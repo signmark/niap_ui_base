@@ -56,9 +56,29 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
       });
     }
     
-    // Получаем все записи контента с использованием ID администратора
-    // Передаем ID администратора (из тестовых аккаунтов проекта)
-    const content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
+    // Получаем все записи контента напрямую через Directus API
+    // Используем полученный adminToken
+    let content: any[] = [];
+    try {
+      log(`Запрос к Directus API для получения контента напрямую`, 'telegram-diagnostics');
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        },
+        params: {
+          limit: 50,
+          sort: '-date_created'
+        }
+      });
+      
+      content = response.data.data;
+      log(`Получено ${content.length} записей контента напрямую через Directus API`, 'telegram-diagnostics');
+    } catch (apiError: any) {
+      log(`Ошибка при прямом запросе к Directus API: ${apiError.message}`, 'telegram-diagnostics');
+      // Пробуем альтернативный метод через storage
+      content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
+      log(`Получено ${content.length} записей контента через storage`, 'telegram-diagnostics');
+    }
     
     if (!content || content.length === 0) {
       return res.status(404).json({
@@ -122,8 +142,24 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
       });
     }
     
-    // Получаем контент из базы
-    const content = await storage.getCampaignContentById(contentId, adminToken);
+    // Получаем контент из базы напрямую через Directus API
+    let content;
+    try {
+      log(`Прямой запрос к Directus API для получения контента с ID ${contentId}`, 'telegram-diagnostics');
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content/${contentId}`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      
+      content = response.data.data;
+      log(`Получен контент с ID ${contentId} напрямую через Directus API`, 'telegram-diagnostics');
+    } catch (apiError: any) {
+      log(`Ошибка при прямом запросе контента через Directus API: ${apiError.message}`, 'telegram-diagnostics');
+      // Пробуем альтернативный метод через storage
+      content = await storage.getCampaignContentById(contentId, adminToken);
+      log(`Получен контент с ID ${contentId} через storage`, 'telegram-diagnostics');
+    }
     
     if (!content) {
       return res.status(404).json({
@@ -231,9 +267,34 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
       });
     }
     
-    // Получаем все записи контента с использованием ID администратора
-    // Передаем ID администратора (из тестовых аккаунтов проекта)
-    const content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
+    // Получаем все записи контента напрямую через Directus API
+    // Используем полученный adminToken
+    let content: any[] = [];
+    try {
+      log(`Запрос к Directus API для массового исправления URL`, 'telegram-diagnostics');
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        },
+        params: {
+          limit: 100,
+          sort: '-date_created',
+          filter: { 
+            "socialPlatforms": { 
+              "_nempty": true 
+            }
+          }
+        }
+      });
+      
+      content = response.data.data;
+      log(`Получено ${content.length} записей контента напрямую через Directus API для исправления URL`, 'telegram-diagnostics');
+    } catch (apiError: any) {
+      log(`Ошибка при прямом запросе к Directus API: ${apiError.message}`, 'telegram-diagnostics');
+      // Пробуем альтернативный метод через storage
+      content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13');
+      log(`Получено ${content.length} записей контента через storage`, 'telegram-diagnostics');
+    }
     
     if (!content || content.length === 0) {
       return res.status(404).json({
