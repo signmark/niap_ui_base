@@ -1309,7 +1309,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                 };
               }
             } catch (error: any) {
@@ -1444,7 +1444,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
                 };
               } else {
                 return {
