@@ -123,8 +123,10 @@ app.use((req, res, next) => {
     // Регистрируем тестовые маршруты для проверки Telegram и других API
     console.log("Registering test API routes...");
     log("Registering test API routes first...");
+    // Регистрируем основные тестовые маршруты
     app.use('/api/test', testRouter);
-    app.use('/api/test', lastTelegramRouter);
+    // Регистрируем маршруты для диагностики и исправления проблем с URL Telegram
+    app.use('/api/telegram-diagnostics', lastTelegramRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
