@@ -5,6 +5,7 @@ import express, { Request, Response } from 'express';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import { telegramService } from '../services/social/telegram-service';
+import { SocialPlatforms } from '@shared/schema';
 
 const lastTelegramRouter = express.Router();
 
