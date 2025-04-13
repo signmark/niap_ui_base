@@ -291,7 +291,9 @@ export abstract class BaseSocialService {
         status: publicationResult.status,
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
         postUrl: publicationResult.postUrl || null,
-        error: publicationResult.error || null
+        error: publicationResult.error || null,
+        // Сохраняем messageId, если он есть (важно для Telegram)
+        messageId: publicationResult.messageId || null
       };
       
       // Создаем или обновляем также socialPlatforms (основное поле для отображения в интерфейсе)
@@ -313,6 +315,8 @@ export abstract class BaseSocialService {
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
         postUrl: publicationResult.postUrl || null,
         postId: publicationResult.postId || null,
+        // Добавляем messageId (критически важно для Telegram)
+        messageId: publicationResult.messageId || null,
         error: publicationResult.error || null
       };
       
