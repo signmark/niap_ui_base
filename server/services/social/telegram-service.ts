@@ -339,7 +339,7 @@ export class TelegramService extends BaseSocialService {
    * @param token Токен бота Telegram
    * @returns Результат отправки сообщения
    */
-  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<{ success: boolean, result?: any, error?: string }> {
+  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<{ success: boolean, result?: any, error?: string, messageId?: number | string }> {
     try {
       // Дополнительно проверяем длину текста
       if (!text || text.trim() === '') {
@@ -385,8 +385,9 @@ export class TelegramService extends BaseSocialService {
       
       // Обрабатываем ответ
       if (response.status === 200 && response.data && response.data.ok) {
-        log(`Сообщение успешно отправлено в Telegram, message_id: ${response.data?.result?.message_id}`, 'social-publishing');
-        return { success: true, result: response.data?.result };
+        const messageId = response.data?.result?.message_id;
+        log(`Сообщение успешно отправлено в Telegram, message_id: ${messageId}`, 'social-publishing');
+        return { success: true, result: response.data?.result, messageId };
       } else {
         log(`Ошибка при отправке сообщения в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
         
@@ -417,8 +418,9 @@ export class TelegramService extends BaseSocialService {
             });
             
             if (fixedResponse.status === 200 && fixedResponse.data && fixedResponse.data.ok) {
-              log(`Сообщение успешно отправлено после агрессивного исправления HTML, message_id: ${fixedResponse.data?.result?.message_id}`, 'social-publishing');
-              return { success: true, result: fixedResponse.data?.result };
+              const messageId = fixedResponse.data?.result?.message_id;
+              log(`Сообщение успешно отправлено после агрессивного исправления HTML, message_id: ${messageId}`, 'social-publishing');
+              return { success: true, result: fixedResponse.data?.result, messageId };
             } else {
               log(`Не удалось отправить сообщение даже после агрессивного исправления HTML: ${JSON.stringify(fixedResponse.data)}`, 'social-publishing');
             }
@@ -448,8 +450,9 @@ export class TelegramService extends BaseSocialService {
           });
           
           if (plainResponse.status === 200 && plainResponse.data && plainResponse.data.ok) {
-            log(`Сообщение успешно отправлено без HTML-форматирования, message_id: ${plainResponse.data?.result?.message_id}`, 'social-publishing');
-            return { success: true, result: plainResponse.data?.result };
+            const messageId = plainResponse.data?.result?.message_id;
+            log(`Сообщение успешно отправлено без HTML-форматирования, message_id: ${messageId}`, 'social-publishing');
+            return { success: true, result: plainResponse.data?.result, messageId };
           } else {
             log(`Ошибка при отправке обычного текста: ${JSON.stringify(plainResponse.data)}`, 'social-publishing');
             return { success: false, error: plainResponse.data?.description || 'Failed to send plain text' };
@@ -462,6 +465,10 @@ export class TelegramService extends BaseSocialService {
       log(`Исключение при отправке сообщения в Telegram: ${error}`, 'social-publishing');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
+    
+    // Этот код никогда не должен выполняться, но на всякий случай добавляем предупреждение
+    log(`КРИТИЧЕСКАЯ ОШИБКА: Метод sendTextMessageToTelegram завершился без явного возврата результата`, 'social-publishing');
+    return { success: false, error: 'Method completed without explicit return' };
   }
 
   /**
@@ -520,10 +527,21 @@ export class TelegramService extends BaseSocialService {
             lastMessageId = response.data.result.message_id;
             log(`Изображение успешно отправлено, message_id: ${lastMessageId}`, 'social-publishing');
             
-            // Генерируем URL сообщения, учитывая username чата, если он известен
-            const messageUrl = this.currentChatUsername 
-              ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
-              : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+            // Генерируем URL сообщения, используя безопасную функцию formatTelegramUrl
+            let formattedChatId = chatId;
+            if (chatId.startsWith('-100')) {
+              formattedChatId = chatId.substring(4);
+            }
+            
+            // Проверяем наличие messageId (обязательное требование!)
+            if (!lastMessageId) {
+              log(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствует messageId при формировании URL для изображения`, 'social-publishing');
+              return { success: false, error: 'MessageId is required for Telegram URL formation' };
+            }
+            
+            // Формируем URL с обязательным messageId
+            const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, lastMessageId, this.currentChatUsername);
+            log(`Сгенерирован URL для сообщения с изображением: ${messageUrl}`, 'social-publishing');
               
             return { 
               success: true, 
@@ -614,10 +632,20 @@ export class TelegramService extends BaseSocialService {
           }
         }
         
-        // Генерируем URL сообщения, учитывая username чата, если он известен
-        const messageUrl = this.currentChatUsername 
-          ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
-          : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+        // Генерируем URL сообщения, используя безопасную функцию formatTelegramUrl
+        let formattedChatId = chatId;
+        if (chatId.startsWith('-100')) {
+          formattedChatId = chatId.substring(4);
+        }
+        
+        // Проверяем наличие messageId (обязательное требование!)
+        if (!lastMessageId) {
+          log(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствует messageId при формировании URL для группы изображений`, 'social-publishing');
+          return { success: false, error: 'MessageId is required for Telegram URL formation' };
+        }
+        
+        const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, lastMessageId, this.currentChatUsername);
+        log(`Сгенерирован URL для группы изображений: ${messageUrl}`, 'social-publishing');
         
         // Если все группы успешно отправлены
         return { 
@@ -706,14 +734,6 @@ export class TelegramService extends BaseSocialService {
     return url;
   }
   
-  /**
-   * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
-   * @param chatId Исходный chat ID (может быть @username или числовым ID)
-   * @param formattedChatId Форматированный chat ID для API запросов
-   * @param messageId Опциональный ID сообщения для создания прямой ссылки
-   * @param chatUsername Опциональный username чата (если известен)
-   * @returns Корректно форматированный URL
-   */
   /**
    * Агрессивный исправитель HTML-тегов для обработки всех возможных случаев
    * @param text Исходный HTML-текст
@@ -936,9 +956,9 @@ export class TelegramService extends BaseSocialService {
       return url;
     }
     
-    // Обработка обычных групп (начинаются с -)
-    if (chatId.startsWith('-')) {
-      // Для обычной группы без username форматируем URL по стандарту
+    // Обработка обычных групп (начинаются с -, но не с -100)
+    if (chatId.startsWith('-') && !chatId.startsWith('-100')) {
+      // Для обычной группы без username форматируем URL по стандарту с /c/
       const groupId = chatId.substring(1); // Убираем только минус
       const url = `https://t.me/c/${groupId}/${messageId}`;
       log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
@@ -1502,7 +1522,8 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
+              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId),
+              messageId: lastMessageId // Добавляем ID сообщения в результат
             };
           } else {
             return {

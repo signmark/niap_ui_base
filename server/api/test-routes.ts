@@ -13,6 +13,9 @@ import axios from 'axios';
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
 
+// Импортируем сервис для работы с Imgur и социальными сетями
+import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
+
 // Middleware для обработки GET запросов к маршрутам -post
 testRouter.get('/instagram-post', (req: Request, res: Response) => {
   // Устанавливаем заголовки для предотвращения кэширования и указания типа контента
@@ -108,38 +111,63 @@ testRouter.get('/telegram-post', (req: Request, res: Response) => {
  */
 testRouter.post('/telegram-post', async (req: Request, res: Response) => {
   try {
-    const { text, chatId, token, imageUrl, additionalImages } = req.body;
+    // Поддерживаем два формата запроса:
+    // 1. Прямая передача полей text, chatId, token
+    // 2. Передача объекта content и chatId
+    const { text, chatId, token, imageUrl, additionalImages, content } = req.body;
     
-    // Проверяем наличие обязательных параметров
-    if (!text || !chatId || !token) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательные параметры: text, chatId и token'
-      });
+    let telegramToken = token;
+    let telegramChatId = chatId;
+    let testContent;
+    
+    if (content) {
+      // Если передан объект content, используем его напрямую
+      testContent = content;
+      
+      // Проверяем наличие обязательных параметров
+      if (!chatId) {
+        return res.status(400).json({
+          success: false,
+          error: 'При использовании объекта content обязательно передать chatId'
+        });
+      }
+      
+      // Используем токен по умолчанию, если не передан
+      if (!telegramToken) {
+        telegramToken = process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+      }
+    } else {
+      // Проверяем наличие обязательных параметров в старом формате
+      if (!text || !chatId || !token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Обязательные параметры: text, chatId и token, либо content и chatId'
+        });
+      }
+      
+      // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
+      testContent = {
+        id: 'test-id',
+        title: 'Тестовый заголовок',
+        content: text, // Используем content вместо text
+        contentType: 'text',
+        imageUrl: imageUrl || '',
+        additionalImages: additionalImages || [],
+        status: 'draft',
+        userId: 'test-user',
+        campaignId: 'test-campaign',
+        socialPlatforms: ['telegram'],
+        createdAt: new Date(),
+        hashtags: [],
+        links: [],
+        metadata: {}
+      };
     }
-    
-    // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
-    const testContent = {
-      id: 'test-id',
-      title: 'Тестовый заголовок',
-      content: text, // Используем content вместо text
-      contentType: 'text',
-      imageUrl: imageUrl || '',
-      additionalImages: additionalImages || [],
-      status: 'draft',
-      userId: 'test-user',
-      campaignId: 'test-campaign',
-      socialPlatforms: ['telegram'],
-      createdAt: new Date(),
-      hashtags: [],
-      links: [],
-      metadata: {}
-    };
     
     // Отправляем тестовое сообщение в Telegram
     const result = await telegramService.publishToTelegram(testContent, {
-      token,
-      chatId
+      token: telegramToken,
+      chatId: telegramChatId
     });
     
     // Логируем результат для отладки
@@ -184,14 +212,26 @@ testRouter.get('/telegram-url', (req: Request, res: Response) => {
     if (formattedChatId.startsWith('@')) {
       formattedChatId = formattedChatId.substring(1);
     } else if (formattedChatId.startsWith('-100')) {
+      // Для ID вида -100XXXXX убираем только префикс -100
       formattedChatId = formattedChatId.substring(4);
+    } else if (formattedChatId.startsWith('-')) {
+      // Для других отрицательных ID (например, -XXXXX) убираем только минус
+      formattedChatId = formattedChatId.substring(1);
     }
     
-    // Форматируем URL
+    // Проверяем обязательное наличие message_id
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ошибка: messageId обязателен для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md'
+      });
+    }
+    
+    // Форматируем URL с обязательным message_id
     const url = telegramService.formatTelegramUrl(
       chatId as string,
       formattedChatId,
-      messageId ? Number(messageId) : undefined,
+      Number(messageId),
       chatUsername as string | undefined
     );
     
@@ -715,16 +755,34 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
       // Формируем URL сообщения
       let messageUrl = '';
       let formattedChatId = chatId;
+      const messageId = response.data?.result?.message_id;
       
-      // Форматируем chatId для URL
-      if (formattedChatId.startsWith('@')) {
-        formattedChatId = formattedChatId.substring(1);
-        messageUrl = `https://t.me/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else if (formattedChatId.startsWith('-100')) {
-        formattedChatId = formattedChatId.substring(4);
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else {
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
+      // Используем сервис для правильного форматирования URL
+      try {
+        // Импортируем сервис из нужного файла
+        const { telegramService } = require('../services/social/telegram-service');
+        
+        // Используем метод форматирования URL с необходимыми параметрами
+        messageUrl = telegramService.formatTelegramUrl(chatId, formattedChatId, messageId);
+        
+        console.log(`Сформирован URL с использованием telegramService: ${messageUrl}`);
+      } catch (error) {
+        console.error('Ошибка при использовании telegramService для форматирования URL:', error);
+        
+        // Резервное форматирование (на случай, если сервис недоступен)
+        if (formattedChatId.startsWith('@')) {
+          formattedChatId = formattedChatId.substring(1);
+          messageUrl = `https://t.me/${formattedChatId}/${messageId}`;
+        } else if (formattedChatId.startsWith('-100')) {
+          formattedChatId = formattedChatId.substring(4);
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        } else if (formattedChatId.startsWith('-')) {
+          // Корректная обработка групп с минусом
+          formattedChatId = formattedChatId.substring(1);
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        } else {
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        }
       }
       
       return res.json({
@@ -900,6 +958,57 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       success: false,
       error: error.message,
       details: error.response?.data || null
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки форматирования URL Telegram через сервис socialPublishingWithImgurService
+ * POST /api/test/format-telegram-url
+ */
+testRouter.post('/format-telegram-url', async (req: Request, res: Response) => {
+  try {
+    const { chatId, messageId } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!chatId || !messageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: chatId и messageId'
+      });
+    }
+    
+    console.log(`[Test API] Проверка форматирования URL для chatId: ${chatId}, messageId: ${messageId}`);
+    
+    // Форматируем chatId для API
+    let formattedChatId = chatId;
+    if (formattedChatId.startsWith('@')) {
+      formattedChatId = formattedChatId.substring(1);
+    } else if (formattedChatId.startsWith('-100')) {
+      // Для ID вида -100XXXXX убираем только префикс -100
+      formattedChatId = formattedChatId.substring(4);
+    } else if (formattedChatId.startsWith('-')) {
+      // Для других отрицательных ID (например, -XXXXX) убираем только минус
+      formattedChatId = formattedChatId.substring(1);
+    }
+    
+    // Форматируем URL с помощью сервиса социальных сетей
+    // Это позволит протестировать новую версию функции formatTelegramUrl
+    const url = socialPublishingWithImgurService.formatTelegramUrl(chatId, formattedChatId, messageId);
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      url,
+      originalChatId: chatId,
+      formattedChatId,
+      messageId
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при форматировании URL Telegram:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
     });
   }
 });
