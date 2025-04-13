@@ -315,9 +315,11 @@ export class TelegramService extends BaseSocialService {
     
     // Базовая информация о публикации
     const publication: SocialPublication = {
-      platformType: SocialPlatform.TELEGRAM,
-      contentId: content.id,
-      status: 'draft',
+      platform: 'telegram',
+      status: 'pending',
+      publishedAt: null,
+      postId: null,
+      postUrl: null,
       error: null
     };
     
@@ -431,9 +433,9 @@ export class TelegramService extends BaseSocialService {
                 // Формируем URL публикации
                 const postUrl = this.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername);
                 
-                publication.platformPostUrl = postUrl;
+                publication.postUrl = postUrl;
                 publication.status = 'published';
-                publication.publishedAt = new Date().toISOString();
+                publication.publishedAt = new Date();
                 
                 // Если есть дополнительные изображения, отправляем их без текста
                 if (images.length > 1) {
