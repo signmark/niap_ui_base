@@ -527,10 +527,16 @@ export class TelegramService extends BaseSocialService {
             lastMessageId = response.data.result.message_id;
             log(`Изображение успешно отправлено, message_id: ${lastMessageId}`, 'social-publishing');
             
-            // Генерируем URL сообщения, учитывая username чата, если он известен
-            const messageUrl = this.currentChatUsername 
-              ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
-              : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+            // Генерируем URL сообщения, используя безопасную функцию formatTelegramUrl
+            let formattedChatId = chatId;
+            if (chatId.startsWith('-100')) {
+              formattedChatId = chatId.substring(4);
+            }
+            
+            // Гарантируем, что lastMessageId является string или number (не undefined)
+            const safeMessageId = lastMessageId || 0; // Если lastMessageId undefined, используем 0 как запасной вариант
+            const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, safeMessageId, this.currentChatUsername);
+            log(`Сгенерирован URL для сообщения с изображением: ${messageUrl}`, 'social-publishing');
               
             return { 
               success: true, 
@@ -621,10 +627,20 @@ export class TelegramService extends BaseSocialService {
           }
         }
         
-        // Генерируем URL сообщения, учитывая username чата, если он известен
-        const messageUrl = this.currentChatUsername 
-          ? `https://t.me/${this.currentChatUsername}/${lastMessageId}`
-          : `https://t.me/c/${chatId.replace('-100', '')}/${lastMessageId}`;
+        // Генерируем URL сообщения, используя безопасную функцию formatTelegramUrl
+        let formattedChatId = chatId;
+        if (chatId.startsWith('-100')) {
+          formattedChatId = chatId.substring(4);
+        }
+        
+        // Проверяем наличие messageId (обязательное требование!)
+        if (!lastMessageId) {
+          log(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствует messageId при формировании URL для группы изображений`, 'social-publishing');
+          return { success: false, error: 'MessageId is required for Telegram URL formation' };
+        }
+        
+        const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, lastMessageId, this.currentChatUsername);
+        log(`Сгенерирован URL для группы изображений: ${messageUrl}`, 'social-publishing');
         
         // Если все группы успешно отправлены
         return { 
