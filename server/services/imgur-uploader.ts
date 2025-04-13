@@ -15,8 +15,10 @@ function log(message: string, context: string = 'imgur-uploader') {
 }
 
 export class ImgurUploaderService {
-  private readonly imgurApiKey: string = '24b7a2b8c7d4563497ca48e07d0c76ba'; // Используем ключ из n8n
-  private readonly uploadEndpoint: string = 'https://api.imgbb.com/1/upload';
+  private readonly imgurApiKey: string = '24b7a2b8c7d4563497ca48e07d0c76ba'; // ImgBB API Key
+  private readonly imgurClientId: string = 'fc3d6ae9c21a8df'; // Imgur Client ID
+  private readonly imgbbUploadEndpoint: string = 'https://api.imgbb.com/1/upload';
+  private readonly imgurUploadEndpoint: string = 'https://api.imgur.com/3/upload';
   private readonly tempDir: string = path.join(process.cwd(), 'uploads', 'temp');
 
   constructor() {
@@ -87,21 +89,21 @@ export class ImgurUploaderService {
   }
 
   /**
-   * Загружает изображение из файла на Imgur
+   * Загружает изображение из файла на ImgBB
    * @param filePath Путь к файлу изображения
-   * @returns URL загруженного изображения на Imgur или null в случае ошибки
+   * @returns URL загруженного изображения на ImgBB или null в случае ошибки
    */
   async uploadImageFromFile(filePath: string): Promise<string | null> {
     try {
-      log(`Загрузка изображения на Imgur из файла: ${filePath}`);
+      log(`Загрузка изображения на ImgBB из файла: ${filePath}`);
       
       // Создаем объект FormData для отправки файла
       const formData = new FormData();
       formData.append('key', this.imgurApiKey);
       formData.append('image', fs.createReadStream(filePath));
 
-      // Отправляем запрос на Imgur API
-      const response = await axios.post(this.uploadEndpoint, formData, {
+      // Отправляем запрос на ImgBB API
+      const response = await axios.post(this.imgbbUploadEndpoint, formData, {
         headers: {
           ...formData.getHeaders(),
         },
@@ -109,15 +111,100 @@ export class ImgurUploaderService {
 
       // Проверяем ответ
       if (response.data && response.data.success && response.data.data && response.data.data.url) {
-        log(`Изображение успешно загружено на Imgur: ${response.data.data.url}`);
+        log(`Изображение успешно загружено на ImgBB: ${response.data.data.url}`);
         return response.data.data.url;
+      } else {
+        log(`Неожиданный формат ответа от ImgBB API: ${JSON.stringify(response.data)}`);
+        return null;
+      }
+    } catch (error) {
+      log(`Ошибка при загрузке изображения на ImgBB из файла: ${error}`);
+      return null;
+    }
+  }
+  
+  /**
+   * Загружает видео из файла на Imgur
+   * @param filePath Путь к файлу видео
+   * @returns URL загруженного видео на Imgur или null в случае ошибки
+   */
+  async uploadVideoFromFile(filePath: string): Promise<string | null> {
+    try {
+      log(`Загрузка видео на Imgur из файла: ${filePath}`);
+      
+      // Создаем объект FormData для отправки файла
+      const formData = new FormData();
+      formData.append('video', fs.createReadStream(filePath));
+      
+      // Отправляем запрос на Imgur API
+      const response = await axios.post(this.imgurUploadEndpoint, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          'Authorization': `Client-ID ${this.imgurClientId}`
+        },
+      });
+      
+      // Проверяем ответ
+      if (response.data && response.data.success && response.data.data && response.data.data.link) {
+        log(`Видео успешно загружено на Imgur: ${response.data.data.link}`);
+        return response.data.data.link;
       } else {
         log(`Неожиданный формат ответа от Imgur API: ${JSON.stringify(response.data)}`);
         return null;
       }
     } catch (error) {
-      log(`Ошибка при загрузке изображения на Imgur из файла: ${error}`);
+      log(`Ошибка при загрузке видео на Imgur из файла: ${error}`);
       return null;
+    }
+  }
+  
+  /**
+   * Загружает видео из URL на Imgur
+   * @param videoUrl URL видео для загрузки
+   * @returns URL загруженного видео на Imgur или null в случае ошибки
+   */
+  async uploadVideoFromUrl(videoUrl: string): Promise<string | null> {
+    try {
+      log(`Загрузка видео на Imgur из URL: ${videoUrl}`);
+      
+      // Если это не локальный файл, то возвращаем исходный URL для видео с внешних источников
+      if (videoUrl.startsWith('http') && !videoUrl.includes('localhost') && !videoUrl.includes('127.0.0.1')) {
+        log(`URL не является локальным, возвращаем исходный URL: ${videoUrl}`);
+        return videoUrl;
+      }
+      
+      // Проверяем, является ли URL локальным файлом
+      if (!videoUrl.startsWith('/') && !videoUrl.startsWith('./')) {
+        log(`URL не является путем к локальному файлу: ${videoUrl}`);
+        return videoUrl;
+      }
+      
+      // Преобразуем относительный путь в абсолютный
+      let filePath = videoUrl;
+      if (videoUrl.startsWith('./')) {
+        filePath = path.join(process.cwd(), videoUrl.substring(2));
+      } else if (!path.isAbsolute(videoUrl)) {
+        filePath = path.join(process.cwd(), videoUrl);
+      }
+      
+      // Проверяем, существует ли файл
+      if (!fs.existsSync(filePath)) {
+        log(`Локальный файл не найден: ${filePath}`);
+        return videoUrl;
+      }
+      
+      // Загружаем видео на Imgur
+      const imgurUrl = await this.uploadVideoFromFile(filePath);
+      if (imgurUrl) {
+        log(`Локальное видео успешно загружено на Imgur: ${imgurUrl}`);
+        return imgurUrl;
+      } else {
+        log(`Не удалось загрузить локальное видео на Imgur: ${filePath}`);
+        return videoUrl;
+      }
+    } catch (error) {
+      log(`Ошибка при загрузке видео на Imgur: ${error}`);
+      return videoUrl; // Возвращаем исходный URL в случае ошибки
     }
   }
 
