@@ -142,6 +142,7 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
     // Формируем корректный URL с messageId
     const correctUrl = telegramService.formatTelegramUrl(
       chatId,
+      formattedChatId,
       messageId
     );
     
@@ -248,9 +249,16 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
           continue;
         }
         
+        // Определяем формат chatId для API
+        let formattedChatId = chatId;
+        if (formattedChatId.startsWith('-100')) {
+          formattedChatId = formattedChatId.substring(4);
+        }
+
         // Формируем корректный URL с messageId
         const correctUrl = telegramService.formatTelegramUrl(
           chatId,
+          formattedChatId,
           messageId
         );
         
