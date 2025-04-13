@@ -1082,7 +1082,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+            postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
           };
         } catch (error: any) {
           log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -1173,7 +1173,7 @@ export class SocialPublishingWithImgurService {
                     platform: 'telegram',
                     status: 'published',
                     publishedAt: new Date(),
-                    postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                    postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
                   };
                 } else {
                   // Если оба метода не работают, отправляем изображение и текст по отдельности
@@ -1205,7 +1205,7 @@ export class SocialPublishingWithImgurService {
                       platform: 'telegram',
                       status: 'published',
                       publishedAt: new Date(),
-                      postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                      postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
                     };
                   }
                 }
@@ -1256,7 +1256,7 @@ export class SocialPublishingWithImgurService {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId || '')
+                postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
               };
             }
           } catch (backupError: any) {
