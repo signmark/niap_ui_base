@@ -15,6 +15,87 @@ import { log } from '../utils/logger';
 export function registerTestDebugRoutes(app: Express): void {
   console.log('[test-routes-debug] Регистрация отладочных маршрутов...');
 
+  // Маршрут для прямого тестирования интеграции путем создания временного контента
+  app.post('/api/test/telegram-create-publish', async (req: Request, res: Response) => {
+    try {
+      const { text, imageUrl } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ 
+          error: 'Не указан текст сообщения' 
+        });
+      }
+      
+      log(`[DEBUG] Тестирование публикации через создание временного контента: ${text.substring(0, 20)}...`, 'test-api');
+      
+      // Создаем тестовый контент
+      const testContent: CampaignContent = {
+        id: 'test-content-id-' + Date.now(),
+        userId: 'test-user-id',
+        campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+        title: 'Тестовый контент',
+        content: text,
+        contentType: 'text',
+        imageUrl: imageUrl || null,
+        additionalImages: null,
+        videoUrl: null,
+        status: 'draft',
+        socialPlatforms: ['telegram'],
+        createdAt: new Date(),
+        prompt: null,
+        keywords: null,
+        scheduledAt: null,
+        publishedAt: null,
+        hashtags: [],
+        links: [],
+        metadata: {}
+      };
+      
+      // Создаем тестовую кампанию с правильными настройками
+      const testCampaign = {
+        id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+        name: 'Тестовая кампания',
+        userId: 'test-user-id',
+        settings: {
+          telegram: {
+            token: '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU',
+            chatId: '-1002302366310'
+          }
+        },
+        socialMediaSettings: {
+          telegram: {
+            token: '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU',
+            chatId: '-1002302366310'
+          }
+        }
+      };
+      
+      // Вызываем сервис для публикации
+      try {
+        log(`[DEBUG] Вызов socialPublishingService.publishToPlatform с platform=telegram`, 'test-api');
+        const result = await socialPublishingService.publishToPlatform('telegram', testContent, testCampaign);
+        return res.status(200).json({
+          success: true,
+          result
+        });
+      } catch (serviceError: any) {
+        log(`[DEBUG] Ошибка в SocialPublishingService: ${serviceError.message}`, 'test-api');
+        return res.status(500).json({
+          error: 'Ошибка в SocialPublishingService',
+          message: serviceError.message,
+          stack: serviceError.stack
+        });
+      }
+    } catch (error: any) {
+      log(`[DEBUG] Ошибка отладки: ${error.message}`, 'test-api');
+      return res.status(500).json({
+        error: 'Ошибка при отладке',
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  });
+
   // Маршрут для прямого тестирования TelegramService
   app.post('/api/test/telegram-direct', async (req: Request, res: Response) => {
     try {
