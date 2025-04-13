@@ -300,8 +300,24 @@ export class TelegramService extends BaseSocialService {
   }
 
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined, chatUsername?: string): string {
-    // Прямая инструкция - всегда использовать URL в формате https://t.me/канал/сообщение
-    const channel = 'ya_delayu_moschno'; // Используем фиксированный канал
+    // Приоритеты:
+    // 1. Если передан username канала, используем его
+    // 2. Если username не передан, но chatId начинается с @, используем его как username
+    // 3. В остальных случаях используем фиксированный канал
+    
+    let channel = 'ya_delayu_moschno'; // Значение по умолчанию
+    
+    if (chatUsername) {
+      // Убираем символ @ если он есть в начале
+      channel = chatUsername.startsWith('@') ? chatUsername.substring(1) : chatUsername;
+      log(`Используем переданный username канала: ${channel}`, 'telegram-service');
+    } else if (chatId && typeof chatId === 'string' && chatId.startsWith('@')) {
+      // Если chatId начинается с @, используем его как username
+      channel = chatId.substring(1);
+      log(`Используем chatId как username канала: ${channel}`, 'telegram-service');
+    } else {
+      log(`Используем фиксированный канал: ${channel}`, 'telegram-service');
+    }
     
     if (!messageId) {
       // Если ID сообщения не указан, возвращаем ссылку на канал
@@ -309,7 +325,9 @@ export class TelegramService extends BaseSocialService {
     }
     
     // Если ID сообщения указан, добавляем его к URL
-    return `https://t.me/${channel}/${messageId}`;
+    const url = `https://t.me/${channel}/${messageId}`;
+    log(`Сформирован URL для Telegram: ${url}`, 'telegram-service');
+    return url;
   }
 
   /**
