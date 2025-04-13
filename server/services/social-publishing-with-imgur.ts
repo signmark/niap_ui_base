@@ -231,11 +231,11 @@ export class SocialPublishingWithImgurService {
         }
       }
       
-      // Если есть ID сообщений, создаем URL первого сообщения в группе
+      // Если есть ID сообщений, создаем URL первого сообщения в группе с помощью метода-форматера
       let messageUrl;
       if (messageIds.length > 0) {
-        messageUrl = `https://t.me/${originalChatId}/${messageIds[0]}`;
-        log(`Создан URL для группы изображений: ${messageUrl}`, 'telegram-debug');
+        messageUrl = this.formatTelegramUrl(originalChatId, formattedChatId, messageIds[0]);
+        log(`Создан URL для группы изображений через formatTelegramUrl: ${messageUrl}`, 'telegram-debug');
       }
       
       return {
@@ -1354,7 +1354,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId)
+            postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : `https://t.me/${chatId.replace('@', '')}`
           };
         } else {
           try {
@@ -1463,7 +1463,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId)
+                  postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : `https://t.me/${chatId.replace('@', '')}`
                 };
               } else {
                 return {
