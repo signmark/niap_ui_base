@@ -13,6 +13,7 @@ const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const DIRECTUS_ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
 const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'Qtpz3dh7';
 const ADMIN_USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // ID администратора
+const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e'; // ID кампании для работы
 
 const lastTelegramRouter = express.Router();
 
@@ -87,6 +88,113 @@ async function getDirectAdminToken(): Promise<string|null> {
     return null;
   }
 }
+
+/**
+ * Получение последней публикации в Telegram
+ * GET /api/telegram-diagnostics/last-telegram-publication
+ */
+/**
+ * Получение всех публикаций Telegram из указанной кампании
+ * GET /api/telegram-diagnostics/telegram-posts
+ */
+lastTelegramRouter.get('/telegram-posts', async (req: Request, res: Response) => {
+  try {
+    // Получаем токен администратора
+    const adminToken = await getDirectAdminToken();
+    
+    if (!adminToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Не удалось получить токен администратора'
+      });
+    }
+    
+    // Получаем все записи контента для указанной кампании
+    let content: any[] = [];
+    try {
+      log(`Запрос к Directus API для получения контента кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
+      // Преобразуем фильтр в строковый формат для совместимости с Directus API
+      const params = new URLSearchParams();
+      params.append('limit', '500');
+      params.append('filter[campaignId][_eq]', CAMPAIGN_ID);
+      params.append('filter[socialPlatforms][_nempty]', 'true');
+      
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      
+      content = response.data.data;
+      log(`Получено ${content.length} записей контента для кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
+    } catch (apiError: any) {
+      log(`Ошибка при прямом запросе к Directus API: ${apiError.message}`, 'telegram-diagnostics');
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при запросе к Directus API: ${apiError.message}`
+      });
+    }
+    
+    if (!content || content.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `Контент не найден для кампании ${CAMPAIGN_ID}`
+      });
+    }
+    
+    // Фильтруем контент с публикациями в Telegram
+    const telegramPosts = content.filter(item => 
+      item.socialPlatforms && 
+      typeof item.socialPlatforms === 'object' && 
+      item.socialPlatforms.telegram
+    );
+    
+    if (telegramPosts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Публикации в Telegram не найдены'
+      });
+    }
+    
+    // Анализируем найденные публикации на наличие messageId и корректность URL
+    const analyzed = telegramPosts.map(post => {
+      const telegramData = post.socialPlatforms.telegram;
+      const hasMessageId = !!telegramData.messageId;
+      const postUrl = telegramData.postUrl || '';
+      const urlHasMessageId = hasMessageId && postUrl.includes('/' + telegramData.messageId);
+      
+      return {
+        id: post.id,
+        title: post.title,
+        messageId: telegramData.messageId,
+        chatId: telegramData.chatId,
+        postUrl,
+        hasValidUrl: urlHasMessageId,
+        needsUrlFix: hasMessageId && !urlHasMessageId
+      };
+    });
+    
+    // Статистика
+    const stats = {
+      total: telegramPosts.length,
+      withMessageId: analyzed.filter(p => p.messageId).length,
+      withValidUrl: analyzed.filter(p => p.hasValidUrl).length,
+      needsUrlFix: analyzed.filter(p => p.needsUrlFix).length
+    };
+    
+    return res.json({
+      success: true,
+      stats,
+      posts: analyzed
+    });
+  } catch (error: any) {
+    log(`Ошибка при получении публикаций Telegram: ${error.message}`, 'telegram-diagnostics');
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
 
 /**
  * Получение последней публикации в Telegram
