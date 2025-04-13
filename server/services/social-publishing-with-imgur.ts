@@ -166,9 +166,9 @@ export class SocialPublishingWithImgurService {
           log(`Изображение успешно отправлено в Telegram`, 'social-publishing');
           const messageId = response.data.result.message_id;
           
-          // Создаем правильный URL сообщения: https://t.me/username/messageId
-          const messageUrl = `https://t.me/${originalChatId}/${messageId}`;
-          log(`Создан URL сообщения: ${messageUrl}`, 'telegram-debug');
+          // Создаем правильный URL сообщения с помощью нашего метода-форматера
+          const messageUrl = this.formatTelegramUrl(originalChatId, formattedChatId, messageId);
+          log(`Создан URL сообщения через formatTelegramUrl: ${messageUrl}`, 'telegram-debug');
           
           return {
             success: true,
@@ -691,10 +691,18 @@ export class SocialPublishingWithImgurService {
    * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
    * @param chatId Исходный chat ID (может быть @username или числовым ID)
    * @param formattedChatId Форматированный chat ID для API запросов
-   * @param messageId Опциональный ID сообщения для создания прямой ссылки
+   * @param messageId ID сообщения для создания прямой ссылки (ОБЯЗАТЕЛЬНЫЙ параметр)
    * @returns Корректно форматированный URL
+   * @throws Error если messageId не указан - согласно требованию TELEGRAM_POSTING_ALGORITHM.md
    */
-  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
+  formatTelegramUrl(chatId: string, formattedChatId: string, messageId: number | string): string {
+    // КРИТИЧЕСКОЕ ТРЕБОВАНИЕ: messageId должен быть указан всегда!
+    if (!messageId) {
+      const errorMessage = 'CRITICAL ERROR: MessageId is REQUIRED for Telegram URL formation according to TELEGRAM_POSTING_ALGORITHM.md';
+      log(errorMessage, 'social-publishing');
+      throw new Error(errorMessage);
+    }
+    
     // Определяем базовый URL для публичных каналов или приватных чатов
     let baseUrl = '';
     
@@ -724,12 +732,10 @@ export class SocialPublishingWithImgurService {
       }
     }
     
-    // Добавляем ID сообщения, если он указан
-    if (messageId) {
-      return `${baseUrl}/${messageId}`;
-    }
-    
-    return baseUrl;
+    // Создаем полный URL с ID сообщения (который обязателен)
+    const url = `${baseUrl}/${messageId}`;
+    log(`Сформирован URL с обязательным message ID: ${url}`, 'social-publishing');
+    return url;
   }
   
   /**
