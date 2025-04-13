@@ -9,6 +9,7 @@ import { publishScheduler } from '../services/publish-scheduler';
 import { SocialPlatform } from '@shared/schema';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
+import { directusAuthManager } from '../services/directus-auth-manager';
 import { directusStorageAdapter } from '../services/directus';
 
 /**
@@ -356,12 +357,15 @@ export function registerPublishingRoutes(app: Express): void {
       log(`Запрос контента по ID: ${contentId}`, 'api');
       
       // Получаем токен администратора
-      const adminToken = await directusAuth.getAdminToken();
+      log(`Попытка получения токена администратора через directusAuthManager...`, 'api');
+      const adminToken = await directusAuthManager.getAdminToken();
       
       if (!adminToken) {
         log(`Не удалось получить токен администратора для доступа к контенту`, 'api');
         return res.status(500).json({ error: 'Ошибка авторизации: не удалось получить доступ к контенту' });
       }
+      
+      log(`Токен администратора успешно получен: ${adminToken.substring(0, 10)}...`, 'api');
       
       // Используем токен администратора для получения контента
       let content = await storage.getCampaignContentById(contentId, adminToken);
