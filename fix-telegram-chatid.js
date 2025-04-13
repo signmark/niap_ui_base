@@ -3,8 +3,8 @@
  * Обновляет ID чата Telegram с "-1001955550242" на "-1002302366310"
  */
 
-require('dotenv').config();
-const axios = require('axios');
+import 'dotenv/config';
+import axios from 'axios';
 
 // Конфигурационные константы
 const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
