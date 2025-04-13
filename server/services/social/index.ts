@@ -31,11 +31,11 @@ export class SocialPublishingService {
     campaign: any,
     authToken?: string
   ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
-    log(`Публикация контента в ${platform}`, 'social-publishing');
+    log(`Публикация контента в социальную сеть: ${platform}`, 'social-publishing');
     
     try {
       // Получаем настройки социальных сетей из объекта кампании
-      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      const settings = campaign?.socialMediaSettings || campaign?.settings || {};
       
       // Выбираем соответствующий сервис в зависимости от платформы
       switch (platform) {

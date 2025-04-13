@@ -31,6 +31,7 @@ export class TelegramService extends BaseSocialService {
     platform: SocialPlatform,
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
+    log(`Публикация контента "${content.title || 'без заголовка'}" в Telegram`, 'social-publish');
     return this.publishContent(content, settings);
   }
   /**
