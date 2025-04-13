@@ -18,6 +18,17 @@ const CAMPAIGN_ID = '46868c44-c6a4-4bed-accf-9ad07bba790e'; // ID кампани
 const lastTelegramRouter = express.Router();
 
 /**
+ * Тестовый маршрут для проверки доступности
+ * GET /api/telegram-diagnostics/test
+ */
+lastTelegramRouter.get('/test', (req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    message: 'Тестовый доступ к диагностическому маршруту работает'
+  });
+});
+
+/**
  * Получает токен администратора Directus 
  * Использует расширенный подход с попыткой получения токена из кэша проекта
  * @returns {Promise<string|null>} Токен администратора или null в случае ошибки
@@ -113,11 +124,20 @@ lastTelegramRouter.get('/telegram-posts', async (req: Request, res: Response) =>
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для получения контента кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
-      // Попробуем получить контент напрямую через API сервера
-      const response = await axios.get('http://localhost:5000/api/campaign-content', {
+      
+      // Получаем контент напрямую через Directus API с использованием полученного adminToken
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
         params: {
-          campaignId: CAMPAIGN_ID,
-          limit: 500
+          filter: {
+            campaign: {
+              _eq: CAMPAIGN_ID
+            }
+          },
+          limit: 500,
+          sort: '-date_created'
+        },
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
@@ -213,11 +233,23 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для получения контента напрямую`, 'telegram-diagnostics');
-      // Используем внутренний API сервера для доступа к данным
+      // Сначала авторизуемся
+      // Пытаемся войти
+      const authResponse = await axios.post('http://localhost:5000/api/auth/login', {
+        email: process.env.DIRECTUS_ADMIN_EMAIL,
+        password: process.env.DIRECTUS_ADMIN_PASSWORD
+      });
+      
+      const token = authResponse.data.token;
+      
+      // Получаем контент с авторизацией
       const response = await axios.get('http://localhost:5000/api/campaign-content', {
         params: {
           limit: 50,
           sort: '-date_created'
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -422,11 +454,23 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для массового исправления URL`, 'telegram-diagnostics');
-      // Используем внутренний API сервера для доступа к данным
+      // Сначала авторизуемся
+      // Пытаемся войти
+      const authResponse = await axios.post('http://localhost:5000/api/auth/login', {
+        email: process.env.DIRECTUS_ADMIN_EMAIL,
+        password: process.env.DIRECTUS_ADMIN_PASSWORD
+      });
+      
+      const token = authResponse.data.token;
+      
+      // Получаем контент с авторизацией
       const response = await axios.get('http://localhost:5000/api/campaign-content', {
         params: {
           limit: 100,
           sort: '-date_created'
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
       
