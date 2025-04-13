@@ -138,8 +138,10 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
     
     // Отправляем тестовое сообщение в Telegram
     const result = await telegramService.publishContent(testContent, {
-      token,
-      chatId
+      telegram: {
+        token,
+        chatId
+      }
     });
     
     // Логируем результат для отладки
@@ -330,8 +332,10 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
     
     // Отправляем тестовое сообщение в Telegram с настройками из кампании
     const result = await telegramService.publishContent(testContent, {
-      token: campaign.settings.telegram.token,
-      chatId: campaign.settings.telegram.chatId
+      telegram: {
+        token: campaign.settings.telegram.token,
+        chatId: campaign.settings.telegram.chatId
+      }
     });
     
     // Логируем результат для отладки
