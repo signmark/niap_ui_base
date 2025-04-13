@@ -7896,17 +7896,44 @@ https://t.me/channelname/ - description`;
         // Результаты публикации
         const publishResults = [];
         
+        // Контрольный вывод кампании и контента для диагностики
+        console.log('DEBUG: campaignContent для публикации:', {
+          id: campaignContent.id,
+          title: campaignContent.title,
+          content: campaignContent.content?.substring(0, 100) + '...',
+          contentType: campaignContent.contentType,
+          imageUrl: campaignContent.imageUrl
+        });
+        
+        console.log('DEBUG: userSettings для публикации:', {
+          telegram: userSettings?.telegram ? { 
+            hasToken: !!userSettings.telegram.token, 
+            hasChatId: !!userSettings.telegram.chatId 
+          } : null,
+          vk: userSettings?.vk ? { 
+            hasToken: !!userSettings.vk.token, 
+            hasGroupId: !!userSettings.vk.groupId 
+          } : null,
+          instagram: userSettings?.instagram ? {
+            hasToken: !!userSettings.instagram.accessToken,
+            hasAccountId: !!userSettings.instagram.businessAccountId
+          } : null
+        });
+        
         // Публикуем контент напрямую через наш сервис публикации
         for (const platform of platformsToPublish) {
           try {
-            log(`Публикация контента в ${platform}`, 'social-publish');
+            log(`Публикация контента "${campaignContent.title}" в ${platform}`, 'social-publish');
             
             let result;
             // Используем сервис публикации для всех платформ
             if (userSettings) {
+              console.log(`DEBUG: Вызов socialPublishingService.publishToPlatform для платформы ${platform}`);
               // Универсальный метод публикации для всех типов платформ
               result = await socialPublishingService.publishToPlatform(platform as any, campaignContent, { settings: userSettings });
+              console.log(`DEBUG: Результат публикации:`, JSON.stringify(result, null, 2));
             } else {
+              console.log(`DEBUG: Отсутствуют настройки для платформы ${platform}`);
               result = {
                 platform: platform as any,
                 status: 'failed',
@@ -7920,7 +7947,7 @@ https://t.me/channelname/ - description`;
             publishResults.push(result);
             
             // Логируем результат
-            log(`Результат публикации в ${platform}: ${result.status}`, 'social-publish');
+            log(`Результат публикации в ${platform}: ${result.status} (${result.error || 'без ошибок'})`, 'social-publish');
           } catch (platformError) {
             console.error(`Ошибка при публикации в ${platform}:`, platformError);
             publishResults.push({
