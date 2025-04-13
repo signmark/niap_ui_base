@@ -956,9 +956,9 @@ export class TelegramService extends BaseSocialService {
       return url;
     }
     
-    // Обработка обычных групп (начинаются с -)
-    if (chatId.startsWith('-')) {
-      // Для обычной группы без username форматируем URL по стандарту
+    // Обработка обычных групп (начинаются с -, но не с -100)
+    if (chatId.startsWith('-') && !chatId.startsWith('-100')) {
+      // Для обычной группы без username форматируем URL по стандарту с /c/
       const groupId = chatId.substring(1); // Убираем только минус
       const url = `https://t.me/c/${groupId}/${messageId}`;
       log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
