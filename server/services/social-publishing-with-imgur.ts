@@ -688,29 +688,39 @@ export class SocialPublishingWithImgurService {
   }
 
   /**
-   * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
+   * Форматирует URL Telegram с учетом разных форматов chat ID и username канала
    * @param chatId Исходный chat ID (может быть @username или числовым ID)
    * @param formattedChatId Форматированный chat ID для API запросов
    * @param messageId Опциональный ID сообщения для создания прямой ссылки
-   * @returns Корректно форматированный URL
+   * @returns Корректно форматированный URL согласно документации
    */
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined): string {
     log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
     
+    // Определяем наличие username в chatId или formattedChatId
+    let username: string | null = null;
+    
+    // Проверяем является ли это username начинающимся с @
+    if (chatId.startsWith('@')) {
+      username = chatId.substring(1);
+    } else if (formattedChatId.startsWith('@')) {
+      username = formattedChatId.substring(1);
+    }
+    
     // Если ID сообщения не указан, вернем дефолтный URL Telegram
     if (!messageId) {
-      // Если это username (начинается с @), можем вернуть URL на канал
-      if (chatId.startsWith('@')) {
-        return `https://t.me/${chatId.substring(1)}`;
+      // Если определен username, возвращаем URL канала
+      if (username) {
+        return `https://t.me/${username}`;
       }
       
       // Для всех остальных случаев без messageId возвращаем базовый URL
       return 'https://t.me';
     }
     
-    // Обработка случая с username (@channel)
-    if (chatId.startsWith('@')) {
-      const username = chatId.substring(1);
+    // Согласно документации, для каналов мы должны использовать формат https://t.me/{username}/{message_id}
+    // Если определен username, используем его для формирования URL
+    if (username) {
       const url = `https://t.me/${username}/${messageId}`;
       log(`Сформирован URL для канала с username: ${url}`, 'social-publishing');
       return url;
