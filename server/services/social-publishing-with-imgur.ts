@@ -722,9 +722,11 @@ export class SocialPublishingWithImgurService {
         log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в https://t.me/c/${channelId}`, 'social-publishing');
         baseUrl = `https://t.me/c/${channelId}`;
       } else if (chatId.startsWith('-')) {
-        // Для обычных групп (с - в начале) прямых ссылок нет
-        log(`Форматирование Telegram URL: обычная группа ${chatId}, прямых ссылок нет`, 'social-publishing');
-        baseUrl = 'https://t.me';
+        // Для групп с минусом, но не начинающихся с -100, нужен формат с /c/ и без минуса
+        // Пример: -123456 должен стать https://t.me/c/123456
+        const channelId = chatId.substring(1); // Убираем префикс -
+        log(`Форматирование Telegram URL: группа с минусом ${chatId} преобразована в https://t.me/c/${channelId}`, 'social-publishing');
+        baseUrl = `https://t.me/c/${channelId}`;
       } else {
         // Для обычных числовых ID без префикса просто используем их (прямой канал или чат с ботом)
         log(`Форматирование Telegram URL: обычный числовой ID ${chatId} используется напрямую`, 'social-publishing');
