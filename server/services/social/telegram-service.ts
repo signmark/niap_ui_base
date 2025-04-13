@@ -339,7 +339,7 @@ export class TelegramService extends BaseSocialService {
    * @param token Токен бота Telegram
    * @returns Результат отправки сообщения
    */
-  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<{ success: boolean, result?: any, error?: string }> {
+  private async sendTextMessageToTelegram(text: string, chatId: string, token: string): Promise<{ success: boolean, result?: any, error?: string, messageId?: number | string }> {
     try {
       // Дополнительно проверяем длину текста
       if (!text || text.trim() === '') {
@@ -385,8 +385,9 @@ export class TelegramService extends BaseSocialService {
       
       // Обрабатываем ответ
       if (response.status === 200 && response.data && response.data.ok) {
-        log(`Сообщение успешно отправлено в Telegram, message_id: ${response.data?.result?.message_id}`, 'social-publishing');
-        return { success: true, result: response.data?.result };
+        const messageId = response.data?.result?.message_id;
+        log(`Сообщение успешно отправлено в Telegram, message_id: ${messageId}`, 'social-publishing');
+        return { success: true, result: response.data?.result, messageId };
       } else {
         log(`Ошибка при отправке сообщения в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
         
@@ -417,8 +418,9 @@ export class TelegramService extends BaseSocialService {
             });
             
             if (fixedResponse.status === 200 && fixedResponse.data && fixedResponse.data.ok) {
-              log(`Сообщение успешно отправлено после агрессивного исправления HTML, message_id: ${fixedResponse.data?.result?.message_id}`, 'social-publishing');
-              return { success: true, result: fixedResponse.data?.result };
+              const messageId = fixedResponse.data?.result?.message_id;
+              log(`Сообщение успешно отправлено после агрессивного исправления HTML, message_id: ${messageId}`, 'social-publishing');
+              return { success: true, result: fixedResponse.data?.result, messageId };
             } else {
               log(`Не удалось отправить сообщение даже после агрессивного исправления HTML: ${JSON.stringify(fixedResponse.data)}`, 'social-publishing');
             }
@@ -448,8 +450,9 @@ export class TelegramService extends BaseSocialService {
           });
           
           if (plainResponse.status === 200 && plainResponse.data && plainResponse.data.ok) {
-            log(`Сообщение успешно отправлено без HTML-форматирования, message_id: ${plainResponse.data?.result?.message_id}`, 'social-publishing');
-            return { success: true, result: plainResponse.data?.result };
+            const messageId = plainResponse.data?.result?.message_id;
+            log(`Сообщение успешно отправлено без HTML-форматирования, message_id: ${messageId}`, 'social-publishing');
+            return { success: true, result: plainResponse.data?.result, messageId };
           } else {
             log(`Ошибка при отправке обычного текста: ${JSON.stringify(plainResponse.data)}`, 'social-publishing');
             return { success: false, error: plainResponse.data?.description || 'Failed to send plain text' };
