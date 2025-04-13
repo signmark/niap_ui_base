@@ -462,6 +462,10 @@ export class TelegramService extends BaseSocialService {
       log(`Исключение при отправке сообщения в Telegram: ${error}`, 'social-publishing');
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
+    
+    // Этот код никогда не должен выполняться, но на всякий случай добавляем предупреждение
+    log(`КРИТИЧЕСКАЯ ОШИБКА: Метод sendTextMessageToTelegram завершился без явного возврата результата`, 'social-publishing');
+    return { success: false, error: 'Method completed without explicit return' };
   }
 
   /**
