@@ -533,9 +533,14 @@ export class TelegramService extends BaseSocialService {
               formattedChatId = chatId.substring(4);
             }
             
-            // Гарантируем, что lastMessageId является string или number (не undefined)
-            const safeMessageId = lastMessageId || 0; // Если lastMessageId undefined, используем 0 как запасной вариант
-            const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, safeMessageId, this.currentChatUsername);
+            // Проверяем наличие messageId (обязательное требование!)
+            if (!lastMessageId) {
+              log(`КРИТИЧЕСКАЯ ОШИБКА: Отсутствует messageId при формировании URL для изображения`, 'social-publishing');
+              return { success: false, error: 'MessageId is required for Telegram URL formation' };
+            }
+            
+            // Формируем URL с обязательным messageId
+            const messageUrl = this.formatTelegramUrl(chatId, formattedChatId, lastMessageId, this.currentChatUsername);
             log(`Сгенерирован URL для сообщения с изображением: ${messageUrl}`, 'social-publishing');
               
             return { 
