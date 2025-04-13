@@ -740,16 +740,34 @@ testRouter.post('/telegram-emoji-html', async (req: Request, res: Response) => {
       // Формируем URL сообщения
       let messageUrl = '';
       let formattedChatId = chatId;
+      const messageId = response.data?.result?.message_id;
       
-      // Форматируем chatId для URL
-      if (formattedChatId.startsWith('@')) {
-        formattedChatId = formattedChatId.substring(1);
-        messageUrl = `https://t.me/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else if (formattedChatId.startsWith('-100')) {
-        formattedChatId = formattedChatId.substring(4);
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
-      } else {
-        messageUrl = `https://t.me/c/${formattedChatId}/${response.data?.result?.message_id}`;
+      // Используем сервис для правильного форматирования URL
+      try {
+        // Импортируем сервис из нужного файла
+        const { telegramService } = require('../services/social/telegram-service');
+        
+        // Используем метод форматирования URL с необходимыми параметрами
+        messageUrl = telegramService.formatTelegramUrl(chatId, formattedChatId, messageId);
+        
+        console.log(`Сформирован URL с использованием telegramService: ${messageUrl}`);
+      } catch (error) {
+        console.error('Ошибка при использовании telegramService для форматирования URL:', error);
+        
+        // Резервное форматирование (на случай, если сервис недоступен)
+        if (formattedChatId.startsWith('@')) {
+          formattedChatId = formattedChatId.substring(1);
+          messageUrl = `https://t.me/${formattedChatId}/${messageId}`;
+        } else if (formattedChatId.startsWith('-100')) {
+          formattedChatId = formattedChatId.substring(4);
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        } else if (formattedChatId.startsWith('-')) {
+          // Корректная обработка групп с минусом
+          formattedChatId = formattedChatId.substring(1);
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        } else {
+          messageUrl = `https://t.me/c/${formattedChatId}/${messageId}`;
+        }
       }
       
       return res.json({
