@@ -7902,10 +7902,10 @@ https://t.me/channelname/ - description`;
             log(`Публикация контента в ${platform}`, 'social-publish');
             
             let result;
-            // Используем новый сервис публикации с поддержкой Imgur для всех платформ
+            // Используем сервис публикации для всех платформ
             if (userSettings) {
               // Универсальный метод публикации для всех типов платформ
-              result = await socialPublishingWithImgurService.publishToPlatform(campaignContent, platform as any, userSettings);
+              result = await socialPublishingService.publishToPlatform(platform as any, campaignContent, { settings: userSettings });
             } else {
               result = {
                 platform: platform as any,
