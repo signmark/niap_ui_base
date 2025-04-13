@@ -28,10 +28,11 @@ export class TelegramService extends BaseSocialService {
    */
   public async publishToPlatform(
     content: CampaignContent,
-    platform: SocialPlatform,
+    platform: SocialPlatform | string,
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
-    log(`Публикация контента "${content.title || 'без заголовка'}" в Telegram`, 'social-publish');
+    log(`Публикация контента "${content.title || 'без заголовка'}" в Telegram, тип platform: ${typeof platform}`, 'social-publish');
+    console.log(`DEBUG: TelegramService.publishToPlatform получил platform типа ${typeof platform} со значением:`, platform);
     return this.publishContent(content, settings);
   }
   /**
