@@ -2,51 +2,70 @@
  * Финальный тест форматирования URL Telegram через API
  * Проверяет правильность исправления URL с отрицательным ID чата
  */
-
-import axios from 'axios';
-const API_URL = 'http://localhost:5000';
+import fetch from 'node-fetch';
 
 async function testTelegramUrlFormatting() {
-  console.log('🔍 Запуск финального теста форматирования URL Telegram...');
+  console.log('Тестирование форматирования URL Telegram...');
   
-  try {
-    // Вызываем тестовый API для проверки форматирования URL
-    const response = await axios.get(`${API_URL}/api/test/telegram-url?chatId=-1002302366310&messageId=12345`);
-    
-    if (response.status !== 200) {
-      throw new Error(`Неверный код ответа: ${response.status}`);
+  // Тестовые данные
+  const testCases = [
+    { 
+      chatId: '-1002302366310', 
+      messageId: '12345', 
+      expectedUrl: 'https://t.me/c/2302366310/12345'
+    },
+    { 
+      chatId: '-100987654321', 
+      messageId: '54321', 
+      expectedUrl: 'https://t.me/c/987654321/54321'
+    },
+    { 
+      chatId: '@test_channel', 
+      messageId: '98765', 
+      expectedUrl: 'https://t.me/test_channel/98765'
+    },
+    { 
+      chatId: '-12345678', 
+      messageId: '11111', 
+      expectedUrl: 'https://t.me/c/12345678/11111'
     }
-    
-    const data = response.data;
-    
-    if (!data.success) {
-      throw new Error(`API вернул ошибку: ${data.error || 'Нет информации об ошибке'}`);
-    }
-    
-    console.log('📋 Ответ от API:', JSON.stringify(data, null, 2));
-    
-    const url = data.data?.url;
-    
-    if (!url) {
-      throw new Error('URL отсутствует в ответе');
-    }
-    
-    console.log('📋 Сформированный URL:', url);
-    
-    // Проверяем формат URL
-    const expectedFormat = 'https://t.me/c/2302366310/12345';
-    
-    if (url === expectedFormat) {
-      console.log('✅ URL сформирован правильно!');
-    } else {
-      console.log(`❌ URL сформирован неправильно! Ожидалось: ${expectedFormat}, Получено: ${url}`);
-    }
-    
-    console.log('🏁 Тест успешно завершен!');
-  } catch (error) {
-    console.error('❌ Ошибка при выполнении теста:', error.message);
-    if (error.response) {
-      console.error('📋 Ответ сервера:', error.response.data);
+  ];
+  
+  // Выполнение тестов
+  for (const test of testCases) {
+    try {
+      const response = await fetch('http://localhost:5000/api/test/format-telegram-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chatId: test.chatId,
+          messageId: test.messageId
+        })
+      });
+      
+      if (!response.ok) {
+        console.error(`Ошибка при тестировании ${test.chatId}: ${response.status} ${response.statusText}`);
+        continue;
+      }
+      
+      const data = await response.json();
+      const formattedUrl = data.url;
+      
+      console.log(`Тест для chat ID: ${test.chatId}`);
+      console.log(`  Ожидаемый URL: ${test.expectedUrl}`);
+      console.log(`  Полученный URL: ${formattedUrl}`);
+      
+      if (formattedUrl === test.expectedUrl) {
+        console.log('  ✅ Тест пройден');
+      } else {
+        console.log('  ❌ Тест не пройден');
+      }
+      console.log();
+      
+    } catch (error) {
+      console.error(`Ошибка при тестировании ${test.chatId}:`, error);
     }
   }
 }

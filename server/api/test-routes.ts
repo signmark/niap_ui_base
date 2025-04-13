@@ -13,6 +13,9 @@ import axios from 'axios';
 // Создаем роутер для тестовых маршрутов
 const testRouter = express.Router();
 
+// Импортируем сервис для работы с Imgur и социальными сетями
+import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
+
 // Middleware для обработки GET запросов к маршрутам -post
 testRouter.get('/instagram-post', (req: Request, res: Response) => {
   // Устанавливаем заголовки для предотвращения кэширования и указания типа контента
@@ -955,6 +958,57 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       success: false,
       error: error.message,
       details: error.response?.data || null
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки форматирования URL Telegram через сервис socialPublishingWithImgurService
+ * POST /api/test/format-telegram-url
+ */
+testRouter.post('/format-telegram-url', async (req: Request, res: Response) => {
+  try {
+    const { chatId, messageId } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!chatId || !messageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: chatId и messageId'
+      });
+    }
+    
+    console.log(`[Test API] Проверка форматирования URL для chatId: ${chatId}, messageId: ${messageId}`);
+    
+    // Форматируем chatId для API
+    let formattedChatId = chatId;
+    if (formattedChatId.startsWith('@')) {
+      formattedChatId = formattedChatId.substring(1);
+    } else if (formattedChatId.startsWith('-100')) {
+      // Для ID вида -100XXXXX убираем только префикс -100
+      formattedChatId = formattedChatId.substring(4);
+    } else if (formattedChatId.startsWith('-')) {
+      // Для других отрицательных ID (например, -XXXXX) убираем только минус
+      formattedChatId = formattedChatId.substring(1);
+    }
+    
+    // Форматируем URL с помощью сервиса социальных сетей
+    // Это позволит протестировать новую версию функции formatTelegramUrl
+    const url = socialPublishingWithImgurService.formatTelegramUrl(chatId, formattedChatId, messageId);
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      url,
+      originalChatId: chatId,
+      formattedChatId,
+      messageId
+    });
+  } catch (error: any) {
+    console.error('[Test API] Ошибка при форматировании URL Telegram:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
     });
   }
 });
