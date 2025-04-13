@@ -7934,8 +7934,13 @@ https://t.me/channelname/ - description`;
                 telegram: userSettings?.telegram ? { hasChatId: !!userSettings.telegram.chatId, hasToken: !!userSettings.telegram.token } : null
               });
               
+              // Важно: гарантируем, что платформа передается как строка
+              const platformString = typeof platform === 'string' ? platform : String(platform);
+              
+              console.log(`DEBUG: Передаем платформу типа ${typeof platformString} со значением '${platformString}'`);
+              
               // Важно: передаем сами настройки, а не объект { settings: userSettings }
-              result = await socialPublishingService.publishToPlatform(platform as any, campaignContent, userSettings);
+              result = await socialPublishingService.publishToPlatform(platformString, campaignContent, userSettings);
               console.log(`DEBUG: Результат публикации:`, JSON.stringify(result, null, 2));
             } else {
               console.log(`DEBUG: Отсутствуют настройки для платформы ${platform}`);
