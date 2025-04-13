@@ -3,7 +3,7 @@
  * ВАЖНО: Проверяется корректность формирования URL с обязательным message_id
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 // Функция для логирования
 function log(message) {
@@ -35,10 +35,11 @@ async function testTextOnlyPost() {
 
     const chatId = '-1002302366310';
 
-    // Используем тестовый маршрут 
+    // Используем тестовый маршрут с token и content, как это ожидается в API
     const response = await axios.post('http://localhost:5000/api/test/telegram-post', {
       content: testContent,
-      chatId: chatId
+      chatId: chatId,
+      token: process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU' // Используем токен по умолчанию для тестирования
     });
 
     if (response.data.success) {

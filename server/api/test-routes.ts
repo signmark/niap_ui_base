@@ -108,38 +108,63 @@ testRouter.get('/telegram-post', (req: Request, res: Response) => {
  */
 testRouter.post('/telegram-post', async (req: Request, res: Response) => {
   try {
-    const { text, chatId, token, imageUrl, additionalImages } = req.body;
+    // Поддерживаем два формата запроса:
+    // 1. Прямая передача полей text, chatId, token
+    // 2. Передача объекта content и chatId
+    const { text, chatId, token, imageUrl, additionalImages, content } = req.body;
     
-    // Проверяем наличие обязательных параметров
-    if (!text || !chatId || !token) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательные параметры: text, chatId и token'
-      });
+    let telegramToken = token;
+    let telegramChatId = chatId;
+    let testContent;
+    
+    if (content) {
+      // Если передан объект content, используем его напрямую
+      testContent = content;
+      
+      // Проверяем наличие обязательных параметров
+      if (!chatId) {
+        return res.status(400).json({
+          success: false,
+          error: 'При использовании объекта content обязательно передать chatId'
+        });
+      }
+      
+      // Используем токен по умолчанию, если не передан
+      if (!telegramToken) {
+        telegramToken = process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+      }
+    } else {
+      // Проверяем наличие обязательных параметров в старом формате
+      if (!text || !chatId || !token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Обязательные параметры: text, chatId и token, либо content и chatId'
+        });
+      }
+      
+      // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
+      testContent = {
+        id: 'test-id',
+        title: 'Тестовый заголовок',
+        content: text, // Используем content вместо text
+        contentType: 'text',
+        imageUrl: imageUrl || '',
+        additionalImages: additionalImages || [],
+        status: 'draft',
+        userId: 'test-user',
+        campaignId: 'test-campaign',
+        socialPlatforms: ['telegram'],
+        createdAt: new Date(),
+        hashtags: [],
+        links: [],
+        metadata: {}
+      };
     }
-    
-    // Формируем тестовый контент в соответствии с ожидаемой структурой для publishToTelegram
-    const testContent = {
-      id: 'test-id',
-      title: 'Тестовый заголовок',
-      content: text, // Используем content вместо text
-      contentType: 'text',
-      imageUrl: imageUrl || '',
-      additionalImages: additionalImages || [],
-      status: 'draft',
-      userId: 'test-user',
-      campaignId: 'test-campaign',
-      socialPlatforms: ['telegram'],
-      createdAt: new Date(),
-      hashtags: [],
-      links: [],
-      metadata: {}
-    };
     
     // Отправляем тестовое сообщение в Telegram
     const result = await telegramService.publishToTelegram(testContent, {
-      token,
-      chatId
+      token: telegramToken,
+      chatId: telegramChatId
     });
     
     // Логируем результат для отладки
