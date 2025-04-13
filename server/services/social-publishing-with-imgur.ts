@@ -454,25 +454,67 @@ export class SocialPublishingWithImgurService {
    * @returns Публичный URL для доступа к сообщению
    */
   formatTelegramUrl(chatId: string, messageId?: number): string {
-    // Использование фиксированного канала для URL (как запросил пользователь)
-    const hardcodedChannel = 'ya_delayu_moschno';
-    // Альтернативный формат URL для числовых ID каналов
-    const hardcodedChatId = '2302366310';
-    
-    // Случайный выбор формата URL (оба рабочие, как отметил пользователь)
-    const useChannelName = Math.random() > 0.5;
-    
+    // Если messageId не указан или пустой/null/undefined/"" - используем дефолтный URL с каналом
     if (!messageId) {
-      // По умолчанию используем hardcoded канал или chatId
-      return useChannelName ? 
-        `https://t.me/${hardcodedChannel}` : 
-        `https://t.me/c/${hardcodedChatId}`;
+      log(`messageId не указан, используем URL для канала`, 'social-publishing');
+      
+      // Если это username (начинается с @), можем вернуть URL на канал
+      if (chatId.startsWith('@')) {
+        return `https://t.me/${chatId.substring(1)}`;
+      }
+      
+      // Для чатов с цифровым ID - возвращаем URL с ID канала
+      if (chatId.startsWith('-100')) {
+        const channelId = chatId.substring(4);
+        return `https://t.me/c/${channelId}`;
+      }
+      
+      // Для обычных групп
+      if (chatId.startsWith('-')) {
+        const groupId = chatId.substring(1);
+        return `https://t.me/c/${groupId}`;
+      }
+      
+      // Для личных чатов (числовой ID)
+      if (!isNaN(Number(chatId))) {
+        return `https://t.me/c/${chatId}`;
+      }
+      
+      // Если ничего не подошло, вернем общий URL Telegram
+      log(`Не удалось определить URL для канала, возвращаем общий URL`, 'social-publishing');
+      return 'https://t.me';
     }
     
-    // Если указан messageId, форматируем URL с ID сообщения
-    return useChannelName ? 
-      `https://t.me/${hardcodedChannel}/${messageId}` : 
-      `https://t.me/c/${hardcodedChatId}/${messageId}`;
+    // Если указан messageId, форматируем правильный URL поста
+    
+    // Обработка случая с username (@channel)
+    if (chatId.startsWith('@')) {
+      const username = chatId.substring(1);
+      const url = `https://t.me/${username}/${messageId}`;
+      log(`Сформирован URL для канала с username: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Обработка случая с супергруппой/каналом (-100...)
+    if (chatId.startsWith('-100')) {
+      const channelId = chatId.substring(4);
+      const url = `https://t.me/c/${channelId}/${messageId}`;
+      log(`Сформирован URL для канала с числовым ID: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Обработка обычных групп (начинаются с -)
+    if (chatId.startsWith('-')) {
+      const groupId = chatId.substring(1);
+      const url = `https://t.me/c/${groupId}/${messageId}`;
+      log(`Сформирован URL для обычной группы: ${url}`, 'social-publishing');
+      return url;
+    }
+    
+    // Личные чаты или боты (числовой ID без минуса)
+    const url = `https://t.me/c/${chatId}/${messageId}`;
+    log(`Сформирован URL для личного чата/бота: ${url}`, 'social-publishing');
+    return url;
   }
 
   /**
