@@ -356,16 +356,16 @@ export function registerPublishingRoutes(app: Express): void {
       // Пытаемся получить контент по ID с использованием токена администратора
       log(`Запрос контента по ID: ${contentId}`, 'api');
       
-      // Получаем токен администратора
-      log(`Попытка получения токена администратора через directusAuthManager...`, 'api');
-      const adminToken = await directusAuthManager.getAdminToken();
+      // Получаем токен администратора через планировщик публикаций
+      log(`Попытка получения системного токена через publishScheduler...`, 'api');
+      const adminToken = await publishScheduler.getSystemToken();
       
       if (!adminToken) {
-        log(`Не удалось получить токен администратора для доступа к контенту`, 'api');
+        log(`Не удалось получить системный токен для доступа к контенту`, 'api');
         return res.status(500).json({ error: 'Ошибка авторизации: не удалось получить доступ к контенту' });
       }
       
-      log(`Токен администратора успешно получен: ${adminToken.substring(0, 10)}...`, 'api');
+      log(`Системный токен успешно получен: ${adminToken.substring(0, 10)}...`, 'api');
       
       // Используем токен администратора для получения контента
       let content = await storage.getCampaignContentById(contentId, adminToken);
