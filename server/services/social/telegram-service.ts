@@ -1502,7 +1502,8 @@ export class TelegramService extends BaseSocialService {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
+              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId),
+              messageId: lastMessageId // Добавляем ID сообщения в результат
             };
           } else {
             return {
