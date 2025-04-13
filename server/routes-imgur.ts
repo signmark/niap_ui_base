@@ -33,7 +33,8 @@ const storage_config = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+// Конфигурация Multer для изображений
+const imageUpload = multer({ 
   storage: storage_config,
   limits: {
     fileSize: 5 * 1024 * 1024 // Ограничение размера файла (5MB)
@@ -43,6 +44,40 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Только изображения разрешены к загрузке'));
+    }
+  }
+});
+
+// Создаем директорию для загрузки видео, если она не существует
+const videosDir = path.join(process.cwd(), 'uploads', 'videos');
+(async () => {
+  try {
+    await mkdir(videosDir, { recursive: true });
+    console.log(`Директория для загрузки видео создана: ${videosDir}`);
+  } catch (error) {
+    console.error(`Ошибка при создании директории для загрузки видео: ${error}`);
+  }
+})();
+
+// Конфигурация для видео
+const videoUpload = multer({ 
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, videosDir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+  }),
+  limits: {
+    fileSize: 50 * 1024 * 1024 // Ограничение размера файла (50MB)
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Только видео разрешены к загрузке'));
     }
   }
 });
@@ -413,8 +448,8 @@ export function registerImgurRoutes(router: Router) {
     }
   });
   
-  // Маршрут для загрузки файла изображения и его отправки на Imgur
-  router.post('/api/imgur/upload-file', upload.single('image'), async (req, res) => {
+  // Маршрут для загрузки файла изображения и его отправки на ImgBB
+  router.post('/api/imgur/upload-file', imageUpload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -552,5 +587,136 @@ export function registerImgurRoutes(router: Router) {
     }
   });
   
+  // Маршрут для загрузки видео и его отправки на Imgur
+  router.post('/api/imgur/upload-video', videoUpload.single('video'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Видео файл не загружен'
+        });
+      }
+      
+      const filePath = req.file.path;
+      console.log(`Видео файл успешно загружен: ${filePath}`);
+      
+      // Загружаем файл на Imgur
+      const imgurUrl = await imgurUploaderService.uploadVideoFromFile(filePath);
+      
+      if (!imgurUrl) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось загрузить видео на Imgur'
+        });
+      }
+      
+      // Отправляем ответ в двух форматах для совместимости
+      const responseData = {
+        success: true,
+        data: {
+          originalname: req.file.originalname,
+          filename: req.file.filename,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: filePath,
+          url: imgurUrl,
+          link: imgurUrl // Добавляем также поле link для совместимости
+        },
+        url: imgurUrl,  // Дублируем URL в корне ответа
+        link: imgurUrl  // И также добавляем поле link для совместимости
+      };
+      
+      console.log('Отправляем ответ на запрос загрузки видео:', JSON.stringify(responseData, null, 2));
+      
+      return res.status(200).json(responseData);
+    } catch (error) {
+      console.error('Ошибка при загрузке видео на Imgur:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при загрузке видео: ${error}`
+      });
+    }
+  });
+  
+  // Маршрут для загрузки видео по URL
+  router.post('/api/imgur/upload-video-from-url', async (req, res) => {
+    try {
+      const { videoUrl } = req.body;
+      
+      if (!videoUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Отсутствует URL видео' 
+        });
+      }
+      
+      const imgurUrl = await imgurUploaderService.uploadVideoFromUrl(videoUrl);
+      
+      if (!imgurUrl) {
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Не удалось загрузить видео на Imgur' 
+        });
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: { url: imgurUrl, link: imgurUrl } 
+      });
+    } catch (error) {
+      console.error('Ошибка при загрузке видео на Imgur:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: `Ошибка при загрузке видео: ${error}` 
+      });
+    }
+  });
+  
+  // Маршрут для получения списка загруженных видео
+  router.get('/api/imgur/videos', (req, res) => {
+    try {
+      const files = fs.readdirSync(videosDir);
+      const videos = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.mp4', '.webm', '.avi', '.mov', '.wmv', '.mkv'].includes(ext);
+      }).map(file => {
+        const filePath = path.join(videosDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          name: file,
+          path: `/uploads/videos/${file}`,
+          size: stats.size,
+          created: stats.birthtime
+        };
+      });
+      
+      return res.status(200).json({
+        success: true,
+        data: { videos }
+      });
+    } catch (error) {
+      console.error('Ошибка при получении списка видео:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при получении списка видео: ${error}`
+      });
+    }
+  });
+  
+  // Маршрут для статического доступа к загруженным видео
+  router.get('/uploads/videos/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(videosDir, filename);
+    
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    } else {
+      return res.status(404).json({
+        success: false,
+        error: 'Видео файл не найден'
+      });
+    }
+  });
+
   console.log('Imgur routes registered');
 }
