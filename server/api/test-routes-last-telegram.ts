@@ -5,8 +5,40 @@ import express, { Request, Response } from 'express';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import { telegramService } from '../services/social/telegram-service';
+import axios from 'axios';
+
+// Добавляем учетные данные администратора Directus из переменных среды
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+const DIRECTUS_ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'Qtpz3dh7';
 
 const lastTelegramRouter = express.Router();
+
+/**
+ * Получает токен администратора Directus напрямую через аутентификацию
+ * @returns {Promise<string|null>} Токен администратора или null в случае ошибки
+ */
+async function getDirectAdminToken(): Promise<string|null> {
+  try {
+    log(`Попытка аутентификации администратора (${DIRECTUS_ADMIN_EMAIL})`, 'telegram-diagnostics');
+    
+    const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
+      email: DIRECTUS_ADMIN_EMAIL,
+      password: DIRECTUS_ADMIN_PASSWORD
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      log(`Администратор успешно аутентифицирован`, 'telegram-diagnostics');
+      return response.data.data.access_token;
+    }
+    
+    log(`Ошибка аутентификации администратора: нет токена в ответе`, 'telegram-diagnostics');
+    return null;
+  } catch (error: any) {
+    log(`Ошибка аутентификации администратора: ${error.message}`, 'telegram-diagnostics');
+    return null;
+  }
+}
 
 /**
  * Получение последней публикации в Telegram
@@ -14,8 +46,8 @@ const lastTelegramRouter = express.Router();
  */
 lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: Response) => {
   try {
-    // Получаем токен администратора
-    const adminToken = await storage.getAdminToken();
+    // Получаем токен администратора напрямую через API
+    const adminToken = await getDirectAdminToken();
     
     if (!adminToken) {
       return res.status(401).json({
@@ -80,8 +112,8 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
       });
     }
     
-    // Получаем токен администратора
-    const adminToken = await storage.getAdminToken();
+    // Получаем токен администратора напрямую через API
+    const adminToken = await getDirectAdminToken();
     
     if (!adminToken) {
       return res.status(401).json({
@@ -189,8 +221,8 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
  */
 lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Response) => {
   try {
-    // Получаем токен администратора
-    const adminToken = await storage.getAdminToken();
+    // Получаем токен администратора напрямую через API
+    const adminToken = await getDirectAdminToken();
     
     if (!adminToken) {
       return res.status(401).json({
