@@ -15,6 +15,154 @@ import { log } from '../utils/logger';
 export function registerTestDebugRoutes(app: Express): void {
   console.log('[test-routes-debug] Регистрация отладочных маршрутов...');
 
+  // Маршрут для имитации публикации из интерфейса
+  app.post('/api/test/ui-publish-simulation', async (req: Request, res: Response) => {
+    try {
+      const { contentId, platforms } = req.body;
+      
+      if (!contentId) {
+        return res.status(400).json({ 
+          error: 'Не указан ID контента' 
+        });
+      }
+      
+      if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+        return res.status(400).json({ 
+          error: 'Не указаны платформы для публикации' 
+        });
+      }
+      
+      log(`[DEBUG] Имитация публикации из интерфейса для контента ${contentId} на платформы: ${platforms.join(', ')}`, 'test-api');
+      
+      // Создаем тестовый контент (имитация существующего контента)
+      const testContent: CampaignContent = {
+        id: contentId || 'test-content-id-' + Date.now(),
+        userId: 'test-user-id',
+        campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+        title: 'Тестовый контент',
+        content: 'Контент для имитации публикации из интерфейса 🚀',
+        contentType: 'text',
+        imageUrl: 'https://i.imgur.com/kTeavzg.jpeg',
+        additionalImages: null,
+        videoUrl: null,
+        status: 'draft',
+        socialPlatforms: platforms,
+        createdAt: new Date(),
+        prompt: null,
+        keywords: null,
+        scheduledAt: null,
+        publishedAt: null,
+        hashtags: [],
+        links: [],
+        metadata: {}
+      };
+      
+      // Логируем вызываемый маршрут (в реальном API это /api/publish)
+      log(`[DEBUG] Имитация вызова маршрута /api/publish с параметрами: ${JSON.stringify({
+        contentId,
+        platforms
+      })}`, 'test-api');
+      
+      // Получаем кампанию из базы данных по ID
+      const campaign = await storage.getCampaignById('46868c44-c6a4-4bed-accf-9ad07bba790e');
+      if (!campaign) {
+        return res.status(404).json({ 
+          error: 'Кампания не найдена',
+          debug: { campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e' }
+        });
+      }
+      
+      // Логируем информацию о настройках кампании
+      log(`[DEBUG] Настройки кампании для публикации: ${JSON.stringify({
+        id: campaign.id,
+        name: campaign.name,
+        telegram: campaign.settings?.telegram || campaign.socialMediaSettings?.telegram || null
+      })}`, 'test-api');
+      
+      // Результаты публикации для каждой платформы
+      const results = [];
+      
+      // Публикуем на каждую платформу
+      for (const platform of platforms) {
+        try {
+          log(`[DEBUG] Публикация на платформу ${platform}...`, 'test-api');
+          const result = await socialPublishingService.publishToPlatform(platform, testContent, campaign);
+          log(`[DEBUG] Результат публикации на ${platform}: ${JSON.stringify(result)}`, 'test-api');
+          results.push({ platform, result });
+        } catch (error: any) {
+          log(`[DEBUG] Ошибка публикации на ${platform}: ${error.message}`, 'test-api');
+          results.push({ 
+            platform, 
+            error: error.message, 
+            stack: error.stack 
+          });
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        results
+      });
+    } catch (error: any) {
+      log(`[DEBUG] Ошибка при имитации публикации: ${error.message}`, 'test-api');
+      return res.status(500).json({
+        error: 'Ошибка при имитации публикации',
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  });
+
+  // Маршрут для получения настроек кампании
+  app.get('/api/test/campaign-settings/:campaignId', async (req: Request, res: Response) => {
+    try {
+      const { campaignId } = req.params;
+      
+      if (!campaignId) {
+        return res.status(400).json({ 
+          error: 'Не указан ID кампании' 
+        });
+      }
+      
+      log(`[DEBUG] Запрос настроек кампании: ${campaignId}`, 'test-api');
+      
+      // Получаем кампанию
+      const campaign = await storage.getCampaignById(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ 
+          error: 'Кампания не найдена',
+          debug: { campaignId }
+        });
+      }
+      
+      // Логируем настройки
+      log(`[DEBUG] Настройки кампании ${campaign.name}: ${JSON.stringify({
+        id: campaign.id,
+        name: campaign.name,
+        settingsKeys: Object.keys(campaign.settings || {}),
+        socialMediaSettingsKeys: Object.keys(campaign.socialMediaSettings || {}),
+        telegramSettings: (campaign.socialMediaSettings || campaign.settings)?.telegram || null
+      })}`, 'test-api');
+      
+      return res.status(200).json({
+        success: true,
+        campaign: {
+          id: campaign.id,
+          name: campaign.name,
+          settings: campaign.settings,
+          socialMediaSettings: campaign.socialMediaSettings
+        }
+      });
+    } catch (error: any) {
+      log(`[DEBUG] Ошибка при получении настроек кампании: ${error.message}`, 'test-api');
+      return res.status(500).json({
+        error: 'Ошибка при запросе настроек кампании',
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  });
+
   // Маршрут для прямого тестирования интеграции путем создания временного контента
   app.post('/api/test/telegram-create-publish', async (req: Request, res: Response) => {
     try {
