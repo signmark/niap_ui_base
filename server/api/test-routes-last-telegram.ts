@@ -6,11 +6,13 @@ import { storage } from '../storage';
 import { log } from '../utils/logger';
 import { telegramService } from '../services/social/telegram-service';
 import axios from 'axios';
+import { directusApiManager } from '../directus';
 
 // Добавляем учетные данные администратора Directus из переменных среды
 const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const DIRECTUS_ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
 const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'Qtpz3dh7';
+const ADMIN_USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // ID администратора
 
 const lastTelegramRouter = express.Router();
 
@@ -21,21 +23,25 @@ const lastTelegramRouter = express.Router();
  */
 async function getDirectAdminToken(): Promise<string|null> {
   try {
-    log(`Попытка получения токена администратора из внутреннего кэша`, 'telegram-diagnostics');
+    log(`Попытка получения токена администратора из кэша directusApiManager`, 'telegram-diagnostics');
     
-    // Проверяем, есть ли токен в кэше проекта через механизм DirectusAuthManager
-    // Сначала попробуем получить токен из внутреннего хранилища
+    // Пробуем получить токен из кэша менеджера directusApiManager
+    const cachedToken = directusApiManager.getCachedToken(ADMIN_USER_ID);
+    
+    if (cachedToken) {
+      log(`Получен валидный токен из кэша directusApiManager для ${ADMIN_USER_ID}`, 'telegram-diagnostics');
+      return cachedToken.token;
+    }
+    
+    // Если не нашли в кэше directusApiManager, попробуем получить через storage.getAdminToken
     try {
-      // Используем storage для получения токена для запросов к API
-      const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // ID администратора
-      const token = await storage.getDirectusToken(userId);
-      
-      if (token) {
-        log('Получен токен из внутреннего кэша проекта', 'telegram-diagnostics');
-        return token;
+      const adminToken = await storage.getAdminToken();
+      if (adminToken) {
+        log(`Получен токен администратора через storage.getAdminToken()`, 'telegram-diagnostics');
+        return adminToken;
       }
-    } catch (cacheError: any) {
-      log(`Ошибка при получении токена из кэша: ${cacheError.message}`, 'telegram-diagnostics');
+    } catch (storageError: any) {
+      log(`Ошибка при получении токена через storage.getAdminToken: ${storageError.message}`, 'telegram-diagnostics');
     }
     
     // Если токен не найден в кэше, используем прямую авторизацию
@@ -60,16 +66,22 @@ async function getDirectAdminToken(): Promise<string|null> {
     log(`Ошибка аутентификации: ${error.message}`, 'telegram-diagnostics');
     
     // В случае ошибки, пробуем использовать механизм планировщика для получения токена
-    log(`Попытка получения токена через механизм планировщика`, 'telegram-diagnostics');
+    log(`Попытка получения токена через альтернативные методы`, 'telegram-diagnostics');
     try {
-      // Используем альтернативный метод через хранилище
-      const schedulerToken = await storage.getAdminToken();
-      if (schedulerToken) {
-        log(`Получен токен из планировщика`, 'telegram-diagnostics');
-        return schedulerToken;
+      // Пробуем получить токен через storage.getAuthToken
+      const authTokenResponse = await axios.get(`${DIRECTUS_URL}/auth/refresh`, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true 
+      });
+      
+      if (authTokenResponse.data && authTokenResponse.data.data && authTokenResponse.data.data.access_token) {
+        log(`Успешно получен токен через auth/refresh API`, 'telegram-diagnostics');
+        return authTokenResponse.data.data.access_token;
       }
-    } catch (storageError: any) {
-      log(`Ошибка при получении токена через планировщик: ${storageError.message}`, 'telegram-diagnostics');
+    } catch (refreshError: any) {
+      log(`Ошибка при запросе refresh token: ${refreshError.message}`, 'telegram-diagnostics');
     }
     
     return null;
