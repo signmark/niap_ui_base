@@ -352,9 +352,44 @@ export function registerPublishingRoutes(app: Express): void {
         log('No authorization header provided', 'api');
       }
       
-      // Получаем контент по ID
-      const content = await storage.getCampaignContentById(contentId);
+      // Пытаемся получить контент по ID с использованием токена администратора
+      log(`Запрос контента по ID: ${contentId}`, 'api');
+      
+      // Получаем токен администратора
+      const adminToken = await directusAuth.getAdminToken();
+      
+      if (!adminToken) {
+        log(`Не удалось получить токен администратора для доступа к контенту`, 'api');
+        return res.status(500).json({ error: 'Ошибка авторизации: не удалось получить доступ к контенту' });
+      }
+      
+      // Используем токен администратора для получения контента
+      let content = await storage.getCampaignContentById(contentId, adminToken);
+      
       if (!content) {
+        try {
+          // Пробуем получить контент напрямую через API Directus с токеном администратора
+          const response = await axios.get(
+            `${process.env.DIRECTUS_URL}/items/campaign_content/${contentId}`, 
+            { 
+              headers: { 
+                'Authorization': `Bearer ${adminToken}` 
+              } 
+            }
+          );
+          
+          if (response.data && response.data.data) {
+            content = response.data.data;
+            log(`Контент успешно получен через прямой API запрос с токеном администратора`, 'api');
+          }
+        } catch (directusError: any) {
+          log(`Ошибка прямого запроса к Directus API: ${directusError.message}`, 'api');
+          log(`Детали ошибки: ${JSON.stringify(directusError.response?.data || {})}`, 'api');
+        }
+      }
+      
+      if (!content) {
+        log(`Контент с ID ${contentId} не найден ни одним из способов`, 'api');
         return res.status(404).json({ error: 'Контент не найден' });
       }
       
