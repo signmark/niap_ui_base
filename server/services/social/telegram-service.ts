@@ -17,6 +17,22 @@ export enum SocialPlatform {
 export class TelegramService extends BaseSocialService {
   // Храним username канала, полученный в процессе публикации
   private currentChatUsername?: string;
+
+  /**
+   * Публикует контент в Telegram
+   * Реализация абстрактного метода из BaseSocialService
+   * @param content Контент для публикации
+   * @param platform Социальная платформа
+   * @param settings Настройки социальных сетей
+   * @returns Результат публикации
+   */
+  public async publishToPlatform(
+    content: CampaignContent,
+    platform: SocialPlatform,
+    settings: SocialMediaSettings
+  ): Promise<SocialPublication> {
+    return this.publishContent(content, settings);
+  }
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
