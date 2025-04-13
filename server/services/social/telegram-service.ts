@@ -682,8 +682,25 @@ export class TelegramService extends BaseSocialService {
    * @param messageId ID сообщения
    * @returns URL сообщения
    */
-  private generatePostUrl(chatId: string, formattedChatId: string, messageId?: number | string): string {
-    log(`Генерация URL для Telegram с chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}`, 'social-publishing');
+  /**
+   * Генерирует URL для поста в Telegram
+   * ВАЖНО: messageId является ОБЯЗАТЕЛЬНЫМ параметром в соответствии с TELEGRAM_POSTING_ALGORITHM.md
+   * URL без messageId считается некорректным и не допускается согласно алгоритму!
+   *
+   * @param chatId ID чата Telegram
+   * @param formattedChatId Форматированный ID чата для API
+   * @param messageId ID сообщения (обязательный параметр)
+   * @returns Полный URL для поста в Telegram
+   * @throws Error если messageId не указан или пуст
+   */
+  private generatePostUrl(chatId: string, formattedChatId: string, messageId: number | string): string {
+    // Обязательная проверка messageId - ID сообщения должен присутствовать всегда!
+    if (!messageId) {
+      log(`КРИТИЧЕСКАЯ ОШИБКА: Попытка создать URL без messageId. Это нарушает алгоритм TELEGRAM_POSTING_ALGORITHM.md. chatId=${chatId}`, 'social-publishing');
+      throw new Error('MessageId is REQUIRED for Telegram URL formation according to TELEGRAM_POSTING_ALGORITHM.md');
+    }
+
+    log(`Генерация URL для Telegram с chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId}`, 'social-publishing');
     const url = this.formatTelegramUrl(chatId, formattedChatId, messageId, this.currentChatUsername);
     log(`Сгенерирован URL для Telegram: ${url}`, 'social-publishing');
     return url;
@@ -870,29 +887,17 @@ export class TelegramService extends BaseSocialService {
     }
   }
   
-  formatTelegramUrl(chatId: string, formattedChatId: string, messageId?: number | string | undefined, chatUsername?: string): string {
+  formatTelegramUrl(chatId: string, formattedChatId: string, messageId: number | string, chatUsername?: string): string {
     // Сохраняем username для использования в generatePostUrl
     if (chatUsername) {
       this.currentChatUsername = chatUsername;
     }
-    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId || 'не указан'}, username=${chatUsername || 'не указан'}`, 'social-publishing');
+    log(`Форматирование Telegram URL: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId}, username=${chatUsername || 'не указан'}`, 'social-publishing');
     
-    // Если ID сообщения не указан, вернем дефолтный URL Telegram
+    // В соответствии с TELEGRAM_POSTING_ALGORITHM.md, messageId должен всегда присутствовать в URL
     if (!messageId) {
-      log(`messageId не указан, возвращаем базовый URL для Telegram`, 'social-publishing');
-      
-      // Если известен username, используем его
-      if (chatUsername) {
-        return `https://t.me/${chatUsername}`;
-      }
-      
-      // Если это username (начинается с @), можем вернуть URL на канал
-      if (chatId.startsWith('@')) {
-        return `https://t.me/${chatId.substring(1)}`;
-      }
-      
-      // Для всех остальных случаев без messageId возвращаем базовый URL
-      return 'https://t.me';
+      log(`ОШИБКА: messageId не указан при формировании URL - это недопустимо по алгоритму`, 'social-publishing');
+      throw new Error('MessageId is required for Telegram URL formation');
     }
     
     // Если известен username чата, используем его для URL
@@ -1118,7 +1123,7 @@ export class TelegramService extends BaseSocialService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: imagesSentResult.messageUrl || this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId || '')
+            postUrl: imagesSentResult.messageUrl || (imagesSentResult.messageId ? this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId) : undefined)
           };
         } else {
           // Если возникла проблема с отправкой изображений, попробуем отправить только текст
@@ -1135,11 +1140,18 @@ export class TelegramService extends BaseSocialService {
               lastMessageId = textResponse.result.message_id;
             }
               
+            // В соответствии с TELEGRAM_POSTING_ALGORITHM.md, URL должен содержать message_id
+            // Если lastMessageId не получен, выбрасываем ошибку
+            if (!lastMessageId) {
+              log(`Критическая ошибка: Не удалось получить messageId для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md`, 'social-publishing');
+              throw new Error('MessageId is required for Telegram URL formation');
+            }
+            
             return {
               platform: 'telegram',
               status: 'published',
               publishedAt: new Date(),
-              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
+              postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
             };
           } catch (error: any) {
             log(`Ошибка при отправке текста в Telegram: ${error.message}`, 'social-publishing');
@@ -1237,11 +1249,17 @@ export class TelegramService extends BaseSocialService {
                     lastMessageId = mediaResponse.data.result[0].message_id;
                   }
                   
+                  // Проверяем наличие messageId согласно требованиям TELEGRAM_POSTING_ALGORITHM.md
+                  if (!lastMessageId) {
+                    log(`Критическая ошибка: Не удалось получить messageId для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md`, 'social-publishing');
+                    throw new Error('MessageId is required for Telegram URL formation');
+                  }
+                  
                   return {
                     platform: 'telegram',
                     status: 'published',
                     publishedAt: new Date(),
-                    postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
+                    postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
                   };
                 } else {
                   // Если оба метода не работают, отправляем изображение и текст по отдельности
@@ -1269,11 +1287,17 @@ export class TelegramService extends BaseSocialService {
                       lastMessageId = textResponse.result.message_id;
                     }
                     
+                    // В соответствии с TELEGRAM_POSTING_ALGORITHM.md, URL должен содержать message_id
+                    if (!lastMessageId) {
+                      log(`Критическая ошибка: Не удалось получить messageId для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md`, 'social-publishing');
+                      throw new Error('MessageId is required for Telegram URL formation');
+                    }
+                    
                     return {
                       platform: 'telegram',
                       status: 'published',
                       publishedAt: new Date(),
-                      postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
+                      postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
                     };
                   }
                 }
@@ -1320,11 +1344,17 @@ export class TelegramService extends BaseSocialService {
                 lastMessageId = textResponse.result.message_id;
               }
               
+              // Проверяем наличие messageId в соответствии с TELEGRAM_POSTING_ALGORITHM.md
+              if (!lastMessageId) {
+                log(`Критическая ошибка: Не удалось получить messageId для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md`, 'social-publishing');
+                throw new Error('MessageId is required for Telegram URL formation');
+              }
+              
               return {
                 platform: 'telegram',
                 status: 'published',
                 publishedAt: new Date(),
-                postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId || '')
+                postUrl: this.generatePostUrl(chatId, formattedChatId, lastMessageId)
               };
             }
           } catch (backupError: any) {
@@ -1512,13 +1542,9 @@ export class TelegramService extends BaseSocialService {
                   messageId: lastMessageId // Добавляем ID сообщения в результат
                 };
               } else {
-                log(`Формируем URL без ID сообщения`, 'social-publishing');
-                return {
-                  platform: 'telegram',
-                  status: 'published',
-                  publishedAt: new Date(),
-                  postUrl: this.generatePostUrl(chatId, formattedChatId, '')
-                };
+                // В соответствии с требованиями TELEGRAM_POSTING_ALGORITHM.md, URL всегда должен содержать messageId
+                log(`Критическая ошибка: Не удалось получить messageId для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md`, 'social-publishing');
+                throw new Error('MessageId is required for Telegram URL formation');
               }
             } else {
               log(`Ошибка при отправке текста: ${textResponse.error}`, 'social-publishing');
