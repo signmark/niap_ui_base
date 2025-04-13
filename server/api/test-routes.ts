@@ -137,11 +137,9 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
     };
     
     // Отправляем тестовое сообщение в Telegram
-    const result = await telegramService.publishContent(testContent, {
-      telegram: {
-        token,
-        chatId
-      }
+    const result = await telegramService.publishToTelegram(testContent, {
+      token,
+      chatId
     });
     
     // Логируем результат для отладки
@@ -158,60 +156,6 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Ошибка при отправке сообщения в Telegram:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Неизвестная ошибка'
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки обработки пустого messageId
- * POST /api/test/telegram-post-empty-msgid
- */
-testRouter.post('/telegram-post-empty-msgid', async (req: Request, res: Response) => {
-  try {
-    const { text, chatId, token, messageId } = req.body;
-    
-    // Проверяем наличие обязательных параметров
-    if (!chatId || !token) {
-      return res.status(400).json({
-        success: false,
-        error: 'Обязательные параметры: chatId и token'
-      });
-    }
-    
-    console.log(`[Test API] Тест формирования URL с пустым messageId: "${messageId}"`);
-    
-    // Получаем информацию о чате для определения username
-    const chatInfo = await telegramService.getChatInfo(chatId, token);
-    console.log(`[Test API] Получена информация о чате:`, chatInfo);
-    
-    // Форматируем chatId для API
-    let formattedChatId = chatId;
-    if (!chatId.startsWith('@') && !chatId.startsWith('-') && !isNaN(Number(chatId))) {
-      formattedChatId = `-100${chatId}`;
-    }
-    
-    // Вызываем функцию formatTelegramUrl
-    const url = telegramService.formatTelegramUrl(
-      chatId, 
-      formattedChatId, 
-      messageId, // Передаем messageId как есть, даже если пустая строка
-      chatInfo?.username
-    );
-    
-    // Возвращаем результат
-    return res.json({
-      success: true,
-      postUrl: url,
-      formattedChatId,
-      originalChatId: chatId,
-      messageId: messageId || null,
-      chatUsername: chatInfo?.username || null
-    });
-  } catch (error: any) {
-    console.error('[Test API] Ошибка при тестировании формирования URL с пустым messageId:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Неизвестная ошибка'
@@ -385,11 +329,9 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
     };
     
     // Отправляем тестовое сообщение в Telegram с настройками из кампании
-    const result = await telegramService.publishContent(testContent, {
-      telegram: {
-        token: campaign.settings.telegram.token,
-        chatId: campaign.settings.telegram.chatId
-      }
+    const result = await telegramService.publishToTelegram(testContent, {
+      token: campaign.settings.telegram.token,
+      chatId: campaign.settings.telegram.chatId
     });
     
     // Логируем результат для отладки

@@ -394,12 +394,16 @@ export class VkService extends BaseSocialService {
    */
   public async publishToPlatform(
     content: CampaignContent,
-    platform: SocialPlatform,
+    platform: SocialPlatform | string,
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
-    if (platform !== 'vk') {
+    // Приводим платформу к строке для безопасного сравнения
+    const platformString = typeof platform === 'string' ? platform : String(platform);
+    console.log(`DEBUG: VkService.publishToPlatform получил platform типа ${typeof platform} со значением:`, platform);
+    
+    if (platformString !== 'vk') {
       return {
-        platform: platform, 
+        platform: 'vk', 
         status: 'failed',
         publishedAt: null,
         error: 'Unsupported platform for VkService'
