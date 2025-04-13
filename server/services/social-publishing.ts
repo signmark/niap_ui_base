@@ -359,24 +359,46 @@ export class SocialPublishingService {
           
           // Берем ID первого сообщения в группе для ссылки
           const firstMessageId = messages[0].message_id;
+          
+          // Используем TelegramService для правильного форматирования URL
+          let formattedChatIdForUrl = formattedChatId;
+          if (formattedChatId.startsWith('-100')) {
+            formattedChatIdForUrl = formattedChatId.substring(4);
+          }
+          
+          // Используем метод formatTelegramUrl для безопасного создания URL
+          const postUrl = telegramService.formatTelegramUrl(formattedChatId, formattedChatIdForUrl, firstMessageId);
+          log(`Сформирован URL для группы сообщений в Telegram: ${postUrl}`, 'social-publishing');
+          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: firstMessageId.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${firstMessageId}`,
+            postUrl: postUrl,
             userId: content.userId // Добавляем userId из контента
           };
         } else {
           // Для одиночного сообщения
           const message = response.data.result;
           log(`Успешная публикация в Telegram. Message ID: ${message.message_id}`, 'social-publishing');
+          
+          // Используем TelegramService для правильного форматирования URL
+          let formattedChatIdForUrl = formattedChatId;
+          if (formattedChatId.startsWith('-100')) {
+            formattedChatIdForUrl = formattedChatId.substring(4);
+          }
+          
+          // Используем метод formatTelegramUrl для безопасного создания URL
+          const postUrl = telegramService.formatTelegramUrl(formattedChatId, formattedChatIdForUrl, message.message_id);
+          log(`Сформирован URL для одиночного сообщения в Telegram: ${postUrl}`, 'social-publishing');
+          
           return {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
             postId: message.message_id.toString(),
-            postUrl: `https://t.me/c/${formattedChatId.replace('-100', '')}/${message.message_id}`,
+            postUrl: postUrl,
             userId: content.userId // Добавляем userId из контента
           };
         }
