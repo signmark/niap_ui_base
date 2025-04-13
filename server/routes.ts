@@ -7930,7 +7930,12 @@ https://t.me/channelname/ - description`;
             if (userSettings) {
               console.log(`DEBUG: Вызов socialPublishingService.publishToPlatform для платформы ${platform}`);
               // Универсальный метод публикации для всех типов платформ
-              result = await socialPublishingService.publishToPlatform(platform as any, campaignContent, { settings: userSettings });
+              console.log(`DEBUG: Настройки для платформы ${platform}:`, {
+                telegram: userSettings?.telegram ? { hasChatId: !!userSettings.telegram.chatId, hasToken: !!userSettings.telegram.token } : null
+              });
+              
+              // Важно: передаем сами настройки, а не объект { settings: userSettings }
+              result = await socialPublishingService.publishToPlatform(platform as any, campaignContent, userSettings);
               console.log(`DEBUG: Результат публикации:`, JSON.stringify(result, null, 2));
             } else {
               console.log(`DEBUG: Отсутствуют настройки для платформы ${platform}`);
