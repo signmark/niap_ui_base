@@ -15,34 +15,70 @@ const DIRECTUS_ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'Qtpz3dh7
 const lastTelegramRouter = express.Router();
 
 /**
- * Получает токен администратора Directus напрямую через аутентификацию
+ * Получает токен администратора Directus 
+ * Использует расширенный подход с попыткой получения токена из кэша проекта
  * @returns {Promise<string|null>} Токен администратора или null в случае ошибки
  */
 async function getDirectAdminToken(): Promise<string|null> {
   try {
-    log(`Попытка аутентификации администратора (${DIRECTUS_ADMIN_EMAIL})`, 'telegram-diagnostics');
+    log(`Попытка получения токена администратора из внутреннего кэша`, 'telegram-diagnostics');
     
+    // Проверяем, есть ли токен в кэше проекта через механизм DirectusAuthManager
+    // Сначала попробуем получить токен из внутреннего хранилища
+    try {
+      // Используем storage для получения токена для запросов к API
+      const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // ID администратора
+      const token = await storage.getDirectusToken(userId);
+      
+      if (token) {
+        log('Получен токен из внутреннего кэша проекта', 'telegram-diagnostics');
+        return token;
+      }
+    } catch (cacheError: any) {
+      log(`Ошибка при получении токена из кэша: ${cacheError.message}`, 'telegram-diagnostics');
+    }
+    
+    // Если токен не найден в кэше, используем прямую авторизацию
+    log(`Прямая авторизация администратора через API Directus`, 'telegram-diagnostics');
     const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
       email: DIRECTUS_ADMIN_EMAIL,
       password: DIRECTUS_ADMIN_PASSWORD
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
     
     if (response.data && response.data.data && response.data.data.access_token) {
-      log(`Администратор успешно аутентифицирован`, 'telegram-diagnostics');
+      log(`Администратор успешно аутентифицирован через API`, 'telegram-diagnostics');
       return response.data.data.access_token;
     }
     
-    log(`Ошибка аутентификации администратора: нет токена в ответе`, 'telegram-diagnostics');
+    log(`Ошибка аутентификации: нет токена в ответе`, 'telegram-diagnostics');
     return null;
   } catch (error: any) {
-    log(`Ошибка аутентификации администратора: ${error.message}`, 'telegram-diagnostics');
+    log(`Ошибка аутентификации: ${error.message}`, 'telegram-diagnostics');
+    
+    // В случае ошибки, пробуем использовать механизм планировщика для получения токена
+    log(`Попытка получения токена через механизм планировщика`, 'telegram-diagnostics');
+    try {
+      // Используем альтернативный метод через хранилище
+      const schedulerToken = await storage.getAdminToken();
+      if (schedulerToken) {
+        log(`Получен токен из планировщика`, 'telegram-diagnostics');
+        return schedulerToken;
+      }
+    } catch (storageError: any) {
+      log(`Ошибка при получении токена через планировщик: ${storageError.message}`, 'telegram-diagnostics');
+    }
+    
     return null;
   }
 }
 
 /**
  * Получение последней публикации в Telegram
- * GET /api/test/last-telegram-publication
+ * GET /api/telegram-diagnostics/last-telegram-publication
  */
 lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: Response) => {
   try {
@@ -119,7 +155,7 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
 
 /**
  * Исправление URL для публикации в Telegram
- * POST /api/test/fix-telegram-url
+ * POST /api/telegram-diagnostics/fix-telegram-url
  */
 lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response) => {
   try {
@@ -253,7 +289,7 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
 
 /**
  * Массовое исправление URL для всех публикаций в Telegram
- * POST /api/test/fix-all-telegram-urls
+ * POST /api/telegram-diagnostics/fix-all-telegram-urls
  */
 lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Response) => {
   try {
