@@ -37,6 +37,8 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
+import { registerTestDebugRoutes } from './api/test-routes-debug';
+import { registerSimpleDebugRoute } from './api/test-debug';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -2888,6 +2890,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerValidationRoutes(app);
   console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
+  // Регистрируем отладочные маршруты для тестирования
+  registerTestDebugRoutes(app);
   console.log('API routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
