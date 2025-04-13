@@ -303,7 +303,8 @@ export class TelegramService extends BaseSocialService {
     // Прямая инструкция - всегда использовать URL в формате https://t.me/канал/сообщение
     const channel = 'ya_delayu_moschno'; // Используем фиксированный канал
     
-    if (!messageId) {
+    // ИСПРАВЛЕНО: учитываем случай, когда messageId - пустая строка
+    if (messageId === undefined || messageId === null || messageId === '') {
       // Если ID сообщения не указан, возвращаем ссылку на канал
       return `https://t.me/${channel}`;
     }
@@ -490,7 +491,9 @@ export class TelegramService extends BaseSocialService {
             
             // Формируем URL публикации
             const messageId = result.messageIds?.[0];
-            const postUrl = messageId ? this.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername) : undefined;
+            // ИСПРАВЛЕНО: учитываем случай, когда messageId - пустая строка
+            const postUrl = (messageId !== undefined && messageId !== null) ? 
+              this.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername) : undefined;
             
             publication.postUrl = postUrl;
             publication.status = 'published';
