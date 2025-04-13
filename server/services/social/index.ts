@@ -26,16 +26,35 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    platform: SocialPlatform,
+    platform: SocialPlatform | string,
     content: CampaignContent,
     campaign: any,
     authToken?: string
   ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
-    log(`Публикация контента в социальную сеть: ${platform}`, 'social-publishing');
+    // Убедимся, что платформа - строка, а не объект
+    const platformString = typeof platform === 'object' ? 
+      (platform.toString ? platform.toString() : JSON.stringify(platform)) : 
+      platform as string;
+    
+    log(`Публикация контента в социальную сеть: ${platformString}`, 'social-publishing');
     
     try {
-      // Получаем настройки социальных сетей из объекта кампании
-      const settings = campaign?.socialMediaSettings || campaign?.settings || {};
+      // Проверяем, что campaign - это объект с настройками, а не обертка { settings: ... }
+      let settings;
+      
+      if (campaign?.settings || campaign?.socialMediaSettings) {
+        // Если передали обычный объект campaign с вложенными настройками
+        settings = campaign?.socialMediaSettings || campaign?.settings || {};
+        log(`Используем настройки из объекта campaign`, 'social-publishing');
+      } else if (campaign) {
+        // Если передали сами настройки напрямую
+        settings = campaign;
+        log(`Используем переданные напрямую настройки`, 'social-publishing');
+      } else {
+        // Если ничего не передали
+        settings = {};
+        log(`Настройки не найдены`, 'social-publishing');
+      }
       
       // Выбираем соответствующий сервис в зависимости от платформы
       switch (platform) {
