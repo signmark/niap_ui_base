@@ -706,15 +706,19 @@ export class SocialPublishingWithImgurService {
     // Определяем базовый URL для публичных каналов или приватных чатов
     let baseUrl = '';
     
+    // Используем единую логику форматирования URL из TelegramService
+    // Эта функция всегда должна быть согласованной с логикой в TelegramService.formatTelegramUrl
+    
     // Если это username (начинается с @), удаляем @ и не добавляем /c/
     if (chatId.startsWith('@')) {
-      baseUrl = `https://t.me/${chatId.substring(1)}`;
+      const username = chatId.substring(1);
+      log(`Форматирование Telegram URL: username ${chatId} преобразован в https://t.me/${username}`, 'social-publishing');
+      baseUrl = `https://t.me/${username}`;
     }
     // Для числовых ID проверяем, нужен ли префикс /c/
     else {
-      // Проверяем, является ли chatId полным числовым идентификатором канала (с -100...)
-      // который нужно обработать специальным образом
-      const isFullNumericId = chatId.startsWith('-100') && /^-100\d+$/.test(chatId);
+      // Проверяем, является ли chatId полным числовым идентификатором супергруппы/канала (с -100...)
+      const isFullNumericId = chatId.startsWith('-100');
       
       if (isFullNumericId) {
         // Для таких ID нужен формат с /c/ и без -100

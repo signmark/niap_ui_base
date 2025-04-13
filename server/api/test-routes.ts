@@ -209,14 +209,26 @@ testRouter.get('/telegram-url', (req: Request, res: Response) => {
     if (formattedChatId.startsWith('@')) {
       formattedChatId = formattedChatId.substring(1);
     } else if (formattedChatId.startsWith('-100')) {
+      // Для ID вида -100XXXXX убираем только префикс -100
       formattedChatId = formattedChatId.substring(4);
+    } else if (formattedChatId.startsWith('-')) {
+      // Для других отрицательных ID (например, -XXXXX) убираем только минус
+      formattedChatId = formattedChatId.substring(1);
     }
     
-    // Форматируем URL
+    // Проверяем обязательное наличие message_id
+    if (!messageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ошибка: messageId обязателен для формирования URL согласно TELEGRAM_POSTING_ALGORITHM.md'
+      });
+    }
+    
+    // Форматируем URL с обязательным message_id
     const url = telegramService.formatTelegramUrl(
       chatId as string,
       formattedChatId,
-      messageId ? Number(messageId) : undefined,
+      Number(messageId),
       chatUsername as string | undefined
     );
     
