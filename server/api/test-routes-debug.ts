@@ -15,6 +15,75 @@ import { log } from '../utils/logger';
 export function registerTestDebugRoutes(app: Express): void {
   console.log('[test-routes-debug] Регистрация отладочных маршрутов...');
 
+  // Маршрут для прямого тестирования TelegramService
+  app.post('/api/test/telegram-direct', async (req: Request, res: Response) => {
+    try {
+      const { text, chatId, token, imageUrl } = req.body;
+      
+      if (!text || !chatId || !token) {
+        return res.status(400).json({ 
+          error: 'Не указаны обязательные параметры (text, chatId, token)' 
+        });
+      }
+      
+      log(`[DEBUG] Прямой запрос к Telegram API, текст: ${text.substring(0, 20)}..., chatId: ${chatId}`, 'test-api');
+      
+      // Создаем тестовый контент
+      const testContent: CampaignContent = {
+        id: 'test-content-id',
+        userId: 'test-user-id',
+        campaignId: 'test-campaign-id',
+        title: 'Тестовый контент',
+        content: text,
+        contentType: 'text',
+        imageUrl: imageUrl || null,
+        additionalImages: null,
+        videoUrl: null,
+        status: 'draft',
+        socialPlatforms: ['telegram'],
+        createdAt: new Date(),
+        prompt: null,
+        keywords: null,
+        scheduledAt: null,
+        publishedAt: null,
+        hashtags: [],
+        links: [],
+        metadata: {}
+      };
+      
+      // Создаем тестовые настройки
+      const testSettings: SocialMediaSettings = {
+        telegram: {
+          token,
+          chatId
+        }
+      };
+      
+      // Вызываем сервис напрямую
+      try {
+        const result = await telegramService.publishContent(testContent, testSettings);
+        return res.status(200).json({
+          success: true,
+          result
+        });
+      } catch (serviceError: any) {
+        log(`[DEBUG] Ошибка в TelegramService: ${serviceError.message}`, 'test-api');
+        return res.status(500).json({
+          error: 'Ошибка в TelegramService',
+          message: serviceError.message,
+          stack: serviceError.stack
+        });
+      }
+    } catch (error: any) {
+      log(`[DEBUG] Ошибка отладки: ${error.message}`, 'test-api');
+      return res.status(500).json({
+        error: 'Ошибка при отладке',
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  });
+
   // Маршрут для отладки параметров публикации в Telegram
   app.post('/api/test/telegram-debug-publish', async (req: Request, res: Response) => {
     try {
