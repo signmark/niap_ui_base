@@ -24,8 +24,11 @@ RUN npm install react-draggable@4.4.6 --save --no-audit
 # Явно устанавливаем multer
 RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit
 
+# Явно устанавливаем @google/generative-ai для интеграции с Gemini
+RUN npm install @google/generative-ai --save --no-audit
+
 # Проверяем наличие библиотек
-RUN npm ls react-draggable && npm ls multer
+RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai
 
 # Копируем исходный код
 COPY . .

@@ -156,6 +156,7 @@ export interface SocialPublication {
   postUrl?: string | null;
   error?: string | null;
   userId?: string | null; // Добавляем поле userId для передачи информации об авторе
+  messageId?: string | number | null; // ID сообщения для Telegram (используется в URL)
 }
 
 export const insertSourcePostSchema = createInsertSchema(sourcePosts)
