@@ -1360,7 +1360,7 @@ export class SocialPublishingWithImgurService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : `https://t.me/${chatId.replace('@', '')}`
+            postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
           };
         } else {
           try {
@@ -1469,7 +1469,7 @@ export class SocialPublishingWithImgurService {
                   platform: 'telegram',
                   status: 'published',
                   publishedAt: new Date(),
-                  postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : `https://t.me/${chatId.replace('@', '')}`
+                  postUrl: lastMessageId ? this.formatTelegramUrl(chatId, formattedChatId, lastMessageId) : null
                 };
               } else {
                 return {
