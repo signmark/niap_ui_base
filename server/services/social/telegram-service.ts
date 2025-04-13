@@ -714,14 +714,6 @@ export class TelegramService extends BaseSocialService {
   }
   
   /**
-   * Вспомогательная функция для форматирования URL Telegram с учетом разных форматов chat ID
-   * @param chatId Исходный chat ID (может быть @username или числовым ID)
-   * @param formattedChatId Форматированный chat ID для API запросов
-   * @param messageId Опциональный ID сообщения для создания прямой ссылки
-   * @param chatUsername Опциональный username чата (если известен)
-   * @returns Корректно форматированный URL
-   */
-  /**
    * Агрессивный исправитель HTML-тегов для обработки всех возможных случаев
    * @param text Исходный HTML-текст
    * @returns Исправленный HTML-текст с правильными закрытыми тегами
