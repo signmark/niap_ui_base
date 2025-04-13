@@ -9,12 +9,92 @@ import { storage } from '../storage';
 import { CampaignContent, SocialMediaSettings } from '@shared/schema';
 import { log } from '../utils/logger';
 import { telegramChatIdFixService } from '../services/telegram-chatid-fix';
+import axios from 'axios';
 
 /**
  * Регистрирует тестовые маршруты для отладки
  */
 export function registerTestDebugRoutes(app: Express): void {
   console.log('[test-routes-debug] Регистрация отладочных маршрутов...');
+  
+  // Специальный маршрут для прямой публикации в Telegram (обходит Directus)
+  app.post('/api/test-debug/telegram-direct-publish', async (req: Request, res: Response) => {
+    try {
+      const { text, imageUrl, campaignId = '46868c44-c6a4-4bed-accf-9ad07bba790e' } = req.body;
+      
+      // Получаем кампанию
+      const campaign = await storage.getCampaignById(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: 'Кампания не найдена' });
+      }
+      
+      // Получаем настройки Telegram
+      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      const telegramSettings = settings.telegram;
+      
+      if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
+        return res.status(400).json({ 
+          error: 'Настройки Telegram не найдены или неполные',
+          settings: telegramSettings
+        });
+      }
+      
+      // Напрямую используем API Telegram для отправки сообщения
+      try {
+        let formattedChatId = telegramSettings.chatId;
+        if (!formattedChatId.startsWith('@') && !formattedChatId.startsWith('-')) {
+          formattedChatId = `-100${formattedChatId}`;
+        }
+        
+        // Формируем URL для API Telegram
+        const baseUrl = `https://api.telegram.org/bot${telegramSettings.token}`;
+        let response;
+        
+        if (imageUrl) {
+          // Отправка изображения с подписью
+          response = await axios.post(`${baseUrl}/sendPhoto`, {
+            chat_id: formattedChatId,
+            photo: imageUrl,
+            caption: text || '',
+            parse_mode: 'HTML'
+          });
+        } else {
+          // Отправка обычного текстового сообщения
+          response = await axios.post(`${baseUrl}/sendMessage`, {
+            chat_id: formattedChatId,
+            text: text || 'Тестовое сообщение',
+            parse_mode: 'HTML'
+          });
+        }
+        
+        // Формируем URL сообщения (для канала "ya_delayu_moschno")
+        const messageId = response.data?.result?.message_id;
+        let messageUrl = null;
+        
+        if (messageId) {
+          messageUrl = `https://t.me/ya_delayu_moschno/${messageId}`;
+        }
+        
+        return res.status(200).json({
+          success: true,
+          response: response.data,
+          messageId,
+          messageUrl
+        });
+      } catch (telegramError: any) {
+        return res.status(500).json({
+          error: 'Ошибка при отправке в Telegram',
+          message: telegramError.message,
+          response: telegramError.response?.data
+        });
+      }
+    } catch (error: any) {
+      return res.status(500).json({
+        error: 'Ошибка при публикации',
+        message: error.message
+      });
+    }
+  });
 
   // Маршрут для имитации публикации из интерфейса
   app.post('/api/test/ui-publish-simulation', async (req: Request, res: Response) => {
