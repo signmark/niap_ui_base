@@ -35,28 +35,7 @@ lastTelegramRouter.get('/test', (req: Request, res: Response) => {
  */
 async function getDirectAdminToken(): Promise<string|null> {
   try {
-    log(`Попытка получения токена администратора из кэша directusApiManager`, 'telegram-diagnostics');
-    
-    // Пробуем получить токен из кэша менеджера directusApiManager
-    const cachedToken = directusApiManager.getCachedToken(ADMIN_USER_ID);
-    
-    if (cachedToken) {
-      log(`Получен валидный токен из кэша directusApiManager для ${ADMIN_USER_ID}`, 'telegram-diagnostics');
-      return cachedToken.token;
-    }
-    
-    // Если не нашли в кэше directusApiManager, попробуем получить через storage.getAdminToken
-    try {
-      const adminToken = await storage.getAdminToken();
-      if (adminToken) {
-        log(`Получен токен администратора через storage.getAdminToken()`, 'telegram-diagnostics');
-        return adminToken;
-      }
-    } catch (storageError: any) {
-      log(`Ошибка при получении токена через storage.getAdminToken: ${storageError.message}`, 'telegram-diagnostics');
-    }
-    
-    // Если токен не найден в кэше, используем прямую авторизацию
+    // Выполняем прямую авторизацию через логин/пароль, без использования кэша
     log(`Прямая авторизация администратора через API Directus`, 'telegram-diagnostics');
     const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
       email: DIRECTUS_ADMIN_EMAIL,
@@ -76,26 +55,6 @@ async function getDirectAdminToken(): Promise<string|null> {
     return null;
   } catch (error: any) {
     log(`Ошибка аутентификации: ${error.message}`, 'telegram-diagnostics');
-    
-    // В случае ошибки, пробуем использовать механизм планировщика для получения токена
-    log(`Попытка получения токена через альтернативные методы`, 'telegram-diagnostics');
-    try {
-      // Пробуем получить токен через storage.getAuthToken
-      const authTokenResponse = await axios.get(`${DIRECTUS_URL}/auth/refresh`, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        withCredentials: true 
-      });
-      
-      if (authTokenResponse.data && authTokenResponse.data.data && authTokenResponse.data.data.access_token) {
-        log(`Успешно получен токен через auth/refresh API`, 'telegram-diagnostics');
-        return authTokenResponse.data.data.access_token;
-      }
-    } catch (refreshError: any) {
-      log(`Ошибка при запросе refresh token: ${refreshError.message}`, 'telegram-diagnostics');
-    }
-    
     return null;
   }
 }
@@ -120,34 +79,20 @@ lastTelegramRouter.get('/telegram-posts', async (req: Request, res: Response) =>
       });
     }
     
-    // Получаем все записи контента для указанной кампании
+    // Получаем все записи контента используя наш storage вместо прямого обращения к API
     let content: any[] = [];
     try {
-      log(`Запрос к Directus API для получения контента кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
+      log(`Запрос контента для кампании ${CAMPAIGN_ID} через storage`, 'telegram-diagnostics');
       
-      // Получаем контент напрямую через Directus API с использованием полученного adminToken
-      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
-        params: {
-          filter: {
-            campaign: {
-              _eq: CAMPAIGN_ID
-            }
-          },
-          limit: 500,
-          sort: '-date_created'
-        },
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
+      // Получаем контент через storage
+      content = await storage.getCampaignContent('53921f16-f51d-4591-80b9-8caa4fde4d13', CAMPAIGN_ID);
       
-      content = response.data.data;
-      log(`Получено ${content.length} записей контента для кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
-    } catch (apiError: any) {
-      log(`Ошибка при прямом запросе к Directus API: ${apiError.message}`, 'telegram-diagnostics');
+      log(`Получено ${content.length} записей контента для кампании ${CAMPAIGN_ID} через storage`, 'telegram-diagnostics');
+    } catch (storageError: any) {
+      log(`Ошибка при запросе к storage: ${storageError.message}`, 'telegram-diagnostics');
       return res.status(500).json({
         success: false,
-        error: `Ошибка при запросе к Directus API: ${apiError.message}`
+        error: `Ошибка при запросе через storage: ${storageError.message}`
       });
     }
     
@@ -233,23 +178,15 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для получения контента напрямую`, 'telegram-diagnostics');
-      // Сначала авторизуемся
-      // Пытаемся войти
-      const authResponse = await axios.post('http://localhost:5000/api/auth/login', {
-        email: process.env.DIRECTUS_ADMIN_EMAIL,
-        password: process.env.DIRECTUS_ADMIN_PASSWORD
-      });
       
-      const token = authResponse.data.token;
-      
-      // Получаем контент с авторизацией
-      const response = await axios.get('http://localhost:5000/api/campaign-content', {
+      // Получаем контент напрямую через Directus API с использованием полученного adminToken
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
         params: {
           limit: 50,
           sort: '-date_created'
         },
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
@@ -454,23 +391,15 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для массового исправления URL`, 'telegram-diagnostics');
-      // Сначала авторизуемся
-      // Пытаемся войти
-      const authResponse = await axios.post('http://localhost:5000/api/auth/login', {
-        email: process.env.DIRECTUS_ADMIN_EMAIL,
-        password: process.env.DIRECTUS_ADMIN_PASSWORD
-      });
       
-      const token = authResponse.data.token;
-      
-      // Получаем контент с авторизацией
-      const response = await axios.get('http://localhost:5000/api/campaign-content', {
+      // Получаем контент напрямую через Directus API с использованием полученного adminToken
+      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
         params: {
           limit: 100,
           sort: '-date_created'
         },
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
