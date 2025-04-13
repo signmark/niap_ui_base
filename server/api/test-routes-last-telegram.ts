@@ -113,15 +113,11 @@ lastTelegramRouter.get('/telegram-posts', async (req: Request, res: Response) =>
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для получения контента кампании ${CAMPAIGN_ID}`, 'telegram-diagnostics');
-      // Преобразуем фильтр в строковый формат для совместимости с Directus API
-      const params = new URLSearchParams();
-      params.append('limit', '500');
-      params.append('filter[campaignId][_eq]', CAMPAIGN_ID);
-      params.append('filter[socialPlatforms][_nempty]', 'true');
-      
-      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
+      // Попробуем получить контент напрямую через API сервера
+      const response = await axios.get('http://localhost:5000/api/campaign-content', {
+        params: {
+          campaignId: CAMPAIGN_ID,
+          limit: 500
         }
       });
       
@@ -217,10 +213,8 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для получения контента напрямую`, 'telegram-diagnostics');
-      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        },
+      // Используем внутренний API сервера для доступа к данным
+      const response = await axios.get('http://localhost:5000/api/campaign-content', {
         params: {
           limit: 50,
           sort: '-date_created'
@@ -428,18 +422,11 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
     let content: any[] = [];
     try {
       log(`Запрос к Directus API для массового исправления URL`, 'telegram-diagnostics');
-      const response = await axios.get(`${DIRECTUS_URL}/items/campaign_content`, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        },
+      // Используем внутренний API сервера для доступа к данным
+      const response = await axios.get('http://localhost:5000/api/campaign-content', {
         params: {
           limit: 100,
-          sort: '-date_created',
-          filter: { 
-            "socialPlatforms": { 
-              "_nempty": true 
-            }
-          }
+          sort: '-date_created'
         }
       });
       
