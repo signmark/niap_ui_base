@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, X } from "lucide-react";
 import { apiRequest } from '@/lib/queryClient';
@@ -14,6 +14,7 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
   const [isUploading, setIsUploading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(currentVideoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const resetUpload = () => {
     setVideoUrl(null);
@@ -29,11 +30,11 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
       const formData = new FormData();
       formData.append('video', file);
       
-      const response = await apiRequest('/api/imgur/upload-video', {
+      const response = await fetch('/api/imgur/upload-video', {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header as it's automatically set with boundary for FormData
-      });
+      }).then(res => res.json());
       
       if (response?.url) {
         setVideoUrl(response.url);
@@ -55,7 +56,7 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
     } finally {
       setIsUploading(false);
     }
-  }, [onVideoUpload]);
+  }, [onVideoUpload, toast]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -82,7 +83,7 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
         });
       }
     }
-  }, [uploadVideo]);
+  }, [uploadVideo, toast]);
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

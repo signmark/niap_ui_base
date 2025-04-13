@@ -45,6 +45,7 @@ import SocialMediaFilter from "@/components/SocialMediaFilter";
 import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
 import { ImageUploader } from "@/components/ImageUploader";
+import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
@@ -1411,12 +1412,10 @@ export default function ContentPage() {
             )}
             {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
               <div className="space-y-2">
-                <Label htmlFor="videoUrl">URL видео</Label>
-                <Input
-                  id="videoUrl"
-                  placeholder="Введите URL видео"
-                  value={newContent.videoUrl}
-                  onChange={(e) => setNewContent({...newContent, videoUrl: e.target.value})}
+                <Label htmlFor="videoUrl">Видео</Label>
+                <VideoUploader
+                  onVideoUpload={(url) => setNewContent({...newContent, videoUrl: url})}
+                  currentVideoUrl={newContent.videoUrl}
                 />
               </div>
             )}
@@ -1679,15 +1678,13 @@ export default function ContentPage() {
               )}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
                 <div className="space-y-2">
-                  <Label htmlFor="videoUrl">URL видео</Label>
-                  <Input
-                    id="videoUrl"
-                    placeholder="Введите URL видео"
-                    value={currentContent.videoUrl || ""}
-                    onChange={(e) => {
-                      const updatedContent = {...currentContent, videoUrl: e.target.value};
+                  <Label htmlFor="videoUrl">Видео</Label>
+                  <VideoUploader
+                    onVideoUpload={(url) => {
+                      const updatedContent = {...currentContent, videoUrl: url};
                       setCurrentContentSafe(updatedContent);
                     }}
+                    currentVideoUrl={currentContent.videoUrl || ""}
                   />
                 </div>
               )}
