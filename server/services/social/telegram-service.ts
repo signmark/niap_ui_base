@@ -476,9 +476,9 @@ export class TelegramService extends BaseSocialService {
             const messageId = result.messageIds?.[0];
             const postUrl = messageId ? this.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername) : undefined;
             
-            publication.platformPostUrl = postUrl || result.messageUrl;
+            publication.postUrl = postUrl;
             publication.status = 'published';
-            publication.publishedAt = new Date().toISOString();
+            publication.publishedAt = new Date();
             
             return publication;
           } else {
@@ -509,9 +509,9 @@ export class TelegramService extends BaseSocialService {
             // Формируем URL публикации
             const postUrl = this.formatTelegramUrl(chatId, formattedChatId, messageId, chatUsername);
             
-            publication.platformPostUrl = postUrl;
+            publication.postUrl = postUrl;
             publication.status = 'published';
-            publication.publishedAt = new Date().toISOString();
+            publication.publishedAt = new Date();
             
             return publication;
           } else {
