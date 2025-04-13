@@ -6,7 +6,6 @@ import { storage } from '../storage';
 import { log } from '../utils/logger';
 import { telegramService } from '../services/social/telegram-service';
 
-// Создаем роутер для тестовых маршрутов
 const lastTelegramRouter = express.Router();
 
 /**
@@ -25,11 +24,9 @@ lastTelegramRouter.get('/last-telegram-publication', async (req: Request, res: R
       });
     }
     
-    // Получаем контент из базы с сортировкой по дате создания (самый новый первый)
-    const content = await storage.getAllCampaignContent({
-      sort: ['-createdAt'],
-      limit: 20
-    }, adminToken);
+    // Используем метод для получения контента специального администратора
+    // с известным userId из базы
+    const content = await storage.getCampaignContent('admin', undefined, adminToken);
     
     if (!content || content.length === 0) {
       return res.status(404).json({
@@ -94,7 +91,7 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
     }
     
     // Получаем контент из базы
-    const content = await storage.getCampaignContent(contentId, adminToken);
+    const content = await storage.getCampaignContentById(contentId, adminToken);
     
     if (!content) {
       return res.status(404).json({
@@ -145,7 +142,6 @@ lastTelegramRouter.post('/fix-telegram-url', async (req: Request, res: Response)
     // Формируем корректный URL с messageId
     const correctUrl = telegramService.formatTelegramUrl(
       chatId,
-      formattedChatId,
       messageId
     );
     
@@ -202,10 +198,8 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
       });
     }
     
-    // Получаем весь контент из базы, ограничим 200 записями для производительности
-    const content = await storage.getAllCampaignContent({
-      limit: 200
-    }, adminToken);
+    // Используем метод для получения контента через администратора
+    const content = await storage.getCampaignContent('admin', undefined, adminToken);
     
     if (!content || content.length === 0) {
       return res.status(404).json({
@@ -254,16 +248,9 @@ lastTelegramRouter.post('/fix-all-telegram-urls', async (req: Request, res: Resp
           continue;
         }
         
-        // Определяем формат chatId для API
-        let formattedChatId = chatId;
-        if (formattedChatId.startsWith('-100')) {
-          formattedChatId = formattedChatId.substring(4);
-        }
-        
         // Формируем корректный URL с messageId
         const correctUrl = telegramService.formatTelegramUrl(
           chatId,
-          formattedChatId,
           messageId
         );
         

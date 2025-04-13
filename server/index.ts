@@ -15,6 +15,8 @@ import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
 // Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
+// Импортируем тестовые маршруты для исправления Telegram URL
+import lastTelegramRouter from './api/test-routes-last-telegram';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -122,6 +124,7 @@ app.use((req, res, next) => {
     console.log("Registering test API routes...");
     log("Registering test API routes first...");
     app.use('/api/test', testRouter);
+    app.use('/api/test', lastTelegramRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
