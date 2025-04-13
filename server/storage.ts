@@ -781,16 +781,6 @@ export class DatabaseStorage implements IStorage {
    */
   async getAdminToken(): Promise<string | null> {
     try {
-      // Используем publishScheduler для получения системного токена
-      const { publishScheduler } = await import('../services/publish-scheduler');
-      
-      const systemToken = await publishScheduler.getSystemToken();
-      if (systemToken) {
-        console.log('Получен системный токен через publishScheduler');
-        return systemToken;
-      }
-
-      // Если не удалось получить через publishScheduler, используем стандартный метод
       // Получаем e-mail и пароль администратора из переменных окружения
       const email = process.env.DIRECTUS_EMAIL;
       const password = process.env.DIRECTUS_PASSWORD;

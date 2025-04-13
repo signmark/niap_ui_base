@@ -503,53 +503,6 @@ export default function ContentPage() {
   });
   
   // Мутация для немедленной публикации контента
-  // Мутация для прямой публикации в Telegram (без обновления статуса через Directus)
-  const directTelegramPublishMutation = useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      console.log("📨 Прямая публикация контента в Telegram, ID:", id);
-      
-      // Используем новый API-эндпоинт для прямой публикации в Telegram
-      return await apiRequest(`/api/publish-direct/telegram/${id}`, { 
-        method: 'POST'
-      });
-    },
-    onSuccess: (data) => {
-      console.log("✅ Результат прямой публикации в Telegram:", data);
-      
-      // Показываем успешное уведомление с URL публикации
-      if (data?.result?.messageUrl) {
-        toast({
-          title: "Опубликовано в Telegram",
-          description: (
-            <div>
-              <p>Сообщение успешно опубликовано!</p>
-              <a href={data.result.messageUrl} target="_blank" rel="noopener noreferrer" 
-                 className="text-primary hover:underline">
-                Открыть публикацию →
-              </a>
-            </div>
-          ),
-        });
-      } else {
-        toast({
-          title: "Опубликовано в Telegram",
-          description: "Сообщение успешно отправлено в Telegram",
-        });
-      }
-      
-      // Обновляем данные в интерфейсе
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
-    },
-    onError: (error: Error) => {
-      console.error("❌ Ошибка прямой публикации в Telegram:", error);
-      toast({
-        title: "Ошибка публикации в Telegram",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   const publishContentMutation = useMutation({
     mutationFn: async ({ id, platforms }: { id: string, platforms?: {[key: string]: boolean} }) => {
       // Подготовка данных о платформах
@@ -1204,28 +1157,6 @@ export default function ContentPage() {
                                           }}
                                         >
                                           <SendHorizontal className="h-3.5 w-3.5" />
-                                        </Button>
-                                        {/* Кнопка для прямой публикации в Telegram (без обновления статуса через Directus) */}
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                          title="Прямая публикация в Telegram"
-                                          onClick={(e) => {
-                                            e.stopPropagation(); // Предотвращаем открытие превью
-                                            
-                                            // Используем прямую публикацию
-                                            directTelegramPublishMutation.mutate({
-                                              id: content.id
-                                            });
-                                          }}
-                                          disabled={directTelegramPublishMutation.isPending}
-                                        >
-                                          {directTelegramPublishMutation.isPending ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                          ) : (
-                                            <Send className="h-3.5 w-3.5" />
-                                          )}
                                         </Button>
                                       </>
                                     )}
