@@ -1,6 +1,6 @@
 /**
- * Тестовый скрипт для проверки возможности загрузки видео на ImgBB
- * Запуск: node test-imgbb-video-upload.js
+ * Тестовый скрипт для проверки возможности загрузки видео на Imgur
+ * Запуск: node test-imgur-video-upload.js
  */
 
 import axios from 'axios';
@@ -19,8 +19,8 @@ function log(message) {
 }
 
 // Константы
-const IMGBB_API_KEY = '24b7a2b8c7d4563497ca48e07d0c76ba'; // API ключ ImgBB
-const UPLOAD_ENDPOINT = 'https://api.imgbb.com/1/upload';
+const IMGUR_CLIENT_ID = 'fc3d6ae9c21a8df'; // API ключ Imgur
+const UPLOAD_ENDPOINT = 'https://api.imgur.com/3/upload';
 
 // URL тестового видео
 const VIDEO_URLS = [
@@ -60,30 +60,30 @@ async function downloadVideo(url, outputPath) {
   });
 }
 
-// Функция для загрузки файла на ImgBB
-async function uploadToImgBB(filePath) {
-  log(`Загрузка файла ${filePath} на ImgBB`);
+// Функция для загрузки файла на Imgur
+async function uploadToImgur(filePath) {
+  log(`Загрузка файла ${filePath} на Imgur`);
   
   try {
     const formData = new FormData();
-    formData.append('key', IMGBB_API_KEY);
-    formData.append('image', fs.createReadStream(filePath));
+    formData.append('video', fs.createReadStream(filePath));
     
     const response = await axios.post(UPLOAD_ENDPOINT, formData, {
       headers: {
-        ...formData.getHeaders()
+        ...formData.getHeaders(),
+        'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
       }
     });
     
     if (response.data && response.data.success) {
-      log(`Файл успешно загружен: ${response.data.data.url}`);
+      log(`Файл успешно загружен: ${response.data.data.link}`);
       return response.data.data;
     } else {
       log(`Ошибка при загрузке: ${JSON.stringify(response.data)}`);
       return null;
     }
   } catch (error) {
-    log(`Ошибка при загрузке на ImgBB: ${error.message}`);
+    log(`Ошибка при загрузке на Imgur: ${error.message}`);
     if (error.response) {
       log(`Статус ошибки: ${error.response.status}`);
       log(`Данные ошибки: ${JSON.stringify(error.response.data)}`);
@@ -110,7 +110,7 @@ function getFileInfo(filePath) {
 
 // Основная функция для тестирования загрузки видео
 async function testVideoUpload() {
-  log('Начало тестирования загрузки видео на ImgBB');
+  log('Начало тестирования загрузки видео на Imgur');
   
   // Создаем временную директорию
   const tempDir = path.join(process.cwd(), 'uploads', 'temp');
@@ -134,8 +134,8 @@ async function testVideoUpload() {
       const fileInfo = getFileInfo(videoPath);
       log(`Информация о файле: ${JSON.stringify(fileInfo)}`);
       
-      // Загружаем видео на ImgBB
-      const result = await uploadToImgBB(videoPath);
+      // Загружаем видео на Imgur
+      const result = await uploadToImgur(videoPath);
       
       testResults.push({
         videoUrl,
@@ -156,7 +156,7 @@ async function testVideoUpload() {
   }
   
   // Выводим итоговые результаты
-  log('\n=== Результаты тестирования загрузки видео на ImgBB ===');
+  log('\n=== Результаты тестирования загрузки видео на Imgur ===');
   testResults.forEach((result, index) => {
     log(`\nТест ${index + 1} (${result.videoUrl}):`);
     log(`Статус: ${result.success ? 'УСПЕШНО' : 'НЕУДАЧНО'}`);
@@ -164,8 +164,8 @@ async function testVideoUpload() {
       log(`Размер файла: ${result.fileInfo.size}`);
     }
     if (result.result) {
-      log(`URL загруженного файла: ${result.result.url}`);
-      log(`Тип: ${result.result.image.mime}`);
+      log(`URL загруженного файла: ${result.result.link}`);
+      log(`Тип медиа: ${result.result.type}`);
     }
     if (result.error) {
       log(`Ошибка: ${result.error}`);
