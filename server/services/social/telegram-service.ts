@@ -915,9 +915,19 @@ export class TelegramService extends BaseSocialService {
     // Обработка случая с супергруппой/каналом (-100...)
     if (chatId.startsWith('-100')) {
       const channelId = chatId.substring(4);
-      const url = `https://t.me/c/${channelId}/${messageId}`;
-      log(`Форматирование Telegram URL: полный числовой ID ${chatId} преобразован в ${url}`, 'social-publishing');
-      return url;
+      
+      // Согласно документации, для каналов мы должны использовать формат https://t.me/{username}/{message_id}
+      // Если username не известен, используем format с /c/
+      if (chatUsername) {
+        const url = `https://t.me/${chatUsername}/${messageId}`;
+        log(`Форматирование Telegram URL с username: ${chatId} преобразован в ${url}`, 'social-publishing');
+        return url;
+      } else {
+        // Если username неизвестен, используем формат с /c/
+        const url = `https://t.me/c/${channelId}/${messageId}`;
+        log(`Форматирование Telegram URL без username: ${chatId} преобразован в ${url}`, 'social-publishing');
+        return url;
+      }
     }
     
     // Обработка обычных групп (начинаются с -)
