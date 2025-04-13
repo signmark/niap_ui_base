@@ -383,11 +383,11 @@ export class TelegramService extends BaseSocialService {
       let result: any;
       
       // Проверяем наличие изображения для публикации
-      const hasMainImage = !!content.image;
-      const hasAdditionalImages = Array.isArray(content.additional_images) && content.additional_images.length > 0;
+      const hasMainImage = !!content.imageUrl;
+      const hasAdditionalImages = Array.isArray(content.additionalImages) && content.additionalImages.length > 0;
       
       // Форматируем текст контента для Telegram с поддержкой HTML
-      let formattedText = content.text || '';
+      let formattedText = content.content || '';
       
       // Если текст содержит HTML-разметку, форматируем его
       if (formattedText.includes('<') && formattedText.includes('>')) {
@@ -408,14 +408,14 @@ export class TelegramService extends BaseSocialService {
         const images: string[] = [];
         
         // Добавляем основное изображение, если оно есть
-        if (hasMainImage && content.image) {
-          images.push(content.image);
+        if (hasMainImage && content.imageUrl) {
+          images.push(content.imageUrl);
         }
         
         // Добавляем дополнительные изображения, если они есть
-        if (hasAdditionalImages && Array.isArray(content.additional_images)) {
+        if (hasAdditionalImages && Array.isArray(content.additionalImages)) {
           // Добавляем проверку типов
-          content.additional_images.forEach((img: any) => {
+          content.additionalImages.forEach((img: any) => {
             if (typeof img === 'string' && img.trim()) {
               images.push(img);
             } else if (img && typeof img === 'object' && img.url && typeof img.url === 'string') {
