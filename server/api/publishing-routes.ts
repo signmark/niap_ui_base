@@ -2,6 +2,7 @@ import { Express, Request, Response } from 'express';
 import axios from 'axios';
 import { storage } from '../storage';
 import { socialPublishingService } from '../services/social/index';
+import { telegramService } from '../services/social/telegram-service';
 
 // Не используем старый сервис, заменив его на новый модульный
 import { publishScheduler } from '../services/publish-scheduler';
@@ -329,6 +330,154 @@ export function registerPublishingRoutes(app: Express): void {
       });
     }
   });
+  
+  // Публикация контента напрямую в Telegram (без обновления статуса через Directus)
+  app.post('/api/publish-direct/telegram/:contentId', async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      const authHeader = req.headers.authorization;
+      
+      // Валидация входных параметров
+      if (!contentId) {
+        return res.status(400).json({ error: 'Не указан ID контента' });
+      }
+      
+      log(`Запрос на прямую публикацию контента ${contentId} в Telegram (без обновления статуса)`, 'api');
+      
+      // Получаем токен авторизации из заголовка
+      let systemToken = null;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        systemToken = authHeader.substring(7);
+      } else {
+        log('No authorization header provided', 'api');
+      }
+      
+      // Пытаемся получить контент по ID с использованием токена администратора
+      log(`Запрос контента по ID: ${contentId}`, 'api');
+      
+      // Получаем токен администратора
+      const adminToken = await directusAuth.getAdminToken();
+      
+      if (!adminToken) {
+        log(`Не удалось получить токен администратора для доступа к контенту`, 'api');
+        return res.status(500).json({ error: 'Ошибка авторизации: не удалось получить доступ к контенту' });
+      }
+      
+      // Используем токен администратора для получения контента
+      let content = await storage.getCampaignContentById(contentId, adminToken);
+      
+      if (!content) {
+        try {
+          // Пробуем получить контент напрямую через API Directus с токеном администратора
+          const response = await axios.get(
+            `${process.env.DIRECTUS_URL}/items/campaign_content/${contentId}`, 
+            { 
+              headers: { 
+                'Authorization': `Bearer ${adminToken}` 
+              } 
+            }
+          );
+          
+          if (response.data && response.data.data) {
+            content = response.data.data;
+            log(`Контент успешно получен через прямой API запрос с токеном администратора`, 'api');
+          }
+        } catch (directusError: any) {
+          log(`Ошибка прямого запроса к Directus API: ${directusError.message}`, 'api');
+          log(`Детали ошибки: ${JSON.stringify(directusError.response?.data || {})}`, 'api');
+        }
+      }
+      
+      if (!content) {
+        log(`Контент с ID ${contentId} не найден ни одним из способов`, 'api');
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Получаем настройки кампании
+      const campaign = await storage.getCampaignById(content.campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: 'Кампания не найдена' });
+      }
+      
+      // Получаем настройки Telegram
+      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      const telegramSettings = settings.telegram;
+      
+      if (!telegramSettings || !telegramSettings.token || !telegramSettings.chatId) {
+        return res.status(400).json({ 
+          error: 'Настройки Telegram не найдены или неполные',
+          settings: telegramSettings
+        });
+      }
+      
+      // Напрямую используем API Telegram для отправки сообщения
+      try {
+        let formattedChatId = telegramSettings.chatId;
+        if (!formattedChatId.startsWith('@') && !formattedChatId.startsWith('-')) {
+          formattedChatId = `-100${formattedChatId}`;
+        }
+        
+        // Форматируем текст для Telegram
+        const formattedText = telegramService.formatTextForTelegram(content.content || '');
+        
+        // Формируем URL для API Telegram
+        const baseUrl = `https://api.telegram.org/bot${telegramSettings.token}`;
+        let response;
+        
+        if (content.imageUrl) {
+          // Отправка изображения с подписью
+          response = await axios.post(`${baseUrl}/sendPhoto`, {
+            chat_id: formattedChatId,
+            photo: content.imageUrl,
+            caption: formattedText || '',
+            parse_mode: 'HTML'
+          });
+        } else {
+          // Отправка обычного текстового сообщения
+          response = await axios.post(`${baseUrl}/sendMessage`, {
+            chat_id: formattedChatId,
+            text: formattedText || 'Пустое сообщение',
+            parse_mode: 'HTML'
+          });
+        }
+        
+        // Формируем URL сообщения (для канала "ya_delayu_moschno")
+        const messageId = response.data?.result?.message_id;
+        let messageUrl = null;
+        
+        if (messageId) {
+          messageUrl = `https://t.me/ya_delayu_moschno/${messageId}`;
+        }
+        
+        // Отдельно: вместо обновления через Directus сразу отдаем успешный результат
+        return res.status(200).json({
+          success: true,
+          platform: 'telegram',
+          result: {
+            messageId,
+            messageUrl,
+            publishedAt: new Date(),
+            status: 'published',
+            platform: 'telegram',
+            response: response.data
+          }
+        });
+      } catch (telegramError: any) {
+        log(`Ошибка при отправке в Telegram: ${telegramError.message}`, 'api');
+        return res.status(500).json({
+          error: 'Ошибка при отправке в Telegram',
+          message: telegramError.message,
+          response: telegramError.response?.data
+        });
+      }
+    } catch (error: any) {
+      log(`Ошибка при прямой публикации: ${error.message}`, 'api');
+      return res.status(500).json({
+        error: 'Ошибка при прямой публикации',
+        message: error.message
+      });
+    }
+  });
 
   // Публикация контента по ID, с указанием платформ
   app.post('/api/publish/:contentId', async (req: Request, res: Response) => {
@@ -405,6 +554,13 @@ export function registerPublishingRoutes(app: Express): void {
           
           try {
             log(`Публикация контента ${content.id} в ${platform}`, 'api');
+            
+            // Логируем настройки кампании для отладки
+            log(`[DEBUG] Настройки кампании для публикации в ${platform}: ${JSON.stringify({
+              id: campaign.id,
+              name: campaign.name,
+              telegram: (campaign.socialMediaSettings || campaign.settings)?.telegram || null
+            })}`, 'api');
             
             // Публикуем контент в выбранную платформу
             const result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);

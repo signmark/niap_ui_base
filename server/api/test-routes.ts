@@ -6,7 +6,6 @@ import express, { Request, Response } from 'express';
 import { telegramService } from '../services/social/telegram-service';
 import { instagramService } from '../services/social/instagram-service';
 import { socialPublishingService } from '../services/social/index';
-import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
 import { storage } from '../storage';
 import { log } from '../utils/logger';
 import axios from 'axios';
@@ -138,9 +137,11 @@ testRouter.post('/telegram-post', async (req: Request, res: Response) => {
     };
     
     // Отправляем тестовое сообщение в Telegram
-    const result = await telegramService.publishToTelegram(testContent, {
-      token,
-      chatId
+    const result = await telegramService.publishContent(testContent, {
+      telegram: {
+        token,
+        chatId
+      }
     });
     
     // Логируем результат для отладки
@@ -330,9 +331,11 @@ testRouter.post('/telegram-html', async (req: Request, res: Response) => {
     };
     
     // Отправляем тестовое сообщение в Telegram с настройками из кампании
-    const result = await telegramService.publishToTelegram(testContent, {
-      token: campaign.settings.telegram.token,
-      chatId: campaign.settings.telegram.chatId
+    const result = await telegramService.publishContent(testContent, {
+      telegram: {
+        token: campaign.settings.telegram.token,
+        chatId: campaign.settings.telegram.chatId
+      }
     });
     
     // Логируем результат для отладки
@@ -901,57 +904,6 @@ testRouter.post('/instagram-post', async (req: Request, res: Response) => {
       success: false,
       error: error.message,
       details: error.response?.data || null
-    });
-  }
-});
-
-/**
- * Тестовый маршрут для проверки форматирования URL для Telegram
- * POST /api/test/format-telegram-url
- * 
- * Пример использования:
- * POST /api/test/format-telegram-url
- * Body: {
- *   "chatId": "@test_channel",
- *   "formattedChatId": "@test_channel",
- *   "messageId": "123456"
- * }
- */
-testRouter.post("/format-telegram-url", async (req: Request, res: Response) => {
-  try {
-    const { chatId, formattedChatId, messageId } = req.body;
-    
-    // Проверяем наличие обязательных параметров
-    if (!chatId || !formattedChatId) {
-      return res.status(400).json({
-        success: false,
-        error: "Обязательные параметры: chatId и formattedChatId"
-      });
-    }
-    
-    log(`[Test API] Запрос на форматирование URL для Telegram`, "test");
-    log(`[Test API] Параметры: chatId=${chatId}, formattedChatId=${formattedChatId}, messageId=${messageId !== undefined ? messageId : "undefined"}`, "test");
-    
-    // Используем socialPublishingWithImgurService для форматирования URL
-    // Уже импортирован на уровне модуля
-    const url = socialPublishingWithImgurService.formatTelegramUrl(chatId, formattedChatId, messageId);
-    
-    log(`[Test API] Сформирован URL: ${url}`, "test");
-    
-    return res.status(200).json({
-      success: true,
-      url: url,
-      params: {
-        chatId,
-        formattedChatId,
-        messageId: messageId !== undefined ? messageId : "undefined"
-      }
-    });
-  } catch (error: any) {
-    log(`[Test API] Ошибка при форматировании URL: ${error.message}`, "test");
-    return res.status(500).json({
-      success: false,
-      error: error.message
     });
   }
 });
