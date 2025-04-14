@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, VideoIcon, Loader2 } from "lucide-react";
+import { Upload, VideoIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { UploadProgress } from './UploadProgress';
 
 /**
  * Утилита для проверки URL на видео-формат
@@ -172,10 +173,12 @@ export function VideoUploader({
       
       {/* Индикатор загрузки */}
       {isUploading && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1" role="status">
-          <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-xs">Загрузка видео...</div>
-        </div>
+        <UploadProgress 
+          isLoading={true} 
+          size="small" 
+          label="Загрузка видео..." 
+          className="mt-1 text-muted-foreground" 
+        />
       )}
       
       {/* Всегда отображаем URL, если он есть */}
@@ -193,10 +196,11 @@ export function VideoUploader({
               <>
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
-                    <div className="flex flex-col items-center gap-2" role="status" aria-label="Загрузка видео">
-                      <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-sm text-center">Загрузка видео...</span>
-                    </div>
+                    <UploadProgress 
+                      isLoading={true} 
+                      size="large" 
+                      label="Загрузка видео..." 
+                    />
                   </div>
                 )}
                 <video 
