@@ -2,6 +2,14 @@ import { pgTable, text, serial, integer, timestamp, boolean, jsonb, uuid, date }
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Тип для элемента медиа (изображения или видео)
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  title?: string;
+  description?: string;
+}
+
 // Таблица source_posts для хранения постов из источников
 export const sourcePosts = pgTable("source_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
