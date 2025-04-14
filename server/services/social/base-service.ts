@@ -91,7 +91,7 @@ export abstract class BaseSocialService {
                 if (possibleArrayFields.length > 0) {
                   // Используем первое найденное поле с массивом
                   updatedContent.additionalImages = parsedImages[possibleArrayFields[0]];
-                  log(`Найден массив изображений в поле ${possibleArrayFields[0]}, содержит ${updatedContent.additionalImages.length} элементов`, 'social-publishing');
+                  log(`Найден массив изображений в поле ${possibleArrayFields[0]}, содержит ${updatedContent.additionalImages?.length || 0} элементов`, 'social-publishing');
                 } else {
                   // Если не нашли массив, создаем пустой
                   updatedContent.additionalImages = [];
@@ -106,7 +106,7 @@ export abstract class BaseSocialService {
           } catch (error) {
             // Если не удалось распарсить JSON, считаем это одиночным URL и создаем массив с одним элементом
             // Обработка строки url
-            const additionalImage = updatedContent.additionalImages as string;
+            const additionalImage = updatedContent.additionalImages;
             if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim().startsWith('http')) {
               updatedContent.additionalImages = [additionalImage.trim()];
               log(`additionalImages в виде строки URL преобразован в массив с одним элементом для ${platform}`, 'social-publishing');
