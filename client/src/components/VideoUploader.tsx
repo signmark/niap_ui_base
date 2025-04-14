@@ -13,19 +13,19 @@ import { UploadProgress } from './UploadProgress';
  */
 export function isVideoUrl(url: string): boolean {
   if (!url) return false;
-  
+
   // Проверяем расширение файла или URL
   const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv'];
   const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
-  
+
   // Проверяем, является ли URL ссылкой на S3 хранилище Beget
   const isBegetS3Url = url.includes('s3.ru1.storage.beget.cloud');
-  
+
   // Проверяем URL видеохостингов
   const isVideoHosting = url.includes('youtube.com/watch') || 
                          url.includes('youtu.be/') || 
                          url.includes('vimeo.com/');
-  
+
   return hasVideoExtension || isBegetS3Url || isVideoHosting;
 }
 
@@ -70,24 +70,24 @@ export function VideoUploader({
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('video', file);
-      
+
       setIsUploading(true);
-      
+
       try {
         console.log('Отправка запроса на загрузку видео файла...');
-        
+
         // Получаем токен авторизации из localStorage
         const token = localStorage.getItem('auth_token');
-        
+
         const response = await axios.post('/api/beget-s3-video/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Authorization': token ? `Bearer ${token}` : ''
           }
         });
-        
+
         console.log('Ответ от API загрузки видео:', response.data);
-        
+
         if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
           const videoUrl = response.data.url || response.data.videoUrl;
           onChange(videoUrl);
@@ -97,7 +97,7 @@ export function VideoUploader({
             title: 'Успешно',
             description: 'Видео загружено на S3'
           });
-          
+
           // Очищаем поле выбора файла
           e.target.value = '';
         } else {
@@ -172,31 +172,20 @@ export function VideoUploader({
           </Button>
         </div>
       </div>
-      {/* Индикатор загрузки скрыт по запросу пользователя */}
-      
-      {/* Отображаем URL, если он есть */}
+
       {value && value.trim() !== '' && (
         <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
           <span className="flex-shrink-0">URL:</span>
           <span className="break-all">{value}</span>
         </div>
       )}
-      
+
       {showPreview && previewUrl && (
         <div className="mt-2 border rounded-md p-2 bg-muted/20">
           <div className="text-xs text-muted-foreground mb-1">Предпросмотр видео:</div>
           <div className="relative w-full h-auto rounded-md overflow-hidden bg-muted">
             {isVideoUrl(previewUrl) ? (
               <>
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
-                    <UploadProgress 
-                      isLoading={true} 
-                      size="large" 
-                      label="Загрузка видео..." 
-                    />
-                  </div>
-                )}
                 <video 
                   src={previewUrl} 
                   controls

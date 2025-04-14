@@ -13,15 +13,15 @@ import { UploadProgress } from './UploadProgress';
  */
 export function getProxiedImageUrl(url: string): string {
   if (!url) return '';
-  
+
   // Пропускаем URL, которые уже проксированы
   if (url.startsWith('/api/proxy-image')) return url;
-  
+
   // Для imgur ссылок и других внешних источников используем прокси
   if (url.match(/^https?:\/\//)) {
     return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   }
-  
+
   return url;
 }
 
@@ -68,9 +68,9 @@ export function ImageUploader({
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('image', file);
-      
+
       setIsUploading(true);
-      
+
       try {
         console.log('Отправка запроса на загрузку файла...');
         const response = await axios.post('/api/imgur/upload-file', formData, {
@@ -78,7 +78,7 @@ export function ImageUploader({
             'Content-Type': 'multipart/form-data'
           }
         });
-        
+
         // НОВЫЙ КОД: выводим больше информации для отладки
         console.log('СЫРОЙ ОТВЕТ:', response);
         console.log('DATA:', response.data);
@@ -86,10 +86,10 @@ export function ImageUploader({
         console.log('DUMP FULL JSON:', JSON.stringify(response.data, null, 2));
         console.log('RESPONSE URL:', response.data.url);
         console.log('RESPONSE LINK:', response.data.link);
-        
+
         // Просто берем URL из корня ответа - после изменения серверного кода
         const imageUrl = response.data.url || response.data.link;
-        
+
         if (imageUrl) {
           console.log('ИТОГОВЫЙ URL изображения для вставки (из корня):', imageUrl);
           onChange(imageUrl);
@@ -100,7 +100,7 @@ export function ImageUploader({
             title: 'Успешно',
             description: 'Изображение загружено'
           });
-          
+
           // Очищаем поле выбора файла
           e.target.value = '';
         } else {
@@ -115,7 +115,7 @@ export function ImageUploader({
               console.log('Найден URL в response.data.data.link:', nestedUrl);
             }
           }
-          
+
           if (nestedUrl) {
             console.log('ИТОГОВЫЙ URL изображения для вставки (из data):', nestedUrl);
             onChange(nestedUrl);
@@ -126,7 +126,7 @@ export function ImageUploader({
               title: 'Успешно',
               description: 'Изображение загружено'
             });
-            
+
             // Очищаем поле выбора файла
             e.target.value = '';
           } else {
@@ -202,9 +202,9 @@ export function ImageUploader({
           </Button>
         </div>
       </div>
-      
+
       {/* Индикатор загрузки скрыт по запросу пользователя */}
-      
+
       {/* Отображаем URL, если он есть */}
       {value && value.trim() !== '' && (
         <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
@@ -212,22 +212,13 @@ export function ImageUploader({
           <span className="break-all">{value}</span>
         </div>
       )}
-      
+
       {showPreview && previewUrl && (
         <div className="mt-2 border rounded-md p-2 bg-muted/20">
           <div className="text-xs text-muted-foreground mb-1">Предпросмотр изображения:</div>
           <div className="relative w-full h-40 rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {previewUrl ? (
               <>
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
-                    <UploadProgress 
-                      isLoading={true} 
-                      size="large" 
-                      label="Загрузка изображения..." 
-                    />
-                  </div>
-                )}
                 <img 
                   src={previewUrl} 
                   alt="Предпросмотр" 
