@@ -645,7 +645,11 @@ export class SocialPublishingWithImgurService {
           
           // Обновляем videoUrl и в объекте в хранилище данных
           try {
-            await storage.updateItemById('campaign_content', updatedContent.id, {
+            // Получаем directusCrud из модуля
+            const { directusCrud } = await import('../services/directus-crud');
+            
+            // Используем метод update для обновления записи в коллекции
+            await directusCrud.update('campaign_content', updatedContent.id, {
               videoUrl: imgurUrl
             });
             log(`Поле videoUrl обновлено в БД для контента ${updatedContent.id}`, 'social-publishing');

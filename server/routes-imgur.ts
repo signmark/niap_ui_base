@@ -618,8 +618,11 @@ export function registerImgurRoutes(router: Router) {
             if (contentId) {
               console.log(`Обновляем videoUrl для контента ${contentId} в БД: ${imgurUrl}`);
               
-              // Используем прямой вызов updateItemById для обновления
-              await storage.updateItemById('campaign_content', contentId, {
+              // Получаем directusCrud из модуля
+              const { directusCrud } = await import('./services/directus-crud');
+              
+              // Используем метод update для обновления записи в коллекции
+              await directusCrud.update('campaign_content', contentId, {
                 videoUrl: imgurUrl
               });
               
