@@ -307,8 +307,11 @@ export class InstagramService extends BaseSocialService {
           containerParams.video_url = videoUrl;
           containerParams.media_type = 'REELS';
           
-          // Добавляем thumb_offset для указания кадра для превью (указываем 5 секунд)
-          containerParams.thumb_offset = 5;
+          // Добавляем параметры, специфичные для REELS
+          containerParams.thumb_offset = 0;  // Миниатюра с начала видео
+          containerParams.share_to_feed = 'true'; // Публикация и в ленту
+          
+          this.writeToLogFile(`Используем параметры для REELS: ${JSON.stringify({...containerParams, access_token: 'СКРЫТО'})}`);
           
           // Для видео можно указать thumbnail_url (обложку видео)
           if (imgurContent.imageUrl) {

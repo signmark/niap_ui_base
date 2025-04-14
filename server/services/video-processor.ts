@@ -160,15 +160,74 @@ export class VideoProcessor {
       
       log(`Целевое разрешение: ${targetWidth}x${targetHeight}`, 'video-processor');
       
-      // Формируем команду ffmpeg для преобразования
-      // Стратегия: Масштабирование с сохранением соотношения сторон и добавлением черных полос если нужно
-      const command = `ffmpeg -i "${inputPath}" -vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black" -c:v libx264 -preset fast -crf 22 -c:a aac -b:a 128k "${outputPath}"`;
+      let command = '';
+      
+      // Instagram имеет очень специфичные требования
+      if (platform === 'instagram') {
+        // Специальные настройки для Instagram:
+        // - Строго соблюдаем соотношение сторон 9:16 для Reels
+        // - Используем постоянный битрейт (не слишком высокий) для совместимости
+        // - Кодек H.264 в профиле High с уровнем 4.0
+        // - Частота кадров 30 fps
+        // - Лимитируем размер файла для уменьшения шансов отклонения Instagram
+        command = `ffmpeg -i "${inputPath}" `
+          + `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,fps=30" `
+          + `-c:v libx264 -profile:v high -level:v 4.0 -b:v 3500k -bufsize 7000k -maxrate 5000k `
+          + `-pix_fmt yuv420p -movflags +faststart `
+          + `-c:a aac -b:a 128k -ar 44100 `
+          + `-metadata:s:v:0 rotate=0 `
+          + `-t 60 ` // Ограничиваем до 60 секунд для большей совместимости
+          + `"${outputPath}"`;
+      } else {
+        // Стандартная команда для других платформ
+        command = `ffmpeg -i "${inputPath}" `
+          + `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black" `
+          + `-c:v libx264 -preset fast -crf 22 `
+          + `-c:a aac -b:a 128k `
+          + `"${outputPath}"`;
+      }
       
       log(`Команда конвертации: ${command}`, 'video-processor');
       
       await execAsync(command);
       
       log(`Видео успешно преобразовано: ${outputPath}`, 'video-processor');
+      
+      // Проверяем размер файла для Instagram
+      if (platform === 'instagram') {
+        try {
+          const stats = fs.statSync(outputPath);
+          const fileSizeInMB = stats.size / (1024 * 1024);
+          log(`Размер обработанного видео: ${fileSizeInMB.toFixed(2)} MB`, 'video-processor');
+          
+          // Если файл слишком большой, повторно обрабатываем с более низким битрейтом
+          if (fileSizeInMB > 90) {
+            log(`Видео слишком большое (${fileSizeInMB.toFixed(2)} MB), уменьшаем битрейт`, 'video-processor');
+            
+            const reprocessPath = path.join(this.tempDir, `reprocessed_${uuidv4()}.mp4`);
+            
+            // Более строгое сжатие для больших файлов
+            const reprocessCommand = `ffmpeg -i "${outputPath}" `
+              + `-vf "scale=${targetWidth}:${targetHeight}" `
+              + `-c:v libx264 -profile:v main -level:v 3.1 -b:v 2000k -bufsize 4000k -maxrate 2500k `
+              + `-pix_fmt yuv420p -movflags +faststart `
+              + `-c:a aac -b:a 96k -ar 44100 `
+              + `-metadata:s:v:0 rotate=0 `
+              + `"${reprocessPath}"`;
+            
+            await execAsync(reprocessCommand);
+            
+            // Удаляем первую версию
+            if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            
+            // Используем новую версию
+            return reprocessPath;
+          }
+        } catch (statError) {
+          log(`Ошибка при проверке размера файла: ${statError}`, 'video-processor');
+          // Продолжаем с существующим файлом
+        }
+      }
       
       return outputPath;
     } catch (error) {
