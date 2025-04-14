@@ -151,26 +151,25 @@ export function VideoUploader({
             disabled={isUploading}
             aria-label="Загрузить видео"
           />
-          {isUploading ? (
-            <div className="h-9 w-9 border rounded-md flex items-center justify-center bg-muted">
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="icon"
+            className="h-9 w-9 flex items-center justify-center"
+            tabIndex={-1}
+            aria-hidden="true"
+            disabled={isUploading}
+          >
+            <span className="sr-only">Загрузить</span>
+            {isUploading ? (
               <div 
                 className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
                 aria-hidden="true" 
               />
-            </div>
-          ) : (
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon"
-              className="h-9 w-9 flex items-center justify-center"
-              tabIndex={-1}
-              aria-hidden="true"
-            >
-              <span className="sr-only">Загрузить</span>
+            ) : (
               <Upload className="h-4 w-4" />
-            </Button>
-          )}
+            )}
+          </Button>
         </div>
       </div>
       {/* Индикатор загрузки скрыт по запросу пользователя */}
