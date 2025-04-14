@@ -1024,8 +1024,25 @@ export class TelegramService extends BaseSocialService {
       // Обрабатываем контент
       const processedContent = this.processAdditionalImages(content, 'telegram');
       
+      // Обрабатываем видео URL, если он есть
+      if (processedContent.videoUrl) {
+        log(`Обнаружено видео в контенте: ${processedContent.videoUrl}`, 'social-publishing');
+        // Если это локальный путь, добавляем к нему базовый URL
+        if (!processedContent.videoUrl.startsWith('http')) {
+          const baseAppUrl = this.getAppBaseUrl();
+          processedContent.videoUrl = `${baseAppUrl}${processedContent.videoUrl.startsWith('/') ? '' : '/'}${processedContent.videoUrl}`;
+          log(`Исправлен URL для видео: ${processedContent.videoUrl}`, 'social-publishing');
+        }
+      }
+      
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
+      
+      // Сохраняем обработанное видео URL после обработки изображений на Imgur
+      if (processedContent.videoUrl) {
+        imgurContent.videoUrl = processedContent.videoUrl;
+        log(`Сохранен видео URL после обработки Imgur: ${imgurContent.videoUrl}`, 'social-publishing');
+      }
       
       // Подготавливаем текст для отправки
       let text = '';
@@ -1144,7 +1161,7 @@ export class TelegramService extends BaseSocialService {
             platform: 'telegram',
             status: 'published',
             publishedAt: new Date(),
-            postUrl: imagesSentResult.messageUrl || (imagesSentResult.messageId ? this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId) : undefined)
+            postUrl: imagesSentResult.messageUrl || (imagesSentResult.messageId ? this.generatePostUrl(chatId, formattedChatId, imagesSentResult.messageId) : '')
           };
         } else {
           // Если возникла проблема с отправкой изображений, попробуем отправить только текст
