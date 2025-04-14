@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, VideoIcon } from "lucide-react";
+import { Upload, VideoIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
@@ -45,6 +45,7 @@ export function VideoUploader({
 }: VideoUploaderProps) {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Для загрузки превью видео
   const [showPreview, setShowPreview] = useState(forcePreview);
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
@@ -119,6 +120,16 @@ export function VideoUploader({
     }
   };
 
+  // Обработчик начала загрузки видео
+  const handleVideoLoadStart = () => {
+    setIsLoading(true);
+  };
+
+  // Обработчик окончания загрузки видео
+  const handleVideoLoaded = () => {
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-2 w-full">
       <div className="flex gap-2 w-full">
@@ -154,6 +165,14 @@ export function VideoUploader({
         </div>
       </div>
       
+      {/* Индикатор загрузки */}
+      {isUploading && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Выполняется загрузка видео...</span>
+        </div>
+      )}
+      
       {/* Всегда отображаем URL, если он есть */}
       {value && value.trim() !== '' && (
         <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
@@ -166,19 +185,32 @@ export function VideoUploader({
           <div className="text-xs text-muted-foreground mb-1">Предпросмотр видео:</div>
           <div className="relative w-full h-auto rounded-md overflow-hidden bg-muted">
             {isVideoUrl(previewUrl) ? (
-              <video 
-                src={previewUrl} 
-                controls
-                preload="metadata"
-                className="max-w-full h-auto max-h-60"
-                onError={() => {
-                  toast({
-                    title: 'Ошибка загрузки превью',
-                    description: 'Не удалось загрузить видео для предпросмотра',
-                    variant: 'destructive'
-                  });
-                }}
-              ></video>
+              <>
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="text-sm">Загрузка видео...</span>
+                    </div>
+                  </div>
+                )}
+                <video 
+                  src={previewUrl} 
+                  controls
+                  preload="metadata"
+                  className="max-w-full h-auto max-h-60"
+                  onLoadStart={handleVideoLoadStart}
+                  onLoadedData={handleVideoLoaded}
+                  onError={() => {
+                    setIsLoading(false);
+                    toast({
+                      title: 'Ошибка загрузки превью',
+                      description: 'Не удалось загрузить видео для предпросмотра',
+                      variant: 'destructive'
+                    });
+                  }}
+                ></video>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
                 <VideoIcon className="h-10 w-10 mb-2" />
