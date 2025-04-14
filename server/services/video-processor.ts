@@ -183,26 +183,62 @@ export class VideoProcessor {
    * @returns URL загруженного видео или null в случае ошибки
    */
   private async uploadToS3(filePath: string): Promise<string | null> {
-    // Здесь должен быть код для загрузки на Beget S3
-    // Используем временное решение с локальным хостингом файла
     try {
-      // Генерируем имя для файла в хранилище
-      const fileName = `processed_${path.basename(filePath)}`;
+      // Импортируем сервис для работы с Beget S3
+      const { begetS3VideoService } = await import('./beget-s3-video-service');
       
-      // Копируем файл в публичную директорию или загружаем через API
-      const publicPath = `/uploads/${fileName}`; // Относительный путь для доступа
-      fs.copyFileSync(filePath, `.${publicPath}`); // Копируем в публичную директорию
+      log(`Загрузка видео на Beget S3: ${filePath}`, 'video-processor');
       
-      // Возвращаем URL для доступа к файлу через веб-сервер
-      const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-      const fileUrl = `${baseUrl}${publicPath}`;
+      // Используем сервис для загрузки видео в Beget S3
+      const result = await begetS3VideoService.uploadLocalVideo(filePath, false);
       
-      log(`Видео доступно по URL: ${fileUrl}`, 'video-processor');
+      if (!result.success || !result.videoUrl) {
+        log(`Ошибка при загрузке видео на Beget S3: ${result.error}`, 'video-processor');
+        
+        // Резервный вариант - сохраняем локально
+        log(`Используем резервный метод локального хранения`, 'video-processor');
+        
+        // Генерируем имя для файла в хранилище
+        const fileName = `processed_${path.basename(filePath)}`;
+        
+        // Копируем файл в публичную директорию
+        const publicPath = `/uploads/${fileName}`; // Относительный путь для доступа
+        fs.copyFileSync(filePath, `.${publicPath}`); // Копируем в публичную директорию
+        
+        // Возвращаем URL для доступа к файлу через веб-сервер
+        const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+        const fileUrl = `${baseUrl}${publicPath}`;
+        
+        log(`Видео доступно локально по URL: ${fileUrl}`, 'video-processor');
+        
+        return fileUrl;
+      }
       
-      return fileUrl;
+      log(`Видео успешно загружено на Beget S3: ${result.videoUrl}`, 'video-processor');
+      return result.videoUrl;
     } catch (error) {
       log(`Ошибка при загрузке видео на S3: ${error}`, 'video-processor');
-      return null;
+      
+      // Резервный вариант с локальным хранением
+      try {
+        // Генерируем имя для файла в хранилище
+        const fileName = `processed_${path.basename(filePath)}`;
+        
+        // Копируем файл в публичную директорию
+        const publicPath = `/uploads/${fileName}`; // Относительный путь для доступа
+        fs.copyFileSync(filePath, `.${publicPath}`); // Копируем в публичную директорию
+        
+        // Возвращаем URL для доступа к файлу через веб-сервер
+        const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+        const fileUrl = `${baseUrl}${publicPath}`;
+        
+        log(`Видео доступно локально по URL (резервный вариант): ${fileUrl}`, 'video-processor');
+        
+        return fileUrl;
+      } catch (backupError) {
+        log(`Критическая ошибка при резервном сохранении: ${backupError}`, 'video-processor');
+        return null;
+      }
     }
   }
   
