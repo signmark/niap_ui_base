@@ -46,6 +46,8 @@ import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
 import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
+import { VideoUploader } from "@/components/VideoUploader";
+import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
@@ -229,6 +231,7 @@ export default function ContentPage() {
     imageUrl: "",
     additionalImages: [] as string[], // Массив URL-адресов дополнительных изображений
     videoUrl: "",
+    additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
   });
@@ -350,6 +353,7 @@ export default function ContentPage() {
             imageUrl: "",
             additionalImages: [],
             videoUrl: "",
+            additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
             keywords: []
           });
