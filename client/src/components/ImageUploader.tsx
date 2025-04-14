@@ -180,30 +180,33 @@ export function ImageUploader({
             disabled={isUploading}
             aria-label="Загрузить изображение"
           />
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="icon"
-            className="h-9 w-9 flex items-center justify-center"
-            disabled={isUploading}
-            tabIndex={-1}
-            aria-hidden="true"
-          >
-            <span className="sr-only">Загрузить</span>
-            {isUploading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            ) : (
+          {isUploading ? (
+            <div className="h-9 w-9 border rounded-md flex items-center justify-center bg-muted">
+              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="icon"
+              className="h-9 w-9 flex items-center justify-center"
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              <span className="sr-only">Загрузить</span>
               <Upload className="h-4 w-4" />
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
       </div>
       
       {/* Индикатор загрузки */}
       {isUploading && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Выполняется загрузка изображения...</span>
+          <span className="inline-flex">
+            <Loader2 className="h-3 w-3 animate-spin" />
+          </span>
+          <span className="inline-block">Выполняется загрузка изображения...</span>
         </div>
       )}
       
@@ -222,9 +225,9 @@ export function ImageUploader({
               <>
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <span className="text-sm">Загрузка изображения...</span>
+                    <div className="flex flex-col items-center gap-2" role="status" aria-label="Загрузка изображения">
+                      <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm text-center">Загрузка изображения...</span>
                     </div>
                   </div>
                 )}
