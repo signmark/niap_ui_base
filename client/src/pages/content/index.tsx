@@ -1722,21 +1722,7 @@ export default function ContentPage() {
                 </div>
               )}
               
-              {/* Универсальное поле additional_media */}
-              <div className="mt-6 space-y-2 border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="additionalMedia">Универсальные медиа-файлы</Label>
-                  <Badge variant="outline" className="text-xs">Новое</Badge>
-                </div>
-                <AdditionalMediaUploader
-                  media={currentContent.additionalMedia || []}
-                  onChange={(media) => setCurrentContentSafe({...currentContent, additionalMedia: media})}
-                  label="Изображения и видео"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Добавьте дополнительные изображения и видео для публикации в социальных сетях
-                </p>
-              </div>
+              {/* Скрыли универсальное поле additional_media */}
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">

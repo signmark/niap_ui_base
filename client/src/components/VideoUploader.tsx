@@ -178,9 +178,7 @@ export function VideoUploader({
                     variant: 'destructive'
                   });
                 }}
-              >
-                Ваш браузер не поддерживает отображение видео
-              </video>
+              ></video>
             ) : (
               <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
                 <VideoIcon className="h-10 w-10 mb-2" />
