@@ -46,6 +46,8 @@ import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
 import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
+import { VideoUploader } from "@/components/VideoUploader";
+import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
@@ -229,6 +231,7 @@ export default function ContentPage() {
     imageUrl: "",
     additionalImages: [] as string[], // Массив URL-адресов дополнительных изображений
     videoUrl: "",
+    additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
   });
@@ -350,6 +353,7 @@ export default function ContentPage() {
             imageUrl: "",
             additionalImages: [],
             videoUrl: "",
+            additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
             keywords: []
           });
@@ -721,6 +725,7 @@ export default function ContentPage() {
       imageUrl: currentContent.imageUrl,
       additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
       videoUrl: currentContent.videoUrl,
+      additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
@@ -1412,11 +1417,23 @@ export default function ContentPage() {
             {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
               <div className="space-y-2">
                 <Label htmlFor="videoUrl">URL видео</Label>
-                <Input
+                <VideoUploader
                   id="videoUrl"
-                  placeholder="Введите URL видео"
                   value={newContent.videoUrl}
-                  onChange={(e) => setNewContent({...newContent, videoUrl: e.target.value})}
+                  onChange={(url) => setNewContent({...newContent, videoUrl: url})}
+                  placeholder="Введите URL видео или загрузите файл"
+                  forcePreview={true}
+                />
+              </div>
+            )}
+            
+            {/* Дополнительные видео */}
+            {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
+              <div className="space-y-2">
+                <AdditionalVideosUploader
+                  videos={newContent.additionalVideos}
+                  onChange={(videos) => setNewContent({...newContent, additionalVideos: videos})}
+                  label="Дополнительные видео"
                 />
               </div>
             )}
@@ -1680,14 +1697,26 @@ export default function ContentPage() {
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
                 <div className="space-y-2">
                   <Label htmlFor="videoUrl">URL видео</Label>
-                  <Input
+                  <VideoUploader
                     id="videoUrl"
-                    placeholder="Введите URL видео"
                     value={currentContent.videoUrl || ""}
-                    onChange={(e) => {
-                      const updatedContent = {...currentContent, videoUrl: e.target.value};
+                    onChange={(url) => {
+                      const updatedContent = {...currentContent, videoUrl: url};
                       setCurrentContentSafe(updatedContent);
                     }}
+                    placeholder="Введите URL видео или загрузите файл"
+                    forcePreview={true}
+                  />
+                </div>
+              )}
+              
+              {/* Дополнительные видео */}
+              {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
+                <div className="space-y-2">
+                  <AdditionalVideosUploader
+                    videos={currentContent.additionalVideos || []}
+                    onChange={(videos) => setCurrentContentSafe({...currentContent, additionalVideos: videos})}
+                    label="Дополнительные видео"
                   />
                 </div>
               )}

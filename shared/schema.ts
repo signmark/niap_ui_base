@@ -198,6 +198,7 @@ export const campaignContent = pgTable("campaign_content", {
   imageUrl: text("image_url"),
   additionalImages: text("additional_images").array(), // Массив URL-адресов дополнительных изображений (в БД - additional_images)
   videoUrl: text("video_url"),
+  additionalMedia: jsonb("additional_media"), // Структурированное хранение медиа-файлов различных типов
   prompt: text("prompt"),
   keywords: text("keywords").array(),
   hashtags: text("hashtags").array(), // Хэштеги для использования в социальных сетях
@@ -239,6 +240,7 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     imageUrl: true,
     additionalImages: true,
     videoUrl: true,
+    additionalMedia: true,
     prompt: true,
     keywords: true,
     hashtags: true,

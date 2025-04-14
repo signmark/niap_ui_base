@@ -71,6 +71,14 @@ export interface PlatformPublishInfo {
 export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed';
 
 // Интерфейс для контента кампании
+// Тип для медиа-файла
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  title?: string;
+  description?: string;
+}
+
 export interface CampaignContent {
   id: string;
   title: string;
@@ -80,7 +88,10 @@ export interface CampaignContent {
   createdAt: string;
   updatedAt?: string | null;
   imageUrl?: string | null;
+  additionalImages?: string[] | null; // Для обратной совместимости
   videoUrl?: string | null;
+  additionalVideos?: string[] | null; // Для обратной совместимости
+  additionalMedia?: MediaItem[] | null; // Новое универсальное поле для всех типов медиа
   imagePrompt?: string | null;
   status: ContentStatus;
   keywords?: string[];
