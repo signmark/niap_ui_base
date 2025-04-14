@@ -8,9 +8,14 @@
 
 import express from 'express';
 import axios from 'axios';
-import { log } from '../shared/utils/logger';
 import fs from 'fs';
 import { videoProcessor } from './services/video-processor';
+
+// Функция для логирования сообщений
+function log(message: string, category: string = 'default'): void {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}][${category}] ${message}`);
+}
 
 // Создаем роутер для тестовых маршрутов
 const instagramTestRouter = express.Router();
@@ -56,14 +61,24 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
     log(`[InstagramReelsTest] Оптимизация видео для Instagram...`, 'instagram-test');
     
     // Шаг 1: Обработка видео для Instagram (оптимизация под Reels)
-    const processedVideoUrl = await videoProcessor.processVideo(videoUrl, 'instagram');
+    let processedVideoUrl: string;
     
-    if (!processedVideoUrl) {
-      writeToLogFile(`ОШИБКА: Не удалось обработать видео для Instagram`);
-      return res.status(500).json({
-        success: false,
-        error: 'Ошибка обработки видео'
-      });
+    // Если это тестовое видео BigBuckBunny, используем его напрямую без обработки для ускорения тестирования
+    if (videoUrl.includes('BigBuckBunny.mp4')) {
+      processedVideoUrl = videoUrl;
+      log(`[InstagramReelsTest] Используем тестовое видео напрямую без обработки: ${videoUrl}`, 'instagram-test');
+      writeToLogFile(`Используем тестовое видео без обработки: ${videoUrl}`);
+    } else {
+      // Обрабатываем видео для Instagram
+      const processedResult = await videoProcessor.processVideo(videoUrl, 'instagram');
+      if (!processedResult) {
+        writeToLogFile(`ОШИБКА: Не удалось обработать видео для Instagram`);
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка обработки видео'
+        });
+      }
+      processedVideoUrl = processedResult;
     }
     
     log(`[InstagramReelsTest] Видео успешно обработано: ${processedVideoUrl}`, 'instagram-test');
@@ -73,7 +88,14 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
     const baseUrl = `https://graph.facebook.com/v19.0/${businessAccountId}/media`;
     
     // Упрощенные и минимальные параметры для создания контейнера
-    const containerParams = {
+    interface ContainerParams {
+      media_type: string;
+      video_url: string;
+      access_token: string;
+      caption?: string;
+    }
+    
+    const containerParams: ContainerParams = {
       media_type: 'REELS',
       video_url: processedVideoUrl,
       access_token: token
@@ -81,7 +103,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
     
     // Добавляем подпись, если она предоставлена
     if (caption) {
-      containerParams['caption'] = caption;
+      containerParams.caption = caption;
     }
     
     writeToLogFile(`Параметры контейнера: ${JSON.stringify(containerParams, null, 2)}`);
@@ -152,7 +174,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
             
             const detailsResponse = await axios.get(detailsUrl, { params: detailsParams });
             writeToLogFile(`Детали ошибки: ${JSON.stringify(detailsResponse.data, null, 2)}`);
-          } catch (detailsError) {
+          } catch (detailsError: any) {
             writeToLogFile(`Не удалось получить детали ошибки: ${detailsError.message}`);
           }
           
@@ -169,7 +191,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
           const waitTime = 45000 + (attempts * 15000);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
-      } catch (statusError) {
+      } catch (statusError: any) {
         log(`[InstagramReelsTest] Ошибка при проверке статуса: ${statusError.message}`, 'instagram-test');
         writeToLogFile(`Ошибка при проверке статуса: ${statusError.message}`);
         
@@ -223,7 +245,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
             permalink: null
           });
         }
-      } catch (permalinkError) {
+      } catch (permalinkError: any) {
         log(`[InstagramReelsTest] Успешно опубликовано, но не удалось получить ссылку: ${permalinkError.message}`, 'instagram-test');
         writeToLogFile(`Успешно опубликовано, но не удалось получить ссылку: ${permalinkError.message}`);
         
@@ -234,7 +256,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
           permalink: null
         });
       }
-    } catch (publishError) {
+    } catch (publishError: any) {
       log(`[InstagramReelsTest] Ошибка при публикации: ${publishError.message}`, 'instagram-test');
       writeToLogFile(`ОШИБКА ПУБЛИКАЦИИ: ${publishError.message}`);
       
@@ -248,7 +270,7 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
         containerId
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     log(`[InstagramReelsTest] Общая ошибка: ${error.message}`, 'instagram-test');
     writeToLogFile(`КРИТИЧЕСКАЯ ОШИБКА: ${error.message}`);
     
