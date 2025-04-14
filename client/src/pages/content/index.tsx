@@ -48,6 +48,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
 import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
+import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
@@ -1710,7 +1711,7 @@ export default function ContentPage() {
                 </div>
               )}
               
-              {/* Дополнительные видео */}
+              {/* Дополнительные видео - устаревший компонент */}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
                 <div className="space-y-2">
                   <AdditionalVideosUploader
@@ -1720,6 +1721,8 @@ export default function ContentPage() {
                   />
                 </div>
               )}
+              
+              {/* Скрыли универсальное поле additional_media */}
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">

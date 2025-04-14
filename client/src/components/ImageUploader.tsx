@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, ImageIcon } from "lucide-react";
+import { Upload, ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
@@ -41,6 +41,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Для загрузки превью изображения
   const [showPreview, setShowPreview] = useState(forcePreview);
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
@@ -149,6 +150,16 @@ export function ImageUploader({
     }
   };
 
+  // Обработчик начала загрузки изображения
+  const handleImageLoadStart = () => {
+    setIsLoading(true);
+  };
+
+  // Обработчик окончания загрузки изображения
+  const handleImageLoaded = () => {
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-2 w-full">
       <div className="flex gap-2 w-full">
@@ -159,22 +170,26 @@ export function ImageUploader({
           onChange={(e) => onChange(e.target.value)}
           className="flex-1"
         />
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Input
             type="file"
             accept="image/*"
             id={`${id}-upload`}
-            className="absolute inset-0 opacity-0 w-full cursor-pointer"
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             onChange={handleFileUpload}
             disabled={isUploading}
+            aria-label="Загрузить изображение"
           />
           <Button 
             type="button" 
             variant="outline" 
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 flex items-center justify-center"
             disabled={isUploading}
+            tabIndex={-1}
+            aria-hidden="true"
           >
+            <span className="sr-only">Загрузить</span>
             {isUploading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             ) : (
@@ -183,6 +198,14 @@ export function ImageUploader({
           </Button>
         </div>
       </div>
+      
+      {/* Индикатор загрузки */}
+      {isUploading && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Выполняется загрузка изображения...</span>
+        </div>
+      )}
       
       {/* Всегда отображаем URL, если он есть */}
       {value && value.trim() !== '' && (
@@ -196,18 +219,31 @@ export function ImageUploader({
           <div className="text-xs text-muted-foreground mb-1">Предпросмотр изображения:</div>
           <div className="relative w-full h-40 rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {previewUrl ? (
-              <img 
-                src={previewUrl} 
-                alt="Предпросмотр" 
-                className="max-h-full max-w-full object-contain"
-                onError={() => {
-                  toast({
-                    title: 'Ошибка загрузки превью',
-                    description: 'Не удалось загрузить изображение для предпросмотра',
-                    variant: 'destructive'
-                  });
-                }}
-              />
+              <>
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="text-sm">Загрузка изображения...</span>
+                    </div>
+                  </div>
+                )}
+                <img 
+                  src={previewUrl} 
+                  alt="Предпросмотр" 
+                  className="max-h-full max-w-full object-contain"
+                  onLoadStart={handleImageLoadStart}
+                  onLoad={handleImageLoaded}
+                  onError={() => {
+                    setIsLoading(false);
+                    toast({
+                      title: 'Ошибка загрузки превью',
+                      description: 'Не удалось загрузить изображение для предпросмотра',
+                      variant: 'destructive'
+                    });
+                  }}
+                />
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center text-muted-foreground">
                 <ImageIcon className="h-10 w-10 mb-2" />
