@@ -1854,8 +1854,39 @@ export class SocialPublishingWithImgurService {
       formData.append('access_token', token);
       formData.append('v', '5.131'); // Версия API VK
       
-      // Обработка изображений
+      // Массив для хранения вложений (фото, видео и т.д.)
       const attachments: string[] = [];
+      
+      // Обработка видео, если оно есть (приоритет перед изображениями)
+      if (processedContent.videoUrl) {
+        try {
+          // Логируем наличие видео для публикации
+          log(`Обнаружено видео для публикации в ВК: ${processedContent.videoUrl}`, 'social-publishing');
+          
+          // Загружаем видео в ВКонтакте
+          const videoAttachment = await this.uploadVideoToVk(
+            token,
+            groupId,
+            processedContent.videoUrl,
+            processedContent.title || 'Видео'
+          );
+          
+          // Если видео успешно загружено, добавляем его в список вложений
+          if (videoAttachment) {
+            attachments.push(videoAttachment);
+            log(`Видео успешно загружено и добавлено в attachments для ВК: ${videoAttachment}`, 'social-publishing');
+          } else {
+            log('Не удалось загрузить видео в ВК, продолжаем с обработкой изображений', 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+          log('Продолжаем с обработкой изображений', 'social-publishing');
+        }
+      } else {
+        log('Видео не обнаружено, продолжаем с обработкой изображений', 'social-publishing');
+      }
+      
+      // Обработка изображений (если нет видео или оно не загрузилось)
       
       // Загрузка основного изображения, если оно есть
       if (processedContent.imageUrl) {
