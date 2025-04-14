@@ -838,6 +838,72 @@ export class SocialPublishingWithImgurService {
    * @returns Корректно форматированный URL
    * @throws Error если messageId не указан - согласно требованию TELEGRAM_POSTING_ALGORITHM.md
    */
+  /**
+   * Загружает видео в ВКонтакте и возвращает строку attachment для включения в пост
+   * @param token Токен доступа ВКонтакте
+   * @param groupId ID группы или сообщества
+   * @param videoUrl URL видео для загрузки
+   * @param title Название видео (опционально)
+   * @returns Строка attachment для видео или null в случае ошибки
+   */
+  private async uploadVideoToVk(
+    token: string,
+    groupId: string | number,
+    videoUrl: string,
+    title?: string
+  ): Promise<string | null> {
+    try {
+      log(`Начинаем загрузку видео в ВК: ${videoUrl.substring(0, 100)}...`, 'social-publishing');
+      
+      // Шаг 1: Получение сервера для загрузки видео
+      const getUploadServerResponse = await axios.get('https://api.vk.com/method/video.save', {
+        params: {
+          access_token: token,
+          group_id: groupId,
+          name: title || 'Видео',
+          description: title || 'Видео из SMM Manager',
+          is_private: 0,
+          wallpost: 0, // Не публиковать на стене автоматически
+          v: '5.131'
+        }
+      });
+      
+      // Проверяем ответ на наличие данных для загрузки
+      if (!getUploadServerResponse.data || !getUploadServerResponse.data.response || !getUploadServerResponse.data.response.upload_url) {
+        log(`Ошибка получения сервера для загрузки видео в ВК: ${JSON.stringify(getUploadServerResponse.data)}`, 'social-publishing');
+        return null;
+      }
+      
+      const uploadUrl = getUploadServerResponse.data.response.upload_url;
+      log(`Получен URL для загрузки видео в ВК: ${uploadUrl}`, 'social-publishing');
+      
+      // Шаг 2: Загружаем видео на сервер ВК
+      // Для этого используем прямую передачу URL, т.к. VK поддерживает загрузку по ссылке
+      const uploadResponse = await axios.post(uploadUrl, { 
+        video_file: videoUrl 
+      });
+      
+      // Проверка успешности загрузки
+      if (!uploadResponse.data || (uploadResponse.data.error && !uploadResponse.data.video_id)) {
+        log(`Ошибка загрузки видео в ВК: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+        return null;
+      }
+      
+      // Видео загружено успешно, формируем строку attachment
+      // Формат: video{owner_id}_{video_id}
+      const videoId = uploadResponse.data.video_id;
+      const ownerId = uploadResponse.data.owner_id || `-${groupId}`;
+      const attachment = `video${ownerId}_${videoId}`;
+      
+      log(`Видео успешно загружено в ВК: ${attachment}`, 'social-publishing');
+      return attachment;
+      
+    } catch (error: any) {
+      log(`Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+      return null;
+    }
+  }
+  
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId: number | string): string {
     // КРИТИЧЕСКОЕ ТРЕБОВАНИЕ: messageId должен быть указан всегда!
     if (!messageId) {
