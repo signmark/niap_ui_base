@@ -968,13 +968,37 @@ export class PublishScheduler {
           
           const unpublishedPlatforms = allPlatforms.filter(p => !publishedPlatforms.includes(p));
           
-          // Проверяем для каждой непубликованной платформы, наступило ли время публикации
+          // Улучшенная проверка для непубликованных платформ
           const pendingPublications = unpublishedPlatforms.filter(platform => {
             const platformData = (freshContent.socialPlatforms as any)[platform];
-            if (!platformData || !platformData.scheduledAt) return false;
+            if (!platformData) return false;
             
-            const platformTime = new Date(platformData.scheduledAt);
-            return platformTime > new Date(); // Время публикации ещё не наступило
+            // Если платформа находится в статусе pending, считаем её ожидающей публикации
+            if (platformData.status === 'pending') {
+              // Если есть scheduledAt, проверяем время
+              if (platformData.scheduledAt) {
+                const platformTime = new Date(platformData.scheduledAt);
+                const now = new Date();
+                log(`Проверка времени для непубликованной платформы ${platform}: ${platformTime.toISOString()} vs ${now.toISOString()}`, 'scheduler');
+                
+                // Проверяем, наступило ли время публикации или еще нет
+                if (platformTime > now) {
+                  // Время публикации ещё не наступило, считаем платформу ожидающей
+                  log(`Платформа ${platform} запланирована на будущее время: ${platformTime.toISOString()}`, 'scheduler');
+                  return true;
+                } else {
+                  // Время публикации наступило, но платформа не опубликована - возможно, была ошибка или задержка
+                  log(`Платформа ${platform} должна была быть опубликована в ${platformTime.toISOString()}, но всё ещё в статусе pending`, 'scheduler');
+                  return true; // Всё равно считаем ожидающей, так как статус pending
+                }
+              } else {
+                // У платформы нет scheduledAt, но она в статусе pending - считаем ожидающей
+                log(`Платформа ${platform} в статусе pending без установленного времени публикации`, 'scheduler');
+                return true;
+              }
+            }
+            
+            return false; // Если платформа не в статусе pending, не считаем её ожидающей
           });
           
           log(`Контент ${content.id}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length} платформ, ожидает публикации: ${pendingPublications.length}`, 'scheduler');
