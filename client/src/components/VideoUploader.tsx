@@ -1,0 +1,190 @@
+import { useState, useEffect } from 'react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Upload, VideoIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+
+/**
+ * Утилита для проверки URL на видео-формат
+ * @param url URL для проверки
+ * @returns true если URL указывает на видеофайл
+ */
+export function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  
+  // Проверяем расширение файла или URL
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv'];
+  const hasVideoExtension = videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  
+  // Проверяем, является ли URL ссылкой на S3 хранилище Beget
+  const isBegetS3Url = url.includes('s3.ru1.storage.beget.cloud');
+  
+  // Проверяем URL видеохостингов
+  const isVideoHosting = url.includes('youtube.com/watch') || 
+                         url.includes('youtu.be/') || 
+                         url.includes('vimeo.com/');
+  
+  return hasVideoExtension || isBegetS3Url || isVideoHosting;
+}
+
+interface VideoUploaderProps {
+  value: string;
+  onChange: (url: string) => void;
+  placeholder?: string;
+  id?: string;
+  forcePreview?: boolean;
+}
+
+export function VideoUploader({ 
+  value, 
+  onChange, 
+  placeholder = "Введите URL видео", 
+  id, 
+  forcePreview = false 
+}: VideoUploaderProps) {
+  const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const [showPreview, setShowPreview] = useState(forcePreview);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [displayUrl, setDisplayUrl] = useState<string>('');
+
+  // Обновляем превью и отображение URL при изменении значения
+  useEffect(() => {
+    if (value && value.trim() !== '') {
+      setPreviewUrl(value);
+      setShowPreview(forcePreview || showPreview);
+      setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
+    } else {
+      setShowPreview(false);
+      setPreviewUrl('');
+      setDisplayUrl('');
+    }
+  }, [value, forcePreview]);
+
+  // Обработка загрузки файла
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('video', file);
+      
+      setIsUploading(true);
+      
+      try {
+        console.log('Отправка запроса на загрузку видео файла...');
+        const response = await axios.post('/api/beget-s3/upload-video', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        console.log('Ответ от API загрузки видео:', response.data);
+        
+        if (response.data && response.data.success && response.data.url) {
+          const videoUrl = response.data.url;
+          onChange(videoUrl);
+          setPreviewUrl(videoUrl);
+          setShowPreview(true);
+          toast({
+            title: 'Успешно',
+            description: 'Видео загружено на S3'
+          });
+          
+          // Очищаем поле выбора файла
+          e.target.value = '';
+        } else {
+          console.error('Не удалось извлечь URL видео из ответа сервера');
+          toast({
+            title: 'Ошибка',
+            description: response.data?.error || 'Не удалось загрузить видео. Попробуйте другой формат.',
+            variant: 'destructive'
+          });
+        }
+      } catch (error: any) {
+        console.error('Ошибка при загрузке видео:', error);
+        toast({
+          title: 'Ошибка',
+          description: error.response?.data?.error || error.message || 'Ошибка при загрузке видео',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-2 w-full">
+      <div className="flex gap-2 w-full">
+        <Input
+          id={id}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1"
+        />
+        <div className="relative">
+          <Input
+            type="file"
+            accept="video/*"
+            id={`${id}-upload`}
+            className="absolute inset-0 opacity-0 w-full cursor-pointer"
+            onChange={handleFileUpload}
+            disabled={isUploading}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="icon"
+            className="h-9 w-9"
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {/* Всегда отображаем URL, если он есть */}
+      {value && value.trim() !== '' && (
+        <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
+          URL: {value}
+        </div>
+      )}
+      
+      {showPreview && previewUrl && (
+        <div className="mt-2 border rounded-md p-2 bg-muted/20">
+          <div className="text-xs text-muted-foreground mb-1">Предпросмотр видео:</div>
+          <div className="relative w-full h-auto rounded-md overflow-hidden bg-muted">
+            {isVideoUrl(previewUrl) ? (
+              <video 
+                src={previewUrl} 
+                controls
+                preload="metadata"
+                className="max-w-full h-auto max-h-60"
+                onError={() => {
+                  toast({
+                    title: 'Ошибка загрузки превью',
+                    description: 'Не удалось загрузить видео для предпросмотра',
+                    variant: 'destructive'
+                  });
+                }}
+              >
+                Ваш браузер не поддерживает отображение видео
+              </video>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
+                <VideoIcon className="h-10 w-10 mb-2" />
+                <span>Не удалось отобразить превью видео</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
