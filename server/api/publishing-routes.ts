@@ -1011,10 +1011,36 @@ export function registerPublishingRoutes(app: Express): void {
             mergedSocialPlatforms[platform] = data;
           });
           
+          // Если поля socialPlatforms пустое или не содержит данных о времени публикации,
+          // но указано общее время scheduledAt, применяем это время ко всем платформам
+          const scheduledAtDate = new Date(scheduledAt);
+          log(`Установлено общее время публикации: ${scheduledAtDate.toISOString()}`, 'api');
+          
+          // Получаем список всех платформ для публикации
+          const allPlatforms = Object.keys(mergedSocialPlatforms);
+          
+          // Для каждой платформы проверяем наличие своего scheduledAt
+          allPlatforms.forEach(platform => {
+            if (!mergedSocialPlatforms[platform]) {
+              // Если платформа указана, но нет данных, создаем объект
+              mergedSocialPlatforms[platform] = {
+                platform: platform,
+                status: 'pending',
+                scheduledAt: scheduledAtDate.toISOString()
+              };
+              log(`Создана новая запись для платформы ${platform} со временем ${scheduledAtDate.toISOString()}`, 'api');
+            } 
+            else if (!mergedSocialPlatforms[platform].scheduledAt) {
+              // Если у платформы отсутствует свое время, устанавливаем общее
+              mergedSocialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+              log(`Установлено время для платформы ${platform}: ${scheduledAtDate.toISOString()}`, 'api');
+            }
+          });
+          
           // Добавляем подробное логирование для отладки
           log(`Существующие платформы: ${JSON.stringify(existingSocialPlatforms)}`, 'api');
           log(`Новые платформы из запроса: ${JSON.stringify(socialPlatforms)}`, 'api');
-          log(`Объединенные платформы: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
+          log(`Объединенные платформы с временем публикации: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
           
           const updateData = {
             status: 'scheduled',
