@@ -1,0 +1,61 @@
+6:14:41 PM [social-publishing] Проверка настроек Instagram: {"hasSettings":true,"settingsType":"object","tokenExists":"да","tokenType":"string","tokenLength":193,"businessAccountId":"17841422577074562"}
+6:14:41 PM [social-publishing] Делегирование публикации в Instagram специализированному сервису
+6:14:41 PM [social-publishing] Вызываем instagramService.publishToInstagram с параметрами token=true, businessAccountId=true
+6:14:41 PM [instagram] [Instagram] Начинаем публикацию в Instagram с использованием бизнес-аккаунта: 17841422577074562
+6:14:41 PM [social-publishing] additionalImages уже является массивом для instagram, содержит 0 элементов после фильтрации
+6:14:41 PM [instagram] [Instagram] Этап 1 - создание контейнера для медиа
+6:14:41 PM [instagram] [Instagram] Обнаружено видео для публикации: https://6e679636ae90-ridiculous-seth.s3.ru1.storag...
+6:14:41 PM [instagram] [Instagram] Оптимизация видео для Instagram...
+6:14:41 PM [video-processor] Начало обработки видео для instagram: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/f9e62347-2034-42da-aad9-7c23fcf6aac8-mov_bbb.mp4
+6:14:41 PM [video-processor] Начинаем загрузку видео с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/f9e62347-2034-42da-aad9-7c23fcf6aac8-mov_bbb.mp4
+6:14:42 PM [video-processor] Видео успешно загружено в temp/original_667ce454-ac24-44f1-b3a8-9fcec3852e80.mp4
+6:14:42 PM [video-processor] Получение информации о видео: ffprobe -v error -show_entries stream=width,height,r_frame_rate,codec_name,duration -show_entries format=duration -of json "temp/original_667ce454-ac24-44f1-b3a8-9fcec3852e80.mp4"
+6:14:42 PM [video-processor] Видео требует конвертации для instagram. Текущее соотношение: 1.82, целевое: 0.5625
+6:14:42 PM [video-processor] Получение информации о видео: ffprobe -v error -show_entries stream=width,height,r_frame_rate,codec_name,duration -show_entries format=duration -of json "temp/original_667ce454-ac24-44f1-b3a8-9fcec3852e80.mp4"
+6:14:42 PM [video-processor] Информация о видео: {"width":320,"height":176,"duration":10,"codec":"h264","aspectRatio":1.8181818181818181}
+6:14:42 PM [video-processor] Целевое разрешение: 1080x1920
+6:14:42 PM [video-processor] [Instagram Video] Применяем оптимальные настройки для Instagram Reels
+6:14:42 PM [video-processor] Команда конвертации: ffmpeg -i "temp/original_667ce454-ac24-44f1-b3a8-9fcec3852e80.mp4" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,fps=30" -c:v libx264 -profile:v high -level:v 4.1 -b:v 10M -maxrate 12M -bufsize 10M -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 192k -ar 44100 -metadata:s:v:0 rotate=0 -t 90 "temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4"
+6:14:53 PM [video-processor] Видео успешно преобразовано: temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:53 PM [video-processor] Размер обработанного видео: 7.49 MB
+6:14:53 PM [video-processor] Загрузка видео на Beget S3: temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:53 PM [beget-s3-video] Uploading local video: temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:53 PM [beget-s3-storage] Uploading file to Beget S3: videos/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [beget-s3-storage] File uploaded successfully: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [beget-s3-video] Video uploaded successfully: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [beget-s3-video] Extracting metadata for local video: temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [beget-s3-video] Metadata extracted successfully: {"width":1080,"height":1920,"duration":10.027,"format":"mov,mp4,m4a,3gp,3g2,mj2","size":7857961,"bitrate":6269441,"codec":"h264"}
+6:14:56 PM [video-processor] Видео успешно загружено на Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [video-processor] Файл удален: temp/original_667ce454-ac24-44f1-b3a8-9fcec3852e80.mp4
+6:14:56 PM [video-processor] Файл удален: temp/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:56 PM [instagram] [Instagram] Видео успешно оптимизировано: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/converted_3ccd91f5-aea6-4573-a5a9-0fa922cc0342.mp4
+6:14:57 PM [instagram] [Instagram] URL видео проверен, статус: 200
+6:14:57 PM [instagram] [Instagram] Внимание! Убедитесь, что соотношение сторон видео соответствует требованиям Instagram (рекомендуется 9:16 или 1:1)
+6:14:57 PM [instagram] [Instagram] Используем тип медиа REELS для публикации видео
+6:14:57 PM [instagram] [Instagram] Отправка запроса на создание контейнера для видео
+6:14:58 PM [instagram] [Instagram] Ответ API (создание контейнера): {"id":"18042554270169663"}
+6:14:58 PM [instagram] [Instagram] Успешно создан контейнер с ID: 18042554270169663
+6:14:58 PM [instagram] [Instagram] Этап 2 - публикация контейнера 18042554270169663
+6:14:58 PM [instagram] [Instagram] Начало процесса ожидания и проверки готовности видео контейнера
+6:14:58 PM [instagram] [Instagram] Начальное ожидание 60 секунд для обработки видео REELS...
+6:15:25 PM [scheduler] Проверка запланированных публикаций
+6:15:25 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+6:15:26 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+6:15:26 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+6:15:26 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+6:15:26 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+6:15:26 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+6:15:26 PM [scheduler] Получено 0 запланированных публикаций через API
+6:15:26 PM [scheduler] Запланированные публикации не найдены
+6:15:27 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+6:15:27 PM [directus-crud] Выполнение операции read для коллекции users/me
+6:15:27 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+6:15:27 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+6:15:27 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+6:15:27 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+6:15:58 PM [instagram] [Instagram] Проверка статуса контейнера 18042554270169663...
+6:15:58 PM [instagram] [Instagram] Получен статус: ERROR
+6:15:58 PM [instagram] [Instagram] Ошибка обработки видео на стороне Instagram
+6:15:58 PM [instagram] [Instagram] Запрашиваем расширенные детали ошибки
+6:15:58 PM [instagram] [Instagram] Не удалось получить расширенные детали ошибки: Request failed with status code 400
+6:15:58 PM [instagram] [Instagram] Видео не готово, ожидание 45 секунд перед следующей попыткой...

@@ -165,27 +165,34 @@ export class VideoProcessor {
       // Instagram имеет очень специфичные требования
       if (platform === 'instagram') {
         // Специальные настройки для Instagram Reels:
-        // - Строго соблюдаем соотношение сторон 9:16 для Reels
-        // - Формат MP4 с кодеком H.264
-        // - Битрейт 8-12 Мбит/с для 1080p
+        // - Instagram требует строгое соотношение 9:16 (вертикальное видео)
+        // - Разрешение 1080x1920 или 720x1280 для оптимального качества
+        // - Кодек H.264, профиль Baseline (для большей совместимости)
+        // - Более низкий битрейт для лучшей совместимости с Instagram API
         // - Частота кадров 30 fps (рекомендуется Instagram)
-        // - Аудио AAC с битрейтом 128-192 кбит/с
+        // - Аудио AAC с битрейтом 128к для лучшей совместимости
         
         log(`[Instagram Video] Применяем оптимальные настройки для Instagram Reels`, 'video-processor');
         
+        // Для Instagram используем разрешение 720p для снижения размера файла
+        const instTargetWidth = 720;
+        const instTargetHeight = 1280;
+        
         command = `ffmpeg -i "${inputPath}" `
           // Масштабирование с сохранением соотношения сторон и добавлением черных полос
-          + `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,fps=30" `
-          // Настройки видеокодека
-          + `-c:v libx264 -profile:v high -level:v 4.1 -b:v 10M -maxrate 12M -bufsize 10M `
+          + `-vf "scale=${instTargetWidth}:${instTargetHeight}:force_original_aspect_ratio=decrease,pad=${instTargetWidth}:${instTargetHeight}:(ow-iw)/2:(oh-ih)/2:black,fps=30" `
+          // Настройки видеокодека - используем более совместимые параметры
+          + `-c:v libx264 -profile:v baseline -level:v 3.0 -preset slow -crf 23 `
+          // Более низкий битрейт для большей совместимости
+          + `-b:v 5M -maxrate 6M -bufsize 5M `
           // Цветовое пространство и оптимизация для быстрого старта
           + `-pix_fmt yuv420p -movflags +faststart `
-          // Настройки аудио
-          + `-c:a aac -b:a 192k -ar 44100 `
+          // Настройки аудио - используем стандартные параметры
+          + `-c:a aac -b:a 128k -ar 44100 -ac 2 `
           // Метаданные для правильной ориентации
           + `-metadata:s:v:0 rotate=0 `
-          // Продолжительность (ограничиваем до 90 секунд для Reels)
-          + `-t 90 ` 
+          // Продолжительность (ограничиваем до 60 секунд для большей совместимости)
+          + `-t 60 ` 
           + `"${outputPath}"`;
       } else {
         // Стандартная команда для других платформ
