@@ -4,6 +4,11 @@ import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
+import { promisify } from 'util';
+import { glob } from 'glob';
+
+// Для детального логирования поиска файлов
+const globPromise = promisify(glob);
 
 /**
  * Отправляет видео в Telegram
@@ -82,6 +87,7 @@ export async function sendVideoToTelegram(
         }
         
         const absolutePath = path.resolve(process.cwd(), localPath);
+        const videoFileName = path.basename(videoUrl);
         
         log(`Чтение локального файла видео: ${absolutePath}`, 'social-publishing');
         
@@ -103,9 +109,36 @@ export async function sendVideoToTelegram(
             formData.append('video', videoBuffer, { filename: fileName });
             log(`Локальный файл видео успешно прочитан, размер: ${videoBuffer.length} байт`, 'social-publishing');
           } else {
-            log(`Файл видео не найден ни по одному из путей. Пробуем путь без изменений: ${videoUrl}`, 'social-publishing');
+            log(`Файл видео не найден по стандартным путям. Выполняем поиск по шаблону...`, 'social-publishing');
             
-            // Пробуем еще один вариант - полный путь без изменений
+            // Выполняем поиск видео в uploads/videos по имени файла
+            try {
+              const videos = await globPromise(path.join(process.cwd(), 'uploads', 'videos', '*'));
+              log(`Найдено ${videos.length} видео в директории uploads/videos`, 'social-publishing');
+              
+              // Сначала ищем по полному совпадению имени файла
+              const exactMatch = videos.find(v => path.basename(v) === videoFileName);
+              if (exactMatch) {
+                const videoBuffer = fs.readFileSync(exactMatch);
+                formData.append('video', videoBuffer, { filename: path.basename(exactMatch) });
+                log(`Найдено точное совпадение по имени файла: ${exactMatch}, размер: ${videoBuffer.length} байт`, 'social-publishing');
+                return; // Успешно нашли и прикрепили видео
+              }
+              
+              // Затем ищем по совпадению базового имени (без временной метки)
+              const baseNameWithoutTimestamp = videoFileName.replace(/^\d+\-\d+\-/, '');
+              const partialMatch = videos.find(v => path.basename(v).includes(baseNameWithoutTimestamp));
+              if (partialMatch) {
+                const videoBuffer = fs.readFileSync(partialMatch);
+                formData.append('video', videoBuffer, { filename: path.basename(partialMatch) });
+                log(`Найдено частичное совпадение по имени файла: ${partialMatch}, размер: ${videoBuffer.length} байт`, 'social-publishing');
+                return; // Успешно нашли и прикрепили видео
+              }
+            } catch (globError) {
+              log(`Ошибка при поиске файлов: ${globError}`, 'social-publishing');
+            }
+            
+            // Если глобальный поиск не помог, пробуем последний вариант - полный путь без изменений
             if (fs.existsSync(videoUrl)) {
               const videoBuffer = fs.readFileSync(videoUrl);
               const fileName = path.basename(videoUrl);
@@ -145,7 +178,17 @@ export async function sendVideoToTelegram(
           }
           
           // Если видео не найдено, отправляем URL как последнее средство
-          if (!formData.has('video')) {
+          // Нет прямого способа проверить наличие поля в FormData, 
+          // поэтому используем переменную для отслеживания
+          let videoFound = false;
+          for (const possiblePath of possiblePaths) {
+            if (fs.existsSync(possiblePath)) {
+              videoFound = true;
+              break;
+            }
+          }
+          
+          if (!videoFound) {
             log(`Видео не найдено нигде, пробуем передать URL напрямую: ${fullVideoUrl}`, 'social-publishing');
             formData.append('video', fullVideoUrl);
           }
