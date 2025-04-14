@@ -587,7 +587,7 @@ export function registerImgurRoutes(router: Router) {
     }
   });
   
-  // Маршрут для загрузки видео и его отправки на Imgur
+  // Маршрут для загрузки видео и сохранения его локально (с попыткой загрузки на Imgur при необходимости)
   router.post('/api/imgur/upload-video', videoUpload.single('video'), async (req, res) => {
     try {
       if (!req.file) {
@@ -600,17 +600,42 @@ export function registerImgurRoutes(router: Router) {
       const filePath = req.file.path;
       console.log(`Видео файл успешно загружен: ${filePath}`);
       
-      // Загружаем файл на Imgur
-      const imgurUrl = await imgurUploaderService.uploadVideoFromFile(filePath);
+      // Формируем URL для локально сохраненного файла
+      const fileName = req.file.filename;
+      const videoRelativePath = `/uploads/videos/${fileName}`;
+      const videoUrl = videoRelativePath;
       
-      if (!imgurUrl) {
-        return res.status(500).json({
-          success: false,
-          error: 'Не удалось загрузить видео на Imgur'
-        });
+      // Пытаемся загрузить видео на Imgur, но если не получится, используем локальный URL
+      try {
+        const imgurUrl = await imgurUploaderService.uploadVideoFromFile(filePath);
+        if (imgurUrl) {
+          console.log(`Видео успешно загружено на Imgur: ${imgurUrl}`);
+          
+          // Отправляем ответ с URL Imgur
+          const responseData = {
+            success: true,
+            data: {
+              originalname: req.file.originalname,
+              filename: req.file.filename,
+              mimetype: req.file.mimetype,
+              size: req.file.size,
+              path: filePath,
+              url: imgurUrl,
+              link: imgurUrl,
+              localUrl: videoUrl // Добавляем и локальный URL на всякий случай
+            },
+            url: imgurUrl,
+            link: imgurUrl
+          };
+          
+          console.log('Отправляем ответ на запрос загрузки видео (Imgur):', JSON.stringify(responseData, null, 2));
+          return res.status(200).json(responseData);
+        }
+      } catch (imgurError) {
+        console.error('Ошибка при загрузке на Imgur, используем локальное хранение:', imgurError);
       }
       
-      // Отправляем ответ в двух форматах для совместимости
+      // Если загрузка на Imgur не удалась, используем локальный URL
       const responseData = {
         success: true,
         data: {
@@ -619,18 +644,17 @@ export function registerImgurRoutes(router: Router) {
           mimetype: req.file.mimetype,
           size: req.file.size,
           path: filePath,
-          url: imgurUrl,
-          link: imgurUrl // Добавляем также поле link для совместимости
+          url: videoUrl,
+          link: videoUrl
         },
-        url: imgurUrl,  // Дублируем URL в корне ответа
-        link: imgurUrl  // И также добавляем поле link для совместимости
+        url: videoUrl,
+        link: videoUrl
       };
       
-      console.log('Отправляем ответ на запрос загрузки видео:', JSON.stringify(responseData, null, 2));
-      
+      console.log('Отправляем ответ на запрос загрузки видео (локальное хранение):', JSON.stringify(responseData, null, 2));
       return res.status(200).json(responseData);
     } catch (error) {
-      console.error('Ошибка при загрузке видео на Imgur:', error);
+      console.error('Ошибка при загрузке видео:', error);
       return res.status(500).json({
         success: false,
         error: `Ошибка при загрузке видео: ${error}`
@@ -650,24 +674,55 @@ export function registerImgurRoutes(router: Router) {
         });
       }
       
-      const imgurUrl = await imgurUploaderService.uploadVideoFromUrl(videoUrl);
-      
-      if (!imgurUrl) {
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Не удалось загрузить видео на Imgur' 
+      // Проверяем, что URL доступен
+      try {
+        const videoResponse = await axios.head(videoUrl, { 
+          timeout: 5000,
+          validateStatus: status => status < 400
         });
+        
+        // Если URL доступен, просто возвращаем его как есть, не загружая на Imgur
+        if (videoResponse.status < 400) {
+          console.log(`Видео по URL ${videoUrl} доступно, возвращаем исходный URL`);
+          return res.status(200).json({ 
+            success: true, 
+            data: { url: videoUrl, link: videoUrl },
+            url: videoUrl
+          });
+        }
+      } catch (error) {
+        console.error(`Ошибка при проверке доступности видео по URL ${videoUrl}:`, error);
+        // Продолжаем выполнение и пытаемся загрузить через Imgur
       }
       
+      // Попытка загрузить через Imgur
+      try {
+        const imgurUrl = await imgurUploaderService.uploadVideoFromUrl(videoUrl);
+        
+        if (imgurUrl) {
+          console.log(`Видео успешно загружено на Imgur: ${imgurUrl}`);
+          return res.status(200).json({ 
+            success: true, 
+            data: { url: imgurUrl, link: imgurUrl },
+            url: imgurUrl
+          });
+        }
+      } catch (imgurError) {
+        console.error('Ошибка при загрузке на Imgur:', imgurError);
+      }
+      
+      // Если загрузка на Imgur не удалась, но URL всё ещё может быть доступен напрямую
+      console.log(`Возвращаем исходный URL для видео: ${videoUrl}`);
       return res.status(200).json({ 
         success: true, 
-        data: { url: imgurUrl, link: imgurUrl } 
+        data: { url: videoUrl, link: videoUrl },
+        url: videoUrl 
       });
     } catch (error) {
-      console.error('Ошибка при загрузке видео на Imgur:', error);
+      console.error('Ошибка при обработке видео URL:', error);
       return res.status(500).json({ 
         success: false, 
-        error: `Ошибка при загрузке видео: ${error}` 
+        error: `Ошибка при обработке видео URL: ${error}` 
       });
     }
   });
