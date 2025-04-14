@@ -18,6 +18,8 @@ import { falAiUniversalService } from './services/fal-ai-universal';
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
+// Импортируем маршруты для обработки видео
+import videoProcessorRoutes from './routes/video-processor-routes';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -187,6 +189,11 @@ app.use((req, res, next) => {
     log("Registering Beget S3 routes...");
     registerBegetS3Routes(app);
     log("Beget S3 routes registered successfully");
+    
+    // Регистрируем маршруты для работы с видео-процессором
+    log("Registering Video Processor routes...");
+    app.use('/api/video-processor', videoProcessorRoutes);
+    log("Video Processor routes registered successfully");
     
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");

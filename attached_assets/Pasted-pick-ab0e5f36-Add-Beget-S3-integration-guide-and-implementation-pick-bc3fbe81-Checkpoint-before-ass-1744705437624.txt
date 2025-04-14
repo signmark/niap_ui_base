@@ -1,0 +1,110 @@
+pick ab0e5f36 Add Beget S3 integration guide and implementation.
+pick bc3fbe81 Checkpoint before assistant change: Add Beget S3 storage services for files and videos.
+pick cc41b2a7 Add Beget S3 cloud storage integration.  Includes file upload and retrieval functionality.
+pick 9ec616f2 Add video upload functionality to the social media content manager
+pick 664f5a18 Add video upload functionality to content creation page
+pick 55fc7742 Add support for additional videos in content creation
+pick b74bb7e1 Add support for additional media in campaign content
+pick fdeb6d79 Enhance campaign content schema to support additional media types.
+pick 242f6ce2 Add additional media field to campaign content
+pick 6e03b72a Add admin API endpoint and script to manage Directus fields
+pick ef1fe92d Add media upload functionality for images and videos
+pick ac84a20b Add video upload API response handling.
+pick 035930c3 Fix: Update video upload API endpoint
+pick 92fa515e Fix video upload authorization issue by adding authentication token to request headers.
+pick 3bd145eb Fix: Correct video upload response handling to accommodate potential URL variations
+pick 1ac16524 Add universal media uploader component
+pick bd8b7ea3 Fix a recently discovered bug # empty
+pick 648eb50a Remove unnecessary UI elements
+pick 4591a96b Add marketing images
+pick 5e4ca44d Improve Additional Videos Uploader component by adding remove button accessibility and styling
+pick c3fb571b Checkpoint before assistant change: Add loading indicators to image and video upload components.
+pick e4ece916 Enhance image and video uploaders with loading indicators # empty
+pick 52dfd879 Improve media uploader UI
+pick 2c4ecff4 Improve media uploaders accessibility and styling
+pick 56b26f85 Checkpoint
+pick 75681aa3 Improve upload progress indicators by replacing custom components with a reusable component.
+pick d0fc88a8 Improve accessibility of upload progress indicators by removing unnecessary text and adding aria-hidden attributes.
+pick 8ab85f73 Remove upload progress indicators from image and video uploader components
+pick 5b9fa3ed Improve media upload display by adding a custom loading indicator
+pick ad25cb78 Add loading spinner during uploads
+pick fd3bee85 Improve media upload indicators
+pick f0381740 Checkpoint before assistant change: Add user-requested image
+pick ab18fae2 Assistant checkpoint: Удалить индикаторы прогресса загрузки
+pick 36572b92 Checkpoint before assistant change: Add image to address user feedback regarding display issue.
+pick d5f8738f Assistant checkpoint: Удалить все индикаторы с текстом 'Выполняется'
+pick 239c262f Checkpoint before assistant change: Add images to address loading spinner issue.
+pick 62142aab Assistant checkpoint: Удалить индикаторы загрузки из компонентов загрузки файлов
+pick 3a888c45 Checkpoint before assistant change: Add image of a modern Russian skyscraper
+pick c195f9ce Update media uploader component styling.
+pick e123f283 Resolve launch issues by implementing aggressive troubleshooting steps.
+pick f947c5bb Fix scheduled post time display
+pick 0433262d Improve social media post scheduling logic to handle per-platform scheduling.
+pick 44e378e3 Improve content publishing status updates to reflect pending publications.
+pick 678fca7a Add image to assets
+pick 331d0857 Improve social media post scheduling by using JSON data for scheduling and ignoring optional fields.
+pick 8ee56611 Improve social media platform handling in content scheduling.
+pick 697549f5 Improve social media publishing logic and add detailed logging.
+pick ee2e1028 Checkpoint # empty
+pick 5c8ae4a6 Add scheduled publishing feature for social media posts
+pick d4aca848 Fix: Improve social media post scheduling and publishing logic to handle multiple platforms correctly.
+pick 8f71511f Fix: Correctly set publication time for all platforms during post creation.
+pick 89bea211 Add script to update post publication times across platforms
+pick 1de62243 Fix inconsistent scheduling time keys in social media publishing
+pick 75f991aa Fix redundant `scheduledAt` and `scheduled_at` fields in social platform data by standardizing date/time field naming and removing duplicates.
+pick effd5bf5 Add formal address option ("Вы") to content creation interface
+pick ce007146 Add marketing asset
+pick cdcd840f Improve upload indicator display in media uploaders.
+pick 317054e3 Reverted changes with conflict resolution
+pick 6c276c77 Fix video posting to Telegram
+pick 5b35ae91 Checkpoint before assistant change: Add Telegram video sending functionality to social media service.
+pick 7b7c93e7 Restore technical debt documentation
+pick b7fa2c24 Checkpoint # empty
+pick 9b635980 Checkpoint # empty
+pick 579929ab Add VK video upload functionality
+pick bc1e14d8 Improve social media publishing by adding video upload functionality to VK.
+pick 98b04f10 Fix VK video upload issue by implementing a new upload method.
+pick 3b689e8b Add support image for troubleshooting
+pick 0023f1aa Checkpoint # empty
+pick 693d8c5f Improve Instagram post handling: Add video support and error handling for missing media.
+pick 28727e8c Fix Instagram video posting # empty
+pick 83e117b1 Improve Instagram integration by handling API responses and using REELS media type.
+pick 071a78d1 Emoji implementation: Added emoji picker with categorized emojis to rich text editor
+pick 16cc1c14 Add a new image asset
+pick b13c4b00 Fix: Restore video uploads for Telegram and Instagram # empty
+pick 9fe6bc79 Fix social media posting issues for Telegram and Instagram # empty
+pick 83330905 Checkpoint # empty
+pick 8cfc4899 Add Telegram S3 integration to social media publishing service
+pick d2722a01 Enhance Telegram publishing: Add support for video posts.
+pick a595959f Fix Instagram video publishing
+
+# Rebase 0db6e4f8..a595959f onto 0db6e4f8 (79 commands)
+#
+# Commands:
+# p, pick <commit> = use commit
+# r, reword <commit> = use commit, but edit the commit message
+# e, edit <commit> = use commit, but stop for amending
+# s, squash <commit> = use commit, but meld into previous commit
+# f, fixup [-C | -c] <commit> = like "squash" but keep only the previous
+#                    commit's log message, unless -C is used, in which case
+#                    keep only this commit's message; -c is same as -C but
+#                    opens the editor
+# x, exec <command> = run command (the rest of the line) using shell
+# b, break = stop here (continue rebase later with 'git rebase --continue')
+# d, drop <commit> = remove commit
+# l, label <label> = label current HEAD with a name
+# t, reset <label> = reset HEAD to a label
+# m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]
+#         create a merge commit using the original merge commit's
+#         message (or the oneline, if no original merge commit was
+#         specified); use -c <commit> to reword the commit message
+# u, update-ref <ref> = track a placeholder for the <ref> to be updated
+#                       to this position in the new commits. The <ref> is
+#                       updated at the end of the rebase
+#
+# These lines can be re-ordered; they are executed from top to bottom.
+#
+# If you remove a line here THAT COMMIT WILL BE LOST.
+#
+# However, if you remove everything, the rebase will be aborted.
+#

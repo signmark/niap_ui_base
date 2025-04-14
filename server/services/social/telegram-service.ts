@@ -2,6 +2,7 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import { telegramS3Integration } from './telegram-s3-integration';
 
 /**
  * Сервис для публикации контента в Telegram
@@ -1058,6 +1059,9 @@ export class TelegramService extends BaseSocialService {
       // Создаем URL API Telegram
       const baseUrl = `https://api.telegram.org/bot${token}`;
       
+      // Проверяем наличие видео
+      const hasVideo = imgurContent.videoUrl || processedContent.videoUrl;
+      
       // Проверяем наличие изображений
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
@@ -1067,9 +1071,52 @@ export class TelegramService extends BaseSocialService {
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      log(`Telegram: наличие видео: ${hasVideo ? 'да' : 'нет'}, наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
-      // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // Определяем стратегию публикации в зависимости от наличия видео, изображений и длины текста
+      
+      // 0. Если есть видео, отправляем его с текстом в подписи
+      if (hasVideo) {
+        log(`Telegram: обнаружено видео для отправки.`, 'social-publishing');
+        
+        try {
+          // Получаем URL видео (из imgurContent или processedContent)
+          const videoUrl = imgurContent.videoUrl || processedContent.videoUrl;
+          
+          // Проверяем наличие видео
+          if (!videoUrl) {
+            throw new Error('Отсутствует URL видео для отправки в Telegram');
+          }
+          
+          // Используем TelegramS3Integration для отправки видео
+          const videoResult = await telegramS3Integration.sendVideoToTelegram(
+            videoUrl,
+            formattedChatId,
+            token,
+            {
+              caption: text,
+              parse_mode: 'HTML'
+            }
+          );
+          
+          if (videoResult.success) {
+            log(`Видео успешно отправлено в Telegram, message ID: ${videoResult.messageId}`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: videoResult.url,
+              messageId: videoResult.messageId
+            };
+          } else {
+            log(`Ошибка при отправке видео в Telegram: ${videoResult.error}. Продолжаем стандартным путём...`, 'social-publishing');
+            // Продолжаем выполнение для отправки текста и изображений как запасной вариант
+          }
+        } catch (error) {
+          log(`Исключение при отправке видео в Telegram: ${error instanceof Error ? error.message : String(error)}. Продолжаем стандартным путём...`, 'social-publishing');
+          // Продолжаем выполнение для отправки текста и изображений как запасной вариант
+        }
+      }
       
       // 1. Если есть изображения и включен флаг принудительного разделения,
       // отправляем сначала изображения без подписи, затем текст отдельным сообщением

@@ -2,11 +2,188 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import path from 'path';
+import { videoProcessorService } from '../video-processor';
 
 /**
  * Сервис для публикации контента в Instagram
  */
 export class InstagramService extends BaseSocialService {
+  /**
+   * Проверяет валидность URL видео
+   * @param url URL видео
+   * @returns true, если URL предположительно валидный
+   */
+  private isValidVideoUrl(url: string): boolean {
+    try {
+      // Проверяем на null или undefined
+      if (!url) {
+        log(`[Instagram] URL видео null или undefined`, 'instagram');
+        return false;
+      }
+
+      // Проверяем формат URL
+      try {
+        new URL(url);
+      } catch (e) {
+        log(`[Instagram] Невалидный формат URL: ${url}`, 'instagram');
+        return false;
+      }
+
+      // Проверяем расширение файла
+      const extension = path.extname(url.split('?')[0]).toLowerCase();
+      const validExtensions = ['.mp4', '.mov', '.avi', '.wmv'];
+      
+      if (!validExtensions.includes(extension)) {
+        log(`[Instagram] Предупреждение: Расширение файла ${extension} может не поддерживаться Instagram`, 'instagram');
+        // Возвращаем true, даже если расширение не в списке, но логируем предупреждение
+        return true;
+      }
+
+      return true;
+    } catch (error) {
+      log(`[Instagram] Ошибка при проверке URL видео: ${error}`, 'instagram');
+      return false;
+    }
+  }
+  /**
+   * Проверяет статус обработки видео и публикует его, когда оно готово
+   * @param containerId ID контейнера медиа
+   * @param token Токен доступа Instagram API
+   * @param businessAccountId ID бизнес-аккаунта
+   * @returns Результат публикации
+   */
+  private async checkAndPublishVideo(containerId: string, token: string, businessAccountId: string): Promise<SocialPublication> {
+    // Базовый URL для проверки статуса и публикации
+    const baseUrl = `https://graph.facebook.com/v18.0`;
+    // URL для получения статуса обработки видео
+    const statusUrl = `${baseUrl}/${containerId}?fields=status_code,status&access_token=${token}`;
+    // URL для публикации контейнера
+    const publishUrl = `${baseUrl}/${businessAccountId}/media_publish?access_token=${token}`;
+    
+    // Максимальное количество попыток проверки статуса
+    const maxRetries = 12;
+    // Начальная задержка между проверками статуса (в мс)
+    let delay = 10000; // 10 секунд
+    
+    log(`[Instagram] Начинаем проверку статуса обработки видео для контейнера ${containerId}`, 'instagram');
+    
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        // Ждем перед проверкой статуса
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        log(`[Instagram] Попытка ${i+1}/${maxRetries}: проверка статуса видео ${containerId}`, 'instagram');
+        
+        // Проверяем статус обработки видео
+        const statusResponse = await axios.get(statusUrl, {
+          timeout: 30000
+        });
+        
+        // Логируем ответ для отладки
+        log(`[Instagram] Статус видео: ${JSON.stringify(statusResponse.data)}`, 'instagram');
+        
+        // Проверяем, завершена ли обработка видео
+        if (statusResponse.data && statusResponse.data.status_code === 'FINISHED') {
+          log(`[Instagram] Видео успешно обработано, публикуем`, 'instagram');
+          
+          // Публикуем обработанное видео
+          const publishResponse = await axios.post(publishUrl, {
+            creation_id: containerId
+          }, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 30000
+          });
+          
+          log(`[Instagram] Ответ публикации: ${JSON.stringify(publishResponse.data)}`, 'instagram');
+          
+          // Проверяем успешность публикации
+          if (publishResponse.data && publishResponse.data.id) {
+            // Получаем ID публикации
+            const postId = publishResponse.data.id;
+            // Получаем permalink на основе ID
+            const permalink = await this.getInstagramPermalink(postId, token);
+            
+            return {
+              platform: 'instagram',
+              status: 'published',
+              publishedAt: new Date(),
+              postId: postId,
+              postUrl: permalink || undefined
+            };
+          } else {
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              publishedAt: null,
+              postId: containerId,
+              error: 'Ошибка публикации видео после обработки: отсутствует ID публикации'
+            };
+          }
+        } else if (statusResponse.data && statusResponse.data.status_code === 'ERROR') {
+          // Если статус ERROR, прекращаем попытки
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            publishedAt: null,
+            postId: containerId,
+            error: `Ошибка обработки видео: ${statusResponse.data.status || 'неизвестная ошибка'}`
+          };
+        } else if (statusResponse.data && statusResponse.data.status_code === 'IN_PROGRESS') {
+          // Если видео все еще обрабатывается, увеличиваем задержку для следующей попытки
+          delay = Math.min(delay * 1.5, 60000); // Максимум 60 секунд между проверками
+          log(`[Instagram] Видео все еще обрабатывается, следующая проверка через ${delay/1000} секунд`, 'instagram');
+        } else {
+          // Неизвестный статус
+          log(`[Instagram] Неизвестный статус обработки видео: ${statusResponse.data?.status_code || 'статус не получен'}`, 'instagram');
+        }
+      } catch (error: any) {
+        log(`[Instagram] Ошибка при проверке статуса видео: ${error.message}`, 'instagram');
+        // Если ошибка в API, продолжаем попытки
+        if (error.response) {
+          log(`[Instagram] Ответ API при ошибке: ${JSON.stringify(error.response.data)}`, 'instagram');
+        }
+      }
+    }
+    
+    // Если после всех попыток видео не опубликовано
+    return {
+      platform: 'instagram',
+      status: 'failed',
+      publishedAt: null,
+      postId: containerId,
+      error: 'Превышено максимальное количество попыток проверки статуса видео'
+    };
+  }
+  
+  /**
+   * Получает permalink публикации из ответа API Instagram
+   * @param postId ID публикации
+   * @param token Токен доступа
+   * @returns URL публикации или null в случае ошибки
+   */
+  private async getInstagramPermalink(postId: string, token: string): Promise<string | null> {
+    try {
+      const url = `https://graph.facebook.com/v18.0/${postId}?fields=permalink&access_token=${token}`;
+      
+      log(`[Instagram] Запрос permalink для публикации ${postId}`, 'instagram');
+      
+      const response = await axios.get(url, {
+        timeout: 30000
+      });
+      
+      if (response.data && response.data.permalink) {
+        log(`[Instagram] Получен permalink: ${response.data.permalink}`, 'instagram');
+        return response.data.permalink;
+      } else {
+        log(`[Instagram] Ответ API не содержит permalink: ${JSON.stringify(response.data)}`, 'instagram');
+        return null;
+      }
+    } catch (error: any) {
+      log(`[Instagram] Ошибка при получении permalink: ${error.message}`, 'instagram');
+      return null;
+    }
+  }
   /**
    * Форматирует текст для публикации в Instagram
    * @param content Исходный текст контента
@@ -96,15 +273,34 @@ export class InstagramService extends BaseSocialService {
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
-      // Проверяем наличие изображения (для Instagram обязательно)
-      if (!imgurContent.imageUrl) {
-        log(`[Instagram] Ошибка публикации: отсутствует основное изображение`, 'instagram');
+      // Проверяем наличие медиа-контента (для Instagram обязательно)
+      const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+      
+      if (!isVideo && !imgurContent.imageUrl) {
+        log(`[Instagram] Ошибка публикации: отсутствует медиа-контент (изображение или видео)`, 'instagram');
         return {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Отсутствует изображение для публикации в Instagram. Необходимо добавить изображение.'
+          error: 'Отсутствует медиа-контент для публикации в Instagram. Необходимо добавить изображение или видео.'
         };
+      }
+      
+      // Проверяем, есть ли видео URL при типе контента video/video-text
+      if (isVideo && !content.videoUrl) {
+        log(`[Instagram] Ошибка публикации: тип контента указан как видео, но URL видео отсутствует`, 'instagram');
+        
+        // Если нет видео, но есть изображение, продолжаем с публикацией изображения
+        if (imgurContent.imageUrl) {
+          log(`[Instagram] Найдено резервное изображение, продолжаем с ним вместо видео`, 'instagram');
+        } else {
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Для публикации видео в Instagram необходимо указать URL видео.'
+          };
+        }
       }
       
       // Подготавливаем текст для отправки
@@ -138,129 +334,292 @@ export class InstagramService extends BaseSocialService {
         log(`[Instagram] Этап 1 - создание контейнера для медиа`, 'instagram');
         
         // Создаем URL для Instagram Graph API
-        const baseUrl = 'https://graph.facebook.com/v17.0';
+        // Обновляем до v18.0 (самой последней версии) для лучшей поддержки REELS
+        const baseUrl = 'https://graph.facebook.com/v18.0';
         
         // Формируем URL запроса для создания контейнера
         const containerUrl = `${baseUrl}/${businessAccountId}/media`;
         
-        // Подготавливаем параметры запроса
-        const containerParams = {
-          image_url: imgurContent.imageUrl,
+        // Проверяем тип контента для определения правильного метода публикации (изображение или видео)
+        const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+        
+        // Подготавливаем параметры запроса в зависимости от типа контента
+        let containerParams: any = {
           caption: caption,
           access_token: token
         };
         
-        // Отправляем запрос на создание контейнера
-        log(`[Instagram] Отправка запроса на создание контейнера с URL изображения: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
-        const containerResponse = await axios.post(
-          containerUrl, 
-          containerParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
+        // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
+        if (isVideo && content.videoUrl) {
+          log(`[Instagram] Обнаружено видео для публикации: ${content.videoUrl.substring(0, 50)}...`, 'instagram');
+          
+          // Проверка URL видео
+          if (!this.isValidVideoUrl(content.videoUrl)) {
+            log(`[Instagram] Предупреждение: URL видео может быть некорректным: ${content.videoUrl}`, 'instagram');
           }
-        );
-        
-        log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
-        
-        // Проверяем успешность создания контейнера
-        if (!containerResponse.data || !containerResponse.data.id) {
-          const errorMsg = containerResponse.data.error ? 
-            `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
-            'Неизвестная ошибка при создании контейнера';
           
-          log(`[Instagram] Ошибка при создании контейнера: ${errorMsg}`, 'instagram');
-          
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: errorMsg
-          };
-        }
-        
-        // Получаем ID контейнера
-        const containerId = containerResponse.data.id;
-        
-        log(`[Instagram] Этап 2 - публикация контейнера ${containerId}`, 'instagram');
-        
-        // Формируем URL запроса для публикации
-        const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
-        
-        // Подготавливаем параметры запроса
-        const publishParams = {
-          creation_id: containerId,
-          access_token: token
-        };
-        
-        // Отправляем запрос на публикацию
-        const publishResponse = await axios.post(
-          publishUrl, 
-          publishParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
+          // Обрабатываем видео для оптимальной совместимости с Instagram, только если доступен ffmpeg
+          let videoUrl = content.videoUrl;
+          try {
+            log(`[Instagram] Проверка доступности ffmpeg...`, 'instagram');
+            const ffmpegAvailable = await videoProcessorService.checkFfmpegAvailability();
+            
+            if (ffmpegAvailable) {
+              log(`[Instagram] Начинаем обработку видео для совместимости с Instagram Reels...`, 'instagram');
+              const processedVideoUrl = await videoProcessorService.processVideoForSocialMedia(content.videoUrl, 'instagram');
+              
+              if (processedVideoUrl) {
+                log(`[Instagram] Видео успешно обработано: ${processedVideoUrl.substring(0, 50)}...`, 'instagram');
+                videoUrl = processedVideoUrl;
+              } else {
+                log(`[Instagram] Ошибка при обработке видео, используем оригинальный URL`, 'instagram');
+              }
+            } else {
+              log(`[Instagram] ffmpeg не доступен, используем оригинальный URL видео`, 'instagram');
+            }
+          } catch (error: any) {
+            log(`[Instagram] Ошибка при обработке видео: ${error.message}. Используем оригинальный URL`, 'instagram');
           }
-        );
-        
-        log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'instagram');
-        
-        // Проверяем успешность публикации
-        if (!publishResponse.data || !publishResponse.data.id) {
-          const errorMsg = publishResponse.data.error ? 
-            `${publishResponse.data.error.code}: ${publishResponse.data.error.message}` : 
-            'Неизвестная ошибка при публикации';
           
-          log(`[Instagram] Ошибка при публикации: ${errorMsg}`, 'instagram');
+          containerParams.video_url = videoUrl;
+          // Используем REELS вместо VIDEO для соответствия требованиям Instagram API
+          containerParams.media_type = 'REELS';
+          // Добавляем параметры, специфичные для REELS
+          containerParams.thumb_offset = 0;
+          containerParams.share_to_feed = true;
           
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: errorMsg
-          };
-        }
-        
-        // Получаем ID публикации
-        const igMediaId = publishResponse.data.id;
-        
-        // Для получения permalink нужен отдельный запрос
-        log(`[Instagram] Этап 3 - получение постоянной ссылки для ${igMediaId}`, 'instagram');
-        
-        // Формируем URL запроса для получения информации о публикации
-        const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
-        
-        // Отправляем запрос
-        const mediaInfoResponse = await axios.get(`${mediaInfoUrl}`, {
-          params: {
-            fields: 'permalink',
-            access_token: token
-          },
-          timeout: 30000
-        });
-        
-        log(`[Instagram] Ответ API (получение информации): ${JSON.stringify(mediaInfoResponse.data)}`, 'instagram');
-        
-        // Проверяем успешность получения информации
-        let postUrl = '';
-        
-        if (mediaInfoResponse.data && mediaInfoResponse.data.permalink) {
-          postUrl = mediaInfoResponse.data.permalink;
-          log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
+          // Добавляем дополнительные параметры для улучшения совместимости
+          containerParams.is_carousel_item = false;
+          
+          // Добавляем расширенное логирование для отладки
+          log(`[Instagram] Параметры запроса для видео: ${JSON.stringify(containerParams)}`, 'instagram');
         } else {
-          // Если не удалось получить permalink, используем стандартную форму ссылки
-          postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-          log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
+          // Если это не видео или видео отсутствует, используем изображение
+          if (imgurContent.imageUrl) {
+            log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
+          } else {
+            log(`[Instagram] Предупреждение: URL изображения отсутствует или null`, 'instagram');
+          }
+          containerParams.image_url = imgurContent.imageUrl;
         }
         
-        log(`[Instagram] Публикация успешно завершена!`, 'instagram');
+        // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
+        log(`[Instagram] Отправка запроса на создание контейнера для ${isVideo ? 'видео' : 'изображения'}`, 'instagram');
+        
+        try {
+          const containerResponse = await axios.post(
+            containerUrl, 
+            containerParams, 
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: isVideo ? 120000 : 60000 // Увеличенный таймаут для видео (2 минуты)
+            }
+          );
+          
+          log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
+          
+          // Проверка на наличие содержательного ответа
+          if (!containerResponse.data) {
+            throw new Error('Получен пустой ответ от Instagram API при создании контейнера');
+          }
+          
+          // Проверяем успешность создания контейнера
+          if (!containerResponse.data.id) {
+            // Пытаемся найти описание ошибки в ответе
+            const errorMsg = containerResponse.data.error ? 
+              `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
+              'Неизвестная ошибка при создании контейнера';
+            
+            throw new Error(errorMsg);
+          }
+          
+          // Преобразуем ответ API в формат SocialPublication
+          if (containerResponse.data && containerResponse.data.id) {
+            // Сохраняем ID контейнера для дальнейшего использования
+            const containerId = containerResponse.data.id;
+            
+            // Для видео необходимо проверить статус обработки и затем опубликовать
+            if (isVideo) {
+              log(`[Instagram] Видео создано в контейнере ${containerId}, ожидаем обработки...`, 'instagram');
+              
+              // Проверяем статус обработки видео
+              try {
+                const result = await this.checkAndPublishVideo(containerId, token, businessAccountId);
+                return result;
+              } catch (error: any) {
+                log(`[Instagram] Ошибка при публикации видео после создания контейнера: ${error.message}`, 'instagram');
+                return {
+                  platform: 'instagram',
+                  status: 'failed',
+                  publishedAt: null,
+                  postId: containerId,
+                  error: `Ошибка при публикации видео: ${error.message}`
+                };
+              }
+            } else {
+              // Для изображений также нужно выполнить публикацию контейнера
+              log(`[Instagram] Изображение создано в контейнере ${containerId}, публикуем...`, 'instagram');
+              
+              try {
+                // Формируем URL для публикации контейнера (согласно документации Instagram Graph API)
+                const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
+                
+                // Отправляем запрос на публикацию контейнера
+                const publishResponse = await axios.post(
+                  publishUrl,
+                  {
+                    creation_id: containerId,
+                    access_token: token
+                  },
+                  {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 60000
+                  }
+                );
+                
+                log(`[Instagram] Ответ API (публикация изображения): ${JSON.stringify(publishResponse.data)}`, 'instagram');
+                
+                // Проверяем успешность публикации
+                if (publishResponse.data && publishResponse.data.id) {
+                  // Получаем permalink публикации
+                  const permalink = await this.getInstagramPermalink(publishResponse.data.id, token);
+                  
+                  return {
+                    platform: 'instagram', 
+                    status: 'published',
+                    publishedAt: new Date(),
+                    postId: publishResponse.data.id,
+                    url: permalink || undefined,
+                    error: null
+                  };
+                } else {
+                  return {
+                    platform: 'instagram', 
+                    status: 'pending',
+                    publishedAt: null,
+                    postId: containerId,
+                    error: null
+                  };
+                }
+              } catch (error: any) {
+                log(`[Instagram] Ошибка при публикации изображения после создания контейнера: ${error.message}`, 'instagram');
+                return {
+                  platform: 'instagram',
+                  status: 'failed',
+                  publishedAt: null,
+                  postId: containerId,
+                  error: `Ошибка при публикации изображения: ${error.message}`
+                };
+              }
+            }
+          } else {
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              publishedAt: null,
+              error: 'Ошибка создания контейнера: неверный формат ответа API'
+            };
+          }
+        } catch (error: any) {
+          log(`[Instagram] Ошибка при создании контейнера: ${error.message}`, 'instagram');
+          
+          // Если ошибка связана с видео, пробуем загрузить изображение вместо него
+          if (isVideo && imgurContent.imageUrl !== null && imgurContent.imageUrl !== undefined) {
+            log(`[Instagram] Попытка создать контейнер с изображением вместо видео`, 'instagram');
+            
+            // Изменяем параметры запроса на изображение - создаем новый объект параметров
+            // Это избавляет от возможных проблем с оставшимися свойствами от видео
+            containerParams = {
+              caption: caption,
+              access_token: token,
+              image_url: imgurContent.imageUrl
+            };
+            
+            // Повторно отправляем запрос с изображением
+            const fallbackResponse = await axios.post(
+              containerUrl, 
+              containerParams, 
+              {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 60000
+              }
+            );
+            
+            log(`[Instagram] Ответ API при резервной загрузке изображения: ${JSON.stringify(fallbackResponse.data)}`, 'instagram');
+            
+            // Преобразуем ответ API в формат SocialPublication
+            if (fallbackResponse.data && fallbackResponse.data.id) {
+              const containerId = fallbackResponse.data.id;
+              
+              // Публикуем контейнер с изображением
+              try {
+                // Формируем URL для публикации контейнера
+                const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
+                
+                // Отправляем запрос на публикацию контейнера
+                const publishResponse = await axios.post(
+                  publishUrl,
+                  {
+                    creation_id: containerId,
+                    access_token: token
+                  },
+                  {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 60000
+                  }
+                );
+                
+                log(`[Instagram] Ответ API (публикация резервного изображения): ${JSON.stringify(publishResponse.data)}`, 'instagram');
+                
+                // Проверяем успешность публикации
+                if (publishResponse.data && publishResponse.data.id) {
+                  // Получаем permalink публикации
+                  const permalink = await this.getInstagramPermalink(publishResponse.data.id, token);
+                  
+                  return {
+                    platform: 'instagram', 
+                    status: 'published',
+                    publishedAt: new Date(),
+                    postId: publishResponse.data.id,
+                    url: permalink || undefined,
+                    error: null
+                  };
+                }
+              } catch (pubError: any) {
+                log(`[Instagram] Ошибка при публикации резервного изображения: ${pubError.message}`, 'instagram');
+              }
+              
+              // Если публикация не удалась, возвращаем статус pending
+              return {
+                platform: 'instagram', 
+                status: 'pending',
+                publishedAt: null,
+                postId: containerId,
+                error: null
+              };
+            } else {
+              return {
+                platform: 'instagram',
+                status: 'failed',
+                publishedAt: null,
+                error: 'Ошибка создания резервного контейнера: неверный формат ответа API'
+              };
+            }
+          }
+          
+          // Если это не видео или нет резервного изображения, прокидываем ошибку дальше
+          throw error;
+        }
+        
+        // Этот код никогда не должен выполняться, так как выше мы либо возвращаем containerResponse, либо выбрасываем исключение
+        log(`[Instagram] Критическая ошибка в логике кода: продолжение выполнения после return/throw`, 'instagram');
         
         return {
           platform: 'instagram',
-          status: 'published',
-          publishedAt: new Date(),
-          postUrl: postUrl
-        };
+          status: 'failed',
+          publishedAt: null,
+          error: 'Внутренняя ошибка в логике кода'
+};
       } catch (error: any) {
         log(`[Instagram] Исключение при публикации: ${error.message}`, 'instagram');
         
@@ -312,6 +671,7 @@ export class InstagramService extends BaseSocialService {
    * @param settings Настройки социальных сетей
    * @returns Результат публикации
    */
+  // Здесь определяем возвращаемый тип в соответствии с базовым классом
   public async publishToPlatform(
     content: CampaignContent,
     platform: SocialPlatform,
