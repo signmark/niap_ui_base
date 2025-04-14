@@ -354,17 +354,61 @@ export class PublishScheduler {
       
       // Фильтруем контент, время публикации которого уже наступило
       const contentToPublish = scheduledContent.filter(content => {
-        if (!content.scheduledAt) return false;
+        // Если нет ни общего времени, ни платформ, то пропускаем
+        if (!content.scheduledAt && (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0)) {
+          return false;
+        }
         
-        const scheduledTime = new Date(content.scheduledAt);
-        const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+        const now = new Date();
         
-        // Логируем для каждого контента
-        log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()}, ` +
-            `текущее время: ${now.toISOString()}, ` + 
-            `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+        // Проверяем индивидуальные настройки времени для платформ
+        if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+          let anyPlatformReady = false;
+          
+          // Проверяем каждую платформу на время публикации
+          for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
+            // Проверяем статус и пропускаем если уже опубликован
+            if (platformData?.status === 'published') {
+              continue;
+            }
+            
+            // Проверяем индивидуальную дату для платформы
+            if (platformData?.scheduledAt) {
+              const platformScheduledTime = new Date(platformData.scheduledAt);
+              const timeUntilPublish = platformScheduledTime.getTime() - now.getTime();
+              
+              log(`Контент ID ${content.id} "${content.title}" для платформы ${platform} запланирован на ${platformScheduledTime.toISOString()}, ` +
+                 `текущее время: ${now.toISOString()}, ` + 
+                 `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+              
+              // Если время публикации для этой платформы наступило
+              if (platformScheduledTime <= now) {
+                anyPlatformReady = true;
+                // Не прерываем цикл, чтобы залогировать все платформы
+              }
+            }
+          }
+          
+          // Если хотя бы одна платформа готова к публикации, разрешаем публикацию
+          if (anyPlatformReady) {
+            return true;
+          }
+        }
         
-        return scheduledTime <= now;
+        // Если не нашли готовых платформ, проверяем общее время
+        if (content.scheduledAt) {
+          const scheduledTime = new Date(content.scheduledAt);
+          const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+          
+          // Логируем для общего времени контента
+          log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()} (общее время), ` +
+              `текущее время: ${now.toISOString()}, ` + 
+              `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
+          
+          return scheduledTime <= now;
+        }
+        
+        return false;
       });
       
       if (contentToPublish.length === 0) {
@@ -526,6 +570,21 @@ export class PublishScheduler {
       }
 
       log(`Публикация контента ${content.id}: "${content.title}"`, 'scheduler');
+      
+      // Логируем информацию о времени публикации для каждой платформы
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        // Выводим настройки времени для каждой платформы для отладки
+        const platformTimes = Object.entries(content.socialPlatforms)
+          .map(([platform, data]) => {
+            const scheduledTime = data.scheduledAt ? new Date(data.scheduledAt).toISOString() : 'не задано';
+            return `${platform}: ${scheduledTime} (статус: ${data.status || 'не установлен'})`;
+          })
+          .join(', ');
+        
+        log(`Настройки времени публикации для платформ: ${platformTimes}`, 'scheduler');
+      } else {
+        log(`Для контента ${content.id} нет индивидуальных настроек времени для платформ, используется общее время: ${content.scheduledAt?.toISOString() || 'не задано'}`, 'scheduler');
+      }
 
       // Получаем системный токен для доступа к API
       const systemToken = await this.getSystemToken();
@@ -620,16 +679,34 @@ export class PublishScheduler {
 
       // Проверяем, в какие платформы нужно публиковать
       const socialPlatforms = content.socialPlatforms || {};
-      const platformsToPublish = Object.keys(socialPlatforms) as SocialPlatform[];
-
+      // Получаем текущее время
+      const now = new Date();
+      
+      // Отфильтруем только те платформы, время публикации которых уже наступило
+      const platformsToPublish = Object.entries(socialPlatforms)
+        .filter(([platform, platformData]) => {
+          // Если платформа уже опубликована, пропускаем
+          if (platformData.status === 'published') {
+            return false;
+          }
+          
+          // Если у платформы есть своё scheduledAt и оно в будущем, пропускаем
+          if (platformData.scheduledAt) {
+            const platformScheduledTime = new Date(platformData.scheduledAt);
+            if (platformScheduledTime > now) {
+              log(`Платформа ${platform} для контента ${content.id} запланирована на ${platformScheduledTime.toISOString()}, пропускаем`, 'scheduler');
+              return false;
+            }
+          }
+          
+          return true;
+        })
+        .map(([platform]) => platform as SocialPlatform);
+        
       if (platformsToPublish.length === 0) {
-        log(`Для контента ${content.id} не указаны платформы`, 'scheduler');
+        log(`Для контента ${content.id} не указаны платформы или время публикации ещё не наступило`, 'scheduler');
         
-        // Обновляем статус - не передаем publishedAt напрямую, это внутреннее поле контента
-        await storage.updateCampaignContent(content.id, {
-          status: 'published'
-        });
-        
+        // Не обновляем статус, так как возможно время для некоторых платформ ещё не наступило
         return;
       }
 
@@ -803,7 +880,7 @@ export class PublishScheduler {
             
             const result = {
               platform,
-              status: 'published',
+              status: 'published' as const,
               publishedAt: new Date(),
               postUrl: foundUrl,
               postId: foundId,
