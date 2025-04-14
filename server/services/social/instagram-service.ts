@@ -576,6 +576,38 @@ export class InstagramService extends BaseSocialService {
                 } else if (statusResponse.data.status_code === 'ERROR') {
                   log(`[Instagram] Ошибка обработки видео на стороне Instagram`, 'instagram');
                   this.writeToLogFile(`Instagram вернул статус ERROR для контейнера ${containerId}`);
+                  
+                  // Проверка дополнительных полей ошибки, если они доступны
+                  if (statusResponse.data.status_issues) {
+                    log(`[Instagram] Детали ошибки: ${JSON.stringify(statusResponse.data.status_issues)}`, 'instagram');
+                    this.writeToLogFile(`Детали ошибки: ${JSON.stringify(statusResponse.data.status_issues)}`);
+                  }
+                  
+                  // Если это видео-контент, пробуем запросить расширенную информацию
+                  try {
+                    const detailsUrl = `${baseUrl}/${containerId}`;
+                    const detailsParams = {
+                      fields: 'status_code,status_issues,error_message,video_status,media_type',
+                      access_token: token
+                    };
+                    
+                    log(`[Instagram] Запрашиваем расширенные детали ошибки`, 'instagram');
+                    
+                    const detailsResponse = await axios.get(detailsUrl, {
+                      params: detailsParams,
+                      timeout: 10000
+                    });
+                    
+                    if (detailsResponse.data) {
+                      log(`[Instagram] Расширенные детали: ${JSON.stringify(detailsResponse.data)}`, 'instagram');
+                      this.writeToLogFile(`Расширенные детали ошибки: ${JSON.stringify(detailsResponse.data)}`);
+                    }
+                  } catch (detailsError) {
+                    log(`[Instagram] Не удалось получить расширенные детали ошибки: ${detailsError.message}`, 'instagram');
+                  }
+                  
+                  // Возвращаем false, чтобы перейти к альтернативной стратегии публикации
+                  return false;
                 }
               }
               return false;
