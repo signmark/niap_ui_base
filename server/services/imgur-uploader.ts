@@ -132,15 +132,36 @@ export class ImgurUploaderService {
     try {
       log(`Загрузка видео на Imgur из файла: ${filePath}`);
       
-      // Создаем объект FormData для отправки файла
-      const formData = new FormData();
-      formData.append('video', fs.createReadStream(filePath));
+      // Проверяем существование файла
+      if (!fs.existsSync(filePath)) {
+        log(`Файл не существует: ${filePath}`);
+        return null;
+      }
+      
+      const fileStats = fs.statSync(filePath);
+      log(`Размер файла: ${fileStats.size} байт`);
+      
+      // Читаем файл в буфер
+      const fileBuffer = fs.readFileSync(filePath);
+      
+      // Кодируем в base64
+      const base64Data = fileBuffer.toString('base64');
+      log(`Файл прочитан и закодирован в base64, размер: ${base64Data.length} символов`);
+      
+      // Создаем данные для отправки
+      const data = {
+        video: base64Data,
+        type: 'base64',
+        name: path.basename(filePath),
+        title: `Video uploaded at ${new Date().toISOString()}`
+      };
       
       // Отправляем запрос на Imgur API
-      const response = await axios.post(this.imgurUploadEndpoint, formData, {
+      log(`Отправка запроса на ${this.imgurUploadEndpoint}`);
+      const response = await axios.post(this.imgurUploadEndpoint, data, {
         headers: {
-          ...formData.getHeaders(),
-          'Authorization': `Client-ID ${this.imgurClientId}`
+          'Authorization': `Client-ID ${this.imgurClientId}`,
+          'Content-Type': 'application/json'
         },
       });
       
@@ -153,7 +174,17 @@ export class ImgurUploaderService {
         return null;
       }
     } catch (error) {
-      log(`Ошибка при загрузке видео на Imgur из файла: ${error}`);
+      // Детальное логирование ошибки
+      if (error.response) {
+        // Ошибка от сервера с кодом статуса
+        log(`Ошибка от Imgur API: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      } else if (error.request) {
+        // Нет ответа от сервера
+        log(`Нет ответа от Imgur: ${error.request}`);
+      } else {
+        // Что-то еще пошло не так
+        log(`Ошибка при загрузке видео на Imgur из файла: ${error.message}`);
+      }
       return null;
     }
   }
