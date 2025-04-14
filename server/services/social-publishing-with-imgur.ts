@@ -645,7 +645,7 @@ export class SocialPublishingWithImgurService {
           
           // Обновляем videoUrl и в объекте в хранилище данных
           try {
-            await storage.campaigns.updateItemById(updatedContent.id, {
+            await storage.updateItemById('campaign_content', updatedContent.id, {
               videoUrl: imgurUrl
             });
             log(`Поле videoUrl обновлено в БД для контента ${updatedContent.id}`, 'social-publishing');
