@@ -106,9 +106,9 @@ export abstract class BaseSocialService {
           } catch (error) {
             // Если не удалось распарсить JSON, считаем это одиночным URL и создаем массив с одним элементом
             // Обработка строки url
-            const additionalImage = updatedContent.additionalImages;
-            if (additionalImage && typeof additionalImage === 'string' && additionalImage.trim().startsWith('http')) {
-              updatedContent.additionalImages = [additionalImage.trim()];
+            const additionalImageContent = updatedContent.additionalImages;
+            if (additionalImageContent && typeof additionalImageContent === 'string' && additionalImageContent.trim().startsWith('http')) {
+              updatedContent.additionalImages = [additionalImageContent.trim()];
               log(`additionalImages в виде строки URL преобразован в массив с одним элементом для ${platform}`, 'social-publishing');
             } else {
               // Иначе создаем пустой массив
