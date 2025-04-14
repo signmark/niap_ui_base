@@ -611,6 +611,27 @@ export function registerImgurRoutes(router: Router) {
         if (imgurUrl) {
           console.log(`Видео успешно загружено на Imgur: ${imgurUrl}`);
           
+          // Обновляем videoUrl для контента в БД
+          try {
+            // Получаем contentId из query параметров, если он там есть
+            const contentId = req.query.contentId as string;
+            if (contentId) {
+              console.log(`Обновляем videoUrl для контента ${contentId} в БД: ${imgurUrl}`);
+              
+              // Используем прямой вызов updateItemById для обновления
+              await storage.updateItemById('campaign_content', contentId, {
+                videoUrl: imgurUrl
+              });
+              
+              console.log(`URL видео успешно обновлен в БД для контента ${contentId}`);
+            } else {
+              console.log('Не найден contentId в запросе, не обновляем БД');
+            }
+          } catch (dbError) {
+            console.error('Ошибка при обновлении videoUrl в БД:', dbError);
+            // Продолжаем выполнение даже при ошибке БД
+          }
+          
           // Отправляем ответ с URL Imgur
           const responseData = {
             success: true,

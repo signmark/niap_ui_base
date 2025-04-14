@@ -623,7 +623,39 @@ export class SocialPublishingWithImgurService {
     const updatedContent = { ...content };
     
     try {
-      log(`Начинаем загрузку изображений на Imgur для контента: ${content.id}`, 'social-publishing');
+      log(`Начинаем загрузку медиа-контента на Imgur для контента: ${content.id}`, 'social-publishing');
+      
+      // Загружаем видео в первую очередь, если оно есть
+      if (updatedContent.videoUrl && typeof updatedContent.videoUrl === 'string' && updatedContent.videoUrl.trim() !== '') {
+        log(`Загрузка видео на Imgur: ${updatedContent.videoUrl}`, 'social-publishing');
+        
+        // Если URL не начинается с http, добавляем базовый URL сервера
+        let originalVideoUrl = updatedContent.videoUrl;
+        if (!originalVideoUrl.startsWith('http')) {
+          // Используем фиксированный базовый URL или получаем его из конфигурации в Directus
+          const baseAppUrl = this.getAppBaseUrl(); 
+          originalVideoUrl = `${baseAppUrl}${originalVideoUrl.startsWith('/') ? '' : '/'}${originalVideoUrl}`;
+          log(`Изменен URL видео для загрузки: ${originalVideoUrl}`, 'social-publishing');
+        }
+        
+        const imgurUrl = await imgurUploaderService.uploadVideoFromUrl(originalVideoUrl);
+        if (imgurUrl) {
+          log(`Видео успешно загружено на Imgur: ${imgurUrl}`, 'social-publishing');
+          updatedContent.videoUrl = imgurUrl;
+          
+          // Обновляем videoUrl и в объекте в хранилище данных
+          try {
+            await storage.campaigns.updateItemById(updatedContent.id, {
+              videoUrl: imgurUrl
+            });
+            log(`Поле videoUrl обновлено в БД для контента ${updatedContent.id}`, 'social-publishing');
+          } catch (dbError) {
+            log(`Ошибка при обновлении поля videoUrl в БД: ${dbError}`, 'social-publishing');
+          }
+        } else {
+          log(`Не удалось загрузить видео на Imgur, оставляем оригинальный URL`, 'social-publishing');
+        }
+      }
       
       // Загружаем основное изображение, если оно есть
       if (updatedContent.imageUrl && typeof updatedContent.imageUrl === 'string' && updatedContent.imageUrl.trim() !== '') {
@@ -682,7 +714,7 @@ export class SocialPublishingWithImgurService {
       
       return updatedContent;
     } catch (error) {
-      log(`Ошибка при загрузке изображений на Imgur: ${error}`, 'social-publishing');
+      log(`Ошибка при загрузке медиа-контента на Imgur: ${error}`, 'social-publishing');
       return content; // Возвращаем оригинальный контент в случае ошибки
     }
   }
