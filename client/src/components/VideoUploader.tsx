@@ -74,23 +74,58 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
     setIsUploading(true);
     
     try {
-      const response = await fetch('/api/imgur/upload-video-from-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ videoUrl: urlInput }),
-      }).then(res => res.json());
+      // Проверяем, что видео доступно, пытаясь получить к нему доступ через HEAD запрос
+      const checkVideo = async (url: string) => {
+        try {
+          const response = await fetch(url, { method: 'HEAD' });
+          return response.ok && 
+                 (response.headers.get('content-type')?.includes('video/') || 
+                  url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.mov'));
+        } catch (error) {
+          console.error('Ошибка при проверке видео:', error);
+          return false;
+        }
+      };
       
-      if (response?.success && response?.data?.url) {
-        setVideoUrl(response.data.url);
-        onVideoUpload(response.data.url);
+      // Если URL доступен и это похоже на видео - используем его напрямую
+      if (await checkVideo(urlInput)) {
+        setVideoUrl(urlInput);
+        onVideoUpload(urlInput);
         toast({
-          title: 'Видео загружено',
-          description: 'Видео успешно загружено с указанного URL',
+          title: 'Видео добавлено',
+          description: 'Видео по указанному URL успешно добавлено',
         });
       } else {
-        throw new Error('Ошибка при загрузке видео. Ответ не содержит URL.');
+        // Если не получилось напрямую, пробуем через сервис
+        try {
+          const response = await fetch('/api/imgur/upload-video-from-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ videoUrl: urlInput }),
+          }).then(res => res.json());
+          
+          if (response?.success && response?.data?.url) {
+            setVideoUrl(response.data.url);
+            onVideoUpload(response.data.url);
+            toast({
+              title: 'Видео загружено',
+              description: 'Видео успешно загружено с указанного URL',
+            });
+          } else {
+            throw new Error('Ошибка при загрузке видео. Ответ не содержит URL.');
+          }
+        } catch (uploadError) {
+          console.error('Ошибка при загрузке видео через сервис:', uploadError);
+          // Предполагаем, что URL доступен напрямую, даже если проверка не сработала
+          setVideoUrl(urlInput);
+          onVideoUpload(urlInput);
+          toast({
+            title: 'Видео добавлено',
+            description: 'Видео добавлено напрямую, без загрузки на сервер',
+          });
+        }
       }
     } catch (error) {
       console.error('Ошибка при загрузке видео по URL:', error);
