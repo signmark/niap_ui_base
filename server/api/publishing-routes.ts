@@ -1019,20 +1019,27 @@ export function registerPublishingRoutes(app: Express): void {
           // Получаем список всех платформ для публикации
           const allPlatforms = Object.keys(mergedSocialPlatforms);
           
-          // Для каждой платформы проверяем наличие своего scheduledAt
+          // Для каждой платформы проверяем наличие своего scheduledAt или scheduled_at
           allPlatforms.forEach(platform => {
+            // Проверяем все возможные ключи для времени публикации
+            const hasTime = mergedSocialPlatforms[platform] && 
+                           (mergedSocialPlatforms[platform].scheduledAt || 
+                            mergedSocialPlatforms[platform].scheduled_at);
+            
             if (!mergedSocialPlatforms[platform]) {
               // Если платформа указана, но нет данных, создаем объект
               mergedSocialPlatforms[platform] = {
                 platform: platform,
                 status: 'pending',
-                scheduledAt: scheduledAtDate.toISOString()
+                scheduledAt: scheduledAtDate.toISOString(),
+                scheduled_at: scheduledAtDate.toISOString() // Добавляем оба формата для совместимости
               };
               log(`Создана новая запись для платформы ${platform} со временем ${scheduledAtDate.toISOString()}`, 'api');
             } 
-            else if (!mergedSocialPlatforms[platform].scheduledAt) {
-              // Если у платформы отсутствует свое время, устанавливаем общее
+            else if (!hasTime) {
+              // Если у платформы отсутствует время публикации, устанавливаем общее
               mergedSocialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+              mergedSocialPlatforms[platform].scheduled_at = scheduledAtDate.toISOString();
               log(`Установлено время для платформы ${platform}: ${scheduledAtDate.toISOString()}`, 'api');
             }
           });
