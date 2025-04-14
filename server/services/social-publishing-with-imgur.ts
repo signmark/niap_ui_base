@@ -853,9 +853,11 @@ export class SocialPublishingWithImgurService {
     title?: string
   ): Promise<string | null> {
     try {
-      log(`Начинаем загрузку видео в ВК: ${videoUrl.substring(0, 100)}...`, 'social-publishing');
+      log(`[DEBUG VK VIDEO] Начинаем загрузку видео в ВК: ${videoUrl}`, 'social-publishing');
       
       // Шаг 1: Получение сервера для загрузки видео
+      log(`[DEBUG VK VIDEO] Получаем сервер для загрузки через video.save с параметрами: token=${token.substring(0, 6)}..., group_id=${groupId}, name=${title || 'Видео'}`, 'social-publishing');
+      
       const getUploadServerResponse = await axios.get('https://api.vk.com/method/video.save', {
         params: {
           access_token: token,
@@ -868,38 +870,80 @@ export class SocialPublishingWithImgurService {
         }
       });
       
+      log(`[DEBUG VK VIDEO] Ответ от video.save: ${JSON.stringify(getUploadServerResponse.data || {})}`, 'social-publishing');
+      
       // Проверяем ответ на наличие данных для загрузки
       if (!getUploadServerResponse.data || !getUploadServerResponse.data.response || !getUploadServerResponse.data.response.upload_url) {
-        log(`Ошибка получения сервера для загрузки видео в ВК: ${JSON.stringify(getUploadServerResponse.data)}`, 'social-publishing');
+        log(`[DEBUG VK VIDEO] Ошибка получения сервера для загрузки видео в ВК: ${JSON.stringify(getUploadServerResponse.data || {})}`, 'social-publishing');
         return null;
       }
       
       const uploadUrl = getUploadServerResponse.data.response.upload_url;
-      log(`Получен URL для загрузки видео в ВК: ${uploadUrl}`, 'social-publishing');
+      log(`[DEBUG VK VIDEO] Получен URL для загрузки видео в ВК: ${uploadUrl}`, 'social-publishing');
       
       // Шаг 2: Загружаем видео на сервер ВК
-      // Для этого используем прямую передачу URL, т.к. VK поддерживает загрузку по ссылке
-      const uploadResponse = await axios.post(uploadUrl, { 
-        video_file: videoUrl 
+      // Для VK передача video_file как строчного URL не работает, нужен либо файл, либо stream
+      // Скачиваем видео и отправляем как multipart/form-data
+      log(`[DEBUG VK VIDEO] Скачиваем видео для дальнейшей загрузки в ВК: ${videoUrl}`, 'social-publishing');
+      
+      const videoResponse = await axios.get(videoUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 30000 // увеличенный таймаут для скачивания видео
       });
       
+      log(`[DEBUG VK VIDEO] Видео скачано, размер: ${(videoResponse.data.length / 1024 / 1024).toFixed(2)} МБ`, 'social-publishing');
+      
+      // Создаем FormData с файлом
+      const formData = new FormData();
+      formData.append('video_file', Buffer.from(videoResponse.data), 'video.mp4');
+      
+      log(`[DEBUG VK VIDEO] Отправляем видео на сервер ВК: ${uploadUrl}`, 'social-publishing');
+      
+      // Загружаем видео
+      const uploadResponse = await axios.post(uploadUrl, formData, {
+        headers: {
+          ...formData.getHeaders()
+        },
+        timeout: 60000 // увеличенный таймаут для загрузки видео
+      });
+      
+      log(`[DEBUG VK VIDEO] Ответ от сервера загрузки: ${JSON.stringify(uploadResponse.data || {})}`, 'social-publishing');
+      
       // Проверка успешности загрузки
-      if (!uploadResponse.data || (uploadResponse.data.error && !uploadResponse.data.video_id)) {
-        log(`Ошибка загрузки видео в ВК: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+      if (!uploadResponse.data) {
+        log(`[DEBUG VK VIDEO] Пустой ответ при загрузке видео в ВК`, 'social-publishing');
+        return null;
+      }
+      
+      // VK может вернуть разные форматы ответа в зависимости от версии API
+      // Проверяем наличие необходимых полей
+      const videoId = uploadResponse.data.video_id || 
+                      (uploadResponse.data.response && uploadResponse.data.response.video_id) ||
+                      (uploadResponse.data.owner_id && uploadResponse.data.id ? uploadResponse.data.id : null);
+                      
+      const ownerId = uploadResponse.data.owner_id || 
+                      (uploadResponse.data.response && uploadResponse.data.response.owner_id) ||
+                      `-${groupId}`;
+      
+      if (!videoId) {
+        log(`[DEBUG VK VIDEO] Ошибка загрузки видео в ВК - отсутствует video_id: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
         return null;
       }
       
       // Видео загружено успешно, формируем строку attachment
       // Формат: video{owner_id}_{video_id}
-      const videoId = uploadResponse.data.video_id;
-      const ownerId = uploadResponse.data.owner_id || `-${groupId}`;
       const attachment = `video${ownerId}_${videoId}`;
       
-      log(`Видео успешно загружено в ВК: ${attachment}`, 'social-publishing');
+      log(`[DEBUG VK VIDEO] Видео успешно загружено в ВК: ${attachment}`, 'social-publishing');
       return attachment;
       
     } catch (error: any) {
-      log(`Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+      log(`[DEBUG VK VIDEO] Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`[DEBUG VK VIDEO] Данные ответа: ${JSON.stringify(error.response.data || {})}`, 'social-publishing');
+        log(`[DEBUG VK VIDEO] Статус ответа: ${error.response.status}`, 'social-publishing');
+        log(`[DEBUG VK VIDEO] Заголовки ответа: ${JSON.stringify(error.response.headers || {})}`, 'social-publishing');
+      }
       return null;
     }
   }
