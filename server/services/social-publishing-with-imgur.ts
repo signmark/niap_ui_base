@@ -256,6 +256,105 @@ export class SocialPublishingWithImgurService {
   }
 
   /**
+   * Универсальный метод для отправки видео в Telegram
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @param videoUrl URL видео для отправки
+   * @param caption Подпись к видео (опционально)
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
+  private async sendVideoToTelegram(
+    chatId: string,
+    token: string,
+    videoUrl: string,
+    caption: string = '',
+    baseUrl: string = `https://api.telegram.org/bot${token}`
+  ): Promise<{success: boolean, error?: string, messageId?: number, messageUrl?: string}> {
+    if (!videoUrl) {
+      log(`sendVideoToTelegram: Не указан URL видео`, 'telegram-debug');
+      return {success: false, error: 'Не указан URL видео'};
+    }
+    
+    // Форматируем chatId, если это необходимо
+    let formattedChatId = chatId;
+    let originalChatId = chatId; // Оригинальный ID для создания URL
+    
+    if (chatId.startsWith('@')) {
+      // Это имя пользователя - не нужно форматировать для API, но сохраняем без @ для URL
+      originalChatId = chatId.substring(1); // Убираем @ для URL
+    } else if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
+      // Для групповых чатов добавляем префикс -100 для API
+      formattedChatId = `-100${chatId}`;
+      // Оригинальный ID без -100 для URL будет использоваться именно числовой ID
+      originalChatId = chatId;
+    }
+    
+    log(`Отправка видео в Telegram, chatId для API: ${formattedChatId}, для URL: ${originalChatId}, URL видео: ${videoUrl}`, 'telegram-debug');
+    
+    try {
+      // Проверяем, что URL не пустой и доступен
+      if (!videoUrl || typeof videoUrl !== 'string' || videoUrl.trim() === '') {
+        log(`Пропускаем пустой URL видео`, 'telegram-debug');
+        return {
+          success: false,
+          error: 'Пустой URL видео'
+        };
+      }
+      
+      // Подготавливаем данные для запроса
+      const sendVideoData: any = {
+        chat_id: formattedChatId,
+        video: videoUrl,
+        parse_mode: 'HTML'
+      };
+      
+      // Если есть подпись, добавляем её (с ограничением длины в 1024 символа)
+      if (caption && caption.trim() !== '') {
+        sendVideoData.caption = caption.length <= 1024 ? caption : caption.substring(0, 1021) + '...';
+      }
+      
+      // Отправляем видео через sendVideo метод API Telegram
+      log(`Отправка видео через sendVideo: ${videoUrl}`, 'telegram-debug');
+      const response = await axios.post(`${baseUrl}/sendVideo`, sendVideoData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000, // Увеличенный таймаут для возможной загрузки большого видео
+        validateStatus: () => true
+      });
+      
+      if (response.status === 200 && response.data.ok) {
+        log(`Видео успешно отправлено в Telegram`, 'social-publishing');
+        const messageId = response.data.result.message_id;
+        
+        // Создаем правильный URL сообщения с помощью метода-форматера
+        const messageUrl = this.formatTelegramUrl(originalChatId, formattedChatId, messageId);
+        log(`Создан URL сообщения с видео через formatTelegramUrl: ${messageUrl}`, 'telegram-debug');
+        
+        return {
+          success: true,
+          messageId,
+          messageUrl
+        };
+      } else {
+        log(`Ошибка при отправке видео в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+        return {
+          success: false,
+          error: `Ошибка API Telegram при отправке видео: ${response.data?.description || 'Неизвестная ошибка'}`
+        };
+      }
+    } catch (error: any) {
+      log(`Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`Данные ответа: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      }
+      return {
+        success: false,
+        error: `Исключение при отправке видео: ${error.message}`
+      };
+    }
+  }
+
+  /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
    * @returns Отформатированный текст для Telegram с поддержкой HTML
