@@ -73,7 +73,7 @@ export function VideoUploader({
       
       try {
         console.log('Отправка запроса на загрузку видео файла...');
-        const response = await axios.post('/api/beget-s3/upload-video', formData, {
+        const response = await axios.post('/api/beget-s3-video/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
