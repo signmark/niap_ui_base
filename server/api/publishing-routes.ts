@@ -1000,10 +1000,26 @@ export function registerPublishingRoutes(app: Express): void {
           log(`Прямое обновление контента ${contentId} через API для планирования`, 'api');
           
           // Формируем данные для обновления
+          // Сохраняем все существующие платформы, которые могли быть, но не указаны в текущем запросе
+          const existingSocialPlatforms = content.socialPlatforms || {};
+          
+          // Объединяем существующие и новые данные о платформах
+          const mergedSocialPlatforms = { ...existingSocialPlatforms };
+          
+          // Обновляем значения для платформ из запроса
+          Object.entries(socialPlatforms).forEach(([platform, data]) => {
+            mergedSocialPlatforms[platform] = data;
+          });
+          
+          // Добавляем подробное логирование для отладки
+          log(`Существующие платформы: ${JSON.stringify(existingSocialPlatforms)}`, 'api');
+          log(`Новые платформы из запроса: ${JSON.stringify(socialPlatforms)}`, 'api');
+          log(`Объединенные платформы: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
+          
           const updateData = {
             status: 'scheduled',
-            scheduled_at: scheduledAt,
-            social_platforms: socialPlatforms
+            scheduled_at: scheduledAt, // Основное время публикации (используется только как ориентир)
+            social_platforms: mergedSocialPlatforms // Обновленные данные о платформах
           };
           
           // Выполняем запрос к API Directus
