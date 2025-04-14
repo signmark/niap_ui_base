@@ -75,8 +75,13 @@ export async function sendVideoToTelegram(
       // Для локального файла
       try {
         // Извлекаем локальный путь к файлу
-        const localPath = videoUrl.replace(baseAppUrl, '');
-        const absolutePath = path.resolve(`.${localPath}`);
+        let localPath = videoUrl.replace(baseAppUrl, '');
+        // Убираем начальный слеш, если он есть
+        if (localPath.startsWith('/')) {
+          localPath = localPath.substring(1);
+        }
+        
+        const absolutePath = path.resolve(process.cwd(), localPath);
         
         log(`Чтение локального файла видео: ${absolutePath}`, 'social-publishing');
         
@@ -87,13 +92,68 @@ export async function sendVideoToTelegram(
           formData.append('video', videoBuffer, { filename: fileName });
           log(`Локальный файл видео успешно прочитан, размер: ${videoBuffer.length} байт`, 'social-publishing');
         } else {
-          log(`Файл видео не найден: ${absolutePath}`, 'social-publishing');
-          throw new Error(`Файл видео не найден: ${absolutePath}`);
+          // Попробуем найти файл без базового пути
+          const originalPath = path.resolve(process.cwd(), videoUrl);
+          log(`Файл не найден, пробуем оригинальный путь: ${originalPath}`, 'social-publishing');
+          
+          if (fs.existsSync(originalPath)) {
+            const videoBuffer = fs.readFileSync(originalPath);
+            const fileName = path.basename(originalPath);
+            
+            formData.append('video', videoBuffer, { filename: fileName });
+            log(`Локальный файл видео успешно прочитан, размер: ${videoBuffer.length} байт`, 'social-publishing');
+          } else {
+            log(`Файл видео не найден ни по одному из путей. Пробуем путь без изменений: ${videoUrl}`, 'social-publishing');
+            
+            // Пробуем еще один вариант - полный путь без изменений
+            if (fs.existsSync(videoUrl)) {
+              const videoBuffer = fs.readFileSync(videoUrl);
+              const fileName = path.basename(videoUrl);
+              
+              formData.append('video', videoBuffer, { filename: fileName });
+              log(`Локальный файл видео успешно прочитан, размер: ${videoBuffer.length} байт`, 'social-publishing');
+            } else {
+              throw new Error(`Файл видео не найден: ${absolutePath}`);
+            }
+          }
         }
       } catch (fileError) {
         log(`Ошибка при чтении файла видео: ${fileError}`, 'social-publishing');
-        // В случае ошибки с файлом, пробуем передать URL
-        formData.append('video', fullVideoUrl);
+        // В случае ошибки с файлом, делаем дополнительную попытку найти файл
+        try {
+          // Пробуем полный путь к uploads/videos
+          const videosDir = path.join(process.cwd(), 'uploads', 'videos');
+          const videoFileName = path.basename(videoUrl);
+          const possiblePaths = [
+            path.join(videosDir, videoFileName),
+            fullVideoUrl,
+            videoUrl
+          ];
+          
+          log(`Попытка поиска видео в альтернативных местах: ${possiblePaths.join(', ')}`, 'social-publishing');
+          
+          // Ищем файл в возможных местах
+          for (const possiblePath of possiblePaths) {
+            if (fs.existsSync(possiblePath)) {
+              const videoBuffer = fs.readFileSync(possiblePath);
+              const fileName = path.basename(possiblePath);
+              
+              formData.append('video', videoBuffer, { filename: fileName });
+              log(`Видео найдено и прочитано из альтернативного места: ${possiblePath}, размер: ${videoBuffer.length} байт`, 'social-publishing');
+              break;
+            }
+          }
+          
+          // Если видео не найдено, отправляем URL как последнее средство
+          if (!formData.has('video')) {
+            log(`Видео не найдено нигде, пробуем передать URL напрямую: ${fullVideoUrl}`, 'social-publishing');
+            formData.append('video', fullVideoUrl);
+          }
+        } catch (secondError) {
+          log(`Вторая попытка чтения файла видео также неудачна: ${secondError}`, 'social-publishing');
+          // В случае повторной ошибки, пробуем передать URL
+          formData.append('video', fullVideoUrl);
+        }
       }
     }
     
