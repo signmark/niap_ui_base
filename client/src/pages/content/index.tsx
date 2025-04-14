@@ -48,6 +48,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
 import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
+import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
@@ -1710,7 +1711,7 @@ export default function ContentPage() {
                 </div>
               )}
               
-              {/* Дополнительные видео */}
+              {/* Дополнительные видео - устаревший компонент */}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
                 <div className="space-y-2">
                   <AdditionalVideosUploader
@@ -1720,6 +1721,22 @@ export default function ContentPage() {
                   />
                 </div>
               )}
+              
+              {/* Универсальное поле additional_media */}
+              <div className="mt-6 space-y-2 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="additionalMedia">Универсальные медиа-файлы</Label>
+                  <Badge variant="outline" className="text-xs">Новое</Badge>
+                </div>
+                <AdditionalMediaUploader
+                  media={currentContent.additionalMedia || []}
+                  onChange={(media) => setCurrentContentSafe({...currentContent, additionalMedia: media})}
+                  label="Изображения и видео"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Добавьте дополнительные изображения и видео для публикации в социальных сетях
+                </p>
+              </div>
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">
