@@ -1106,14 +1106,32 @@ export class TelegramService extends BaseSocialService {
                 
           log(`Telegram: подготовлена подпись для видео, длина: ${videoCaption.length} символов`, 'social-publishing');
           
-          // Используем внешний обработчик для отправки видео
-          const videoResponse = await sendVideoToTelegram(
-            imgurContent.videoUrl!,
-            videoCaption,
-            formattedChatId,
-            token,
-            this.getAppBaseUrl()
-          );
+          // Проверяем, является ли видео локальным файлом
+          const isLocalVideo = imgurContent.videoUrl && typeof imgurContent.videoUrl === 'string' && 
+            (imgurContent.videoUrl.startsWith('/') || imgurContent.videoUrl.startsWith('./'));
+          
+          let videoResponse;
+          
+          if (isLocalVideo) {
+            // Используем улучшенный обработчик для локальных видео
+            log(`Telegram: обнаружено локальное видео, используем улучшенный обработчик`, 'social-publishing');
+            videoResponse = await sendLocalVideoToTelegram(
+              imgurContent.videoUrl!,
+              formattedChatId,
+              token,
+              videoCaption
+            );
+          } else {
+            // Используем стандартный обработчик для видео по URL
+            log(`Telegram: обнаружено видео по URL, используем стандартный обработчик`, 'social-publishing');
+            videoResponse = await sendVideoToTelegram(
+              imgurContent.videoUrl!,
+              videoCaption,
+              formattedChatId,
+              token,
+              this.getAppBaseUrl()
+            );
+          }
           
           if (videoResponse.success) {
             log(`Видео успешно отправлено в Telegram, ID сообщения: ${videoResponse.messageId}`, 'social-publishing');

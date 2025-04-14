@@ -11,6 +11,105 @@ import { glob } from 'glob';
 const globPromise = promisify(glob);
 
 /**
+ * Улучшенная версия отправки локальных видеофайлов в Telegram
+ * @param videoPath Путь к локальному видеофайлу
+ * @param chatId ID чата Telegram
+ * @param token Токен бота Telegram
+ * @param caption Подпись к видео
+ * @returns Результат отправки видео
+ */
+export async function sendLocalVideoToTelegram(
+  videoPath: string,
+  chatId: string,
+  token: string,
+  caption: string = ''
+): Promise<{ success: boolean; messageId?: number | string; error?: string }> {
+  try {
+    log(`[IMPROVED] Отправка локального видео в Telegram: ${videoPath} в чат ${chatId}`, 'social-publishing');
+    
+    // Проверяем валидность chat_id
+    let formattedChatId = chatId;
+    if (!formattedChatId.startsWith('@') && !formattedChatId.startsWith('-')) {
+      formattedChatId = `-100${formattedChatId}`;
+      log(`Преобразован chatId для канала: ${formattedChatId}`, 'social-publishing');
+    }
+    
+    // Формируем URL запроса
+    const apiUrl = `https://api.telegram.org/bot${token}/sendVideo`;
+    
+    // Подготавливаем данные формы
+    const formData = new FormData();
+    formData.append('chat_id', formattedChatId);
+    formData.append('caption', caption);
+    formData.append('parse_mode', 'HTML');
+    
+    // Проверяем существование файла
+    // Определяем возможные пути к файлу
+    const possiblePaths = [
+      videoPath,
+      videoPath.startsWith('/') ? `.${videoPath}` : `/${videoPath}`,
+      videoPath.startsWith('.') ? videoPath : `./${videoPath}`,
+      path.join(process.cwd(), 'uploads', 'videos', path.basename(videoPath))
+    ];
+    
+    let fileFound = false;
+    let videoBuffer: Buffer | null = null;
+    let fileName = '';
+    
+    for (const possiblePath of possiblePaths) {
+      log(`[IMPROVED] Проверка наличия файла по пути: ${possiblePath}`, 'social-publishing');
+      if (fs.existsSync(possiblePath)) {
+        log(`[IMPROVED] Файл найден по пути: ${possiblePath}`, 'social-publishing');
+        // Читаем файл в буфер
+        videoBuffer = fs.readFileSync(possiblePath);
+        fileName = path.basename(possiblePath);
+        
+        log(`[IMPROVED] Видео прочитано, размер: ${videoBuffer.length} байт`, 'social-publishing');
+        fileFound = true;
+        break;
+      }
+    }
+    
+    if (!fileFound || !videoBuffer) {
+      log(`[IMPROVED] Ошибка: видеофайл не найден по указанным путям: ${possiblePaths.join(', ')}`, 'social-publishing');
+      return { success: false, error: 'Видеофайл не найден' };
+    }
+    
+    // Добавляем видео в форму
+    formData.append('video', videoBuffer, { filename: fileName });
+    log(`[IMPROVED] Видео добавлено в форму, размер: ${videoBuffer.length} байт`, 'social-publishing');
+    
+    // Отправляем запрос
+    log(`[IMPROVED] Отправка запроса на публикацию видео в Telegram`, 'social-publishing');
+    const response = await axios.post(apiUrl, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+      timeout: 60000, // Увеличенный таймаут для загрузки видео
+    });
+    
+    // Проверяем результат
+    if (response.data && response.data.ok) {
+      const messageId = response.data.result.message_id;
+      log(`[IMPROVED] Видео успешно отправлено в Telegram, messageId: ${messageId}`, 'social-publishing');
+      return { success: true, messageId };
+    } else {
+      log(`[IMPROVED] Ошибка при отправке видео в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
+      return { success: false, error: JSON.stringify(response.data) };
+    }
+  } catch (error: any) {
+    log(`[IMPROVED] Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
+    
+    if (error.response) {
+      log(`[IMPROVED] Ответ сервера: ${JSON.stringify(error.response.data)}`, 'social-publishing');
+      return { success: false, error: JSON.stringify(error.response.data) };
+    }
+    
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Отправляет видео в Telegram
  * @param videoUrl URL видео для отправки
  * @param caption Подпись к видео (опционально)
