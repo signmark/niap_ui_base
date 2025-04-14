@@ -160,6 +160,7 @@ export interface SocialPublication {
   platform: SocialPlatform;
   status: 'pending' | 'published' | 'failed';
   publishedAt: Date | null;
+  scheduledAt?: Date | string | null; // Добавляем время планирования для каждой платформы
   postId?: string | null;
   postUrl?: string | null;
   error?: string | null;
