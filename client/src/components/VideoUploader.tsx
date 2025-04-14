@@ -9,9 +9,10 @@ interface VideoUploaderProps {
   onVideoUpload: (url: string) => void;
   currentVideoUrl?: string | null;
   className?: string;
+  contentId?: string; // ID контента для обновления в БД
 }
 
-export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }: VideoUploaderProps) {
+export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '', contentId }: VideoUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(currentVideoUrl || null);
   const [urlInput, setUrlInput] = useState('');
@@ -33,7 +34,14 @@ export function VideoUploader({ onVideoUpload, currentVideoUrl, className = '' }
       const formData = new FormData();
       formData.append('video', file);
       
-      const response = await fetch('/api/imgur/upload-video', {
+      // Добавляем contentId в URL, если он есть
+      const url = contentId 
+        ? `/api/imgur/upload-video?contentId=${encodeURIComponent(contentId)}` 
+        : '/api/imgur/upload-video';
+      
+      console.log(`Загрузка видео с contentId: ${contentId || 'не указан'}`);
+      
+      const response = await fetch(url, {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header as it's automatically set with boundary for FormData
