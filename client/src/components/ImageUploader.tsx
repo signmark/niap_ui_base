@@ -170,22 +170,26 @@ export function ImageUploader({
           onChange={(e) => onChange(e.target.value)}
           className="flex-1"
         />
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Input
             type="file"
             accept="image/*"
             id={`${id}-upload`}
-            className="absolute inset-0 opacity-0 w-full cursor-pointer"
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             onChange={handleFileUpload}
             disabled={isUploading}
+            aria-label="Загрузить изображение"
           />
           <Button 
             type="button" 
             variant="outline" 
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 flex items-center justify-center"
             disabled={isUploading}
+            tabIndex={-1}
+            aria-hidden="true"
           >
+            <span className="sr-only">Загрузить</span>
             {isUploading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             ) : (
