@@ -95,6 +95,139 @@ export class SocialPublishingWithImgurService {
    * @param baseUrl Базовый URL API Telegram
    * @returns Результат отправки (успех/ошибка)
    */
+  /**
+   * Универсальный метод для отправки видео в Telegram
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @param videoUrl URL видео для отправки
+   * @param caption Подпись к видео (опционально)
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
+  private async sendVideoToTelegram(
+    chatId: string,
+    token: string,
+    videoUrl: string,
+    caption?: string,
+    baseUrl: string = `https://api.telegram.org/bot${token}`
+  ): Promise<{success: boolean, error?: string, messageId?: number, messageUrl?: string}> {
+    log(`Отправка видео в Telegram: ${videoUrl.substring(0, 100)}...`, 'social-publishing');
+    
+    try {
+      // Проверяем и форматируем URL видео
+      let finalVideoUrl = videoUrl;
+      if (!finalVideoUrl.startsWith('http')) {
+        const baseAppUrl = this.getAppBaseUrl();
+        finalVideoUrl = `${baseAppUrl}${finalVideoUrl.startsWith('/') ? '' : '/'}${finalVideoUrl}`;
+        log(`Исправлен URL для видео: ${finalVideoUrl}`, 'social-publishing');
+      }
+      
+      // Подготавливаем данные для запроса
+      const requestData: any = {
+        chat_id: chatId,
+        video: finalVideoUrl,
+        parse_mode: 'HTML',
+        supports_streaming: true
+      };
+      
+      // Добавляем подпись, если она предоставлена
+      if (caption) {
+        requestData.caption = caption;
+      }
+      
+      // Отправляем запрос на API Telegram
+      const response = await axios.post(`${baseUrl}/sendVideo`, requestData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000, // Увеличенный таймаут для больших видео
+        validateStatus: () => true // Всегда возвращаем ответ, даже если это ошибка
+      });
+      
+      log(`Ответ от Telegram API (sendVideo): код ${response.status}, data: ${JSON.stringify(response.data)}`, 'telegram-debug');
+      
+      if (response.status === 200 && response.data && response.data.ok) {
+        const messageId = response.data.result?.message_id;
+        log(`Видео успешно отправлено в Telegram, messageId: ${messageId}`, 'social-publishing');
+        
+        // Формируем URL сообщения, если доступен messageId
+        let messageUrl = null;
+        if (messageId) {
+          try {
+            messageUrl = this.formatTelegramUrl(chatId, chatId, messageId);
+            log(`Сформирован URL сообщения с видео: ${messageUrl}`, 'social-publishing');
+          } catch (urlError: any) {
+            log(`Ошибка при формировании URL: ${urlError.message}`, 'social-publishing');
+          }
+        }
+        
+        return {
+          success: true,
+          messageId,
+          messageUrl
+        };
+      } else {
+        const errorMsg = response.data?.description || 'Неизвестная ошибка при отправке видео';
+        log(`Ошибка при отправке видео в Telegram: ${errorMsg}`, 'social-publishing');
+        
+        // Если ошибка связана с размером видео, пытаемся отправить ссылку вместо вложения
+        if (errorMsg.includes('too large') || errorMsg.includes('file is too big')) {
+          log(`Видео слишком большое, пытаемся отправить как ссылку`, 'social-publishing');
+          
+          try {
+            // Отправляем текстовое сообщение со ссылкой на видео
+            const textMessage = `<b>Видео доступно по ссылке:</b>\n${finalVideoUrl}`;
+            const textResponse = await this.sendTextMessageToTelegram(
+              caption ? `${caption}\n\n${textMessage}` : textMessage, 
+              chatId, 
+              token
+            );
+            
+            if (textResponse.success) {
+              log(`Ссылка на видео успешно отправлена`, 'social-publishing');
+              const linkMessageId = textResponse.data?.result?.message_id;
+              let linkMessageUrl = null;
+              
+              if (linkMessageId) {
+                try {
+                  linkMessageUrl = this.formatTelegramUrl(chatId, chatId, linkMessageId);
+                } catch (urlError) {
+                  // Игнорируем ошибку, если не удалось создать URL
+                }
+              }
+              
+              return {
+                success: true,
+                messageId: linkMessageId,
+                messageUrl: linkMessageUrl
+              };
+            }
+          } catch (linkError: any) {
+            log(`Не удалось отправить ссылку на видео: ${linkError.message}`, 'social-publishing');
+          }
+        }
+        
+        return {
+          success: false,
+          error: errorMsg
+        };
+      }
+    } catch (error: any) {
+      const errorMsg = error.message || 'Неизвестная ошибка при отправке видео';
+      log(`Исключение при отправке видео в Telegram: ${errorMsg}`, 'social-publishing');
+      return {
+        success: false,
+        error: errorMsg
+      };
+    }
+  }
+
+  /**
+   * Универсальный метод для отправки изображений в Telegram
+   * @param chatId ID чата Telegram 
+   * @param token Токен бота Telegram
+   * @param images Массив URL изображений
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
   private async sendImagesToTelegram(
     chatId: string,
     token: string,
@@ -264,95 +397,6 @@ export class SocialPublishingWithImgurService {
    * @param baseUrl Базовый URL API Telegram
    * @returns Результат отправки (успех/ошибка)
    */
-  private async sendVideoToTelegram(
-    chatId: string,
-    token: string,
-    videoUrl: string,
-    caption: string = '',
-    baseUrl: string = `https://api.telegram.org/bot${token}`
-  ): Promise<{success: boolean, error?: string, messageId?: number, messageUrl?: string}> {
-    if (!videoUrl) {
-      log(`sendVideoToTelegram: Не указан URL видео`, 'telegram-debug');
-      return {success: false, error: 'Не указан URL видео'};
-    }
-    
-    // Форматируем chatId, если это необходимо
-    let formattedChatId = chatId;
-    let originalChatId = chatId; // Оригинальный ID для создания URL
-    
-    if (chatId.startsWith('@')) {
-      // Это имя пользователя - не нужно форматировать для API, но сохраняем без @ для URL
-      originalChatId = chatId.substring(1); // Убираем @ для URL
-    } else if (!chatId.startsWith('-100') && !isNaN(Number(chatId))) {
-      // Для групповых чатов добавляем префикс -100 для API
-      formattedChatId = `-100${chatId}`;
-      // Оригинальный ID без -100 для URL будет использоваться именно числовой ID
-      originalChatId = chatId;
-    }
-    
-    log(`Отправка видео в Telegram, chatId для API: ${formattedChatId}, для URL: ${originalChatId}, URL видео: ${videoUrl}`, 'telegram-debug');
-    
-    try {
-      // Проверяем, что URL не пустой и доступен
-      if (!videoUrl || typeof videoUrl !== 'string' || videoUrl.trim() === '') {
-        log(`Пропускаем пустой URL видео`, 'telegram-debug');
-        return {
-          success: false,
-          error: 'Пустой URL видео'
-        };
-      }
-      
-      // Подготавливаем данные для запроса
-      const sendVideoData: any = {
-        chat_id: formattedChatId,
-        video: videoUrl,
-        parse_mode: 'HTML'
-      };
-      
-      // Если есть подпись, добавляем её (с ограничением длины в 1024 символа)
-      if (caption && caption.trim() !== '') {
-        sendVideoData.caption = caption.length <= 1024 ? caption : caption.substring(0, 1021) + '...';
-      }
-      
-      // Отправляем видео через sendVideo метод API Telegram
-      log(`Отправка видео через sendVideo: ${videoUrl}`, 'telegram-debug');
-      const response = await axios.post(`${baseUrl}/sendVideo`, sendVideoData, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 60000, // Увеличенный таймаут для возможной загрузки большого видео
-        validateStatus: () => true
-      });
-      
-      if (response.status === 200 && response.data.ok) {
-        log(`Видео успешно отправлено в Telegram`, 'social-publishing');
-        const messageId = response.data.result.message_id;
-        
-        // Создаем правильный URL сообщения с помощью метода-форматера
-        const messageUrl = this.formatTelegramUrl(originalChatId, formattedChatId, messageId);
-        log(`Создан URL сообщения с видео через formatTelegramUrl: ${messageUrl}`, 'telegram-debug');
-        
-        return {
-          success: true,
-          messageId,
-          messageUrl
-        };
-      } else {
-        log(`Ошибка при отправке видео в Telegram: ${JSON.stringify(response.data)}`, 'social-publishing');
-        return {
-          success: false,
-          error: `Ошибка API Telegram при отправке видео: ${response.data?.description || 'Неизвестная ошибка'}`
-        };
-      }
-    } catch (error: any) {
-      log(`Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
-      if (error.response) {
-        log(`Данные ответа: ${JSON.stringify(error.response.data)}`, 'social-publishing');
-      }
-      return {
-        success: false,
-        error: `Исключение при отправке видео: ${error.message}`
-      };
-    }
-  }
 
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
@@ -1110,9 +1154,62 @@ export class SocialPublishingWithImgurService {
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      // Проверяем наличие видео в контенте
+      const hasVideo = !!processedContent.videoUrl;
+      log(`Telegram: наличие видео: ${hasVideo}, изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
-      // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // Определяем стратегию публикации в зависимости от наличия видео, изображений и длины текста
+      
+      // 0. Если есть видео, отправляем его с подписью - приоритет выше, чем у изображений
+      if (hasVideo) {
+        log(`Telegram: публикация с видео. URL видео: ${processedContent.videoUrl}`, 'social-publishing');
+        
+        // Подготавливаем подпись для видео (с ограничением в 1024 символа)
+        const videoCaption = text.length <= 1024 ? 
+          text : 
+          (processedContent.title ? 
+            `<b>${processedContent.title}</b>\n\n${text.substring(0, 900)}...` : 
+            text.substring(0, 1000) + '...');
+        
+        log(`Подготовлена подпись для видео, длина: ${videoCaption.length} символов`, 'social-publishing');
+        
+        try {
+          // Отправляем видео через специализированный метод
+          const videoResult = await this.sendVideoToTelegram(
+            formattedChatId,
+            token,
+            processedContent.videoUrl,
+            videoCaption,
+            baseUrl
+          );
+          
+          if (videoResult.success) {
+            log(`Видео успешно отправлено в Telegram, messageId: ${videoResult.messageId}`, 'social-publishing');
+            lastMessageId = videoResult.messageId;
+            
+            // Возвращаем результат публикации
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: videoResult.messageUrl || null,
+              error: null
+            };
+          } else {
+            log(`Ошибка при отправке видео в Telegram: ${videoResult.error}`, 'social-publishing');
+            
+            // В случае ошибки продолжаем выполнение - попробуем отправить текст
+            log(`Попытка отправки текста после неудачной отправки видео`, 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
+          
+          // В случае исключения продолжаем выполнение - попробуем отправить текст
+          log(`Продолжение публикации после исключения при отправке видео`, 'social-publishing');
+        }
+      }
+      
+      // Определяем стратегию публикации для изображений и текста, если видео не было или его отправка не удалась
       
       // 1. Если есть изображения и включен флаг принудительного разделения,
       // отправляем сначала изображения без подписи, затем текст отдельным сообщением
