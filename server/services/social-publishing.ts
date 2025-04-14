@@ -1632,9 +1632,10 @@ export class SocialPublishingService {
     }
     
     // Получаем список платформ, которые ожидают публикации в будущем
-    const pendingPublications = Object.entries(socialPlatforms).filter(([_, platformData]) => {
+    const pendingPublications = Object.entries(socialPlatforms).filter(([platform, platformData]) => {
       // Если платформа уже опубликована, пропускаем
       if (platformData.status === 'published') {
+        log(`Платформа ${platform} уже опубликована`, 'social-publishing');
         return false;
       }
       
@@ -1642,21 +1643,38 @@ export class SocialPublishingService {
       if (platformData.scheduledAt) {
         const platformScheduledTime = new Date(platformData.scheduledAt);
         const now = new Date();
-        return platformScheduledTime > now; // Время публикации ещё не наступило
+        const isPending = platformScheduledTime > now; // Время публикации ещё не наступило
+        
+        // Добавляем детальное логирование для отладки
+        if (isPending) {
+          const timeUntilPublish = Math.floor((platformScheduledTime.getTime() - now.getTime()) / (1000 * 60));
+          log(`Платформа ${platform} ожидает публикации через ${timeUntilPublish} минут(ы) (${platformScheduledTime.toISOString()})`, 'social-publishing');
+        } else {
+          log(`Платформа ${platform} должна быть опубликована (время наступило: ${platformScheduledTime.toISOString()})`, 'social-publishing');
+        }
+        
+        return isPending;
       }
       
+      log(`Платформа ${platform} не имеет данных о времени публикации`, 'social-publishing');
       return false; // По умолчанию не считаем ожидающей публикации
     });
     
     // Если есть платформы, ожидающие публикации в будущем, возвращаем false (не все опубликовано)
     if (pendingPublications.length > 0) {
-      log(`Найдено ${pendingPublications.length} платформ, ожидающих публикации в будущем`, 'social-publishing');
+      log(`Найдено ${pendingPublications.length} платформ, ожидающих публикации в будущем: ${pendingPublications.map(([p]) => p).join(', ')}`, 'social-publishing');
       return false;
     }
     
+    // Проверяем, сколько платформ опубликовано и сколько всего платформ
+    const totalPlatforms = Object.keys(socialPlatforms).length;
+    const publishedPlatforms = Object.values(socialPlatforms).filter(p => p.status === 'published').length;
+    
+    log(`Статус платформ: опубликовано ${publishedPlatforms} из ${totalPlatforms}`, 'social-publishing');
+    
     // Проверяем, что на всех платформах статус 'published'
     // (за исключением тех, которые ждут публикации в будущем - они уже отфильтрованы)
-    return Object.values(socialPlatforms).every(platform => platform.status === 'published');
+    return publishedPlatforms === totalPlatforms;
   }
 
   /**

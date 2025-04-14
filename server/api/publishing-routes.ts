@@ -1039,7 +1039,7 @@ export function registerPublishingRoutes(app: Express): void {
             await storage.updateCampaignContent(contentId, {
               status: 'scheduled',
               scheduledAt: new Date(scheduledAt),
-              socialPlatforms: socialPlatforms
+              socialPlatforms: mergedSocialPlatforms // Используем объединенные платформы для согласованности с API
             }, token);
             
             log(`Контент ${contentId} также обновлен через storage`, 'api');
