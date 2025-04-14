@@ -153,7 +153,10 @@ export function VideoUploader({
           />
           {isUploading ? (
             <div className="h-9 w-9 border rounded-md flex items-center justify-center bg-muted">
-              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <div 
+                className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                aria-hidden="true" 
+              />
             </div>
           ) : (
             <Button 

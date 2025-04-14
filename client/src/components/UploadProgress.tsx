@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Компонент для отображения прогресса загрузки без использования dynamic children и text nodes
+ * Компонент для отображения прогресса загрузки без текста, только с анимацией
  */
 export function UploadProgress({ 
   isLoading = false, 
@@ -16,18 +16,23 @@ export function UploadProgress({
 }) {
   if (!isLoading) return null;
 
+  // Определяем размер спиннера в зависимости от параметра size
   const spinnerSize = size === 'small' ? 'h-3 w-3' : 'h-8 w-8';
   const spinnerBorder = size === 'small' ? 'border-2' : 'border-4';
-  const textSize = size === 'small' ? 'text-xs' : 'text-sm';
   
+  // Радикальный подход - только спиннер без текста
   return (
     <div 
-      className={`flex ${size === 'small' ? 'flex-row items-center gap-2' : 'flex-col items-center gap-2'} ${className}`}
+      className={`${className}`}
       role="status"
       aria-label={label}
     >
-      <div className={`${spinnerSize} ${spinnerBorder} border-primary border-t-transparent rounded-full animate-spin`}></div>
-      <div className={textSize}>{label}</div>
+      <div 
+        className={`${spinnerSize} ${spinnerBorder} border-primary border-t-transparent rounded-full animate-spin mx-auto`}
+        aria-hidden="true"
+      />
+      {/* Скрытый текст для скринридеров */}
+      <span className="sr-only">{label}</span>
     </div>
   );
 }
