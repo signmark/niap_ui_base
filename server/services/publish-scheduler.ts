@@ -354,61 +354,56 @@ export class PublishScheduler {
       
       // Фильтруем контент, время публикации которого уже наступило
       const contentToPublish = scheduledContent.filter(content => {
-        // Если нет ни общего времени, ни платформ, то пропускаем
-        if (!content.scheduledAt && (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0)) {
+        // Если нет платформ для публикации, то пропускаем
+        if (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0) {
+          log(`Контент ID ${content.id} "${content.title}" не имеет настроек социальных платформ, пропускаем`, 'scheduler');
           return false;
         }
         
         const now = new Date();
+        let anyPlatformReady = false;
+        let logMessages = [];
         
-        // Проверяем индивидуальные настройки времени для платформ
-        if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
-          let anyPlatformReady = false;
-          
-          // Проверяем каждую платформу на время публикации
-          for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
-            // Проверяем статус и пропускаем если уже опубликован
-            if (platformData?.status === 'published') {
-              continue;
-            }
-            
-            // Проверяем индивидуальную дату для платформы
-            if (platformData?.scheduledAt) {
-              const platformScheduledTime = new Date(platformData.scheduledAt);
-              const timeUntilPublish = platformScheduledTime.getTime() - now.getTime();
-              
-              log(`Контент ID ${content.id} "${content.title}" для платформы ${platform} запланирован на ${platformScheduledTime.toISOString()}, ` +
-                 `текущее время: ${now.toISOString()}, ` + 
-                 `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
-              
-              // Если время публикации для этой платформы наступило
-              if (platformScheduledTime <= now) {
-                anyPlatformReady = true;
-                // Не прерываем цикл, чтобы залогировать все платформы
-              }
-            }
+        // Проверяем каждую платформу на время публикации
+        for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
+          // Проверяем статус и пропускаем если уже опубликован
+          if (platformData?.status === 'published') {
+            logMessages.push(`${platform}: уже опубликован`);
+            continue;
           }
           
-          // Если хотя бы одна платформа готова к публикации, разрешаем публикацию
-          if (anyPlatformReady) {
-            return true;
+          // Проверяем индивидуальную дату для платформы
+          if (platformData?.scheduledAt) {
+            const platformScheduledTime = new Date(platformData.scheduledAt);
+            const timeUntilPublish = platformScheduledTime.getTime() - now.getTime();
+            
+            const minutesDiff = Math.floor(timeUntilPublish / 1000 / 60);
+            logMessages.push(`${platform}: запланирован на ${platformScheduledTime.toISOString()} (через ${minutesDiff} мин.)`);
+            
+            // Если время публикации для этой платформы наступило
+            if (platformScheduledTime <= now) {
+              logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ`);
+              anyPlatformReady = true;
+            }
+          } else {
+            logMessages.push(`${platform}: нет данных о времени публикации`);
           }
         }
         
-        // Если не нашли готовых платформ, проверяем общее время
+        // Логируем результаты проверки времени для всего контента
+        log(`Проверка времени публикации для контента ID ${content.id} "${content.title}":`, 'scheduler');
+        logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
+        
+        // Если общее поле scheduledAt указано, логируем его значение, но НЕ используем для принятия решения
         if (content.scheduledAt) {
           const scheduledTime = new Date(content.scheduledAt);
           const timeUntilPublish = scheduledTime.getTime() - now.getTime();
           
-          // Логируем для общего времени контента
-          log(`Контент ID ${content.id} "${content.title}" запланирован на ${scheduledTime.toISOString()} (общее время), ` +
-              `текущее время: ${now.toISOString()}, ` + 
-              `разница: ${Math.floor(timeUntilPublish / 1000 / 60)} минут`, 'scheduler');
-          
-          return scheduledTime <= now;
+          log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ`, 'scheduler');
         }
         
-        return false;
+        // Возвращаем true, если хотя бы одна платформа готова к публикации
+        return anyPlatformReady;
       });
       
       if (contentToPublish.length === 0) {
@@ -682,26 +677,49 @@ export class PublishScheduler {
       // Получаем текущее время
       const now = new Date();
       
+      // Подробное логирование для диагностики
+      log(`Проверка платформ для публикации контента ${content.id} "${content.title || ''}":`, 'scheduler');
+      
       // Отфильтруем только те платформы, время публикации которых уже наступило
       const platformsToPublish = Object.entries(socialPlatforms)
         .filter(([platform, platformData]) => {
           // Если платформа уже опубликована, пропускаем
           if (platformData.status === 'published') {
+            log(`  - ${platform}: статус "published", пропускаем`, 'scheduler');
             return false;
           }
           
-          // Если у платформы есть своё scheduledAt и оно в будущем, пропускаем
+          // Если у платформы есть своё scheduledAt, используем его для проверки
           if (platformData.scheduledAt) {
             const platformScheduledTime = new Date(platformData.scheduledAt);
+            const diffMs = platformScheduledTime.getTime() - now.getTime();
+            const diffMinutes = Math.floor(diffMs / 1000 / 60);
+            
             if (platformScheduledTime > now) {
-              log(`Платформа ${platform} для контента ${content.id} запланирована на ${platformScheduledTime.toISOString()}, пропускаем`, 'scheduler');
+              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., ПРОПУСКАЕМ`, 'scheduler');
               return false;
+            } else {
+              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, время публикации НАСТУПИЛО`, 'scheduler');
+              return true;
             }
+          } else {
+            // Если нет специфического времени для платформы, все равно включаем ее
+            log(`  - ${platform}: нет точного времени, используем общее время (если есть)`, 'scheduler');
+            
+            // Используем общее поле scheduledAt только если нет индивидуального времени
+            if (content.scheduledAt) {
+              return content.scheduledAt <= now;
+            }
+            
+            // Если нет ни индивидуального, ни общего времени - включаем для публикации по умолчанию
+            log(`  - ${platform}: нет времени публикации вообще, считаем готовым`, 'scheduler');
+            return true;
           }
-          
-          return true;
         })
         .map(([platform]) => platform as SocialPlatform);
+        
+      // Общий результат
+      log(`Итого платформ для публикации: ${platformsToPublish.length} (${platformsToPublish.join(', ')})`, 'scheduler');
         
       if (platformsToPublish.length === 0) {
         log(`Для контента ${content.id} не указаны платформы или время публикации ещё не наступило`, 'scheduler');
