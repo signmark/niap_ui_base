@@ -1000,10 +1000,59 @@ export function registerPublishingRoutes(app: Express): void {
           log(`Прямое обновление контента ${contentId} через API для планирования`, 'api');
           
           // Формируем данные для обновления
+          // Сохраняем все существующие платформы, которые могли быть, но не указаны в текущем запросе
+          const existingSocialPlatforms = content.socialPlatforms || {};
+          
+          // Объединяем существующие и новые данные о платформах
+          const mergedSocialPlatforms = { ...existingSocialPlatforms };
+          
+          // Обновляем значения для платформ из запроса
+          Object.entries(socialPlatforms).forEach(([platform, data]) => {
+            mergedSocialPlatforms[platform] = data;
+          });
+          
+          // Если поля socialPlatforms пустое или не содержит данных о времени публикации,
+          // но указано общее время scheduledAt, применяем это время ко всем платформам
+          const scheduledAtDate = new Date(scheduledAt);
+          log(`Установлено общее время публикации: ${scheduledAtDate.toISOString()}`, 'api');
+          
+          // Получаем список всех платформ для публикации
+          const allPlatforms = Object.keys(mergedSocialPlatforms);
+          
+          // Для каждой платформы проверяем наличие своего scheduledAt или scheduled_at
+          allPlatforms.forEach(platform => {
+            // Проверяем все возможные ключи для времени публикации
+            const hasTime = mergedSocialPlatforms[platform] && 
+                           (mergedSocialPlatforms[platform].scheduledAt || 
+                            mergedSocialPlatforms[platform].scheduled_at);
+            
+            if (!mergedSocialPlatforms[platform]) {
+              // Если платформа указана, но нет данных, создаем объект
+              mergedSocialPlatforms[platform] = {
+                platform: platform,
+                status: 'pending',
+                scheduledAt: scheduledAtDate.toISOString(),
+                scheduled_at: scheduledAtDate.toISOString() // Добавляем оба формата для совместимости
+              };
+              log(`Создана новая запись для платформы ${platform} со временем ${scheduledAtDate.toISOString()}`, 'api');
+            } 
+            else if (!hasTime) {
+              // Если у платформы отсутствует время публикации, устанавливаем общее
+              mergedSocialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
+              mergedSocialPlatforms[platform].scheduled_at = scheduledAtDate.toISOString();
+              log(`Установлено время для платформы ${platform}: ${scheduledAtDate.toISOString()}`, 'api');
+            }
+          });
+          
+          // Добавляем подробное логирование для отладки
+          log(`Существующие платформы: ${JSON.stringify(existingSocialPlatforms)}`, 'api');
+          log(`Новые платформы из запроса: ${JSON.stringify(socialPlatforms)}`, 'api');
+          log(`Объединенные платформы с временем публикации: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
+          
           const updateData = {
             status: 'scheduled',
-            scheduled_at: scheduledAt,
-            social_platforms: socialPlatforms
+            scheduled_at: scheduledAt, // Основное время публикации (используется только как ориентир)
+            social_platforms: mergedSocialPlatforms // Обновленные данные о платформах
           };
           
           // Выполняем запрос к API Directus
@@ -1023,7 +1072,7 @@ export function registerPublishingRoutes(app: Express): void {
             await storage.updateCampaignContent(contentId, {
               status: 'scheduled',
               scheduledAt: new Date(scheduledAt),
-              socialPlatforms: socialPlatforms
+              socialPlatforms: mergedSocialPlatforms // Используем объединенные платформы для согласованности с API
             }, token);
             
             log(`Контент ${contentId} также обновлен через storage`, 'api');
