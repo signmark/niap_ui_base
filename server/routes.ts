@@ -5,6 +5,8 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { registerInstagramTestRoutes } from './test-instagram-posting';
+import { registerVideoProcessingRoutes } from './test-video-processing';
 import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
@@ -8212,6 +8214,12 @@ https://t.me/channelname/ - description`;
     }
   });
 
+  // Регистрируем тестовые маршруты для публикации в Instagram
+  registerInstagramTestRoutes(app);
+  
+  // Регистрируем тестовые маршруты для обработки видео
+  registerVideoProcessingRoutes(app);
+  
   console.log('Route registration completed');
   // Webhook endpoint to receive trend topics from n8n
   app.post("/api/webhook/trend-topics", async (req, res) => {

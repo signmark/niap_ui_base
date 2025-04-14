@@ -18,6 +18,10 @@ import { falAiUniversalService } from './services/fal-ai-universal';
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
+// Импортируем тестовые маршруты для Instagram
+import testInstagramApiRouter from './test-instagram-api';
+// Импортируем тестовые маршруты для публикации видео
+import testVideoPublishingRouter from './test-video-publishing';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -128,6 +132,10 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     // Регистрируем маршруты для диагностики и исправления проблем с URL Telegram
     app.use('/api/telegram-diagnostics', telegramDiagnosticsRouter);
+    // Регистрируем маршруты для тестирования Instagram API
+    app.use('/api/test-instagram', testInstagramApiRouter);
+    // Регистрируем маршруты для тестирования публикации видео
+    app.use('/api/test-video', testVideoPublishingRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
