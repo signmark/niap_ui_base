@@ -164,19 +164,28 @@ export class VideoProcessor {
       
       // Instagram имеет очень специфичные требования
       if (platform === 'instagram') {
-        // Специальные настройки для Instagram:
+        // Специальные настройки для Instagram Reels:
         // - Строго соблюдаем соотношение сторон 9:16 для Reels
-        // - Используем постоянный битрейт (не слишком высокий) для совместимости
-        // - Кодек H.264 в профиле High с уровнем 4.0
-        // - Частота кадров 30 fps
-        // - Лимитируем размер файла для уменьшения шансов отклонения Instagram
+        // - Формат MP4 с кодеком H.264
+        // - Битрейт 8-12 Мбит/с для 1080p
+        // - Частота кадров 30 fps (рекомендуется Instagram)
+        // - Аудио AAC с битрейтом 128-192 кбит/с
+        
+        log(`[Instagram Video] Применяем оптимальные настройки для Instagram Reels`, 'video-processor');
+        
         command = `ffmpeg -i "${inputPath}" `
+          // Масштабирование с сохранением соотношения сторон и добавлением черных полос
           + `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,fps=30" `
-          + `-c:v libx264 -profile:v high -level:v 4.0 -b:v 3500k -bufsize 7000k -maxrate 5000k `
+          // Настройки видеокодека
+          + `-c:v libx264 -profile:v high -level:v 4.1 -b:v 10M -maxrate 12M -bufsize 10M `
+          // Цветовое пространство и оптимизация для быстрого старта
           + `-pix_fmt yuv420p -movflags +faststart `
-          + `-c:a aac -b:a 128k -ar 44100 `
+          // Настройки аудио
+          + `-c:a aac -b:a 192k -ar 44100 `
+          // Метаданные для правильной ориентации
           + `-metadata:s:v:0 rotate=0 `
-          + `-t 60 ` // Ограничиваем до 60 секунд для большей совместимости
+          // Продолжительность (ограничиваем до 90 секунд для Reels)
+          + `-t 90 ` 
           + `"${outputPath}"`;
       } else {
         // Стандартная команда для других платформ
@@ -206,16 +215,52 @@ export class VideoProcessor {
             
             const reprocessPath = path.join(this.tempDir, `reprocessed_${uuidv4()}.mp4`);
             
-            // Более строгое сжатие для больших файлов
+            // Более строгое сжатие для больших файлов - точно под требования Instagram (битрейт, размер и т.д.)
             const reprocessCommand = `ffmpeg -i "${outputPath}" `
+              // Сохраняем то же разрешение, но меняем битрейт 
               + `-vf "scale=${targetWidth}:${targetHeight}" `
-              + `-c:v libx264 -profile:v main -level:v 3.1 -b:v 2000k -bufsize 4000k -maxrate 2500k `
+              // Аккуратно настраиваем битрейт, чтобы быть в пределах требований Instagram
+              + `-c:v libx264 -profile:v main -level:v 4.0 -b:v 5M -maxrate 6M -bufsize 6M `
+              // Поддержка цветовых пространств и быстрый старт
               + `-pix_fmt yuv420p -movflags +faststart `
-              + `-c:a aac -b:a 96k -ar 44100 `
+              // Оптимизированный звук
+              + `-c:a aac -b:a 128k -ar 44100 `
+              // Обеспечиваем правильную ориентацию
               + `-metadata:s:v:0 rotate=0 `
               + `"${reprocessPath}"`;
             
+            log(`Запуск переобработки видео для снижения размера: ${reprocessCommand}`, 'video-processor');
             await execAsync(reprocessCommand);
+            
+            // Проверяем новый размер
+            const newStats = fs.statSync(reprocessPath);
+            const newFileSizeInMB = newStats.size / (1024 * 1024);
+            log(`Размер после переобработки: ${newFileSizeInMB.toFixed(2)} MB`, 'video-processor');
+            
+            // Если по-прежнему слишком большой, сжимаем еще сильнее
+            if (newFileSizeInMB > 90) {
+              log(`Видео все еще слишком большое, применяем дополнительное сжатие`, 'video-processor');
+              
+              const finalReprocessPath = path.join(this.tempDir, `final_${uuidv4()}.mp4`);
+              
+              // Финальная попытка сжатия - жертвуем качеством для соответствия требованиям размера
+              const finalCommand = `ffmpeg -i "${reprocessPath}" `
+                + `-vf "scale=${Math.floor(targetWidth * 0.75)}:${Math.floor(targetHeight * 0.75)}" `
+                + `-c:v libx264 -profile:v main -level:v 3.1 -crf 28 `
+                + `-pix_fmt yuv420p -movflags +faststart `
+                + `-c:a aac -b:a 96k -ar 44100 `
+                + `-metadata:s:v:0 rotate=0 `
+                + `"${finalReprocessPath}"`;
+              
+              await execAsync(finalCommand);
+              
+              // Удаляем промежуточные версии
+              if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+              if (fs.existsSync(reprocessPath)) fs.unlinkSync(reprocessPath);
+              
+              // Используем финальную версию
+              return finalReprocessPath;
+            }
             
             // Удаляем первую версию
             if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);

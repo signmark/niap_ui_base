@@ -420,6 +420,7 @@ export class InstagramService extends BaseSocialService {
         // Функция для обработки ответа создания контейнера
         const processContainerResponse = (response: any) => {
           if (!response.data) {
+            this.writeToLogFile(`ОШИБКА API: Получен пустой ответ от Instagram API при создании контейнера`);
             throw new Error('Получен пустой ответ от Instagram API при создании контейнера');
           }
           
@@ -428,6 +429,10 @@ export class InstagramService extends BaseSocialService {
             const errorMsg = response.data.error ? 
               `${response.data.error.code}: ${response.data.error.message}` : 
               'Неизвестная ошибка при создании контейнера';
+            
+            // Детальное логирование для Instagram API
+            this.writeToLogFile(`ОШИБКА СОЗДАНИЯ КОНТЕЙНЕРА: ${JSON.stringify(response.data)}`);
+            log(`[Instagram] Детальная информация об ошибке: ${JSON.stringify(response.data)}`, 'instagram');
             
             throw new Error(errorMsg);
           }
@@ -532,16 +537,18 @@ export class InstagramService extends BaseSocialService {
           
           // Записываем в лог файл факт начала ожидания
           this.writeToLogFile(`Начало периода ожидания для обработки видео Instagram...`);
+          this.writeToLogFile(`Container ID: ${containerId}, Media Type: REELS, Video URL: ${containerParams.video_url && containerParams.video_url.substring(0, 100)}...`);
           
-          // Ожидаем начальные 40 секунд перед первыми проверками статуса
-          log(`[Instagram] Начальное ожидание 40 секунд для обработки видео...`, 'instagram');
-          this.writeToLogFile(`Начальное ожидание 40 секунд для обработки видео Instagram...`);
+          // Instagram Reels требуют более длительной обработки на стороне сервера
+          // Ожидаем начальные 60 секунд перед первыми проверками статуса (увеличено с 40 до 60)
+          log(`[Instagram] Начальное ожидание 60 секунд для обработки видео REELS...`, 'instagram');
+          this.writeToLogFile(`Начальное ожидание 60 секунд для обработки видео Instagram REELS...`);
           
-          await new Promise(resolve => setTimeout(resolve, 40000));
+          await new Promise(resolve => setTimeout(resolve, 60000));
           
           // Проверка статуса контейнера и умная стратегия ожидания
           // Увеличиваем максимальное число проверок для видео Reels
-          const maxAttempts = 8; // Реализация до 8 попыток с увеличивающимися интервалами
+          const maxAttempts = 10; // Увеличили до 10 попыток для соответствия документации Instagram
           let attempts = 0;
           let isReady = false;
           
@@ -647,8 +654,9 @@ export class InstagramService extends BaseSocialService {
               log(`[Instagram] Контейнер видео готов к публикации после ${attempts} проверки`, 'instagram');
             } else if (attempts < maxAttempts) {
               // Прогрессивно увеличиваем время ожидания с каждой попыткой
-              // Первые попытки - 20 сек, затем 30, 40, 50, 60...
-              const waitTime = (20000 + (attempts * 10000)); 
+              // Используем более длительные интервалы, так как обработка Reels может занимать долгое время
+              // Первые попытки - 30 сек, затем 45, 60, 75...
+              const waitTime = (30000 + (attempts * 15000)); 
               this.writeToLogFile(`Видео не готово, ожидание ещё ${waitTime/1000} секунд перед попыткой ${attempts+1}/${maxAttempts}...`);
               
               log(`[Instagram] Видео не готово, ожидание ${waitTime/1000} секунд перед следующей попыткой...`, 'instagram');
