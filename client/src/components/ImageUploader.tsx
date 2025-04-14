@@ -204,15 +204,7 @@ export function ImageUploader({
         </div>
       </div>
       
-      {/* Индикатор загрузки */}
-      {isUploading && (
-        <UploadProgress 
-          isLoading={true} 
-          size="small" 
-          label="Загрузка изображения..." 
-          className="mt-1 text-muted-foreground" 
-        />
-      )}
+      {/* Индикатор загрузки скрыт по запросу пользователя */}
       
       {/* Всегда отображаем URL, если он есть */}
       {value && value.trim() !== '' && (
