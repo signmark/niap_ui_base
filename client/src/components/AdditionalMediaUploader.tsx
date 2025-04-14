@@ -27,7 +27,7 @@ export function AdditionalMediaUploader({
   onChange, 
   label = "Медиа-файлы" 
 }: AdditionalMediaUploaderProps) {
-  
+
   // Обработчик изменения URL медиа
   const handleMediaUrlChange = (index: number, url: string) => {
     const updatedMedia = [...media];
@@ -55,14 +55,14 @@ export function AdditionalMediaUploader({
     updatedMedia[index] = { ...updatedMedia[index], description };
     onChange(updatedMedia);
   };
-  
+
   // Обработчик удаления медиа
   const handleRemoveMedia = (index: number) => {
     const updatedMedia = [...media];
     updatedMedia.splice(index, 1);
     onChange(updatedMedia);
   };
-  
+
   // Обработчик добавления нового медиа
   const handleAddMedia = (type: 'image' | 'video' = 'image') => {
     onChange([...media, { url: "", type, title: "", description: "" }]);
@@ -93,7 +93,7 @@ export function AdditionalMediaUploader({
           </Button>
         </div>
       </div>
-      
+
       {media.length > 0 ? (
         <div className="space-y-6">
           {media.map((mediaItem, index) => (
@@ -123,7 +123,7 @@ export function AdditionalMediaUploader({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <div className="space-y-3">
                 {/* URL поле с загрузчиком */}
                 {mediaItem.type === 'video' ? (
@@ -172,7 +172,7 @@ export function AdditionalMediaUploader({
                     )}
                   </div>
                 )}
-                
+
                 {/* Заголовок и описание */}
                 <div className="grid grid-cols-1 gap-3 mt-2">
                   <div>

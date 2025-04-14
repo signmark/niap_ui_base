@@ -134,7 +134,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileName = file.name;
-        
+
         let fileType: 'image' | 'video';
         let uploadResult: { url: string } | null = null;
 
@@ -172,7 +172,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
       // Добавляем новые медиафайлы в список
       setMediaList(prev => [...prev, ...newMediaItems]);
-      
+
       toast({
         title: "Файлы загружены",
         description: `Успешно загружено ${newMediaItems.length} файлов`,
@@ -332,7 +332,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   return (
     <div className="space-y-3 my-4">
       {!hideTitle && <h3 className="text-md font-medium mb-2">{title}</h3>}
-      
+
       <div className="flex flex-wrap gap-2 mb-3">
         {/* Кнопка загрузки файла */}
         <Button 
@@ -344,7 +344,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           {isUploading ? <Spinner size="sm" /> : <Upload size={16} />}
           {isUploading ? "Загрузка..." : "Загрузить файл"}
         </Button>
-        
+
         {/* Кнопка добавления URL */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
