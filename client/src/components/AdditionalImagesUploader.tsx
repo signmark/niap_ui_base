@@ -41,7 +41,7 @@ export function AdditionalImagesUploader({
   };
 
   return (
-    <div className="space-y-2 relative">
+    <div className="space-y-2">
       <div className="flex justify-between items-center mb-2">
         <Label>{label}</Label>
         <Button 
@@ -58,9 +58,9 @@ export function AdditionalImagesUploader({
       {images.length > 0 ? (
         <div className="space-y-3">
           {images.map((imageUrl, index) => (
-            <div key={index} className="flex flex-col gap-1 relative">
-              <div className="flex gap-2 items-start relative">
-                <div className="flex-1 w-full">
+            <div key={index} className="flex flex-col gap-1">
+              <div className="flex items-start">
+                <div className="flex-1">
                   <ImageUploader
                     id={`additional-image-${index}`}
                     value={imageUrl}
@@ -69,18 +69,17 @@ export function AdditionalImagesUploader({
                     forcePreview={true}
                   />
                 </div>
-                <div className="flex-shrink-0">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon"
-                    className="h-9 w-9 mt-1"
-                    onClick={() => handleRemoveImage(index)}
-                    aria-label="Удалить изображение"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  className="h-9 w-9 mt-1 ml-2 flex-none"
+                  onClick={() => handleRemoveImage(index)}
+                  aria-label="Удалить изображение"
+                >
+                  <span className="sr-only">Удалить</span>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
               {imageUrl && imageUrl.trim() !== '' && (
                 <div className="text-xs text-muted-foreground ml-1 break-all">
