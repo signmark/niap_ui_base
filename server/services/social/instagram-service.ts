@@ -307,9 +307,14 @@ export class InstagramService extends BaseSocialService {
           containerParams.video_url = videoUrl;
           containerParams.media_type = 'REELS';
           
-          // Добавляем параметры, специфичные для REELS
+          // Добавляем параметры, специфичные для REELS согласно документации Facebook Graph API
           containerParams.thumb_offset = 0;  // Миниатюра с начала видео
           containerParams.share_to_feed = 'true'; // Публикация и в ленту
+          
+          // Добавляем рекомендуемые параметры для Instagram Reels
+          containerParams.caption_position = 'default'; // Позиция заголовка
+          containerParams.audio_name = 'Оригинальное аудио'; // Название аудио
+          containerParams.is_reel_audio_recommendation_enabled = false; // Отключаем рекомендации аудио
           
           this.writeToLogFile(`Используем параметры для REELS: ${JSON.stringify({...containerParams, access_token: 'СКРЫТО'})}`);
           
@@ -318,6 +323,15 @@ export class InstagramService extends BaseSocialService {
             log(`[Instagram] Добавляем URL обложки видео: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
             containerParams.thumbnail_url = imgurContent.imageUrl;
           }
+          
+          // Добавляем метаданные для видео, которые рекомендуются в документации Graph API
+          containerParams.video_meta_data = JSON.stringify({
+            supports_video_clipping: true,
+            content_category: 'REELS',
+            audio_format: 'AAC',
+            original_video_source: 'USER_GENERATED',
+            creation_source: 'SMM_PLATFORM'
+          });
           
           // Проверяем метаданные видео и URL на общедоступность
           try {
@@ -566,9 +580,10 @@ export class InstagramService extends BaseSocialService {
               const statusResponse = await axios.get(statusUrl, {
                 params: statusParams,
                 headers: {
-                  'Cache-Control': 'no-cache'
+                  'Cache-Control': 'no-cache',
+                  'User-Agent': 'SMM-Manager/1.0'
                 },
-                timeout: 15000 // Увеличенный таймаут для надежности
+                timeout: 20000 // Увеличенный таймаут для большей надежности
               });
               
               // Записываем результат в логи
