@@ -316,6 +316,11 @@ export class InstagramService extends BaseSocialService {
           containerParams.audio_name = 'Оригинальное аудио'; // Название аудио
           containerParams.is_reel_audio_recommendation_enabled = false; // Отключаем рекомендации аудио
           
+          // Дополнительные параметры для Instagram Reels согласно последней документации Graph API v18.0
+          containerParams.product_tags = []; // Пустой массив тегов продуктов (требуется для Reels)
+          containerParams.collaborators = []; // Пустой массив соавторов (требуется для Reels)
+          containerParams.location_id = null; // Отсутствие геолокации
+          
           this.writeToLogFile(`Используем параметры для REELS: ${JSON.stringify({...containerParams, access_token: 'СКРЫТО'})}`);
           
           // Для видео можно указать thumbnail_url (обложку видео)
@@ -463,8 +468,13 @@ export class InstagramService extends BaseSocialService {
             containerUrl, 
             containerParams, 
             {
-              headers: { 'Content-Type': 'application/json' },
-              timeout: isVideo ? 120000 : 60000 // Увеличенный таймаут для видео (2 минуты)
+              headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'SMM-Manager/1.0',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
+              },
+              timeout: isVideo ? 180000 : 60000 // Увеличенный таймаут для видео (3 минуты)
             }
           );
           
@@ -502,7 +512,12 @@ export class InstagramService extends BaseSocialService {
                 containerUrl, 
                 containerParams, 
                 {
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'SMM-Manager/1.0',
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                  },
                   timeout: 60000
                 }
               );
@@ -571,7 +586,7 @@ export class InstagramService extends BaseSocialService {
             try {
               const statusUrl = `${baseUrl}/${containerId}`;
               const statusParams = {
-                fields: 'status_code',
+                fields: 'status_code,status_issues,error_message,video_status,media_type,media_product_type',
                 access_token: token
               };
               
@@ -687,13 +702,17 @@ export class InstagramService extends BaseSocialService {
         try {
           log(`[Instagram] Отправка запроса на публикацию контейнера: ${containerId}`, 'instagram');
           
+          // Согласно последней документации Facebook Graph API, 
+          // запросы на публикацию рекомендуется отправлять с телом (а не с params)
           const publishResponse = await axios.post(
             publishUrl, 
-            null, 
+            publishParams, 
             {
-              params: publishParams,
-              headers: { 'Content-Type': 'application/json' },
-              timeout: 60000 // Увеличенный таймаут для надежности
+              headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'SMM-Manager/1.0' 
+              },
+              timeout: 90000 // Увеличенный таймаут для видео Reels (до 90 секунд)
             }
           );
           
@@ -711,13 +730,17 @@ export class InstagramService extends BaseSocialService {
             try {
               const mediaInfoUrl = `${baseUrl}/${igMediaId}`;
               const mediaInfoParams = {
-                fields: 'id,permalink,media_type,media_url,thumbnail_url',
+                fields: 'id,permalink,media_type,media_url,thumbnail_url,caption,children,comments_count,is_shared_to_feed,like_count,media_product_type,owner,shortcode,username',
                 access_token: token
               };
               
               const mediaInfoResponse = await axios.get(mediaInfoUrl, {
                 params: mediaInfoParams,
-                timeout: 30000
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'User-Agent': 'SMM-Manager/1.0'
+                },
+                timeout: 45000 // Увеличенный таймаут для получения информации о Reels
               });
               
               this.writeToLogFile(`MEDIA INFO RESPONSE: ${JSON.stringify(mediaInfoResponse.data)}`);
