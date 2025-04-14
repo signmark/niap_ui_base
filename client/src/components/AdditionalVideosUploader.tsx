@@ -41,7 +41,7 @@ export function AdditionalVideosUploader({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       <div className="flex justify-between items-center mb-2">
         <Label>{label}</Label>
         <Button 
@@ -58,8 +58,8 @@ export function AdditionalVideosUploader({
       {videos.length > 0 ? (
         <div className="space-y-3">
           {videos.map((videoUrl, index) => (
-            <div key={index} className="flex flex-col gap-1">
-              <div className="flex gap-2 items-start">
+            <div key={index} className="flex flex-col gap-1 relative">
+              <div className="flex gap-2 items-start relative">
                 <div className="flex-1 w-full">
                   <VideoUploader
                     id={`additional-video-${index}`}
@@ -69,15 +69,18 @@ export function AdditionalVideosUploader({
                     forcePreview={true}
                   />
                 </div>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon"
-                  className="h-9 w-9 mt-1"
-                  onClick={() => handleRemoveVideo(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex-shrink-0">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    className="h-9 w-9 mt-1"
+                    onClick={() => handleRemoveVideo(index)}
+                    aria-label="Удалить видео"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
