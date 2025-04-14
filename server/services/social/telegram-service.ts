@@ -1022,9 +1022,9 @@ export class TelegramService extends BaseSocialService {
       }
       
       // Обрабатываем контент
-      const processedContent = this.processAdditionalImages(content, 'telegram');
+      let processedContent = this.processAdditionalImages(content, 'telegram');
       
-      // Обрабатываем видео URL, если он есть
+      // Обрабатываем видео URL, если он есть - делаем это ДО загрузки на Imgur
       if (processedContent.videoUrl) {
         log(`Обнаружено видео в контенте: ${processedContent.videoUrl}`, 'social-publishing');
         // Если это локальный путь, добавляем к нему базовый URL
@@ -1038,10 +1038,9 @@ export class TelegramService extends BaseSocialService {
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
-      // Сохраняем обработанное видео URL после обработки изображений на Imgur
-      if (processedContent.videoUrl) {
-        imgurContent.videoUrl = processedContent.videoUrl;
-        log(`Сохранен видео URL после обработки Imgur: ${imgurContent.videoUrl}`, 'social-publishing');
+      // Проверяем видео после обработки Imgur
+      if (imgurContent.videoUrl) {
+        log(`Проверка видео URL после обработки Imgur: ${imgurContent.videoUrl}`, 'social-publishing');
       }
       
       // Подготавливаем текст для отправки
@@ -1076,6 +1075,9 @@ export class TelegramService extends BaseSocialService {
       // Создаем URL API Telegram
       const baseUrl = `https://api.telegram.org/bot${token}`;
       
+      // Проверяем наличие видео
+      const hasVideo = imgurContent.videoUrl !== undefined && imgurContent.videoUrl !== null && imgurContent.videoUrl !== '';
+      
       // Проверяем наличие изображений
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
@@ -1085,9 +1087,64 @@ export class TelegramService extends BaseSocialService {
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      log(`Telegram: наличие видео: ${hasVideo}, наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
-      // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // Определяем стратегию публикации в зависимости от наличия видео, изображений и длины текста
+      
+      // 0. Если есть видео, отправляем его с текстом (приоритет видео выше, чем изображений)
+      if (hasVideo) {
+        try {
+          log(`Telegram: приоритетная отправка видео: ${imgurContent.videoUrl}`, 'social-publishing');
+          
+          // Подготавливаем подпись для видео (используем полный текст, если вмещается в лимит Telegram)
+          const videoCaption = text.length <= 1024 ? text : 
+            (imgurContent.title ? 
+              (imgurContent.title.length > 200 ? 
+                imgurContent.title.substring(0, 197) + '...' : 
+                imgurContent.title) : 
+              '');
+                
+          log(`Telegram: подготовлена подпись для видео, длина: ${videoCaption.length} символов`, 'social-publishing');
+          
+          // Используем внешний обработчик для отправки видео
+          const videoResponse = await sendVideoToTelegram(
+            imgurContent.videoUrl!,
+            videoCaption,
+            formattedChatId,
+            token,
+            this.getAppBaseUrl()
+          );
+          
+          if (videoResponse.success) {
+            log(`Видео успешно отправлено в Telegram, ID сообщения: ${videoResponse.messageId}`, 'social-publishing');
+            
+            // Если подпись была сокращена, отправляем полный текст отдельным сообщением
+            if (text.length > 1024 && videoCaption !== text) {
+              log(`Отправка полного текста отдельным сообщением после видео`, 'social-publishing');
+              await this.sendTextMessageToTelegram(text, formattedChatId, token);
+            }
+            
+            // Формируем URL для видео сообщения
+            const videoPostUrl = videoResponse.messageId ? 
+              this.generatePostUrl(chatId, formattedChatId, videoResponse.messageId) : '';
+            
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: videoPostUrl,
+              messageId: videoResponse.messageId
+            };
+          } else {
+            log(`Ошибка при отправке видео в Telegram: ${videoResponse.error}`, 'social-publishing');
+            // Если с видео возникла проблема, продолжаем с обычными вариантами отправки
+            // НЕ выходим из функции, а переходим к проверке изображений
+          }
+        } catch (videoError: any) {
+          log(`Исключение при отправке видео в Telegram: ${videoError.message}`, 'social-publishing');
+          // Продолжаем с обычными вариантами отправки
+        }
+      }
       
       // 1. Если есть изображения и включен флаг принудительного разделения,
       // отправляем сначала изображения без подписи, затем текст отдельным сообщением
