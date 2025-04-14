@@ -2,6 +2,7 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import { sendVideoToTelegram } from './telegram-video-handler';
 
 /**
  * Сервис для публикации контента в Telegram
@@ -1391,6 +1392,101 @@ export class TelegramService extends BaseSocialService {
       }
       // 3. В остальных случаях (нет изображений или несколько изображений)
       else {
+        // Проверяем, есть ли видео для отправки
+        if (processedContent.videoUrl) {
+          try {
+            log(`Обнаружено видео для отправки в Telegram: ${processedContent.videoUrl}`, 'social-publishing');
+            
+            // Подготавливаем подпись для видео (аналогично подписи для изображения)
+            const videoCaption = text.length <= 1024 ? 
+              text : 
+              (processedContent.title ? 
+                (processedContent.title.length > 200 ? 
+                  processedContent.title.substring(0, 197) + '...' : 
+                  processedContent.title) : 
+                '');
+                
+            log(`Telegram: подготовлена подпись для видео, длина: ${videoCaption.length} символов`, 'social-publishing');
+            
+            // Отправляем видео с подписью, используя внешний обработчик
+            const videoResponse = await sendVideoToTelegram(
+              processedContent.videoUrl,
+              videoCaption,
+              formattedChatId,
+              token,
+              this.getAppBaseUrl()
+            );
+            
+            if (videoResponse.success) {
+              log(`Видео успешно отправлено в Telegram, ID сообщения: ${videoResponse.messageId}`, 'social-publishing');
+              
+              // Сохраняем ID сообщения для формирования URL
+              lastMessageId = videoResponse.messageId;
+              
+              // Возвращаем результат публикации
+              return {
+                platform: 'telegram',
+                status: 'published',
+                publishedAt: new Date(),
+                postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId),
+                messageId: lastMessageId
+              };
+            } else {
+              log(`Ошибка при отправке видео в Telegram: ${videoResponse.error}`, 'social-publishing');
+              
+              // Если с видео возникла проблема, пробуем отправить только текст
+              log('Попытка отправки только текста после ошибки с видео', 'social-publishing');
+              const textOnlyResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+              
+              if (textOnlyResponse.success) {
+                lastMessageId = textOnlyResponse.messageId;
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId),
+                  messageId: lastMessageId
+                };
+              }
+              
+              return {
+                platform: 'telegram',
+                status: 'failed',
+                publishedAt: null,
+                error: `Ошибка при отправке видео: ${videoResponse.error}`
+              };
+            }
+          } catch (videoError: any) {
+            log(`Исключение при отправке видео в Telegram: ${videoError.message}`, 'social-publishing');
+            
+            // При ошибке пробуем отправить только текст
+            try {
+              log('Попытка отправки только текста после ошибки с видео', 'social-publishing');
+              const textOnlyResponse = await this.sendTextMessageToTelegram(text, formattedChatId, token);
+              
+              if (textOnlyResponse.success) {
+                lastMessageId = textOnlyResponse.messageId;
+                return {
+                  platform: 'telegram',
+                  status: 'published',
+                  publishedAt: new Date(),
+                  postUrl: this.formatTelegramUrl(chatId, formattedChatId, lastMessageId),
+                  messageId: lastMessageId
+                };
+              }
+            } catch (textError) {
+              log(`Ошибка при отправке резервного текстового сообщения: ${textError}`, 'social-publishing');
+            }
+            
+            return {
+              platform: 'telegram',
+              status: 'failed',
+              publishedAt: null,
+              error: `Исключение при отправке видео: ${videoError.message}`
+            };
+          }
+        }
+        
         // Если есть изображения, отправляем их
         if (processedContent.imageUrl || (processedContent.additionalImages && processedContent.additionalImages.length > 0)) {
           // Подготавливаем подпись для изображения
