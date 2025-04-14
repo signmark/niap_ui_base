@@ -1631,7 +1631,31 @@ export class SocialPublishingService {
       return false;
     }
     
+    // Получаем список платформ, которые ожидают публикации в будущем
+    const pendingPublications = Object.entries(socialPlatforms).filter(([_, platformData]) => {
+      // Если платформа уже опубликована, пропускаем
+      if (platformData.status === 'published') {
+        return false;
+      }
+      
+      // Если у платформы есть своё scheduledAt и оно в будущем, считаем ожидающей публикации
+      if (platformData.scheduledAt) {
+        const platformScheduledTime = new Date(platformData.scheduledAt);
+        const now = new Date();
+        return platformScheduledTime > now; // Время публикации ещё не наступило
+      }
+      
+      return false; // По умолчанию не считаем ожидающей публикации
+    });
+    
+    // Если есть платформы, ожидающие публикации в будущем, возвращаем false (не все опубликовано)
+    if (pendingPublications.length > 0) {
+      log(`Найдено ${pendingPublications.length} платформ, ожидающих публикации в будущем`, 'social-publishing');
+      return false;
+    }
+    
     // Проверяем, что на всех платформах статус 'published'
+    // (за исключением тех, которые ждут публикации в будущем - они уже отфильтрованы)
     return Object.values(socialPlatforms).every(platform => platform.status === 'published');
   }
 

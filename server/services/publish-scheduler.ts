@@ -938,29 +938,89 @@ export class PublishScheduler {
         }
       }
       
-      // Обновляем основной статус контента на "published", если:
-      // 1. Есть хотя бы одна успешная публикация
-      // 2. Все платформы уже были в статусе "published" (successfulPublications > 0 && totalAttempts === 0)
-      if (successfulPublications > 0) {
-        log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах`, 'scheduler');
-        
-        try {
-          // Сначала проверяем, что контент все еще существует в базе
-          // Используем переданный токен авторизации
-          const existingContent = await storage.getCampaignContentById(content.id, authToken);
-          if (!existingContent) {
-            log(`Контент с ID ${content.id} не найден в БД, обновление статуса невозможно`, 'scheduler');
-            return;
+      // Проверяем, остались ли ещё непубликованные платформы
+      // Получаем актуальные данные о платформах контента из БД
+      try {
+        const freshContent = await storage.getCampaignContentById(content.id, authToken);
+        if (freshContent && freshContent.socialPlatforms && typeof freshContent.socialPlatforms === 'object') {
+          const allPlatforms = Object.keys(freshContent.socialPlatforms);
+          const publishedPlatforms = Object.entries(freshContent.socialPlatforms)
+            .filter(([_, data]) => data.status === 'published')
+            .map(([platform]) => platform);
+          
+          const unpublishedPlatforms = allPlatforms.filter(p => !publishedPlatforms.includes(p));
+          
+          // Проверяем для каждой непубликованной платформы, наступило ли время публикации
+          const pendingPublications = unpublishedPlatforms.filter(platform => {
+            const platformData = (freshContent.socialPlatforms as any)[platform];
+            if (!platformData || !platformData.scheduledAt) return false;
+            
+            const platformTime = new Date(platformData.scheduledAt);
+            return platformTime > new Date(); // Время публикации ещё не наступило
+          });
+          
+          log(`Контент ${content.id}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length} платформ, ожидает публикации: ${pendingPublications.length}`, 'scheduler');
+          
+          // Если все платформы опубликованы или нет платформ, ожидающих публикации в будущем
+          // то меняем статус на published
+          if (pendingPublications.length === 0) {
+            log(`Обновление основного статуса контента ${content.id} на "published" после публикации во всех платформах или в отсутствии запланированных платформ`, 'scheduler');
+            
+            try {
+              // Обновляем статус с передачей токена авторизации
+              await storage.updateCampaignContent(content.id, {
+                status: 'published'
+              }, authToken);
+              
+              log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
+            } catch (updateError: any) {
+              log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
+            }
+          } else {
+            // Есть платформы, ожидающие публикации в будущем
+            log(`Контент ${content.id} имеет ${pendingPublications.length} платформ, запланированных на будущее время. Оставляем статус scheduled`, 'scheduler');
+            
+            // Удостоверяемся, что основной статус остается scheduled
+            try {
+              // Проверяем текущий статус
+              if (freshContent.status !== 'scheduled') {
+                await storage.updateCampaignContent(content.id, {
+                  status: 'scheduled'
+                }, authToken);
+                log(`Восстановлен статус "scheduled" для контента ${content.id}, т.к. остались запланированные публикации`, 'scheduler');
+              }
+            } catch (updateError: any) {
+              log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
+            }
           }
-          
-          // Обновляем статус с передачей токена авторизации
-          await storage.updateCampaignContent(content.id, {
-            status: 'published'
-          }, authToken);
-          
-          log(`Статус контента ${content.id} успешно обновлен на published`, 'scheduler');
-        } catch (updateError: any) {
-          log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
+        } else {
+          // Если не удалось получить данные о платформах, действуем по старой логике
+          if (successfulPublications > 0) {
+            log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах (резервная логика)`, 'scheduler');
+            
+            // Обновляем статус с передачей токена авторизации
+            await storage.updateCampaignContent(content.id, {
+              status: 'published'
+            }, authToken);
+            
+            log(`Статус контента ${content.id} успешно обновлен на published (резервная логика)`, 'scheduler');
+          }
+        }
+      } catch (checkError: any) {
+        log(`Ошибка при проверке оставшихся платформ для контента ${content.id}: ${checkError.message}`, 'scheduler');
+        
+        // Резервная логика в случае ошибки
+        if (successfulPublications > 0) {
+          try {
+            // Обновляем статус с передачей токена авторизации
+            await storage.updateCampaignContent(content.id, {
+              status: 'published'
+            }, authToken);
+            
+            log(`Статус контента ${content.id} успешно обновлен на published (при ошибке проверки)`, 'scheduler');
+          } catch (updateError: any) {
+            log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
+          }
         }
       }
     } catch (error: any) {
