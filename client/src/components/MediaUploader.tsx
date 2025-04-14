@@ -341,8 +341,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           disabled={isUploading || mediaList.length >= maxItems}
           className="flex items-center gap-1"
         >
-          {isUploading ? <Spinner size="sm" /> : <Upload size={16} />}
-          {isUploading ? "Загрузка..." : "Загрузить файл"}
+          {isUploading ? <Spinner size="sm" /> : <Upload size={16} className="mr-1" />}
+          {isUploading ? "" : "Загрузить файл"}
         </Button>
 
         {/* Кнопка добавления URL */}
