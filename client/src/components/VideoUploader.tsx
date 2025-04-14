@@ -73,9 +73,14 @@ export function VideoUploader({
       
       try {
         console.log('Отправка запроса на загрузку видео файла...');
+        
+        // Получаем токен авторизации из localStorage
+        const token = localStorage.getItem('authToken');
+        
         const response = await axios.post('/api/beget-s3-video/upload', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+            'Authorization': token ? `Bearer ${token}` : ''
           }
         });
         
