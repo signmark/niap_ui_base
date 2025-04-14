@@ -73,16 +73,21 @@ export function VideoUploader({
       
       try {
         console.log('Отправка запроса на загрузку видео файла...');
-        const response = await axios.post('/api/beget-s3/upload-video', formData, {
+        
+        // Получаем токен авторизации из localStorage
+        const token = localStorage.getItem('auth_token');
+        
+        const response = await axios.post('/api/beget-s3-video/upload', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+            'Authorization': token ? `Bearer ${token}` : ''
           }
         });
         
         console.log('Ответ от API загрузки видео:', response.data);
         
-        if (response.data && response.data.success && response.data.url) {
-          const videoUrl = response.data.url;
+        if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
+          const videoUrl = response.data.url || response.data.videoUrl;
           onChange(videoUrl);
           setPreviewUrl(videoUrl);
           setShowPreview(true);
