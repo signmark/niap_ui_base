@@ -155,6 +155,9 @@ export abstract class BaseSocialService {
       // Создаем копию контента
       const updatedContent = { ...content };
       
+      // ВАЖНО: Сохраняем видео URL перед обработкой изображений
+      const videoUrl = updatedContent.videoUrl;
+      
       // Обрабатываем основное изображение, если оно есть
       if (updatedContent.imageUrl && !updatedContent.imageUrl.startsWith('http')) {
         log(`Загрузка основного изображения на Imgur: ${updatedContent.imageUrl}`, 'social-publishing');
@@ -171,6 +174,12 @@ export abstract class BaseSocialService {
         } catch (uploadError) {
           log(`Исключение при загрузке основного изображения на Imgur: ${uploadError}`, 'social-publishing');
         }
+      }
+      
+      // ВАЖНО: Восстанавливаем videoUrl после обработки изображений
+      if (videoUrl) {
+        updatedContent.videoUrl = videoUrl;
+        log(`Сохранен видео URL после обработки: ${videoUrl}`, 'social-publishing');
       }
       
       // Обрабатываем дополнительные изображения, если они есть
