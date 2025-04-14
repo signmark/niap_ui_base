@@ -206,10 +206,15 @@ export function ImageUploader({
       
       {/* Индикатор загрузки скрыт по запросу пользователя */}
       
-      {/* Всегда отображаем URL, если он есть */}
+      {/* Отображаем URL с индикатором загрузки, если он есть */}
       {value && value.trim() !== '' && (
-        <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
-          URL: {value}
+        <div className="text-xs text-muted-foreground ml-1 mt-1 break-all flex items-center gap-1">
+          <span className="flex-shrink-0">URL:</span>
+          <span className="flex-grow break-all">{value}</span>
+          {isUploading && (
+            <span className="flex-shrink-0 w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin ml-1" 
+                  aria-hidden="true" />
+          )}
         </div>
       )}
       
