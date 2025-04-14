@@ -109,16 +109,41 @@ instagramTestRouter.post('/test-reels', async (req, res) => {
     writeToLogFile(`Параметры контейнера: ${JSON.stringify(containerParams, null, 2)}`);
     log(`[InstagramReelsTest] Создание контейнера для Reels`, 'instagram-test');
     
-    const containerResponse = await axios.post(baseUrl, containerParams, {
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SMM-Manager/1.0'
+    try {
+      log(`[InstagramReelsTest] Отправка запроса на создание контейнера: ${baseUrl}`, 'instagram-test');
+      writeToLogFile(`Отправка запроса на создание контейнера: ${baseUrl}`);
+      
+      const containerResponse = await axios.post(baseUrl, containerParams, {
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SMM-Manager/1.0'
+        }
+      });
+      
+      writeToLogFile(`Ответ создания контейнера: ${JSON.stringify(containerResponse.data, null, 2)}`);
+      
+      if (!containerResponse.data.id) {
+        const errorMsg = 'Ответ API не содержит ID контейнера';
+        log(`[InstagramReelsTest] ${errorMsg}`, 'instagram-test');
+        writeToLogFile(errorMsg);
+        throw new Error(errorMsg);
       }
-    });
-    
-    const containerId = containerResponse.data.id;
-    log(`[InstagramReelsTest] Контейнер создан с ID: ${containerId}`, 'instagram-test');
-    writeToLogFile(`Создан контейнер с ID: ${containerId}`);
+      
+      const containerId = containerResponse.data.id;
+      log(`[InstagramReelsTest] Контейнер создан с ID: ${containerId}`, 'instagram-test');
+      writeToLogFile(`Создан контейнер с ID: ${containerId}`);
+    } catch (containerError: any) {
+      log(`[InstagramReelsTest] Ошибка создания контейнера: ${containerError.message}`, 'instagram-test');
+      writeToLogFile(`Ошибка создания контейнера: ${containerError.message}`);
+      
+      if (containerError.response) {
+        log(`[InstagramReelsTest] Статус ошибки: ${containerError.response.status}`, 'instagram-test');
+        writeToLogFile(`Статус ошибки: ${containerError.response.status}`);
+        writeToLogFile(`Детали ошибки: ${JSON.stringify(containerError.response.data, null, 2)}`);
+      }
+      
+      throw containerError;
+    }
     
     // Шаг 3: Ожидание обработки видео на серверах Instagram
     // Увеличиваем начальное ожидание для большей вероятности успеха
