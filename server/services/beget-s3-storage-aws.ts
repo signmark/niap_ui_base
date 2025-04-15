@@ -66,27 +66,55 @@ export class BegetS3StorageAws {
 
   /**
    * Загружает файл в S3 хранилище
-   * @param fileData Содержимое файла (Buffer или строка)
-   * @param fileName Имя файла (опционально, если не указано - генерируется UUID)
-   * @param contentType MIME-тип файла
-   * @param folder Папка для сохранения (опционально)
+   * @param options Опции для загрузки файла
    * @returns Результат загрузки файла
    */
-  async uploadFile(
-    fileData: Buffer | string, 
-    fileName?: string, 
-    contentType: string = 'application/octet-stream',
-    folder?: string
-  ): Promise<UploadFileResult> {
+  async uploadFile(options: {
+    key?: string;
+    filePath?: string;
+    fileData?: Buffer | string;
+    contentType?: string;
+  }): Promise<UploadFileResult> {
     try {
-      const fileKey = this.generateFileKey(fileName, folder);
+      let fileKey = options.key;
+      let fileBody: Buffer | string;
+      let contentType = options.contentType || 'application/octet-stream';
+      
+      // Если указан путь к файлу, читаем его содержимое
+      if (options.filePath) {
+        if (!fs.existsSync(options.filePath)) {
+          throw new Error(`File not found: ${options.filePath}`);
+        }
+        
+        fileBody = fs.readFileSync(options.filePath);
+        
+        // Если ключ не указан, генерируем его из имени файла
+        if (!fileKey) {
+          fileKey = this.generateFileKey(path.basename(options.filePath));
+        }
+        
+        // Если тип контента не указан, определяем по расширению файла
+        if (!options.contentType) {
+          contentType = this.getMimeTypeByExtension(path.extname(options.filePath));
+        }
+      } else if (options.fileData) {
+        // Используем переданные данные файла
+        fileBody = options.fileData;
+        
+        // Если ключ не указан, генерируем случайный
+        if (!fileKey) {
+          fileKey = this.generateFileKey();
+        }
+      } else {
+        throw new Error('Either filePath or fileData must be provided');
+      }
       
       log.info(`Uploading file to Beget S3: ${fileKey}`, this.logPrefix);
       
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: fileKey,
-        Body: fileData,
+        Body: fileBody,
         ContentType: contentType,
         ACL: 'public-read'
       });
@@ -128,12 +156,20 @@ export class BegetS3StorageAws {
       if (!fs.existsSync(filePath)) {
         throw new Error(`File not found: ${filePath}`);
       }
-
-      const fileData = fs.readFileSync(filePath);
+      
       const localFileName = fileName || path.basename(filePath);
       const mimeType = contentType || this.getMimeTypeByExtension(path.extname(filePath));
+      
+      let key = localFileName;
+      if (folder) {
+        key = `${folder}/${localFileName}`;
+      }
 
-      return this.uploadFile(fileData, localFileName, mimeType, folder);
+      return this.uploadFile({
+        filePath,
+        key,
+        contentType: mimeType
+      });
     } catch (error) {
       log.error(`Error uploading local file to Beget S3: ${(error as Error).message}`, this.logPrefix);
       return {
