@@ -129,9 +129,11 @@ services:
   smm:
     build:
       context: ./smm
-      dockerfile: Dockerfile.aws
+      dockerfile: Dockerfile
     restart: always
-    # Убираем монтирование local volume, чтобы не перезаписывать node_modules в контейнере
+    volumes:
+      - ./smm:/app
+      #- /app/node_modules
     environment:
       - NODE_ENV=development
       - BEGET_S3_ACCESS_KEY=${BEGET_S3_ACCESS_KEY}
