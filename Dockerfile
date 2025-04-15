@@ -27,8 +27,13 @@ RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit
 # Явно устанавливаем @google/generative-ai для интеграции с Gemini
 RUN npm install @google/generative-ai --save --no-audit
 
-# Устанавливаем AWS SDK для работы с Beget S3
-RUN npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save --no-audit
+# Устанавливаем AWS SDK для работы с Beget S3 (приоритетно)
+RUN npm install --save --no-audit \
+    @aws-sdk/client-s3@3.523.0 \
+    @aws-sdk/s3-request-presigner@3.523.0 \
+    @aws-sdk/lib-storage@3.523.0 \
+    && npm ls @aws-sdk/client-s3 \
+    && echo "AWS SDK установлен успешно"
 
 # Проверяем наличие библиотек
 RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls @aws-sdk/client-s3
@@ -38,6 +43,9 @@ RUN ffmpeg -version
 
 # Копируем исходный код
 COPY . .
+
+# Проверяем доступность AWS SDK
+RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK:', e); process.exit(1); }"
 
 # Экспортируем порт для приложения
 EXPOSE 5000
