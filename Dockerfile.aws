@@ -1,0 +1,29 @@
+FROM node:18
+
+WORKDIR /app
+
+# Установка утилит для работы с видео
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копирование package.json и установка зависимостей
+COPY package*.json ./
+RUN npm install
+
+# Установка AWS SDK пакетов отдельным слоем для лучшего кэширования
+RUN npm install --save \
+    @aws-sdk/client-s3 \
+    @aws-sdk/s3-request-presigner \
+    @aws-sdk/lib-storage
+
+# Копирование исходного кода
+COPY . .
+
+# Компиляция TypeScript
+RUN npm run build
+
+# Запуск приложения
+CMD ["npm", "run", "start"]
