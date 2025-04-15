@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { TextEnhancementDialog } from './TextEnhancementDialog'
+import { EmojiPicker } from './EmojiPicker'
 import {
   Bold,
   Italic,
@@ -419,6 +420,15 @@ export default function RichTextEditor({
             </PopoverContent>
           </Popover>
 
+          {/* Emoji Picker */}
+          <div className="mx-1 h-full w-px bg-border" />
+          
+          <EmojiPicker 
+            onEmojiSelect={(emoji) => {
+              editor.chain().focus().insertContent(emoji).run();
+            }} 
+          />
+          
           {/* Magic Wand Button for AI Text Enhancement */}
           <div className="mx-1 h-full w-px bg-border" />
           
