@@ -1,48 +1,75 @@
-# Решение проблем с AWS SDK в Docker-контейнере
+# Docker + AWS SDK: Решение проблем интеграции 
 
-Данное руководство описывает процесс исправления проблемы с недоступностью AWS SDK в контейнере Docker.
+## Обзор проблемы
 
-## Проблема
+При контейнеризации приложения с использованием Docker возникает проблема с доступностью пакетов AWS SDK, необходимых для работы с Beget S3.
 
-При запуске приложения в Docker-контейнере может возникнуть ошибка:
+## Симптомы
 
-```
-Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@aws-sdk/client-s3' imported from /app/server/services/beget-s3-storage-aws.ts
-```
+1. При запуске приложения в контейнере возникают ошибки:
+   ```
+   Error: Cannot find module '@aws-sdk/client-s3'
+   ```
 
-Даже если AWS SDK указан в Dockerfile и установлен во время сборки образа:
+2. Ошибка ERR_MODULE_NOT_FOUND для пакетов:
+   - `@aws-sdk/client-s3`
+   - `@aws-sdk/s3-request-presigner`
+   - `@aws-sdk/lib-storage`
 
-```dockerfile
-RUN npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save --no-audit
-```
+## Причины
 
-## Причина проблемы
+1. **Проблема монтирования томов**: Монтирование директории `node_modules` в `docker-compose.yml` блокирует доступ к установленным внутри контейнера пакетам.
 
-Проблема возникает из-за конфликта томов (volumes) в docker-compose.yml:
+2. **Порядок операций в Dockerfile**: Несмотря на установку пакетов в Dockerfile, при определенных конфигурациях они могут быть недоступны после создания контейнера.
 
-```yaml
-volumes:
-  - ./smm:/app
-  - /app/node_modules
-```
+## Решения
 
-Монтирование локальной директории `./smm` в `/app` приводит к тому, что пакеты, установленные в контейнере, становятся недоступными, так как локальные файлы "перекрывают" файлы контейнера в целевой директории.
+### Решение 1: Исправление docker-compose.yml
 
-## Решение
-
-### 1. Модификация docker-compose.yml
-
-Закомментируйте или удалите строку монтирования node_modules в docker-compose.yml:
+Закомментируйте или удалите строку монтирования `node_modules` в `docker-compose.yml`:
 
 ```yaml
 volumes:
   - ./smm:/app
-  #- /app/node_modules  # Закомментировать эту строку
+  #- /app/node_modules
 ```
 
-### 2. Улучшение Dockerfile
+### Решение 2: Установка пакетов после запуска контейнера
 
-Обновите команду установки AWS SDK в Dockerfile для более надежной установки:
+Дополните скрипт деплоя (deploy.sh) установкой пакетов в запущенном контейнере:
+
+```bash
+# После запуска контейнеров
+echo -e "${YELLOW}Определение имени контейнера smm...${NC}"
+CONTAINER_ID=$(docker ps | grep smm | awk '{print $1}')
+
+if [ -z "$CONTAINER_ID" ]; then
+    echo -e "${RED}Контейнер smm не найден. Проверьте его статус.${NC}"
+    docker ps
+    exit 1
+fi
+
+echo -e "${GREEN}Найден контейнер smm: $CONTAINER_ID${NC}"
+echo -e "${YELLOW}Установка пакетов AWS SDK в контейнере smm...${NC}"
+docker exec -i $CONTAINER_ID npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save
+```
+
+### Решение 3: Использование mock AWS SDK для тестирования
+
+Создайте файл `server/services/beget-s3-storage-mock.ts` для эмуляции работы с S3 API при отсутствии AWS SDK:
+
+```typescript
+/**
+ * Мок-реализация S3 клиента для тестирования
+ */
+export class MockS3Client {
+  // Методы для эмуляции S3 клиента
+}
+```
+
+### Решение 4: Явная установка в Dockerfile
+
+Убедитесь, что установка AWS SDK в Dockerfile явно прописана и проверяется:
 
 ```dockerfile
 # Устанавливаем AWS SDK для работы с Beget S3 (приоритетно)
@@ -52,50 +79,52 @@ RUN npm install --save --no-audit \
     @aws-sdk/lib-storage@3.523.0 \
     && npm ls @aws-sdk/client-s3 \
     && echo "AWS SDK установлен успешно"
-```
 
-Добавьте проверку доступности AWS SDK в Dockerfile:
-
-```dockerfile
 # Проверяем доступность AWS SDK
 RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK:', e); process.exit(1); }"
 ```
 
-### 3. Пересборка образа
+## Проверка интеграции с Beget S3
 
-После внесения изменений, пересоберите образ без использования кэша:
+Для проверки успешной интеграции с Beget S3 можно использовать тестовый скрипт, который пытается загрузить небольшой файл:
 
-```bash
-docker-compose down
-docker-compose build --no-cache smm
-docker-compose up -d
+```javascript
+// test-beget-s3.js
+// Скрипт для тестирования загрузки файлов в Beget S3
 ```
 
-## Дополнительная информация
+## Настройки окружения для Beget S3
 
-### Монтирование томов в Docker
+Убедитесь, что в файле `.env` правильно настроены следующие переменные:
 
-При использовании монтирования томов в Docker важно понимать:
-
-1. При монтировании хост-директории в контейнер (`./smm:/app`), все файлы в целевой директории контейнера перезаписываются файлами с хоста
-2. Монтирование `/app/node_modules` (без источника) используется для сохранения node_modules контейнера и предотвращения их перезаписи
-3. Если у вас на хосте нет node_modules или они не синхронизированы с контейнером, лучше полностью отключить монтирование node_modules
-
-### Верификация установки пакетов
-
-Для проверки, что AWS SDK корректно установлен и доступен в контейнере:
-
-```bash
-docker exec -it root-smm-1 bash -c "npm ls @aws-sdk/client-s3"
+```
+BEGET_S3_ACCESS_KEY=9GKH5CY@27DGMDRR7682
+BEGET_S3_SECRET_KEY=wNgp3IoHQDDr3gWAqUe@r0Ckt5oy5dWhPRULHRS9
+BEGET_S3_BUCKET=ваш-бакет
+BEGET_S3_ENDPOINT=https://s3.ru1.storage.beget.cloud  # или другой соответствующий endpoint
+BEGET_S3_REGION=ru-1  # или другой регион хранилища
 ```
 
-При успешной установке должен быть выведен путь к установленному пакету.
+## Проблемы доступа к файлам (AccessDenied)
 
-## Заключение
+Если при загрузке файлов возникает ошибка `AccessDenied` при попытке получить загруженный файл, убедитесь что:
 
-Правильная настройка монтирования томов в Docker и корректная установка зависимостей в Dockerfile критически важны для работы приложений, использующих внешние библиотеки, такие как AWS SDK.
+1. В запросе на загрузку файла установлен параметр `ACL: 'public-read'`
+2. Корректно настроены разрешения для бакета в панели Beget
+3. В URL для доступа к файлу используется правильное имя бакета
 
-При возникновении подобных проблем в будущем, проверяйте:
-1. Корректность монтирования томов в docker-compose.yml
-2. Правильность установки пакетов в Dockerfile
-3. Доступность пакетов внутри контейнера через `npm ls` команды
+## Логирование для отладки
+
+Для детальной отладки проблем с AWS SDK добавьте дополнительное логирование в сервисы работы с S3:
+
+```typescript
+// В файле beget-s3-storage-aws.ts
+console.log('S3 Client config:', {
+  endpoint: this.endpoint,
+  region: this.region,
+  credentials: {
+    accessKeyId: "***" + this.credentials.accessKeyId.slice(-4),
+    secretAccessKey: "***" + this.credentials.secretAccessKey.slice(-4)
+  }
+});
+```
