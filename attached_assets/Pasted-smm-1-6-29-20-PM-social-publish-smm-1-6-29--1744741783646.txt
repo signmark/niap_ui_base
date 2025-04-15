@@ -1,0 +1,106 @@
+smm-1  | 6:29:20 PM [social-publish] Получены настройки социальных сетей из кампании
+smm-1  | 6:29:20 PM [social-publish] Публикация контента в telegram
+smm-1  | 6:29:20 PM [social-publishing] Публикация контента "Как автоматизировать составление рационов?" в telegram
+smm-1  | 6:29:20 PM [social-publishing] Отключен флаг forceImageTextSeparation для Telegram публикации. Длина текста: 294 символов
+smm-1  | 6:29:20 PM [telegram-debug] publishToTelegram вызван для контента: 06cd2327-66b7-4113-b53b-e4f37b20f787, title: "Как автоматизировать составление рационов?"
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | 6:29:20 PM [telegram-debug] Telegram настройки: {"hasSettings":true,"hasToken":true,"hasChatId":true,"token":"752910...","chatId":"-1002302366310","campaignId":"46868c44-c6a4-4bed-accf-9ad07bba790e"}
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | 6:29:20 PM [social-publishing] publishToTelegram вызван для контента ID: 06cd2327-66b7-4113-b53b-e4f37b20f787, Title: "Как автоматизировать составление рационов?"
+smm-1  | 6:29:20 PM [social-publishing] Параметры Telegram: {"settingsProvided":true,"tokenProvided":true,"chatIdProvided":true,"tokenLength":46,"chatIdValue":"-1002302366310"}
+smm-1  | 6:29:20 PM [social-publishing] Используем токен Telegram: 752910... и ID чата: -1002302366310
+smm-1  | 6:29:20 PM [social-publishing] Публикация в Telegram. Контент: 06cd2327-66b7-4113-b53b-e4f37b20f787, тип: video-text
+smm-1  | 6:29:20 PM [social-publishing] Обработка дополнительных изображений для Telegram. Тип: object, значение: []...
+smm-1  | 6:29:20 PM [social-publishing] Telegram: Найдено 0 корректных дополнительных изображений
+smm-1  | 6:29:20 PM [social-publishing] Начинаем загрузку изображений на Imgur для контента: 06cd2327-66b7-4113-b53b-e4f37b20f787
+smm-1  | 6:29:20 PM [social-publishing] Обработка ID чата для Telegram: "-1002302366310"
+smm-1  | 6:29:20 PM [social-publishing] Проверка чата через API Telegram: -1002302366310
+smm-1  | 6:29:20 PM [social-publishing] Чат найден через API: {"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel","active_usernames":["ya_delayu_moschno"],"invite_link":"https://t.me/+d6nOPp7tWkwzODI6","can_send_gift":true,"has_visible_history":true,"can_send_paid_media":true,"accepted_gift_types":{"unlimited_gifts":true,"limited_gifts":true,"unique_gifts":true,"premium_subscription":false},"photo":{"small_file_id":"AQADAgADIO0xG0EFuUgACAIAA5qdH6IW____cZSCZmeDSMA2BA","small_file_unique_id":"AQADIO0xG0EFuUgAAQ","big_file_id":"AQADAgADIO0xG0EFuUgACAMAA5qdH6IW____cZSCZmeDSMA2BA","big_file_unique_id":"AQADIO0xG0EFuUgB"},"available_reactions":[],"max_reaction_count":11,"accent_color_id":6}
+smm-1  | 6:29:20 PM [social-publishing] Используем username из API: @ya_delayu_moschno
+smm-1  | 6:29:20 PM [social-publishing] Используем ID чата для Telegram: @ya_delayu_moschno
+smm-1  | 6:29:20 PM [social-publishing] Обработка HTML для Telegram: исходный текст 252 символов, обработанный 240 символов
+smm-1  | 6:29:20 PM [social-publishing] Первые 100 символов обработанного текста: Узнайте, как НИАП помогает специалистам по питанию экономить до 80% времени при создании индивидуаль
+smm-1  | 6:29:20 PM [social-publishing] Telegram: наличие видео: true, изображений: false, принудительное разделение: false
+smm-1  | 6:29:20 PM [social-publishing] Telegram: публикация с видео. URL видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/5bb96d71-9a3f-401c-99f2-0787a615a034.mp4
+smm-1  | 6:29:20 PM [social-publishing] Подготовлена подпись для видео, длина: 291 символов
+smm-1  | 6:29:20 PM [social-publishing] Отправка видео в Telegram: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/5bb96d71-9a3f-401c-99f2-0787a...
+smm-1  | 6:29:21 PM [telegram-debug] Ответ от Telegram API (sendVideo): код 400, data: {"ok":false,"error_code":400,"description":"Bad Request: failed to get HTTP URL content"}
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | 6:29:21 PM [social-publishing] Ошибка при отправке видео в Telegram: Bad Request: failed to get HTTP URL content
+smm-1  | 6:29:21 PM [social-publishing] Ошибка при отправке видео в Telegram: Bad Request: failed to get HTTP URL content
+smm-1  | 6:29:21 PM [social-publishing] Попытка отправки текста после неудачной отправки видео
+smm-1  | 6:29:21 PM [social-publishing] Отправка текстового сообщения в Telegram, длина: 291 символов
+smm-1  | 6:29:21 PM [social-publishing] Форматирование chat ID: исходный "@ya_delayu_moschno" -> форматированный "@ya_delayu_moschno"
+smm-1  | 6:29:21 PM [social-publishing] Подготовка текста для Telegram, исходная длина: 291 символов
+smm-1  | 6:29:21 PM [social-publishing] Внимание: количество открывающих (1) и закрывающих (0) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.
+smm-1  | 6:29:21 PM [social-publishing] Форматирование текста для Telegram: было 291 символов, стало 287
+smm-1  | 6:29:21 PM [social-publishing] Отправка текстового сообщения в Telegram, длина: 287 символов, первые 100 символов: "<b>Как автоматизировать составление рационов?
+smm-1  |
+smm-1  | Узнайте, как НИАП помогает специалистам по питанию эк..."
+smm-1  | 6:29:21 PM [social-publishing] Ответ от Telegram API: {"ok":false,"error_code":400,"description":"Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"b\""}
+smm-1  | 6:29:21 PM [social-publishing] Ошибка при отправке HTML-форматированного текста: код 400, Bad Request: can't parse entities: Can't find end tag corresponding to start tag "b"
+smm-1  | 6:29:21 PM [social-publishing] Отправка обычного текста в Telegram (без HTML), длина: 284 символов
+smm-1  | 6:29:21 PM [social-publishing] Успешная отправка обычного текста: message_id 1379
+smm-1  | 6:29:21 PM [social-publishing] Текст успешно отправлен в Telegram: {"success":true,"data":{"ok":true,"result":{"message_id":1379,"sender_chat":{"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel"},"chat":{"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel"},"date":1744741761,"text":"Как автоматизировать составление рационов?\n\nУзнайте, как НИАП помогает специалистам по питанию экономить до 80% времени при создании индивидуальных рационов. Наш сервис автоматически рассчитывает нутриенты и формирует сбалансированное меню с учетом 85 факторов.\nПопробуйте бесплатно!"}}}
+smm-1  | 6:29:21 PM [social-publishing] Получен message_id из textResponse для обычного сообщения: 1379
+smm-1  | 6:29:21 PM [social-publishing] Форматирование Telegram URL: полный числовой ID -1002302366310 преобразован в https://t.me/c/2302366310
+smm-1  | 6:29:21 PM [social-publishing] Сформирован URL с обязательным message ID: https://t.me/c/2302366310/1379
+smm-1  | 6:29:21 PM [social-publish] Результат публикации в telegram: published
+smm-1  | 6:29:22 PM [express] POST /api/content/06cd2327-66b7-4113-b53b-e4f37b20f787/publish-social 200 in 14…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:29:22 PM [express] GET /api/campaign-content 200 in 58ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:29:23 PM [express] GET /api/campaign-content 304 in 60ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:29:24 PM [express] GET /api/keywords 304 in 31ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | 6:29:34 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 6:29:34 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 6:29:34 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+smm-1  | 6:29:34 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:29:34 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 6:29:34 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 6:29:34 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+smm-1  | 6:29:35 PM [scheduler] Получено 0 запланированных публикаций через API
+smm-1  | 6:29:35 PM [scheduler] Запланированные публикации не найдены
+smm-1  | 6:29:35 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+smm-1  | 6:29:35 PM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 6:29:35 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 6:29:35 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:29:35 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 6:29:35 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:29:35 PM [express] GET /api/keywords 304 in 29ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:29:35 PM [express] GET /api/campaign-content 304 in 95ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
