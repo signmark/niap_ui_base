@@ -84,14 +84,24 @@ else
 fi
 
 # Установка AWS SDK в контейнере smm
+echo -e "${YELLOW}Определение имени контейнера smm...${NC}"
+CONTAINER_ID=$(docker ps | grep smm | awk '{print $1}')
+
+if [ -z "$CONTAINER_ID" ]; then
+    echo -e "${RED}Контейнер smm не найден. Проверьте его статус.${NC}"
+    docker ps
+    exit 1
+fi
+
+echo -e "${GREEN}Найден контейнер smm: $CONTAINER_ID${NC}"
 echo -e "${YELLOW}Установка пакетов AWS SDK в контейнере smm...${NC}"
-docker exec -i root-smm-1 npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save
+docker exec -i $CONTAINER_ID npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save
 
 # Проверка установки
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Пакеты AWS SDK успешно установлены${NC}"
     echo -e "${YELLOW}Перезапуск контейнера smm...${NC}"
-    docker restart root-smm-1
+    docker restart $CONTAINER_ID
     echo -e "${GREEN}Деплой успешно завершен!${NC}"
 else
     echo -e "${RED}Ошибка при установке пакетов AWS SDK${NC}"
