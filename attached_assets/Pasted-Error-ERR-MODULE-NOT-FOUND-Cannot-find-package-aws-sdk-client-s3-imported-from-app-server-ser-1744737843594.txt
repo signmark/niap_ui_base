@@ -1,0 +1,23 @@
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@aws-sdk/client-s3' imported from /app/server/services/beget-s3-storage-aws.ts
+smm-1  |     at new NodeError (node:internal/errors:405:5)
+smm-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+smm-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+smm-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+smm-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+smm-1  |     at resolveBase (file:///app/node_modules/tsx/dist/esm/index.mjs?1744737771350:2:3212)
+smm-1  |     at resolveDirectory (file:///app/node_modules/tsx/dist/esm/index.mjs?1744737771350:2:3584)
+smm-1  |     at resolveTsPaths (file:///app/node_modules/tsx/dist/esm/index.mjs?1744737771350:2:4073)
+smm-1  |     at async resolve (file:///app/node_modules/tsx/dist/esm/index.mjs?1744737771350:2:4441)
+smm-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+smm-1  |   code: 'ERR_MODULE_NOT_FOUND'
+smm-1  | }
+smm-1  |
+smm-1  | Node.js v18.20.8
+root@oladaymbzh:~# docker ps
+CONTAINER ID   IMAGE                      COMMAND                  CREATED         STATUS                         PORTS                                                                          NAMES
+ae2b66d7921c   root-n8n                   "tini -- /docker-ent…"   2 minutes ago   Up 2 minutes                   127.0.0.1:5678->5678/tcp                                                       root-n8n-1
+aa026a1f0e5f   root-smm                   "docker-entrypoint.s…"   2 minutes ago   Restarting (1) 3 seconds ago                                                                                  root-smm-1
+2d5aebda181e   directus/directus:latest   "docker-entrypoint.s…"   8 days ago      Up 2 days                      8055/tcp                                                                       root-directus-1
+21364733c2f4   dpage/pgadmin4             "/entrypoint.sh"         11 days ago     Up 2 days                      80/tcp, 443/tcp                                                                root-pgadmin-1
+ff2e43eaebcf   traefik:v3.3               "/entrypoint.sh --ap…"   11 days ago     Up 2 days                      0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   root-traefik-1
+d75ca1417a9d   postgres:16                "docker-entrypoint.s…"   11 days ago     Up 2 days                      5432/tcp                                                                       root-postgres-1
