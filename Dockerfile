@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Устанавливаем системные зависимости через apt
 RUN apt-get update && \
-    apt-get install -y python3 make g++ && \
+    apt-get install -y python3 make g++ ffmpeg curl wget && \
     rm -rf /var/lib/apt/lists/*
 
 # Копируем package.json и package-lock.json
@@ -29,6 +29,9 @@ RUN npm install @google/generative-ai --save --no-audit
 
 # Проверяем наличие библиотек
 RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai
+
+# Проверяем наличие ffmpeg
+RUN ffmpeg -version
 
 # Копируем исходный код
 COPY . .
