@@ -1,157 +1,17 @@
 /**
  * Сервис для работы с Beget S3 хранилищем через AWS SDK v3
  * 
- * Расширенная мок-реализация с реальным функционалом загрузки в S3
+ * Реализация с использованием официального AWS SDK
  */
-// Мок AWS SDK для обхода проблем с импортом
-export class S3Client {
-  private config: any;
-  private logPrefix = 'mocked-s3-client';
-
-  constructor(config: any) {
-    this.config = config;
-    console.log('Enhanced S3Client initialized with config:', config);
-  }
-
-  async send(command: any) {
-    console.log(`Enhanced S3Client send called with command type: ${command.constructor.name}`);
-    
-    if (command instanceof PutObjectCommand) {
-      // Реальная загрузка через HTTP API Beget S3
-      try {
-        const { Bucket, Key, Body, ContentType } = command.input;
-        const accessKey = this.config.credentials.accessKeyId;
-        const secretKey = this.config.credentials.secretAccessKey;
-        const endpoint = this.config.endpoint.replace('https://', '');
-        
-        const url = `https://${Bucket}.${endpoint}/${Key}`;
-        console.log(`Uploading to ${url}`);
-        
-        // Используем fetch для загрузки файла
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': ContentType || 'application/octet-stream',
-            'x-amz-acl': 'public-read'
-          },
-          body: Body
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Upload failed with status ${response.status}: ${response.statusText}`);
-        }
-        
-        return { ETag: '"mocked-etag"' };
-      } catch (error) {
-        console.error('Error in mocked PutObjectCommand:', error);
-        throw error;
-      }
-    } else if (command instanceof GetObjectCommand) {
-      // Получение объекта через fetch
-      try {
-        const { Bucket, Key } = command.input;
-        const endpoint = this.config.endpoint.replace('https://', '');
-        const url = `https://${Bucket}.${endpoint}/${Key}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`GetObject failed with status ${response.status}: ${response.statusText}`);
-        }
-        
-        const buffer = await response.arrayBuffer();
-        return { 
-          Body: {
-            transformToByteArray: async () => new Uint8Array(buffer),
-            transformToString: async () => new TextDecoder().decode(buffer),
-            on: (event: string, callback: Function) => {
-              if (event === 'data') {
-                callback(Buffer.from(buffer));
-              } else if (event === 'end') {
-                callback();
-              }
-              return this;
-            }
-          },
-          ContentType: response.headers.get('Content-Type')
-        };
-      } catch (error) {
-        console.error('Error in mocked GetObjectCommand:', error);
-        throw error;
-      }
-    } else if (command instanceof DeleteObjectCommand) {
-      // Мок для удаления
-      return { DeleteMarker: true };
-    } else if (command instanceof HeadObjectCommand) {
-      // Проверка существования через HEAD запрос
-      try {
-        const { Bucket, Key } = command.input;
-        const endpoint = this.config.endpoint.replace('https://', '');
-        const url = `https://${Bucket}.${endpoint}/${Key}`;
-        
-        const response = await fetch(url, { method: 'HEAD' });
-        if (!response.ok) {
-          throw new Error(`HeadObject failed with status ${response.status}`);
-        }
-        
-        return {
-          ContentType: response.headers.get('Content-Type'),
-          ContentLength: response.headers.get('Content-Length')
-        };
-      } catch (error) {
-        console.error('Error in mocked HeadObjectCommand:', error);
-        throw error;
-      }
-    } else if (command instanceof ListObjectsV2Command) {
-      // Заглушка для ListObjectsV2Command
-      return { Contents: [] };
-    } else {
-      console.warn(`Unhandled command type: ${command.constructor.name}`);
-      return {};
-    }
-  }
-}
-
-export class PutObjectCommand {
-  input: any;
-  constructor(input: any) {
-    this.input = input;
-  }
-}
-
-export class GetObjectCommand {
-  input: any;
-  constructor(input: any) {
-    this.input = input;
-  }
-}
-
-export class DeleteObjectCommand {
-  input: any;
-  constructor(input: any) {
-    this.input = input;
-  }
-}
-
-export class ListObjectsV2Command {
-  input: any;
-  constructor(input: any) {
-    this.input = input;
-  }
-}
-
-export class HeadObjectCommand {
-  input: any;
-  constructor(input: any) {
-    this.input = input;
-  }
-}
-
-export const getSignedUrl = (client: any, command: any, options: any) => {
-  console.log('Mock getSignedUrl called with command:', command.constructor.name);
-  const { Bucket, Key } = command.input;
-  const endpoint = client.config.endpoint.replace('https://', '');
-  return Promise.resolve(`https://${Bucket}.${endpoint}/${Key}?X-Amz-SignedExpires=${Date.now() + (options.expiresIn * 1000)}`);
-};
+import { 
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  HeadObjectCommand
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -393,21 +253,11 @@ export class BegetS3StorageAws {
         throw new Error('File body is empty');
       }
       
-      const stream = response.Body as Readable;
-      const chunks: Buffer[] = [];
-      
-      return new Promise((resolve, reject) => {
-        stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-        stream.on('error', (err) => {
-          log.error(`Error reading file stream: ${err.message}`, this.logPrefix);
-          reject(err);
-        });
-        stream.on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          log.info(`File retrieved successfully, size: ${buffer.length} bytes`, this.logPrefix);
-          resolve(buffer);
-        });
-      });
+      // Используем стандартный интерфейс AWS SDK v3 для получения данных тела
+      const arrayBuffer = await response.Body.transformToByteArray();
+      const buffer = Buffer.from(arrayBuffer);
+      log.info(`File retrieved successfully, size: ${buffer.length} bytes`, this.logPrefix);
+      return buffer;
     } catch (error) {
       log.error(`Error getting file from Beget S3: ${(error as Error).message}`, this.logPrefix);
       return null;
@@ -509,7 +359,15 @@ export class BegetS3StorageAws {
 
       const response = await this.client.send(command);
       
-      const files = response.Contents?.map(item => item.Key as string) || [];
+      // Приводим типы в соответствии с интерфейсом SDK
+      const files: string[] = [];
+      if (response.Contents && Array.isArray(response.Contents)) {
+        for (const item of response.Contents) {
+          if (item.Key) {
+            files.push(item.Key);
+          }
+        }
+      }
       
       log.info(`Retrieved ${files.length} files`, this.logPrefix);
       return files;
