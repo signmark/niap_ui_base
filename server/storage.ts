@@ -1111,7 +1111,29 @@ export class DatabaseStorage implements IStorage {
         directusUpdates.prompt = updates.prompt;
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
+<<<<<<< HEAD
       if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
+=======
+      // Обновляем только поля socialPlatforms, которые были изменены
+      if (updates.socialPlatforms !== undefined) {
+        // Получаем текущие данные о платформах и объединяем их с новыми
+        const existingContent = await this.getCampaignContentById(id, authToken);
+        const currentPlatforms = existingContent?.socialPlatforms || {};
+        const updatedPlatforms = { ...currentPlatforms, ...updates.socialPlatforms };
+        
+        directusUpdates.social_platforms = updatedPlatforms;
+      }
+      // Добавляем обработку поля socialPublications для сохранения URL публикаций
+      if (updates.socialPublications !== undefined) {
+        // Получаем текущие данные о публикациях и объединяем их с новыми
+        const existingContent = await this.getCampaignContentById(id, authToken);
+        const currentSocialPublications = existingContent?.socialPublications || {};
+        const updatedSocialPublications = { ...currentSocialPublications, ...updates.socialPublications };
+        
+        console.log(`Обновляем информацию о публикациях контента ${id}:`, JSON.stringify(updatedSocialPublications));
+        directusUpdates.social_publications = updatedSocialPublications;
+      }
+>>>>>>> 28d8ae3d (Fix: Prevent overwriting of social media posts on update.  The update now merges new post data with existing data, preventing data loss.)
       // Добавляем обработку дополнительных изображений
       if (updates.additionalImages !== undefined) {
         console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);

@@ -384,6 +384,13 @@ export class PublishScheduler {
             if (platformScheduledTime <= now) {
               logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ`);
               anyPlatformReady = true;
+              
+              // Устанавливаем статус 'pending' для этой платформы, если он еще не установлен
+              // Это важно для корректной публикации
+              if (content.socialPlatforms[platform] && content.socialPlatforms[platform].status !== 'pending') {
+                log(`Устанавливаем статус 'pending' для платформы ${platform}`, 'scheduler');
+                content.socialPlatforms[platform].status = 'pending';
+              }
             }
           } else {
             logMessages.push(`${platform}: нет данных о времени публикации`);
@@ -440,36 +447,81 @@ export class PublishScheduler {
               continue;
             }
             
-            // Проверяем наличие publishedAt поля - если есть, значит контент уже опубликован
-            if (freshData.published_at) {
-              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет published_at = ${freshData.published_at}, пропускаем`, 'scheduler');
-              continue;
-            }
+            // Удалена проверка на publishedAt - она не должна влиять на публикацию
+            // т.к. может быть заполнена раньше, чем завершится публикация на всех платформах
             
             // Проверяем статус в платформах
             if (freshData.social_platforms && typeof freshData.social_platforms === 'object') {
               const socialPlatforms = freshData.social_platforms;
               
-              // Проверяем, есть ли хотя бы одна платформа со статусом published
-              const anyPublished = Object.values(socialPlatforms).some(
-                (platform: any) => platform && platform.status === 'published'
-              );
+              // Сначала обновляем статусы на 'pending' для платформ, которые прошли время публикации
+              const now = new Date();
+              let platformsUpdated = false;
               
-              if (anyPublished) {
-                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет опубликованный статус в соцсетях, пропускаем`, 'scheduler');
-                // Обновляем общий статус на published
-                log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
+              for (const [platform, platformData] of Object.entries(socialPlatforms)) {
+                // Пропускаем уже опубликованные платформы
+                if (platformData?.status === 'published') {
+                  continue;
+                }
                 
-                await axios.patch(
-                  `${directusUrl}/items/campaign_content/${content.id}`,
-                  { 
-                    status: 'published',
-                    published_at: new Date().toISOString()
-                  },
-                  { headers: { 'Authorization': `Bearer ${authToken}` } }
-                );
+                // Если время публикации наступило, но статус не pending, устанавливаем его
+                if (platformData?.scheduledAt) {
+                  const platformScheduledTime = new Date(platformData.scheduledAt);
+                  
+                  if (platformScheduledTime <= now && platformData.status !== 'pending') {
+                    log(`Обновляем статус для платформы ${platform} на 'pending', так как время публикации наступило`, 'scheduler');
+                    socialPlatforms[platform].status = 'pending';
+                    platformsUpdated = true;
+                  }
+                }
+              }
+              
+              // Если были обновления, сохраняем их в БД
+              if (platformsUpdated) {
+                try {
+                  log(`Сохраняем обновленные статусы платформ в БД для контента ${content.id}`, 'scheduler');
+                  
+                  const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+                  await axios.patch(
+                    `${directusUrl}/items/campaign_content/${content.id}`,
+                    {
+                      social_platforms: socialPlatforms
+                    },
+                    {
+                      headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                      }
+                    }
+                  );
+                  
+                  log(`Статусы платформ успешно обновлены для контента ${content.id}`, 'scheduler');
+                } catch (error: any) {
+                  log(`Ошибка при обновлении статусов платформ: ${error.message}`, 'scheduler');
+                }
+              }
+              
+              // Проверяем, сколько платформ имеют статус pending (ожидают публикации)
+              const pendingPlatforms = Object.entries(socialPlatforms)
+                .filter(([_, data]: [string, any]) => data && data.status === 'pending')
+                .map(([platform, _]) => platform);
+              
+              // Проверяем, сколько платформ имеют статус опубликовано
+              const publishedPlatforms = Object.entries(socialPlatforms)
+                .filter(([_, data]: [string, any]) => data && data.status === 'published')
+                .map(([platform, _]) => platform);
+              
+              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет опубликованный статус в соцсетях: ${publishedPlatforms.join(', ')}`, 'scheduler');
+              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" ожидает публикации в соцсетях: ${pendingPlatforms.join(', ')}`, 'scheduler');
+              
+              // Главное изменение логики: ПРОДОЛЖАЕМ публикацию если есть хотя бы одна платформа в статусе pending
+              if (pendingPlatforms.length === 0) {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" не имеет платформ, ожидающих публикации, пропускаем`, 'scheduler');
                 continue;
               }
+              
+              // НЕ обновляем общий статус на published, даже если есть опубликованные платформы
+              // Статус published будет установлен только когда ВСЕ платформы будут опубликованы
             }
             
             // Если все проверки прошли, добавляем в список для публикации
@@ -535,32 +587,22 @@ export class PublishScheduler {
         return;
       }
       
-      // ЖЕСТКАЯ проверка статуса ПЕРЕД публикацией
-      // Проверяем, был ли контент уже опубликован (общий статус или любая платформа)
+      // Проверяем, был ли контент опубликован (только общий статус)
       if (content.status === 'published') {
-        log(`БЛОКИРОВКА: Контент ${content.id} имеет глобальный статус "published", публикация остановлена`, 'scheduler');
-        return;
+        log(`ВНИМАНИЕ: Контент ${content.id} имеет глобальный статус "published", но проверим платформы`, 'scheduler');
+        // Не останавливаем публикацию полностью - проверим каждую платформу отдельно
       }
       
-      // Проверяем статус в социальных платформах
+      // Проверяем статус в социальных платформах, но ТОЛЬКО для логирования
+      // Не блокируем публикацию, если какие-то платформы уже опубликованы
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
-        // Если хотя бы одна платформа имеет статус published, считаем контент опубликованным
-        const anyPublished = Object.values(content.socialPlatforms).some(
-          (platform: any) => platform && platform.status === 'published'
-        );
+        // Находим опубликованные платформы (только для логирования)
+        const publishedPlatforms = Object.entries(content.socialPlatforms)
+          .filter(([_, data]: [string, any]) => data && data.status === 'published')
+          .map(([platform, _]) => platform);
         
-        if (anyPublished) {
-          log(`БЛОКИРОВКА: Контент ${content.id} уже имеет опубликованный статус в некоторых соцсетях, публикация остановлена`, 'scheduler');
-          
-          // Обновляем основной статус на published, если он ещё не установлен
-          if (content.status !== 'published') {
-            await storage.updateCampaignContent(content.id, {
-              status: 'published'
-            });
-            log(`Обновлен глобальный статус контента ${content.id} на "published"`, 'scheduler');
-          }
-          
-          return;
+        if (publishedPlatforms.length > 0) {
+          log(`ИНФОРМАЦИЯ: Контент ${content.id} уже имеет опубликованный статус на платформах: ${publishedPlatforms.join(', ')}`, 'scheduler');
         }
       }
 

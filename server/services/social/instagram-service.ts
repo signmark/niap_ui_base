@@ -489,7 +489,7 @@ export class InstagramService extends BaseSocialService {
                     status: 'published',
                     publishedAt: new Date(),
                     postId: publishResponse.data.id,
-                    url: permalink || undefined,
+                    postUrl: permalink || undefined,
                     error: null
                   };
                 } else {
@@ -581,7 +581,7 @@ export class InstagramService extends BaseSocialService {
                     status: 'published',
                     publishedAt: new Date(),
                     postId: publishResponse.data.id,
-                    url: permalink || undefined,
+                    postUrl: permalink || undefined,
                     error: null
                   };
                 }

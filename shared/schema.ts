@@ -235,6 +235,8 @@ export const campaignContent = pgTable("campaign_content", {
     }
     */
   }),
+  // Добавляем поле для хранения детальной информации по публикациям
+  socialPublications: jsonb("social_publications").default({}),
   metadata: jsonb("metadata").default({}), // Для дополнительных метаданных о контенте
 });
 
@@ -257,6 +259,7 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     scheduledAt: true,
     status: true,
     socialPlatforms: true,
+    socialPublications: true,
     metadata: true
   });
 
