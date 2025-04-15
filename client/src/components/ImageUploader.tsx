@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { UploadProgress } from './UploadProgress';
 
 /**
  * Функция для преобразования URL изображения в прокси-URL
@@ -12,15 +13,15 @@ import axios from "axios";
  */
 export function getProxiedImageUrl(url: string): string {
   if (!url) return '';
-  
+
   // Пропускаем URL, которые уже проксированы
   if (url.startsWith('/api/proxy-image')) return url;
-  
+
   // Для imgur ссылок и других внешних источников используем прокси
   if (url.match(/^https?:\/\//)) {
     return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   }
-  
+
   return url;
 }
 
@@ -41,6 +42,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Для загрузки превью изображения
   const [showPreview, setShowPreview] = useState(forcePreview);
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
@@ -66,9 +68,9 @@ export function ImageUploader({
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('image', file);
-      
+
       setIsUploading(true);
-      
+
       try {
         console.log('Отправка запроса на загрузку файла...');
         const response = await axios.post('/api/imgur/upload-file', formData, {
@@ -76,7 +78,7 @@ export function ImageUploader({
             'Content-Type': 'multipart/form-data'
           }
         });
-        
+
         // НОВЫЙ КОД: выводим больше информации для отладки
         console.log('СЫРОЙ ОТВЕТ:', response);
         console.log('DATA:', response.data);
@@ -84,10 +86,10 @@ export function ImageUploader({
         console.log('DUMP FULL JSON:', JSON.stringify(response.data, null, 2));
         console.log('RESPONSE URL:', response.data.url);
         console.log('RESPONSE LINK:', response.data.link);
-        
+
         // Просто берем URL из корня ответа - после изменения серверного кода
         const imageUrl = response.data.url || response.data.link;
-        
+
         if (imageUrl) {
           console.log('ИТОГОВЫЙ URL изображения для вставки (из корня):', imageUrl);
           onChange(imageUrl);
@@ -98,7 +100,7 @@ export function ImageUploader({
             title: 'Успешно',
             description: 'Изображение загружено'
           });
-          
+
           // Очищаем поле выбора файла
           e.target.value = '';
         } else {
@@ -113,7 +115,7 @@ export function ImageUploader({
               console.log('Найден URL в response.data.data.link:', nestedUrl);
             }
           }
-          
+
           if (nestedUrl) {
             console.log('ИТОГОВЫЙ URL изображения для вставки (из data):', nestedUrl);
             onChange(nestedUrl);
@@ -124,7 +126,7 @@ export function ImageUploader({
               title: 'Успешно',
               description: 'Изображение загружено'
             });
-            
+
             // Очищаем поле выбора файла
             e.target.value = '';
           } else {
@@ -149,6 +151,16 @@ export function ImageUploader({
     }
   };
 
+  // Обработчик начала загрузки изображения
+  const handleImageLoadStart = () => {
+    setIsLoading(true);
+  };
+
+  // Обработчик окончания загрузки изображения
+  const handleImageLoaded = () => {
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-2 w-full">
       <div className="flex gap-2 w-full">
@@ -159,55 +171,70 @@ export function ImageUploader({
           onChange={(e) => onChange(e.target.value)}
           className="flex-1"
         />
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Input
             type="file"
             accept="image/*"
             id={`${id}-upload`}
-            className="absolute inset-0 opacity-0 w-full cursor-pointer"
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             onChange={handleFileUpload}
             disabled={isUploading}
+            aria-label="Загрузить изображение"
           />
           <Button 
             type="button" 
             variant="outline" 
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 flex items-center justify-center"
+            tabIndex={-1}
+            aria-hidden="true"
             disabled={isUploading}
           >
+            <span className="sr-only">Загрузить</span>
             {isUploading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <div 
+                className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                aria-hidden="true" 
+              />
             ) : (
               <Upload className="h-4 w-4" />
             )}
           </Button>
         </div>
       </div>
-      
-      {/* Всегда отображаем URL, если он есть */}
+
+      {/* Индикатор загрузки скрыт по запросу пользователя */}
+
+      {/* Отображаем URL, если он есть */}
       {value && value.trim() !== '' && (
         <div className="text-xs text-muted-foreground ml-1 mt-1 break-all">
-          URL: {value}
+          <span className="flex-shrink-0">URL:</span>
+          <span className="break-all">{value}</span>
         </div>
       )}
-      
+
       {showPreview && previewUrl && (
         <div className="mt-2 border rounded-md p-2 bg-muted/20">
           <div className="text-xs text-muted-foreground mb-1">Предпросмотр изображения:</div>
           <div className="relative w-full h-40 rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {previewUrl ? (
-              <img 
-                src={previewUrl} 
-                alt="Предпросмотр" 
-                className="max-h-full max-w-full object-contain"
-                onError={() => {
-                  toast({
-                    title: 'Ошибка загрузки превью',
-                    description: 'Не удалось загрузить изображение для предпросмотра',
-                    variant: 'destructive'
-                  });
-                }}
-              />
+              <>
+                <img 
+                  src={previewUrl} 
+                  alt="Предпросмотр" 
+                  className="max-h-full max-w-full object-contain"
+                  onLoadStart={handleImageLoadStart}
+                  onLoad={handleImageLoaded}
+                  onError={() => {
+                    setIsLoading(false);
+                    toast({
+                      title: 'Ошибка загрузки превью',
+                      description: 'Не удалось загрузить изображение для предпросмотра',
+                      variant: 'destructive'
+                    });
+                  }}
+                />
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center text-muted-foreground">
                 <ImageIcon className="h-10 w-10 mb-2" />

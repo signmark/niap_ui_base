@@ -8,6 +8,7 @@ import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
 import { registerGeminiRoutes } from "./routes-gemini";
 import { registerImgurRoutes } from "./routes-imgur";
+import { registerBegetS3Routes } from "./routes-beget-s3";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
@@ -181,6 +182,11 @@ app.use((req, res, next) => {
     log("Registering DeepSeek Models route...");
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
+    
+    // Регистрируем маршруты для работы с Beget S3
+    log("Registering Beget S3 routes...");
+    registerBegetS3Routes(app);
+    log("Beget S3 routes registered successfully");
     
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");

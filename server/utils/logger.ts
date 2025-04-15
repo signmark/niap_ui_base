@@ -8,7 +8,7 @@
  * @param message Сообщение для вывода
  * @param source Источник сообщения (по умолчанию "express")
  */
-export function log(message: string, source = "express") {
+export function logMessage(message: string, source = "express") {
   const time = new Date().toLocaleTimeString();
   console.log(`${time} [${source}] ${message}`);
   
@@ -42,6 +42,16 @@ export function log(message: string, source = "express") {
 }
 
 /**
+ * Выводит информационное сообщение в консоль с указанием источника
+ * @param message Сообщение для вывода
+ * @param source Источник сообщения (по умолчанию "express")
+ */
+export function info(message: string, source = "express") {
+  const time = new Date().toLocaleTimeString();
+  console.log(`${time} [${source}] ${message}`);
+}
+
+/**
  * Выводит сообщение об ошибке в консоль с указанием источника
  * @param message Сообщение для вывода
  * @param error Объект ошибки
@@ -72,10 +82,28 @@ export function debug(message: string, source = "express") {
   console.debug(`${time} [${source}] ${message}`);
 }
 
+/**
+ * Основная функция логирования с поддержкой различных уровней
+ */
+export const log: {
+  (message: string, source?: string): void;
+  info: typeof info;
+  error: typeof error;
+  warn: typeof warn;
+  debug: typeof debug;
+} = logMessage as any;
+
+// Добавляем методы для функции log
+log.info = info;
+log.error = error;
+log.warn = warn;
+log.debug = debug;
+
 // Экспортируем все функции как единый объект для удобства использования
 export default {
   log,
   error,
   warn,
-  debug
+  debug,
+  info
 };
