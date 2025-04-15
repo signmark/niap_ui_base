@@ -18,6 +18,21 @@ export interface TelegramVideoMessageOptions {
   allow_sending_without_reply?: boolean;
 }
 
+// Для обратной совместимости добавляем интерфейс для параметризованного вызова
+export interface TelegramVideoParams {
+  videoUrl: string;
+  chatId: string;
+  token: string;
+  caption?: string;
+  parse_mode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  has_spoiler?: boolean;
+  supports_streaming?: boolean;
+  disable_notification?: boolean;
+  protect_content?: boolean;
+  reply_to_message_id?: number;
+  allow_sending_without_reply?: boolean;
+}
+
 export interface TelegramVideoResult {
   success: boolean;
   messageId?: number;
@@ -29,6 +44,13 @@ export class TelegramS3Integration {
   private logPrefix = 'telegram-s3';
 
   /**
+   * Отправляет видео из Beget S3 в Telegram (перегрузка для объекта параметров)
+   * @param params Объект с параметрами для отправки видео
+   * @returns Результат отправки
+   */
+  async sendVideoToTelegram(params: TelegramVideoParams): Promise<TelegramVideoResult>;
+
+  /**
    * Отправляет видео из Beget S3 в Telegram
    * @param videoUrl URL видео в Beget S3 или внешний URL
    * @param chatId ID чата в Telegram
@@ -37,6 +59,47 @@ export class TelegramS3Integration {
    * @returns Результат отправки
    */
   async sendVideoToTelegram(
+    videoUrlOrParams: string | TelegramVideoParams,
+    chatId?: string,
+    token?: string,
+    options: TelegramVideoMessageOptions = {}
+  ): Promise<TelegramVideoResult> {
+    // Проверяем, какая перегрузка вызвана
+    if (typeof videoUrlOrParams === 'object') {
+      // Вызов с объектом параметров
+      const params = videoUrlOrParams;
+      return this.sendVideoToTelegramImpl(
+        params.videoUrl,
+        params.chatId,
+        params.token,
+        {
+          caption: params.caption,
+          parse_mode: params.parse_mode,
+          has_spoiler: params.has_spoiler,
+          supports_streaming: params.supports_streaming,
+          disable_notification: params.disable_notification,
+          protect_content: params.protect_content,
+          reply_to_message_id: params.reply_to_message_id,
+          allow_sending_without_reply: params.allow_sending_without_reply
+        }
+      );
+    } else {
+      // Вызов с индивидуальными параметрами
+      if (!chatId || !token) {
+        return {
+          success: false,
+          error: 'Missing required parameters (chatId or token)'
+        };
+      }
+      return this.sendVideoToTelegramImpl(videoUrlOrParams, chatId, token, options);
+    }
+  }
+
+  /**
+   * Внутренняя реализация отправки видео в Telegram
+   * @private
+   */
+  private async sendVideoToTelegramImpl(
     videoUrl: string,
     chatId: string,
     token: string,
