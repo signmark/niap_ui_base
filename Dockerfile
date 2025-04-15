@@ -27,8 +27,11 @@ RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit
 # Явно устанавливаем @google/generative-ai для интеграции с Gemini
 RUN npm install @google/generative-ai --save --no-audit
 
+# Устанавливаем AWS SDK для работы с Beget S3
+RUN npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner @aws-sdk/lib-storage --save --no-audit
+
 # Проверяем наличие библиотек
-RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai
+RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls @aws-sdk/client-s3
 
 # Проверяем наличие ffmpeg
 RUN ffmpeg -version
