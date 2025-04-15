@@ -232,6 +232,47 @@ export class BegetS3StorageAws {
       };
     }
   }
+  
+  /**
+   * Загружает строковый контент или данные в виде строки в S3 хранилище
+   * @param content Строковый контент или данные для загрузки
+   * @param fileName Имя файла (если не указано, генерируется автоматически)
+   * @param contentType MIME-тип контента (по умолчанию 'text/plain')
+   * @param folder Папка для сохранения (опционально)
+   * @returns Результат загрузки контента
+   */
+  async uploadContent(
+    content: string,
+    fileName?: string,
+    contentType: string = 'text/plain',
+    folder?: string
+  ): Promise<UploadFileResult> {
+    try {
+      log.info(`Uploading content to Beget S3, size: ${content.length} bytes`, this.logPrefix);
+      
+      // Если имя файла не указано, генерируем его
+      const actualFileName = fileName || `content-${Date.now()}.txt`;
+      
+      // Определяем итоговый ключ с учетом папки
+      let key = actualFileName;
+      if (folder) {
+        key = `${folder}/${actualFileName}`;
+      }
+      
+      // Загружаем строковый контент как файл
+      return this.uploadFile({
+        key,
+        fileData: content,
+        contentType
+      });
+    } catch (error) {
+      log.error(`Error uploading content to Beget S3: ${(error as Error).message}`, this.logPrefix);
+      return {
+        success: false,
+        error: (error as Error).message
+      };
+    }
+  }
 
   /**
    * Получает файл из S3 хранилища
