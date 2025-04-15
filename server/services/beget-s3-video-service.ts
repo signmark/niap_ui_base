@@ -59,41 +59,72 @@ export class BegetS3VideoService {
       const result = await this.uploadVideoFile(tempFilePath, generateThumbnail);
       
       // Удаляем временный файл
-      this.cleanupTempFile(tempFilePath);
+      try {
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+          log.info(`Deleted temp file: ${tempFilePath}`, this.logPrefix);
+        }
+      } catch (error) {
+        log.error(`Error deleting temp file: ${(error as Error).message}`, this.logPrefix);
+      }
       
       return result;
     } catch (error) {
       log.error(`Error uploading video from URL: ${(error as Error).message}`, this.logPrefix);
       return {
         success: false,
-        error: (error as Error).message
+        error: `Error uploading video from URL: ${(error as Error).message}`
       };
     }
   }
 
   /**
-   * Загружает видео-файл в Beget S3
-   * @param filePath Путь к файлу видео
+   * Загружает локальный видеофайл в Beget S3
+   * @param filePath Путь к локальному видеофайлу
    * @param generateThumbnail Флаг для генерации превью видео
    * @returns Результат загрузки видео
    */
-  async uploadVideoFile(
-    filePath: string, 
+  async uploadLocalVideo(
+    filePath: string,
     generateThumbnail: boolean = false
   ): Promise<UploadVideoResult> {
     try {
-      log.info(`Uploading video file: ${filePath}`, this.logPrefix);
+      log.info(`Uploading local video: ${filePath}`, this.logPrefix);
       
-      // Генерируем уникальный ключ для видео
-      const fileName = path.basename(filePath);
-      const fileExt = path.extname(fileName);
-      const uniqueId = uuidv4();
-      const videoKey = `${this.videoFolder}/${uniqueId}${fileExt}`;
+      // Проверяем существование файла
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`Video file not found: ${filePath}`);
+      }
       
+      // Загружаем видео в Beget S3
+      return await this.uploadVideoFile(filePath, generateThumbnail);
+    } catch (error) {
+      log.error(`Error uploading local video: ${(error as Error).message}`, this.logPrefix);
+      return {
+        success: false,
+        error: `Error uploading local video: ${(error as Error).message}`
+      };
+    }
+  }
+
+  /**
+   * Загружает видеофайл в Beget S3
+   * @param filePath Путь к видеофайлу
+   * @param generateThumbnail Флаг для генерации превью видео
+   * @returns Результат загрузки видео
+   */
+  private async uploadVideoFile(
+    filePath: string,
+    generateThumbnail: boolean = false
+  ): Promise<UploadVideoResult> {
+    try {
       // Получаем метаданные видео
       const metadata = await this.getVideoMetadata(filePath);
       
-      // Загружаем видео в Beget S3
+      // Генерируем уникальный ключ для видео
+      const fileExt = path.extname(filePath);
+      const videoKey = `${this.videoFolder}/${uuidv4()}${fileExt}`;
+      
       log.info(`Uploading video to S3 with key: ${videoKey}`, this.logPrefix);
       const uploadResult = await begetS3StorageAws.uploadFile({
         key: videoKey,
@@ -107,66 +138,54 @@ export class BegetS3VideoService {
       
       log.info(`Video uploaded successfully: ${uploadResult.url}`, this.logPrefix);
       
-      // Результат с URL видео
-      const result: UploadVideoResult = {
-        success: true,
-        videoUrl: uploadResult.url,
-        metadata,
-        key: videoKey
-      };
+      let thumbnailUrl = null;
       
-      // Если требуется, генерируем и загружаем превью
+      // Генерируем превью видео, если нужно
       if (generateThumbnail) {
-        const thumbnailResult = await this.generateAndUploadThumbnail(filePath, uniqueId);
-        
+        const thumbnailResult = await this.generateAndUploadThumbnail(filePath);
         if (thumbnailResult.success && thumbnailResult.url) {
-          result.thumbnailUrl = thumbnailResult.url;
+          thumbnailUrl = thumbnailResult.url;
+          log.info(`Thumbnail generated and uploaded: ${thumbnailUrl}`, this.logPrefix);
+        } else {
+          log.warn(`Failed to generate thumbnail: ${thumbnailResult.error}`, this.logPrefix);
         }
       }
       
-      return result;
+      return {
+        success: true,
+        videoUrl: uploadResult.url,
+        thumbnailUrl: thumbnailUrl || undefined,
+        metadata,
+        key: videoKey
+      };
     } catch (error) {
-      log.error(`Error uploading video file: ${(error as Error).message}`, this.logPrefix);
+      log.error(`Error in uploadVideoFile: ${(error as Error).message}`, this.logPrefix);
       return {
         success: false,
-        error: (error as Error).message
+        error: `Error uploading video file: ${(error as Error).message}`
       };
     }
   }
 
   /**
-   * Генерирует и загружает превью видео
-   * @param videoPath Путь к файлу видео
-   * @param uniqueId Уникальный идентификатор для имени файла
+   * Генерирует и загружает превью видео в Beget S3
+   * @param videoPath Путь к видеофайлу
    * @returns Результат загрузки превью
    */
-  private async generateAndUploadThumbnail(
-    videoPath: string,
-    uniqueId: string
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
+  private async generateAndUploadThumbnail(videoPath: string): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      log.info(`Generating thumbnail for video: ${videoPath}`, this.logPrefix);
+      // Создаем временный файл для превью
+      const thumbnailPath = path.join(os.tmpdir(), `thumbnail_${uuidv4()}.jpg`);
       
-      // Генерируем временный путь для превью
-      const thumbnailPath = path.join(os.tmpdir(), `${uniqueId}-thumb.jpg`);
+      // Генерируем превью с помощью ffmpeg
+      await this.generateThumbnail(videoPath, thumbnailPath);
       
-      // Используем ffmpeg для создания превью
-      const ffmpegCommand = `ffmpeg -i "${videoPath}" -ss 00:00:01 -vframes 1 -filter:v scale="640:-1" "${thumbnailPath}" -y`;
-      
-      try {
-        execSync(ffmpegCommand, { stdio: 'ignore' });
-      } catch (error) {
-        log.error(`Failed to generate thumbnail with ffmpeg: ${(error as Error).message}`, this.logPrefix);
-        return { success: false, error: 'Thumbnail generation failed' };
-      }
-      
-      // Проверяем, был ли создан файл превью
       if (!fs.existsSync(thumbnailPath)) {
-        return { success: false, error: 'Thumbnail file was not created' };
+        throw new Error('Failed to generate thumbnail');
       }
       
-      // Загружаем превью в Beget S3
-      const thumbnailKey = `${this.thumbnailFolder}/${uniqueId}.jpg`;
+      // Генерируем ключ для превью
+      const thumbnailKey = `${this.thumbnailFolder}/${uuidv4()}.jpg`;
       
       log.info(`Uploading thumbnail to S3 with key: ${thumbnailKey}`, this.logPrefix);
       
@@ -182,56 +201,139 @@ export class BegetS3VideoService {
       }
       
       if (!uploadResult.success) {
-        return { success: false, error: `Failed to upload thumbnail: ${uploadResult.error}` };
+        throw new Error(`Failed to upload thumbnail to S3: ${uploadResult.error}`);
       }
-      
-      log.info(`Thumbnail uploaded successfully: ${uploadResult.url}`, this.logPrefix);
       
       return {
         success: true,
         url: uploadResult.url
       };
     } catch (error) {
-      log.error(`Error generating or uploading thumbnail: ${(error as Error).message}`, this.logPrefix);
+      log.error(`Error generating and uploading thumbnail: ${(error as Error).message}`, this.logPrefix);
       return {
         success: false,
-        error: (error as Error).message
+        error: `Error generating thumbnail: ${(error as Error).message}`
       };
+    }
+  }
+
+  /**
+   * Генерирует превью видео с помощью ffmpeg
+   * @param videoPath Путь к видеофайлу
+   * @param thumbnailPath Путь для сохранения превью
+   */
+  private async generateThumbnail(videoPath: string, thumbnailPath: string): Promise<void> {
+    try {
+      // Проверяем наличие ffmpeg
+      this.checkFfmpegInstalled();
+      
+      // Получаем длительность видео для выбора средней точки
+      const metadata = await this.getVideoMetadata(videoPath);
+      const duration = metadata.duration || 0;
+      
+      // Выбираем точку для создания превью (30% от длительности видео или 3 секунды)
+      const thumbnailTime = duration > 10 ? Math.floor(duration * 0.3) : 3;
+      
+      // Генерируем превью с помощью ffmpeg
+      execSync(`ffmpeg -i "${videoPath}" -ss ${thumbnailTime} -vframes 1 -q:v 2 "${thumbnailPath}" -y`);
+      
+      log.info(`Thumbnail generated at ${thumbnailPath}`, this.logPrefix);
+    } catch (error) {
+      log.error(`Error generating thumbnail: ${(error as Error).message}`, this.logPrefix);
+      throw new Error(`Failed to generate thumbnail: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Проверяет наличие ffmpeg в системе
+   * @throws Error если ffmpeg не установлен
+   */
+  private checkFfmpegInstalled(): void {
+    try {
+      execSync('ffmpeg -version');
+    } catch (error) {
+      log.error('ffmpeg is not installed', this.logPrefix);
+      throw new Error('ffmpeg is not installed or not in PATH');
+    }
+  }
+
+  /**
+   * Получает метаданные видео с помощью ffprobe
+   * @param videoPath Путь к видеофайлу
+   * @returns Метаданные видео
+   */
+  private async getVideoMetadata(videoPath: string): Promise<VideoMetadata> {
+    try {
+      this.checkFfmpegInstalled(); // ffprobe обычно устанавливается вместе с ffmpeg
+      
+      const cmd = `ffprobe -v error -show_entries format=duration -show_entries stream=width,height,codec_name -show_entries format=bit_rate -of json "${videoPath}"`;
+      const output = execSync(cmd).toString();
+      
+      const result = JSON.parse(output);
+      
+      const format = result.format || {};
+      const streams = Array.isArray(result.streams) ? result.streams : [];
+      const videoStream = streams.find((s: any) => s.codec_type === 'video' || s.width !== undefined) || {};
+      
+      // Размер файла в байтах
+      const fileSizeInBytes = fs.statSync(videoPath).size;
+      
+      return {
+        width: videoStream.width ? Number(videoStream.width) : undefined,
+        height: videoStream.height ? Number(videoStream.height) : undefined,
+        duration: format.duration ? Number(format.duration) : undefined,
+        format: path.extname(videoPath).replace('.', ''),
+        size: fileSizeInBytes,
+        bitrate: format.bit_rate ? Number(format.bit_rate) : undefined,
+        codec: videoStream.codec_name
+      };
+    } catch (error) {
+      log.error(`Error getting video metadata: ${(error as Error).message}`, this.logPrefix);
+      // Возвращаем пустой объект в случае ошибки
+      return {};
     }
   }
 
   /**
    * Скачивает видео по URL во временный файл
    * @param url URL видео
-   * @returns Путь к временному файлу или null в случае ошибки
+   * @returns Путь к скачанному файлу или null в случае ошибки
    */
   private async downloadVideoToTempFile(url: string): Promise<string | null> {
     try {
-      // Создаем временный файл
-      const tempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
-      
-      log.info(`Downloading video to temporary file: ${tempFilePath}`, this.logPrefix);
-      
-      // Используем wget для скачивания файла (более надежно для больших файлов)
-      const wgetCommand = `wget "${url}" -O "${tempFilePath}" --quiet`;
-      
-      try {
-        execSync(wgetCommand, { stdio: 'ignore' });
-      } catch (error) {
-        log.error(`Failed to download with wget: ${(error as Error).message}`, this.logPrefix);
-        
-        // Удаляем временный файл, если скачивание не удалось
-        if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
-        }
-        
-        return null;
+      // Создаем временную директорию
+      const tempDir = path.join(os.tmpdir(), 'beget-s3-video-downloads');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
       }
       
-      // Проверяем, был ли скачан файл
-      if (!fs.existsSync(tempFilePath) || fs.statSync(tempFilePath).size === 0) {
-        log.error('Downloaded file is empty or does not exist', this.logPrefix);
-        return null;
+      // Определяем расширение файла из URL
+      let fileExt = path.extname(url);
+      if (!fileExt) {
+        // Если расширение не определено, используем .mp4 по умолчанию
+        fileExt = '.mp4';
+      }
+      
+      // Создаем имя временного файла
+      const tempFilePath = path.join(tempDir, `video_${uuidv4()}${fileExt}`);
+      
+      // Скачиваем видео с помощью curl или wget
+      try {
+        execSync(`curl -L "${url}" -o "${tempFilePath}"`);
+      } catch (curlError) {
+        log.warn(`Failed to download with curl: ${(curlError as Error).message}`, this.logPrefix);
+        try {
+          execSync(`wget "${url}" -O "${tempFilePath}"`);
+        } catch (wgetError) {
+          throw new Error('Failed to download video using both curl and wget');
+        }
+      }
+      
+      // Проверяем размер файла
+      const fileSize = fs.statSync(tempFilePath).size;
+      if (fileSize === 0) {
+        fs.unlinkSync(tempFilePath);
+        throw new Error('Downloaded file is empty');
       }
       
       return tempFilePath;
@@ -242,90 +344,29 @@ export class BegetS3VideoService {
   }
 
   /**
-   * Получает метаданные видео-файла
-   * @param filePath Путь к файлу видео
-   * @returns Метаданные видео
-   */
-  private async getVideoMetadata(filePath: string): Promise<VideoMetadata> {
-    try {
-      log.info(`Getting video metadata: ${filePath}`, this.logPrefix);
-      
-      // Используем ffprobe для получения метаданных
-      const ffprobeCommand = `ffprobe -v error -select_streams v:0 -show_entries stream=width,height,duration,codec_name -show_entries format=duration,size,bit_rate -of json "${filePath}"`;
-      
-      const output = execSync(ffprobeCommand, { encoding: 'utf-8' });
-      const data = JSON.parse(output);
-      
-      // Извлекаем метаданные
-      const stream = data.streams && data.streams.length > 0 ? data.streams[0] : {};
-      const format = data.format || {};
-      
-      const metadata: VideoMetadata = {
-        width: stream.width,
-        height: stream.height,
-        duration: parseFloat(stream.duration || format.duration || '0'),
-        codec: stream.codec_name,
-        format: path.extname(filePath).substring(1), // Удаляем точку из расширения
-        size: parseInt(format.size || '0', 10),
-        bitrate: parseInt(format.bit_rate || '0', 10)
-      };
-      
-      log.info(`Video metadata: ${JSON.stringify(metadata)}`, this.logPrefix);
-      
-      return metadata;
-    } catch (error) {
-      log.error(`Error getting video metadata: ${(error as Error).message}`, this.logPrefix);
-      return {}; // Возвращаем пустой объект в случае ошибки
-    }
-  }
-
-  /**
-   * Удаляет временный файл
-   * @param filePath Путь к файлу
-   */
-  private cleanupTempFile(filePath: string | null): void {
-    if (filePath && fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-        log.info(`Temporary file deleted: ${filePath}`, this.logPrefix);
-      } catch (error) {
-        log.error(`Error deleting temporary file: ${(error as Error).message}`, this.logPrefix);
-      }
-    }
-  }
-
-  /**
    * Получает MIME-тип на основе расширения файла
    * @param extension Расширение файла
    * @returns MIME-тип
    */
   private getContentTypeFromExtension(extension: string): string {
-    // Убираем точку из расширения, если она есть
-    const ext = extension.startsWith('.') ? extension.substring(1) : extension;
+    const ext = extension.toLowerCase().replace('.', '');
     
-    // Определяем MIME-тип на основе расширения
-    switch (ext.toLowerCase()) {
-      case 'mp4':
-        return 'video/mp4';
-      case 'webm':
-        return 'video/webm';
-      case 'avi':
-        return 'video/x-msvideo';
-      case 'wmv':
-        return 'video/x-ms-wmv';
-      case 'flv':
-        return 'video/x-flv';
-      case 'mov':
-        return 'video/quicktime';
-      case '3gp':
-        return 'video/3gpp';
-      case 'mkv':
-        return 'video/x-matroska';
-      default:
-        return 'application/octet-stream';
-    }
+    const mimeTypes: Record<string, string> = {
+      'mp4': 'video/mp4',
+      'webm': 'video/webm',
+      'mov': 'video/quicktime',
+      'avi': 'video/x-msvideo',
+      'mkv': 'video/x-matroska',
+      'wmv': 'video/x-ms-wmv',
+      'flv': 'video/x-flv',
+      'mpg': 'video/mpeg',
+      'mpeg': 'video/mpeg',
+      'm4v': 'video/x-m4v',
+      '3gp': 'video/3gpp'
+    };
+    
+    return mimeTypes[ext] || 'video/mp4';
   }
 }
 
-// Экспортируем экземпляр сервиса для использования в приложении
 export const begetS3VideoService = new BegetS3VideoService();
