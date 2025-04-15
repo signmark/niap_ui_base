@@ -1,28 +1,26 @@
-version: '3'
-
 services:
   traefik:
     image: "traefik:v3.3"
-    restart: always
-    command:
-      - "--api=true"
-      - "--api.insecure=true"
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
-      - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
-      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./traefik_data:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+            restart: always
+            command:
+              - "--api=true"
+              - "--api.insecure=true"
+              - "--api.dashboard=true"
+              - "--providers.docker=true"
+              - "--providers.docker.exposedbydefault=false"
+              - "--entrypoints.web.address=:80"
+              - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+              - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+              - "--entrypoints.websecure.address=:443"
+              - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+              - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
+              - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+            ports:
+              - "80:80"
+              - "443:443"
+            volumes:
+              - ./traefik_data:/letsencrypt
+              - /var/run/docker.sock:/var/run/docker.sock:ro
 
   n8n:
     build:
@@ -127,11 +125,11 @@ services:
       - traefik.http.routers.directus.entrypoints=web,websecure
       - traefik.http.routers.directus.tls.certresolver=mytlschallenge
       - traefik.http.services.directus.loadbalancer.server.port=8055
-  
+      
   smm:
     build:
       context: ./smm
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.aws
     restart: always
     volumes:
       - ./smm:/app
