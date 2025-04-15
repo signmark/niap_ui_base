@@ -59,8 +59,8 @@ export function AdditionalImagesUploader({
         <div className="space-y-3">
           {images.map((imageUrl, index) => (
             <div key={index} className="flex flex-col gap-1">
-              <div className="flex gap-2 items-start">
-                <div className="flex-1 w-full">
+              <div className="flex items-start">
+                <div className="flex-1">
                   <ImageUploader
                     id={`additional-image-${index}`}
                     value={imageUrl}
@@ -73,9 +73,11 @@ export function AdditionalImagesUploader({
                   type="button" 
                   variant="outline" 
                   size="icon"
-                  className="h-9 w-9 mt-1"
+                  className="h-9 w-9 mt-1 ml-2 flex-none"
                   onClick={() => handleRemoveImage(index)}
+                  aria-label="Удалить изображение"
                 >
+                  <span className="sr-only">Удалить</span>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

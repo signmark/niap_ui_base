@@ -95,6 +95,139 @@ export class SocialPublishingWithImgurService {
    * @param baseUrl Базовый URL API Telegram
    * @returns Результат отправки (успех/ошибка)
    */
+  /**
+   * Универсальный метод для отправки видео в Telegram
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @param videoUrl URL видео для отправки
+   * @param caption Подпись к видео (опционально)
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
+  private async sendVideoToTelegram(
+    chatId: string,
+    token: string,
+    videoUrl: string,
+    caption?: string,
+    baseUrl: string = `https://api.telegram.org/bot${token}`
+  ): Promise<{success: boolean, error?: string, messageId?: number, messageUrl?: string}> {
+    log(`Отправка видео в Telegram: ${videoUrl.substring(0, 100)}...`, 'social-publishing');
+    
+    try {
+      // Проверяем и форматируем URL видео
+      let finalVideoUrl = videoUrl;
+      if (!finalVideoUrl.startsWith('http')) {
+        const baseAppUrl = this.getAppBaseUrl();
+        finalVideoUrl = `${baseAppUrl}${finalVideoUrl.startsWith('/') ? '' : '/'}${finalVideoUrl}`;
+        log(`Исправлен URL для видео: ${finalVideoUrl}`, 'social-publishing');
+      }
+      
+      // Подготавливаем данные для запроса
+      const requestData: any = {
+        chat_id: chatId,
+        video: finalVideoUrl,
+        parse_mode: 'HTML',
+        supports_streaming: true
+      };
+      
+      // Добавляем подпись, если она предоставлена
+      if (caption) {
+        requestData.caption = caption;
+      }
+      
+      // Отправляем запрос на API Telegram
+      const response = await axios.post(`${baseUrl}/sendVideo`, requestData, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000, // Увеличенный таймаут для больших видео
+        validateStatus: () => true // Всегда возвращаем ответ, даже если это ошибка
+      });
+      
+      log(`Ответ от Telegram API (sendVideo): код ${response.status}, data: ${JSON.stringify(response.data)}`, 'telegram-debug');
+      
+      if (response.status === 200 && response.data && response.data.ok) {
+        const messageId = response.data.result?.message_id;
+        log(`Видео успешно отправлено в Telegram, messageId: ${messageId}`, 'social-publishing');
+        
+        // Формируем URL сообщения, если доступен messageId
+        let messageUrl = null;
+        if (messageId) {
+          try {
+            messageUrl = this.formatTelegramUrl(chatId, chatId, messageId);
+            log(`Сформирован URL сообщения с видео: ${messageUrl}`, 'social-publishing');
+          } catch (urlError: any) {
+            log(`Ошибка при формировании URL: ${urlError.message}`, 'social-publishing');
+          }
+        }
+        
+        return {
+          success: true,
+          messageId,
+          messageUrl
+        };
+      } else {
+        const errorMsg = response.data?.description || 'Неизвестная ошибка при отправке видео';
+        log(`Ошибка при отправке видео в Telegram: ${errorMsg}`, 'social-publishing');
+        
+        // Если ошибка связана с размером видео, пытаемся отправить ссылку вместо вложения
+        if (errorMsg.includes('too large') || errorMsg.includes('file is too big')) {
+          log(`Видео слишком большое, пытаемся отправить как ссылку`, 'social-publishing');
+          
+          try {
+            // Отправляем текстовое сообщение со ссылкой на видео
+            const textMessage = `<b>Видео доступно по ссылке:</b>\n${finalVideoUrl}`;
+            const textResponse = await this.sendTextMessageToTelegram(
+              caption ? `${caption}\n\n${textMessage}` : textMessage, 
+              chatId, 
+              token
+            );
+            
+            if (textResponse.success) {
+              log(`Ссылка на видео успешно отправлена`, 'social-publishing');
+              const linkMessageId = textResponse.data?.result?.message_id;
+              let linkMessageUrl = null;
+              
+              if (linkMessageId) {
+                try {
+                  linkMessageUrl = this.formatTelegramUrl(chatId, chatId, linkMessageId);
+                } catch (urlError) {
+                  // Игнорируем ошибку, если не удалось создать URL
+                }
+              }
+              
+              return {
+                success: true,
+                messageId: linkMessageId,
+                messageUrl: linkMessageUrl
+              };
+            }
+          } catch (linkError: any) {
+            log(`Не удалось отправить ссылку на видео: ${linkError.message}`, 'social-publishing');
+          }
+        }
+        
+        return {
+          success: false,
+          error: errorMsg
+        };
+      }
+    } catch (error: any) {
+      const errorMsg = error.message || 'Неизвестная ошибка при отправке видео';
+      log(`Исключение при отправке видео в Telegram: ${errorMsg}`, 'social-publishing');
+      return {
+        success: false,
+        error: errorMsg
+      };
+    }
+  }
+
+  /**
+   * Универсальный метод для отправки изображений в Telegram
+   * @param chatId ID чата Telegram 
+   * @param token Токен бота Telegram
+   * @param images Массив URL изображений
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
   private async sendImagesToTelegram(
     chatId: string,
     token: string,
@@ -254,6 +387,16 @@ export class SocialPublishingWithImgurService {
       };
     }
   }
+
+  /**
+   * Универсальный метод для отправки видео в Telegram
+   * @param chatId ID чата Telegram
+   * @param token Токен бота Telegram
+   * @param videoUrl URL видео для отправки
+   * @param caption Подпись к видео (опционально)
+   * @param baseUrl Базовый URL API Telegram
+   * @returns Результат отправки (успех/ошибка)
+   */
 
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
@@ -695,6 +838,116 @@ export class SocialPublishingWithImgurService {
    * @returns Корректно форматированный URL
    * @throws Error если messageId не указан - согласно требованию TELEGRAM_POSTING_ALGORITHM.md
    */
+  /**
+   * Загружает видео в ВКонтакте и возвращает строку attachment для включения в пост
+   * @param token Токен доступа ВКонтакте
+   * @param groupId ID группы или сообщества
+   * @param videoUrl URL видео для загрузки
+   * @param title Название видео (опционально)
+   * @returns Строка attachment для видео или null в случае ошибки
+   */
+  private async uploadVideoToVk(
+    token: string,
+    groupId: string | number,
+    videoUrl: string,
+    title?: string
+  ): Promise<string | null> {
+    try {
+      log(`[DEBUG VK VIDEO] Начинаем загрузку видео в ВК: ${videoUrl}`, 'social-publishing');
+      
+      // Шаг 1: Получение сервера для загрузки видео
+      log(`[DEBUG VK VIDEO] Получаем сервер для загрузки через video.save с параметрами: token=${token.substring(0, 6)}..., group_id=${groupId}, name=${title || 'Видео'}`, 'social-publishing');
+      
+      const getUploadServerResponse = await axios.get('https://api.vk.com/method/video.save', {
+        params: {
+          access_token: token,
+          group_id: groupId,
+          name: title || 'Видео',
+          description: title || 'Видео из SMM Manager',
+          is_private: 0,
+          wallpost: 0, // Не публиковать на стене автоматически
+          v: '5.131'
+        }
+      });
+      
+      log(`[DEBUG VK VIDEO] Ответ от video.save: ${JSON.stringify(getUploadServerResponse.data || {})}`, 'social-publishing');
+      
+      // Проверяем ответ на наличие данных для загрузки
+      if (!getUploadServerResponse.data || !getUploadServerResponse.data.response || !getUploadServerResponse.data.response.upload_url) {
+        log(`[DEBUG VK VIDEO] Ошибка получения сервера для загрузки видео в ВК: ${JSON.stringify(getUploadServerResponse.data || {})}`, 'social-publishing');
+        return null;
+      }
+      
+      const uploadUrl = getUploadServerResponse.data.response.upload_url;
+      log(`[DEBUG VK VIDEO] Получен URL для загрузки видео в ВК: ${uploadUrl}`, 'social-publishing');
+      
+      // Шаг 2: Загружаем видео на сервер ВК
+      // Для VK передача video_file как строчного URL не работает, нужен либо файл, либо stream
+      // Скачиваем видео и отправляем как multipart/form-data
+      log(`[DEBUG VK VIDEO] Скачиваем видео для дальнейшей загрузки в ВК: ${videoUrl}`, 'social-publishing');
+      
+      const videoResponse = await axios.get(videoUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 30000 // увеличенный таймаут для скачивания видео
+      });
+      
+      log(`[DEBUG VK VIDEO] Видео скачано, размер: ${(videoResponse.data.length / 1024 / 1024).toFixed(2)} МБ`, 'social-publishing');
+      
+      // Создаем FormData с файлом
+      const formData = new FormData();
+      formData.append('video_file', Buffer.from(videoResponse.data), 'video.mp4');
+      
+      log(`[DEBUG VK VIDEO] Отправляем видео на сервер ВК: ${uploadUrl}`, 'social-publishing');
+      
+      // Загружаем видео
+      const uploadResponse = await axios.post(uploadUrl, formData, {
+        headers: {
+          ...formData.getHeaders()
+        },
+        timeout: 60000 // увеличенный таймаут для загрузки видео
+      });
+      
+      log(`[DEBUG VK VIDEO] Ответ от сервера загрузки: ${JSON.stringify(uploadResponse.data || {})}`, 'social-publishing');
+      
+      // Проверка успешности загрузки
+      if (!uploadResponse.data) {
+        log(`[DEBUG VK VIDEO] Пустой ответ при загрузке видео в ВК`, 'social-publishing');
+        return null;
+      }
+      
+      // VK может вернуть разные форматы ответа в зависимости от версии API
+      // Проверяем наличие необходимых полей
+      const videoId = uploadResponse.data.video_id || 
+                      (uploadResponse.data.response && uploadResponse.data.response.video_id) ||
+                      (uploadResponse.data.owner_id && uploadResponse.data.id ? uploadResponse.data.id : null);
+                      
+      const ownerId = uploadResponse.data.owner_id || 
+                      (uploadResponse.data.response && uploadResponse.data.response.owner_id) ||
+                      `-${groupId}`;
+      
+      if (!videoId) {
+        log(`[DEBUG VK VIDEO] Ошибка загрузки видео в ВК - отсутствует video_id: ${JSON.stringify(uploadResponse.data)}`, 'social-publishing');
+        return null;
+      }
+      
+      // Видео загружено успешно, формируем строку attachment
+      // Формат: video{owner_id}_{video_id}
+      const attachment = `video${ownerId}_${videoId}`;
+      
+      log(`[DEBUG VK VIDEO] Видео успешно загружено в ВК: ${attachment}`, 'social-publishing');
+      return attachment;
+      
+    } catch (error: any) {
+      log(`[DEBUG VK VIDEO] Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+      if (error.response) {
+        log(`[DEBUG VK VIDEO] Данные ответа: ${JSON.stringify(error.response.data || {})}`, 'social-publishing');
+        log(`[DEBUG VK VIDEO] Статус ответа: ${error.response.status}`, 'social-publishing');
+        log(`[DEBUG VK VIDEO] Заголовки ответа: ${JSON.stringify(error.response.headers || {})}`, 'social-publishing');
+      }
+      return null;
+    }
+  }
+  
   formatTelegramUrl(chatId: string, formattedChatId: string, messageId: number | string): string {
     // КРИТИЧЕСКОЕ ТРЕБОВАНИЕ: messageId должен быть указан всегда!
     if (!messageId) {
@@ -1011,9 +1264,62 @@ export class SocialPublishingWithImgurService {
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      // Проверяем наличие видео в контенте
+      const hasVideo = !!processedContent.videoUrl;
+      log(`Telegram: наличие видео: ${hasVideo}, изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
-      // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // Определяем стратегию публикации в зависимости от наличия видео, изображений и длины текста
+      
+      // 0. Если есть видео, отправляем его с подписью - приоритет выше, чем у изображений
+      if (hasVideo) {
+        log(`Telegram: публикация с видео. URL видео: ${processedContent.videoUrl}`, 'social-publishing');
+        
+        // Подготавливаем подпись для видео (с ограничением в 1024 символа)
+        const videoCaption = text.length <= 1024 ? 
+          text : 
+          (processedContent.title ? 
+            `<b>${processedContent.title}</b>\n\n${text.substring(0, 900)}...` : 
+            text.substring(0, 1000) + '...');
+        
+        log(`Подготовлена подпись для видео, длина: ${videoCaption.length} символов`, 'social-publishing');
+        
+        try {
+          // Отправляем видео через специализированный метод
+          const videoResult = await this.sendVideoToTelegram(
+            formattedChatId,
+            token,
+            processedContent.videoUrl,
+            videoCaption,
+            baseUrl
+          );
+          
+          if (videoResult.success) {
+            log(`Видео успешно отправлено в Telegram, messageId: ${videoResult.messageId}`, 'social-publishing');
+            lastMessageId = videoResult.messageId;
+            
+            // Возвращаем результат публикации
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: videoResult.messageUrl || null,
+              error: null
+            };
+          } else {
+            log(`Ошибка при отправке видео в Telegram: ${videoResult.error}`, 'social-publishing');
+            
+            // В случае ошибки продолжаем выполнение - попробуем отправить текст
+            log(`Попытка отправки текста после неудачной отправки видео`, 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
+          
+          // В случае исключения продолжаем выполнение - попробуем отправить текст
+          log(`Продолжение публикации после исключения при отправке видео`, 'social-publishing');
+        }
+      }
+      
+      // Определяем стратегию публикации для изображений и текста, если видео не было или его отправка не удалась
       
       // 1. Если есть изображения и включен флаг принудительного разделения,
       // отправляем сначала изображения без подписи, затем текст отдельным сообщением
@@ -1592,8 +1898,39 @@ export class SocialPublishingWithImgurService {
       formData.append('access_token', token);
       formData.append('v', '5.131'); // Версия API VK
       
-      // Обработка изображений
+      // Массив для хранения вложений (фото, видео и т.д.)
       const attachments: string[] = [];
+      
+      // Обработка видео, если оно есть (приоритет перед изображениями)
+      if (processedContent.videoUrl) {
+        try {
+          // Логируем наличие видео для публикации
+          log(`Обнаружено видео для публикации в ВК: ${processedContent.videoUrl}`, 'social-publishing');
+          
+          // Загружаем видео в ВКонтакте
+          const videoAttachment = await this.uploadVideoToVk(
+            token,
+            groupId,
+            processedContent.videoUrl,
+            processedContent.title || 'Видео'
+          );
+          
+          // Если видео успешно загружено, добавляем его в список вложений
+          if (videoAttachment) {
+            attachments.push(videoAttachment);
+            log(`Видео успешно загружено и добавлено в attachments для ВК: ${videoAttachment}`, 'social-publishing');
+          } else {
+            log('Не удалось загрузить видео в ВК, продолжаем с обработкой изображений', 'social-publishing');
+          }
+        } catch (error: any) {
+          log(`Ошибка при загрузке видео в ВК: ${error.message}`, 'social-publishing');
+          log('Продолжаем с обработкой изображений', 'social-publishing');
+        }
+      } else {
+        log('Видео не обнаружено, продолжаем с обработкой изображений', 'social-publishing');
+      }
+      
+      // Обработка изображений (если нет видео или оно не загрузилось)
       
       // Загрузка основного изображения, если оно есть
       if (processedContent.imageUrl) {
