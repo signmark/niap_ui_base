@@ -1,0 +1,241 @@
+mm-1  | Успешно получен контент с использованием переданного токена
+smm-1  | ✅ Контент найден в Directus: f45ce579-8336-4037-a17b-fd02941ea47c, user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Используем переданный токен авторизации для обновления контента f45ce579-8336-4037-a17b-fd02941ea47c
+smm-1  | Обновляем дополнительные изображения контента f45ce579-8336-4037-a17b-fd02941ea47c: []
+smm-1  | Обновляем ключевые слова контента f45ce579-8336-4037-a17b-fd02941ea47c: [ 'автоматизация', 'пп питание', 'идеальный рацион' ]
+smm-1  | Отправляем обновление в Directus для контента f45ce579-8336-4037-a17b-fd02941ea47c: {"content":"<p>С НИАП создание идеального рациона занимает всего 5 минут! Наш сервис автоматически подбирает оптимальное меню, учитывая все ваши потребности.</p><p>Попробуйте и убедитесь сами!</p>","content_type":"video-text","title":"Как создать идеальный рацион за 5 минут?","image_url":null,"video_url":"https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-9413009a8938.mp4","additional_images":[],"keywords":["автоматизация","пп питание","идеальный рацион"]}
+smm-1  | 6:32:22 PM [express] PATCH /api/publish/update-content/f45ce579-8336-4037-a17b-fd02941ea47c 200 in 7…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:32:22 PM [express] GET /api/campaign-content 200 in 53ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:32:27 PM [express] GET /api/keywords 304 in 27ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:32:32 PM [express] GET /api/campaign-content 304 in 71ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | 6:32:34 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 6:32:34 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 6:32:34 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+smm-1  | 6:32:34 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:32:34 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 6:32:34 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 6:32:34 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+smm-1  | 6:32:34 PM [scheduler] Получено 0 запланированных публикаций через API
+smm-1  | 6:32:34 PM [scheduler] Запланированные публикации не найдены
+smm-1  | 6:32:35 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+smm-1  | 6:32:35 PM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 6:32:35 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 6:32:35 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:32:35 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 6:32:35 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:32:37 PM [express] GET /api/keywords 304 in 30ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:32:43 PM [express] GET /api/campaign-content 304 in 65ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:32:47 PM [express] GET /api/keywords 304 in 31ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:32:53 PM [express] GET /api/campaign-content 304 in 60ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:32:57 PM [express] GET /api/keywords 304 in 24ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:03 PM [express] GET /api/campaign-content 304 in 72ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | 6:33:05 PM [social-publish] Получены настройки социальных сетей из кампании
+smm-1  | 6:33:05 PM [social-publish] Публикация контента в instagram
+smm-1  | 6:33:05 PM [social-publishing] Публикация контента "Как создать идеальный рацион за 5 минут?" в instagram
+smm-1  | 6:33:05 PM [social-publishing] Проверка настроек Instagram: {"hasSettings":true,"settingsType":"object","tokenExists":"да","tokenType":"string","tokenLength":193,"businessAccountId":"17841422577074562"}
+smm-1  | 6:33:05 PM [social-publishing] Делегирование публикации в Instagram специализированному сервису
+smm-1  | 6:33:05 PM [social-publishing] Вызываем instagramService.publishToInstagram с параметрами token=true, businessAccountId=true
+smm-1  | 6:33:05 PM [instagram] [Instagram] Начинаем публикацию в Instagram с использованием бизнес-аккаунта: 17841422577074562
+smm-1  | 6:33:05 PM [social-publishing] additionalImages уже является массивом для instagram, содержит 0 элементов после фильтрации
+smm-1  | 6:33:05 PM [instagram] [Instagram] Этап 1 - создание контейнера для медиа
+smm-1  | 6:33:05 PM [instagram] [Instagram] Обнаружено видео для публикации: https://6e679636ae90-ridiculous-seth.s3.ru1.storag...
+smm-1  | 6:33:05 PM [instagram] [Instagram] Отправка запроса на создание контейнера для видео
+smm-1  | 6:33:06 PM [instagram] [Instagram] Ошибка при создании контейнера: Request failed with status code 400
+smm-1  | 6:33:06 PM [instagram] [Instagram] Исключение при публикации: Request failed with status code 400
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | 6:33:06 PM [instagram] [Instagram] Детали ошибки API: {"error":{"message":"Invalid parameter","type":"OAuthException","code":100,"error_subcode":2207067,"is_transient":false,"error_user_title":"Неподдерживаемый тип медиафайла VIDEO","error_user_msg":"Значение VIDEO для media_type устарело. Используйте тип медиафайла REELS, чтобы опубликовать видео в своей ленте Instagram. Для публикации видео, перейдите по ссылке https://developers.facebook.com/docs/instagram-api/reference/ig-user/media#creating.","fbtrace_id":"Awfi9_3tdrqd3gHHKZZRQ6P"}}
+smm-1  | 6:33:06 PM [social-publishing] Instagram-сервис вернул результат: status=failed, error=Ошибка API Instagram: Invalid parameter (код 100)
+smm-1  | 6:33:06 PM [social-publish] Результат публикации в instagram: failed
+smm-1  | 6:33:06 PM [social-publish] Публикация контента в telegram
+smm-1  | 6:33:06 PM [social-publishing] Публикация контента "Как создать идеальный рацион за 5 минут?" в telegram
+smm-1  | 6:33:06 PM [social-publishing] Отключен флаг forceImageTextSeparation для Telegram публикации. Длина текста: 224 символов
+smm-1  | 6:33:06 PM [telegram-debug] publishToTelegram вызван для контента: f45ce579-8336-4037-a17b-fd02941ea47c, title: "Как создать идеальный рацион за 5 минут?"
+smm-1  | 6:33:06 PM [telegram-debug] Telegram настройки: {"hasSettings":true,"hasToken":true,"hasChatId":true,"token":"752910...","chatId":"-1002302366310","campaignId":"46868c44-c6a4-4bed-accf-9ad07bba790e"}
+smm-1  | 6:33:06 PM [social-publishing] publishToTelegram вызван для контента ID: f45ce579-8336-4037-a17b-fd02941ea47c, Title: "Как создать идеальный рацион за 5 минут?"
+smm-1  | 6:33:06 PM [social-publishing] Параметры Telegram: {"settingsProvided":true,"tokenProvided":true,"chatIdProvided":true,"tokenLength":46,"chatIdValue":"-1002302366310"}
+smm-1  | 6:33:06 PM [social-publishing] Используем токен Telegram: 752910... и ID чата: -1002302366310
+smm-1  | 6:33:06 PM [social-publishing] Публикация в Telegram. Контент: f45ce579-8336-4037-a17b-fd02941ea47c, тип: video-text
+smm-1  | 6:33:06 PM [social-publishing] Обработка дополнительных изображений для Telegram. Тип: object, значение: []...
+smm-1  | 6:33:06 PM [social-publishing] Telegram: Найдено 0 корректных дополнительных изображений
+smm-1  | 6:33:06 PM [social-publishing] Начинаем загрузку изображений на Imgur для контента: f45ce579-8336-4037-a17b-fd02941ea47c
+smm-1  | 6:33:06 PM [social-publishing] Обработка ID чата для Telegram: "-1002302366310"
+smm-1  | 6:33:06 PM [social-publishing] Проверка чата через API Telegram: -1002302366310
+smm-1  | 6:33:06 PM [social-publishing] Чат найден через API: {"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel","active_usernames":["ya_delayu_moschno"],"invite_link":"https://t.me/+d6nOPp7tWkwzODI6","can_send_gift":true,"has_visible_history":true,"can_send_paid_media":true,"accepted_gift_types":{"unlimited_gifts":true,"limited_gifts":true,"unique_gifts":true,"premium_subscription":false},"photo":{"small_file_id":"AQADAgADIO0xG0EFuUgACAIAA5qdH6IW____cZSCZmeDSMA2BA","small_file_unique_id":"AQADIO0xG0EFuUgAAQ","big_file_id":"AQADAgADIO0xG0EFuUgACAMAA5qdH6IW____cZSCZmeDSMA2BA","big_file_unique_id":"AQADIO0xG0EFuUgB"},"available_reactions":[],"max_reaction_count":11,"accent_color_id":6}
+smm-1  | 6:33:06 PM [social-publishing] Используем username из API: @ya_delayu_moschno
+smm-1  | 6:33:06 PM [social-publishing] Используем ID чата для Telegram: @ya_delayu_moschno
+smm-1  | 6:33:06 PM [social-publishing] Обработка HTML для Telegram: исходный текст 184 символов, обработанный 172 символов
+smm-1  | 6:33:06 PM [social-publishing] Первые 100 символов обработанного текста: С НИАП создание идеального рациона занимает всего 5 минут! Наш сервис автоматически подбирает оптима
+smm-1  | 6:33:06 PM [social-publishing] Telegram: наличие видео: true, изображений: false, принудительное разделение: false
+smm-1  | 6:33:06 PM [social-publishing] Telegram: публикация с видео. URL видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-9413009a8938.mp4
+smm-1  | 6:33:06 PM [social-publishing] Подготовлена подпись для видео, длина: 221 символов
+smm-1  | 6:33:06 PM [social-publishing] Отправка видео в Telegram: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-94130...
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:33:07 PM [express] GET /api/keywords 304 in 30ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | 6:33:07 PM [telegram-debug] Ответ от Telegram API (sendVideo): код 400, data: {"ok":false,"error_code":400,"description":"Bad Request: failed to get HTTP URL content"}
+smm-1  | Ошибка записи логов: ReferenceError: require is not defined
+smm-1  | 6:33:07 PM [social-publishing] Ошибка при отправке видео в Telegram: Bad Request: failed to get HTTP URL content
+smm-1  | 6:33:07 PM [social-publishing] Ошибка при отправке видео в Telegram: Bad Request: failed to get HTTP URL content
+smm-1  | 6:33:07 PM [social-publishing] Попытка отправки текста после неудачной отправки видео
+smm-1  | 6:33:07 PM [social-publishing] Отправка текстового сообщения в Telegram, длина: 221 символов
+smm-1  | 6:33:07 PM [social-publishing] Форматирование chat ID: исходный "@ya_delayu_moschno" -> форматированный "@ya_delayu_moschno"
+smm-1  | 6:33:07 PM [social-publishing] Подготовка текста для Telegram, исходная длина: 221 символов
+smm-1  | 6:33:07 PM [social-publishing] Внимание: количество открывающих (1) и закрывающих (0) HTML-тегов не совпадает. Это может вызвать ошибку при отправке в Telegram.
+smm-1  | 6:33:07 PM [social-publishing] Форматирование текста для Telegram: было 221 символов, стало 217
+smm-1  | 6:33:07 PM [social-publishing] Отправка текстового сообщения в Telegram, длина: 217 символов, первые 100 символов: "<b>Как создать идеальный рацион за 5 минут?
+smm-1  |
+smm-1  | С НИАП создание идеального рациона занимает всего 5 мин..."
+smm-1  | 6:33:07 PM [social-publishing] Ответ от Telegram API: {"ok":false,"error_code":400,"description":"Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"b\""}
+smm-1  | 6:33:07 PM [social-publishing] Ошибка при отправке HTML-форматированного текста: код 400, Bad Request: can't parse entities: Can't find end tag corresponding to start tag "b"
+smm-1  | 6:33:07 PM [social-publishing] Отправка обычного текста в Telegram (без HTML), длина: 214 символов
+smm-1  | 6:33:08 PM [social-publishing] Успешная отправка обычного текста: message_id 1380
+smm-1  | 6:33:08 PM [social-publishing] Текст успешно отправлен в Telegram: {"success":true,"data":{"ok":true,"result":{"message_id":1380,"sender_chat":{"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel"},"chat":{"id":-1002302366310,"title":"Подсознание наизнанку","username":"ya_delayu_moschno","type":"channel"},"date":1744741988,"text":"Как создать идеальный рацион за 5 минут?\n\nС НИАП создание идеального рациона занимает всего 5 минут! Наш сервис автоматически подбирает оптимальное меню, учитывая все ваши потребности.\nПопробуйте и убедитесь сами!"}}}
+smm-1  | 6:33:08 PM [social-publishing] Получен message_id из textResponse для обычного сообщения: 1380
+smm-1  | 6:33:08 PM [social-publishing] Форматирование Telegram URL: полный числовой ID -1002302366310 преобразован в https://t.me/c/2302366310
+smm-1  | 6:33:08 PM [social-publishing] Сформирован URL с обязательным message ID: https://t.me/c/2302366310/1380
+smm-1  | 6:33:08 PM [social-publish] Результат публикации в telegram: published
+smm-1  | 6:33:08 PM [social-publish] Публикация контента в vk
+smm-1  | 6:33:08 PM [social-publishing] Публикация контента "Как создать идеальный рацион за 5 минут?" в vk
+smm-1  | 6:33:08 PM [social-publishing] Формат ID группы VK очищен от префикса "club": 228626989
+smm-1  | 6:33:08 PM [social-publishing] Используем токен VK: vk1.a.... и ID группы: 228626989
+smm-1  | 6:33:08 PM [social-publishing] Публикация в VK. Контент: f45ce579-8336-4037-a17b-fd02941ea47c, тип: video-text
+smm-1  | 6:33:08 PM [social-publishing] Обработка дополнительных изображений для VK. Тип: object, значение: []...
+smm-1  | 6:33:08 PM [social-publishing] VK: Найдено 0 корректных дополнительных изображений
+smm-1  | 6:33:08 PM [social-publishing] Начинаем загрузку изображений на Imgur для контента: f45ce579-8336-4037-a17b-fd02941ea47c
+smm-1  | 6:33:08 PM [social-publishing] Обнаружено видео для публикации в ВК: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-9413009a8938.mp4
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Начинаем загрузку видео в ВК: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-9413009a8938.mp4
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Получаем сервер для загрузки через video.save с параметрами: token=vk1.a...., group_id=228626989, name=Как создать идеальный рацион за 5 минут?
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Ответ от video.save: {"response":{"access_key":"4244c59a1a9241a1e5","access_by_link_key":"ln-B3d5zZbInKdWmlPCVo","description":"Как создать идеальный рацион за 5 минут?","owner_id":-228626989,"title":"Как создать идеальный рацион за 5 минут?","upload_url":"https://ovu.mycdn.me/upload.do?sig=5cb9389d1fe251746ce1d38ac04416c3bd4c48e4&expires=1744885988247&clientType=14&appId=512000384397&id=9526720407655&userId=0&cid=8104022772327&vkOwnerId=-228626989&vkVideoId=456239040&vkUserId=31533937&vkVideoHash=ce7e27c2a000f8e2dc&saveOriginal=1","video_id":456239040}}
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Получен URL для загрузки видео в ВК: https://ovu.mycdn.me/upload.do?sig=5cb9389d1fe251746ce1d38ac04416c3bd4c48e4&expires=1744885988247&clientType=14&appId=512000384397&id=9526720407655&userId=0&cid=8104022772327&vkOwnerId=-228626989&vkVideoId=456239040&vkUserId=31533937&vkVideoHash=ce7e27c2a000f8e2dc&saveOriginal=1
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Скачиваем видео для дальнейшей загрузки в ВК: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/37e247d0-dfd7-449b-9749-9413009a8938.mp4
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Ошибка при загрузке видео в ВК: Request failed with status code 403
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Данные ответа: {"type":"Buffer","data":[60,63,120,109,108,32,118,101,114,115,105,111,110,61,34,49,46,48,34,32,101,110,99,111,100,105,110,103,61,34,85,84,70,45,56,34,63,62,60,69,114,114,111,114,62,60,67,111,100,101,62,65,99,99,101,115,115,68,101,110,105,101,100,60,47,67,111,100,101,62,60,77,101,115,115,97,103,101,62,60,47,77,101,115,115,97,103,101,62,60,66,117,99,107,101,116,78,97,109,101,62,54,101,54,55,57,54,51,54,97,101,57,48,45,114,105,100,105,99,117,108,111,117,115,45,115,101,116,104,60,47,66,117,99,107,101,116,78,97,109,101,62,60,82,101,113,117,101,115,116,73,100,62,116,120,48,48,48,48,48,101,100,101,49,51,97,54,100,48,52,48,52,55,48,97,53,45,48,48,54,55,102,101,97,54,54,52,45,51,99,101,56,99,53,45,100,101,102,97,117,108,116,60,47,82,101,113,117,101,115,116,73,100,62,60,72,111,115,116,73,100,62,51,99,101,56,99,53,45,100,101,102,97,117,108,116,45,100,101,102,97,117,108,116,60,47,72,111,115,116,73,100,62,60,47,69,114,114,111,114,62]}
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Статус ответа: 403
+smm-1  | 6:33:08 PM [social-publishing] [DEBUG VK VIDEO] Заголовки ответа: {"accept-ranges":"bytes","content-length":"261","content-type":"application/xml","date":"Tue, 15 Apr 2025 18:33:08 GMT","x-amz-request-id":"tx00000ede13a6d040470a5-0067fea664-3ce8c5-default","connection":"close"}
+smm-1  | 6:33:08 PM [social-publishing] Не удалось загрузить видео в ВК, продолжаем с обработкой изображений
+smm-1  | 6:33:08 PM [social-publishing] Пост успешно опубликован в VK, ID: 589
+smm-1  | 6:33:08 PM [social-publish] Результат публикации в vk: published
+smm-1  | 6:33:08 PM [express] POST /api/content/f45ce579-8336-4037-a17b-fd02941ea47c/publish-social 200 in 31…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:09 PM [express] GET /api/campaign-content 200 in 66ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:13 PM [express] GET /api/campaign-content 304 in 61ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:23 PM [express] GET /api/campaign-content 304 in 64ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:34 PM [express] GET /api/campaign-content 304 in 65ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | 6:33:34 PM [directus-auth] Checking for expiring sessions
+smm-1  | 6:33:34 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 6:33:34 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 6:33:34 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+smm-1  | 6:33:34 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:33:34 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 6:33:34 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 6:33:34 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+smm-1  | 6:33:34 PM [scheduler] Получено 0 запланированных публикаций через API
+smm-1  | 6:33:34 PM [scheduler] Запланированные публикации не найдены
+smm-1  | 6:33:35 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+smm-1  | 6:33:35 PM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 6:33:35 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 6:33:35 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 6:33:35 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 6:33:35 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и полезно"]
+smm-1  | 6:33:45 PM [express] GET /api/campaign-content 304 in 83ms :: {"data":[{"id":"59eb189a-584d-46b8-840…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["пп рецепты","здоровое питание","вкусно и пол
