@@ -206,4 +206,99 @@ router.get('/exists/:key', authMiddleware, async (req, res) => {
   }
 });
 
+// Тестовый маршрут для проверки подключения к Beget S3
+router.post('/test', async (req, res) => {
+  try {
+    // Проверяем наличие переменных окружения
+    const hasEnvVars = process.env.BEGET_S3_ACCESS_KEY && 
+                      process.env.BEGET_S3_SECRET_KEY && 
+                      process.env.BEGET_S3_BUCKET;
+    
+    // Получаем время на сервере для проверки соединения
+    const now = new Date();
+    const testId = now.getTime();
+    
+    return res.json({
+      success: true,
+      message: 'Beget S3 API работает',
+      timestamp: now.toISOString(),
+      test_id: testId,
+      connection: {
+        hasCredentials: hasEnvVars,
+        endpoint: process.env.BEGET_S3_ENDPOINT || 'https://s3.ru1.storage.beget.cloud',
+        bucket: process.env.BEGET_S3_BUCKET
+      }
+    });
+  } catch (error) {
+    log.error(`Error in test endpoint: ${(error as Error).message}`, logPrefix);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  }
+});
+
+// Тестовый маршрут для загрузки контента (текст)
+router.post('/upload-content', async (req, res) => {
+  try {
+    const { content, filename, contentType = 'text/plain', folder } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ success: false, error: 'Content is required' });
+    }
+    
+    const finalFilename = filename || `test-content-${Date.now()}.txt`;
+    
+    // Вызываем сервисный метод для загрузки контента
+    const uploadResult = await begetS3StorageAws.uploadContent(
+      content,
+      finalFilename,
+      contentType,
+      folder
+    );
+    
+    if (!uploadResult.success) {
+      return res.status(500).json({ 
+        success: false, 
+        error: uploadResult.error || 'Error uploading content to S3' 
+      });
+    }
+    
+    return res.json({
+      success: true,
+      url: uploadResult.url,
+      key: uploadResult.key,
+      contentType,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    log.error(`Error in upload-content endpoint: ${(error as Error).message}`, logPrefix);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  }
+});
+
+// Информация о настройках Beget S3
+router.get('/info', async (req, res) => {
+  try {
+    // Получаем список файлов для проверки подключения
+    const files = await begetS3StorageAws.listFiles('', 5);
+    
+    return res.json({
+      success: true,
+      configuration: {
+        endpoint: process.env.BEGET_S3_ENDPOINT || 'https://s3.ru1.storage.beget.cloud',
+        region: process.env.BEGET_S3_REGION || 'ru-central-1',
+        bucket: process.env.BEGET_S3_BUCKET,
+        hasCredentials: !!process.env.BEGET_S3_ACCESS_KEY && 
+                      !!process.env.BEGET_S3_SECRET_KEY
+      },
+      test: {
+        filesCount: files.length,
+        sampleFiles: files.slice(0, 5),
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    log.error(`Error in info endpoint: ${(error as Error).message}`, logPrefix);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  }
+});
+
 export default router;
