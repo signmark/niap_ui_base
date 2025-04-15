@@ -1,96 +1,89 @@
 /**
- * Скрипт для тестирования интеграции с Beget S3
- * Проверяет загрузку небольшого текстового файла в хранилище Beget S3
+ * Тест для загрузки файла в Beget S3 через модифицированную реализацию AWS SDK
  */
-
-import axios from 'axios';
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import FormData from 'form-data';
+import os from 'os';
+import { begetS3StorageAws } from './server/services/beget-s3-storage-aws.js';
 
-// Функция для вывода информации в консоль
-function log(message) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
-}
-
-async function testBegetS3() {
-  log('Начало теста интеграции с Beget S3');
+// Создаем временный тестовый файл
+const createTestFile = () => {
+  const tempDir = os.tmpdir();
+  const testFilePath = path.join(tempDir, `test-file-${Date.now()}.txt`);
+  const content = `This is a test file for Beget S3 upload. Created at: ${new Date().toISOString()}`;
   
+  fs.writeFileSync(testFilePath, content, 'utf8');
+  console.log(`Created test file at: ${testFilePath}`);
+  
+  return testFilePath;
+};
+
+// Тестирует загрузку файла
+const testUpload = async () => {
   try {
-    // Получаем текущую директорию в ES модулях
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    // Создаем временный тестовый файл
-    const testFilePath = path.join(__dirname, 'test-upload.txt');
-    fs.writeFileSync(testFilePath, 'Тестовый файл для проверки интеграции с Beget S3. ' + new Date().toISOString());
-    log(`Создан тестовый файл: ${testFilePath}`);
+    // Проверяем наличие переменных окружения
+    const { BEGET_S3_ACCESS_KEY, BEGET_S3_SECRET_KEY, BEGET_S3_BUCKET } = process.env;
     
-    // Создаем FormData для отправки файла
-    const formData = new FormData();
-    formData.append('file', fs.createReadStream(testFilePath));
+    if (!BEGET_S3_ACCESS_KEY || !BEGET_S3_SECRET_KEY || !BEGET_S3_BUCKET) {
+      console.error('Missing required environment variables. Make sure you have BEGET_S3_ACCESS_KEY, BEGET_S3_SECRET_KEY, and BEGET_S3_BUCKET defined.');
+      return;
+    }
     
-    // Сначала получаем токен авторизации
-    log('Авторизация пользователя...');
-    const authResponse = await axios.post('http://localhost:5000/api/auth/login', {
-      email: 'lbrspb@gmail.com',
-      password: 'tester12345'
+    console.log('Environment variables found:', {
+      BEGET_S3_ACCESS_KEY: BEGET_S3_ACCESS_KEY.slice(0, 3) + '***' + BEGET_S3_ACCESS_KEY.slice(-3),
+      BEGET_S3_SECRET_KEY: BEGET_S3_SECRET_KEY.slice(0, 3) + '***' + BEGET_S3_SECRET_KEY.slice(-3),
+      BEGET_S3_BUCKET
     });
     
-    const authToken = authResponse.data.token;
-    log('Получен токен авторизации');
+    // Создаем тестовый файл
+    const testFilePath = createTestFile();
     
-    // Отправляем запрос на API загрузки
-    log('Отправка файла в Beget S3...');
-    const response = await axios.post('http://localhost:5000/api/beget-s3/upload', formData, {
-      headers: {
-        ...formData.getHeaders(),
-        'Authorization': `Bearer ${authToken}`
-      },
+    console.log('Starting upload to Beget S3...');
+    
+    // Загружаем файл
+    const uploadResult = await begetS3StorageAws.uploadFile({
+      filePath: testFilePath,
+      key: `test-uploads/test-file-${Date.now()}.txt`,
+      contentType: 'text/plain'
     });
     
-    // Выводим результат
-    log('Ответ от API:');
-    console.log(response.data);
-    
-    if (response.data && response.data.url) {
-      log(`Файл успешно загружен по адресу: ${response.data.url}`);
+    if (uploadResult.success) {
+      console.log('Upload successful!');
+      console.log('File URL:', uploadResult.url);
       
-      // Попробуем получить загруженный файл
-      log('Проверка доступности файла...');
-      const downloadResponse = await axios.get(response.data.url);
-      log(`Содержимое файла доступно, размер: ${downloadResponse.data.length} байт`);
-      return true;
+      // Пробуем доступиться к файлу через HTTP
+      console.log('Checking file access...');
+      try {
+        const response = await fetch(uploadResult.url);
+        if (response.ok) {
+          const content = await response.text();
+          console.log('File content successfully retrieved:');
+          console.log(content);
+        } else {
+          console.error(`Failed to access file: ${response.status} ${response.statusText}`);
+        }
+      } catch (accessError) {
+        console.error('Error accessing file:', accessError.message);
+      }
     } else {
-      log('Ошибка при загрузке файла: отсутствует URL в ответе');
-      return false;
+      console.error('Upload failed:', uploadResult.error);
     }
+    
+    // Очищаем тестовый файл
+    if (fs.existsSync(testFilePath)) {
+      fs.unlinkSync(testFilePath);
+      console.log(`Deleted test file: ${testFilePath}`);
+    }
+    
   } catch (error) {
-    log('Ошибка при тестировании интеграции с Beget S3:');
-    console.error(error.response ? error.response.data : error.message);
-    return false;
-  } finally {
-    // Удаляем временный файл
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      fs.unlinkSync(path.join(__dirname, 'test-upload.txt'));
-      log('Временный файл удален');
-    } catch (e) {
-      // Игнорируем ошибки при удалении
-    }
+    console.error('Test failed with error:', error);
   }
-}
+};
 
-// Запуск теста
-testBegetS3()
-  .then(success => {
-    log(`Тест интеграции с Beget S3 ${success ? 'УСПЕШНО ЗАВЕРШЕН' : 'ЗАВЕРШИЛСЯ С ОШИБКОЙ'}`);
-    process.exit(success ? 0 : 1);
-  })
-  .catch(error => {
-    log('Необработанная ошибка в тесте:');
-    console.error(error);
-    process.exit(1);
-  });
+// Запускаем тест
+testUpload().then(() => {
+  console.log('Test completed');
+}).catch((error) => {
+  console.error('Unhandled error in test:', error);
+});
