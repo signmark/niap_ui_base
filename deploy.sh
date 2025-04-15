@@ -22,9 +22,15 @@ fi
 echo -e "${YELLOW}Очистка Docker от неиспользуемых ресурсов...${NC}"
 docker system prune -a -f
 
-# Переход в директорию smm/
-echo -e "${YELLOW}Переход в директорию smm/...${NC}"
-cd smm/
+# Проверка и переход в директорию smm/ если мы не в ней
+echo -e "${YELLOW}Проверка текущей директории...${NC}"
+CURRENT_DIR=$(basename "$PWD")
+if [ "$CURRENT_DIR" != "smm" ]; then
+    echo -e "${YELLOW}Переход в директорию smm/...${NC}"
+    cd smm/ || { echo -e "${RED}Ошибка: директория smm/ не найдена${NC}"; exit 1; }
+else
+    echo -e "${GREEN}Уже находимся в директории smm/${NC}"
+fi
 
 # Обновление кода из Git-репозитория
 echo -e "${YELLOW}Получение последних изменений из Git...${NC}"
