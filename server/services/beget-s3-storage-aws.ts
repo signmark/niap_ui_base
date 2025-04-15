@@ -211,7 +211,16 @@ export class BegetS3StorageAws {
       // Если имя файла не указано, попробуем получить из URL
       const detectedFileName = fileName || this.extractFileNameFromUrl(url);
       
-      return this.uploadFile(buffer, detectedFileName, mimeType, folder);
+      let key = detectedFileName;
+      if (folder) {
+        key = `${folder}/${detectedFileName}`;
+      }
+      
+      return this.uploadFile({
+        key,
+        fileData: buffer,
+        contentType: mimeType
+      });
     } catch (error) {
       log.error(`Error uploading file from URL to Beget S3: ${(error as Error).message}`, this.logPrefix);
       return {
