@@ -2,6 +2,7 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import { TelegramS3Integration } from './telegram-s3-integration';
 
 /**
  * Сервис для публикации контента в Telegram
@@ -9,6 +10,17 @@ import { BaseSocialService } from './base-service';
 export class TelegramService extends BaseSocialService {
   // Храним username канала, полученный в процессе публикации
   private currentChatUsername?: string;
+  
+  // Интеграция с Beget S3 для работы с видео
+  private telegramS3Integration: TelegramS3Integration;
+  
+  /**
+   * Конструктор сервиса Telegram
+   */
+  constructor() {
+    super();
+    this.telegramS3Integration = new TelegramS3Integration();
+  }
   /**
    * Форматирует текст для публикации в Telegram с учетом поддерживаемых HTML-тегов
    * @param content Исходный текст контента
@@ -1062,14 +1074,125 @@ export class TelegramService extends BaseSocialService {
       const hasImages = processedContent.imageUrl || 
         (processedContent.additionalImages && processedContent.additionalImages.length > 0);
       
+      // Проверяем наличие видео (разные поля, в которых может храниться видео)
+      const hasVideo = Boolean(
+        processedContent.videoUrl || 
+        (processedContent as any).video_url || 
+        (processedContent.metadata && ((processedContent.metadata as any).video_url || (processedContent.metadata as any).videoUrl)) ||
+        (processedContent.additionalMedia && Array.isArray(processedContent.additionalMedia) && 
+          processedContent.additionalMedia.some((media: any) => 
+            media.type === 'video' || (media.url && typeof media.url === 'string' && media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i))
+          )
+        )
+      );
+      
       // Проверяем необходимость принудительного разделения текста и изображений
       // Флаг устанавливается в методе publishToPlatform для всех Telegram публикаций
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      log(`Telegram: наличие изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      log(`Telegram: наличие изображений: ${hasImages}, наличие видео: ${hasVideo}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
-      // Определяем стратегию публикации в зависимости от длины текста и наличия изображений
+      // Определяем стратегию публикации в зависимости от наличия видео, изображений и текста
+      
+      // 0. Если есть видео, отправляем его через сервис TelegramS3Integration
+      if (hasVideo) {
+        log(`Telegram: публикация с видео. Отправляем через TelegramS3Integration.`, 'social-publishing');
+        
+        try {
+          // Определяем URL видео из различных возможных источников
+          // Проверяем все возможные локации URL видео
+          let videoUrl = processedContent.videoUrl || undefined;
+          
+          // Проверяем альтернативное название поля
+          if (!videoUrl && (processedContent as any).video_url) {
+            videoUrl = (processedContent as any).video_url;
+          }
+          
+          // Проверяем поля в метаданных
+          if (!videoUrl && processedContent.metadata) {
+            if ((processedContent.metadata as any).video_url) {
+              videoUrl = (processedContent.metadata as any).video_url;
+            } else if ((processedContent.metadata as any).videoUrl) {
+              videoUrl = (processedContent.metadata as any).videoUrl;
+            }
+          }
+          
+          // Проверяем в additionalMedia
+          if (!videoUrl && processedContent.additionalMedia && Array.isArray(processedContent.additionalMedia)) {
+            const videoMedia = processedContent.additionalMedia.find((media: any) => {
+              if (media.type === 'video') return true;
+              if (media.url && typeof media.url === 'string') {
+                return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+              }
+              return false;
+            });
+            
+            if (videoMedia && videoMedia.url) {
+              videoUrl = videoMedia.url;
+            }
+          }
+          
+          if (!videoUrl) {
+            log(`Ошибка: Видео обнаружено, но URL не найден`, 'social-publishing');
+            throw new Error('Video URL not found in content');
+          }
+          
+          log(`Отправка видео в Telegram: ${videoUrl}`, 'social-publishing');
+          
+          // Подготавливаем текст в качестве подписи к видео
+          const videoCaption = text.length <= 1024 ? text : text.substring(0, 1021) + '...';
+          
+          // Отправляем видео через специализированный сервис
+          const videoResult = await this.telegramS3Integration.sendVideoToTelegram(
+            videoUrl,
+            formattedChatId,
+            token,
+            {
+              caption: videoCaption,
+              parse_mode: 'HTML'
+            }
+          );
+          
+          if (videoResult.success) {
+            log(`Видео успешно отправлено в Telegram, ID сообщения: ${videoResult.messageId}`, 'social-publishing');
+            
+            // Убедимся, что messageId определен перед использованием
+            if (!videoResult.messageId) {
+              log(`Предупреждение: messageId не получен от сервиса отправки видео`, 'social-publishing');
+              return {
+                platform: 'telegram',
+                status: 'published',
+                publishedAt: new Date(),
+                postUrl: 'https://t.me/' + (chatId.startsWith('@') ? chatId.substring(1) : chatId) // Временная ссылка
+              };
+            }
+            
+            return {
+              platform: 'telegram',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: this.generatePostUrl(chatId, formattedChatId, videoResult.messageId || '0')
+            };
+          } else {
+            log(`Ошибка при отправке видео в Telegram: ${videoResult.error}`, 'social-publishing');
+            return {
+              platform: 'telegram',
+              status: 'failed',
+              publishedAt: null,
+              error: `Ошибка при отправке видео: ${videoResult.error}`
+            };
+          }
+        } catch (error: any) {
+          log(`Исключение при отправке видео в Telegram: ${error.message}`, 'social-publishing');
+          return {
+            platform: 'telegram',
+            status: 'failed',
+            publishedAt: null,
+            error: `Исключение при отправке видео: ${error.message}`
+          };
+        }
+      }
       
       // 1. Если есть изображения и включен флаг принудительного разделения,
       // отправляем сначала изображения без подписи, затем текст отдельным сообщением

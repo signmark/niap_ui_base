@@ -1013,4 +1013,126 @@ testRouter.post('/format-telegram-url', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Тестовый маршрут для проверки отправки видео в Telegram
+ * POST /api/test/telegram-video
+ */
+testRouter.post('/telegram-video', async (req: Request, res: Response) => {
+  try {
+    const { chatId, token, videoUrl, caption } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!videoUrl || !chatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: videoUrl и chatId'
+      });
+    }
+    
+    log(`[Test API] Запрос на отправку видео в Telegram`, 'test');
+    log(`[Test API] URL видео: ${videoUrl}`, 'test');
+    log(`[Test API] Chat ID: ${chatId}`, 'test');
+    
+    // Используем токен из запроса или из переменных окружения
+    const botToken = token || process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+    
+    // Получаем экземпляр сервиса TelegramS3Integration
+    const { telegramS3Integration } = require('../services/social/telegram-s3-integration');
+    
+    // Отправляем видео в Telegram
+    const result = await telegramS3Integration.sendVideoToTelegram(
+      videoUrl,
+      chatId,
+      botToken,
+      {
+        caption: caption || 'Тестовое видео',
+        parse_mode: 'HTML'
+      }
+    );
+    
+    log(`[Test API] Результат отправки видео: ${JSON.stringify(result)}`, 'test');
+    
+    // Возвращаем результат
+    return res.json({
+      success: result.success,
+      messageId: result.messageId,
+      url: result.url,
+      error: result.error
+    });
+  } catch (error: any) {
+    log(`[Test API] Ошибка при отправке видео в Telegram: ${error.message}`, 'test');
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
+/**
+ * Тестовый маршрут для проверки обработки видео в контенте для Telegram
+ * POST /api/test/telegram-content-video
+ */
+testRouter.post('/telegram-content-video', async (req: Request, res: Response) => {
+  try {
+    const { chatId, token, videoUrl, text, campaignId } = req.body;
+    
+    // Проверяем наличие обязательных параметров
+    if (!videoUrl || !chatId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Обязательные параметры: videoUrl и chatId'
+      });
+    }
+    
+    log(`[Test API] Запрос на отправку контента с видео в Telegram`, 'test');
+    
+    // Используем токен из запроса или из переменных окружения
+    const botToken = token || process.env.TELEGRAM_BOT_TOKEN || '7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU';
+    
+    // Создаем тестовый контент с видео
+    const testContent = {
+      id: `test-${Date.now()}`,
+      title: 'Тест публикации видео',
+      content: text || 'Тестовое видео для Telegram',
+      contentType: 'video',
+      imageUrl: '',
+      additionalImages: [],
+      status: 'draft',
+      userId: 'test-user',
+      campaignId: campaignId || 'test-campaign',
+      socialPlatforms: ['telegram'],
+      createdAt: new Date(),
+      hashtags: [],
+      links: [],
+      metadata: {
+        video_url: videoUrl  // Используем поле video_url в метаданных
+      }
+    };
+    
+    // Отправляем тестовый контент в Telegram
+    const result = await telegramService.publishToTelegram(testContent, {
+      token: botToken,
+      chatId: chatId
+    });
+    
+    log(`[Test API] Результат отправки контента с видео: ${JSON.stringify(result)}`, 'test');
+    
+    // Возвращаем результат
+    return res.json({
+      success: true,
+      platform: result.platform,
+      status: result.status,
+      postUrl: result.postUrl,
+      data: result
+    });
+  } catch (error: any) {
+    log(`[Test API] Ошибка при отправке контента с видео в Telegram: ${error.message}`, 'test');
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Неизвестная ошибка'
+    });
+  }
+});
+
 export default testRouter;

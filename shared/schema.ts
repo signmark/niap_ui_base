@@ -2,6 +2,14 @@ import { pgTable, text, serial, integer, timestamp, boolean, jsonb, uuid, date }
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Тип для элемента медиа (изображения или видео)
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  title?: string;
+  description?: string;
+}
+
 // Таблица source_posts для хранения постов из источников
 export const sourcePosts = pgTable("source_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -152,6 +160,7 @@ export interface SocialPublication {
   platform: SocialPlatform;
   status: 'pending' | 'published' | 'failed';
   publishedAt: Date | null;
+  scheduledAt?: Date | string | null; // Добавляем время планирования для каждой платформы
   postId?: string | null;
   postUrl?: string | null;
   error?: string | null;
@@ -198,6 +207,7 @@ export const campaignContent = pgTable("campaign_content", {
   imageUrl: text("image_url"),
   additionalImages: text("additional_images").array(), // Массив URL-адресов дополнительных изображений (в БД - additional_images)
   videoUrl: text("video_url"),
+  additionalMedia: jsonb("additional_media"), // Структурированное хранение медиа-файлов различных типов
   prompt: text("prompt"),
   keywords: text("keywords").array(),
   hashtags: text("hashtags").array(), // Хэштеги для использования в социальных сетях
@@ -239,6 +249,7 @@ export const insertCampaignContentSchema = createInsertSchema(campaignContent)
     imageUrl: true,
     additionalImages: true,
     videoUrl: true,
+    additionalMedia: true,
     prompt: true,
     keywords: true,
     hashtags: true,

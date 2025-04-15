@@ -1545,8 +1545,22 @@ export class SocialPublishingService {
         }
       }
       
-      // Обновляем информацию о публикации
-      socialPlatforms[platformKey] = publicationResult;
+      // Сохраняем существующие данные платформы, если они есть
+      const existingPlatformData = socialPlatforms[platformKey] || {};
+      
+      // Объединяем существующие данные с новыми результатами публикации
+      // Важно: сохраняем scheduledAt и другие важные поля, которые могут быть в существующих данных
+      socialPlatforms[platformKey] = {
+        ...existingPlatformData,   // Сохраняем все существующие данные
+        ...publicationResult,      // Применяем новые данные
+        // Убедимся, что статус и дата публикации обновлены
+        status: publicationResult.status,
+        publishedAt: publicationResult.status === 'published' ? publicationResult.publishedAt : existingPlatformData.publishedAt,
+        // Сохраняем дату планирования, если она есть
+        scheduledAt: existingPlatformData.scheduledAt || publicationResult.scheduledAt
+      };
+      
+      log(`Объединены данные для платформы ${platformKey}. Исходные: ${JSON.stringify(existingPlatformData)}, Новые: ${JSON.stringify(publicationResult)}`, 'social-publishing');
       
       // Определяем общий статус публикации на основе статусов всех платформ
       const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
@@ -1628,11 +1642,100 @@ export class SocialPublishingService {
   private checkAllPlatformsPublished(socialPlatforms: Record<string, SocialPublication>): boolean {
     // Если нет информации о платформах, считаем, что не опубликовано
     if (!socialPlatforms || Object.keys(socialPlatforms).length === 0) {
+      log(`Нет информации о платформах, статус не может быть определен как published`, 'social-publishing');
       return false;
     }
     
-    // Проверяем, что на всех платформах статус 'published'
-    return Object.values(socialPlatforms).every(platform => platform.status === 'published');
+    // Подробно логируем все платформы для диагностики
+    const allPlatforms = Object.keys(socialPlatforms);
+    log(`Проверка статуса публикаций для ${allPlatforms.length} платформ: ${allPlatforms.join(', ')}`, 'social-publishing');
+    
+    // Группируем платформы по статусам для анализа
+    const platformsByStatus = {
+      published: [] as string[],  // Опубликованные
+      pending: [] as string[],    // Ожидающие публикации (статус pending)
+      failed: [] as string[],     // Не удалось опубликовать
+      scheduled: [] as string[]   // Запланированные на будущее время
+    };
+    
+    // Обрабатываем каждую платформу
+    Object.entries(socialPlatforms).forEach(([platformName, platformData]) => {
+      // Проверяем наличие даты планирования и статуса
+      const hasScheduledAt = !!platformData.scheduledAt;
+      const status = platformData.status || 'pending';  // По умолчанию pending, если статус не указан
+      
+      log(`Платформа ${platformName}: статус=${status}, scheduledAt=${hasScheduledAt ? new Date(platformData.scheduledAt!).toISOString() : 'не указано'}`, 'social-publishing');
+      
+      // Если статус published, добавляем в опубликованные и переходим к следующей
+      if (status === 'published') {
+        platformsByStatus.published.push(platformName);
+        return;
+      }
+      
+      // Если статус failed, добавляем в неудачные и переходим к следующей
+      if (status === 'failed') {
+        platformsByStatus.failed.push(platformName);
+        return;
+      }
+      
+      // Проверяем scheduledAt для pending платформ
+      if (hasScheduledAt) {
+        const scheduledTime = new Date(platformData.scheduledAt!);
+        const now = new Date();
+        
+        // Если время публикации в будущем, считаем запланированной
+        if (scheduledTime > now) {
+          const minutesLeft = Math.floor((scheduledTime.getTime() - now.getTime()) / (1000 * 60));
+          log(`Платформа ${platformName} запланирована на будущее время (через ${minutesLeft} мин.)`, 'social-publishing');
+          platformsByStatus.scheduled.push(platformName);
+        } else {
+          // Время наступило, но статус все еще pending - возможно, ожидает публикации в ближайшем цикле
+          log(`Платформа ${platformName} должна быть опубликована (время наступило ${scheduledTime.toISOString()})`, 'social-publishing');
+          platformsByStatus.pending.push(platformName);
+        }
+      } else {
+        // Нет данных о времени, но статус pending - считаем ожидающей публикации
+        log(`Платформа ${platformName} в статусе pending без указания времени публикации`, 'social-publishing');
+        platformsByStatus.pending.push(platformName);
+      }
+    });
+    
+    // Подробно логируем результаты группировки
+    log(`Статус платформ по группам:`, 'social-publishing');
+    log(`- Опубликовано: ${platformsByStatus.published.length} (${platformsByStatus.published.join(', ')})`, 'social-publishing');
+    log(`- Ожидают публикации: ${platformsByStatus.pending.length} (${platformsByStatus.pending.join(', ')})`, 'social-publishing');
+    log(`- Запланированы на будущее: ${platformsByStatus.scheduled.length} (${platformsByStatus.scheduled.join(', ')})`, 'social-publishing');
+    log(`- Не удалось опубликовать: ${platformsByStatus.failed.length} (${platformsByStatus.failed.join(', ')})`, 'social-publishing');
+    
+    // Изменяем на published, только если:
+    // 1. Есть хотя бы одна опубликованная платформа
+    // 2. Нет платформ, ожидающих публикации сейчас
+    // 3. Нет платформ, запланированных на будущее
+    const allPublished = (
+      platformsByStatus.published.length > 0 && 
+      platformsByStatus.pending.length === 0 &&
+      platformsByStatus.scheduled.length === 0
+    );
+    
+    if (allPublished) {
+      log(`Все активные платформы опубликованы, итоговый статус: published`, 'social-publishing');
+    } else {
+      // Детально объясняем, почему не считаем опубликованным
+      const reasons = [];
+      if (platformsByStatus.published.length === 0) {
+        reasons.push('нет ни одной опубликованной платформы');
+      }
+      if (platformsByStatus.pending.length > 0) {
+        reasons.push(`${platformsByStatus.pending.length} платформ ожидают публикации (${platformsByStatus.pending.join(', ')})`);
+      }
+      if (platformsByStatus.scheduled.length > 0) {
+        reasons.push(`${platformsByStatus.scheduled.length} платформ запланированы на будущее (${platformsByStatus.scheduled.join(', ')})`);
+      }
+      
+      log(`Итоговый статус: scheduled - причины: ${reasons.join('; ')}`, 'social-publishing');
+    }
+    
+    return allPublished;
   }
 
   /**

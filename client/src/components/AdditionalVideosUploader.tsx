@@ -59,8 +59,8 @@ export function AdditionalVideosUploader({
         <div className="space-y-3">
           {videos.map((videoUrl, index) => (
             <div key={index} className="flex flex-col gap-1">
-              <div className="flex gap-2 items-start">
-                <div className="flex-1 w-full">
+              <div className="flex items-start">
+                <div className="flex-1">
                   <VideoUploader
                     id={`additional-video-${index}`}
                     value={videoUrl}
@@ -73,9 +73,11 @@ export function AdditionalVideosUploader({
                   type="button" 
                   variant="outline" 
                   size="icon"
-                  className="h-9 w-9 mt-1"
+                  className="h-9 w-9 mt-1 ml-2 flex-none"
                   onClick={() => handleRemoveVideo(index)}
+                  aria-label="Удалить видео"
                 >
+                  <span className="sr-only">Удалить</span>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

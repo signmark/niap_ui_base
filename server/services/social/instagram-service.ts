@@ -96,15 +96,34 @@ export class InstagramService extends BaseSocialService {
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
-      // Проверяем наличие изображения (для Instagram обязательно)
-      if (!imgurContent.imageUrl) {
-        log(`[Instagram] Ошибка публикации: отсутствует основное изображение`, 'instagram');
+      // Проверяем наличие медиа-контента (для Instagram обязательно)
+      const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+      
+      if (!isVideo && !imgurContent.imageUrl) {
+        log(`[Instagram] Ошибка публикации: отсутствует медиа-контент (изображение или видео)`, 'instagram');
         return {
           platform: 'instagram',
           status: 'failed',
           publishedAt: null,
-          error: 'Отсутствует изображение для публикации в Instagram. Необходимо добавить изображение.'
+          error: 'Отсутствует медиа-контент для публикации в Instagram. Необходимо добавить изображение или видео.'
         };
+      }
+      
+      // Проверяем, есть ли видео URL при типе контента video/video-text
+      if (isVideo && !content.videoUrl) {
+        log(`[Instagram] Ошибка публикации: тип контента указан как видео, но URL видео отсутствует`, 'instagram');
+        
+        // Если нет видео, но есть изображение, продолжаем с публикацией изображения
+        if (imgurContent.imageUrl) {
+          log(`[Instagram] Найдено резервное изображение, продолжаем с ним вместо видео`, 'instagram');
+        } else {
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            publishedAt: null,
+            error: 'Для публикации видео в Instagram необходимо указать URL видео.'
+          };
+        }
       }
       
       // Подготавливаем текст для отправки
@@ -143,23 +162,87 @@ export class InstagramService extends BaseSocialService {
         // Формируем URL запроса для создания контейнера
         const containerUrl = `${baseUrl}/${businessAccountId}/media`;
         
-        // Подготавливаем параметры запроса
-        const containerParams = {
-          image_url: imgurContent.imageUrl,
+        // Проверяем тип контента для определения правильного метода публикации (изображение или видео)
+        const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+        
+        // Подготавливаем параметры запроса в зависимости от типа контента
+        let containerParams: any = {
           caption: caption,
           access_token: token
         };
         
-        // Отправляем запрос на создание контейнера
-        log(`[Instagram] Отправка запроса на создание контейнера с URL изображения: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
-        const containerResponse = await axios.post(
-          containerUrl, 
-          containerParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
+        // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
+        if (isVideo && content.videoUrl) {
+          log(`[Instagram] Обнаружено видео для публикации: ${content.videoUrl.substring(0, 50)}...`, 'instagram');
+          containerParams.video_url = content.videoUrl;
+          containerParams.media_type = 'VIDEO';
+        } else {
+          // Если это не видео или видео отсутствует, используем изображение
+          log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
+          containerParams.image_url = imgurContent.imageUrl;
+        }
+        
+        // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
+        log(`[Instagram] Отправка запроса на создание контейнера для ${isVideo ? 'видео' : 'изображения'}`, 'instagram');
+        
+        try {
+          const containerResponse = await axios.post(
+            containerUrl, 
+            containerParams, 
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: isVideo ? 120000 : 60000 // Увеличенный таймаут для видео (2 минуты)
+            }
+          );
+          
+          log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
+          
+          // Проверка на наличие содержательного ответа
+          if (!containerResponse.data) {
+            throw new Error('Получен пустой ответ от Instagram API при создании контейнера');
           }
-        );
+          
+          // Проверяем успешность создания контейнера
+          if (!containerResponse.data.id) {
+            // Пытаемся найти описание ошибки в ответе
+            const errorMsg = containerResponse.data.error ? 
+              `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
+              'Неизвестная ошибка при создании контейнера';
+            
+            throw new Error(errorMsg);
+          }
+          
+          return containerResponse;
+        } catch (error: any) {
+          log(`[Instagram] Ошибка при создании контейнера: ${error.message}`, 'instagram');
+          
+          // Если ошибка связана с видео, пробуем загрузить изображение вместо него
+          if (isVideo && imgurContent.imageUrl) {
+            log(`[Instagram] Попытка создать контейнер с изображением вместо видео`, 'instagram');
+            
+            // Изменяем параметры запроса на изображение
+            containerParams.video_url = undefined;
+            containerParams.media_type = undefined;
+            containerParams.image_url = imgurContent.imageUrl;
+            
+            // Повторно отправляем запрос с изображением
+            const fallbackResponse = await axios.post(
+              containerUrl, 
+              containerParams, 
+              {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 60000
+              }
+            );
+            
+            log(`[Instagram] Ответ API при резервной загрузке изображения: ${JSON.stringify(fallbackResponse.data)}`, 'instagram');
+            
+            return fallbackResponse;
+          }
+          
+          // Если это не видео или нет резервного изображения, прокидываем ошибку дальше
+          throw error;
+        }
         
         log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
         
