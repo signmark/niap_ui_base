@@ -45,7 +45,8 @@ RUN ffmpeg -version
 COPY . .
 
 # Проверяем доступность AWS SDK
-RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK:', e); process.exit(1); }"
+RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK client-s3:', e); process.exit(1); }"
+RUN node -e "try { require('@aws-sdk/lib-storage'); console.log('AWS SDK lib-storage доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK lib-storage:', e); process.exit(1); }"
 
 # Экспортируем порт для приложения
 EXPOSE 5000

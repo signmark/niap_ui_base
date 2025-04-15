@@ -100,9 +100,23 @@ docker exec -i $CONTAINER_ID npm install @aws-sdk/client-s3 @aws-sdk/s3-request-
 # Проверка установки
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Пакеты AWS SDK успешно установлены${NC}"
-    echo -e "${YELLOW}Перезапуск контейнера smm...${NC}"
-    docker restart $CONTAINER_ID
-    echo -e "${GREEN}Деплой успешно завершен!${NC}"
+    
+    # Дополнительная проверка доступности модуля lib-storage
+    echo -e "${YELLOW}Проверка доступности модуля @aws-sdk/lib-storage...${NC}"
+    docker exec -i $CONTAINER_ID node -e "try { require('@aws-sdk/lib-storage'); console.log('AWS SDK lib-storage успешно импортирован'); } catch (e) { console.error('Ошибка импорта lib-storage:', e); process.exit(1); }"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Модуль @aws-sdk/lib-storage успешно импортирован${NC}"
+        echo -e "${YELLOW}Перезапуск контейнера smm...${NC}"
+        docker restart $CONTAINER_ID
+        echo -e "${GREEN}Деплой успешно завершен!${NC}"
+    else
+        echo -e "${RED}Ошибка при импорте модуля @aws-sdk/lib-storage${NC}"
+        echo -e "${YELLOW}Попытка повторной установки...${NC}"
+        docker exec -i $CONTAINER_ID npm install @aws-sdk/lib-storage --save
+        docker restart $CONTAINER_ID
+        echo -e "${GREEN}Контейнер перезапущен после повторной установки ${NC}"
+    fi
 else
     echo -e "${RED}Ошибка при установке пакетов AWS SDK${NC}"
     echo -e "${YELLOW}Проверьте логи контейнера: docker logs root-smm-1${NC}"
