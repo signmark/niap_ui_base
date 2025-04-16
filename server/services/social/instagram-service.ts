@@ -73,6 +73,19 @@ export class InstagramService extends BaseSocialService {
     instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null }
   ): Promise<SocialPublication> {
     try {
+      // РАСШИРЕННОЕ ЛОГИРОВАНИЕ ПРИ ОТЛАДКЕ INSTAGRAM
+      log(`[Instagram DEBUG] Начало попытки публикации в Instagram для контента ID: ${content.id}`, 'instagram');
+      log(`[Instagram DEBUG] Параметры запроса: Token длина: ${instagramSettings.token ? instagramSettings.token.length : 0}, Business Account ID: ${instagramSettings.businessAccountId}`, 'instagram');
+      
+      try {
+        // Выводим текущие данные социальных платформ
+        if (content.socialPlatforms && content.socialPlatforms.instagram) {
+          log(`[Instagram DEBUG] Текущие данные платформы Instagram: ${JSON.stringify(content.socialPlatforms.instagram)}`, 'instagram');
+        }
+      } catch (logError) {
+        log(`[Instagram DEBUG] Ошибка при логировании данных платформы: ${logError}`, 'instagram');
+      }
+      
       // Проверяем наличие необходимых параметров
       if (!instagramSettings.token || !instagramSettings.businessAccountId) {
         log(`Ошибка публикации в Instagram: отсутствуют настройки. Token: ${instagramSettings.token ? 'задан' : 'отсутствует'}, Business Account ID: ${instagramSettings.businessAccountId ? 'задан' : 'отсутствует'}`, 'instagram');
@@ -185,8 +198,11 @@ export class InstagramService extends BaseSocialService {
         // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
         log(`[Instagram] Отправка запроса на создание контейнера для ${isVideo ? 'видео' : 'изображения'}`, 'instagram');
         
+        let containerResponse;
+        
         try {
-          const containerResponse = await axios.post(
+          // Отправка запроса на создание контейнера
+          containerResponse = await axios.post(
             containerUrl, 
             containerParams, 
             {
@@ -212,7 +228,7 @@ export class InstagramService extends BaseSocialService {
             throw new Error(errorMsg);
           }
           
-          return containerResponse;
+          // ИСПРАВЛЕНО: Удален оператор return containerResponse, который прерывал выполнение функции
         } catch (error: any) {
           log(`[Instagram] Ошибка при создании контейнера: ${error.message}`, 'instagram');
           
@@ -220,39 +236,41 @@ export class InstagramService extends BaseSocialService {
           if (isVideo && imgurContent.imageUrl) {
             log(`[Instagram] Попытка создать контейнер с изображением вместо видео`, 'instagram');
             
-            // Изменяем параметры запроса на изображение
-            containerParams.video_url = undefined;
-            containerParams.media_type = undefined;
-            containerParams.image_url = imgurContent.imageUrl;
-            
-            // Повторно отправляем запрос с изображением
-            const fallbackResponse = await axios.post(
-              containerUrl, 
-              containerParams, 
-              {
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 60000
-              }
-            );
-            
-            log(`[Instagram] Ответ API при резервной загрузке изображения: ${JSON.stringify(fallbackResponse.data)}`, 'instagram');
-            
-            return fallbackResponse;
+            try {
+              // Изменяем параметры запроса на изображение
+              containerParams.video_url = undefined;
+              containerParams.media_type = undefined;
+              containerParams.image_url = imgurContent.imageUrl;
+              
+              // Повторно отправляем запрос с изображением
+              containerResponse = await axios.post(
+                containerUrl, 
+                containerParams, 
+                {
+                  headers: { 'Content-Type': 'application/json' },
+                  timeout: 60000
+                }
+              );
+              
+              log(`[Instagram] Ответ API при резервной загрузке изображения: ${JSON.stringify(containerResponse.data)}`, 'instagram');
+              
+              // ИСПРАВЛЕНО: Удален оператор return fallbackResponse, который прерывал выполнение функции
+            } catch (fallbackError) {
+              log(`[Instagram] Ошибка при резервной загрузке изображения: ${fallbackError.message}`, 'instagram');
+              throw fallbackError;
+            }
+          } else {
+            // Если это не видео или нет резервного изображения, прокидываем ошибку дальше
+            throw error;
           }
-          
-          // Если это не видео или нет резервного изображения, прокидываем ошибку дальше
-          throw error;
         }
         
-        log(`[Instagram] Ответ API (создание контейнера): ${JSON.stringify(containerResponse.data)}`, 'instagram');
-        
+        // ИСПРАВЛЕНО: Этот блок теперь доступен, так как нет преждевременного return
         // Проверяем успешность создания контейнера
-        if (!containerResponse.data || !containerResponse.data.id) {
-          const errorMsg = containerResponse.data.error ? 
-            `${containerResponse.data.error.code}: ${containerResponse.data.error.message}` : 
-            'Неизвестная ошибка при создании контейнера';
+        if (!containerResponse || !containerResponse.data || !containerResponse.data.id) {
+          const errorMsg = 'Не удалось создать контейнер для публикации в Instagram';
           
-          log(`[Instagram] Ошибка при создании контейнера: ${errorMsg}`, 'instagram');
+          log(`[Instagram] ${errorMsg}`, 'instagram');
           
           return {
             platform: 'instagram',
