@@ -1,0 +1,36 @@
+{
+  "data": {
+    "id": "02bc0dc0-4a3d-4926-adbc-260f8ac2f3fd",
+    "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e",
+    "userId": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "title": "Персональные сбалансированные рационы: секреты успеха",
+    "content": "<p>Как создать идеальный рацион, учитывающий 85 факторов? НИАП раскрывает секреты персонализации питания для ваших клиентов. Попробуйте наш сервис и убедитесь сами!</p>",
+    "contentType": "text-image",
+    "imageUrl": "https://i.ibb.co/TB73Yp7c/1744800900508-608666989-e8-R6ii1-E90-Qiz-QAhyucx-Q.jpg",
+    "videoUrl": null,
+    "prompt": null,
+    "keywords": [
+      "персональные рационы",
+      "сбалансированное питание",
+      "диетология"
+    ],
+    "hashtags": [],
+    "links": [],
+    "createdAt": "2025-04-16T11:49:05",
+    "scheduledAt": null,
+    "publishedAt": null,
+    "status": "draft",
+    "socialPlatforms": {
+      "vk": {
+        "status": "pending"
+      },
+      "telegram": {
+        "status": "pending"
+      },
+      "instagram": {
+        "status": "pending"
+      }
+    },
+    "metadata": {}
+  }
+}
