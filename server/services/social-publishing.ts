@@ -1520,11 +1520,14 @@ export class SocialPublishingService {
         }
       }
       
-      // Обновляем информацию о платформе
+      // Обновляем информацию только для конкретной платформы, сохраняя данные других платформ
       // platform может быть строкой или объектом, обрабатываем оба случая
       const platformKey = typeof platform === 'string' ? platform : (platform as any).toString();
       log(`Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
       log(`Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      
+      // Сохраняем и логируем данные о всех платформах перед обновлением
+      log(`Все платформы до обновления: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
       
       // Проверяем наличие URL-а в publicationResult
       if (!publicationResult.postUrl && content.socialPlatforms) {
@@ -1545,10 +1548,12 @@ export class SocialPublishingService {
         }
       }
       
+      // !!! ВАЖНО: Не изменяем существующий объект socialPlatforms целиком, а обновляем только данные для конкретной платформы
+      
       // Сохраняем существующие данные платформы, если они есть
       const existingPlatformData = socialPlatforms[platformKey] || {};
       
-      // Объединяем существующие данные с новыми результатами публикации
+      // Объединяем существующие данные с новыми результатами публикации только для текущей платформы
       // Важно: сохраняем scheduledAt и другие важные поля, которые могут быть в существующих данных
       socialPlatforms[platformKey] = {
         ...existingPlatformData,   // Сохраняем все существующие данные
@@ -1559,6 +1564,9 @@ export class SocialPublishingService {
         // Сохраняем дату планирования, если она есть
         scheduledAt: existingPlatformData.scheduledAt || publicationResult.scheduledAt
       };
+      
+      // Логируем обновленные данные платформы
+      log(`Обновлена информация для платформы ${platformKey}: ${JSON.stringify(socialPlatforms[platformKey])}`, 'social-publishing');
       
       log(`Объединены данные для платформы ${platformKey}. Исходные: ${JSON.stringify(existingPlatformData)}, Новые: ${JSON.stringify(publicationResult)}`, 'social-publishing');
       
