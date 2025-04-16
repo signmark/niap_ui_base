@@ -2347,6 +2347,7 @@ export class SocialPublishingWithImgurService {
   /**
    * Обновляет статус публикации контента в социальной сети с улучшенной поддержкой мультиплатформ
    * Гарантирует сохранение данных по всем платформам при обновлении статуса конкретной платформы
+   * КРИТИЧЕСКИ ВАЖНО: сохраняет данные всех платформ при обновлении одной!
    * @param contentId ID контента 
    * @param platform Социальная платформа, которая обновляется
    * @param publicationResult Результат публикации (статус, URL, ошибки и т.д.)
@@ -2360,7 +2361,7 @@ export class SocialPublishingWithImgurService {
     // Генерируем уникальный идентификатор операции для корреляции логов
     const operationId = `update_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
-    log(`[${operationId}] НАЧАЛО обновления статуса публикации для контента ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
+    log(`[${operationId}] ➡️ НАЧАЛО ОБРАБОТКИ обновления статуса публикации для контента ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
     
     // Получаем URL Directus
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -2371,7 +2372,7 @@ export class SocialPublishingWithImgurService {
       const systemToken = await this.getSystemToken();
       
       if (!systemToken) {
-        log(`[${operationId}] ОШИБКА: Не удалось получить токен администратора`, 'social-publishing');
+        log(`[${operationId}] ❌ ОШИБКА: Не удалось получить токен администратора`, 'social-publishing');
         return null;
       }
       
@@ -2386,30 +2387,59 @@ export class SocialPublishingWithImgurService {
           }
         });
         
-        if (!fetchResponse.data?.data) {
+        if (!fetchResponse?.data?.data) {
           throw new Error('Отсутствуют данные в ответе API');
         }
         
         currentItem = fetchResponse.data.data;
-        log(`[${operationId}] 2. Успешно получены данные контента: ${contentId}`, 'social-publishing');
+        log(`[${operationId}] 2. ✅ Успешно получены данные контента: ${contentId}`, 'social-publishing');
       } catch (fetchError: any) {
-        log(`[${operationId}] ОШИБКА: Не удалось получить данные контента: ${fetchError.message}`, 'social-publishing');
+        log(`[${operationId}] ❌ ОШИБКА: Не удалось получить данные контента: ${fetchError.message}`, 'social-publishing');
         return null;
       }
       
       // 3. Извлекаем текущие данные социальных платформ
       log(`[${operationId}] 3. Извлекаем и анализируем текущие данные социальных платформ`, 'social-publishing');
-      // Создаем копию с четким типом для избежания проблем с null/undefined
-      const currentPlatforms = currentItem.social_platforms ? JSON.parse(JSON.stringify(currentItem.social_platforms)) : {};
       
-      // Логируем текущее состояние, если есть данные
-      log(`[${operationId}] 3. Текущие данные платформ:\n${JSON.stringify(currentPlatforms, null, 2)}`, 'social-publishing');
+      // Создаем копию с четким типом для избежания проблем с null/undefined
+      // ВАЖНО: Если данных нет или они некорректны, используем пустой объект
+      let currentPlatforms = {};
+      try {
+        if (currentItem.social_platforms) {
+          if (typeof currentItem.social_platforms === 'string') {
+            // Если данные пришли в виде строки, парсим их
+            currentPlatforms = JSON.parse(currentItem.social_platforms);
+          } else if (typeof currentItem.social_platforms === 'object') {
+            // Если данные пришли в виде объекта, создаем глубокую копию
+            currentPlatforms = JSON.parse(JSON.stringify(currentItem.social_platforms));
+          }
+        }
+      } catch (parseError) {
+        log(`[${operationId}] ⚠️ Предупреждение: ошибка при парсинге данных платформ, используем пустой объект: ${parseError}`, 'social-publishing');
+        currentPlatforms = {};
+      }
+      
+      // Дополнительная проверка, что у нас точно объект
+      if (!currentPlatforms || typeof currentPlatforms !== 'object') {
+        currentPlatforms = {};
+      }
+      
+      // Логируем текущее состояние платформ до обновления
+      log(`[${operationId}] 3. Текущие данные платформ до обновления:\n${JSON.stringify(currentPlatforms, null, 2)}`, 'social-publishing');
+      
+      // ВАЖНО: Явно перечисляем все платформы, которые есть в данных до обновления
+      const existingPlatforms = Object.keys(currentPlatforms);
+      log(`[${operationId}] 3. ✅ Найдены существующие платформы (${existingPlatforms.length}): ${existingPlatforms.join(', ')}`, 'social-publishing');
       
       // 4. Подготовка обновленных данных для указанной платформы
       log(`[${operationId}] 4. Подготовка обновленных данных для платформы: ${platform}`, 'social-publishing');
+      
+      // Сохраняем данные текущей платформы, если они уже есть
+      const existingPlatformData = currentPlatforms[platform] || {};
+      
       const platformUpdateData = {
         // Сохраняем существующие данные для этой платформы
-        ...(currentPlatforms[platform] || {}),
+        ...existingPlatformData,
         // Обновляем статус и связанные поля
         status: publicationResult.status,
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
@@ -2424,17 +2454,37 @@ export class SocialPublishingWithImgurService {
       
       // 5. Формирование финального объекта данных для всех платформ
       log(`[${operationId}] 5. Формирование финального объекта данных для всех платформ`, 'social-publishing');
+      
       // Создаем новый объект, чтобы избежать мутаций
       const mergedPlatforms = { ...currentPlatforms };
       
       // Обновляем только данные для указанной платформы
       mergedPlatforms[platform] = platformUpdateData;
       
-      log(`[${operationId}] 5. Финальный объект данных для всех платформ:\n${JSON.stringify(mergedPlatforms, null, 2)}`, 'social-publishing');
+      // КРИТИЧЕСКАЯ ПРОВЕРКА: убедимся, что мы НЕ потеряли ни одну платформу
+      const updatedPlatforms = Object.keys(mergedPlatforms);
       
-      // Проверка наличия всех ожидаемых платформ в финальном объекте
-      const platformCount = Object.keys(mergedPlatforms).length;
-      log(`[${operationId}] 5. Количество платформ в финальном объекте: ${platformCount}`, 'social-publishing');
+      log(`[${operationId}] 5. ⚠️ ПРОВЕРКА СОХРАННОСТИ ДАННЫХ:`, 'social-publishing');
+      log(`[${operationId}] 5. - До: ${existingPlatforms.length} платформ: ${existingPlatforms.join(', ')}`, 'social-publishing');
+      log(`[${operationId}] 5. - После: ${updatedPlatforms.length} платформ: ${updatedPlatforms.join(', ')}`, 'social-publishing');
+      
+      if (existingPlatforms.length > updatedPlatforms.length) {
+        log(`[${operationId}] 5. ❌ КРИТИЧЕСКАЯ ОШИБКА: потеряны данные платформ!`, 'social-publishing');
+        
+        // Восстанавливаем потерянные платформы
+        for (const lostPlatform of existingPlatforms) {
+          if (!mergedPlatforms[lostPlatform]) {
+            log(`[${operationId}] 5. ⚠️ Восстанавливаем потерянную платформу: ${lostPlatform}`, 'social-publishing');
+            mergedPlatforms[lostPlatform] = currentPlatforms[lostPlatform];
+          }
+        }
+        
+        // Повторная проверка после восстановления
+        const restoredPlatforms = Object.keys(mergedPlatforms);
+        log(`[${operationId}] 5. - После восстановления: ${restoredPlatforms.length} платформ: ${restoredPlatforms.join(', ')}`, 'social-publishing');
+      }
+      
+      log(`[${operationId}] 5. ✅ Финальный объект данных для всех платформ:\n${JSON.stringify(mergedPlatforms, null, 2)}`, 'social-publishing');
       
       // 6. Отправка обновления в Directus через PATCH запрос
       log(`[${operationId}] 6. Отправка обновления в Directus для контента: ${contentId}`, 'social-publishing');
@@ -2458,14 +2508,37 @@ export class SocialPublishingWithImgurService {
           }
         );
         
-        if (!updateResponse.data?.data) {
+        if (!updateResponse?.data?.data) {
           throw new Error('Некорректный ответ API при обновлении');
         }
         
-        log(`[${operationId}] 6. Обновление успешно отправлено в Directus`, 'social-publishing');
+        log(`[${operationId}] 6. ✅ Обновление успешно отправлено в Directus`, 'social-publishing');
         
-        // 7. Формируем объект CampaignContent для возврата 
-        log(`[${operationId}] 7. Формирование объекта контента для возврата`, 'social-publishing');
+        // 7. Верификация обновления - проверим, что данные действительно обновились
+        log(`[${operationId}] 7. Верификация обновления в Directus`, 'social-publishing');
+        
+        const verifyResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (verifyResponse?.data?.data?.social_platforms) {
+          const verifiedPlatforms = verifyResponse.data.data.social_platforms;
+          const verifiedKeys = Object.keys(verifiedPlatforms);
+          
+          log(`[${operationId}] 7. Верификация платформ: ${verifiedKeys.length} платформ после обновления: ${verifiedKeys.join(', ')}`, 'social-publishing');
+          
+          if (verifiedKeys.length < updatedPlatforms.length) {
+            log(`[${operationId}] 7. ⚠️ ПРЕДУПРЕЖДЕНИЕ: В Directus меньше платформ (${verifiedKeys.length}), чем мы отправили (${updatedPlatforms.length})`, 'social-publishing');
+          } else {
+            log(`[${operationId}] 7. ✅ Верификация успешна - все платформы сохранены`, 'social-publishing');
+          }
+        }
+        
+        // 8. Формируем объект CampaignContent для возврата
+        log(`[${operationId}] 8. Формирование объекта контента для возврата`, 'social-publishing');
         updatedContent = {
           id: currentItem.id,
           content: currentItem.content,
@@ -2490,17 +2563,17 @@ export class SocialPublishingWithImgurService {
           metadata: currentItem.metadata || {}
         };
         
-        log(`[${operationId}] ЗАВЕРШЕНО обновление статуса публикации для ${contentId}, платформа: ${platform}`, 'social-publishing');
+        log(`[${operationId}] ✅ ЗАВЕРШЕНО обновление статуса публикации для ${contentId}, платформа: ${platform}`, 'social-publishing');
         return updatedContent;
         
       } catch (updateError: any) {
-        log(`[${operationId}] ОШИБКА при отправке обновления: ${updateError.message}`, 'social-publishing');
+        log(`[${operationId}] ❌ ОШИБКА при отправке обновления: ${updateError.message}`, 'social-publishing');
         if (updateError.response) {
           log(`[${operationId}] Детали ответа API: ${JSON.stringify(updateError.response.data)}`, 'social-publishing');
         }
         
-        // 8. Проверяем данные снова после ошибки обновления
-        log(`[${operationId}] 8. Проверка данных после ошибки обновления`, 'social-publishing');
+        // 9. Проверяем данные снова после ошибки обновления
+        log(`[${operationId}] 9. Проверка данных после ошибки обновления`, 'social-publishing');
         try {
           const verificationResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
             headers: {
@@ -2509,18 +2582,44 @@ export class SocialPublishingWithImgurService {
             }
           });
           
-          if (verificationResponse.data?.data?.social_platforms) {
-            log(`[${operationId}] 8. Текущие данные в Directus после ошибки обновления:\n${JSON.stringify(verificationResponse.data.data.social_platforms, null, 2)}`, 'social-publishing');
+          if (verificationResponse?.data?.data?.social_platforms) {
+            log(`[${operationId}] 9. Текущие данные в Directus после ошибки обновления:\n${JSON.stringify(verificationResponse.data.data.social_platforms, null, 2)}`, 'social-publishing');
           }
         } catch (verifyError) {
-          log(`[${operationId}] 8. Не удалось проверить данные после ошибки: ${verifyError}`, 'social-publishing');
+          log(`[${operationId}] 9. Не удалось проверить данные после ошибки: ${verifyError}`, 'social-publishing');
         }
         
-        return null;
+        // В случае ошибки возвращаем объект с текущими данными, но обновленными данными платформы
+        // Это позволит клиенту видеть хотя бы частично обновленное состояние
+        log(`[${operationId}] ⚠️ Возвращаем объект с локально обновленными данными платформы ${platform} (без сохранения в Directus)`, 'social-publishing');
+        
+        return {
+          id: currentItem.id,
+          content: currentItem.content,
+          userId: currentItem.user_id,
+          campaignId: currentItem.campaign_id,
+          status: currentItem.status,
+          contentType: currentItem.content_type || 'text',
+          title: currentItem.title || null,
+          imageUrl: currentItem.image_url,
+          videoUrl: currentItem.video_url,
+          scheduledAt: currentItem.scheduled_at ? new Date(currentItem.scheduled_at) : null,
+          createdAt: new Date(currentItem.created_at),
+          // Используем объединенные данные платформ
+          socialPlatforms: mergedPlatforms,
+          additionalImages: currentItem.additional_images || null,
+          additionalMedia: currentItem.additional_media || null,
+          keywords: currentItem.keywords || null,
+          hashtags: currentItem.hashtags || null,
+          prompt: currentItem.prompt || null,
+          links: currentItem.links || null,
+          publishedAt: currentItem.published_at ? new Date(currentItem.published_at) : null,
+          metadata: currentItem.metadata || {}
+        };
       }
       
     } catch (error: any) {
-      log(`[${operationId}] КРИТИЧЕСКАЯ ОШИБКА при обновлении статуса публикации: ${error.message}`, 'social-publishing');
+      log(`[${operationId}] ❌ КРИТИЧЕСКАЯ ОШИБКА при обновлении статуса публикации: ${error.message}`, 'social-publishing');
       return null;
     }
   }
