@@ -1944,16 +1944,17 @@ export class SocialPublishingWithImgurService {
       const attachments: string[] = [];
       
       // Обработка видео, если оно есть (приоритет перед изображениями)
-      if (processedContent.videoUrl) {
+      // Используем переменную videoUrl из улучшенной проверки выше
+      if (hasVideo && videoUrl) {
         try {
           // Логируем наличие видео для публикации
-          log(`Обнаружено видео для публикации в ВК: ${processedContent.videoUrl}`, 'social-publishing');
+          log(`Обнаружено видео для публикации в ВК: ${videoUrl}`, 'social-publishing');
           
           // Загружаем видео в ВКонтакте
           const videoAttachment = await this.uploadVideoToVk(
             token,
             groupId,
-            processedContent.videoUrl,
+            videoUrl,
             processedContent.title || 'Видео'
           );
           
