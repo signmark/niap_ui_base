@@ -2,6 +2,8 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Сервис для публикации контента в Instagram
@@ -198,23 +200,29 @@ export class InstagramService extends BaseSocialService {
         // Используем обновленную переменную isVideo из улучшенной проверки выше
         
         // Подготавливаем параметры запроса в зависимости от типа контента
-        let containerParams: any = {
-          caption: caption,
-          access_token: token
-        };
+        // ВАЖНО: Для Instagram API требуется параметр media_type напрямую в теле запроса, а не в query params
+        let containerParams: any = {};
         
         // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
         if (isVideo && videoUrl) {
           log(`[Instagram] Обнаружено видео для публикации: ${videoUrl.substring(0, 50)}...`, 'instagram');
-          containerParams.video_url = videoUrl;
-          containerParams.media_type = 'VIDEO';
+          containerParams = {
+            caption: caption,
+            video_url: videoUrl,
+            media_type: 'VIDEO' // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+          };
         } else {
           // Если это не видео или видео отсутствует, используем изображение
           log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl?.substring(0, 50)}...`, 'instagram');
-          containerParams.image_url = imgurContent.imageUrl;
-          // Важно: явно указываем тип медиа для Instagram
-          containerParams.media_type = 'IMAGE';
+          containerParams = {
+            caption: caption,
+            image_url: imgurContent.imageUrl,
+            media_type: 'IMAGE' // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+          };
         }
+        
+        // Логируем тело запроса для отладки
+        log(`[Instagram] Параметры запроса на создание контейнера: ${JSON.stringify(containerParams)}`, 'instagram');
         
         // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
         log(`[Instagram] Отправка запроса на создание контейнера для ${isVideo ? 'видео' : 'изображения'}`, 'instagram');
@@ -258,10 +266,12 @@ export class InstagramService extends BaseSocialService {
             log(`[Instagram] Попытка создать контейнер с изображением вместо видео`, 'instagram');
             
             try {
-              // Изменяем параметры запроса на изображение
-              containerParams.video_url = undefined;
-              containerParams.media_type = undefined;
-              containerParams.image_url = imgurContent.imageUrl;
+              // Изменяем параметры запроса на изображение - создаем новый объект
+              containerParams = {
+                caption: caption,
+                image_url: imgurContent.imageUrl,
+                media_type: 'IMAGE'  // ВАЖНО: Явно указываем тип медиа для Instagram
+              };
               
               // Повторно отправляем запрос с изображением
               containerResponse = await axios.post(
