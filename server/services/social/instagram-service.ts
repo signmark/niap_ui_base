@@ -402,8 +402,13 @@ export class InstagramService extends BaseSocialService {
         }
         
         // Записываем postUrl и для использования через "Опубликовать сейчас"
-        fs.mkdir('/home/runner/workspace/logs/instagram', { recursive: true }, (err) => {
-          if (err) log(`[Instagram] Ошибка создания директории логов: ${err.message}`, 'instagram');
+        try {
+          // Создаем директорию логов синхронно
+          const logDir = '/home/runner/workspace/logs/instagram';
+          if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+            log(`[Instagram] Создана директория логов: ${logDir}`, 'instagram');
+          }
           
           const logData = {
             publishedAt: new Date().toISOString(),
@@ -412,15 +417,19 @@ export class InstagramService extends BaseSocialService {
             permalink: postUrl
           };
           
-          fs.writeFile(
-            `/home/runner/workspace/logs/instagram/post_${content.id.substring(0, 8)}_${Date.now()}.json`, 
+          // Используем синхронную запись для упрощения обработки ошибок
+          const logFilePath = `${logDir}/post_${content.id.substring(0, 8)}_${Date.now()}.json`;
+          fs.writeFileSync(
+            logFilePath, 
             JSON.stringify(logData, null, 2), 
-            'utf8', 
-            (writeErr) => {
-              if (writeErr) log(`[Instagram] Ошибка записи лога: ${writeErr.message}`, 'instagram');
-            }
+            'utf8'
           );
-        });
+          
+          log(`[Instagram] Сохранен лог успешной публикации: ${logFilePath}`, 'instagram');
+        } catch (logError) {
+          // Ошибка логирования не должна прерывать успешную публикацию
+          log(`[Instagram] Ошибка сохранения лога: ${logError.message}`, 'instagram');
+        }
         
         log(`[Instagram] Публикация успешно завершена!`, 'instagram');
         
