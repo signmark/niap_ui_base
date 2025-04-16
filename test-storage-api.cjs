@@ -9,10 +9,35 @@ const contentId = process.argv[2] || '8186b9ef-b290-4cad-970e-c39b8afda63e';
 const platform = process.argv[3] || 'instagram';
 const testUrl = `https://${platform}.com/p/test_${Date.now()}`;
 
+// Учетные данные
+const userEmail = process.env.TEST_USER_EMAIL || 'lbrspb@gmail.com';
+const userPassword = process.env.TEST_USER_PASSWORD || 'smm789hf3';
+
 // Функция для логирования
 function log(message) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${message}`);
+}
+
+// Функция для авторизации
+async function login() {
+  log('Авторизация в системе...');
+  try {
+    const loginResponse = await axios.post(`${apiUrl}/api/auth/login`, {
+      email: userEmail,
+      password: userPassword
+    });
+    
+    if (loginResponse?.data?.token) {
+      log('✅ Авторизация успешна');
+      return loginResponse.data.token;
+    } else {
+      throw new Error('Ответ сервера не содержит токен');
+    }
+  } catch (error) {
+    log(`❌ Ошибка авторизации: ${error.message}`);
+    throw error;
+  }
 }
 
 // Основная функция тестирования
@@ -23,9 +48,16 @@ async function testStorageAPI() {
   log(`Тестовый URL: ${testUrl}`);
   
   try {
+    // 0. Авторизация
+    const token = await login();
+    const authHeaders = { Authorization: `Bearer ${token}` };
+    
     // 1. Получение текущего контента через API
     log('\n1. Получение текущего контента...');
-    const contentResponse = await axios.get(`${apiUrl}/api/campaign-content/${contentId}`);
+    const contentResponse = await axios.get(
+      `${apiUrl}/api/campaign-content/${contentId}`,
+      { headers: authHeaders }
+    );
     
     if (!contentResponse?.data) {
       throw new Error('Не удалось получить контент');
@@ -49,11 +81,15 @@ async function testStorageAPI() {
     
     // 2. Тестируем обновление через test-instagram-route
     log('\n2. Тестирование обновления через /api/test/save-instagram-url...');
-    const updateResponse = await axios.post(`${apiUrl}/api/test/save-instagram-url`, {
-      contentId,
-      postUrl: testUrl,
-      messageId: `test_msg_${Date.now()}`
-    });
+    const updateResponse = await axios.post(
+      `${apiUrl}/api/test/save-instagram-url`, 
+      {
+        contentId,
+        postUrl: testUrl,
+        messageId: `test_msg_${Date.now()}`
+      },
+      { headers: authHeaders }
+    );
     
     log(`Статус ответа: ${updateResponse.status}`);
     if (updateResponse.data) {
@@ -62,7 +98,10 @@ async function testStorageAPI() {
     
     // 3. Проверяем результат обновления
     log('\n3. Проверка результата обновления...');
-    const updatedContentResponse = await axios.get(`${apiUrl}/api/campaign-content/${contentId}`);
+    const updatedContentResponse = await axios.get(
+      `${apiUrl}/api/campaign-content/${contentId}`,
+      { headers: authHeaders }
+    );
     
     if (!updatedContentResponse?.data) {
       throw new Error('Не удалось получить обновленный контент');
@@ -91,12 +130,16 @@ async function testStorageAPI() {
     log('\n4. Тестирование прямого API маршрута публикации...');
     const directTestUrl = `https://${platform}.com/p/direct_test_${Date.now()}`;
     
-    const publicationResponse = await axios.post(`${apiUrl}/api/social/test-publish`, {
-      contentId,
-      platform,
-      postUrl: directTestUrl,
-      messageId: `direct_test_msg_${Date.now()}`
-    });
+    const publicationResponse = await axios.post(
+      `${apiUrl}/api/social/test-publish`, 
+      {
+        contentId,
+        platform,
+        postUrl: directTestUrl,
+        messageId: `direct_test_msg_${Date.now()}`
+      },
+      { headers: authHeaders }
+    );
     
     log(`Статус ответа: ${publicationResponse.status}`);
     if (publicationResponse.data) {
@@ -105,7 +148,10 @@ async function testStorageAPI() {
     
     // 5. Финальная проверка
     log('\n5. Финальная проверка результатов...');
-    const finalContentResponse = await axios.get(`${apiUrl}/api/campaign-content/${contentId}`);
+    const finalContentResponse = await axios.get(
+      `${apiUrl}/api/campaign-content/${contentId}`,
+      { headers: authHeaders }
+    );
     
     if (!finalContentResponse?.data) {
       throw new Error('Не удалось получить финальный контент');
