@@ -1534,8 +1534,8 @@ export class SocialPublishingService {
       }
       
       // Обновляем информацию о платформе
-      // platform может быть строкой или объектом, обрабатываем оба случая
-      const platformKey = typeof platform === 'string' ? platform : String(platform);
+      // platform - это строковый enum ('instagram', 'telegram', 'vk', 'facebook')
+      const platformKey = platform;
       
       log(`[ПЛАТФОРМА КЛЮЧ] Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
       log(`[ПЛАТФОРМА ДАННЫЕ] Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
