@@ -7,8 +7,7 @@ import * as path from 'path';
 import * as os from 'os';
 import FormData from 'form-data';
 import { TelegramService } from './social/telegram-service';
-import { DirectusAuthManager } from './directus-auth-manager';
-import { directusAuthManager } from './directus-auth-manager';
+import { DirectusAuthManager, directusAuthManager } from './directus-auth-manager';
 
 /**
  * Сервис для публикации контента в социальные сети
@@ -1510,27 +1509,36 @@ export class SocialPublishingService {
       }
       
       // Обновляем статус публикации для платформы
-      // Важно - не перезаписываем весь объект, а обновляем только данные для конкретной платформы
+      // КРИТИЧНО: не перезаписываем весь объект, а обновляем только данные для конкретной платформы
+      // Иначе это приведет к потере данных о других запланированных платформах
       let socialPlatforms = content.socialPlatforms || {};
       
-      // Логируем исходные данные для отладки
-      log(`Исходные данные socialPlatforms: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
+      // Логируем исходные данные для отладки (с отчетливой маркировкой записи)
+      log(`[ПЛАТФОРМЫ ДО] Исходные данные socialPlatforms: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
       
       // Преобразуем из строки в объект, если это строка
       if (typeof socialPlatforms === 'string') {
         try {
           socialPlatforms = JSON.parse(socialPlatforms);
+          log(`[ПЛАТФОРМЫ ПАРСИНГ] Успешно преобразован JSON в объект: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
         } catch (e) {
-          log(`Ошибка при разборе JSON socialPlatforms: ${e}. Создаем новый объект.`, 'social-publishing');
+          log(`[ПЛАТФОРМЫ ОШИБКА] Ошибка при разборе JSON socialPlatforms: ${e}. Создаем новый объект.`, 'social-publishing');
           socialPlatforms = {};
         }
       }
       
+      // КРИТИЧЕСКАЯ ПРОВЕРКА: убедимся, что socialPlatforms - объект, а не null/undefined/другой тип
+      if (!socialPlatforms || typeof socialPlatforms !== 'object' || Array.isArray(socialPlatforms)) {
+        log(`[ПЛАТФОРМЫ ОШИБКА ТИПА] socialPlatforms имеет неверный тип: ${typeof socialPlatforms}. Создаем новый объект.`, 'social-publishing');
+        socialPlatforms = {};
+      }
+      
       // Обновляем информацию о платформе
       // platform может быть строкой или объектом, обрабатываем оба случая
-      const platformKey = typeof platform === 'string' ? platform : (platform as any).toString();
-      log(`Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
-      log(`Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      const platformKey = typeof platform === 'string' ? platform : String(platform);
+      
+      log(`[ПЛАТФОРМА КЛЮЧ] Обновление статуса публикации для платформы: ${platformKey}`, 'social-publishing');
+      log(`[ПЛАТФОРМА ДАННЫЕ] Данные публикации: ${JSON.stringify(publicationResult)}`, 'social-publishing');
       
       // Проверяем наличие URL-а в publicationResult
       if (!publicationResult.postUrl && content.socialPlatforms) {
@@ -1543,22 +1551,24 @@ export class SocialPublishingService {
           
           // Если у платформы уже есть сохраненный URL, используем его
           if (existingPlatforms[platformKey] && existingPlatforms[platformKey].postUrl) {
-            log(`Найден сохраненный URL ${existingPlatforms[platformKey].postUrl} для платформы ${platformKey}`, 'social-publishing');
+            log(`[ПЛАТФОРМА URL] Найден сохраненный URL ${existingPlatforms[platformKey].postUrl} для платформы ${platformKey}`, 'social-publishing');
             publicationResult.postUrl = existingPlatforms[platformKey].postUrl;
           }
         } catch (e) {
-          log(`Ошибка при попытке извлечь сохраненный URL: ${e}`, 'social-publishing');
+          log(`[ПЛАТФОРМА URL ОШИБКА] Ошибка при попытке извлечь сохраненный URL: ${e}`, 'social-publishing');
         }
       }
       
-      // Создаем копию объекта socialPlatforms, чтобы не изменять исходный объект напрямую
+      // ВАЖНО: Создаем НОВУЮ копию объекта socialPlatforms, чтобы не изменять исходный объект напрямую
       const updatedSocialPlatforms = { ...socialPlatforms };
       
       // Сохраняем существующие данные платформы, если они есть
       const existingPlatformData = updatedSocialPlatforms[platformKey] || {};
       
+      log(`[ПЛАТФОРМА СУЩЕСТВУЮЩИЕ ДАННЫЕ] Данные перед обновлением для ${platformKey}: ${JSON.stringify(existingPlatformData)}`, 'social-publishing');
+      
       // Объединяем существующие данные с новыми результатами публикации
-      // Важно: сохраняем scheduledAt и другие важные поля, которые могут быть в существующих данных
+      // КРИТИЧНО: сохраняем scheduledAt и другие важные поля, которые могут быть в существующих данных
       updatedSocialPlatforms[platformKey] = {
         ...existingPlatformData,   // Сохраняем все существующие данные
         ...publicationResult,      // Применяем новые данные
@@ -1569,7 +1579,12 @@ export class SocialPublishingService {
         scheduledAt: existingPlatformData.scheduledAt || publicationResult.scheduledAt
       };
       
-      log(`Объединены данные для платформы ${platformKey}. Исходные: ${JSON.stringify(existingPlatformData)}, Новые: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      log(`[ПЛАТФОРМА ОБЪЕДИНЕНИЕ] Объединены данные для платформы ${platformKey}.`, 'social-publishing');
+      log(`[ПЛАТФОРМА НОВЫЕ ДАННЫЕ] Результат объединения для ${platformKey}: ${JSON.stringify(updatedSocialPlatforms[platformKey])}`, 'social-publishing');
+      
+      // Проверяем, что другие платформы не были потеряны
+      const platformsList = Object.keys(updatedSocialPlatforms);
+      log(`[ПЛАТФОРМЫ ПОЛНЫЙ СПИСОК] Все платформы в обновленном объекте: ${platformsList.join(', ')}`, 'social-publishing');
       
       // Используем updatedSocialPlatforms вместо socialPlatforms
       socialPlatforms = updatedSocialPlatforms;
@@ -2180,9 +2195,6 @@ export class SocialPublishingService {
     }
   }
 }
-
-// Импортируем экземпляр DirectusAuthManager
-import { directusAuthManager } from './directus-auth-manager';
 
 // Создаем экземпляр сервиса с передачей менеджера авторизации
 export const socialPublishingService = new SocialPublishingService(directusAuthManager);
