@@ -16,6 +16,65 @@ import { directusStorageAdapter } from '../services/directus';
  */
 export function registerPublishingRoutes(app: Express): void {
   console.log('[publishing-routes] Регистрация маршрутов управления публикациями...');
+
+  // Маршрут для обновления статуса публикации контента (для тестов)
+  app.post('/api/publication/update-status', async (req: Request, res: Response) => {
+    try {
+      const { contentId, platform, publicationResult } = req.body;
+      
+      if (!contentId || !platform || !publicationResult) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Отсутствуют обязательные параметры (contentId, platform, publicationResult)' 
+        });
+      }
+      
+      log(`Запрос на обновление статуса публикации для контента ${contentId}, платформа: ${platform}`, 'api');
+      log(`Данные результата публикации: ${JSON.stringify(publicationResult)}`, 'api');
+      
+      // Получаем системный токен для обновления статуса публикации
+      const systemToken = await socialPublishingService.getSystemToken();
+      if (!systemToken) {
+        log(`Не удалось получить системный токен для обновления статуса публикации`, 'api');
+        return res.status(500).json({ 
+          success: false,
+          error: 'Не удалось получить системный токен для обновления статуса публикации' 
+        });
+      }
+      
+      // Вызываем метод updatePublicationStatus из socialPublishingService
+      const updatedContent = await socialPublishingService.updatePublicationStatus(
+        contentId,
+        platform as SocialPlatform,
+        publicationResult
+      );
+      
+      if (!updatedContent) {
+        log(`Не удалось обновить статус публикации для контента ${contentId}`, 'api');
+        return res.status(500).json({ 
+          success: false,
+          error: 'Не удалось обновить статус публикации' 
+        });
+      }
+      
+      log(`Статус публикации успешно обновлен для контента ${contentId}, платформа: ${platform}`, 'api');
+      
+      return res.status(200).json({
+        success: true,
+        contentId,
+        platform,
+        status: updatedContent.status,
+        socialPlatforms: updatedContent.socialPlatforms
+      });
+    } catch (error: any) {
+      log(`Ошибка при обновлении статуса публикации: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка при обновлении статуса публикации',
+        message: error.message 
+      });
+    }
+  });
   
   // Специальный маршрут для запуска проверки запланированных публикаций
   // Важно: этот маршрут должен быть определен ДО маршрута с параметром :contentId

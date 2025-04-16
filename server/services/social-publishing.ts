@@ -1533,6 +1533,38 @@ export class SocialPublishingService {
         socialPlatforms = {};
       }
       
+      // ФИКС ДЛЯ ВОССТАНОВЛЕНИЯ ДРУГИХ ПЛАТФОРМ: если платформы есть в исходных данных (social_platforms), 
+      // но отсутствуют в текущем объекте socialPlatforms, восстанавливаем их
+      if (content && content.social_platforms && typeof content.social_platforms === 'object') {
+        log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Проверяем наличие платформ в исходных данных content.social_platforms`, 'social-publishing');
+        
+        try {
+          // Преобразуем из строки в объект, если это строка
+          let originalPlatforms = content.social_platforms;
+          if (typeof originalPlatforms === 'string') {
+            try {
+              originalPlatforms = JSON.parse(originalPlatforms);
+              log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Успешно преобразован JSON из social_platforms в объект`, 'social-publishing');
+            } catch (e) {
+              log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при разборе JSON social_platforms: ${e}`, 'social-publishing');
+              originalPlatforms = {};
+            }
+          }
+          
+          // Добавляем платформы, которых нет в текущем socialPlatforms
+          if (originalPlatforms && typeof originalPlatforms === 'object') {
+            Object.entries(originalPlatforms).forEach(([key, value]) => {
+              if (!socialPlatforms[key]) {
+                log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Восстановлена платформа ${key} из исходных данных`, 'social-publishing');
+                socialPlatforms[key] = value as any;
+              }
+            });
+          }
+        } catch (error) {
+          log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при восстановлении платформ: ${error}`, 'social-publishing');
+        }
+      }
+      
       // Обновляем информацию о платформе
       // platform - это строковый enum ('instagram', 'telegram', 'vk', 'facebook')
       const platformKey = platform;
