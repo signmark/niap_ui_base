@@ -349,9 +349,14 @@ export class InstagramService extends BaseSocialService {
           postUrl = mediaInfoResponse.data.permalink;
           log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
         } else {
-          // Если не удалось получить permalink, используем стандартную форму ссылки
-          postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-          log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
+          // Если не удалось получить permalink, создаём ссылку из ID медиа
+          // ID медиа имеет формат: {business_account_id}_{media_id}
+          // Для URL нам нужна только вторая часть
+          const shortMediaId = String(igMediaId).includes('_') ? 
+            igMediaId.split('_')[1] : igMediaId;
+          
+          postUrl = `https://www.instagram.com/p/${shortMediaId}/`;
+          log(`[Instagram] Не удалось получить permalink, создаём постоянную ссылку из ID: ${postUrl}`, 'instagram');
         }
         
         log(`[Instagram] Публикация успешно завершена!`, 'instagram');
