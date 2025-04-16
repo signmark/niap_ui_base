@@ -482,13 +482,15 @@ export class PublishScheduler {
             if (freshData.social_platforms && typeof freshData.social_platforms === 'object') {
               const socialPlatforms = freshData.social_platforms;
               
-              // Проверяем, есть ли хотя бы одна платформа со статусом published
-              const anyPublished = Object.values(socialPlatforms).some(
-                (platform: any) => platform && platform.status === 'published'
-              );
+              // ИСПРАВЛЕНИЕ: Проверяем ВСЕ ли платформы имеют статус published
+              const allPlatforms = Object.keys(socialPlatforms);
+              const publishedPlatforms = Object.entries(socialPlatforms)
+                .filter(([_, data]: [string, any]) => data && data.status === 'published')
+                .map(([platform]) => platform);
               
-              if (anyPublished) {
-                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет опубликованный статус в соцсетях, пропускаем`, 'scheduler');
+              // ИСПРАВЛЕНИЕ: Обновляем статус только когда ВСЕ платформы опубликованы
+              if (publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length) {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован ВО ВСЕХ (${publishedPlatforms.length}/${allPlatforms.length}) соцсетях, обновляем статус`, 'scheduler');
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
@@ -501,6 +503,9 @@ export class PublishScheduler {
                   { headers: { 'Authorization': `Bearer ${authToken}` } }
                 );
                 continue;
+              } else if (publishedPlatforms.length > 0) {
+                // Если опубликованы НЕ ВСЕ платформы - продолжаем публикацию остальных
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${allPlatforms.length} соцсетях, продолжаем публикацию`, 'scheduler');
               }
             }
             
