@@ -1005,32 +1005,47 @@ export class PublishScheduler {
             const platformData = (freshContent.socialPlatforms as any)[platform];
             if (!platformData) return false;
             
-            // Если платформа находится в статусе pending, считаем её ожидающей публикации
-            if (platformData.status === 'pending') {
-              // Если есть scheduledAt, проверяем время
-              if (platformData.scheduledAt) {
-                const platformTime = new Date(platformData.scheduledAt);
-                const now = new Date();
-                log(`Проверка времени для непубликованной платформы ${platform}: ${platformTime.toISOString()} vs ${now.toISOString()}`, 'scheduler');
-                
-                // Проверяем, наступило ли время публикации или еще нет
-                if (platformTime > now) {
-                  // Время публикации ещё не наступило, считаем платформу ожидающей
-                  log(`Платформа ${platform} запланирована на будущее время: ${platformTime.toISOString()}`, 'scheduler');
-                  return true;
-                } else {
-                  // Время публикации наступило, но платформа не опубликована - возможно, была ошибка или задержка
-                  log(`Платформа ${platform} должна была быть опубликована в ${platformTime.toISOString()}, но всё ещё в статусе pending`, 'scheduler');
-                  return true; // Всё равно считаем ожидающей, так как статус pending
-                }
-              } else {
-                // У платформы нет scheduledAt, но она в статусе pending - считаем ожидающей
-                log(`Платформа ${platform} в статусе pending без установленного времени публикации`, 'scheduler');
+            // ИСПРАВЛЕНИЕ: Считаем ожидающими публикации все платформы, которые НЕ опубликованы 
+            // или находятся в состоянии ошибки (failed/error)
+            // Если это не 'published', то платформа всё ещё требует внимания
+            if (platformData.status !== 'published') {
+              // Если статус failed или есть ошибка, то платформа явно требует внимания
+              if (platformData.status === 'failed' || platformData.error) {
+                log(`Платформа ${platform} находится в статусе ошибки: ${platformData.status}, ошибка: ${platformData.error || 'нет данных'}`, 'scheduler');
                 return true;
               }
+              
+              // Если статус scheduled или pending, то проверяем время
+              if (platformData.status === 'scheduled' || platformData.status === 'pending') {
+                if (platformData.scheduledAt) {
+                  const platformTime = new Date(platformData.scheduledAt);
+                  const now = new Date();
+                  log(`Проверка времени для платформы ${platform}: ${platformTime.toISOString()} vs ${now.toISOString()}`, 'scheduler');
+                  
+                  // Проверяем, наступило ли время публикации или еще нет
+                  if (platformTime > now) {
+                    // Время публикации ещё не наступило
+                    log(`Платформа ${platform} запланирована на будущее время: ${platformTime.toISOString()}`, 'scheduler');
+                    return true;
+                  } else {
+                    // Время публикации наступило, но публикация не произошла
+                    log(`Платформа ${platform} должна была быть опубликована в ${platformTime.toISOString()}, но всё ещё в статусе ${platformData.status}`, 'scheduler');
+                    return true; // Всё равно считаем ожидающей
+                  }
+                } else {
+                  // Нет установленного времени публикации
+                  log(`Платформа ${platform} в статусе ${platformData.status} без установленного времени публикации`, 'scheduler');
+                  return true;
+                }
+              }
+              
+              // В любом другом статусе (не published, не pending, не scheduled) - тоже считаем ожидающей
+              log(`Платформа ${platform} в неизвестном статусе: ${platformData.status}`, 'scheduler');
+              return true;
             }
             
-            return false; // Если платформа не в статусе pending, не считаем её ожидающей
+            // Если статус published, то платформа не ожидает публикации
+            return false;
           });
           
           log(`Контент ${content.id}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length} платформ, ожидает публикации: ${pendingPublications.length}`, 'scheduler');
