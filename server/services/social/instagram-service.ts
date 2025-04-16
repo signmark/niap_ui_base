@@ -5,6 +5,9 @@ import { BaseSocialService } from './base-service';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Вспомогательная функция для задержки выполнения кода
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Сервис для публикации контента в Instagram
  */
@@ -169,6 +172,9 @@ export class InstagramService extends BaseSocialService {
       // Определяем окончательно, есть ли у нас видео
       const isVideo = (content.contentType === 'video-text' || content.contentType === 'video') && videoUrl !== null;
       
+      // Расширенное логирование для диагностики
+      log(`[Instagram DEBUG] Тип контента: ${content.contentType}, videoUrl: ${videoUrl ? 'найден' : 'не найден'}, isVideo: ${isVideo}`, 'instagram');
+      
       // Проверяем, есть ли хоть какой-то медиа-контент (обязательно для Instagram)
       if (!isVideo && !imgurContent.imageUrl) {
         log(`[Instagram] Ошибка публикации: отсутствует медиа-контент (изображение или видео)`, 'instagram');
@@ -223,13 +229,17 @@ export class InstagramService extends BaseSocialService {
         // ВАЖНО: Для Instagram API требуется параметр media_type напрямую в теле запроса, а не в query params
         let containerParams: any = {};
         
+        // Также передаем access_token в запросе создания контейнера (рекомендовано документацией)
+        // Это может решить проблему с ошибкой "Object with ID does not exist"
+        
         // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
         if (isVideo && videoUrl) {
           log(`[Instagram] Обнаружено видео для публикации: ${videoUrl.substring(0, 50)}...`, 'instagram');
           containerParams = {
             caption: caption,
             video_url: videoUrl,
-            media_type: 'VIDEO' // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            media_type: 'VIDEO', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            access_token: token  // Добавляем токен доступа к запросу создания контейнера
           };
         } else {
           // Если это не видео или видео отсутствует, используем изображение
@@ -237,7 +247,8 @@ export class InstagramService extends BaseSocialService {
           containerParams = {
             caption: caption,
             image_url: imgurContent.imageUrl,
-            media_type: 'IMAGE' // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            media_type: 'IMAGE', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            access_token: token  // Добавляем токен доступа к запросу создания контейнера
           };
         }
         
@@ -290,7 +301,8 @@ export class InstagramService extends BaseSocialService {
               containerParams = {
                 caption: caption,
                 image_url: imgurContent.imageUrl,
-                media_type: 'IMAGE'  // ВАЖНО: Явно указываем тип медиа для Instagram
+                media_type: 'IMAGE',  // ВАЖНО: Явно указываем тип медиа для Instagram
+                access_token: token  // Добавляем токен доступа к резервному запросу
               };
               
               // Повторно отправляем запрос с изображением
@@ -345,15 +357,67 @@ export class InstagramService extends BaseSocialService {
           access_token: token
         };
         
-        // Отправляем запрос на публикацию
-        const publishResponse = await axios.post(
-          publishUrl, 
-          publishParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
+        // Отправляем запрос на публикацию с механизмом повторных попыток
+        let publishResponse;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            publishResponse = await axios.post(
+              publishUrl, 
+              publishParams, 
+              {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+              }
+            );
+            
+            // Если запрос успешный, прерываем цикл
+            if (publishResponse && publishResponse.data && publishResponse.data.id) {
+              log(`[Instagram] Успешная публикация с попытки #${retryCount + 1}`, 'instagram');
+              break;
+            }
+            
+            // Если запрос прошел, но без ID медиа - это ошибка
+            log(`[Instagram] Ответ не содержит ID медиа, повторная попытка #${retryCount + 1}`, 'instagram');
+            retryCount++;
+            
+            if (retryCount < maxRetries) {
+              // Увеличиваем время ожидания с каждой попыткой
+              const waitTime = 3000 * (retryCount + 1);
+              log(`[Instagram] Ожидание ${waitTime}мс перед следующей попыткой...`, 'instagram');
+              await sleep(waitTime);
+            }
+          } catch (error: any) {
+            log(`[Instagram] Ошибка публикации (попытка ${retryCount + 1}): ${error.message}`, 'instagram');
+            
+            // Проверяем тип ошибки - если это "Object with ID does not exist", это может быть временная ошибка
+            const isTemporaryError = error.response?.data?.error?.message?.includes('Object with ID') || 
+                                    error.message?.includes('Object with ID');
+            
+            if (isTemporaryError) {
+              log(`[Instagram] Обнаружена временная ошибка API, повторная попытка #${retryCount + 1}`, 'instagram');
+              retryCount++;
+              
+              if (retryCount < maxRetries) {
+                // Увеличиваем время ожидания с каждой попыткой
+                const waitTime = 5000 * (retryCount + 1);
+                log(`[Instagram] Ожидание ${waitTime}мс перед следующей попыткой...`, 'instagram');
+                await sleep(waitTime);
+              }
+            } else {
+              // Если это не временная ошибка, прекращаем попытки
+              log(`[Instagram] Критическая ошибка, прекращение попыток: ${error.message}`, 'instagram');
+              throw error;
+            }
           }
-        );
+        }
+        
+        // Если после всех попыток нет успеха
+        if (!publishResponse || !publishResponse.data) {
+          throw new Error(`Не удалось опубликовать пост в Instagram после ${maxRetries} попыток`);
+        }
         
         log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'instagram');
         
