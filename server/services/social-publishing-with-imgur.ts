@@ -2412,13 +2412,24 @@ export class SocialPublishingWithImgurService {
       // Шаг 2: Обновляем статус публикации в объекте social_platforms
       const socialPlatforms = content.socialPlatforms || {};
       
+      // Детальное логирование исходных данных
+      log(`ИСХОДНЫЕ данные платформ для ${contentId}:\n${JSON.stringify(socialPlatforms, null, 2)}`, 'social-publishing');
+      
       // Создаем глубокую копию объекта socialPlatforms
       const updatedSocialPlatforms = JSON.parse(JSON.stringify(socialPlatforms));
+      
+      // Проверка, что копирование выполнено правильно
+      log(`После глубокого копирования для ${contentId}:\n${JSON.stringify(updatedSocialPlatforms, null, 2)}`, 'social-publishing');
+      
+      // Сохраняем текущие данные платформы, если они есть
+      const existingPlatformData = updatedSocialPlatforms[platform] || {};
+      
+      log(`Существующие данные для платформы ${platform}:\n${JSON.stringify(existingPlatformData, null, 2)}`, 'social-publishing');
       
       // Обновляем или добавляем только данные конкретной платформы
       updatedSocialPlatforms[platform] = {
         // Сохраняем существующие данные платформы
-        ...(updatedSocialPlatforms[platform] || {}),
+        ...existingPlatformData,
         // Обновляем актуальные данные
         status: publicationResult.status,
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
@@ -2430,7 +2441,7 @@ export class SocialPublishingWithImgurService {
       };
       
       // Логирование для диагностики
-      log(`Обновляем social_platforms для ${contentId}:\n${JSON.stringify(updatedSocialPlatforms, null, 2)}`, 'social-publishing');
+      log(`ОБНОВЛЕННЫЕ данные social_platforms для ${contentId}:\n${JSON.stringify(updatedSocialPlatforms, null, 2)}`, 'social-publishing');
       
       // Шаг 3: Обновляем данные напрямую через API с системным токеном
       log(`Прямое обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
