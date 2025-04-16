@@ -973,8 +973,8 @@ export class PublishScheduler {
             const platformData = (freshContent.socialPlatforms as any)[platform];
             if (!platformData) return false;
             
-            // Если платформа находится в статусе pending, считаем её ожидающей публикации
-            if (platformData.status === 'pending') {
+            // Если платформа находится в статусе pending или scheduled, считаем её ожидающей публикации
+            if (platformData.status === 'pending' || platformData.status === 'scheduled') {
               // Если есть scheduledAt, проверяем время
               if (platformData.scheduledAt) {
                 const platformTime = new Date(platformData.scheduledAt);
@@ -1003,10 +1003,10 @@ export class PublishScheduler {
           
           log(`Контент ${content.id}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length} платформ, ожидает публикации: ${pendingPublications.length}`, 'scheduler');
           
-          // Если все платформы опубликованы или нет платформ, ожидающих публикации в будущем
-          // то меняем статус на published
-          if (pendingPublications.length === 0) {
-            log(`Обновление основного статуса контента ${content.id} на "published" после публикации во всех платформах или в отсутствии запланированных платформ`, 'scheduler');
+          // ИЗМЕНЕНО: Проверяем, действительно ли все платформы опубликованы
+          // Считаем контент опубликованным только когда все платформы из списка имеют статус published
+          if (publishedPlatforms.length === allPlatforms.length && pendingPublications.length === 0) {
+            log(`Обновление основного статуса контента ${content.id} на "published" после публикации во ВСЕХ платформах (${publishedPlatforms.length}/${allPlatforms.length})`, 'scheduler');
             
             try {
               // Обновляем статус с передачей токена авторизации
@@ -1036,30 +1036,42 @@ export class PublishScheduler {
             }
           }
         } else {
-          // Если не удалось получить данные о платформах, действуем по старой логике
+          // Если не удалось получить данные о платформах, действуем по безопасной логике
+          // ИЗМЕНЕНО: Не меняем автоматически статус на published, а просто логируем и сохраняем статус scheduled
           if (successfulPublications > 0) {
-            log(`Обновление основного статуса контента ${content.id} на "published" после успешной публикации в ${successfulPublications}/${platformsToPublish.length} платформах (резервная логика)`, 'scheduler');
+            log(`Не обновляем основной статус контента ${content.id} на "published", так как может быть ещё ${platformsToPublish.length - successfulPublications} ожидающих платформ (резервная логика)`, 'scheduler');
             
-            // Обновляем статус с передачей токена авторизации
-            await storage.updateCampaignContent(content.id, {
-              status: 'published'
-            }, authToken);
-            
-            log(`Статус контента ${content.id} успешно обновлен на published (резервная логика)`, 'scheduler');
+            // Убеждаемся, что статус остаётся scheduled для будущих публикаций
+            if (freshContent && freshContent.status !== 'scheduled') {
+              await storage.updateCampaignContent(content.id, {
+                status: 'scheduled'
+              }, authToken);
+              
+              log(`Восстановлен статус "scheduled" для контента ${content.id} (резервная логика)`, 'scheduler');
+            } else {
+              log(`Сохранен текущий статус контента ${content.id} (резервная логика)`, 'scheduler');
+            }
           }
         }
       } catch (checkError: any) {
         log(`Ошибка при проверке оставшихся платформ для контента ${content.id}: ${checkError.message}`, 'scheduler');
         
-        // Резервная логика в случае ошибки
+        // Резервная логика в случае ошибки - ИЗМЕНЕНО: сохраняем статус scheduled
         if (successfulPublications > 0) {
           try {
-            // Обновляем статус с передачей токена авторизации
-            await storage.updateCampaignContent(content.id, {
-              status: 'published'
-            }, authToken);
+            // Для безопасности, проверяем текущий статус
+            const currentContent = await storage.getCampaignContent(content.id, authToken);
             
-            log(`Статус контента ${content.id} успешно обновлен на published (при ошибке проверки)`, 'scheduler');
+            // Сохраняем статус scheduled, чтобы другие платформы могли быть опубликованы
+            if (currentContent && currentContent.status !== 'scheduled') {
+              await storage.updateCampaignContent(content.id, {
+                status: 'scheduled'
+              }, authToken);
+              
+              log(`Восстановлен статус scheduled для контента ${content.id} (при ошибке проверки)`, 'scheduler');
+            } else {
+              log(`Сохранен текущий статус контента ${content.id} (при ошибке проверки)`, 'scheduler');
+            }
           } catch (updateError: any) {
             log(`Ошибка при обновлении статуса контента ${content.id}: ${updateError.message}`, 'scheduler');
           }
