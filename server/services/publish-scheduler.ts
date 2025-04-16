@@ -935,9 +935,9 @@ export class PublishScheduler {
         log(`Использование резервного метода публикации для контента ${content.id} на платформе ${platform}`, 'scheduler');
         
         const result = await socialPublishingService.publishToPlatform(
-          content,
-          platform,
-          socialSettings
+          platform,  // Первым параметром передаем платформу
+          content,   // Вторым параметром передаем контент
+          socialSettings  // Третьим параметром передаем настройки
         );
 
         // Обновляем статус публикации через модульный сервис socialPublishingService
