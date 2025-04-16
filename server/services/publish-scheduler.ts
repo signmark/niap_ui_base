@@ -440,10 +440,42 @@ export class PublishScheduler {
               continue;
             }
             
-            // Проверяем наличие publishedAt поля - если есть, значит контент уже опубликован
+            // Проверяем наличие publishedAt поля - НО НЕ БЛОКИРУЕМ, если есть неопубликованные платформы
+            // Логика изменена: проверяем, остались ли неопубликованные платформы, даже если published_at уже установлен
             if (freshData.published_at) {
-              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет published_at = ${freshData.published_at}, пропускаем`, 'scheduler');
-              continue;
+              // Проверяем, остались ли платформы для публикации
+              const platformsData = freshData.social_platforms;
+              let pendingPlatformsExist = false;
+              
+              if (platformsData && typeof platformsData === 'object') {
+                // Преобразуем из строки в объект, если это строка
+                let platforms = platformsData;
+                if (typeof platforms === 'string') {
+                  try {
+                    platforms = JSON.parse(platforms);
+                  } catch (e) {
+                    log(`Ошибка при парсинге social_platforms: ${e}`, 'scheduler');
+                    platforms = {};
+                  }
+                }
+                
+                // Проверяем все платформы
+                for (const [platform, data] of Object.entries(platforms)) {
+                  // Если есть платформа со статусом scheduled или pending, продолжаем публикацию
+                  if (data.status === 'scheduled' || data.status === 'pending') {
+                    pendingPlatformsExist = true;
+                    log(`Обнаружена неопубликованная платформа ${platform} в контенте ID ${content.id}, несмотря на published_at`, 'scheduler');
+                  }
+                }
+              }
+              
+              // Если нет ожидающих платформ, пропускаем контент
+              if (!pendingPlatformsExist) {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" уже имеет published_at = ${freshData.published_at} и все платформы опубликованы, пропускаем`, 'scheduler');
+                continue;
+              } else {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет published_at = ${freshData.published_at}, но найдены неопубликованные платформы - ПРОДОЛЖАЕМ`, 'scheduler');
+              }
             }
             
             // Проверяем статус в платформах
