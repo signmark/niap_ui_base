@@ -3,8 +3,14 @@
  * Имитирует процесс публикации в Telegram, а затем проверяет, что информация о других платформах сохранилась
  */
 
-const axios = require('axios');
-const fs = require('fs');
+import axios from 'axios';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Получаем текущую директорию для ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Константы для тестирования
 const DIRECTUS_URL = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
@@ -81,12 +87,12 @@ async function createTestContent(token) {
     const content = {
       title: `Тест сохранения платформ ${timeStr}`,
       content: `Это тестовый контент для проверки сохранения информации о платформах. Создан: ${timeStr}`,
-      campaignId: CAMPAIGN_ID,
+      campaign_id: CAMPAIGN_ID, // snake_case для Directus API
       status: 'scheduled',
-      contentType: 'text',
-      imageUrl: 'https://picsum.photos/800/600',
-      socialPlatforms: socialPlatforms,
-      userId: '53921f16-f51d-4591-80b9-8caa4fde4d13' // ID пользователя для теста
+      content_type: 'text', // snake_case для Directus API
+      image_url: 'https://picsum.photos/800/600', // snake_case для Directus API
+      social_platforms: socialPlatforms, // snake_case для Directus API
+      user_id: '53921f16-f51d-4591-80b9-8caa4fde4d13' // ID пользователя для теста
     };
     
     // Отправляем запрос на создание

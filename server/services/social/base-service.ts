@@ -310,7 +310,11 @@ export abstract class BaseSocialService {
       }
       
       // Обновляем информацию о публикации в socialPlatforms
+      // Сохраняем предыдущее состояние платформы и объединяем с новыми данными
       socialPlatforms[platform] = {
+        // Сохраняем существующие данные для платформы
+        ...(socialPlatforms[platform] || {}),
+        // Обновляем новыми данными
         status: publicationResult.status,
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
         postUrl: publicationResult.postUrl || null,
@@ -319,6 +323,10 @@ export abstract class BaseSocialService {
         messageId: publicationResult.messageId || null,
         error: publicationResult.error || null
       };
+      
+      // Логирование для отладки
+      log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Обновленные данные платформы ${platform}: ${JSON.stringify(socialPlatforms[platform])}`, 'social-publishing');
+      log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Все платформы после обновления: ${JSON.stringify(Object.keys(socialPlatforms))}`, 'social-publishing');
       
       // Обновляем контент
       const updatedContent = await storage.updateCampaignContent(contentId, {
