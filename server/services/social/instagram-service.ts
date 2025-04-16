@@ -99,9 +99,29 @@ export class InstagramService extends BaseSocialService {
         };
       }
       
-      // Извлекаем параметры
-      const token = instagramSettings.token;
+      // Проверяем альтернативное поле accessToken, которое может использоваться в некоторых контекстах
+      let token = instagramSettings.token;
+      if (!token && instagramSettings.accessToken) {
+        token = instagramSettings.accessToken;
+        log(`[Instagram] Использую альтернативное поле accessToken вместо token`, 'instagram');
+      }
+      
+      // Убеждаемся, что токен валидный (не содержит только пробелы)
+      if (token && typeof token === 'string' && token.trim() === '') {
+        log(`[Instagram] Предупреждение: токен содержит только пробелы`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Токен Instagram содержит только пробелы'
+        };
+      }
+      
+      // Проверяем формат business account ID (должен быть числовым)
       const businessAccountId = instagramSettings.businessAccountId;
+      if (businessAccountId && isNaN(Number(businessAccountId))) {
+        log(`[Instagram] Предупреждение: Business Account ID должен быть числовым, получено: ${businessAccountId}`, 'instagram');
+      }
       
       log(`[Instagram] Начинаем публикацию в Instagram с использованием бизнес-аккаунта: ${businessAccountId}`, 'instagram');
       
