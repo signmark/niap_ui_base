@@ -2446,12 +2446,43 @@ export class SocialPublishingWithImgurService {
       // ДОПОЛНИТЕЛЬНОЕ логирование для отладки проблем с PATCH обновлением
       log(`Отправляем обновление в Directus для контента ${contentId}: ${JSON.stringify({ social_platforms: updatedSocialPlatforms })}`, 'social-publishing');
       
-      // Шаг 3: Обновляем данные напрямую через API с системным токеном
-      log(`Прямое обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
+      // Шаг 3: Получаем актуальные данные перед обновлением, чтобы гарантировать сохранение всех платформ
+      log(`Получаем актуальные данные перед обновлением для ${contentId}`, 'social-publishing');
+      
+      // Предварительно инициализируем mergedPlatforms, чтобы она была доступна даже в случае ошибки
+      let mergedPlatforms = { ...updatedSocialPlatforms };
       
       try {
+        // Сначала получаем актуальные данные из Directus
+        const currentData = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Получаем актуальные данные по платформам
+        const currentPlatforms = currentData?.data?.data?.social_platforms || {};
+        
+        log(`Текущие данные платформ из API: ${JSON.stringify(currentPlatforms)}`, 'social-publishing');
+        
+        // Обновляем только нужную платформу, сохраняя остальные
+        mergedPlatforms = { ...currentPlatforms };
+        
+        // Проверяем, существует ли платформа, которую мы обновляем
+        if (platform in mergedPlatforms) {
+          // Обновляем существующую платформу
+          mergedPlatforms[platform] = updatedSocialPlatforms[platform];
+        } else {
+          // Добавляем новую платформу
+          mergedPlatforms[platform] = updatedSocialPlatforms[platform];
+        }
+        
+        log(`Итоговые объединенные данные платформ: ${JSON.stringify(mergedPlatforms)}`, 'social-publishing');
+        
+        // Теперь выполняем обновление с объединенными данными
         const updateResponse = await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
-          social_platforms: updatedSocialPlatforms
+          social_platforms: mergedPlatforms
         }, {
           headers: {
             'Authorization': `Bearer ${systemToken}`,
@@ -2462,10 +2493,10 @@ export class SocialPublishingWithImgurService {
         if (updateResponse.data && updateResponse.data.data) {
           log(`Статус публикации успешно обновлен через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
           
-          // Возвращаем обновленный объект контента с новым значением socialPlatforms
+          // Возвращаем обновленный объект контента с объединенными значениями socialPlatforms
           return {
             ...content,
-            socialPlatforms: updatedSocialPlatforms
+            socialPlatforms: mergedPlatforms
           };
         } else {
           log(`Странный ответ от API при обновлении статуса: ${JSON.stringify(updateResponse.data)}`, 'social-publishing');
@@ -2473,17 +2504,20 @@ export class SocialPublishingWithImgurService {
       } catch (error: any) {
         log(`Ошибка при прямом обновлении статуса публикации через API: ${error.message}`, 'social-publishing');
         
-        // В случае ошибки, возвращаем исходный объект с обновленным полем socialPlatforms
+        // В случае ошибки, возвращаем исходный объект с объединенными значениями socialPlatforms
         // Это позволит избежать ошибки при последующих вызовах этого метода
         return {
           ...content,
-          socialPlatforms: updatedSocialPlatforms
+          socialPlatforms: mergedPlatforms
         };
       }
       
       return null;
     } catch (error: any) {
       log(`Ошибка при обновлении статуса публикации: ${error.message}`, 'social-publishing');
+      
+      // В случае общей ошибки просто возвращаем null
+      // Все переменные, на которые мы пытались ссылаться, недоступны в этом блоке
       return null;
     }
   }
