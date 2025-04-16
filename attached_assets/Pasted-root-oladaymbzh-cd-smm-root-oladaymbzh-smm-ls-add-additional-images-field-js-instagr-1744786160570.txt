@@ -1,0 +1,61 @@
+root@oladaymbzh:~# cd smm/
+root@oladaymbzh:~/smm# ls
+ add_additional_images_field.js       instagram-test-api.cjs                     temp_replace.txt
+ add_additional_media_field.js        instagram-test-api.js                      test-api-telegram-html.js
+ add_social_media_settings_field.js   instagram-test-api.mjs                     test-app-telegram-api.js
+ AI_MODEL_INTEGRATION_GUIDE.md        install-aws-sdk.sh                         test-autorun-telegram-html.js
+ AI_MODEL_INTEGRATION_PLAN.md         jest.config.js                             test-beget-s3-direct.js
+ API_ARCHITECTURE_GUIDE.md            login-check.mjs                            test-beget-s3.js
+ API_INTEGRATION.md                   login-test.mjs                             test-beget-s3.ts
+ API_INTEGRATIONS_UPDATE.md           logs                                       test-beget-s3-video.ts
+ API_KEYS_STORAGE_POLICY.md           node_modules                               test-campaign-format.cjs
+ attached_assets                      package.json                               test-claude-api.html
+ auth_response.txt                    package-lock.json                          test-complex-nested-unclosed-tags.js
+ aws-package.json                     postcss.config.js                          test-fix-tags.js
+ BEGET_S3_INSTALLATION_GUIDE.md       project_docs                               test-format-api.js
+ BEGET_S3_INTEGRATION_GUIDE.md        pytest-style-output.js                     test-full-chain.js
+ beget-s3-video-service-content.txt   pytest-style-output-with-failures.js       test-html-formatting.js
+ check-permissions.js                 README.md                                  test-html-publish.cjs
+ check-permissions.mjs                register_field_directus.js                 test-html-tags-fixing.js
+ clean-db-duplicates.mjs              remove-posts-without-social-platforms.js   test-html-tags-real.js
+ clean-duplicates.js                  replit.nix                                 test-instagram-telegram-api.cjs
+ clean-duplicates.mjs                 run-single-test.js                         test-instagram-telegram-api.js
+ client                               run-test-api-keys.js                       test-instagram-ui.js
+ commercial_proposal_en.md            run-tests.js                               test-integration-telegram-html.js
+ commercial_proposal_ru.md            run-tests.sh                               test-real-app-telegram.js
+ copy_to_parent_deploy.sh             run-tests-telegram-html.js                 test-real-telegram.js
+ cp-env-example.sh                    run-tests-telegram-images.js               test-runner.js
+ create-additional-media-field.js     scripts                                    test-s3-upload.txt
+ DAILY_REPORTS.md                     server                                     test-server-formatter.js
+ db-maintenance.sql                   SERVER_STARTUP_ISSUES.md                   TEST_SETUP_GUIDE.md
+ delete-posts.js                      setup_infrastructure_en.sh                 TEST_SETUP_GUIDE.txt
+ delete-posts.mjs                     setup_infrastructure.sh                    test-telegram-api.js
+ deploy                               shared                                     test-telegram-caption.js
+ deploy-instructions.md               tailwind.config.ts                         test-telegram-exact-format.js
+ deploy.sh                            TASKS_FOR_TOMORROW.md                      test-telegram-formatting.cjs
+ detailed_project_prompt_en.md        TECHNICAL_CHALLENGES.md                    test-telegram-html-format.js
+ detailed_project_prompt_ru.md        TECHNICAL_DEBT.md                          test-telegram-html-formatting.js
+ direct-telegram-post-test.js         TECHNICAL_DEBT_SCHEDULE_TIME_FIELDS.md     test-telegram-parse-mode.js
+ dist                                 telegram-caption-test.js                   test-telegram-post.js
+ docker-compose.yml                   telegram-check-username.js                 test-telegram-publish-workflow-check.js
+ Dockerfile                           TELEGRAM_CODE_CHANGES.md                   test-telegram-result.md
+ Dockerfile.aws                       telegram-format-test.js                    test-telegram-service.js
+ Dockerfile.bak                       telegram-html-autotest.js                  test-telegram-text-only.js
+ dockerfile_content.txt               telegram-html-fix-test.cjs                 test-telegram-url-client.js
+ Dockerfile-n8n                       telegram-html-fix-test.js                  test-telegram-url-final.js
+ Dockerfile.new                       telegram-html-fix-test.mjs                 test-telegram-url-format.js
+ docs                                 telegram-html-test-fixed.cjs               test-telegram-url.js
+ drizzle.config.ts                    telegram-html-test-fixed.js                test-telegram-url-problem.js
+ env.example                          telegram-html-test.js                      test-telegram-url-server.js
+ field_creation_log.txt               TELEGRAM_INTEGRATION_CHANGELOG.md          theme.json
+ fix_additional_images_field.js       telegram-multi-images-test.js              token_response.json
+ fixed-docker-compose.yml             telegram-real-implementation-test.js       tsconfig.json
+ fixed-docker-compose.yml.bak         telegram-test-api.js                       update-directus-field.js
+ fixed-file.ts                        telegram-test-html-format.js               update-platform-times.js
+ fix-telegram-html-route.js           TELEGRAM_TESTING.md                        uploads
+ fix-telegram-url.js                  telegram-test.js                           vite.config.ts
+ generated-icon.png                   telegram-unclosed-tags-test.js             vk-multi-images-test.js
+ get-scheduled-content.mjs            temp_code.txt                             'Не удалось найти подходящие источники'
+ instagram-api-test.cjs               temp-file.ts
+ instagram-integration-test.cjs       temp_original.txt
+root@oladaymbzh:~/smm#
