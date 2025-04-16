@@ -1491,6 +1491,27 @@ export class SocialPublishingService {
           if (response.data && response.data.data) {
             content = response.data.data;
             log(`Контент получен напрямую через API: ${contentId}`, 'social-publishing');
+            
+            // ВАЖНО: Преобразуем social_platforms в socialPlatforms для дальнейшей работы
+            if (content.social_platforms) {
+              // Обрабатываем поле social_platforms перед использованием
+              let rawPlatforms = content.social_platforms;
+              
+              // Если строка, пробуем распарсить JSON
+              if (typeof rawPlatforms === 'string') {
+                try {
+                  rawPlatforms = JSON.parse(rawPlatforms);
+                  log(`[ПЛАТФОРМЫ ПАРСИНГ] Social_platforms успешно распарсен из строки: ${JSON.stringify(rawPlatforms)}`, 'social-publishing');
+                } catch (e) {
+                  log(`[ПЛАТФОРМЫ ОШИБКА] Ошибка при разборе JSON social_platforms: ${e}.`, 'social-publishing');
+                  rawPlatforms = {};
+                }
+              }
+              
+              // Присваиваем преобразованное значение к socialPlatforms
+              content.socialPlatforms = rawPlatforms;
+              log(`[ПЛАТФОРМЫ ПРЕОБРАЗОВАНИЕ] social_platforms успешно преобразован в socialPlatforms`, 'social-publishing');
+            }
           }
         } catch (error) {
           log(`Ошибка при получении контента через API: ${(error as any).message}`, 'social-publishing');
@@ -1533,14 +1554,47 @@ export class SocialPublishingService {
         socialPlatforms = {};
       }
       
-      // ФИКС ДЛЯ ВОССТАНОВЛЕНИЯ ДРУГИХ ПЛАТФОРМ: если платформы есть в исходных данных (social_platforms), 
-      // но отсутствуют в текущем объекте socialPlatforms, восстанавливаем их
-      if (content && content.social_platforms && typeof content.social_platforms === 'object') {
+      // ФИКС ДЛЯ ВОССТАНОВЛЕНИЯ ДРУГИХ ПЛАТФОРМ: если есть данные в поле socialPlatforms или в исходных social_platforms, 
+      // обязательно сохраняем все данные всех платформ
+      
+      // Проверяем наличие данных в socialPlatforms
+      if (content && content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Проверяем наличие платформ в content.socialPlatforms`, 'social-publishing');
+        
+        try {
+          // Преобразуем из строки в объект, если это строка
+          let existingPlatforms = content.socialPlatforms;
+          if (typeof existingPlatforms === 'string') {
+            try {
+              existingPlatforms = JSON.parse(existingPlatforms);
+              log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Успешно преобразован JSON из socialPlatforms в объект`, 'social-publishing');
+            } catch (e) {
+              log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при разборе JSON socialPlatforms: ${e}`, 'social-publishing');
+              existingPlatforms = {};
+            }
+          }
+          
+          // Добавляем платформы из socialPlatforms в общий объект
+          if (existingPlatforms && typeof existingPlatforms === 'object') {
+            Object.entries(existingPlatforms).forEach(([key, value]) => {
+              if (!socialPlatforms[key]) {
+                log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Восстановлена платформа ${key} из socialPlatforms`, 'social-publishing');
+                socialPlatforms[key] = value as any;
+              }
+            });
+          }
+        } catch (error) {
+          log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при восстановлении из socialPlatforms: ${error}`, 'social-publishing');
+        }
+      }
+      
+      // Дополнительно проверяем наличие данных в поле snake_case social_platforms
+      if (content && (content as any).social_platforms && typeof (content as any).social_platforms === 'object') {
         log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Проверяем наличие платформ в исходных данных content.social_platforms`, 'social-publishing');
         
         try {
           // Преобразуем из строки в объект, если это строка
-          let originalPlatforms = content.social_platforms;
+          let originalPlatforms = (content as any).social_platforms;
           if (typeof originalPlatforms === 'string') {
             try {
               originalPlatforms = JSON.parse(originalPlatforms);
@@ -1551,17 +1605,17 @@ export class SocialPublishingService {
             }
           }
           
-          // Добавляем платформы, которых нет в текущем socialPlatforms
+          // Добавляем платформы из social_platforms, которых нет в текущем socialPlatforms
           if (originalPlatforms && typeof originalPlatforms === 'object') {
             Object.entries(originalPlatforms).forEach(([key, value]) => {
               if (!socialPlatforms[key]) {
-                log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Восстановлена платформа ${key} из исходных данных`, 'social-publishing');
+                log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Восстановлена платформа ${key} из social_platforms`, 'social-publishing');
                 socialPlatforms[key] = value as any;
               }
             });
           }
         } catch (error) {
-          log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при восстановлении платформ: ${error}`, 'social-publishing');
+          log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Ошибка при восстановлении из social_platforms: ${error}`, 'social-publishing');
         }
       }
       
