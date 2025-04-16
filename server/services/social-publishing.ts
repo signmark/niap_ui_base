@@ -1702,9 +1702,11 @@ export class SocialPublishingService {
         try {
           const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
           const updateData: Record<string, any> = {
-            socialPlatforms,
+            social_platforms: socialPlatforms, // КРИТИЧНО: используем snake_case для Directus API
             status: allPublished ? 'published' : 'scheduled'
           };
+          
+          log(`Отправляем обновление в Directus для контента ${contentId}: ${JSON.stringify(updateData)}`, 'social-publishing');
           
           // Добавляем дату публикации, если есть хотя бы одна успешная публикация
           if (firstPublishedAt) {
@@ -1729,9 +1731,12 @@ export class SocialPublishingService {
       
       // Обновляем контент через хранилище
       const updateData: Partial<InsertCampaignContent> = {
-        socialPlatforms,
+        socialPlatforms, // В методе updateCampaignContent социальные платформы будут преобразованы в snake_case для Directus API
         status: allPublished ? 'published' : 'scheduled'
       };
+      
+      // Логируем данные для отладки
+      log(`Обновление контента ${contentId} через хранилище: ${JSON.stringify(updateData)}`, 'social-publishing');
       
       // Добавляем дату публикации, если есть хотя бы одна успешная публикация
       if (firstPublishedAt) {

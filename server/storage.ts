@@ -1174,7 +1174,10 @@ export class DatabaseStorage implements IStorage {
         directusUpdates.prompt = updates.prompt;
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
-      if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
+      if (updates.socialPlatforms !== undefined) {
+        console.log(`[КРИТИЧНО] Обновляем social_platforms контента ${id}: ${JSON.stringify(updates.socialPlatforms)}`);
+        directusUpdates.social_platforms = updates.socialPlatforms;
+      }
       // Добавляем обработку дополнительных изображений
       if (updates.additionalImages !== undefined) {
         console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);
