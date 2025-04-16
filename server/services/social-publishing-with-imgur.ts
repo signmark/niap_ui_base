@@ -2412,14 +2412,25 @@ export class SocialPublishingWithImgurService {
       // Шаг 2: Обновляем статус публикации в объекте social_platforms
       const socialPlatforms = content.socialPlatforms || {};
       
-      const updatedSocialPlatforms = {
-        ...socialPlatforms,
-        [platform]: {
-          status: publicationResult.status,
-          publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt) : null,
-          error: publicationResult.error || null
-        }
+      // Создаем глубокую копию объекта socialPlatforms
+      const updatedSocialPlatforms = JSON.parse(JSON.stringify(socialPlatforms));
+      
+      // Обновляем или добавляем только данные конкретной платформы
+      updatedSocialPlatforms[platform] = {
+        // Сохраняем существующие данные платформы
+        ...(updatedSocialPlatforms[platform] || {}),
+        // Обновляем актуальные данные
+        status: publicationResult.status,
+        publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
+        error: publicationResult.error || null,
+        // Добавляем дополнительные данные из publicationResult
+        ...(publicationResult.postUrl ? { postUrl: publicationResult.postUrl } : {}),
+        ...(publicationResult.postId ? { postId: publicationResult.postId } : {}),
+        ...(publicationResult.messageId ? { messageId: publicationResult.messageId } : {})
       };
+      
+      // Логирование для диагностики
+      log(`Обновляем social_platforms для ${contentId}:\n${JSON.stringify(updatedSocialPlatforms, null, 2)}`, 'social-publishing');
       
       // Шаг 3: Обновляем данные напрямую через API с системным токеном
       log(`Прямое обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
