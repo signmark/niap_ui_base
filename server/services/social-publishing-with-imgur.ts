@@ -2487,81 +2487,154 @@ export class SocialPublishingWithImgurService {
       log(`[${operationId}] 5. ✅ Финальный объект данных для всех платформ:\n${JSON.stringify(mergedPlatforms, null, 2)}`, 'social-publishing');
       
       // 6. Отправка обновления в Directus через PATCH запрос
-      log(`[${operationId}] 6. Отправка обновления в Directus для контента: ${contentId}`, 'social-publishing');
+      log(`[${operationId}] 6. Отправка обновления для контента: ${contentId}`, 'social-publishing');
       let updatedContent = null;
       
       try {
         // Четко указываем, что обновляем только поле social_platforms
         const updatePayload = { social_platforms: mergedPlatforms };
         
-        log(`[${operationId}] 6. PATCH запрос: ${JSON.stringify(updatePayload, null, 2)}`, 'social-publishing');
+        log(`[${operationId}] 6. Подготовлен объект обновления: ${JSON.stringify(updatePayload, null, 2)}`, 'social-publishing');
         
-        // Выполняем запрос на обновление
-        const updateResponse = await axios.patch(
-          `${directusUrl}/items/campaign_content/${contentId}`,
-          updatePayload,
-          {
-            headers: {
-              'Authorization': `Bearer ${systemToken}`,
-              'Content-Type': 'application/json'
+        // НОВЫЙ ПОДХОД: Сначала пытаемся получить контент через внутренний сервис storage
+        log(`[${operationId}] 6. Получение контента через storage`, 'social-publishing');
+        let existingContent = null;
+        
+        try {
+          existingContent = await storage.getCampaignContent(contentId);
+          log(`[${operationId}] 6. ✅ Контент успешно получен через storage`, 'social-publishing');
+        } catch (storageError) {
+          log(`[${operationId}] 6. ⚠️ Ошибка при получении контента через storage: ${storageError}`, 'social-publishing');
+          log(`[${operationId}] 6. ⚠️ Продолжаем с имеющимися данными`, 'social-publishing');
+        }
+        
+        // Если получение через storage не удалось, используем данные из currentItem
+        if (!existingContent && currentItem) {
+          log(`[${operationId}] 6. Создание объекта контента из currentItem`, 'social-publishing');
+          existingContent = {
+            id: currentItem.id,
+            content: currentItem.content,
+            userId: currentItem.user_id,
+            campaignId: currentItem.campaign_id,
+            status: currentItem.status,
+            contentType: currentItem.content_type || 'text',
+            title: currentItem.title || null,
+            imageUrl: currentItem.image_url,
+            videoUrl: currentItem.video_url || null,
+            additionalImages: currentItem.additional_images || null,
+            additionalMedia: currentItem.additional_media || null,
+            prompt: currentItem.prompt || null,
+            keywords: currentItem.keywords || [],
+            hashtags: currentItem.hashtags || [],
+            links: currentItem.links || [],
+            createdAt: currentItem.date_created ? new Date(currentItem.date_created) : null,
+            publishedAt: currentItem.published_at ? new Date(currentItem.published_at) : null,
+            scheduledAt: currentItem.scheduled_at ? new Date(currentItem.scheduled_at) : null,
+            socialPlatforms: mergedPlatforms,
+            metadata: currentItem.metadata || {}
+          };
+        } else if (existingContent) {
+          // Обновляем только поле socialPlatforms
+          existingContent.socialPlatforms = mergedPlatforms;
+        } else {
+          // Если у нас нет данных ни из storage, ни из currentItem, выдаем ошибку
+          throw new Error('Отсутствуют данные контента для обновления');
+        }
+        
+        // Обновление через storage
+        log(`[${operationId}] 6. Обновление контента через storage`, 'social-publishing');
+        if (existingContent) {
+          // Сохраняем через storage
+          try {
+            await storage.updateCampaignContent(contentId, {
+              socialPlatforms: mergedPlatforms
+            });
+            log(`[${operationId}] 6. ✅ Контент успешно обновлён через storage`, 'social-publishing');
+            updatedContent = existingContent;
+          } catch (updateError) {
+            log(`[${operationId}] 6. ❌ Ошибка при обновлении через storage: ${updateError}`, 'social-publishing');
+            
+            // Запасной вариант: прямой запрос к API
+            log(`[${operationId}] 6. Использование запасного варианта - прямой запрос к API`, 'social-publishing');
+            const updateResponse = await axios.patch(
+              `${directusUrl}/items/campaign_content/${contentId}`,
+              { social_platforms: mergedPlatforms },
+              {
+                headers: {
+                  'Authorization': `Bearer ${systemToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (updateResponse?.data?.data) {
+              log(`[${operationId}] 6. ✅ Контент успешно обновлён через прямой API запрос`, 'social-publishing');
+              updatedContent = existingContent;
+            } else {
+              throw new Error('Не удалось обновить контент ни через storage, ни через API');
             }
           }
-        );
-        
-        if (!updateResponse?.data?.data) {
-          throw new Error('Некорректный ответ API при обновлении');
+        } else {
+          throw new Error('Отсутствует объект контента для обновления');
         }
         
-        log(`[${operationId}] 6. ✅ Обновление успешно отправлено в Directus`, 'social-publishing');
-        
-        // 7. Верификация обновления - проверим, что данные действительно обновились
-        log(`[${operationId}] 7. Верификация обновления в Directus`, 'social-publishing');
-        
-        const verifyResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${systemToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (verifyResponse?.data?.data?.social_platforms) {
-          const verifiedPlatforms = verifyResponse.data.data.social_platforms;
-          const verifiedKeys = Object.keys(verifiedPlatforms);
+        // 7. Верификация обновления через storage
+        log(`[${operationId}] 7. Верификация обновления через storage`, 'social-publishing');
+        try {
+          const verifiedContent = await storage.getCampaignContent(contentId);
           
-          log(`[${operationId}] 7. Верификация платформ: ${verifiedKeys.length} платформ после обновления: ${verifiedKeys.join(', ')}`, 'social-publishing');
-          
-          if (verifiedKeys.length < updatedPlatforms.length) {
-            log(`[${operationId}] 7. ⚠️ ПРЕДУПРЕЖДЕНИЕ: В Directus меньше платформ (${verifiedKeys.length}), чем мы отправили (${updatedPlatforms.length})`, 'social-publishing');
-          } else {
-            log(`[${operationId}] 7. ✅ Верификация успешна - все платформы сохранены`, 'social-publishing');
+          if (verifiedContent?.socialPlatforms) {
+            const verifiedPlatforms = verifiedContent.socialPlatforms;
+            const verifiedKeys = Object.keys(verifiedPlatforms);
+            
+            log(`[${operationId}] 7. Верификация платформ: ${verifiedKeys.length} платформ после обновления: ${verifiedKeys.join(', ')}`, 'social-publishing');
+            
+            if (verifiedKeys.length < updatedPlatforms.length) {
+              log(`[${operationId}] 7. ⚠️ ПРЕДУПРЕЖДЕНИЕ: После обновления меньше платформ (${verifiedKeys.length}), чем мы отправили (${updatedPlatforms.length})`, 'social-publishing');
+            } else {
+              log(`[${operationId}] 7. ✅ Верификация успешна - все платформы сохранены`, 'social-publishing');
+            }
+            
+            // Проверяем сохранился ли URL публикации
+            if (verifiedPlatforms[platform]?.postUrl === publicationResult.postUrl) {
+              log(`[${operationId}] 7. ✅ URL публикации успешно сохранен: ${verifiedPlatforms[platform].postUrl}`, 'social-publishing');
+            } else {
+              log(`[${operationId}] 7. ⚠️ URL публикации сохранен неверно или не сохранен`, 'social-publishing');
+              log(`[${operationId}] 7. ⚠️ Ожидаемый URL: ${publicationResult.postUrl}`, 'social-publishing');
+              log(`[${operationId}] 7. ⚠️ Фактический URL: ${verifiedPlatforms[platform]?.postUrl || 'отсутствует'}`, 'social-publishing');
+            }
           }
+        } catch (verifyError) {
+          log(`[${operationId}] 7. ⚠️ Не удалось верифицировать обновление: ${verifyError}`, 'social-publishing');
         }
         
-        // 8. Формируем объект CampaignContent для возврата
-        log(`[${operationId}] 8. Формирование объекта контента для возврата`, 'social-publishing');
-        updatedContent = {
-          id: currentItem.id,
-          content: currentItem.content,
-          userId: currentItem.user_id,
-          campaignId: currentItem.campaign_id,
-          status: currentItem.status,
-          contentType: currentItem.content_type || 'text',
-          title: currentItem.title || null,
-          imageUrl: currentItem.image_url,
-          videoUrl: currentItem.video_url,
-          scheduledAt: currentItem.scheduled_at ? new Date(currentItem.scheduled_at) : null,
-          createdAt: new Date(currentItem.created_at),
-          // Используем объединенные данные платформ
-          socialPlatforms: mergedPlatforms,
-          additionalImages: currentItem.additional_images || null,
-          additionalMedia: currentItem.additional_media || null,
-          keywords: currentItem.keywords || null,
-          hashtags: currentItem.hashtags || null,
-          prompt: currentItem.prompt || null,
-          links: currentItem.links || null,
-          publishedAt: currentItem.published_at ? new Date(currentItem.published_at) : null,
-          metadata: currentItem.metadata || {}
-        };
+        // 8. Если объект updatedContent уже сформирован из existingContent, используем его
+        if (!updatedContent && currentItem) {
+          // Формируем объект CampaignContent для возврата
+          updatedContent = {
+            id: currentItem.id,
+            content: currentItem.content,
+            userId: currentItem.user_id,
+            campaignId: currentItem.campaign_id,
+            status: currentItem.status,
+            contentType: currentItem.content_type || 'text',
+            title: currentItem.title || null,
+            imageUrl: currentItem.image_url,
+            videoUrl: currentItem.video_url || null,
+            scheduledAt: currentItem.scheduled_at ? new Date(currentItem.scheduled_at) : null,
+            createdAt: new Date(currentItem.created_at),
+            // Используем объединенные данные платформ
+            socialPlatforms: mergedPlatforms,
+            additionalImages: currentItem.additional_images || null,
+            additionalMedia: currentItem.additional_media || null,
+            keywords: currentItem.keywords || [],
+            hashtags: currentItem.hashtags || [],
+            prompt: currentItem.prompt || null,
+            links: currentItem.links || [],
+            publishedAt: currentItem.published_at ? new Date(currentItem.published_at) : null,
+            metadata: currentItem.metadata || {}
+          };
+        }
         
         log(`[${operationId}] ✅ ЗАВЕРШЕНО обновление статуса публикации для ${contentId}, платформа: ${platform}`, 'social-publishing');
         return updatedContent;
