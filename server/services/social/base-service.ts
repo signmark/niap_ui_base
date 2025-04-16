@@ -279,6 +279,32 @@ export abstract class BaseSocialService {
       
       const content = await storage.getCampaignContent(contentId, token);
       
+      // Логирование для отладки - получаемый контент и его socialPlatforms
+      log(`[ПЛАТФОРМЫ DEBUG] Получен контент с ID ${contentId}`, 'social-publishing');
+      
+      // Проверяем наличие socialPlatforms и его тип в полученном контенте
+      if (content && content.socialPlatforms) {
+        // Если строка, пытаемся распарсить
+        if (typeof content.socialPlatforms === 'string') {
+            try {
+                const parsed = JSON.parse(content.socialPlatforms);
+                log(`[ПЛАТФОРМЫ DEBUG] socialPlatforms (parsed string): ${JSON.stringify(parsed)}`, 'social-publishing');
+                log(`[ПЛАТФОРМЫ DEBUG] Ключи socialPlatforms: ${Object.keys(parsed).join(', ')}`, 'social-publishing');
+            } catch (e) {
+                log(`[ПЛАТФОРМЫ DEBUG] Ошибка парсинга socialPlatforms: ${e}`, 'social-publishing');
+            }
+        } else if (typeof content.socialPlatforms === 'object') {
+            // Если объект
+            log(`[ПЛАТФОРМЫ DEBUG] socialPlatforms (object): ${JSON.stringify(content.socialPlatforms)}`, 'social-publishing');
+            log(`[ПЛАТФОРМЫ DEBUG] Ключи socialPlatforms: ${Object.keys(content.socialPlatforms).join(', ')}`, 'social-publishing');
+        } else {
+            // Другой тип
+            log(`[ПЛАТФОРМЫ DEBUG] socialPlatforms имеет неожиданный тип: ${typeof content.socialPlatforms}`, 'social-publishing');
+        }
+      } else {
+        log(`[ПЛАТФОРМЫ DEBUG] Контент не содержит socialPlatforms`, 'social-publishing');
+      }
+      
       if (!content) {
         log(`Не удалось получить контент с ID ${contentId} для обновления статуса публикации`, 'social-publishing');
         return null;
