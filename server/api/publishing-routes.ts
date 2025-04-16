@@ -483,6 +483,33 @@ export function registerPublishingRoutes(app: Express): void {
             } else {
               log(`Публикация ${content.id} в ${platform} успешна, результат без messageId`, 'api');
             }
+            
+            // Обновляем статус публикации на 'published' для успешной платформы
+            if (systemToken) {
+              try {
+                const socialPlatforms = content.socialPlatforms || {};
+                
+                await storage.updateCampaignContent(content.id, {
+                  socialPlatforms: {
+                    ...socialPlatforms,
+                    [platform]: {
+                      ...(socialPlatforms[platform] || {}),
+                      status: 'published',
+                      publishedAt: new Date().toISOString(),
+                      error: null,
+                      postUrl: result?.url || result?.postUrl || null,
+                      messageId: result?.messageId || null
+                    }
+                  }
+                }, systemToken);
+                
+                log(`Статус публикации ${content.id} обновлен на published для ${platform}`, 'api');
+              } catch (updateError: any) {
+                log(`Ошибка при обновлении статуса публикации ${content.id} на published: ${updateError.message}`, 'api');
+              }
+            } else {
+              log(`Не удалось обновить статус публикации ${content.id} для ${platform} на published - нет системного токена`, 'api');
+            }
           } catch (platformError: any) {
             results[platform] = {
               success: false,
