@@ -581,13 +581,18 @@ export class PublishScheduler {
       
       // Проверяем статус в социальных платформах
       if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
-        // Если хотя бы одна платформа имеет статус published, считаем контент опубликованным
-        const anyPublished = Object.values(content.socialPlatforms).some(
-          (platform: any) => platform && platform.status === 'published'
-        );
+        // ИСПРАВЛЕНИЕ: Проверяем все платформы на статус published
+        const allPlatforms = Object.keys(content.socialPlatforms);
+        const publishedPlatforms = Object.entries(content.socialPlatforms)
+          .filter(([_, data]: [string, any]) => data && data.status === 'published')
+          .map(([platform]) => platform);
         
-        if (anyPublished) {
-          log(`БЛОКИРОВКА: Контент ${content.id} уже имеет опубликованный статус в некоторых соцсетях, публикация остановлена`, 'scheduler');
+        // Информирование о статусе публикации
+        log(`Проверка статуса платформ: опубликовано ${publishedPlatforms.length} из ${allPlatforms.length}`, 'scheduler');
+        
+        // ИСПРАВЛЕНИЕ: Обновляем статус только если ВСЕ платформы опубликованы
+        if (publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length) {
+          log(`БЛОКИРОВКА: Контент ${content.id} опубликован ВО ВСЕХ (${publishedPlatforms.length}/${allPlatforms.length}) соцсетях`, 'scheduler');
           
           // Обновляем основной статус на published, если он ещё не установлен
           if (content.status !== 'published') {
@@ -598,6 +603,9 @@ export class PublishScheduler {
           }
           
           return;
+        } else if (publishedPlatforms.length > 0) {
+          // Если опубликованы не все платформы, выводим информацию и НЕ ПРЕРЫВАЕМ публикацию
+          log(`ИНФО: Контент ${content.id} опубликован только в НЕКОТОРЫХ (${publishedPlatforms.length}/${allPlatforms.length}) соцсетях, продолжаем публикацию остальных`, 'scheduler');
         }
       }
 
