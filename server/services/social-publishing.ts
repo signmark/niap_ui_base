@@ -1509,13 +1509,18 @@ export class SocialPublishingService {
       }
       
       // Обновляем статус публикации для платформы
+      // Важно - не перезаписываем весь объект, а обновляем только данные для конкретной платформы
       let socialPlatforms = content.socialPlatforms || {};
+      
+      // Логируем исходные данные для отладки
+      log(`Исходные данные socialPlatforms: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
       
       // Преобразуем из строки в объект, если это строка
       if (typeof socialPlatforms === 'string') {
         try {
           socialPlatforms = JSON.parse(socialPlatforms);
         } catch (e) {
+          log(`Ошибка при разборе JSON socialPlatforms: ${e}. Создаем новый объект.`, 'social-publishing');
           socialPlatforms = {};
         }
       }
@@ -1545,12 +1550,15 @@ export class SocialPublishingService {
         }
       }
       
+      // Создаем копию объекта socialPlatforms, чтобы не изменять исходный объект напрямую
+      const updatedSocialPlatforms = { ...socialPlatforms };
+      
       // Сохраняем существующие данные платформы, если они есть
-      const existingPlatformData = socialPlatforms[platformKey] || {};
+      const existingPlatformData = updatedSocialPlatforms[platformKey] || {};
       
       // Объединяем существующие данные с новыми результатами публикации
       // Важно: сохраняем scheduledAt и другие важные поля, которые могут быть в существующих данных
-      socialPlatforms[platformKey] = {
+      updatedSocialPlatforms[platformKey] = {
         ...existingPlatformData,   // Сохраняем все существующие данные
         ...publicationResult,      // Применяем новые данные
         // Убедимся, что статус и дата публикации обновлены
@@ -1561,6 +1569,12 @@ export class SocialPublishingService {
       };
       
       log(`Объединены данные для платформы ${platformKey}. Исходные: ${JSON.stringify(existingPlatformData)}, Новые: ${JSON.stringify(publicationResult)}`, 'social-publishing');
+      
+      // Используем updatedSocialPlatforms вместо socialPlatforms
+      socialPlatforms = updatedSocialPlatforms;
+      
+      // Логируем обновленные данные для проверки
+      log(`Обновленные данные socialPlatforms: ${JSON.stringify(socialPlatforms)}`, 'social-publishing');
       
       // Определяем общий статус публикации на основе статусов всех платформ
       const allPublished = this.checkAllPlatformsPublished(socialPlatforms);
