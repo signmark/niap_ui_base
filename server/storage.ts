@@ -977,6 +977,32 @@ export class DatabaseStorage implements IStorage {
       const item = response.data.data;
       console.log(`✅ Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
       
+      // Обрабатываем поле social_platforms перед возвратом
+      let socialPlatforms = item.social_platforms;
+      
+      // Логируем полученные данные социальных платформ для отладки
+      console.log(`Получены данные social_platforms из Directus для ${item.id}: ${
+        typeof item.social_platforms === 'object' ? 
+        JSON.stringify(Object.keys(item.social_platforms || {})) : 
+        typeof item.social_platforms}`);
+      
+      // Если поле undefined или null, инициализируем пустым объектом
+      if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
+        console.log(`social_platforms отсутствует или null, инициализируем пустым объектом`);
+        socialPlatforms = {};
+      }
+      
+      // Если поле является строкой, пробуем распарсить JSON
+      if (typeof socialPlatforms === 'string') {
+        try {
+          socialPlatforms = JSON.parse(socialPlatforms);
+          console.log(`social_platforms успешно распарсены из строки`);
+        } catch (e) {
+          console.error(`Ошибка при парсинге social_platforms из строки: ${e}`);
+          socialPlatforms = {};
+        }
+      }
+      
       return {
         id: item.id,
         content: item.content,
@@ -990,7 +1016,7 @@ export class DatabaseStorage implements IStorage {
         prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
+        socialPlatforms: socialPlatforms, // Используем обработанное значение
         publishedPlatforms: item.published_platforms || [],
         keywords: item.keywords || [] // Добавляем ключевые слова
       };
@@ -1043,6 +1069,33 @@ export class DatabaseStorage implements IStorage {
       });
       
       const item = response.data.data;
+      
+      // Обрабатываем поле social_platforms перед возвратом
+      let socialPlatforms = item.social_platforms;
+      
+      // Логируем полученные данные социальных платформ для отладки
+      console.log(`[CREATE] Получены данные social_platforms из Directus для ${item.id}: ${
+        typeof item.social_platforms === 'object' ? 
+        JSON.stringify(Object.keys(item.social_platforms || {})) : 
+        typeof item.social_platforms}`);
+      
+      // Если поле undefined или null, инициализируем пустым объектом
+      if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
+        console.log(`[CREATE] social_platforms отсутствует или null, инициализируем пустым объектом`);
+        socialPlatforms = {};
+      }
+      
+      // Если поле является строкой, пробуем распарсить JSON
+      if (typeof socialPlatforms === 'string') {
+        try {
+          socialPlatforms = JSON.parse(socialPlatforms);
+          console.log(`[CREATE] social_platforms успешно распарсены из строки`);
+        } catch (e) {
+          console.error(`[CREATE] Ошибка при парсинге social_platforms из строки: ${e}`);
+          socialPlatforms = {};
+        }
+      }
+      
       return {
         id: item.id,
         content: item.content,
@@ -1056,7 +1109,7 @@ export class DatabaseStorage implements IStorage {
         prompt: item.prompt || "",  // Добавляем поле промта при возвращении результата
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
+        socialPlatforms: socialPlatforms, // Используем обработанное значение
         keywords: item.keywords || [], // Добавляем ключевые слова при возвращении результата
         additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
@@ -1140,6 +1193,33 @@ export class DatabaseStorage implements IStorage {
       const response = await directusApi.patch(`/items/campaign_content/${id}`, directusUpdates, { headers });
       
       const item = response.data.data;
+      
+      // Обрабатываем поле social_platforms перед возвратом
+      let socialPlatforms = item.social_platforms;
+      
+      // Логируем полученные данные социальных платформ для отладки
+      console.log(`[UPDATE] Получены данные social_platforms из Directus для ${item.id}: ${
+        typeof item.social_platforms === 'object' ? 
+        JSON.stringify(Object.keys(item.social_platforms || {})) : 
+        typeof item.social_platforms}`);
+      
+      // Если поле undefined или null, инициализируем пустым объектом
+      if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
+        console.log(`[UPDATE] social_platforms отсутствует или null, инициализируем пустым объектом`);
+        socialPlatforms = {};
+      }
+      
+      // Если поле является строкой, пробуем распарсить JSON
+      if (typeof socialPlatforms === 'string') {
+        try {
+          socialPlatforms = JSON.parse(socialPlatforms);
+          console.log(`[UPDATE] social_platforms успешно распарсены из строки`);
+        } catch (e) {
+          console.error(`[UPDATE] Ошибка при парсинге social_platforms из строки: ${e}`);
+          socialPlatforms = {};
+        }
+      }
+      
       return {
         id: item.id,
         content: item.content,
@@ -1153,7 +1233,7 @@ export class DatabaseStorage implements IStorage {
         prompt: item.prompt || "",
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
+        socialPlatforms: socialPlatforms, // Используем обработанное значение
         keywords: item.keywords || [], // Добавляем возврат ключевых слов
         additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
       };
@@ -1241,23 +1321,43 @@ export class DatabaseStorage implements IStorage {
         headers
       });
       
-      const content = (response.data?.data || []).map((item: any) => ({
-        id: item.id,
-        content: item.content,
-        userId: item.user_id,
-        campaignId: item.campaign_id,
-        status: item.status,
-        contentType: item.content_type || "text",
-        title: item.title || null,
-        imageUrl: item.image_url,
-        prompt: item.prompt || "",
-        videoUrl: item.video_url,
-        scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
-        createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms,
-        keywords: item.keywords || [], // Добавляем ключевые слова
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
-      }));
+      const content = (response.data?.data || []).map((item: any) => {
+        // Обрабатываем поле social_platforms для каждого элемента
+        let socialPlatforms = item.social_platforms;
+        
+        // Если поле undefined или null, инициализируем пустым объектом
+        if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
+          socialPlatforms = {};
+        }
+        
+        // Если поле является строкой, пробуем распарсить JSON
+        if (typeof socialPlatforms === 'string') {
+          try {
+            socialPlatforms = JSON.parse(socialPlatforms);
+          } catch (e) {
+            console.error(`[getScheduledContent] Ошибка при парсинге social_platforms из строки для ${item.id}: ${e}`);
+            socialPlatforms = {};
+          }
+        }
+        
+        return {
+          id: item.id,
+          content: item.content,
+          userId: item.user_id,
+          campaignId: item.campaign_id,
+          status: item.status,
+          contentType: item.content_type || "text",
+          title: item.title || null,
+          imageUrl: item.image_url,
+          prompt: item.prompt || "",
+          videoUrl: item.video_url,
+          scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+          createdAt: new Date(item.created_at),
+          socialPlatforms: socialPlatforms, // Используем обработанное значение
+          keywords: item.keywords || [], // Добавляем ключевые слова
+          additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
+        };
+      });
       
       return content;
     } catch (error) {
