@@ -1,26 +1,26 @@
 {
   "initialState": {
-    "contentId": "4f5f780f-f9eb-4513-bb80-fcc114cad169",
+    "contentId": "22b5d0c6-9c7d-461e-be6c-91fd7e6595c2",
     "socialPlatforms": {
       "telegram": {
         "status": "scheduled",
-        "scheduledAt": "2025-04-16T11:53:45.825Z",
+        "scheduledAt": "2025-04-16T11:56:23.896Z",
         "chatId": "@test_channel"
       },
       "vk": {
         "status": "scheduled",
-        "scheduledAt": "2025-04-16T11:57:45.825Z",
+        "scheduledAt": "2025-04-16T12:00:23.896Z",
         "groupId": "123456789"
       },
       "instagram": {
         "status": "scheduled",
-        "scheduledAt": "2025-04-16T12:02:45.825Z",
+        "scheduledAt": "2025-04-16T12:05:23.896Z",
         "accountId": "987654321"
       }
     }
   },
   "finalState": {
-    "contentId": "4f5f780f-f9eb-4513-bb80-fcc114cad169",
+    "contentId": "22b5d0c6-9c7d-461e-be6c-91fd7e6595c2",
     "status": "scheduled",
     "platforms": [
       "telegram"
@@ -33,7 +33,7 @@
         "status": "published",
         "postUrl": "https://t.me/test_channel/12345",
         "messageId": 12345,
-        "publishedAt": "2025-04-16T11:52:45.992Z"
+        "publishedAt": "2025-04-16T11:55:24.074Z"
       }
     }
   }

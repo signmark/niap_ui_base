@@ -279,17 +279,47 @@ export abstract class BaseSocialService {
       
       const content = await storage.getCampaignContent(contentId, token);
       
-      // Логирование для отладки - получаемый контент и его socialPlatforms
+      // Логирование для отладки - получаемый контент и его поля связанные с платформами
       log(`[ПЛАТФОРМЫ DEBUG] Получен контент с ID ${contentId}`, 'social-publishing');
-      
-      // Проверяем наличие socialPlatforms и его тип в полученном контенте
-      if (content && content.socialPlatforms) {
+
+      // Проверяем наличие social_platforms в сыром формате
+      if (content && (content as any).social_platforms) {
+        log(`[ПЛАТФОРМЫ DEBUG] Найдено поле social_platforms (snake_case)`, 'social-publishing');
+        
+        // Проверяем тип поля social_platforms (snake_case формат из базы данных)
+        let rawPlatformsData = (content as any).social_platforms;
+        
+        // Если строка, пытаемся распарсить
+        if (typeof rawPlatformsData === 'string') {
+            try {
+                const parsed = JSON.parse(rawPlatformsData);
+                log(`[ПЛАТФОРМЫ DEBUG] social_platforms (parsed string): ${JSON.stringify(parsed)}`, 'social-publishing');
+                log(`[ПЛАТФОРМЫ DEBUG] Ключи social_platforms: ${Object.keys(parsed).join(', ')}`, 'social-publishing');
+                // Присваиваем распарсенные данные в socialPlatforms для дальнейшего использования
+                content.socialPlatforms = parsed;
+            } catch (e) {
+                log(`[ПЛАТФОРМЫ DEBUG] Ошибка парсинга social_platforms: ${e}`, 'social-publishing');
+            }
+        } else if (typeof rawPlatformsData === 'object') {
+            // Если объект
+            log(`[ПЛАТФОРМЫ DEBUG] social_platforms (object): ${JSON.stringify(rawPlatformsData)}`, 'social-publishing');
+            log(`[ПЛАТФОРМЫ DEBUG] Ключи social_platforms: ${Object.keys(rawPlatformsData).join(', ')}`, 'social-publishing');
+            // Присваиваем данные в socialPlatforms для дальнейшего использования
+            content.socialPlatforms = rawPlatformsData;
+        } else {
+            // Другой тип
+            log(`[ПЛАТФОРМЫ DEBUG] social_platforms имеет неожиданный тип: ${typeof rawPlatformsData}`, 'social-publishing');
+        }
+      } 
+      // Дополнительно проверяем socialPlatforms (camelCase)
+      else if (content && content.socialPlatforms) {
         // Если строка, пытаемся распарсить
         if (typeof content.socialPlatforms === 'string') {
             try {
                 const parsed = JSON.parse(content.socialPlatforms);
                 log(`[ПЛАТФОРМЫ DEBUG] socialPlatforms (parsed string): ${JSON.stringify(parsed)}`, 'social-publishing');
                 log(`[ПЛАТФОРМЫ DEBUG] Ключи socialPlatforms: ${Object.keys(parsed).join(', ')}`, 'social-publishing');
+                content.socialPlatforms = parsed;
             } catch (e) {
                 log(`[ПЛАТФОРМЫ DEBUG] Ошибка парсинга socialPlatforms: ${e}`, 'social-publishing');
             }
@@ -302,7 +332,9 @@ export abstract class BaseSocialService {
             log(`[ПЛАТФОРМЫ DEBUG] socialPlatforms имеет неожиданный тип: ${typeof content.socialPlatforms}`, 'social-publishing');
         }
       } else {
-        log(`[ПЛАТФОРМЫ DEBUG] Контент не содержит socialPlatforms`, 'social-publishing');
+        log(`[ПЛАТФОРМЫ DEBUG] Контент не содержит ни social_platforms, ни socialPlatforms`, 'social-publishing');
+        // Инициализируем пустые socialPlatforms
+        content.socialPlatforms = {};
       }
       
       if (!content) {
@@ -354,17 +386,28 @@ export abstract class BaseSocialService {
       log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Обновленные данные платформы ${platform}: ${JSON.stringify(socialPlatforms[platform])}`, 'social-publishing');
       log(`[ПЛАТФОРМЫ ВОССТАНОВЛЕНИЕ] Все платформы после обновления: ${JSON.stringify(Object.keys(socialPlatforms))}`, 'social-publishing');
       
-      // Обновляем контент
-      const updatedContent = await storage.updateCampaignContent(contentId, {
-        socialPublications,
-        socialPlatforms,
+      // Проблема: Вместо socialPlatforms нужно использовать social_platforms (snake_case) для Directus API
+      // Обновляем контент, преобразуя socialPlatforms -> social_platforms для Directus
+      const updatePayload = {
+        // Если поле socialPublications существует в схеме, используем его
+        ...(content.socialPublications !== undefined ? { socialPublications } : {}),
+        // Преобразуем socialPlatforms в social_platforms для Directus API
+        social_platforms: socialPlatforms,
         // Если публикация успешна, обновляем общий статус до "published"
         // только если мы публиковали на все выбранные платформы
         ...(publicationResult.status === 'published' ? {
           // Проверяем, были ли опубликованы все выбранные платформы
           status: this.shouldUpdateToPublished(content, socialPublications) ? 'published' : content.status
         } : {})
-      }, token);
+      };
+      
+      // Логируем попытку обновления
+      log(`Обновляем контент ${contentId} с данными: ${JSON.stringify({
+        social_platforms: Object.keys(socialPlatforms),
+        status: updatePayload.status
+      })}`, 'social-publishing');
+      
+      const updatedContent = await storage.updateCampaignContent(contentId, updatePayload, token);
       
       if (updatedContent) {
         log(`Статус публикации успешно обновлен для ${contentId}, платформа: ${platform}`, 'social-publishing');

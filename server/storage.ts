@@ -1100,6 +1100,16 @@ export class DatabaseStorage implements IStorage {
       // Преобразуем данные из нашей схемы в формат Directus
       const directusUpdates: Record<string, any> = {};
       
+      // Проверяем наличие snake_case полей (например, social_platforms)
+      // и добавляем их напрямую для совместимости с функциями, которые используют обращение к БД напрямую
+      const updateKeys = Object.keys(updates as Record<string, any>);
+      for (const key of updateKeys) {
+        if (key.includes('_')) {
+          console.log(`Обнаружено поле в формате snake_case: ${key}`);
+          directusUpdates[key] = (updates as Record<string, any>)[key];
+        }
+      }
+      
       if (updates.content !== undefined) directusUpdates.content = updates.content;
       if (updates.status !== undefined) directusUpdates.status = updates.status;
       if (updates.contentType !== undefined) directusUpdates.content_type = updates.contentType;
