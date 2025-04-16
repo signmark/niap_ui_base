@@ -1986,10 +1986,13 @@ export class SocialPublishingWithImgurService {
         }
       }
       
+      // Определяем, есть ли видео для публикации
+      // Важно: создаем переменную hasVideo, используемую позже
       const hasVideo = !!videoUrl;
+      log(`VK публикация: hasVideo=${hasVideo}, videoUrl=${videoUrl || 'не найден'}`, 'social-publishing');
       
       // Если есть видео, пробуем опубликовать его
-      if (hasVideo && videoUrl) {
+      if (videoUrl) {
         try {
           // Логируем наличие видео для публикации
           log(`Обнаружено видео для публикации в ВК: ${videoUrl}`, 'social-publishing');
