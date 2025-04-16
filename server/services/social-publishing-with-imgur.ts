@@ -2583,7 +2583,7 @@ export class SocialPublishingWithImgurService {
         try {
           const verifiedContent = await storage.getCampaignContent(contentId);
           
-          if (verifiedContent?.socialPlatforms) {
+          if (verifiedContent && verifiedContent.socialPlatforms) {
             const verifiedPlatforms = verifiedContent.socialPlatforms;
             const verifiedKeys = Object.keys(verifiedPlatforms);
             

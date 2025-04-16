@@ -19,23 +19,32 @@ function log(message) {
   console.log(`[${timestamp}] ${message}`);
 }
 
-// Функция для авторизации
+// Функция для авторизации через Directus API
 async function login() {
-  log('Авторизация в системе...');
+  log('Авторизация в Directus API...');
   try {
-    const loginResponse = await axios.post(`${apiUrl}/api/auth/login`, {
-      email: userEmail,
-      password: userPassword
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    // Делаем запрос к Directus auth endpoint напрямую как на скриншоте
+    const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
+      email: "lbrspb@gmail.com",
+      password: "smm789hf3"
     });
     
-    if (loginResponse?.data?.token) {
-      log('✅ Авторизация успешна');
-      return loginResponse.data.token;
+    // Получаем access_token напрямую из ответа Directus
+    if (loginResponse?.data?.data?.access_token) {
+      const token = loginResponse.data.data.access_token;
+      log('✅ Авторизация в Directus успешна');
+      return token;
     } else {
-      throw new Error('Ответ сервера не содержит токен');
+      throw new Error('Ответ Directus не содержит access_token');
     }
   } catch (error) {
-    log(`❌ Ошибка авторизации: ${error.message}`);
+    log(`❌ Ошибка авторизации в Directus: ${error.message}`);
+    if (error.response) {
+      log(`Статус ошибки: ${error.response.status}`);
+      log(`Тело ответа: ${JSON.stringify(error.response.data)}`);
+    }
     throw error;
   }
 }
