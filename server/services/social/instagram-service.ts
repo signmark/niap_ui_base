@@ -376,9 +376,41 @@ export class InstagramService extends BaseSocialService {
           const shortMediaId = String(igMediaId).includes('_') ? 
             igMediaId.split('_')[1] : igMediaId;
           
-          postUrl = `https://www.instagram.com/p/${shortMediaId}/`;
+          // Если ID имеет короткий формат IG, используем его, иначе создаем альтернативную ссылку
+          if (/^[A-Za-z0-9_-]{11}$/.test(shortMediaId)) {
+            postUrl = `https://www.instagram.com/p/${shortMediaId}/`;
+          } else {
+            // Альтернативный метод создания ссылки - на основе имени бизнес-аккаунта
+            const accountName = instagramSettings.businessAccountName || 
+                              (instagramSettings.businessAccountId ? 
+                               instagramSettings.businessAccountId.toString() : 'instagram');
+            postUrl = `https://www.instagram.com/${accountName}/`;
+            log(`[Instagram] Не удалось создать прямую ссылку на пост, используем ссылку на профиль: ${postUrl}`, 'instagram');
+          }
+            
           log(`[Instagram] Не удалось получить permalink, создаём постоянную ссылку из ID: ${postUrl}`, 'instagram');
         }
+        
+        // Записываем postUrl и для использования через "Опубликовать сейчас"
+        fs.mkdir('/home/runner/workspace/logs/instagram', { recursive: true }, (err) => {
+          if (err) log(`[Instagram] Ошибка создания директории логов: ${err.message}`, 'instagram');
+          
+          const logData = {
+            publishedAt: new Date().toISOString(),
+            contentId: content.id,
+            igMediaId: igMediaId,
+            permalink: postUrl
+          };
+          
+          fs.writeFile(
+            `/home/runner/workspace/logs/instagram/post_${content.id.substring(0, 8)}_${Date.now()}.json`, 
+            JSON.stringify(logData, null, 2), 
+            'utf8', 
+            (writeErr) => {
+              if (writeErr) log(`[Instagram] Ошибка записи лога: ${writeErr.message}`, 'instagram');
+            }
+          );
+        });
         
         log(`[Instagram] Публикация успешно завершена!`, 'instagram');
         
