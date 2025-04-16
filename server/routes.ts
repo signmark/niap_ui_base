@@ -37,6 +37,7 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
+import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
@@ -2889,6 +2890,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
   console.log('API routes registered successfully');
+  
+  // Регистрируем маршруты для тестирования Instagram
+  registerTestInstagramRoute(app);
+  console.log('Test Instagram routes registered');
   
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);

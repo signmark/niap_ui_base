@@ -1,0 +1,342 @@
+/**
+ * Тестовый маршрут для проверки публикации в Instagram и сохранения URL
+ */
+import express, { Request, Response } from 'express';
+import { socialPublishingWithImgurService } from '../services/social-publishing-with-imgur';
+import { instagramService } from '../services/social/instagram-service';
+import { log } from '../utils/logger';
+import type { CampaignContent } from '../../shared/schema';
+import axios from 'axios';
+
+// Функция для регистрации тестового маршрута
+export function registerTestInstagramRoute(app: express.Express) {
+  console.log('Регистрация тестового маршрута для Instagram');
+
+  // Маршрут для прямой публикации в Instagram с сохранением результата
+  app.post('/api/test/instagram-publish', async (req: Request, res: Response) => {
+    const { contentId } = req.body;
+
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Необходимо указать contentId' 
+      });
+    }
+
+    log(`[Test Route] Тестовая публикация в Instagram для контента: ${contentId}`, 'instagram-test');
+
+    try {
+      // 1. Получаем системный токен
+      const systemToken = await getSystemToken();
+      
+      if (!systemToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось получить системный токен'
+        });
+      }
+
+      // 2. Получаем данные контента из Directus
+      const content = await fetchContent(contentId, systemToken);
+      
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Не удалось найти контент'
+        });
+      }
+
+      // 3. Получаем данные кампании для настроек соцсетей
+      const campaign = await fetchCampaign(content.campaignId, systemToken);
+      
+      if (!campaign || !campaign.social_media_settings) {
+        return res.status(404).json({
+          success: false,
+          error: 'Не удалось получить настройки социальных сетей'
+        });
+      }
+
+      // 4. Подготавливаем социальные настройки
+      const socialSettings = prepareSocialSettings(campaign);
+
+      // 5. Публикуем в Instagram
+      const result = await instagramService.publishToPlatform(content, 'instagram', socialSettings);
+      
+      log(`[Test Route] Результат публикации в Instagram: ${JSON.stringify(result)}`, 'instagram-test');
+
+      // 6. Обновляем статус публикации
+      if (result) {
+        const updatedContent = await socialPublishingWithImgurService.updatePublicationStatus(
+          contentId,
+          'instagram',
+          result
+        );
+
+        // 7. Получаем финальный контент для проверки
+        const finalContent = await fetchContent(contentId, systemToken);
+
+        return res.json({
+          success: true,
+          publication: result,
+          updatedContent: updatedContent,
+          finalContent: finalContent,
+          socialPlatforms: finalContent?.socialPlatforms || {},
+          instagram: finalContent?.socialPlatforms?.instagram || null
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Публикация не вернула результат'
+        });
+      }
+    } catch (error: any) {
+      console.error('Ошибка в тестовом маршруте Instagram:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при публикации: ${error.message}`,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
+
+  // Маршрут для проверки только сохранения URL
+  app.post('/api/test/save-instagram-url', async (req: Request, res: Response) => {
+    const { contentId, postUrl, messageId } = req.body;
+
+    if (!contentId || !postUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Необходимо указать contentId и postUrl' 
+      });
+    }
+
+    try {
+      // Обновляем статус публикации с тестовым URL
+      const updatedContent = await socialPublishingWithImgurService.updatePublicationStatus(
+        contentId,
+        'instagram',
+        {
+          platform: 'instagram',
+          status: 'published',
+          publishedAt: new Date(),
+          postUrl: postUrl,
+          ...(messageId ? { messageId } : {})
+        }
+      );
+
+      // Получаем системный токен
+      const systemToken = await getSystemToken();
+      
+      if (!systemToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось получить системный токен'
+        });
+      }
+
+      // Получаем финальный контент для проверки
+      const finalContent = await fetchContent(contentId, systemToken);
+
+      return res.json({
+        success: true,
+        updatedContent: updatedContent,
+        finalContent: finalContent,
+        socialPlatforms: finalContent?.socialPlatforms || {},
+        instagram: finalContent?.socialPlatforms?.instagram || null
+      });
+    } catch (error: any) {
+      console.error('Ошибка при сохранении URL:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при сохранении URL: ${error.message}`
+      });
+    }
+  });
+
+  console.log('Тестовый маршрут для Instagram зарегистрирован');
+}
+
+// Вспомогательные функции
+async function getSystemToken(): Promise<string | null> {
+  try {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+    
+    if (!adminEmail || !adminPassword) {
+      log('Отсутствуют учетные данные администратора для Directus', 'auth');
+      return null;
+    }
+    
+    const response = await axios.post(`${directusUrl}/auth/login`, {
+      email: adminEmail,
+      password: adminPassword
+    });
+    
+    if (response?.data?.data?.access_token) {
+      return response.data.data.access_token;
+    }
+    
+    return null;
+  } catch (error: any) {
+    log(`Ошибка при получении системного токена: ${error.message}`, 'auth');
+    return null;
+  }
+}
+
+async function fetchContent(contentId: string, token: string): Promise<CampaignContent | null> {
+  try {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response?.data?.data) {
+      return null;
+    }
+    
+    const directusItem = response.data.data;
+    
+    // Преобразуем Directus формат в наш внутренний формат
+    const content: CampaignContent = {
+      id: directusItem.id,
+      userId: directusItem.user_id,
+      campaignId: directusItem.campaign_id,
+      title: directusItem.title,
+      content: directusItem.content,
+      contentType: directusItem.content_type,
+      imageUrl: directusItem.image_url,
+      videoUrl: directusItem.video_url,
+      additionalImages: directusItem.additional_images || null,
+      additionalMedia: directusItem.additional_media || null,
+      status: directusItem.status,
+      prompt: directusItem.prompt || null,
+      keywords: directusItem.keywords || [],
+      hashtags: directusItem.hashtags || [],
+      links: directusItem.links || [],
+      createdAt: directusItem.date_created ? new Date(directusItem.date_created) : null,
+      publishedAt: directusItem.published_at ? new Date(directusItem.published_at) : null,
+      scheduledAt: directusItem.scheduled_at ? new Date(directusItem.scheduled_at) : null,
+      socialPlatforms: parseSocialPlatforms(directusItem.social_platforms),
+      metadata: directusItem.metadata || {}
+    };
+    
+    return content;
+  } catch (error: any) {
+    log(`Ошибка при получении контента: ${error.message}`, 'fetch-content');
+    return null;
+  }
+}
+
+async function fetchCampaign(campaignId: string, token: string): Promise<any | null> {
+  try {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    const response = await axios.get(`${directusUrl}/items/user_campaigns/${campaignId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response?.data?.data) {
+      return null;
+    }
+    
+    return response.data.data;
+  } catch (error: any) {
+    log(`Ошибка при получении кампании: ${error.message}`, 'fetch-campaign');
+    return null;
+  }
+}
+
+function parseSocialPlatforms(data: any): Record<string, any> {
+  if (!data) {
+    return {};
+  }
+  
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      return {};
+    }
+  }
+  
+  if (typeof data === 'object') {
+    return data;
+  }
+  
+  return {};
+}
+
+function prepareSocialSettings(campaign: any): any {
+  const settings: any = {};
+
+  // Обработка настроек соцсетей
+  try {
+    if (campaign.social_media_settings) {
+      let socialSettings;
+      
+      if (typeof campaign.social_media_settings === 'string') {
+        socialSettings = JSON.parse(campaign.social_media_settings);
+      } else {
+        socialSettings = campaign.social_media_settings;
+      }
+      
+      // Передаем все настройки соцсетей
+      if (socialSettings.telegram) {
+        settings.telegram = socialSettings.telegram;
+      }
+      
+      if (socialSettings.instagram) {
+        settings.instagram = socialSettings.instagram;
+      }
+      
+      if (socialSettings.vk) {
+        settings.vk = socialSettings.vk;
+      }
+      
+      if (socialSettings.facebook) {
+        settings.facebook = socialSettings.facebook;
+      }
+    }
+  } catch (error) {
+    log(`Ошибка при подготовке настроек соцсетей: ${error}`, 'social-settings');
+  }
+  
+  // Резервное использование системных настроек
+  const socialNetworks = process.env.SOCIAL_NETWORKS;
+  
+  if (socialNetworks) {
+    try {
+      const networksConfig = JSON.parse(socialNetworks);
+      
+      if (!settings.telegram && networksConfig.telegram) {
+        settings.telegram = networksConfig.telegram;
+      }
+      
+      if (!settings.instagram && networksConfig.instagram) {
+        settings.instagram = networksConfig.instagram;
+      }
+      
+      if (!settings.vk && networksConfig.vk) {
+        settings.vk = networksConfig.vk;
+      }
+      
+      if (!settings.facebook && networksConfig.facebook) {
+        settings.facebook = networksConfig.facebook;
+      }
+    } catch (error) {
+      log(`Ошибка при парсинге SOCIAL_NETWORKS: ${error}`, 'social-settings');
+    }
+  }
+  
+  return settings;
+}
