@@ -38,6 +38,7 @@ import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
+import { registerTestSocialRoutes } from './api/test-social-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 
