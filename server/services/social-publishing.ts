@@ -8,6 +8,7 @@ import * as os from 'os';
 import FormData from 'form-data';
 import { TelegramService } from './social/telegram-service';
 import { DirectusAuthManager } from './directus-auth-manager';
+import { directusAuthManager } from './directus-auth-manager';
 
 /**
  * Сервис для публикации контента в социальные сети
@@ -2144,6 +2145,10 @@ export class SocialPublishingService {
     }
   }
 
+  /**
+   * Получает системный токен для доступа к API Directus
+   * @returns Токен доступа или null в случае ошибки
+   */
   private async getSystemToken(): Promise<string | null> {
     try {
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
@@ -2168,11 +2173,16 @@ export class SocialPublishingService {
       
       log(`Не удалось получить токен администратора Directus: Неверный формат ответа`, 'social-publishing');
       return null;
-    } catch (error: any) {
-      log(`Ошибка при получении токена администратора Directus: ${error.message}`, 'social-publishing');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log(`Ошибка при получении токена администратора Directus: ${errorMessage}`, 'social-publishing');
       return null;
     }
   }
 }
 
-export const socialPublishingService = new SocialPublishingService();
+// Импортируем экземпляр DirectusAuthManager
+import { directusAuthManager } from './directus-auth-manager';
+
+// Создаем экземпляр сервиса с передачей менеджера авторизации
+export const socialPublishingService = new SocialPublishingService(directusAuthManager);
