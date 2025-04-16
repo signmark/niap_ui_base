@@ -9,38 +9,31 @@ const contentId = process.argv[2] || '8186b9ef-b290-4cad-970e-c39b8afda63e';
 const platform = process.argv[3] || 'instagram';
 const testUrl = `https://${platform}.com/p/test_${Date.now()}`;
 
-// Учетные данные
-const userEmail = process.env.TEST_USER_EMAIL || 'lbrspb@gmail.com';
-const userPassword = process.env.TEST_USER_PASSWORD || 'smm789hf3';
-
 // Функция для логирования
 function log(message) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${message}`);
 }
 
-// Функция для авторизации через Directus API
+// Функция для авторизации напрямую через API сервера, а не через Directus
 async function login() {
-  log('Авторизация в Directus API...');
+  log('Авторизация в локальный API сервер...');
   try {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-    
-    // Делаем запрос к Directus auth endpoint напрямую как на скриншоте
-    const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
-      email: "lbrspb@gmail.com",
-      password: "smm789hf3"
+    // Эндпоинт авторизации на локальном сервере
+    const authResponse = await axios.post(`${apiUrl}/api/auth/login`, {
+      email: 'lbrspb@gmail.com',
+      password: 'smm789hf3'
     });
     
-    // Получаем access_token напрямую из ответа Directus
-    if (loginResponse?.data?.data?.access_token) {
-      const token = loginResponse.data.data.access_token;
-      log('✅ Авторизация в Directus успешна');
+    if (authResponse?.data?.token) {
+      const token = authResponse.data.token;
+      log('✅ Авторизация в API успешна');
       return token;
     } else {
-      throw new Error('Ответ Directus не содержит access_token');
+      throw new Error('Ответ API не содержит токен');
     }
   } catch (error) {
-    log(`❌ Ошибка авторизации в Directus: ${error.message}`);
+    log(`❌ Ошибка авторизации в API: ${error.message}`);
     if (error.response) {
       log(`Статус ошибки: ${error.response.status}`);
       log(`Тело ответа: ${JSON.stringify(error.response.data)}`);
