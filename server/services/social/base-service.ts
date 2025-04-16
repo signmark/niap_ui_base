@@ -403,7 +403,7 @@ export abstract class BaseSocialService {
       
       // Логируем попытку обновления
       log(`Обновляем контент ${contentId} с данными: ${JSON.stringify({
-        social_platforms: Object.keys(socialPlatforms),
+        social_platforms: socialPlatforms, // Отправляем полный объект, а не только ключи!
         status: updatePayload.status
       })}`, 'social-publishing');
       
@@ -438,10 +438,16 @@ export abstract class BaseSocialService {
     // Обрабатываем разные форматы поля socialPlatforms
     if (Array.isArray(content.socialPlatforms)) {
       // Если это массив строк, используем его напрямую
+      log(`socialPlatforms является массивом: ${JSON.stringify(content.socialPlatforms)}`, 'social-publishing');
       selectedPlatforms = content.socialPlatforms;
     } else if (typeof content.socialPlatforms === 'object' && content.socialPlatforms !== null) {
       // Если это объект, извлекаем ключи
+      log(`socialPlatforms является объектом: ${JSON.stringify(content.socialPlatforms)}`, 'social-publishing');
       selectedPlatforms = Object.keys(content.socialPlatforms);
+      log(`Extracted platforms (keys): ${selectedPlatforms.join(', ')}`, 'social-publishing');
+    } else {
+      // Если поле имеет неожиданный формат, логируем для отладки
+      log(`[ВНИМАНИЕ] Неожиданный формат socialPlatforms: ${typeof content.socialPlatforms}`, 'social-publishing');
     }
     
     if (!selectedPlatforms.length) {
