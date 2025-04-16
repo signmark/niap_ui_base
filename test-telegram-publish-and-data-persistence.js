@@ -13,14 +13,21 @@ import 'dotenv/config';
 
 // Конфигурация
 const API_URL = 'http://localhost:5000';
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const DIRECTUS_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
 const DIRECTUS_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || '123456789';
 const CONTENT_ID = process.argv[2] || '02bc0dc0-4a3d-4926-adbc-260f8ac2f3fd'; // ID вашего контента
 
-// Создаем простую обертку для HTTP запросов
+// Создаем обертки для HTTP запросов
+const directusApi = axios.create({
+  baseURL: DIRECTUS_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -34,7 +41,7 @@ async function waitFor(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Авторизация
+// Авторизация напрямую через Directus
 async function authenticate() {
   if (authToken) {
     // Уже авторизован
@@ -44,28 +51,35 @@ async function authenticate() {
   
   try {
     console.log(`\n🔑 Авторизация пользователя: ${DIRECTUS_EMAIL}`);
-    const response = await api.post('/api/auth/login', {
+    
+    // Выполняем авторизацию непосредственно в Directus
+    const response = await directusApi.post('/auth/login', {
       email: DIRECTUS_EMAIL,
       password: DIRECTUS_PASSWORD
     });
     
-    if (!response.data || !response.data.token) {
+    if (!response.data || !response.data.data || !response.data.data.access_token) {
       console.error('❌ Ответ авторизации не содержит токен:', response.data);
       return false;
     }
     
-    authToken = response.data.token;
+    authToken = response.data.data.access_token;
     console.log(`✅ Авторизация успешна, длина токена: ${authToken.length}`);
     
     // Устанавливаем токен в заголовках для всех последующих запросов
+    directusApi.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
     api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
     
     // Проверяем, что мы действительно авторизованы
     try {
-      const checkResponse = await api.get('/api/auth/me');
-      console.log(`✓ Проверка авторизации успешна. Пользователь ID: ${checkResponse.data.id}`);
+      const checkResponse = await directusApi.get('/users/me');
+      console.log(`✓ Проверка авторизации успешна. Пользователь ID: ${checkResponse.data.data.id}`);
     } catch (checkError) {
       console.error('❌ Проверка авторизации не удалась:', checkError.message);
+      if (checkError.response) {
+        console.error('Детали ошибки:', checkError.response.data);
+      }
+      return false;
     }
     
     return true;
