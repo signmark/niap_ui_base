@@ -109,9 +109,45 @@ export class InstagramService extends BaseSocialService {
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
-      // Проверяем наличие медиа-контента (для Instagram обязательно)
-      const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+      // Более надежная проверка наличия медиа для Instagram
+      // Проверяем наличие видео URL из всех возможных источников
+      let videoUrl = null;
       
+      // Проверяем несколько возможных полей для видео
+      if (content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '') {
+        videoUrl = content.videoUrl;
+        log(`[Instagram] Найдено видео в основном поле videoUrl: ${videoUrl}`, 'instagram');
+      } else if ((content as any).video_url && typeof (content as any).video_url === 'string' && (content as any).video_url.trim() !== '') {
+        videoUrl = (content as any).video_url;
+        log(`[Instagram] Найдено видео в поле video_url: ${videoUrl}`, 'instagram');
+      } else if (content.metadata && (content.metadata as any).videoUrl && typeof (content.metadata as any).videoUrl === 'string') {
+        videoUrl = (content.metadata as any).videoUrl;
+        log(`[Instagram] Найдено видео в metadata.videoUrl: ${videoUrl}`, 'instagram');
+      } else if (content.metadata && (content.metadata as any).video_url && typeof (content.metadata as any).video_url === 'string') {
+        videoUrl = (content.metadata as any).video_url;
+        log(`[Instagram] Найдено видео в metadata.video_url: ${videoUrl}`, 'instagram');
+      }
+      
+      // Проверяем наличие видео в additionalMedia
+      if (!videoUrl && content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0) {
+        const videoMedia = content.additionalMedia.find((media: any) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`[Instagram] Найдено видео в additionalMedia: ${videoUrl}`, 'instagram');
+        }
+      }
+      
+      // Определяем окончательно, есть ли у нас видео
+      const isVideo = (content.contentType === 'video-text' || content.contentType === 'video') && videoUrl !== null;
+      
+      // Проверяем, есть ли хоть какой-то медиа-контент (обязательно для Instagram)
       if (!isVideo && !imgurContent.imageUrl) {
         log(`[Instagram] Ошибка публикации: отсутствует медиа-контент (изображение или видео)`, 'instagram');
         return {
@@ -120,23 +156,6 @@ export class InstagramService extends BaseSocialService {
           publishedAt: null,
           error: 'Отсутствует медиа-контент для публикации в Instagram. Необходимо добавить изображение или видео.'
         };
-      }
-      
-      // Проверяем, есть ли видео URL при типе контента video/video-text
-      if (isVideo && !content.videoUrl) {
-        log(`[Instagram] Ошибка публикации: тип контента указан как видео, но URL видео отсутствует`, 'instagram');
-        
-        // Если нет видео, но есть изображение, продолжаем с публикацией изображения
-        if (imgurContent.imageUrl) {
-          log(`[Instagram] Найдено резервное изображение, продолжаем с ним вместо видео`, 'instagram');
-        } else {
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: 'Для публикации видео в Instagram необходимо указать URL видео.'
-          };
-        }
       }
       
       // Подготавливаем текст для отправки
@@ -176,7 +195,7 @@ export class InstagramService extends BaseSocialService {
         const containerUrl = `${baseUrl}/${businessAccountId}/media`;
         
         // Проверяем тип контента для определения правильного метода публикации (изображение или видео)
-        const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+        // Используем обновленную переменную isVideo из улучшенной проверки выше
         
         // Подготавливаем параметры запроса в зависимости от типа контента
         let containerParams: any = {
@@ -185,14 +204,16 @@ export class InstagramService extends BaseSocialService {
         };
         
         // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
-        if (isVideo && content.videoUrl) {
-          log(`[Instagram] Обнаружено видео для публикации: ${content.videoUrl.substring(0, 50)}...`, 'instagram');
-          containerParams.video_url = content.videoUrl;
+        if (isVideo && videoUrl) {
+          log(`[Instagram] Обнаружено видео для публикации: ${videoUrl.substring(0, 50)}...`, 'instagram');
+          containerParams.video_url = videoUrl;
           containerParams.media_type = 'VIDEO';
         } else {
           // Если это не видео или видео отсутствует, используем изображение
-          log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
+          log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl?.substring(0, 50)}...`, 'instagram');
           containerParams.image_url = imgurContent.imageUrl;
+          // Важно: явно указываем тип медиа для Instagram
+          containerParams.media_type = 'IMAGE';
         }
         
         // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
