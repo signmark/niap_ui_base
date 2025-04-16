@@ -2443,6 +2443,9 @@ export class SocialPublishingWithImgurService {
       // Логирование для диагностики
       log(`ОБНОВЛЕННЫЕ данные social_platforms для ${contentId}:\n${JSON.stringify(updatedSocialPlatforms, null, 2)}`, 'social-publishing');
       
+      // ДОПОЛНИТЕЛЬНОЕ логирование для отладки проблем с PATCH обновлением
+      log(`Отправляем обновление в Directus для контента ${contentId}: ${JSON.stringify({ social_platforms: updatedSocialPlatforms })}`, 'social-publishing');
+      
       // Шаг 3: Обновляем данные напрямую через API с системным токеном
       log(`Прямое обновление статуса публикации через API: ${contentId}, платформа: ${platform}`, 'social-publishing');
       
