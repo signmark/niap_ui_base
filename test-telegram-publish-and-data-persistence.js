@@ -9,12 +9,15 @@
 
 import axios from 'axios';
 import fs from 'fs';
+import 'dotenv/config';
 
 // Конфигурация
 const API_URL = 'http://localhost:5000';
+const DIRECTUS_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+const DIRECTUS_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || '123456789';
 const CONTENT_ID = process.argv[2] || '02bc0dc0-4a3d-4926-adbc-260f8ac2f3fd'; // ID вашего контента
 
-// Создаем простую обертку для HTTP запросов с авторизацией из браузера
+// Создаем простую обертку для HTTP запросов
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -23,9 +26,56 @@ const api = axios.create({
   }
 });
 
+// Флаг авторизации
+let authToken = null;
+
 // Вспомогательные функции
 async function waitFor(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Авторизация
+async function authenticate() {
+  if (authToken) {
+    // Уже авторизован
+    console.log('ℹ️ Используем существующий токен авторизации');
+    return true;
+  }
+  
+  try {
+    console.log(`\n🔑 Авторизация пользователя: ${DIRECTUS_EMAIL}`);
+    const response = await api.post('/api/auth/login', {
+      email: DIRECTUS_EMAIL,
+      password: DIRECTUS_PASSWORD
+    });
+    
+    if (!response.data || !response.data.token) {
+      console.error('❌ Ответ авторизации не содержит токен:', response.data);
+      return false;
+    }
+    
+    authToken = response.data.token;
+    console.log(`✅ Авторизация успешна, длина токена: ${authToken.length}`);
+    
+    // Устанавливаем токен в заголовках для всех последующих запросов
+    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    
+    // Проверяем, что мы действительно авторизованы
+    try {
+      const checkResponse = await api.get('/api/auth/me');
+      console.log(`✓ Проверка авторизации успешна. Пользователь ID: ${checkResponse.data.id}`);
+    } catch (checkError) {
+      console.error('❌ Проверка авторизации не удалась:', checkError.message);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`❌ Ошибка авторизации: ${error.message}`);
+    if (error.response) {
+      console.error('Детали ошибки:', error.response.data);
+    }
+    return false;
+  }
 }
 
 // Получение данных контента
@@ -114,6 +164,14 @@ async function runTest() {
   console.log(`📝 Тестируемый контент: ${CONTENT_ID}`);
   
   try {
+    // Авторизация
+    console.log('\n🔒 Выполняем авторизацию...');
+    const isAuthenticated = await authenticate();
+    if (!isAuthenticated) {
+      console.error('❌ Ошибка авторизации. Тест остановлен.');
+      return;
+    }
+    
     // Шаг 1: Получаем текущий контент
     const initialContent = await getContent(CONTENT_ID);
     if (!initialContent) {
