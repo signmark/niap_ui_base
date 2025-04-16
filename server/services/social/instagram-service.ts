@@ -2,6 +2,11 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Вспомогательная функция для задержки выполнения кода
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Сервис для публикации контента в Instagram
@@ -97,9 +102,29 @@ export class InstagramService extends BaseSocialService {
         };
       }
       
-      // Извлекаем параметры
-      const token = instagramSettings.token;
+      // Проверяем альтернативное поле accessToken, которое может использоваться в некоторых контекстах
+      let token = instagramSettings.token;
+      if (!token && instagramSettings.accessToken) {
+        token = instagramSettings.accessToken;
+        log(`[Instagram] Использую альтернативное поле accessToken вместо token`, 'instagram');
+      }
+      
+      // Убеждаемся, что токен валидный (не содержит только пробелы)
+      if (token && typeof token === 'string' && token.trim() === '') {
+        log(`[Instagram] Предупреждение: токен содержит только пробелы`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Токен Instagram содержит только пробелы'
+        };
+      }
+      
+      // Проверяем формат business account ID (должен быть числовым)
       const businessAccountId = instagramSettings.businessAccountId;
+      if (businessAccountId && isNaN(Number(businessAccountId))) {
+        log(`[Instagram] Предупреждение: Business Account ID должен быть числовым, получено: ${businessAccountId}`, 'instagram');
+      }
       
       log(`[Instagram] Начинаем публикацию в Instagram с использованием бизнес-аккаунта: ${businessAccountId}`, 'instagram');
       
@@ -109,9 +134,48 @@ export class InstagramService extends BaseSocialService {
       // Загружаем локальные изображения на Imgur
       const imgurContent = await this.uploadImagesToImgur(processedContent);
       
-      // Проверяем наличие медиа-контента (для Instagram обязательно)
-      const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+      // Более надежная проверка наличия медиа для Instagram
+      // Проверяем наличие видео URL из всех возможных источников
+      let videoUrl = null;
       
+      // Проверяем несколько возможных полей для видео
+      if (content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '') {
+        videoUrl = content.videoUrl;
+        log(`[Instagram] Найдено видео в основном поле videoUrl: ${videoUrl}`, 'instagram');
+      } else if ((content as any).video_url && typeof (content as any).video_url === 'string' && (content as any).video_url.trim() !== '') {
+        videoUrl = (content as any).video_url;
+        log(`[Instagram] Найдено видео в поле video_url: ${videoUrl}`, 'instagram');
+      } else if (content.metadata && (content.metadata as any).videoUrl && typeof (content.metadata as any).videoUrl === 'string') {
+        videoUrl = (content.metadata as any).videoUrl;
+        log(`[Instagram] Найдено видео в metadata.videoUrl: ${videoUrl}`, 'instagram');
+      } else if (content.metadata && (content.metadata as any).video_url && typeof (content.metadata as any).video_url === 'string') {
+        videoUrl = (content.metadata as any).video_url;
+        log(`[Instagram] Найдено видео в metadata.video_url: ${videoUrl}`, 'instagram');
+      }
+      
+      // Проверяем наличие видео в additionalMedia
+      if (!videoUrl && content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0) {
+        const videoMedia = content.additionalMedia.find((media: any) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`[Instagram] Найдено видео в additionalMedia: ${videoUrl}`, 'instagram');
+        }
+      }
+      
+      // Определяем окончательно, есть ли у нас видео
+      const isVideo = (content.contentType === 'video-text' || content.contentType === 'video') && videoUrl !== null;
+      
+      // Расширенное логирование для диагностики
+      log(`[Instagram DEBUG] Тип контента: ${content.contentType}, videoUrl: ${videoUrl ? 'найден' : 'не найден'}, isVideo: ${isVideo}`, 'instagram');
+      
+      // Проверяем, есть ли хоть какой-то медиа-контент (обязательно для Instagram)
       if (!isVideo && !imgurContent.imageUrl) {
         log(`[Instagram] Ошибка публикации: отсутствует медиа-контент (изображение или видео)`, 'instagram');
         return {
@@ -120,23 +184,6 @@ export class InstagramService extends BaseSocialService {
           publishedAt: null,
           error: 'Отсутствует медиа-контент для публикации в Instagram. Необходимо добавить изображение или видео.'
         };
-      }
-      
-      // Проверяем, есть ли видео URL при типе контента video/video-text
-      if (isVideo && !content.videoUrl) {
-        log(`[Instagram] Ошибка публикации: тип контента указан как видео, но URL видео отсутствует`, 'instagram');
-        
-        // Если нет видео, но есть изображение, продолжаем с публикацией изображения
-        if (imgurContent.imageUrl) {
-          log(`[Instagram] Найдено резервное изображение, продолжаем с ним вместо видео`, 'instagram');
-        } else {
-          return {
-            platform: 'instagram',
-            status: 'failed',
-            publishedAt: null,
-            error: 'Для публикации видео в Instagram необходимо указать URL видео.'
-          };
-        }
       }
       
       // Подготавливаем текст для отправки
@@ -176,24 +223,37 @@ export class InstagramService extends BaseSocialService {
         const containerUrl = `${baseUrl}/${businessAccountId}/media`;
         
         // Проверяем тип контента для определения правильного метода публикации (изображение или видео)
-        const isVideo = content.contentType === 'video-text' || content.contentType === 'video';
+        // Используем обновленную переменную isVideo из улучшенной проверки выше
         
         // Подготавливаем параметры запроса в зависимости от типа контента
-        let containerParams: any = {
-          caption: caption,
-          access_token: token
-        };
+        // ВАЖНО: Для Instagram API требуется параметр media_type напрямую в теле запроса, а не в query params
+        let containerParams: any = {};
+        
+        // Также передаем access_token в запросе создания контейнера (рекомендовано документацией)
+        // Это может решить проблему с ошибкой "Object with ID does not exist"
         
         // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
-        if (isVideo && content.videoUrl) {
-          log(`[Instagram] Обнаружено видео для публикации: ${content.videoUrl.substring(0, 50)}...`, 'instagram');
-          containerParams.video_url = content.videoUrl;
-          containerParams.media_type = 'VIDEO';
+        if (isVideo && videoUrl) {
+          log(`[Instagram] Обнаружено видео для публикации: ${videoUrl.substring(0, 50)}...`, 'instagram');
+          containerParams = {
+            caption: caption,
+            video_url: videoUrl,
+            media_type: 'VIDEO', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            access_token: token  // Добавляем токен доступа к запросу создания контейнера
+          };
         } else {
           // Если это не видео или видео отсутствует, используем изображение
-          log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl.substring(0, 50)}...`, 'instagram');
-          containerParams.image_url = imgurContent.imageUrl;
+          log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl?.substring(0, 50)}...`, 'instagram');
+          containerParams = {
+            caption: caption,
+            image_url: imgurContent.imageUrl,
+            media_type: 'IMAGE', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            access_token: token  // Добавляем токен доступа к запросу создания контейнера
+          };
         }
+        
+        // Логируем тело запроса для отладки
+        log(`[Instagram] Параметры запроса на создание контейнера: ${JSON.stringify(containerParams)}`, 'instagram');
         
         // Отправляем запрос на создание контейнера с увеличенными таймаутами для видео
         log(`[Instagram] Отправка запроса на создание контейнера для ${isVideo ? 'видео' : 'изображения'}`, 'instagram');
@@ -237,10 +297,13 @@ export class InstagramService extends BaseSocialService {
             log(`[Instagram] Попытка создать контейнер с изображением вместо видео`, 'instagram');
             
             try {
-              // Изменяем параметры запроса на изображение
-              containerParams.video_url = undefined;
-              containerParams.media_type = undefined;
-              containerParams.image_url = imgurContent.imageUrl;
+              // Изменяем параметры запроса на изображение - создаем новый объект
+              containerParams = {
+                caption: caption,
+                image_url: imgurContent.imageUrl,
+                media_type: 'IMAGE',  // ВАЖНО: Явно указываем тип медиа для Instagram
+                access_token: token  // Добавляем токен доступа к резервному запросу
+              };
               
               // Повторно отправляем запрос с изображением
               containerResponse = await axios.post(
@@ -294,15 +357,67 @@ export class InstagramService extends BaseSocialService {
           access_token: token
         };
         
-        // Отправляем запрос на публикацию
-        const publishResponse = await axios.post(
-          publishUrl, 
-          publishParams, 
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 30000
+        // Отправляем запрос на публикацию с механизмом повторных попыток
+        let publishResponse;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            publishResponse = await axios.post(
+              publishUrl, 
+              publishParams, 
+              {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+              }
+            );
+            
+            // Если запрос успешный, прерываем цикл
+            if (publishResponse && publishResponse.data && publishResponse.data.id) {
+              log(`[Instagram] Успешная публикация с попытки #${retryCount + 1}`, 'instagram');
+              break;
+            }
+            
+            // Если запрос прошел, но без ID медиа - это ошибка
+            log(`[Instagram] Ответ не содержит ID медиа, повторная попытка #${retryCount + 1}`, 'instagram');
+            retryCount++;
+            
+            if (retryCount < maxRetries) {
+              // Увеличиваем время ожидания с каждой попыткой
+              const waitTime = 3000 * (retryCount + 1);
+              log(`[Instagram] Ожидание ${waitTime}мс перед следующей попыткой...`, 'instagram');
+              await sleep(waitTime);
+            }
+          } catch (error: any) {
+            log(`[Instagram] Ошибка публикации (попытка ${retryCount + 1}): ${error.message}`, 'instagram');
+            
+            // Проверяем тип ошибки - если это "Object with ID does not exist", это может быть временная ошибка
+            const isTemporaryError = error.response?.data?.error?.message?.includes('Object with ID') || 
+                                    error.message?.includes('Object with ID');
+            
+            if (isTemporaryError) {
+              log(`[Instagram] Обнаружена временная ошибка API, повторная попытка #${retryCount + 1}`, 'instagram');
+              retryCount++;
+              
+              if (retryCount < maxRetries) {
+                // Увеличиваем время ожидания с каждой попыткой
+                const waitTime = 5000 * (retryCount + 1);
+                log(`[Instagram] Ожидание ${waitTime}мс перед следующей попыткой...`, 'instagram');
+                await sleep(waitTime);
+              }
+            } else {
+              // Если это не временная ошибка, прекращаем попытки
+              log(`[Instagram] Критическая ошибка, прекращение попыток: ${error.message}`, 'instagram');
+              throw error;
+            }
           }
-        );
+        }
+        
+        // Если после всех попыток нет успеха
+        if (!publishResponse || !publishResponse.data) {
+          throw new Error(`Не удалось опубликовать пост в Instagram после ${maxRetries} попыток`);
+        }
         
         log(`[Instagram] Ответ API (публикация): ${JSON.stringify(publishResponse.data)}`, 'instagram');
         
@@ -349,9 +464,55 @@ export class InstagramService extends BaseSocialService {
           postUrl = mediaInfoResponse.data.permalink;
           log(`[Instagram] Получена постоянная ссылка: ${postUrl}`, 'instagram');
         } else {
-          // Если не удалось получить permalink, используем стандартную форму ссылки
-          postUrl = `https://www.instagram.com/p/${igMediaId}/`;
-          log(`[Instagram] Не удалось получить permalink, используем стандартную ссылку: ${postUrl}`, 'instagram');
+          // Если не удалось получить permalink, создаём ссылку из ID медиа
+          // ID медиа имеет формат: {business_account_id}_{media_id}
+          // Для URL нам нужна только вторая часть
+          const shortMediaId = String(igMediaId).includes('_') ? 
+            igMediaId.split('_')[1] : igMediaId;
+          
+          // Если ID имеет короткий формат IG, используем его, иначе создаем альтернативную ссылку
+          if (/^[A-Za-z0-9_-]{11}$/.test(shortMediaId)) {
+            postUrl = `https://www.instagram.com/p/${shortMediaId}/`;
+          } else {
+            // Альтернативный метод создания ссылки - на основе имени бизнес-аккаунта
+            const accountName = instagramSettings.businessAccountName || 
+                              (instagramSettings.businessAccountId ? 
+                               instagramSettings.businessAccountId.toString() : 'instagram');
+            postUrl = `https://www.instagram.com/${accountName}/`;
+            log(`[Instagram] Не удалось создать прямую ссылку на пост, используем ссылку на профиль: ${postUrl}`, 'instagram');
+          }
+            
+          log(`[Instagram] Не удалось получить permalink, создаём постоянную ссылку из ID: ${postUrl}`, 'instagram');
+        }
+        
+        // Записываем postUrl и для использования через "Опубликовать сейчас"
+        try {
+          // Создаем директорию логов синхронно
+          const logDir = '/home/runner/workspace/logs/instagram';
+          if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+            log(`[Instagram] Создана директория логов: ${logDir}`, 'instagram');
+          }
+          
+          const logData = {
+            publishedAt: new Date().toISOString(),
+            contentId: content.id,
+            igMediaId: igMediaId,
+            permalink: postUrl
+          };
+          
+          // Используем синхронную запись для упрощения обработки ошибок
+          const logFilePath = `${logDir}/post_${content.id.substring(0, 8)}_${Date.now()}.json`;
+          fs.writeFileSync(
+            logFilePath, 
+            JSON.stringify(logData, null, 2), 
+            'utf8'
+          );
+          
+          log(`[Instagram] Сохранен лог успешной публикации: ${logFilePath}`, 'instagram');
+        } catch (logError) {
+          // Ошибка логирования не должна прерывать успешную публикацию
+          log(`[Instagram] Ошибка сохранения лога: ${logError.message}`, 'instagram');
         }
         
         log(`[Instagram] Публикация успешно завершена!`, 'instagram');

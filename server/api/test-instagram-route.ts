@@ -112,7 +112,37 @@ export function registerTestInstagramRoute(app: express.Express) {
     }
 
     try {
-      // Обновляем статус публикации с тестовым URL
+      // 1. Сначала получаем системный токен
+      log('1. Получение системного токена для запроса к Directus', 'instagram-test');
+      const systemToken = await getSystemToken();
+      
+      if (!systemToken) {
+        log('Ошибка: Не удалось получить системный токен', 'instagram-test');
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось получить системный токен'
+        });
+      }
+      
+      log(`Токен получен успешно (первые 6 символов: ${systemToken.substring(0, 6)}...)`, 'instagram-test');
+      
+      // 2. Получаем текущее состояние контента
+      log(`2. Получение текущего состояния контента ${contentId}`, 'instagram-test');
+      const initialContent = await fetchContent(contentId, systemToken);
+      
+      if (!initialContent) {
+        log(`Ошибка: Не удалось получить начальное состояние контента ${contentId}`, 'instagram-test');
+        return res.status(404).json({
+          success: false,
+          error: 'Не удалось получить начальное состояние контента'
+        });
+      }
+      
+      log('Начальное состояние получено успешно', 'instagram-test');
+      log(`Текущие платформы: ${Object.keys(initialContent.socialPlatforms || {}).join(', ')}`, 'instagram-test');
+      
+      // 3. Обновляем статус публикации с тестовым URL
+      log('3. Обновление статуса публикации', 'instagram-test');
       const updatedContent = await socialPublishingWithImgurService.updatePublicationStatus(
         contentId,
         'instagram',
@@ -124,19 +154,44 @@ export function registerTestInstagramRoute(app: express.Express) {
           ...(messageId ? { messageId } : {})
         }
       );
-
-      // Получаем системный токен
-      const systemToken = await getSystemToken();
       
-      if (!systemToken) {
+      if (!updatedContent) {
+        log('Ошибка: Не удалось обновить статус публикации', 'instagram-test');
         return res.status(500).json({
           success: false,
-          error: 'Не удалось получить системный токен'
+          error: 'Не удалось обновить статус публикации',
+          initial: initialContent
         });
       }
+      
+      log('Статус публикации обновлен успешно', 'instagram-test');
 
-      // Получаем финальный контент для проверки
+      // 4. Получаем финальный контент для проверки
+      log('4. Получение финального состояния контента', 'instagram-test');
       const finalContent = await fetchContent(contentId, systemToken);
+      
+      if (!finalContent) {
+        log('Ошибка: Не удалось получить финальное состояние контента', 'instagram-test');
+        return res.status(500).json({
+          success: true,
+          error: 'Не удалось получить финальное состояние контента',
+          updatedContent: updatedContent,
+          initial: initialContent
+        });
+      }
+      
+      log('Финальное состояние получено успешно', 'instagram-test');
+      log(`Финальные платформы: ${Object.keys(finalContent.socialPlatforms || {}).join(', ')}`, 'instagram-test');
+      
+      // 5. Проверяем, что URL сохранился
+      const instagramPlatform = finalContent.socialPlatforms?.instagram;
+      log(`5. Результат проверки URL: ${instagramPlatform?.postUrl === postUrl ? 'УСПЕШНО' : 'ОШИБКА'}`, 'instagram-test');
+      
+      if (instagramPlatform?.postUrl === postUrl) {
+        log(`URL ${postUrl} успешно сохранен для Instagram`, 'instagram-test');
+      } else {
+        log(`Ошибка: URL не сохранен. Ожидали: ${postUrl}, Получили: ${instagramPlatform?.postUrl || 'null'}`, 'instagram-test');
+      }
 
       return res.json({
         success: true,
@@ -146,6 +201,7 @@ export function registerTestInstagramRoute(app: express.Express) {
         instagram: finalContent?.socialPlatforms?.instagram || null
       });
     } catch (error: any) {
+      log(`КРИТИЧЕСКАЯ ОШИБКА при сохранении URL: ${error.message}`, 'instagram-test');
       console.error('Ошибка при сохранении URL:', error);
       
       return res.status(500).json({
