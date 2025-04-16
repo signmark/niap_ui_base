@@ -277,7 +277,20 @@ export abstract class BaseSocialService {
         return null;
       }
       
-      const content = await storage.getCampaignContent(contentId, token);
+      // CRITICAL: Логирование перед запросом контента
+      log(`[КРИТИЧНО!!!] Перед запросом контента для обновления статуса. ID: ${contentId}, платформа: ${platform}`, 'social-publishing');
+      
+      const content = await storage.getCampaignContentById(contentId, token);
+      
+      // CRITICAL: Проверка полученного контента
+      if (!content) {
+        log(`[КРИТИЧНО!!!] Не удалось получить контент с ID ${contentId} для обновления статуса`, 'social-publishing');
+        return null;
+      }
+      
+      // CRITICAL: Логирование полученного контента
+      log(`[КРИТИЧНО!!!] Успешно получен контент с ID ${contentId}`, 'social-publishing');
+      log(`[КРИТИЧНО!!!] socialPlatforms: ${JSON.stringify(content.socialPlatforms)}`, 'social-publishing');
       
       // Логирование для отладки - получаемый контент и его поля связанные с платформами
       log(`[ПЛАТФОРМЫ DEBUG] Получен контент с ID ${contentId}`, 'social-publishing');

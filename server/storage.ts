@@ -981,22 +981,26 @@ export class DatabaseStorage implements IStorage {
       let socialPlatforms = item.social_platforms;
       
       // Логируем полученные данные социальных платформ для отладки
-      console.log(`Получены данные social_platforms из Directus для ${item.id}: ${
-        typeof item.social_platforms === 'object' ? 
-        JSON.stringify(Object.keys(item.social_platforms || {})) : 
-        typeof item.social_platforms}`);
+      console.log(`[STORAGE CRITICAL] Получены данные social_platforms из Directus для ${item.id}, тип: ${typeof item.social_platforms}`);
+      
+      if (typeof item.social_platforms === 'object') {
+        console.log(`[STORAGE CRITICAL] social_platforms (объект): ${JSON.stringify(item.social_platforms)}`);
+      } else {
+        console.log(`[STORAGE CRITICAL] social_platforms (не объект): ${item.social_platforms}`);
+      }
       
       // Если поле undefined или null, инициализируем пустым объектом
       if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
-        console.log(`social_platforms отсутствует или null, инициализируем пустым объектом`);
+        console.log(`[STORAGE CRITICAL] social_platforms отсутствует или null, инициализируем пустым объектом`);
         socialPlatforms = {};
       }
       
       // Если поле является строкой, пробуем распарсить JSON
       if (typeof socialPlatforms === 'string') {
         try {
+          console.log(`[STORAGE CRITICAL] Пытаемся распарсить social_platforms из строки: ${socialPlatforms}`);
           socialPlatforms = JSON.parse(socialPlatforms);
-          console.log(`social_platforms успешно распарсены из строки`);
+          console.log(`[STORAGE CRITICAL] social_platforms успешно распарсены из строки в объект: ${JSON.stringify(socialPlatforms)}`);
         } catch (e) {
           console.error(`Ошибка при парсинге social_platforms из строки: ${e}`);
           socialPlatforms = {};
@@ -1201,22 +1205,26 @@ export class DatabaseStorage implements IStorage {
       let socialPlatforms = item.social_platforms;
       
       // Логируем полученные данные социальных платформ для отладки
-      console.log(`[UPDATE] Получены данные social_platforms из Directus для ${item.id}: ${
-        typeof item.social_platforms === 'object' ? 
-        JSON.stringify(Object.keys(item.social_platforms || {})) : 
-        typeof item.social_platforms}`);
+      console.log(`[UPDATE CRITICAL] Получены данные social_platforms из Directus для ${item.id}, тип: ${typeof item.social_platforms}`);
+      
+      if (typeof item.social_platforms === 'object') {
+        console.log(`[UPDATE CRITICAL] social_platforms (объект): ${JSON.stringify(item.social_platforms)}`);
+      } else {
+        console.log(`[UPDATE CRITICAL] social_platforms (не объект): ${item.social_platforms}`);
+      }
       
       // Если поле undefined или null, инициализируем пустым объектом
       if (typeof socialPlatforms === 'undefined' || socialPlatforms === null) {
-        console.log(`[UPDATE] social_platforms отсутствует или null, инициализируем пустым объектом`);
+        console.log(`[UPDATE CRITICAL] social_platforms отсутствует или null, инициализируем пустым объектом`);
         socialPlatforms = {};
       }
       
       // Если поле является строкой, пробуем распарсить JSON
       if (typeof socialPlatforms === 'string') {
         try {
+          console.log(`[UPDATE CRITICAL] Пытаемся распарсить social_platforms из строки: ${socialPlatforms}`);
           socialPlatforms = JSON.parse(socialPlatforms);
-          console.log(`[UPDATE] social_platforms успешно распарсены из строки`);
+          console.log(`[UPDATE CRITICAL] social_platforms успешно распарсены из строки в объект: ${JSON.stringify(socialPlatforms)}`);
         } catch (e) {
           console.error(`[UPDATE] Ошибка при парсинге social_platforms из строки: ${e}`);
           socialPlatforms = {};
