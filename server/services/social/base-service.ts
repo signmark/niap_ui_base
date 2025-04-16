@@ -255,92 +255,209 @@ export abstract class BaseSocialService {
   }
   
   /**
-   * Обновляет статус публикации контента в социальной сети
-   * @param contentId ID контента
-   * @param platform Социальная платформа
-   * @param publicationResult Результат публикации
-   * @returns Обновленный контент или null в случае ошибки
+   * Обновляет статус публикации контента в социальной сети с улучшенной поддержкой мультиплатформ
+   * Гарантирует сохранение данных по всем платформам при обновлении статуса конкретной платформы
+   * КРИТИЧЕСКИ ВАЖНО: сохраняет данные всех платформ при обновлении одной!
+   * @param contentId ID контента 
+   * @param platform Социальная платформа, которая обновляется
+   * @param publicationResult Результат публикации (статус, URL, ошибки и т.д.)
+   * @returns Обновленный объект контента или null в случае ошибки
    */
   public async updatePublicationStatus(
-    contentId: string, 
-    platform: SocialPlatform, 
+    contentId: string,
+    platform: SocialPlatform,
     publicationResult: SocialPublication
   ): Promise<CampaignContent | null> {
+    // Генерируем уникальный идентификатор операции для корреляции логов
+    const operationId = `update_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    log(`[${operationId}] ➡️ НАЧАЛО ОБРАБОТКИ обновления статуса публикации для контента ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
+    
+    // Получаем URL Directus
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
     try {
-      log(`Обновление статуса публикации: ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
+      // 1. Получаем токен администратора
+      log(`[${operationId}] 1. Получение токена администратора`, 'social-publishing');
+      const systemToken = await this.getSystemToken();
       
-      // Получаем текущий контент из Directus
-      const token = await this.getSystemToken();
-      
-      if (!token) {
-        log(`Не удалось получить токен для обновления статуса публикации`, 'social-publishing');
+      if (!systemToken) {
+        log(`[${operationId}] ❌ ОШИБКА: Не удалось получить токен администратора`, 'social-publishing');
         return null;
       }
       
-      const content = await storage.getCampaignContent(contentId, token);
+      // 2. Получаем самые актуальные данные контента из Directus через storage
+      log(`[${operationId}] 2. Запрос актуальных данных контента из Directus: ${contentId}`, 'social-publishing');
+      let currentItem = await storage.getCampaignContentById(contentId, systemToken);
       
-      if (!content) {
-        log(`Не удалось получить контент с ID ${contentId} для обновления статуса публикации`, 'social-publishing');
+      if (!currentItem) {
+        log(`[${operationId}] ❌ ОШИБКА: Не удалось получить данные контента: ${contentId}`, 'social-publishing');
         return null;
       }
       
-      // Создаем или обновляем поле socialPublications
-      const socialPublications = content.socialPublications || {};
+      log(`[${operationId}] 2. ✅ Успешно получены данные контента: ${contentId}`, 'social-publishing');
       
-      socialPublications[platform] = {
-        status: publicationResult.status,
-        publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
-        postUrl: publicationResult.postUrl || null,
-        error: publicationResult.error || null,
-        // Сохраняем messageId, если он есть (важно для Telegram)
-        messageId: publicationResult.messageId || null
-      };
+      // 3. Извлекаем текущие данные социальных платформ
+      log(`[${operationId}] 3. Извлекаем и анализируем текущие данные социальных платформ`, 'social-publishing');
       
-      // Создаем или обновляем также socialPlatforms (основное поле для отображения в интерфейсе)
-      let socialPlatforms = content.socialPlatforms || {};
-      
-      // Если socialPlatforms представлено как массив, преобразуем его в объект
-      if (Array.isArray(socialPlatforms)) {
-        const newSocialPlatforms: Record<string, any> = {};
-        for (const platformName of socialPlatforms) {
-          newSocialPlatforms[platformName] = newSocialPlatforms[platformName] || { status: 'pending' };
+      // Создаем копию с четким типом для избежания проблем с null/undefined
+      // ВАЖНО: Если данных нет или они некорректны, используем пустой объект
+      let currentPlatforms = {};
+      try {
+        if (currentItem.socialPlatforms) {
+          if (typeof currentItem.socialPlatforms === 'string') {
+            // Если данные пришли в виде строки, парсим их
+            currentPlatforms = JSON.parse(currentItem.socialPlatforms);
+          } else if (typeof currentItem.socialPlatforms === 'object') {
+            // Если данные пришли в виде объекта, создаем глубокую копию
+            currentPlatforms = JSON.parse(JSON.stringify(currentItem.socialPlatforms));
+          }
+          
+          // Если socialPlatforms представлено как массив, преобразуем его в объект
+          if (Array.isArray(currentPlatforms)) {
+            const newSocialPlatforms: Record<string, any> = {};
+            for (const platformName of currentPlatforms) {
+              newSocialPlatforms[platformName] = newSocialPlatforms[platformName] || { status: 'pending' };
+            }
+            currentPlatforms = newSocialPlatforms;
+            log(`[${operationId}] 3. Преобразуем массив socialPlatforms в объект для контента ${contentId}`, 'social-publishing');
+          }
         }
-        socialPlatforms = newSocialPlatforms;
-        log(`Преобразуем массив socialPlatforms в объект для контента ${contentId}`, 'social-publishing');
+      } catch (parseError) {
+        log(`[${operationId}] ⚠️ Предупреждение: ошибка при парсинге данных платформ, используем пустой объект: ${parseError}`, 'social-publishing');
+        currentPlatforms = {};
       }
       
-      // Обновляем информацию о публикации в socialPlatforms
-      socialPlatforms[platform] = {
+      // Дополнительная проверка, что у нас точно объект
+      if (!currentPlatforms || typeof currentPlatforms !== 'object') {
+        currentPlatforms = {};
+      }
+      
+      // Логируем текущее состояние платформ до обновления
+      log(`[${operationId}] 3. Текущие данные платформ до обновления:\n${JSON.stringify(currentPlatforms, null, 2)}`, 'social-publishing');
+      
+      // ВАЖНО: Явно перечисляем все платформы, которые есть в данных до обновления
+      const existingPlatforms = Object.keys(currentPlatforms);
+      log(`[${operationId}] 3. ✅ Найдены существующие платформы (${existingPlatforms.length}): ${existingPlatforms.join(', ')}`, 'social-publishing');
+      
+      // 4. Подготовка обновленных данных для указанной платформы
+      log(`[${operationId}] 4. Подготовка обновленных данных для платформы: ${platform}`, 'social-publishing');
+      
+      // Сохраняем данные текущей платформы, если они уже есть
+      const existingPlatformData = currentPlatforms[platform] || {};
+      
+      const platformUpdateData = {
+        // Сохраняем существующие данные для этой платформы
+        ...existingPlatformData,
+        // Обновляем статус и связанные поля
         status: publicationResult.status,
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
-        postUrl: publicationResult.postUrl || null,
-        postId: publicationResult.postId || null,
-        // Добавляем messageId (критически важно для Telegram)
-        messageId: publicationResult.messageId || null,
-        error: publicationResult.error || null
+        error: publicationResult.error || null,
+        // Добавляем новые данные из publicationResult при их наличии
+        ...(publicationResult.postUrl ? { postUrl: publicationResult.postUrl } : {}),
+        ...(publicationResult.postId ? { postId: publicationResult.postId } : {}),
+        ...(publicationResult.messageId ? { messageId: publicationResult.messageId } : {})
       };
       
-      // Обновляем контент
-      const updatedContent = await storage.updateCampaignContent(contentId, {
-        socialPublications,
-        socialPlatforms,
-        // Если публикация успешна, обновляем общий статус до "published"
+      log(`[${operationId}] 4. Подготовленные данные для платформы ${platform}:\n${JSON.stringify(platformUpdateData, null, 2)}`, 'social-publishing');
+      
+      // 5. Формирование финального объекта данных для всех платформ
+      log(`[${operationId}] 5. Формирование финального объекта данных для всех платформ`, 'social-publishing');
+      
+      // Создаем новый объект, чтобы избежать мутаций
+      const mergedPlatforms = { ...currentPlatforms };
+      
+      // Обновляем только данные для указанной платформы
+      mergedPlatforms[platform] = platformUpdateData;
+      
+      // КРИТИЧЕСКАЯ ПРОВЕРКА: убедимся, что мы НЕ потеряли ни одну платформу
+      const updatedPlatforms = Object.keys(mergedPlatforms);
+      
+      log(`[${operationId}] 5. ⚠️ ПРОВЕРКА СОХРАННОСТИ ДАННЫХ:`, 'social-publishing');
+      log(`[${operationId}] 5. - До: ${existingPlatforms.length} платформ: ${existingPlatforms.join(', ')}`, 'social-publishing');
+      log(`[${operationId}] 5. - После: ${updatedPlatforms.length} платформ: ${updatedPlatforms.join(', ')}`, 'social-publishing');
+      
+      if (existingPlatforms.length > updatedPlatforms.length) {
+        log(`[${operationId}] 5. ❌ КРИТИЧЕСКАЯ ОШИБКА: потеряны данные платформ!`, 'social-publishing');
+        
+        // Восстанавливаем потерянные платформы
+        for (const lostPlatform of existingPlatforms) {
+          if (!mergedPlatforms[lostPlatform]) {
+            log(`[${operationId}] 5. ⚠️ Восстанавливаем потерянную платформу: ${lostPlatform}`, 'social-publishing');
+            mergedPlatforms[lostPlatform] = currentPlatforms[lostPlatform];
+          }
+        }
+        
+        // Повторная проверка после восстановления
+        const restoredPlatforms = Object.keys(mergedPlatforms);
+        log(`[${operationId}] 5. - После восстановления: ${restoredPlatforms.length} платформ: ${restoredPlatforms.join(', ')}`, 'social-publishing');
+      }
+      
+      log(`[${operationId}] 5. ✅ Финальный объект данных для всех платформ:\n${JSON.stringify(mergedPlatforms, null, 2)}`, 'social-publishing');
+      
+      // 6. Отправка обновления в Directus через PATCH запрос через storage
+      log(`[${operationId}] 6. Отправка обновления в Directus для контента: ${contentId}`, 'social-publishing');
+      
+      const updatePayload = { 
+        // Обновляем только socialPlatforms
+        socialPlatforms: mergedPlatforms,
+        // Если публикация успешна, возможно, нужно обновить общий статус до "published"
         // только если мы публиковали на все выбранные платформы
         ...(publicationResult.status === 'published' ? {
           // Проверяем, были ли опубликованы все выбранные платформы
-          status: this.shouldUpdateToPublished(content, socialPublications) ? 'published' : content.status
+          status: this.shouldUpdateToPublished(currentItem, mergedPlatforms) ? 'published' : currentItem.status
         } : {})
-      }, token);
+      };
       
-      if (updatedContent) {
-        log(`Статус публикации успешно обновлен для ${contentId}, платформа: ${platform}`, 'social-publishing');
+      log(`[${operationId}] 6. Запрос на обновление: ${JSON.stringify(updatePayload, null, 2)}`, 'social-publishing');
+      
+      try {
+        // Обновляем контент через storage
+        const updatedContent = await storage.updateCampaignContent(contentId, updatePayload, systemToken);
+        
+        if (!updatedContent) {
+          throw new Error('Некорректный ответ API при обновлении');
+        }
+        
+        log(`[${operationId}] 6. ✅ Обновление успешно отправлено в Directus`, 'social-publishing');
+        
+        // 7. Верификация обновления - проверим, что данные действительно обновились
+        log(`[${operationId}] 7. Верификация обновления в Directus`, 'social-publishing');
+        
+        const verifiedContent = await storage.getCampaignContentById(contentId, systemToken);
+        
+        if (verifiedContent?.socialPlatforms) {
+          const verifiedPlatforms = verifiedContent.socialPlatforms;
+          const verifiedKeys = Object.keys(verifiedPlatforms);
+          
+          log(`[${operationId}] 7. Верификация платформ: ${verifiedKeys.length} платформ после обновления: ${verifiedKeys.join(', ')}`, 'social-publishing');
+          
+          if (verifiedKeys.length < updatedPlatforms.length) {
+            log(`[${operationId}] 7. ⚠️ ПРЕДУПРЕЖДЕНИЕ: В Directus меньше платформ (${verifiedKeys.length}), чем мы отправили (${updatedPlatforms.length})`, 'social-publishing');
+          } else {
+            log(`[${operationId}] 7. ✅ Верификация успешна - все платформы сохранены`, 'social-publishing');
+          }
+        }
+        
+        log(`[${operationId}] ✅ ЗАВЕРШЕНО обновление статуса публикации для ${contentId}, платформа: ${platform}`, 'social-publishing');
         return updatedContent;
-      } else {
-        log(`Ошибка при обновлении статуса публикации для ${contentId}`, 'social-publishing');
-        return null;
+        
+      } catch (updateError: any) {
+        log(`[${operationId}] ❌ ОШИБКА при отправке обновления: ${updateError.message}`, 'social-publishing');
+        
+        // В случае ошибки возвращаем объект с текущими данными, но обновленными данными платформы
+        // Это позволит клиенту видеть хотя бы частично обновленное состояние
+        log(`[${operationId}] ⚠️ Возвращаем объект с локально обновленными данными платформы ${platform} (без сохранения в Directus)`, 'social-publishing');
+        
+        return {
+          ...currentItem,
+          // Используем объединенные данные платформ
+          socialPlatforms: mergedPlatforms
+        };
       }
-    } catch (error) {
-      log(`Исключение при обновлении статуса публикации: ${error}`, 'social-publishing');
+      
+    } catch (error: any) {
+      log(`[${operationId}] ❌ КРИТИЧЕСКАЯ ОШИБКА при обновлении статуса публикации: ${error.message}`, 'social-publishing');
       return null;
     }
   }
