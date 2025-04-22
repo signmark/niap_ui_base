@@ -45,6 +45,7 @@ import { directusCrud } from './services/directus-crud';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
+import facebookWebhookRoutes from './api/facebook-webhook-direct';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
