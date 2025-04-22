@@ -25,21 +25,29 @@ async function testInstagramCarousel() {
   try {
     log('Запуск теста публикации карусели в Instagram');
     
-    // Шаг 1: Получаем админский токен
-    log('Шаг 1: Получение токена администратора');
-    
     // Используем API URL Replit вместо localhost
     const baseUrl = process.env.REPLIT_URL || 'https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev';
     log(`Используем базовый URL: ${baseUrl}`);
     
-    const authResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    // Шаг 1: Получаем токен администратора через Directus API напрямую
+    log('Шаг 1: Получение токена администратора через Directus API');
+    
+    // Email и пароль из нашего .env файла
+    const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+    
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    log(`Отправка запроса на ${directusUrl}/auth/login с email: ${email}`);
+    
+    const authResponse = await fetch(`${directusUrl}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
-        password: process.env.DIRECTUS_ADMIN_PASSWORD || 'admin_test_password',
+        email,
+        password,
+        mode: 'json'
       }),
     });
     
@@ -55,28 +63,13 @@ async function testInstagramCarousel() {
       }
     }
     
-    // Проверяем наличие правильного Content-Type
-    const contentType = authResponse.headers.get('content-type');
-    log(`Тип содержимого ответа авторизации: ${contentType}`);
+    const authData = await authResponse.json();
     
-    let authData;
-    
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        authData = await authResponse.json();
-      } catch (parseError) {
-        log(`Ошибка при разборе JSON: ${parseError.message}`);
-        const responseText = await authResponse.text();
-        log(`Полученный ответ (первые 200 символов): ${responseText.substring(0, 200)}...`);
-        throw new Error(`Ошибка при разборе ответа от сервера`);
-      }
-    } else {
-      const responseText = await authResponse.text();
-      log(`Получен не-JSON ответ. Первые 200 символов: ${responseText.substring(0, 200)}...`);
-      throw new Error(`Сервер вернул ответ в неправильном формате (ожидался JSON)`);
+    if (!authData || !authData.data || !authData.data.access_token) {
+      throw new Error(`Не удалось получить токен: ${JSON.stringify(authData)}`);
     }
     
-    const token = authData?.token || '';
+    const token = authData.data.access_token;
     
     if (!token) {
       throw new Error('Не удалось получить токен администратора');

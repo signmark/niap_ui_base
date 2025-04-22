@@ -17,7 +17,14 @@ router.post('/instagram-carousel', async (req, res) => {
     log.info(`[Instagram Carousel Webhook] Отправка запроса на публикацию карусели для контента ${contentId}`);
     
     // Вызываем локальный эндпоинт для публикации карусели
-    const response = await fetch('http://localhost:5000/api/instagram-carousel', {
+    // Используем прямой локальный вызов без реферера для Replit
+    const apiUrl = process.env.REPLIT_URL 
+      ? `${process.env.REPLIT_URL}/api/instagram-carousel` 
+      : 'http://localhost:5000/api/instagram-carousel';
+      
+    log.info(`[Instagram Carousel Webhook] Вызов через API URL: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

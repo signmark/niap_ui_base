@@ -23,7 +23,14 @@ export const registerTestInstagramCarouselRoute = (app: express.Express) => {
       log(`[Test Instagram Carousel] Отправка запроса на публикацию карусели для контента ${contentId}`);
       
       // Отправляем запрос на webhook маршрут для Instagram карусели
-      const response = await fetch('http://localhost:5000/api/webhook/instagram-carousel', {
+      // Используем прямой локальный вызов без реферера для Replit
+      const apiUrl = process.env.REPLIT_URL 
+        ? `${process.env.REPLIT_URL}/api/webhook/instagram-carousel` 
+        : 'http://localhost:5000/api/webhook/instagram-carousel';
+        
+      log(`[Test Instagram Carousel] Отправка запроса на вебхук по URL: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
