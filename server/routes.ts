@@ -2895,6 +2895,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты валидации API ключей социальных сетей
   console.log('Registering validation routes...');
   registerValidationRoutes(app);
+  
+  // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями
+  console.log('Registering direct webhook routes for social platforms...');
+  app.use('/api/webhook', telegramWebhookRoutes);
+  app.use('/api/webhook', vkWebhookRoutes);
+  app.use('/api/webhook', instagramWebhookRoutes);
+  app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
+  
+  // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
+  // чтобы его специфичные маршруты (например, /api/publish/now) не перехватывались
+  // маршрутами с параметрами (например, /api/publish/:contentId) из publishing-routes
+  app.use('/api', socialPublishingRouter); // Универсальный маршрутизатор для публикации в социальные сети
+  console.log('Social publishing router registered successfully');
+  
+  // Затем регистрируем общие маршруты для публикации
   console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
   console.log('API routes registered successfully');
@@ -2903,14 +2918,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
   console.log('Test Instagram routes registered');
-  
-  // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями
-  console.log('Registering direct webhook routes for social platforms...');
-  app.use('/api/webhook', telegramWebhookRoutes);
-  app.use('/api/webhook', vkWebhookRoutes);
-  app.use('/api/webhook', instagramWebhookRoutes);
-  app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
-  app.use('/api', socialPublishingRouter); // Универсальный маршрутизатор для публикации в социальные сети
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
