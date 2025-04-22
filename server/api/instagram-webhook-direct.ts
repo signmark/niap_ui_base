@@ -14,8 +14,8 @@ router.post('/instagram', async (req, res) => {
     }
     
     // URL до webhook n8n для публикации в Instagram
-    // Возможно, нужно использовать другое имя webhook
-    const webhookUrl = 'https://n8n.nplanner.ru/webhook/instagram';
+    // Точный URL, который вы указали
+    const webhookUrl = 'https://n8n.nplanner.ru/webhook/publish-instagram';
     
     log.info(`[Instagram Webhook] Отправка запроса на публикацию контента ${contentId} в Instagram`);
     
