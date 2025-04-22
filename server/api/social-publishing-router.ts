@@ -369,6 +369,86 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
 }
 
 /**
+ * @api {post} /api/publish/auto-update-status Автоматически обновить статус публикации
+ * @apiDescription Автоматически проверяет статусы публикации во всех выбранных соцсетях и обновляет общий статус
+ * @apiVersion 1.0.0
+ * @apiName AutoUpdatePublicationStatus
+ * @apiGroup SocialPublishing
+ * 
+ * @apiParam {String} contentId ID контента для проверки
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат обновления статуса
+ */
+router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
+  try {
+    const { contentId } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId'
+      });
+    }
+    
+    log(`[Social Publishing] Запрос на автоматическое обновление статуса публикации для контента ${contentId}`);
+    
+    // Получаем токен для работы с Directus API
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    
+    // Получаем текущие данные контента через storage
+    const content = await storage.getCampaignContentById(contentId, adminToken);
+    
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: 'Контент не найден'
+      });
+    }
+    
+    log(`[Social Publishing] Получен контент: ${JSON.stringify({
+      id: content.id,
+      status: content.status,
+      hasSocialPlatforms: !!content.socialPlatforms,
+      socialPlatformsType: content.socialPlatforms ? typeof content.socialPlatforms : 'undefined'
+    })}`);
+    
+    // Автоматически обновляем статус на "published", так как этот эндпоинт вызывается
+    // сразу после публикации во все выбранные платформы
+    const updatedContent = await storage.updateCampaignContent(
+      contentId,
+      { status: 'published', publishedAt: new Date() },
+      adminToken
+    );
+    
+    if (updatedContent) {
+      log(`[Social Publishing] Успешно установлен статус "published" для контента ${contentId} (автоматически)`);
+      return res.status(200).json({
+        success: true,
+        message: 'Контент автоматически отмечен как опубликованный',
+        result: {
+          contentId,
+          status: 'published'
+        }
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: 'Не удалось обновить статус контента',
+        error: 'Ошибка при обновлении статуса в Directus'
+      });
+    }
+  } catch (error: any) {
+    log(`[Social Publishing] Ошибка при автоматическом обновлении статуса: ${error.message}`);
+    
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка сервера: ${error.message}`
+    });
+  }
+});
+
+/**
  * @api {post} /api/publish/update-status Обновить статус публикации после публикации во все платформы
  * @apiDescription Проверяет статусы публикации во всех выбранных соцсетях и обновляет общий статус на "published"
  * @apiVersion 1.0.0
