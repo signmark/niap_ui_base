@@ -15,6 +15,136 @@ import { SocialPlatform } from '@shared/schema';
 const router = express.Router();
 
 /**
+ * @api {post} /api/publish/now Публикация контента сразу в выбранные социальные сети
+ * @apiDescription Публикует контент сразу в выбранные социальные сети и сохраняет выбранные платформы
+ * @apiVersion 1.0.0
+ * @apiName PublishContentNow
+ * @apiGroup SocialPublishing
+ * 
+ * @apiParam {String} contentId ID контента для публикации
+ * @apiParam {Object} platforms Объект с выбранными платформами, например: {telegram: true, vk: true, instagram: false}
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат публикации
+ */
+router.post('/publish/now', authMiddleware, async (req, res) => {
+  try {
+    const { contentId, platforms } = req.body;
+    
+    log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ`);
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId'
+      });
+    }
+    
+    // Проверяем, что платформы указаны и это объект
+    if (!platforms || typeof platforms !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать платформы для публикации'
+      });
+    }
+
+    // Получаем список выбранных платформ (где значение true)
+    const selectedPlatforms = Object.entries(platforms)
+      .filter(([_, selected]) => selected === true)
+      .map(([name]) => name);
+    
+    if (selectedPlatforms.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Не выбрано ни одной платформы для публикации'
+      });
+    }
+    
+    log(`[Social Publishing] Выбранные платформы: ${selectedPlatforms.join(', ')}`);
+    
+    // Получаем токен для работы с Directus API
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    
+    // Сначала сохраняем информацию о выбранных платформах в контент
+    // Это очень важно - сохраняем структуру платформ перед публикацией
+    const platformsData: Record<string, any> = {};
+    
+    selectedPlatforms.forEach(platform => {
+      platformsData[platform] = {
+        selected: true,
+        status: 'pending' // Начальный статус - ожидание публикации
+      };
+    });
+    
+    // Обновляем контент, чтобы сохранить выбранные платформы
+    const updatedContent = await storage.updateCampaignContent(
+      contentId,
+      { socialPlatforms: platformsData },
+      adminToken
+    );
+    
+    if (!updatedContent) {
+      log(`[Social Publishing] Ошибка при сохранении выбранных платформ для контента ${contentId}`);
+      return res.status(500).json({
+        success: false,
+        error: 'Не удалось сохранить выбранные платформы'
+      });
+    }
+    
+    log(`[Social Publishing] Успешно сохранены выбранные платформы для контента ${contentId}`);
+    
+    // Запускаем публикацию в каждую выбранную платформу
+    const publishResults = [];
+    
+    for (const platform of selectedPlatforms) {
+      try {
+        // Проверяем, поддерживается ли эта платформа
+        if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+          publishResults.push({
+            platform,
+            success: false,
+            error: `Платформа ${platform} не поддерживается`
+          });
+          continue;
+        }
+        
+        log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
+        
+        // Запускаем публикацию через n8n вебхук
+        const result = await publishViaN8nAsync(contentId, platform);
+        
+        publishResults.push({
+          platform,
+          success: true,
+          result
+        });
+      } catch (error: any) {
+        log(`[Social Publishing] Ошибка при публикации в ${platform}: ${error.message}`);
+        
+        publishResults.push({
+          platform,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Контент отправлен на публикацию в выбранные платформы',
+      results: publishResults
+    });
+  } catch (error: any) {
+    log(`[Social Publishing] Критическая ошибка при публикации: ${error.message}`);
+    
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка сервера: ${error.message}`
+    });
+  }
+});
+
+/**
  * @api {post} /api/publish Публикация контента в социальные сети
  * @apiDescription Публикует контент в выбранную социальную платформу (универсальный маршрут)
  * @apiVersion 1.0.0
@@ -128,6 +258,60 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       success: false,
       error: `Ошибка при публикации через n8n: ${error.message}`
     });
+  }
+}
+
+/**
+ * Асинхронно публикует контент через n8n вебхук и возвращает результат (для использования с Promise)
+ * @param contentId ID контента для публикации
+ * @param platform Платформа для публикации
+ * @returns Результат публикации
+ */
+async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
+  try {
+    log(`[Social Publishing] Асинхронная публикация контента ${contentId} в ${platform} через n8n вебхук`);
+    
+    // Маппинг платформ на соответствующие n8n вебхуки
+    const webhookMap: Record<string, string> = {
+      'telegram': 'publish-telegram',
+      'vk': 'publish-vk',
+      'instagram': 'publish-instagram',
+      'facebook': 'publish-facebook'
+    };
+    
+    const webhookName = webhookMap[platform];
+    if (!webhookName) {
+      throw new Error(`Платформа ${platform} не имеет настроенного вебхука`);
+    }
+    
+    // Формируем URL вебхука
+    const webhookUrl = `https://n8n.nplanner.ru/webhook/${webhookName}`;
+    
+    // Для n8n вебхуков отправляем только contentId, как указано в требованиях
+    const webhookPayload = {
+      contentId
+    };
+    
+    // Отправляем запрос на n8n вебхук
+    const response = await axios.post(webhookUrl, webhookPayload);
+    
+    log(`[Social Publishing] Отправлены данные в n8n вебхук: contentId=${contentId}, platform=${platform}`);
+    log(`[Social Publishing] Данные извлекаются из Directus по contentId`);
+    
+    log(`[Social Publishing] Ответ от n8n вебхука: ${JSON.stringify(response.data)}`);
+    
+    return {
+      success: true,
+      message: `Контент успешно отправлен на публикацию в ${platform}`,
+      data: response.data
+    };
+  } catch (error: any) {
+    log(`[Social Publishing] Ошибка при публикации через n8n: ${error.message}`);
+    if (error.response) {
+      log(`[Social Publishing] Детали ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    throw new Error(`Ошибка при публикации через n8n: ${error.message}`);
   }
 }
 

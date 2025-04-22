@@ -602,7 +602,8 @@ export default function ContentPage() {
       // Вызываем API для обновления статуса после публикации на все выбранные платформы
       try {
         console.log("Вызов API для обновления статуса публикации...");
-        const updateResponse = await fetch('/api/publish/update-status', {
+        // Используем обновленный API в social-publishing-router, который не требует явного указания платформ
+        const updateResponse = await fetch('/api/publish/auto-update-status', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
