@@ -88,8 +88,21 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     log(`[Social Publishing] Выбранные платформы: ${selectedPlatforms.join(', ')}`);
     
-    // Получаем токен для работы с Directus API
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    // Получаем токен администратора из сервиса DirectusAuthManager
+    // Импортируем его динамически, чтобы избежать проблем с циклическими зависимостями
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    
+    // Получаем токен из активных сессий администратора или используем токен из переменных окружения
+    let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    const sessions = directusAuthManager.getAllActiveSessions();
+    
+    if (sessions.length > 0) {
+      // Берем самый свежий токен из активных сессий
+      adminToken = sessions[0].token;
+      log(`[Social Publishing] Используется токен администратора из активной сессии`);
+    } else {
+      log(`[Social Publishing] Активные сессии не найдены, используется токен из переменных окружения`);
+    }
     
     // Сначала сохраняем информацию о выбранных платформах в контент
     // Это очень важно - сохраняем структуру платформ перед публикацией
@@ -102,66 +115,77 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       };
     });
     
-    // Обновляем контент, чтобы сохранить выбранные платформы
-    const updatedContent = await storage.updateCampaignContent(
-      contentId,
-      { socialPlatforms: platformsData },
-      adminToken
-    );
+    try {
+      log(`[Social Publishing] Обновляем статусы платформ для контента ${contentId} с токеном администратора`);
+      
+      // Обновляем контент, чтобы сохранить выбранные платформы
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { socialPlatforms: platformsData },
+        adminToken
+      );
     
-    if (!updatedContent) {
-      log(`[Social Publishing] Ошибка при сохранении выбранных платформ для контента ${contentId}`);
-      return res.status(500).json({
-        success: false,
-        error: 'Не удалось сохранить выбранные платформы'
-      });
-    }
+      if (!updatedContent) {
+        log(`[Social Publishing] Ошибка при сохранении выбранных платформ для контента ${contentId}`);
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось сохранить выбранные платформы'
+        });
+      }
     
-    log(`[Social Publishing] Успешно сохранены выбранные платформы для контента ${contentId}`);
-    
-    // Запускаем публикацию в каждую выбранную платформу
-    const publishResults = [];
-    
-    for (const platform of selectedPlatforms) {
-      try {
-        // Проверяем, поддерживается ли эта платформа
-        if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+      log(`[Social Publishing] Успешно сохранены выбранные платформы для контента ${contentId}`);
+      
+      // Запускаем публикацию в каждую выбранную платформу
+      const publishResults = [];
+      
+      for (const platform of selectedPlatforms) {
+        try {
+          // Проверяем, поддерживается ли эта платформа
+          if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+            publishResults.push({
+              platform,
+              success: false,
+              error: `Платформа ${platform} не поддерживается`
+            });
+            continue;
+          }
+          
+          log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
+          
+          // Запускаем публикацию через n8n вебхук
+          const result = await publishViaN8nAsync(contentId, platform);
+          
+          publishResults.push({
+            platform,
+            success: true,
+            result
+          });
+        } catch (error: any) {
+          log(`[Social Publishing] Ошибка при публикации в ${platform}: ${error.message}`);
+          
           publishResults.push({
             platform,
             success: false,
-            error: `Платформа ${platform} не поддерживается`
+            error: error.message
           });
-          continue;
         }
-        
-        log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
-        
-        // Запускаем публикацию через n8n вебхук
-        const result = await publishViaN8nAsync(contentId, platform);
-        
-        publishResults.push({
-          platform,
-          success: true,
-          result
-        });
-      } catch (error: any) {
-        log(`[Social Publishing] Ошибка при публикации в ${platform}: ${error.message}`);
-        
-        publishResults.push({
-          platform,
-          success: false,
-          error: error.message
-        });
       }
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Контент отправлен на публикацию в выбранные платформы',
+        results: publishResults
+      });
+    } catch (error: any) {
+      log(`[Social Publishing] Критическая ошибка при публикации: ${error.message}`);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Внутренняя ошибка сервера: ${error.message}`
+      });
     }
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Контент отправлен на публикацию в выбранные платформы',
-      results: publishResults
-    });
   } catch (error: any) {
-    log(`[Social Publishing] Критическая ошибка при публикации: ${error.message}`);
+    log(`[Social Publishing] Глобальная ошибка при публикации: ${error.message}`);
     
     return res.status(500).json({
       success: false,
