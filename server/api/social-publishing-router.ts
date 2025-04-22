@@ -222,12 +222,23 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
       });
     }
     
+    log(`[Social Publishing] Получен контент: ${JSON.stringify({
+      id: content.id,
+      status: content.status,
+      hasSocialPlatforms: !!content.socialPlatforms,
+      socialPlatformsType: content.socialPlatforms ? typeof content.socialPlatforms : 'undefined'
+    })}`);
+    
     // Проверяем, есть ли данные о социальных платформах
     if (!content.socialPlatforms || typeof content.socialPlatforms !== 'object') {
       log(`[Social Publishing] Контент ${contentId} не имеет данных о социальных платформах`);
       return res.status(200).json({
         success: false,
-        error: 'Контент не имеет данных о социальных платформах'
+        message: 'Контент не имеет данных о социальных платформах',
+        result: {
+          contentId,
+          status: content.status || 'draft'
+        }
       });
     }
 
@@ -239,7 +250,11 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
       log(`[Social Publishing] Для контента ${contentId} не выбраны платформы для публикации`);
       return res.status(200).json({
         success: false,
-        error: 'Не выбраны платформы для публикации'
+        message: 'Не выбраны платформы для публикации',
+        result: {
+          contentId,
+          status: content.status || 'draft'
+        }
       });
     }
     
