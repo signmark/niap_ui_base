@@ -171,6 +171,27 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         }
       }
       
+      // Проверяем, есть ли успешные публикации
+      const hasSuccessfulPublications = publishResults.some(result => result.success);
+      
+      if (hasSuccessfulPublications) {
+        // Автоматически обновляем общий статус контента на "published"
+        try {
+          log(`[Social Publishing] Автоматическое обновление статуса для контента ${contentId} после успешной публикации`);
+          
+          await storage.updateCampaignContent(
+            contentId,
+            { status: 'published', publishedAt: new Date() },
+            adminToken
+          );
+          
+          log(`[Social Publishing] Статус контента успешно обновлен на "published"`);
+        } catch (statusError: any) {
+          log(`[Social Publishing] Ошибка при обновлении статуса контента: ${statusError.message}`);
+          // Продолжаем работу даже при ошибке обновления статуса
+        }
+      }
+      
       return res.status(200).json({
         success: true,
         message: 'Контент отправлен на публикацию в выбранные платформы',
@@ -292,6 +313,31 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     log(`[Social Publishing] Данные извлекаются из Directus по contentId`);
     
     log(`[Social Publishing] Ответ от n8n вебхука: ${JSON.stringify(response.data)}`);
+    
+    // Обновляем статус контента на "published" после успешной публикации
+    try {
+      log(`[Social Publishing] Обновление статуса контента ${contentId} на "published" после публикации в ${platform}`);
+      
+      // Получаем токен администратора
+      const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+      let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      if (sessions.length > 0) {
+        adminToken = sessions[0].token;
+      }
+      
+      await storage.updateCampaignContent(
+        contentId,
+        { status: 'published', publishedAt: new Date() },
+        adminToken
+      );
+      
+      log(`[Social Publishing] Статус контента ${contentId} успешно обновлен на "published"`);
+    } catch (statusError: any) {
+      log(`[Social Publishing] Ошибка при обновлении статуса контента: ${statusError.message}`);
+      // Продолжаем даже при ошибке обновления статуса
+    }
     
     return res.status(200).json({
       success: true,
