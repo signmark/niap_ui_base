@@ -39,6 +39,7 @@ import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
+import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
@@ -2898,6 +2899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);
+  registerTestInstagramCarouselRoute(app);
   console.log('Test Instagram routes registered');
   
   // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями

@@ -1,201 +1,198 @@
 /**
- * Тестовый скрипт для прямой проверки публикации карусели в Instagram
- * Не требует запущенного сервера, работает напрямую с Graph API
+ * Скрипт для тестирования публикации карусели в Instagram
+ * 
+ * Этот скрипт отправляет запрос на тестовый эндпоинт Instagram карусели,
+ * который в свою очередь вызывает webhook маршрут для Instagram карусели.
+ * 
+ * Использование: node instagram-carousel-test.js
  */
 
-const axios = require('axios');
+import fetch from 'node-fetch';
+import fs from 'fs';
+import path from 'path';
 
-// Настройки Instagram/Facebook
-const INSTAGRAM_TOKEN = 'EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R';
-const INSTAGRAM_BUSINESS_ACCOUNT_ID = '17841422577074562';
-
-// Тестовые изображения - публично доступные URL, проверенные для Instagram
-const testImages = [
-  'https://v3.fal.media/files/lion/W-HNg-Ax1vlVUVAXoNAva.png',   // Основное изображение
-  'https://v3.fal.media/files/rabbit/TOLFCrYadFmSqJ5WwwYE-.png'  // Дополнительное изображение
-];
-
-// Тестовый текст/подпись
-const caption = "Тестовая карусель через Graph API v16.0. #тест #api";
-
-// Функция задержки
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// Функция для логирования с поддержкой записи в файл
+function log(message) {
+  const logMessage = `[${new Date().toISOString()}] ${message}`;
+  console.log(logMessage);
+  
+  // Записываем в лог-файл
+  fs.appendFileSync('instagram-carousel-test.log', logMessage + '\n');
 }
 
-/**
- * Основная функция для выполнения теста
- */
-async function runTest() {
-  console.log("=== НАЧАЛО ТЕСТИРОВАНИЯ ПУБЛИКАЦИИ КАРУСЕЛИ В INSTAGRAM ===");
-  
-  // Проверка наличия токена и ID аккаунта
-  if (!INSTAGRAM_TOKEN || !INSTAGRAM_BUSINESS_ACCOUNT_ID) {
-    console.error("Ошибка: Не указаны токен Instagram или ID бизнес-аккаунта");
-    console.error("Установите переменные окружения INSTAGRAM_TOKEN и INSTAGRAM_BUSINESS_ACCOUNT_ID");
-    process.exit(1);
-  }
-  
-  console.log(`Instagram Business Account ID: ${INSTAGRAM_BUSINESS_ACCOUNT_ID}`);
-  console.log(`Длина токена: ${INSTAGRAM_TOKEN.length} символов`);
-  console.log(`Тестовые изображения: ${testImages.join(', ')}`);
-  
-  // Создание контейнеров для изображений
-  console.log("\n1. Создание контейнеров для отдельных изображений карусели");
-  const containerIds = [];
-  
-  for (let i = 0; i < testImages.length; i++) {
-    const imageUrl = testImages[i];
-    console.log(`\nОбработка изображения ${i+1}/${testImages.length}: ${imageUrl}`);
+// Функция для тестирования публикации карусели в Instagram
+async function testInstagramCarousel() {
+  try {
+    log('Запуск теста публикации карусели в Instagram');
     
-    try {
-      // Создание HTTP-запроса для создания контейнера изображения
-      console.log(`Отправка POST запроса к https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media`);
-      console.log(`Параметры: image_url=${imageUrl}, is_carousel_item=true`);
+    // Шаг 1: Получаем админский токен
+    log('Шаг 1: Получение токена администратора');
+    const authResponse = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
+        password: process.env.DIRECTUS_ADMIN_PASSWORD || 'admin_test_password',
+      }),
+    });
+    
+    if (!authResponse.ok) {
+      try {
+        const error = await authResponse.json();
+        throw new Error(`Ошибка авторизации: ${JSON.stringify(error)}`);
+      } catch (parseError) {
+        const responseText = await authResponse.text();
+        log(`Ошибка при разборе ответа: ${parseError.message}`);
+        log(`Полученный ответ: ${responseText.substring(0, 200)}...`);
+        throw new Error(`Ошибка авторизации: невозможно разобрать ответ`);
+      }
+    }
+    
+    // Проверяем наличие правильного Content-Type
+    const contentType = authResponse.headers.get('content-type');
+    log(`Тип содержимого ответа авторизации: ${contentType}`);
+    
+    let authData;
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        authData = await authResponse.json();
+      } catch (parseError) {
+        log(`Ошибка при разборе JSON: ${parseError.message}`);
+        const responseText = await authResponse.text();
+        log(`Полученный ответ (первые 200 символов): ${responseText.substring(0, 200)}...`);
+        throw new Error(`Ошибка при разборе ответа от сервера`);
+      }
+    } else {
+      const responseText = await authResponse.text();
+      log(`Получен не-JSON ответ. Первые 200 символов: ${responseText.substring(0, 200)}...`);
+      throw new Error(`Сервер вернул ответ в неправильном формате (ожидался JSON)`);
+    }
+    
+    const token = authData?.token || '';
+    
+    if (!token) {
+      throw new Error('Не удалось получить токен администратора');
+    }
+    
+    log(`Токен получен, длина: ${token.length} символов`);
+    
+    // Шаг 2: Получаем существующий контент для тестирования
+    log('Шаг 2: Получение существующего контента с изображениями');
+    const contentResponse = await fetch('http://localhost:5000/api/campaign-content?limit=5', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!contentResponse.ok) {
+      const error = await contentResponse.json();
+      throw new Error(`Ошибка получения контента: ${JSON.stringify(error)}`);
+    }
+    
+    const contentData = await contentResponse.json();
+    
+    if (!contentData || !contentData.data || contentData.data.length === 0) {
+      throw new Error('Нет доступного контента для тестирования');
+    }
+    
+    // Находим первый контент с основным изображением и дополнительными изображениями
+    let testContent = null;
+    
+    for (const content of contentData.data) {
+      if (content.imageUrl && content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+        testContent = content;
+        break;
+      }
+    }
+    
+    if (!testContent) {
+      // Если не нашли подходящий контент, используем первый с изображением
+      testContent = contentData.data.find(item => item.imageUrl);
       
-      const containerResponse = await axios({
-        method: 'post',
-        url: `https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media`,
-        data: {
-          access_token: INSTAGRAM_TOKEN,
-          image_url: imageUrl,
-          is_carousel_item: true
-        }
+      if (!testContent) {
+        throw new Error('Не найден контент с изображениями для тестирования');
+      }
+      
+      // Добавляем тестовые дополнительные изображения
+      log('Добавление тестовых дополнительных изображений');
+      testContent.additionalImages = [
+        'https://v3.fal.media/files/rabbit/TOLFCrYadFmSqJ5WwwYE-.png',
+        'https://v3.fal.media/files/lion/W-HNg-Ax1vlVUVAXoNAva.png'
+      ];
+    }
+    
+    log(`Найден тестовый контент: ID=${testContent.id}, Title="${testContent.title}"`);
+    log(`Основное изображение: ${testContent.imageUrl}`);
+    log(`Дополнительные изображения: ${JSON.stringify(testContent.additionalImages)}`);
+    
+    // Шаг 3: Убедимся, что у контента есть настройки для Instagram
+    if (!testContent.socialPlatforms || !Array.isArray(testContent.socialPlatforms)) {
+      log('Добавление настроек Instagram для тестового контента');
+      testContent.socialPlatforms = [{
+        platform: 'instagram',
+        accessToken: process.env.INSTAGRAM_TOKEN || 'EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R',
+        businessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || '17841422577074562'
+      }];
+      
+      // Обновляем контент в Directus с добавленными настройками
+      log('Обновление контента с настройками Instagram');
+      const updateResponse = await fetch(`http://localhost:5000/api/campaign-content/${testContent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          socialPlatforms: testContent.socialPlatforms
+        }),
       });
       
-      console.log(`Ответ API:`, JSON.stringify(containerResponse.data, null, 2));
-      
-      if (containerResponse.data && containerResponse.data.id) {
-        containerIds.push(containerResponse.data.id);
-        console.log(`✅ Контейнер создан успешно, ID: ${containerResponse.data.id}`);
+      if (!updateResponse.ok) {
+        const error = await updateResponse.json();
+        log(`Предупреждение: Не удалось обновить настройки Instagram: ${JSON.stringify(error)}`);
+        // Продолжаем тест, даже если обновление не удалось
       } else {
-        console.error(`❌ Ошибка: Ответ без ID контейнера`);
-      }
-    } catch (error) {
-      console.error(`❌ Ошибка при создании контейнера:`, error.message);
-      if (error.response) {
-        console.error('Детали ошибки:', JSON.stringify(error.response.data, null, 2));
+        log('Настройки Instagram успешно обновлены для тестового контента');
       }
     }
     
-    // Задержка между запросами для избежания лимитов API
-    await delay(2000);
-  }
-  
-  console.log(`\nСоздано ${containerIds.length} контейнеров из ${testImages.length} изображений`);
-  
-  // Проверяем, что созданы контейнеры
-  if (containerIds.length === 0) {
-    console.error("❌ Ошибка: Не удалось создать ни одного контейнера для изображений");
-    process.exit(1);
-  }
-  
-  // Небольшая пауза перед созданием контейнера карусели
-  await delay(3000);
-  
-  // Создание контейнера карусели
-  console.log("\n2. Создание контейнера карусели");
-  let carouselContainerId;
-  
-  try {
-    // Создание HTTP-запроса для создания контейнера карусели
-    console.log(`Отправка POST запроса к https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media`);
-    console.log(`Параметры: media_type=CAROUSEL, children=${containerIds.join(',')}, caption=${caption}`);
-    
-    const carouselData = {
-      access_token: INSTAGRAM_TOKEN,
-      media_type: 'CAROUSEL',
-      children: containerIds.join(','),
-      caption: caption
-    };
-    
-    console.log("Данные запроса:", JSON.stringify(carouselData, null, 2));
-    
-    const carouselResponse = await axios({
-      method: 'post',
-      url: `https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media`,
-      data: carouselData
+    // Шаг 4: Отправка запроса на тестовый эндпоинт для публикации карусели
+    log('Шаг 4: Отправка запроса на тестовый эндпоинт Instagram карусели');
+    const carouselResponse = await fetch('http://localhost:5000/api/test/instagram-carousel', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contentId: testContent.id,
+        token: token
+      }),
     });
     
-    console.log(`Ответ API:`, JSON.stringify(carouselResponse.data, null, 2));
+    const carouselResult = await carouselResponse.json();
     
-    if (carouselResponse.data && carouselResponse.data.id) {
-      carouselContainerId = carouselResponse.data.id;
-      console.log(`✅ Контейнер карусели создан успешно, ID: ${carouselContainerId}`);
+    log(`Результат публикации карусели: ${JSON.stringify(carouselResult, null, 2)}`);
+    
+    if (carouselResult.success) {
+      log('✅ Тест публикации карусели в Instagram УСПЕШНО завершен');
+      log(`Ссылка на публикацию: ${carouselResult.permalink || 'Не предоставлена'}`);
     } else {
-      console.error(`❌ Ошибка: Ответ без ID контейнера карусели`);
-      process.exit(1);
+      log(`❌ Тест публикации карусели в Instagram НЕУСПЕШЕН: ${carouselResult.error || 'Неизвестная ошибка'}`);
     }
+    
+    return carouselResult;
   } catch (error) {
-    console.error(`❌ Ошибка при создании контейнера карусели:`, error.message);
-    if (error.response) {
-      console.error('Детали ошибки:', JSON.stringify(error.response.data, null, 2));
-    }
-    process.exit(1);
+    log(`❌ Ошибка при выполнении теста: ${error.message}`);
+    return { success: false, error: error.message };
   }
-  
-  // Небольшая пауза перед публикацией карусели
-  await delay(3000);
-  
-  // Публикация карусели
-  console.log("\n3. Публикация карусели");
-  
-  try {
-    // Создание HTTP-запроса для публикации карусели
-    console.log(`Отправка POST запроса к https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media_publish`);
-    console.log(`Параметры: creation_id=${carouselContainerId}`);
-    
-    const publishData = {
-      access_token: INSTAGRAM_TOKEN,
-      creation_id: carouselContainerId
-    };
-    
-    console.log("Данные запроса:", JSON.stringify(publishData, null, 2));
-    
-    const publishResponse = await axios({
-      method: 'post',
-      url: `https://graph.facebook.com/v16.0/${INSTAGRAM_BUSINESS_ACCOUNT_ID}/media_publish`,
-      data: publishData
-    });
-    
-    console.log(`Ответ API:`, JSON.stringify(publishResponse.data, null, 2));
-    
-    if (publishResponse.data && publishResponse.data.id) {
-      const postId = publishResponse.data.id;
-      console.log(`✅ Карусель опубликована успешно, ID публикации: ${postId}`);
-      
-      // Получение permalink публикации
-      console.log("\n4. Получение постоянной ссылки");
-      
-      try {
-        const permalinkResponse = await axios.get(
-          `https://graph.facebook.com/v16.0/${postId}?fields=permalink&access_token=${INSTAGRAM_TOKEN}`
-        );
-        
-        console.log(`Ответ API:`, JSON.stringify(permalinkResponse.data, null, 2));
-        
-        if (permalinkResponse.data && permalinkResponse.data.permalink) {
-          console.log(`✅ Постоянная ссылка на публикацию: ${permalinkResponse.data.permalink}`);
-        } else {
-          console.log(`⚠️ Не удалось получить постоянную ссылку на публикацию`);
-        }
-      } catch (error) {
-        console.log(`⚠️ Ошибка при получении ссылки:`, error.message);
-      }
-    } else {
-      console.error(`❌ Ошибка: Ответ без ID публикации`);
-    }
-  } catch (error) {
-    console.error(`❌ Ошибка при публикации карусели:`, error.message);
-    if (error.response) {
-      console.error('Детали ошибки:', JSON.stringify(error.response.data, null, 2));
-    }
-  }
-  
-  console.log("\n=== ЗАВЕРШЕНИЕ ТЕСТИРОВАНИЯ ПУБЛИКАЦИИ КАРУСЕЛИ В INSTAGRAM ===");
 }
 
-// Запуск теста
-runTest().catch(error => {
-  console.error("❌ Неперехваченная ошибка:", error);
+// Запускаем тест
+testInstagramCarousel().then(result => {
+  log('Тест завершен');
+  process.exit(result.success ? 0 : 1);
 });
