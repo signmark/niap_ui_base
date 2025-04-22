@@ -46,6 +46,7 @@ import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
+import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
 
 /**
@@ -2909,6 +2910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
+  app.use('/api', socialPublishingRouter); // Универсальный маршрутизатор для публикации в социальные сети
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
