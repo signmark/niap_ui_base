@@ -44,7 +44,7 @@ import { directusCrud } from './services/directus-crud';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
-import * as instagramCarouselWebhook from './api/instagram-carousel-webhook';
+import instagramCarouselWebhookRoutes from './api/instagram-carousel-webhook';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
