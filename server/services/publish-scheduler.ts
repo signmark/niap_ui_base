@@ -982,17 +982,51 @@ export class PublishScheduler {
         // Резервный вариант: публикуем через n8n вебхуки вместо прямого вызова publishToPlatform
         log(`Использование резервного метода публикации через n8n webhook для контента ${content.id} на платформе ${platform}`, 'scheduler');
         
-        // Преобразуем имя платформы в строку, чтобы избежать ошибки [object Object]
-        // ИСПРАВЛЕНО: Улучшена типизация и обработка платформы
-        let platformName: string;
+        // Преобразуем имя платформы в строку и маппим на правильные webhook endpoints
+        // ИСПРАВЛЕНО: Добавлен маппинг для гарантии правильного формата
+        // Маппинг платформ на их webhook endpoints
+        const webhookMap: Record<string, string> = {
+          'telegram': 'publish-telegram',
+          'vk': 'publish-vk',
+          'instagram': 'publish-instagram',
+          'facebook': 'publish-facebook'
+        };
+        
+        // Преобразуем platform в строку нижнего регистра для маппинга
+        let platformString: string;
         if (typeof platform === 'string') {
-          platformName = platform.toLowerCase();
-        } else if (platform && typeof platform === 'object' && platform.hasOwnProperty('toString')) {
-          platformName = String(platform).toLowerCase();
+          platformString = platform.toLowerCase();
+        } else if (platform && typeof platform === 'object') {
+          if (platform.hasOwnProperty('toString')) {
+            platformString = String(platform).toLowerCase();
+          } else {
+            // Последняя попытка получить строковое представление
+            platformString = Object.prototype.toString.call(platform).toLowerCase();
+            log(`Получено сложное представление платформы: ${platformString}`, 'scheduler');
+          }
         } else {
           // Запасной вариант - преобразуем в строку даже если будет [object Object]
-          platformName = String(platform).toLowerCase();
-          log(`Внимание: платформа имеет непредвиденный формат: ${platformName}`, 'scheduler');
+          platformString = String(platform).toLowerCase();
+          log(`Внимание: платформа имеет непредвиденный формат: ${platformString}`, 'scheduler');
+        }
+        
+        // Ищем webhook по маппингу
+        let webhookName = webhookMap[platformString];
+        if (!webhookName) {
+          // Если прямое соответствие не найдено, проверяем вхождение названия в строку
+          for (const [key, value] of Object.entries(webhookMap)) {
+            if (platformString.includes(key)) {
+              webhookName = value;
+              log(`Найдено частичное соответствие платформы: ${platformString} → ${key}`, 'scheduler');
+              break;
+            }
+          }
+          
+          // Если все еще не нашли, используем значение по умолчанию
+          if (!webhookName) {
+            webhookName = `publish-${platformString}`;
+            log(`Внимание: не найдено соответствие для платформы ${platformString}, используем ${webhookName}`, 'scheduler');
+          }
         }
         
         // Определяем URL для webhook запроса н8н
@@ -1000,7 +1034,7 @@ export class PublishScheduler {
         const n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru/webhook';
         // Проверяем, не содержит ли базовый URL уже слеш в конце
         const baseUrlWithoutTrailingSlash = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
-        const webhookUrl = `${baseUrlWithoutTrailingSlash}/publish-${platformName.toLowerCase()}`;
+        const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
         
         try {
           log(`Отправка запроса на n8n webhook ${webhookUrl} для контента ID ${content.id}`, 'scheduler');
