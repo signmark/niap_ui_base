@@ -979,28 +979,67 @@ export class PublishScheduler {
           log(`Исключение при вызове API публикации: ${apiError}`, 'scheduler');
         }
         
-        // Резервный вариант: публикуем через модульный сервис, если API метод не сработал
-        log(`Использование резервного метода публикации для контента ${content.id} на платформе ${platform}`, 'scheduler');
+        // Резервный вариант: публикуем через n8n вебхуки вместо прямого вызова publishToPlatform
+        log(`Использование резервного метода публикации через n8n webhook для контента ${content.id} на платформе ${platform}`, 'scheduler');
         
-        const result = await socialPublishingService.publishToPlatform(
-          content,
-          platform,
-          socialSettings
-        );
+        // Преобразуем имя платформы в строку, чтобы избежать ошибки [object Object]
+        const platformName = typeof platform === 'string' ? platform : String(platform);
+        
+        // Определяем URL для webhook запроса н8н
+        const n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru/webhook';
+        const webhookUrl = `${n8nBaseUrl}/publish-${platformName.toLowerCase()}`;
+        
+        try {
+          log(`Отправка запроса на n8n webhook ${webhookUrl} для контента ID ${content.id}`, 'scheduler');
+          
+          // Отправляем только ID контента - вебхук загрузит все остальные данные сам
+          const webhookResponse = await axios.post(webhookUrl, {
+            contentId: content.id
+          });
+          
+          log(`Ответ от n8n webhook: ${JSON.stringify(webhookResponse.data)}`, 'scheduler');
+          
+          // Создаем успешный результат на основе ответа webhook
+          const successResult = {
+            status: 'published' as const,
+            platform, // Важно: добавляем платформу в объект результата
+            publishedAt: new Date(),
+            postUrl: webhookResponse.data?.postUrl || null,
+            postId: webhookResponse.data?.postId || null,
+            error: null
+          };
+          
+          // Обновляем статус публикации через модульный сервис socialPublishingService
+          await socialPublishingService.updatePublicationStatus(
+            content.id,
+            platform,
+            successResult
+          );
 
-        // Обновляем статус публикации через модульный сервис socialPublishingService
-        await socialPublishingService.updatePublicationStatus(
-          content.id,
-          platform,
-          result
-        );
-
-        // Логируем результат
-        if (result.status === 'published') {
+          // Логируем результат
           log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
           successfulPublications++;
-        } else {
-          log(`Ошибка при публикации контента ${content.id} в ${platform}: ${result.error}`, 'scheduler');
+        } catch (webhookError) {
+          log(`Ошибка при вызове n8n webhook для ${platform}: ${webhookError}`, 'scheduler');
+          
+          // Создаем объект с ошибкой
+          const errorResult = {
+            status: 'failed' as const,
+            platform, // Важно: добавляем платформу в объект результата
+            publishedAt: null,
+            postUrl: null,
+            postId: null,
+            error: `Ошибка вызова n8n webhook: ${webhookError}`
+          };
+          
+          // Обновляем статус публикации, указывая на ошибку
+          await socialPublishingService.updatePublicationStatus(
+            content.id,
+            platform,
+            errorResult
+          );
+          
+          log(`Ошибка при публикации контента ${content.id} в ${platform}: ${errorResult.error}`, 'scheduler');
         }
       }
       
