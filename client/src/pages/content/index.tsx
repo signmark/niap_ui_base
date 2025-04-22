@@ -596,8 +596,34 @@ export default function ContentPage() {
       
       return publicationResults;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data, variables) => {
       console.log("Результат публикации:", data);
+      
+      // Вызываем API для обновления статуса после публикации на все выбранные платформы
+      try {
+        console.log("Вызов API для обновления статуса публикации...");
+        const updateResponse = await fetch('/api/publish/update-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            contentId: variables.id
+          })
+        });
+        
+        const updateResult = await updateResponse.json();
+        console.log("Результат обновления статуса:", updateResult);
+        
+        if (updateResult.success) {
+          console.log("Статус публикации успешно обновлен на 'published'");
+        } else {
+          console.log("Не все платформы опубликованы, статус не обновлен", updateResult.message);
+        }
+      } catch (error) {
+        console.error("Ошибка при обновлении статуса публикации:", error);
+      }
       
       // Обновляем данные в интерфейсе
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
