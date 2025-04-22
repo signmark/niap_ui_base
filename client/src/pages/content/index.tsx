@@ -507,94 +507,51 @@ export default function ContentPage() {
     }
   });
   
-  // Мутация для немедленной публикации контента
+  // Мутация для немедленной публикации контента через новый API эндпоинт
   const publishContentMutation = useMutation({
     mutationFn: async ({ id, platforms }: { id: string, platforms?: {[key: string]: boolean} }) => {
-      // Подготовка данных о платформах
-      const socialPlatformsData: Record<string, any> = {};
-      
-      // Если есть выбранные платформы, настраиваем их в JSON-структуру
-      if (platforms) {
-        Object.entries(platforms).forEach(([platform, isEnabled]) => {
-          if (isEnabled) {
-            socialPlatformsData[platform] = {
-              status: 'pending',
-              publishedAt: null,
-              postId: null,
-              postUrl: null,
-              error: null
-            };
-          }
-        });
-      } else {
-        // Если платформы не выбраны, по умолчанию используем только Telegram и VK
-        // (Instagram и Facebook требуют явного выбора)
-        ['telegram', 'vk'].forEach(platform => {
-          socialPlatformsData[platform] = {
-            status: 'pending',
-            publishedAt: null,
-            postId: null,
-            postUrl: null,
-            error: null
-          };
-        });
+      // Проверяем наличие необходимых параметров
+      if (!id) {
+        throw new Error('ID контента не указан');
       }
-
-      console.log("🚀 Подготовленные данные для прямой публикации:");
+      
+      // Если платформы не указаны, используем значения по умолчанию
+      const platformsToPublish = platforms || {
+        telegram: true,
+        vk: true,
+        instagram: false,
+        facebook: false
+      };
+      
+      console.log("🚀 Подготовленные данные для публикации через новый API:");
       console.log("ID контента:", id);
-      console.log("Выбранные платформы:", platforms || "Все доступные");
-      console.log("Данные socialPlatforms для сохранения:", JSON.stringify(socialPlatformsData, null, 2));
-
-      // Определяем, какие платформы выбраны
-      const selectedPlatforms = Object.keys(socialPlatformsData);
+      console.log("Выбранные платформы:", platformsToPublish);
       
-      // Массив для хранения результатов публикации
-      const publicationResults = [];
+      // Вызываем новый API эндпоинт, который сразу публикует во все выбранные платформы
+      // и сохраняет информацию о выбранных платформах в Directus
+      const response = await fetch('/api/publish/now', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          contentId: id,
+          platforms: platformsToPublish
+        })
+      });
       
-      // Публикуем на каждую платформу отдельно через webhook через наш API сервер
-      for (const platform of selectedPlatforms) {
-        try {
-          let endpointUrl = '';
-          
-          // Выбираем соответствующий эндпоинт для каждой платформы
-          if (platform === 'telegram') {
-            endpointUrl = '/api/webhook/telegram';
-          } else if (platform === 'vk') {
-            endpointUrl = '/api/webhook/vk';
-          } else if (platform === 'instagram') {
-            endpointUrl = '/api/webhook/instagram';
-          } else {
-            // Для других платформ пока используем старый API
-            continue;
-          }
-          
-          console.log(`🚀 Публикация на ${platform} через webhook: ${endpointUrl}`);
-          
-          // Используем наш API-клиент для запросов
-          const response = await fetch(endpointUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              contentId: id
-            })
-          });
-          
-          const result = await response.json();
-          console.log(`✅ Результат публикации на ${platform}:`, result);
-          publicationResults.push({ platform, result });
-        } catch (error) {
-          console.error(`❌ Ошибка публикации на ${platform}:`, error);
-          publicationResults.push({ 
-            platform, 
-            error: error instanceof Error ? error.message : 'Неизвестная ошибка' 
-          });
-        }
+      // Проверяем статус ответа
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Ошибка публикации (${response.status})`);
       }
       
-      return publicationResults;
+      // Получаем результат публикации
+      const result = await response.json();
+      console.log("✅ Результат публикации через новый API:", result);
+      
+      return result;
     },
     onSuccess: async (data, variables) => {
       console.log("Результат публикации:", data);
