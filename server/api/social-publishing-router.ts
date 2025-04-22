@@ -51,6 +51,28 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         error: 'Необходимо указать платформы для публикации'
       });
     }
+    
+    // Валидируем, что платформы имеют ожидаемый формат {platformName: boolean}
+    log(`[Social Publishing] Проверка формата объекта platforms: ${JSON.stringify(platforms)}`);
+    const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook'];
+    const receivedPlatformKeys = Object.keys(platforms);
+    
+    log(`[Social Publishing] Ожидаемые ключи платформ: ${validPlatformKeys.join(', ')}`);
+    log(`[Social Publishing] Полученные ключи платформ: ${receivedPlatformKeys.join(', ')}`);
+    
+    // Проверяем, что хотя бы один ключ валидный и его значение - boolean
+    // Не требуем все ключи, так как могут быть отправлены только нужные платформы
+    const validFormat = receivedPlatformKeys.length > 0 && receivedPlatformKeys.some(key => 
+      validPlatformKeys.includes(key) && typeof platforms[key] === 'boolean'
+    );
+    
+    if (!validFormat) {
+      log(`[Social Publishing] Ошибка: неверный формат объекта platforms`);
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный формат платформ. Ожидается объект с ключами: telegram, vk, instagram, facebook'
+      });
+    }
 
     // Получаем список выбранных платформ (где значение true)
     const selectedPlatforms = Object.entries(platforms)

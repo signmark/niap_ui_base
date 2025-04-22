@@ -2066,15 +2066,11 @@ export default function ContentPage() {
                     return;
                   }
                   
-                  // Фильтруем выбранные платформы
-                  const platformsToPublish = Object.entries(selectedPlatforms)
-                    .filter(([_, isSelected]) => isSelected)
-                    .map(([platform]) => platform);
-                    
-                  // Публикуем немедленно
+                  // Публикуем немедленно через новый API, который ожидает объект с булевыми значениями
+                  // для каждой платформы: {telegram: true, vk: true, instagram: false, facebook: false}
                   publishContentMutation.mutate({
                     id: currentContent?.id || '',
-                    platforms: selectedPlatforms // передаем объект с выбранными платформами
+                    platforms: selectedPlatforms
                   });
                   
                   console.log("Запрос на публикацию с выбранными платформами:", selectedPlatforms);
