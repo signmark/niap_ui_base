@@ -983,7 +983,17 @@ export class PublishScheduler {
         log(`Использование резервного метода публикации через n8n webhook для контента ${content.id} на платформе ${platform}`, 'scheduler');
         
         // Преобразуем имя платформы в строку, чтобы избежать ошибки [object Object]
-        const platformName = typeof platform === 'string' ? platform : String(platform);
+        // ИСПРАВЛЕНО: Улучшена типизация и обработка платформы
+        let platformName: string;
+        if (typeof platform === 'string') {
+          platformName = platform.toLowerCase();
+        } else if (platform && typeof platform === 'object' && platform.hasOwnProperty('toString')) {
+          platformName = String(platform).toLowerCase();
+        } else {
+          // Запасной вариант - преобразуем в строку даже если будет [object Object]
+          platformName = String(platform).toLowerCase();
+          log(`Внимание: платформа имеет непредвиденный формат: ${platformName}`, 'scheduler');
+        }
         
         // Определяем URL для webhook запроса н8н
         // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
