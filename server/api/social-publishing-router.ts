@@ -301,7 +301,17 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     // Формируем URL вебхука
     // Формируем URL вебхука
     // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
-    const baseUrl = "https://n8n.nplanner.ru/webhook";
+        // Формируем URL вебхука с учетом N8N_URL
+    let baseUrl = process.env.N8N_URL || "https://n8n.nplanner.ru";
+    
+    // Всегда добавляем /webhook если его нет
+    if (!baseUrl.includes("/webhook")) {
+      // Если baseUrl заканчивается на /, убираем его перед добавлением /webhook
+      if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
+      baseUrl = `${baseUrl}/webhook`;
+    }
     // Убираем возможный слеш в конце базового URL
     const baseUrlWithoutTrailingSlash = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;

@@ -1031,10 +1031,23 @@ export class PublishScheduler {
         
         // Определяем URL для webhook запроса н8н
         // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
-        const n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru/webhook';
+        let n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru';
+        
+        // Всегда добавляем /webhook если его нет
+        if (!n8nBaseUrl.includes('/webhook')) {
+          // Если n8nBaseUrl заканчивается на /, убираем его перед добавлением /webhook
+          if (n8nBaseUrl.endsWith('/')) {
+            n8nBaseUrl = n8nBaseUrl.slice(0, -1);
+          }
+          n8nBaseUrl = `${n8nBaseUrl}/webhook`;
+        }
+        
         // Проверяем, не содержит ли базовый URL уже слеш в конце
         const baseUrlWithoutTrailingSlash = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
         const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
+        
+        // Добавляем дополнительный лог для отладки URL
+        log(`Сформирован URL для n8n webhook: ${webhookUrl}`, 'scheduler');
         
         try {
           log(`Отправка запроса на n8n webhook ${webhookUrl} для контента ID ${content.id}`, 'scheduler');
