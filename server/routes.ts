@@ -44,7 +44,7 @@ import { directusCrud } from './services/directus-crud';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
-import instagramCarouselWebhookRoutes from './api/instagram-carousel-webhook';
+import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -2905,6 +2905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
+  app.use('/api/webhook', instagramCarouselWebhookRoutes);
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном

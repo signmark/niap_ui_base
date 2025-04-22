@@ -41,4 +41,4 @@ export const register = (app: any) => {
   log.info('Instagram Carousel webhook маршрут зарегистрирован');
 };
 
-export default { register };
+export default router;
