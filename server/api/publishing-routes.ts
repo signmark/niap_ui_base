@@ -179,11 +179,29 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Объект контента не предоставлен' });
       }
       
-      if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+      // Обработка двух возможных форматов платформ: массив или объект
+      let selectedPlatforms: string[] = [];
+      
+      if (Array.isArray(platforms)) {
+        // Формат массива: ["telegram", "vk"]
+        selectedPlatforms = platforms;
+      } else if (platforms && typeof platforms === 'object') {
+        // Формат объекта: {telegram: true, vk: true, instagram: false}
+        selectedPlatforms = Object.entries(platforms)
+          .filter(([_, selected]) => selected === true)
+          .map(([name]) => name);
+      }
+      
+      // Проверка, что выбрана хотя бы одна платформа
+      if (!selectedPlatforms.length) {
+        log(`[publishing-routes] Ошибка: не указаны платформы для публикации. Переданные данные: ${JSON.stringify(platforms)}`, 'api');
         return res.status(400).json({ error: 'Не указаны платформы для публикации' });
       }
       
-      log(`Публикация контента ${content.id || 'без ID'} в платформы: ${JSON.stringify(platforms)}`, 'api');
+      // Заменяем оригинальные platforms на преобразованный массив, чтобы не менять остальной код
+      const platformsArray = selectedPlatforms;
+      
+      log(`Публикация контента ${content.id || 'без ID'} в платформы: ${JSON.stringify(selectedPlatforms)}`, 'api');
       
       // Получаем настройки кампании
       const campaign = await storage.getCampaignById(content.campaignId);
@@ -218,7 +236,7 @@ export function registerPublishingRoutes(app: Express): void {
           const updatedPlatforms: Record<string, any> = {};
           
           // Обновляем статус только для выбранных платформ
-          for (const platform of platforms) {
+          for (const platform of platformsArray) {
             updatedPlatforms[platform] = {
               ...(socialPlatforms[platform] || {}),
               status: 'pending',
@@ -238,7 +256,7 @@ export function registerPublishingRoutes(app: Express): void {
         }
         
         // Публикуем на каждую платформу
-        for (const platformName of platforms) {
+        for (const platformName of platformsArray) {
           const platform = platformName as SocialPlatform;
           
           try {
@@ -343,9 +361,27 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(400).json({ error: 'Не указан ID контента' });
       }
 
-      if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+      // Обработка двух возможных форматов платформ: массив или объект
+      let selectedPlatforms: string[] = [];
+      
+      if (Array.isArray(platforms)) {
+        // Формат массива: ["telegram", "vk"]
+        selectedPlatforms = platforms;
+      } else if (platforms && typeof platforms === 'object') {
+        // Формат объекта: {telegram: true, vk: true, instagram: false}
+        selectedPlatforms = Object.entries(platforms)
+          .filter(([_, selected]) => selected === true)
+          .map(([name]) => name);
+      }
+      
+      // Проверка, что выбрана хотя бы одна платформа
+      if (!selectedPlatforms.length) {
+        log(`[publishing-routes] Ошибка: не указаны платформы для публикации контента ${contentId}. Переданные данные: ${JSON.stringify(platforms)}`, 'api');
         return res.status(400).json({ error: 'Не указаны платформы для публикации' });
       }
+      
+      // Заменяем оригинальные platforms на преобразованный массив, чтобы не менять остальной код
+      const platformsArray = selectedPlatforms;
 
       // Получаем контент
       const content = await storage.getCampaignContentById(contentId);
@@ -381,7 +417,7 @@ export function registerPublishingRoutes(app: Express): void {
         const updatedPlatforms: Record<string, any> = {};
         
         // Обновляем статус только для выбранных платформ
-        for (const platform of platforms) {
+        for (const platform of platformsArray) {
           updatedPlatforms[platform] = {
             ...(socialPlatforms[platform] || {}),
             status: 'pending',
@@ -400,7 +436,7 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
         
         // Публикуем на каждую платформу
-        for (const platformName of platforms) {
+        for (const platformName of platformsArray) {
           const platform = platformName as SocialPlatform;
           
           try {
