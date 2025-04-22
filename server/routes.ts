@@ -43,6 +43,7 @@ import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
+import instagramWebhookRoutes from './api/instagram-webhook-direct';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -2902,6 +2903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Registering direct webhook routes for social platforms...');
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
+  app.use('/api/webhook', instagramWebhookRoutes);
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном

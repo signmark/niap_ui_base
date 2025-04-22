@@ -561,6 +561,8 @@ export default function ContentPage() {
             endpointUrl = '/api/webhook/telegram';
           } else if (platform === 'vk') {
             endpointUrl = '/api/webhook/vk';
+          } else if (platform === 'instagram') {
+            endpointUrl = '/api/webhook/instagram';
           } else {
             // Для других платформ пока используем старый API
             continue;
