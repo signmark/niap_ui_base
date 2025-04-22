@@ -7878,6 +7878,7 @@ https://t.me/channelname/ - description`;
         }
         
         // Готовим данные контента для публикации в формате нашего приложения
+        // Добавляем поддержку всех необходимых полей для корректной работы Instagram и других платформ
         const campaignContent = {
           id: content.id,
           title: content.title || '',
@@ -7885,13 +7886,26 @@ https://t.me/channelname/ - description`;
           imageUrl: content.image_url || null,
           videoUrl: content.video_url || null,
           additionalImages: content.additional_images || [], // Добавляем поле дополнительных изображений
+          additionalMedia: content.additional_media || [],
           contentType: content.content_type || 'text',
           hashtags: content.hashtags || [],
+          links: content.links || [],
           keywords: content.keywords || [],
           status: content.status || 'draft',
           userId: content.user_id,
-          campaignId: content.campaign_id
+          campaignId: content.campaign_id,
+          scheduledAt: content.scheduled_at,
+          publishedAt: content.published_at,
+          prompt: content.prompt || '',
+          metadata: content.metadata || {},
+          createdAt: content.date_created ? new Date(content.date_created) : new Date()
         };
+        
+        // Логирование для отладки Instagram
+        if (platformsToPublish.includes('instagram')) {
+          log(`Подготовка контента для Instagram: ID=${content.id}, contentType=${content.content_type}`, 'social-publish');
+          log(`URL изображения: ${content.image_url}`, 'social-publish');
+        }
         
         // Результаты публикации
         const publishResults = [];

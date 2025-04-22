@@ -242,8 +242,56 @@ export class SocialPublishingService {
         log(`Всего подготовлено ${images.length} изображений для Telegram`, 'social-publishing');
       }
       
-      // Проверяем доступность видео
-      const hasVideo = content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '';
+      // Проверяем доступность видео во всех возможных местах
+      let videoUrl = null;
+      
+      // 1. Проверяем основное поле videoUrl
+      if (content.videoUrl && typeof content.videoUrl === 'string' && content.videoUrl.trim() !== '') {
+        videoUrl = content.videoUrl;
+        log(`Найдено видео в основном поле videoUrl: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 2. Проверяем альтернативное поле video_url
+      if (!videoUrl && content.video_url && typeof content.video_url === 'string' && content.video_url.trim() !== '') {
+        videoUrl = content.video_url;
+        log(`Найдено видео в поле video_url: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 3. Проверяем в метаданных
+      if (!videoUrl && content.metadata) {
+        if (content.metadata.videoUrl && typeof content.metadata.videoUrl === 'string' && content.metadata.videoUrl.trim() !== '') {
+          videoUrl = content.metadata.videoUrl;
+          log(`Найдено видео в metadata.videoUrl: ${videoUrl}`, 'social-publishing');
+        } else if (content.metadata.video_url && typeof content.metadata.video_url === 'string' && content.metadata.video_url.trim() !== '') {
+          videoUrl = content.metadata.video_url;
+          log(`Найдено видео в metadata.video_url: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      // 4. Проверяем в additionalMedia
+      if (!videoUrl && content.additionalMedia && Array.isArray(content.additionalMedia)) {
+        const videoMedia = content.additionalMedia.find((media) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`Найдено видео в additionalMedia: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      const hasVideo = !!videoUrl;
+      
+      // Логируем результат проверки на видео
+      if (hasVideo) {
+        log(`Обнаружено видео для публикации в Telegram: ${videoUrl}`, 'social-publishing');
+      } else {
+        log(`Видео не обнаружено в контенте`, 'social-publishing');
+      }
       
       // Ограничиваем длину подписи, так как Telegram имеет ограничение
       const maxCaptionLength = 4096;
@@ -295,10 +343,10 @@ export class SocialPublishingService {
         });
       } else if (hasVideo) {
         // Отправка видео с подписью
-        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${content.videoUrl}`, 'social-publishing');
+        log(`Отправка видео в Telegram для типа ${content.contentType} с URL: ${videoUrl}`, 'social-publishing');
         const videoRequestBody = {
           chat_id: formattedChatId,
-          video: content.videoUrl,
+          video: videoUrl,
           caption: text,
           parse_mode: 'HTML'
         };

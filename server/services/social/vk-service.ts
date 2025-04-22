@@ -117,11 +117,72 @@ export class VkService extends BaseSocialService {
         log(`Текст для VK был обрезан до 16000 символов`, 'social-publishing');
       }
       
-      // Определяем, есть ли изображения для публикации
+      // Определяем, есть ли изображения или видео для публикации
       const hasMainImage = imgurContent.imageUrl && imgurContent.imageUrl.trim() !== '';
+      const hasVideo = imgurContent.videoUrl && imgurContent.videoUrl.trim() !== '';
       const hasAdditionalImages = imgurContent.additionalImages && 
                                 Array.isArray(imgurContent.additionalImages) && 
                                 imgurContent.additionalImages.length > 0;
+      
+      // Сначала проверяем наличие видео
+      if (hasVideo) {
+        log(`Обнаружено видео для публикации в VK: ${imgurContent.videoUrl}`, 'social-publishing');
+        
+        try {
+          // Формируем запрос к API VK для публикации видео
+          const apiUrl = 'https://api.vk.com/method/wall.post';
+          const videoUrl = imgurContent.videoUrl as string;
+          
+          // Добавляем текст и ссылку на видео в сообщение
+          const messageWithVideo = `${text}\n\n${videoUrl}`;
+          
+          const params = new URLSearchParams({
+            owner_id: ownerId,
+            message: messageWithVideo,
+            access_token: token,
+            v: '5.131' // Версия API VK
+          });
+          
+          // Отправляем запрос
+          const response = await axios.post(apiUrl, params);
+          
+          if (response.data && response.data.response && response.data.response.post_id) {
+            const postId = response.data.response.post_id;
+            const postUrl = `https://vk.com/wall${ownerId}_${postId}`;
+            
+            log(`Пост с видео успешно опубликован в VK: ${postUrl}`, 'social-publishing');
+            
+            return {
+              platform: 'vk',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl
+            };
+          } else {
+            const errorMsg = response.data.error ? 
+              `${response.data.error.error_code}: ${response.data.error.error_msg}` : 
+              'Неизвестная ошибка при публикации видео';
+            
+            log(`Ошибка при публикации видео в VK: ${errorMsg}`, 'social-publishing');
+            
+            return {
+              platform: 'vk',
+              status: 'failed',
+              publishedAt: null,
+              error: errorMsg
+            };
+          }
+        } catch (error: any) {
+          log(`Исключение при публикации видео в VK: ${error.message}`, 'social-publishing');
+          
+          return {
+            platform: 'vk',
+            status: 'failed',
+            publishedAt: null,
+            error: `Exception while posting video: ${error.message}`
+          };
+        }
+      }
       
       // Собираем все изображения для публикации
       const allImages: string[] = [];
@@ -134,7 +195,7 @@ export class VkService extends BaseSocialService {
         allImages.push(...(imgurContent.additionalImages as string[]));
       }
       
-      // Если нет изображений, публикуем только текст
+      // Если нет изображений и видео, публикуем только текст
       if (allImages.length === 0) {
         log(`Публикация в VK только с текстом (без изображений)`, 'social-publishing');
         
@@ -394,14 +455,17 @@ export class VkService extends BaseSocialService {
    */
   public async publishToPlatform(
     content: CampaignContent,
-    platform: SocialPlatform | string,
+    platform: SocialPlatform | string | any,
     settings: SocialMediaSettings
   ): Promise<SocialPublication> {
-    // Приводим платформу к строке для безопасного сравнения
-    const platformString = typeof platform === 'string' ? platform : String(platform);
-    console.log(`DEBUG: VkService.publishToPlatform получил platform типа ${typeof platform} со значением:`, platform);
+    // Гарантированно обрабатываем platform как строку
+    // Защита от передачи объектов и других неожиданных типов
+    const platformStr = typeof platform === 'string' ? platform : 'vk';
     
-    if (platformString !== 'vk') {
+    log(`VkService.publishToPlatform получил platform типа ${typeof platform}, используем: ${platformStr}`, 'social-publishing');
+    
+    // Всегда возвращаем platform: 'vk' в результате для VkService
+    if (platformStr !== 'vk') {
       return {
         platform: 'vk', 
         status: 'failed',

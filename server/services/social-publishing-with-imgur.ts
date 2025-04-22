@@ -1264,15 +1264,57 @@ export class SocialPublishingWithImgurService {
       const forceImageTextSeparation = processedContent.metadata && 
         (processedContent.metadata as any).forceImageTextSeparation === true;
       
-      // Проверяем наличие видео в контенте
-      const hasVideo = !!processedContent.videoUrl;
-      log(`Telegram: наличие видео: ${hasVideo}, изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
+      // Проверяем наличие видео во всех возможных полях
+      let videoUrl = null;
+      
+      // 1. Проверяем основное поле videoUrl
+      if (processedContent.videoUrl && typeof processedContent.videoUrl === 'string' && processedContent.videoUrl.trim() !== '') {
+        videoUrl = processedContent.videoUrl;
+        log(`Найдено видео в основном поле videoUrl: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 2. Проверяем альтернативное поле video_url
+      if (!videoUrl && (processedContent as any).video_url && typeof (processedContent as any).video_url === 'string' && (processedContent as any).video_url.trim() !== '') {
+        videoUrl = (processedContent as any).video_url;
+        log(`Найдено видео в поле video_url: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 3. Проверяем в метаданных
+      if (!videoUrl && processedContent.metadata) {
+        if ((processedContent.metadata as any).videoUrl && typeof (processedContent.metadata as any).videoUrl === 'string' && (processedContent.metadata as any).videoUrl.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).videoUrl;
+          log(`Найдено видео в metadata.videoUrl: ${videoUrl}`, 'social-publishing');
+        } else if ((processedContent.metadata as any).video_url && typeof (processedContent.metadata as any).video_url === 'string' && (processedContent.metadata as any).video_url.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).video_url;
+          log(`Найдено видео в metadata.video_url: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      // 4. Проверяем в additionalMedia
+      if (!videoUrl && processedContent.additionalMedia && Array.isArray(processedContent.additionalMedia)) {
+        const videoMedia = processedContent.additionalMedia.find((media: any) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`Найдено видео в additionalMedia: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      const hasVideo = !!videoUrl;
+      
+      log(`Telegram: наличие видео: ${hasVideo} (URL: ${videoUrl || 'не найден'}), изображений: ${hasImages}, принудительное разделение: ${forceImageTextSeparation}`, 'social-publishing');
       
       // Определяем стратегию публикации в зависимости от наличия видео, изображений и длины текста
       
       // 0. Если есть видео, отправляем его с подписью - приоритет выше, чем у изображений
       if (hasVideo) {
-        log(`Telegram: публикация с видео. URL видео: ${processedContent.videoUrl}`, 'social-publishing');
+        log(`Telegram: публикация с видео. URL видео: ${videoUrl}`, 'social-publishing');
         
         // Подготавливаем подпись для видео (с ограничением в 1024 символа)
         const videoCaption = text.length <= 1024 ? 
@@ -1288,7 +1330,7 @@ export class SocialPublishingWithImgurService {
           const videoResult = await this.sendVideoToTelegram(
             formattedChatId,
             token,
-            processedContent.videoUrl,
+            videoUrl,
             videoCaption,
             baseUrl
           );
@@ -1902,16 +1944,64 @@ export class SocialPublishingWithImgurService {
       const attachments: string[] = [];
       
       // Обработка видео, если оно есть (приоритет перед изображениями)
-      if (processedContent.videoUrl) {
+      // Проверяем наличие видео во всех возможных полях
+      let videoUrl = null;
+      
+      // 1. Проверяем основное поле videoUrl
+      if (processedContent.videoUrl && typeof processedContent.videoUrl === 'string' && processedContent.videoUrl.trim() !== '') {
+        videoUrl = processedContent.videoUrl;
+        log(`Найдено видео в основном поле videoUrl для VK: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 2. Проверяем альтернативное поле video_url
+      if (!videoUrl && (processedContent as any).video_url && typeof (processedContent as any).video_url === 'string' && (processedContent as any).video_url.trim() !== '') {
+        videoUrl = (processedContent as any).video_url;
+        log(`Найдено видео в поле video_url для VK: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 3. Проверяем в метаданных
+      if (!videoUrl && processedContent.metadata) {
+        if ((processedContent.metadata as any).videoUrl && typeof (processedContent.metadata as any).videoUrl === 'string' && (processedContent.metadata as any).videoUrl.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).videoUrl;
+          log(`Найдено видео в metadata.videoUrl для VK: ${videoUrl}`, 'social-publishing');
+        } else if ((processedContent.metadata as any).video_url && typeof (processedContent.metadata as any).video_url === 'string' && (processedContent.metadata as any).video_url.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).video_url;
+          log(`Найдено видео в metadata.video_url для VK: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      // 4. Проверяем в additionalMedia
+      if (!videoUrl && processedContent.additionalMedia && Array.isArray(processedContent.additionalMedia)) {
+        const videoMedia = processedContent.additionalMedia.find((media: any) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`Найдено видео в additionalMedia для VK: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      // Определяем, есть ли видео для публикации
+      // Важно: создаем переменную hasVideo, используемую позже
+      const hasVideo = !!videoUrl;
+      log(`VK публикация: hasVideo=${hasVideo}, videoUrl=${videoUrl || 'не найден'}`, 'social-publishing');
+      
+      // Если есть видео, пробуем опубликовать его
+      if (videoUrl) {
         try {
           // Логируем наличие видео для публикации
-          log(`Обнаружено видео для публикации в ВК: ${processedContent.videoUrl}`, 'social-publishing');
+          log(`Обнаружено видео для публикации в ВК: ${videoUrl}`, 'social-publishing');
           
           // Загружаем видео в ВКонтакте
           const videoAttachment = await this.uploadVideoToVk(
             token,
             groupId,
-            processedContent.videoUrl,
+            videoUrl,
             processedContent.title || 'Видео'
           );
           
@@ -2250,7 +2340,85 @@ export class SocialPublishingWithImgurService {
         access_token: token
       };
       
-      // Проверяем наличие изображения
+      // Проверяем наличие видео во всех возможных полях
+      let videoUrl = null;
+      
+      // 1. Проверяем основное поле videoUrl
+      if (processedContent.videoUrl && typeof processedContent.videoUrl === 'string' && processedContent.videoUrl.trim() !== '') {
+        videoUrl = processedContent.videoUrl;
+        log(`Найдено видео в основном поле videoUrl для Facebook: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 2. Проверяем альтернативное поле video_url
+      if (!videoUrl && (processedContent as any).video_url && typeof (processedContent as any).video_url === 'string' && (processedContent as any).video_url.trim() !== '') {
+        videoUrl = (processedContent as any).video_url;
+        log(`Найдено видео в поле video_url для Facebook: ${videoUrl}`, 'social-publishing');
+      }
+      
+      // 3. Проверяем в метаданных
+      if (!videoUrl && processedContent.metadata) {
+        if ((processedContent.metadata as any).videoUrl && typeof (processedContent.metadata as any).videoUrl === 'string' && (processedContent.metadata as any).videoUrl.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).videoUrl;
+          log(`Найдено видео в metadata.videoUrl для Facebook: ${videoUrl}`, 'social-publishing');
+        } else if ((processedContent.metadata as any).video_url && typeof (processedContent.metadata as any).video_url === 'string' && (processedContent.metadata as any).video_url.trim() !== '') {
+          videoUrl = (processedContent.metadata as any).video_url;
+          log(`Найдено видео в metadata.video_url для Facebook: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      // 4. Проверяем в additionalMedia
+      if (!videoUrl && processedContent.additionalMedia && Array.isArray(processedContent.additionalMedia)) {
+        const videoMedia = processedContent.additionalMedia.find((media: any) => {
+          if (media.type === 'video') return true;
+          if (media.url && typeof media.url === 'string') {
+            return media.url.toLowerCase().match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i) !== null;
+          }
+          return false;
+        });
+        
+        if (videoMedia && videoMedia.url) {
+          videoUrl = videoMedia.url;
+          log(`Найдено видео в additionalMedia для Facebook: ${videoUrl}`, 'social-publishing');
+        }
+      }
+      
+      const hasVideo = !!videoUrl;
+      
+      // Если есть видео, пробуем опубликовать его
+      if (hasVideo) {
+        try {
+          log(`Facebook: Публикация с видео ${videoUrl}`, 'social-publishing');
+          
+          // Для Facebook публикуем видео через специальный эндпоинт
+          const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/videos`, {
+            file_url: videoUrl, // Используем URL видео напрямую
+            description: text,
+            access_token: token
+          });
+          
+          if (response.data && response.data.id) {
+            log(`Видео успешно опубликовано в Facebook, ID: ${response.data.id}`, 'social-publishing');
+            
+            return {
+              platform: 'facebook',
+              status: 'published',
+              publishedAt: new Date(),
+              postUrl: `https://www.facebook.com/${response.data.post_id || response.data.id}`
+            };
+          } else {
+            log(`Ошибка при публикации видео в Facebook: ${JSON.stringify(response.data)}`, 'social-publishing');
+            // Продолжаем с попыткой публикации изображения или текста
+          }
+        } catch (videoError: any) {
+          log(`Ошибка при публикации видео в Facebook: ${videoError.message}`, 'social-publishing');
+          if (videoError.response) {
+            log(`Facebook API ответ при публикации видео: ${JSON.stringify(videoError.response.data)}`, 'social-publishing');
+          }
+          // Продолжаем с попыткой публикации изображения или текста
+        }
+      }
+      
+      // Проверяем наличие изображения (если нет видео или не удалось опубликовать видео)
       if (processedContent.imageUrl) {
         try {
           log(`Facebook: Публикация с изображением ${processedContent.imageUrl}`, 'social-publishing');
