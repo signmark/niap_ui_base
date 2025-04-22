@@ -49,17 +49,9 @@ router.post('/publish', authMiddleware, async (req, res) => {
         return publishViaN8n(contentId, 'vk', req, res);
         
       case 'instagram':
-        // Проверяем, есть ли дополнительные изображения для карусели
-        const { additionalImages, useCarousel = false } = req.body;
-        
-        if (additionalImages && additionalImages.length > 0 && useCarousel) {
-          // Если есть дополнительные изображения и указано использовать карусель, 
-          // используем прямую интеграцию с API Instagram для карусели
-          return publishInstagramCarousel(contentId, req, res);
-        } else {
-          // Иначе используем обычный n8n вебхук для Instagram
-          return publishViaN8n(contentId, 'instagram', req, res);
-        }
+        // Для Instagram теперь всегда используем n8n вебхук
+        log(`[Social Publishing] Instagram публикации перенаправляются через n8n`);
+        return publishViaN8n(contentId, 'instagram', req, res);
         
       default:
         return res.status(400).json({
@@ -106,8 +98,16 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     // Формируем URL вебхука
     const webhookUrl = `https://n8n.nplanner.ru/webhook/${webhookName}`;
     
-    // Отправляем запрос на n8n вебхук
-    const response = await axios.post(webhookUrl, { contentId });
+    // Для n8n вебхуков отправляем только contentId, как указано в требованиях
+    const webhookPayload = {
+      contentId
+    };
+    
+    // Отправляем запрос на n8n вебхук только с contentId
+    const response = await axios.post(webhookUrl, webhookPayload);
+    
+    log(`[Social Publishing] Отправлены данные в n8n вебхук: contentId=${contentId}, platform=${platform}`);
+    log(`[Social Publishing] Данные извлекаются из Directus по contentId`);
     
     log(`[Social Publishing] Ответ от n8n вебхука: ${JSON.stringify(response.data)}`);
     
