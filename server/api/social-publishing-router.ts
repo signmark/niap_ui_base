@@ -29,11 +29,14 @@ const router = express.Router();
  */
 router.post('/publish/now', authMiddleware, async (req, res) => {
   try {
+    log(`[Social Publishing] Получен запрос на публикацию с телом: ${JSON.stringify(req.body)}`);
+    
     const { contentId, platforms } = req.body;
     
-    log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ`);
+    log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ: ${JSON.stringify(platforms)}`);
     
     if (!contentId) {
+      log(`[Social Publishing] Ошибка: не указан contentId`);
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать contentId'
@@ -42,6 +45,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     // Проверяем, что платформы указаны и это объект
     if (!platforms || typeof platforms !== 'object') {
+      log(`[Social Publishing] Ошибка: платформы не указаны или не являются объектом: ${JSON.stringify(platforms)}`);
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать платформы для публикации'
