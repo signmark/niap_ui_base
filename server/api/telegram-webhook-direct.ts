@@ -5,7 +5,7 @@ import log from '../utils/logger';
 const router = Router();
 
 // Маршрут для прямой публикации в Telegram через n8n webhook
-router.post('/', async (req, res) => {
+router.post('/telegram', async (req, res) => {
   try {
     const { contentId } = req.body;
     

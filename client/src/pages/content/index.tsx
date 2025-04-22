@@ -551,25 +551,25 @@ export default function ContentPage() {
       // Массив для хранения результатов публикации
       const publicationResults = [];
       
-      // Публикуем на каждую платформу отдельно через webhook
+      // Публикуем на каждую платформу отдельно через webhook через наш API сервер
       for (const platform of selectedPlatforms) {
         try {
-          let webhookUrl = '';
+          let endpointUrl = '';
           
-          // Выбираем соответствующий webhook URL для каждой платформы
+          // Выбираем соответствующий эндпоинт для каждой платформы
           if (platform === 'telegram') {
-            webhookUrl = 'https://n8n.nplanner.ru/webhook/publish-telegram';
+            endpointUrl = '/api/webhook/telegram';
           } else if (platform === 'vk') {
-            webhookUrl = 'https://n8n.nplanner.ru/webhook/publish-vk';
+            endpointUrl = '/api/webhook/vk';
           } else {
             // Для других платформ пока используем старый API
             continue;
           }
           
-          console.log(`🚀 Публикация на ${platform} через webhook: ${webhookUrl}`);
+          console.log(`🚀 Публикация на ${platform} через webhook: ${endpointUrl}`);
           
-          // Отправка через fetch с таймаутом
-          const response = await fetch(webhookUrl, {
+          // Используем наш API-клиент для запросов
+          const response = await fetch(endpointUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

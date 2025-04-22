@@ -2898,6 +2898,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTestInstagramRoute(app);
   console.log('Test Instagram routes registered');
   
+  // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями
+  console.log('Registering direct webhook routes for social platforms...');
+  app.use('/api/webhook', telegramWebhookRoutes);
+  app.use('/api/webhook', vkWebhookRoutes);
+  console.log('Social platform webhook routes registered successfully');
+  
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);
   
