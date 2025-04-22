@@ -41,6 +41,8 @@ import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
+import telegramWebhookRoutes from './api/telegram-webhook-direct';
+import vkWebhookRoutes from './api/vk-webhook-direct';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
