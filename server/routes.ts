@@ -46,6 +46,7 @@ import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
+import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
