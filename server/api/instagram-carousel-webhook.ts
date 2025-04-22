@@ -280,4 +280,174 @@ export const register = (app: express.Express) => {
   log('Регистрация Instagram Carousel API завершена');
 };
 
+/**
+ * Публикует карусель в Instagram через прямую интеграцию с API
+ * @param contentId ID контента для публикации
+ * @param imageUrls Массив URL изображений для карусели
+ * @param caption Текст публикации
+ * @param token Токен Instagram API
+ * @param businessAccountId ID бизнес-аккаунта Instagram
+ * @returns Результат публикации карусели
+ */
+export async function publishCarousel(
+  contentId: string, 
+  imageUrls: string[], 
+  caption: string, 
+  token: string, 
+  businessAccountId: string
+): Promise<any> {
+  try {
+    log(`[Instagram Carousel] Публикация карусели для контента ${contentId}`);
+    log(`[Instagram Carousel] Количество изображений: ${imageUrls.length}`);
+    
+    // 1. Создание контейнеров для изображений
+    const containerIds: string[] = [];
+    
+    for (let i = 0; i < imageUrls.length; i++) {
+      const imageUrl = imageUrls[i];
+      log(`[Instagram Carousel] Создание контейнера для изображения ${i + 1}/${imageUrls.length}`);
+      
+      try {
+        // Создаем контейнер для изображения
+        const response = await axios({
+          method: 'post',
+          url: `https://graph.facebook.com/v16.0/${businessAccountId}/media`,
+          data: {
+            access_token: token,
+            image_url: imageUrl,
+            is_carousel_item: true
+          }
+        });
+        
+        if (response.data && response.data.id) {
+          containerIds.push(response.data.id);
+          log(`[Instagram Carousel] Контейнер ${i + 1} создан успешно, ID: ${response.data.id}`);
+        } else {
+          throw new Error('Ответ без ID контейнера');
+        }
+        
+        // Задержка перед созданием следующего контейнера (8 секунд)
+        if (i < imageUrls.length - 1) {
+          await delay(8000);
+        }
+      } catch (error: any) {
+        log(`[Instagram Carousel] Ошибка при создании контейнера ${i + 1}: ${error.message}`);
+        if (error.response) {
+          log(`[Instagram Carousel] Детали ошибки: ${JSON.stringify(error.response.data)}`);
+        }
+        
+        // Если некоторые контейнеры созданы, прекращаем создание новых
+        break;
+      }
+    }
+    
+    // Проверяем количество контейнеров
+    if (containerIds.length < 2) {
+      throw new Error('Недостаточно контейнеров для создания карусели (минимум 2)');
+    }
+    
+    log(`[Instagram Carousel] Создано ${containerIds.length} контейнеров`);
+    
+    // Большая задержка перед созданием контейнера карусели (15 секунд)
+    log(`[Instagram Carousel] Задержка 15 секунд перед созданием контейнера карусели...`);
+    await delay(15000);
+    
+    // 2. Создание контейнера карусели
+    let carouselContainerId;
+    try {
+      log(`[Instagram Carousel] Создание контейнера карусели...`);
+      
+      const carouselResponse = await axios({
+        method: 'post',
+        url: `https://graph.facebook.com/v16.0/${businessAccountId}/media`,
+        data: {
+          access_token: token,
+          media_type: 'CAROUSEL',
+          children: containerIds.join(','),
+          caption: caption || ''
+        }
+      });
+      
+      if (carouselResponse.data && carouselResponse.data.id) {
+        carouselContainerId = carouselResponse.data.id;
+        log(`[Instagram Carousel] Контейнер карусели создан успешно, ID: ${carouselContainerId}`);
+      } else {
+        throw new Error('Ответ без ID контейнера карусели');
+      }
+    } catch (error: any) {
+      log(`[Instagram Carousel] Ошибка при создании контейнера карусели: ${error.message}`);
+      if (error.response) {
+        log(`[Instagram Carousel] Детали ошибки: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+    
+    // Большая задержка перед публикацией (20 секунд)
+    log(`[Instagram Carousel] Задержка 20 секунд перед публикацией карусели...`);
+    await delay(20000);
+    
+    // 3. Публикация карусели
+    try {
+      log(`[Instagram Carousel] Публикация карусели...`);
+      
+      const publishResponse = await axios({
+        method: 'post',
+        url: `https://graph.facebook.com/v16.0/${businessAccountId}/media_publish`,
+        data: {
+          access_token: token,
+          creation_id: carouselContainerId
+        }
+      });
+      
+      if (publishResponse.data && publishResponse.data.id) {
+        const postId = publishResponse.data.id;
+        log(`[Instagram Carousel] Карусель опубликована успешно, ID публикации: ${postId}`);
+        
+        // Получаем permalink публикации
+        let permalink = null;
+        try {
+          const permalinkResponse = await axios.get(
+            `https://graph.facebook.com/v16.0/${postId}?fields=permalink&access_token=${token}`
+          );
+          
+          if (permalinkResponse.data && permalinkResponse.data.permalink) {
+            permalink = permalinkResponse.data.permalink;
+            log(`[Instagram Carousel] Получен permalink: ${permalink}`);
+          }
+        } catch (error: any) {
+          log(`[Instagram Carousel] Ошибка при получении permalink: ${error.message}`);
+          // Продолжаем выполнение, даже если не удалось получить permalink
+        }
+        
+        return {
+          success: true,
+          message: 'Карусель успешно опубликована',
+          postId,
+          permalink
+        };
+      } else {
+        throw new Error('Ответ без ID публикации');
+      }
+    } catch (error: any) {
+      log(`[Instagram Carousel] Ошибка при публикации карусели: ${error.message}`);
+      if (error.response) {
+        log(`[Instagram Carousel] Детали ошибки: ${JSON.stringify(error.response.data)}`);
+      }
+      
+      // Если это ошибка 2207032, сообщаем о временном ограничении API
+      if (error.response && 
+          error.response.data && 
+          error.response.data.error && 
+          error.response.data.error.error_subcode === 2207032) {
+        throw new Error('Временное ограничение API Instagram (код 2207032). Пожалуйста, повторите попытку через 10-15 минут.');
+      }
+      
+      throw error;
+    }
+  } catch (error: any) {
+    log(`[Instagram Carousel] Критическая ошибка: ${error.message}`);
+    throw error;
+  }
+}
+
 export default { register };

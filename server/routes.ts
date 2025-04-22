@@ -2908,7 +2908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
-  app.use('/api/webhook', instagramCarouselWebhookRoutes);
+  app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
