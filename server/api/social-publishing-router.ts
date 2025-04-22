@@ -9,6 +9,8 @@ import axios from 'axios';
 import { log } from '../utils/logger';
 import { authMiddleware } from '../middleware/auth';
 import * as instagramCarouselHandler from './instagram-carousel-webhook';
+import { storage } from '../storage';
+import { SocialPlatform } from '@shared/schema';
 
 const router = express.Router();
 
@@ -181,5 +183,135 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
     });
   }
 }
+
+/**
+ * @api {post} /api/publish/update-status Обновить статус публикации после публикации во все платформы
+ * @apiDescription Проверяет статусы публикации во всех выбранных соцсетях и обновляет общий статус на "published"
+ * @apiVersion 1.0.0
+ * @apiName UpdatePublicationStatus
+ * @apiGroup SocialPublishing
+ * 
+ * @apiParam {String} contentId ID контента для проверки
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат обновления статуса
+ */
+router.post('/publish/update-status', authMiddleware, async (req, res) => {
+  try {
+    const { contentId } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId'
+      });
+    }
+    
+    log(`[Social Publishing] Запрос на обновление статуса публикации для контента ${contentId}`);
+    
+    // Получаем токен для работы с Directus API
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    
+    // Получаем текущие данные контента через storage
+    const content = await storage.getCampaignContentById(contentId, adminToken);
+    
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: 'Контент не найден'
+      });
+    }
+    
+    // Проверяем, есть ли данные о социальных платформах
+    if (!content.socialPlatforms || typeof content.socialPlatforms !== 'object') {
+      log(`[Social Publishing] Контент ${contentId} не имеет данных о социальных платформах`);
+      return res.status(200).json({
+        success: false,
+        error: 'Контент не имеет данных о социальных платформах'
+      });
+    }
+
+    // Получаем список выбранных платформ и их статусы
+    const platforms = content.socialPlatforms as Record<string, any>;
+    const platformNames = Object.keys(platforms);
+    
+    if (platformNames.length === 0) {
+      log(`[Social Publishing] Для контента ${contentId} не выбраны платформы для публикации`);
+      return res.status(200).json({
+        success: false,
+        error: 'Не выбраны платформы для публикации'
+      });
+    }
+    
+    log(`[Social Publishing] Проверка статусов публикации для контента ${contentId} в платформах: ${platformNames.join(', ')}`);
+    
+    // Проверяем статусы публикации в каждой платформе
+    const platformStatuses = platformNames.map(name => {
+      const platform = platforms[name];
+      return {
+        name,
+        status: platform && platform.status ? platform.status : 'pending',
+        published: platform && platform.status === 'published'
+      };
+    });
+    
+    // Записываем информацию о статусах публикации
+    const publishedPlatforms = platformStatuses.filter(p => p.published);
+    const pendingPlatforms = platformStatuses.filter(p => !p.published);
+    
+    log(`[Social Publishing] Платформы с статусом published: ${publishedPlatforms.map(p => p.name).join(', ') || 'нет'}`);
+    log(`[Social Publishing] Платформы с другими статусами: ${pendingPlatforms.map(p => p.name).join(', ') || 'нет'}`);
+    
+    // Проверяем, все ли выбранные платформы опубликованы
+    const allPublished = pendingPlatforms.length === 0;
+    
+    if (allPublished) {
+      log(`[Social Publishing] Все выбранные платформы опубликованы для контента ${contentId}, обновляем общий статус`);
+      
+      // Обновляем общий статус контента на "published"
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { status: 'published', publishedAt: new Date() },
+        adminToken
+      );
+      
+      if (updatedContent) {
+        log(`[Social Publishing] Успешно обновлен общий статус контента ${contentId} на "published"`);
+        return res.status(200).json({
+          success: true,
+          message: 'Общий статус публикации обновлен на "published"',
+          result: {
+            contentId,
+            status: 'published',
+            platformStatuses
+          }
+        });
+      } else {
+        log(`[Social Publishing] Ошибка при обновлении общего статуса контента ${contentId}`);
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось обновить общий статус контента'
+        });
+      }
+    } else {
+      log(`[Social Publishing] Не все платформы опубликованы для контента ${contentId}, статус не обновлен`);
+      return res.status(200).json({
+        success: false,
+        message: 'Не все выбранные платформы опубликованы, общий статус не обновлен',
+        result: {
+          contentId,
+          status: content.status,
+          platformStatuses
+        }
+      });
+    }
+  } catch (error: any) {
+    log(`[Social Publishing] Ошибка при обновлении статуса публикации: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка сервера: ${error.message}`
+    });
+  }
+});
 
 export default router;
