@@ -986,8 +986,11 @@ export class PublishScheduler {
         const platformName = typeof platform === 'string' ? platform : String(platform);
         
         // Определяем URL для webhook запроса н8н
+        // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
         const n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru/webhook';
-        const webhookUrl = `${n8nBaseUrl}/publish-${platformName.toLowerCase()}`;
+        // Проверяем, не содержит ли базовый URL уже слеш в конце
+        const baseUrlWithoutTrailingSlash = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
+        const webhookUrl = `${baseUrlWithoutTrailingSlash}/publish-${platformName.toLowerCase()}`;
         
         try {
           log(`Отправка запроса на n8n webhook ${webhookUrl} для контента ID ${content.id}`, 'scheduler');

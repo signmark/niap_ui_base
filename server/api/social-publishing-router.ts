@@ -299,8 +299,15 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     }
     
     // Формируем URL вебхука
-    const webhookUrl = `https://n8n.nplanner.ru/webhook/${webhookName}`;
+    // Формируем URL вебхука
+    // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
+    const baseUrl = "https://n8n.nplanner.ru/webhook";
+    // Убираем возможный слеш в конце базового URL
+    const baseUrlWithoutTrailingSlash = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
     
+    // Логируем URL для отладки
+    log(`[Social Publishing] Сформирован URL для n8n webhook: ${webhookUrl}`);
     // Для n8n вебхуков отправляем только contentId, как указано в требованиях
     const webhookPayload = {
       contentId
@@ -381,8 +388,15 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     }
     
     // Формируем URL вебхука
-    const webhookUrl = `https://n8n.nplanner.ru/webhook/${webhookName}`;
+    // Формируем URL вебхука
+    // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
+    const baseUrl = "https://n8n.nplanner.ru/webhook";
+    // Убираем возможный слеш в конце базового URL
+    const baseUrlWithoutTrailingSlash = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
     
+    // Логируем URL для отладки
+    log(`[Social Publishing] Сформирован URL для n8n webhook: ${webhookUrl}`);
     // Для n8n вебхуков отправляем только contentId, как указано в требованиях
     const webhookPayload = {
       contentId
