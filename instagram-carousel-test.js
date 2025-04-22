@@ -27,7 +27,12 @@ async function testInstagramCarousel() {
     
     // Шаг 1: Получаем админский токен
     log('Шаг 1: Получение токена администратора');
-    const authResponse = await fetch('http://localhost:5000/api/auth/login', {
+    
+    // Используем API URL Replit вместо localhost
+    const baseUrl = process.env.REPLIT_URL || 'https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev';
+    log(`Используем базовый URL: ${baseUrl}`);
+    
+    const authResponse = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +86,7 @@ async function testInstagramCarousel() {
     
     // Шаг 2: Получаем существующий контент для тестирования
     log('Шаг 2: Получение существующего контента с изображениями');
-    const contentResponse = await fetch('http://localhost:5000/api/campaign-content?limit=5', {
+    const contentResponse = await fetch(`${baseUrl}/api/campaign-content?limit=5`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -139,7 +144,7 @@ async function testInstagramCarousel() {
       
       // Обновляем контент в Directus с добавленными настройками
       log('Обновление контента с настройками Instagram');
-      const updateResponse = await fetch(`http://localhost:5000/api/campaign-content/${testContent.id}`, {
+      const updateResponse = await fetch(`${baseUrl}/api/campaign-content/${testContent.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -161,7 +166,7 @@ async function testInstagramCarousel() {
     
     // Шаг 4: Отправка запроса на тестовый эндпоинт для публикации карусели
     log('Шаг 4: Отправка запроса на тестовый эндпоинт Instagram карусели');
-    const carouselResponse = await fetch('http://localhost:5000/api/test/instagram-carousel', {
+    const carouselResponse = await fetch(`${baseUrl}/api/test/instagram-carousel`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
