@@ -248,14 +248,47 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
     
     if (platformNames.length === 0) {
       log(`[Social Publishing] Для контента ${contentId} не выбраны платформы для публикации`);
-      return res.status(200).json({
-        success: false,
-        message: 'Не выбраны платформы для публикации',
-        result: {
-          contentId,
-          status: content.status || 'draft'
-        }
-      });
+      
+      // Если контент уже имеет статус "published", то не меняем его
+      if (content.status === 'published') {
+        return res.status(200).json({
+          success: true,
+          message: 'Контент уже опубликован',
+          result: {
+            contentId,
+            status: 'published'
+          }
+        });
+      }
+      
+      // Если платформы не указаны, но запрос пришел от нашего клиента,
+      // все равно обновляем статус на "published"
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { status: 'published', publishedAt: new Date() },
+        adminToken
+      );
+      
+      if (updatedContent) {
+        log(`[Social Publishing] Успешно установлен статус "published" для контента ${contentId} (без платформ)`);
+        return res.status(200).json({
+          success: true,
+          message: 'Контент отмечен как опубликованный (без платформ)',
+          result: {
+            contentId,
+            status: 'published'
+          }
+        });
+      } else {
+        return res.status(200).json({
+          success: false,
+          message: 'Не удалось обновить статус контента',
+          result: {
+            contentId,
+            status: content.status || 'draft'
+          }
+        });
+      }
     }
     
     log(`[Social Publishing] Проверка статусов публикации для контента ${contentId} в платформах: ${platformNames.join(', ')}`);
