@@ -390,6 +390,7 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       try {
         // Используем полный URL для webhook
         const apiBaseUrl = process.env.API_URL || 'http://localhost:5000';
+        // Корректный URL для Facebook webhook (как зарегистрировано в routes.ts)
         const response = await axios.post(`${apiBaseUrl}/api/facebook-webhook`, { contentId });
         
         log(`[Social Publishing] Facebook webhook ответ: ${JSON.stringify(response.data)}`);
