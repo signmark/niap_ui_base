@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
     }
     
     // Получаем данные кампании для извлечения настроек Facebook
-    const campaignResponse = await directusApi.get(`/items/campaigns/${content.campaign_id}`, {
+    const campaignResponse = await directusApi.get(`/items/user_campaigns/${content.campaign_id}`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`
       }
