@@ -44,18 +44,45 @@ router.post('/', async (req, res) => {
       hasImage: !!content.imageUrl
     })}`);
     
-    // Формируем данные для публикации в Facebook
-    // Facebook API требует accessToken и другие параметры
-    const facebookAccessToken = process.env.FACEBOOK_ACCESS_TOKEN;
-    const facebookPageId = process.env.FACEBOOK_PAGE_ID;
-    
-    if (!facebookAccessToken || !facebookPageId) {
-      log.error('[Facebook Direct] Отсутствуют токен доступа или ID страницы Facebook');
+    // Получаем информацию о кампании для получения настроек Facebook
+    if (!content.campaignId) {
+      log.error(`[Facebook Direct] Контент ${contentId} не содержит campaignId`);
       return res.status(400).json({ 
         success: false,
-        error: 'Не настроены учетные данные Facebook (токен и/или ID страницы)' 
+        error: 'Не указан ID кампании в контенте' 
       });
     }
+    
+    // Получаем данные кампании для извлечения настроек Facebook
+    const campaign = await storage.getCampaignById(content.campaignId, adminToken);
+    
+    if (!campaign) {
+      log.error(`[Facebook Direct] Кампания с ID ${content.campaignId} не найдена`);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Кампания не найдена' 
+      });
+    }
+    
+    log.info(`[Facebook Direct] Получены данные кампании: "${campaign.name}"`);
+    
+    // Извлекаем настройки Facebook из кампании
+    const socialSettings = campaign.social_media_settings || {};
+    const facebookSettings = socialSettings.facebook || {};
+    
+    const facebookAccessToken = facebookSettings.token;
+    const facebookPageId = facebookSettings.pageId;
+    
+    if (!facebookAccessToken || !facebookPageId) {
+      log.error('[Facebook Direct] Отсутствуют токен доступа или ID страницы Facebook в настройках кампании');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Не настроены учетные данные Facebook (токен и/или ID страницы) в настройках кампании' 
+      });
+    }
+    
+    log.info(`[Facebook Direct] Используются настройки из кампании: токен ${facebookAccessToken.substring(0, 10)}... и страница ${facebookPageId}`);
+    
     
     // Подготавливаем данные для публикации
     const message = content.content;
