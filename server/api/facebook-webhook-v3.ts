@@ -269,7 +269,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = carouselResult.id;
-        postUrl = carouselResult.permalink;
+        postUrl = carouselResult.postUrl;
       } else if (hasVideo && videoUrl) {
         // Публикуем пост с видео
         log.info(`[Facebook v3] Публикация поста с видео: ${videoUrl}`);
@@ -298,7 +298,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = imageResult.id;
-        postUrl = imageResult.permalink;
+        postUrl = imageResult.postUrl;
       } else {
         // Публикуем обычный текстовый пост
         log.info(`[Facebook v3] Публикация текстового поста`);
@@ -311,7 +311,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = textResult.id;
-        postUrl = textResult.permalink;
+        postUrl = textResult.postUrl;
       }
       
       log.info(`[Facebook v3] Пост успешно опубликован: ID=${postId}, URL=${postUrl}`);
