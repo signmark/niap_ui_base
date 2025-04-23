@@ -242,8 +242,20 @@ router.post('/', async (req, res) => {
       log.info(`[Facebook Direct] Запасной вариант успешно опубликован: ID=${postId}, URL=${postUrl}`);
     }
     
-    // Обновляем статус публикации контента в Directus
+    // Обновляем статус публикации Facebook в Directus
     await updateSocialPlatformsStatus(contentId, adminToken, postUrl);
+    
+    // Проверяем и обновляем общий статус публикации (проверка всех платформ)
+    try {
+      log.info(`[Facebook Direct] Проверка общего статуса публикации для контента ${contentId}`);
+      const updateStatusUrl = `${process.env.APP_URL || 'http://localhost:5000'}/api/publish/update-status`;
+      await axios.post(updateStatusUrl, { contentId }, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      log.info(`[Facebook Direct] Общий статус публикации проверен и обновлен`);
+    } catch (statusError: any) {
+      log.error(`[Facebook Direct] Ошибка при обновлении общего статуса: ${statusError.message}`);
+    }
     
     return res.json({ 
       success: true,
