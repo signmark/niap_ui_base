@@ -3529,7 +3529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               tone,
               maxTokens: 4000,
               temperature: 0.7,
-              model: 'claude-3-sonnet-20240229'
+              model: 'claude-3-7-sonnet-20250219' // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
             }
           );
           
