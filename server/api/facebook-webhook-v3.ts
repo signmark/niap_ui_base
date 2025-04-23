@@ -270,6 +270,21 @@ router.post('/', async (req, res) => {
         
         postId = carouselResult.id;
         postUrl = carouselResult.permalink;
+      } else if (hasVideo && videoUrl) {
+        // Публикуем пост с видео
+        log.info(`[Facebook v3] Публикация поста с видео: ${videoUrl}`);
+        
+        const videoResult = await publishVideoPost(
+          apiVersion,
+          pageId,
+          pageAccessToken,
+          message,
+          videoUrl,
+          content.title || undefined
+        );
+        
+        postId = videoResult.id;
+        postUrl = videoResult.permalink;
       } else if (imageUrl) {
         // Публикуем пост с одним изображением
         log.info(`[Facebook v3] Публикация поста с изображением`);
@@ -283,7 +298,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = imageResult.id;
-        postPermalink = imageResult.permalink;
+        postUrl = imageResult.permalink;
       } else {
         // Публикуем обычный текстовый пост
         log.info(`[Facebook v3] Публикация текстового поста`);
@@ -296,10 +311,10 @@ router.post('/', async (req, res) => {
         );
         
         postId = textResult.id;
-        postPermalink = textResult.permalink;
+        postUrl = textResult.permalink;
       }
       
-      log.info(`[Facebook v3] Пост успешно опубликован: ID=${postId}, URL=${postPermalink}`);
+      log.info(`[Facebook v3] Пост успешно опубликован: ID=${postId}, URL=${postUrl}`);
     } catch (publishError: any) {
       log.error(`[Facebook v3] Ошибка при публикации: ${publishError.message}`);
       
@@ -332,7 +347,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = fallbackResult.id;
-        postPermalink = fallbackResult.permalink;
+        postUrl = fallbackResult.permalink;
         
         log.info(`[Facebook v3] Запасной вариант успешно опубликован: ID=${postId}`);
       } catch (fallbackError: any) {
@@ -348,7 +363,7 @@ router.post('/', async (req, res) => {
     log.info(`[Facebook v3] Обновление статуса публикации в Directus`);
     
     try {
-      await updatePublicationStatus(contentId, adminToken, postPermalink);
+      await updatePublicationStatus(contentId, adminToken, postUrl);
       log.info(`[Facebook v3] Статус публикации успешно обновлен`);
     } catch (updateError: any) {
       log.error(`[Facebook v3] Ошибка при обновлении статуса: ${updateError.message}`);
@@ -359,7 +374,7 @@ router.post('/', async (req, res) => {
       success: true,
       message: 'Пост успешно опубликован в Facebook',
       postId: postId,
-      permalink: postPermalink
+      permalink: postUrl
     });
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка публикации: ${error.message}`);
@@ -647,7 +662,7 @@ async function updatePublicationStatus(contentId: string, token: string, permali
       ...(socialPlatforms.facebook || {}),
       status: 'published',
       publishedAt: new Date().toISOString(),
-      permalink: permalink || ''
+      postUrl: permalink || ''
     };
     
     // Обновляем контент в Directus через прямой PATCH запрос
