@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import axios from 'axios';
 import log from '../utils/logger';
-import { storage } from '../storage';
+import { directusApi } from '../lib/directus';
 
 const router = Router();
 

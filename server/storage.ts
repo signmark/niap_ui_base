@@ -627,59 +627,34 @@ export class DatabaseStorage implements IStorage {
   /**
    * Получает кампанию по ID с настройками для социальных платформ
    * @param campaignId ID кампании
-   * @returns Объект кампании с настройками или undefined
+   * @param token Опциональный токен авторизации
+   * @returns Объект кампании с настройками или null, если кампания не найдена
    */
-  async getCampaignById(campaignId: string): Promise<any> {
+  async getCampaignById(campaignId: string, token?: string): Promise<any> {
     try {
-      console.log(`[DatabaseStorage] Getting campaign with settings by ID: ${campaignId}`);
+      console.log(`[DatabaseStorage] Получение кампании по ID: ${campaignId}`);
       
-      // Получаем системный токен администратора
-      const adminToken = await this.getAdminToken();
-      if (!adminToken) {
-        console.error('No admin token available');
-        return undefined;
-      }
+      // Используем напрямую directusApi, чтобы убедиться, что мы получим все поля, включая social_media_settings
+      const authToken = token || process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
       
-      // Получаем кампанию через API
       const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
-        params: {
-          fields: ['id', 'name', 'description', 'user_id', 'social_media_settings']
-        },
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
       
       if (!response.data?.data) {
-        console.error(`Campaign with ID ${campaignId} not found`);
-        return undefined;
+        console.error(`[DatabaseStorage] Кампания с ID ${campaignId} не найдена`);
+        return null;
       }
       
       const item = response.data.data;
+      console.log(`[DatabaseStorage] Получена кампания: ${item.name}`);
       
-      // Парсим настройки, если они есть
-      let socialMediaSettings = null;
-      if (item.social_media_settings) {
-        try {
-          socialMediaSettings = typeof item.social_media_settings === 'string' 
-            ? JSON.parse(item.social_media_settings) 
-            : item.social_media_settings;
-        } catch (parseError) {
-          console.error('Error parsing campaign social_media_settings:', parseError);
-        }
-      }
-      
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        userId: item.user_id,
-        settings: socialMediaSettings, // Для обратной совместимости со старым кодом
-        socialMediaSettings // Новое поле с правильным названием
-      };
+      return item;
     } catch (error) {
-      console.error('Error getting campaign with settings from Directus:', error);
-      return undefined;
+      console.error(`[DatabaseStorage] Ошибка при получении кампании по ID ${campaignId}:`, error);
+      return null;
     }
   }
 
