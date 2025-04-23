@@ -248,8 +248,8 @@ router.post('/', async (req, res) => {
           postId = albumId;
           
           // Для альбомов формат ссылки другой
-          postPermalink = `https://facebook.com/media/set/?set=a.${albumId}`;
-          log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
+          const postUrl = `https://facebook.com/media/set/?set=a.${albumId}`;
+          log.info(`[Facebook Direct] Карусель успешно опубликована, postUrl: ${postUrl}`);
         } catch (albumError: any) {
           log.error(`[Facebook Direct] Ошибка при создании альбома: ${albumError.message}`);
           
@@ -310,8 +310,8 @@ router.post('/', async (req, res) => {
             log.info(`[Facebook Direct] Ответ от API Facebook (карусельный пост): ${JSON.stringify(response.data)}`);
             
             postId = response.data.id;
-            postPermalink = `https://facebook.com/${postId}`;
-            log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
+            const postUrl = `https://facebook.com/${postId}`;
+            log.info(`[Facebook Direct] Карусель успешно опубликована, postUrl: ${postUrl}`);
           } catch (attachedError: any) {
             log.error(`[Facebook Direct] Ошибка при методе attached_media: ${attachedError.message}`);
             
@@ -331,8 +331,8 @@ router.post('/', async (req, res) => {
             
             const photoResponse = await axios.post(photoUrl, singlePhotoData);
             postId = photoResponse.data.id;
-            postPermalink = `https://facebook.com/${postId}`;
-            log.info(`[Facebook Direct] Опубликовано единичное изображение: ${postPermalink}`);
+            const postUrl = `https://facebook.com/${postId}`;
+            log.info(`[Facebook Direct] Опубликовано единичное изображение: ${postUrl}`);
           }
         }
       }
@@ -352,7 +352,8 @@ router.post('/', async (req, res) => {
         log.info(`[Facebook Direct] Ответ от API Facebook (публикация с изображением): ${JSON.stringify(response.data)}`);
         
         postId = response.data.id;
-        postPermalink = `https://facebook.com/${postId}`;
+        const postUrl = `https://facebook.com/${postId}`;
+        postPermalink = postUrl;
       } else {
         // Публикуем обычный текстовый пост
         const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
@@ -365,7 +366,8 @@ router.post('/', async (req, res) => {
         log.info(`[Facebook Direct] Ответ от API Facebook (текстовый пост): ${JSON.stringify(response.data)}`);
         
         postId = response.data.id;
-        postPermalink = `https://facebook.com/${postId}`;
+        const postUrl = `https://facebook.com/${postId}`;
+        postPermalink = postUrl;
       }
       
       log.info(`[Facebook Direct] Пост успешно создан, ID: ${postId}`);
@@ -393,8 +395,9 @@ router.post('/', async (req, res) => {
         const response = await axios.post(feedUrl, fallbackData);
         
         postId = response.data.id;
-        postPermalink = `https://facebook.com/${facebookPageId}/posts/${postId}`;
-        log.info(`[Facebook Direct] Fallback пост успешно опубликован: ${postPermalink}`);
+        const postUrl = `https://facebook.com/${facebookPageId}/posts/${postId}`;
+        postPermalink = postUrl;
+        log.info(`[Facebook Direct] Fallback пост успешно опубликован: ${postUrl}`);
       } catch (fallbackError: any) {
         log.error(`[Facebook Direct] Даже fallback не сработал: ${fallbackError.message}`);
         throw mainError; // Пробрасываем исходную ошибку
@@ -415,7 +418,7 @@ router.post('/', async (req, res) => {
       }
     }
     
-    log.info(`[Facebook Direct] Ссылка на опубликованный пост: ${postPermalink}`);
+    log.info(`[Facebook Direct] Ссылка на опубликованный пост (postUrl): ${postPermalink}`);
     
     // Обновляем статус публикации контента в Directus
     await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
