@@ -127,6 +127,10 @@ export class ClaudeService {
       const testModel = 'claude-3-haiku-20240307'; // Используем самую маленькую модель для быстрой проверки
       logger.log(`Using model ${testModel} for API key test`, 'claude');
       
+      // Дополнительное логирование для отладки процесса проверки ключа
+      logger.log(`API URL: ${this.apiUrl}`, 'claude');
+      logger.log(`API Key format verification: ${this.apiKey?.startsWith('sk-ant-')}`, 'claude');
+      
       const result = await this.makeRequest({
         model: testModel,
         max_tokens: 10,
@@ -485,8 +489,9 @@ export class ClaudeService {
         {
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': this.apiKey,
-            'anthropic-version': '2023-06-01'
+            'Authorization': `Bearer ${this.apiKey}`,
+            'anthropic-version': '2023-06-01',
+            'x-api-key': this.apiKey // для обратной совместимости со старыми ключами
           }
         }
       );
