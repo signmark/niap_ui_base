@@ -131,6 +131,18 @@ router.post('/', async (req, res) => {
     const message = content.content.replace(/<[^>]*>/g, ''); // Удаляем HTML-разметку
     const imageUrl = content.image_url;
     
+    // Логируем информацию об изображении
+    log.info(`[Facebook Direct] URL изображения: ${imageUrl}`);
+    
+    // Создаем файл для отладки
+    try {
+      const fs = require('fs');
+      fs.writeFileSync('/tmp/fb-test.log', `Content ID: ${contentId}\nImageURL: ${imageUrl}\nMessage: ${message.substring(0, 100)}...\n`);
+      log.info(`[Facebook Direct] Создан файл журнала для отладки в /tmp/fb-test.log`);
+    } catch (logError) {
+      log.error(`[Facebook Direct] Ошибка создания файла журнала: ${logError.message}`);
+    }
+    
     // Обрабатываем additional_images, если они есть
     let additionalImages = content.additional_images || [];
     
@@ -475,14 +487,57 @@ async function publishImagePost(
     // Публикуем изображение напрямую
     log.info(`[Facebook Direct] Публикация поста с изображением: ${imageUrl}`);
     
+    // Записываем информацию в лог-файл
+    try {
+      const fs = require('fs');
+      fs.appendFileSync('/tmp/fb-test.log', `\n[publishImagePost] Попытка публикации изображения: ${imageUrl}\n`);
+    } catch (appendError) {
+      log.error(`[Facebook Direct] Ошибка дополнения файла журнала: ${appendError.message}`);
+    }
+    
+    // Проверка URL изображения
+    try {
+      const urlCheckResponse = await axios.head(imageUrl, { timeout: 5000 });
+      log.info(`[Facebook Direct] Проверка URL изображения: статус ${urlCheckResponse.status}`);
+      
+      // Добавляем информацию о доступности изображения в лог
+      const fs = require('fs');
+      fs.appendFileSync('/tmp/fb-test.log', `Изображение доступно, статус: ${urlCheckResponse.status}\n`);
+      
+    } catch (urlCheckError) {
+      log.error(`[Facebook Direct] Ошибка при проверке изображения: ${urlCheckError.message}`);
+      
+      // Добавляем информацию об ошибке в лог
+      const fs = require('fs');
+      fs.appendFileSync('/tmp/fb-test.log', `Ошибка доступа к изображению: ${urlCheckError.message}\n`);
+      
+      // Если изображение недоступно, пробуем использовать заглушку
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        log.info(`[Facebook Direct] URL изображения не начинается с http, добавляем базовый URL`);
+        const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+        imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+        log.info(`[Facebook Direct] Исправленный URL изображения: ${imageUrl}`);
+        
+        // Добавляем информацию об исправлении в лог
+        fs.appendFileSync('/tmp/fb-test.log', `Исправленный URL: ${imageUrl}\n`);
+      }
+    }
+    
     const photoUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/photos`;
     const photoData = new URLSearchParams();
     photoData.append('url', imageUrl);
     photoData.append('message', message);
     photoData.append('access_token', pageAccessToken);
     
+    // Логируем отправляемые данные
+    log.info(`[Facebook Direct] Отправка запроса на ${photoUrl} с URL изображения ${imageUrl}`);
+    
     const response = await axios.post(photoUrl, photoData);
     const postId = response.data.id;
+    
+    // Добавляем информацию об успешной отправке в лог
+    const fs = require('fs');
+    fs.appendFileSync('/tmp/fb-test.log', `Успешная публикация, ID: ${postId}\n`);
     
     // Формируем ссылку на пост
     const postUrl = `https://facebook.com/${postId}`;
