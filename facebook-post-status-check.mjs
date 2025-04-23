@@ -24,10 +24,10 @@ async function checkFacebookPostStatus() {
     );
     const pageAccessToken = pageResponse.data.access_token;
     
-    // Проверяем статус поста
+    // Для типа "Photo" доступны другие поля
     console.log(`Проверка статуса поста ${postId}...`);
     const postResponse = await axios.get(
-      `https://graph.facebook.com/${apiVersion}/${postId}?fields=message,created_time,permalink_url,attachments,shares`,
+      `https://graph.facebook.com/${apiVersion}/${postId}?fields=created_time,from,name,picture,link,images,likes.summary(true),comments.summary(true)`,
       { params: { access_token: pageAccessToken } }
     );
     
@@ -35,17 +35,34 @@ async function checkFacebookPostStatus() {
     console.log('------------------------------------');
     console.log(`ID поста: ${postResponse.data.id}`);
     console.log(`Время создания: ${postResponse.data.created_time}`);
-    console.log(`Ссылка: ${postResponse.data.permalink_url}`);
     
-    if (postResponse.data.message) {
-      console.log(`Текст: ${postResponse.data.message.substring(0, 100)}...`);
+    if (postResponse.data.link) {
+      console.log(`Ссылка: ${postResponse.data.link}`);
     }
     
-    if (postResponse.data.attachments && postResponse.data.attachments.data.length > 0) {
-      console.log(`Тип вложения: ${postResponse.data.attachments.data[0].type}`);
-      if (postResponse.data.attachments.data[0].media) {
-        console.log(`URL изображения: ${postResponse.data.attachments.data[0].media.image.src}`);
-      }
+    if (postResponse.data.name) {
+      console.log(`Заголовок: ${postResponse.data.name}`);
+    }
+    
+    if (postResponse.data.picture) {
+      console.log(`Превью: ${postResponse.data.picture}`);
+    }
+    
+    if (postResponse.data.from) {
+      console.log(`Опубликовано от: ${postResponse.data.from.name} (ID: ${postResponse.data.from.id})`);
+    }
+    
+    if (postResponse.data.images && postResponse.data.images.length > 0) {
+      console.log(`Оригинальное изображение: ${postResponse.data.images[0].source}`);
+      console.log(`Размер: ${postResponse.data.images[0].width}x${postResponse.data.images[0].height}`);
+    }
+    
+    if (postResponse.data.likes) {
+      console.log(`Лайки: ${postResponse.data.likes.summary.total_count}`);
+    }
+    
+    if (postResponse.data.comments) {
+      console.log(`Комментарии: ${postResponse.data.comments.summary.total_count}`);
     }
     
     if (postResponse.data.shares) {

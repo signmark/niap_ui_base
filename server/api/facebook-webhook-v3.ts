@@ -13,7 +13,7 @@ const router = Router();
  * Улучшенная версия с более надежной обработкой авторизации и ошибок
  */
 router.post('/', async (req, res) => {
-  let postPermalink = '';
+  let postUrl = '';
   let postId = '';
   
   try {
@@ -212,6 +212,7 @@ router.post('/', async (req, res) => {
     // Шаг 5: Подготавливаем контент для публикации
     const message = content.content.replace(/<[^>]*>/g, ''); // Удаляем HTML-разметку
     const imageUrl = content.image_url;
+    const videoUrl = content.video_url;
     
     // Обрабатываем additional_images, если они есть
     let additionalImages = content.additional_images || [];
@@ -233,8 +234,15 @@ router.post('/', async (req, res) => {
     // Определяем тип контента для публикации
     const hasImages = imageUrl || (additionalImages && additionalImages.length > 0);
     const isCarousel = imageUrl && additionalImages && additionalImages.length > 0;
+    const hasVideo = videoUrl ? true : false;
     
-    log.info(`[Facebook v3] Тип публикации: ${isCarousel ? 'карусель' : (hasImages ? 'пост с изображением' : 'текстовый пост')}`);
+    // Определяем тип публикации для логирования
+    let publicationType = 'текстовый пост';
+    if (isCarousel) publicationType = 'карусель';
+    else if (hasVideo) publicationType = 'видео';
+    else if (hasImages) publicationType = 'пост с изображением';
+    
+    log.info(`[Facebook v3] Тип публикации: ${publicationType}`);
     
     const apiVersion = 'v19.0';
     
@@ -261,7 +269,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = carouselResult.id;
-        postPermalink = carouselResult.permalink;
+        postUrl = carouselResult.permalink;
       } else if (imageUrl) {
         // Публикуем пост с одним изображением
         log.info(`[Facebook v3] Публикация поста с изображением`);
@@ -539,6 +547,53 @@ async function publishTextPost(
     return { id: postId, permalink };
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при публикации текстового поста: ${error.message}`);
+    
+    if (error.response?.data) {
+      log.error(`[Facebook v3] Детали ошибки: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Публикует видео в Facebook
+ */
+async function publishVideoPost(
+  apiVersion: string,
+  pageId: string,
+  pageAccessToken: string,
+  message: string,
+  videoUrl: string,
+  title?: string
+): Promise<{ id: string, permalink: string }> {
+  try {
+    log.info(`[Facebook v3] Публикация видео: ${videoUrl}`);
+    
+    // Публикуем видео
+    const postUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/videos`;
+    const postData = new URLSearchParams();
+    postData.append('file_url', videoUrl);
+    postData.append('description', message);
+    
+    if (title) {
+      postData.append('title', title);
+    }
+    
+    postData.append('access_token', pageAccessToken);
+    
+    log.info(`[Facebook v3] Отправка запроса на публикацию видео...`);
+    const response = await axios.post(postUrl, postData);
+    const postId = response.data.id;
+    
+    log.info(`[Facebook v3] Видео успешно отправлено на публикацию, ID: ${postId}`);
+    
+    // Формируем ссылку на пост с видео
+    const permalink = `https://facebook.com/${pageId}/videos/${postId}`;
+    
+    return { id: postId, permalink };
+  } catch (error: any) {
+    log.error(`[Facebook v3] Ошибка при публикации видео: ${error.message}`);
     
     if (error.response?.data) {
       log.error(`[Facebook v3] Детали ошибки: ${JSON.stringify(error.response.data)}`);
