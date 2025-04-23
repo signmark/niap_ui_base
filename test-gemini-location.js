@@ -18,6 +18,7 @@ if (!apiKey) {
 }
 
 console.log('🔑 API ключ получен из аргументов командной строки');
+console.log(`👀 Первые 4 символа ключа: ${apiKey.substring(0, 4)}...`);
 
 // Получение информации о текущем IP-адресе сервера
 async function getServerLocation() {
@@ -85,14 +86,14 @@ async function testGeminiAccess() {
     // 3. Тестируем доступ к API
     console.log('\n📋 Отправка тестового запроса к Gemini API...');
     
-    // Запрос к API
+    // Запрос к API - используем модель gemini-1.5-flash как в проекте
     return new Promise((resolve, reject) => {
-      const requestData = JSON.stringify({
+      const requestBody = {
         contents: [
           {
             parts: [
               {
-                text: "Hello, world!"
+                text: "Напиши привет по-русски"
               }
             ]
           }
@@ -101,17 +102,23 @@ async function testGeminiAccess() {
           temperature: 0.7,
           maxOutputTokens: 50
         }
-      });
+      };
+      
+      const requestData = JSON.stringify(requestBody);
+      
+      console.log('\n📊 Тело запроса:', JSON.stringify(requestBody, null, 2));
       
       const options = {
         hostname: 'generativelanguage.googleapis.com',
-        path: `/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+        path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Content-Length': requestData.length
+          'Content-Length': Buffer.byteLength(requestData)
         }
       };
+      
+      console.log('\n🔗 URL запроса:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.substring(0, 4)}...`);
       
       const req = https.request(options, (res) => {
         let responseData = '';
@@ -122,22 +129,34 @@ async function testGeminiAccess() {
         
         res.on('end', () => {
           console.log(`\n🌐 Статус ответа: ${res.statusCode}`);
+          console.log('\n📊 Сырой ответ API:', responseData);
           
           if (res.statusCode === 200) {
-            resolve({
-              success: true,
-              data: JSON.parse(responseData)
-            });
+            try {
+              const parsedData = JSON.parse(responseData);
+              resolve({
+                success: true,
+                data: parsedData
+              });
+            } catch (e) {
+              reject(`Ошибка при обработке успешного ответа: ${e.message}`);
+            }
           } else {
             try {
-              const errorData = JSON.parse(responseData);
+              let errorData;
+              try {
+                errorData = JSON.parse(responseData);
+              } catch {
+                errorData = { raw: responseData };
+              }
+              
               resolve({
                 success: false,
                 status: res.statusCode,
                 error: errorData
               });
             } catch (e) {
-              reject(`Неизвестная ошибка: ${responseData}`);
+              reject(`Ошибка при обработке ответа с ошибкой: ${e.message}, данные: ${responseData}`);
             }
           }
         });
@@ -152,7 +171,7 @@ async function testGeminiAccess() {
     });
   } catch (error) {
     console.error(`\n❌ Ошибка: ${error}`);
-    return { success: false, error };
+    return { success: false, error: String(error) };
   }
 }
 
@@ -163,33 +182,44 @@ async function main() {
     
     if (testResult.success) {
       console.log('\n✅ Тест успешно пройден! API ключ Gemini работает корректно в вашем регионе.');
-      console.log('\n📝 Краткий ответ API:');
+      
+      // Извлекаем текст из ответа
+      const responseText = testResult.data.candidates[0].content.parts[0].text;
+      console.log('\n📝 Ответ API:');
       console.log('------------------------');
-      console.log(testResult.data.candidates[0].content.parts[0].text.substring(0, 100) + '...');
+      console.log(responseText);
       console.log('------------------------');
+      
+      console.log('\n🎉 API ключ Gemini работает корректно с вашим сервером!');
     } else {
       console.log('\n❌ Ошибка при тестировании API:');
       
-      if (testResult.status === 400 && 
-          testResult.error?.error?.message?.includes('User location is not supported')) {
-        console.log('\n🚫 Подтверждено: Ваш регион не поддерживается Gemini API.');
+      // Проверяем конкретную ошибку региона
+      const errorMessage = JSON.stringify(testResult.error);
+      if (errorMessage.includes('User location is not supported')) {
+        console.log('\n🚫 ПОДТВЕРЖДЕНО: Ваш регион не поддерживается Gemini API.');
         console.log('\n📢 Рекомендации:');
-        console.log('1️⃣ Используйте VPN для доступа через поддерживаемый регион (например, США или ЕС)');
+        console.log('1️⃣ Используйте VPN для доступа через поддерживаемый регион (США, ЕС)');
         console.log('2️⃣ Разместите приложение на сервере в поддерживаемом регионе');
-        console.log('3️⃣ Используйте альтернативный API (например, Claude от Anthropic или другие модели)');
+        console.log('3️⃣ Используйте альтернативный API (Claude от Anthropic или другие модели)');
         console.log('\n👉 Подробнее: https://ai.google.dev/available_regions');
+      } else if (testResult.status === 404) {
+        console.log('\n🚫 Ошибка 404: Модель не найдена.');
+        console.log('Возможно, имя модели изменилось или недоступно. Проверьте актуальные названия моделей в документации Google API.');
       } else if (testResult.status === 400) {
-        console.log('Возможная причина: неверный формат запроса или другая ошибка валидации.');
-        console.log('Подробности ошибки:', testResult.error?.error?.message || 'Нет деталей');
+        console.log('\n🚫 Ошибка 400: Некорректный запрос.');
+        console.log('Причина:', testResult.error?.error?.message || 'Неизвестна');
       } else if (testResult.status === 401) {
-        console.log('Возможная причина: недействительный API ключ.');
+        console.log('\n🚫 Ошибка 401: Недействительный API ключ.');
         console.log('Проверьте правильность ключа или получите новый ключ.');
       } else if (testResult.status === 403) {
-        console.log('Возможная причина: отказано в доступе. Ключ API может быть ограничен или отключен.');
+        console.log('\n🚫 Ошибка 403: Отказано в доступе.');
+        console.log('Ключ API может быть ограничен или отключен.');
       } else if (testResult.status === 429) {
-        console.log('Возможная причина: превышен лимит запросов. Попробуйте позже.');
+        console.log('\n🚫 Ошибка 429: Превышен лимит запросов.');
+        console.log('Попробуйте повторить запрос позже.');
       } else {
-        console.log(`Статус ошибки: ${testResult.status}`);
+        console.log(`\n🚫 Ошибка ${testResult.status || 'неизвестная'}:`);
         console.log('Подробности:', JSON.stringify(testResult.error, null, 2));
       }
     }
