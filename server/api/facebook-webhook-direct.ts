@@ -10,6 +10,9 @@ const router = Router();
  * Данный маршрут полностью заменяет использование n8n для Facebook
  */
 router.post('/', async (req, res) => {
+  let postPermalink = '';
+  let postId = '';
+  
   try {
     const { contentId } = req.body;
     
@@ -57,24 +60,71 @@ router.post('/', async (req, res) => {
     // Подготавливаем данные для публикации
     const message = content.content;
     const imageUrl = content.imageUrl;
+    const additionalImages = content.additionalImages || [];
     
-    // Для простоты сначала сделаем текстовый пост
-    // В будущем можно добавить логику для разных типов контента
+    // Определяем тип контента для публикации
+    const hasImages = imageUrl || (additionalImages && additionalImages.length > 0);
+    const isCarousel = imageUrl && additionalImages && additionalImages.length > 0;
     
-    // Публикуем текстовый пост
-    const apiVersion = 'v17.0'; // Версия Facebook Graph API
-    const url = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
+    log.info(`[Facebook Direct] Тип публикации: ${isCarousel ? 'карусель' : (hasImages ? 'пост с изображением' : 'текстовый пост')}`);
     
-    const postData = {
-      message: message,
-      access_token: facebookAccessToken
-    };
+    if (isCarousel) {
+      log.info(`[Facebook Direct] Найдено ${additionalImages.length + 1} изображений для карусели`);
+    }
     
-    // Отправляем запрос к Facebook API
-    let response;
+    // Версия Facebook Graph API
+    const apiVersion = 'v17.0';
     
-    // Если есть изображение, публикуем пост с изображением
-    if (imageUrl) {
+    // Выбираем тип публикации на основе наличия изображений
+    if (isCarousel) {
+      // Публикуем карусель (альбом) с несколькими изображениями
+      log.info(`[Facebook Direct] Публикация карусели с ${additionalImages.length + 1} изображениями`);
+      
+      // Для карусели сначала создаем альбом
+      const albumUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/albums`;
+      const albumData = {
+        name: content.title || 'Новый альбом',
+        message: message,
+        access_token: facebookAccessToken
+      };
+      
+      log.info('[Facebook Direct] Создание альбома для карусели');
+      const albumResponse = await axios.post(albumUrl, albumData);
+      const albumId = albumResponse.data.id;
+      log.info(`[Facebook Direct] Альбом успешно создан, ID: ${albumId}`);
+      
+      // Теперь добавляем все изображения в альбом
+      const photoUrl = `https://graph.facebook.com/${apiVersion}/${albumId}/photos`;
+      
+      // Сначала добавляем основное изображение
+      const mainPhotoData = {
+        url: imageUrl,
+        access_token: facebookAccessToken
+      };
+      
+      log.info(`[Facebook Direct] Добавление основного изображения ${imageUrl} в альбом`);
+      await axios.post(photoUrl, mainPhotoData);
+      
+      // Затем добавляем дополнительные изображения
+      for (const additionalImageUrl of additionalImages) {
+        const additionalPhotoData = {
+          url: additionalImageUrl,
+          access_token: facebookAccessToken
+        };
+        
+        log.info(`[Facebook Direct] Добавление дополнительного изображения ${additionalImageUrl} в альбом`);
+        await axios.post(photoUrl, additionalPhotoData);
+      }
+      
+      // Для альбома используем его ID
+      postId = albumId;
+      
+      // Для альбомов формат ссылки другой
+      postPermalink = `https://facebook.com/media/set/?set=a.${albumId}`;
+      log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
+    }
+    else if (imageUrl) {
+      // Публикуем пост с одним изображением
       log.info(`[Facebook Direct] Публикация с изображением: ${imageUrl}`);
       
       // Создаем URL для публикации с изображением
@@ -88,42 +138,49 @@ router.post('/', async (req, res) => {
       };
       
       log.info(`[Facebook Direct] Отправка запроса на публикацию с изображением: ${photoUrl}`);
-      response = await axios.post(photoUrl, photoData);
+      const response = await axios.post(photoUrl, photoData);
       log.info(`[Facebook Direct] Ответ от API Facebook (публикация с изображением): ${JSON.stringify(response.data)}`);
+      
+      postId = response.data.id;
     } else {
       // Публикуем обычный текстовый пост
-      log.info(`[Facebook Direct] Отправка запроса к Facebook API для текстового поста: ${url}`);
-      response = await axios.post(url, postData);
+      const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
+      const postData = {
+        message: message,
+        access_token: facebookAccessToken
+      };
+      
+      log.info(`[Facebook Direct] Отправка запроса к Facebook API для текстового поста: ${feedUrl}`);
+      const response = await axios.post(feedUrl, postData);
       log.info(`[Facebook Direct] Ответ от API Facebook (текстовый пост): ${JSON.stringify(response.data)}`);
+      
+      postId = response.data.id;
     }
     
-    // Получаем ID созданного поста
-    const postId = response.data.id;
     log.info(`[Facebook Direct] Пост успешно создан, ID: ${postId}`);
     
-    // Формируем ссылку на пост
-    let permalink;
-    
-    // Пост в Facebook часто имеет формат ID типа '[pageId]_[postId]'
-    // Формируем ссылку на основе ID страницы и поста
-    if (postId.includes('_')) {
-      // Если ID уже содержит ID страницы (формат pageId_postId)
-      permalink = `https://facebook.com/${postId}`;
-    } else {
-      // Формируем полную ссылку на основе ID страницы и поста
-      permalink = `https://facebook.com/${facebookPageId}/posts/${postId}`;
+    // Формируем ссылку на пост если она еще не задана (для карусели уже задана)
+    if (!postPermalink) {
+      // Пост в Facebook часто имеет формат ID типа '[pageId]_[postId]'
+      if (postId.includes('_')) {
+        // Если ID уже содержит ID страницы (формат pageId_postId)
+        postPermalink = `https://facebook.com/${postId}`;
+      } else {
+        // Формируем полную ссылку на основе ID страницы и поста
+        postPermalink = `https://facebook.com/${facebookPageId}/posts/${postId}`;
+      }
     }
     
-    log.info(`[Facebook Direct] Ссылка на опубликованный пост: ${permalink}`);
+    log.info(`[Facebook Direct] Ссылка на опубликованный пост: ${postPermalink}`);
     
     // Обновляем статус публикации контента в Directus
-    await updateSocialPlatformsStatus(contentId, adminToken, permalink);
+    await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
     
     return res.json({ 
       success: true,
       message: 'Пост успешно опубликован в Facebook',
       postId: postId,
-      permalink: permalink
+      permalink: postPermalink
     });
   } catch (error: any) {
     log.error(`[Facebook Direct] Ошибка при публикации: ${error.message}`);
@@ -170,7 +227,8 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, per
     // Обновляем статус Facebook
     socialPlatforms.facebook = {
       status: 'published',
-      publishedAt: new Date().toISOString()
+      publishedAt: new Date().toISOString(),
+      permalink: permalink || '' // Добавляем ссылку на пост, если она предоставлена
     };
     
     // Обновляем контент в Directus
