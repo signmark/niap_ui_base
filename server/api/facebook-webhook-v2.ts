@@ -204,10 +204,10 @@ router.post('/', async (req, res) => {
         );
         
         postId = textResult.id;
-        postPermalink = textResult.permalink;
+        postUrl = textResult.postUrl;
       }
       
-      log.info(`[Facebook Direct] Пост успешно опубликован: ID=${postId}, URL=${postPermalink}`);
+      log.info(`[Facebook Direct] Пост успешно опубликован: ID=${postId}, URL=${postUrl}`);
       
     } catch (publishError: any) {
       log.error(`[Facebook Direct] Ошибка при публикации: ${publishError.message}`);
@@ -237,19 +237,19 @@ router.post('/', async (req, res) => {
       );
       
       postId = fallbackResult.id;
-      postPermalink = fallbackResult.permalink;
+      postUrl = fallbackResult.postUrl;
       
-      log.info(`[Facebook Direct] Запасной вариант успешно опубликован: ID=${postId}, URL=${postPermalink}`);
+      log.info(`[Facebook Direct] Запасной вариант успешно опубликован: ID=${postId}, URL=${postUrl}`);
     }
     
     // Обновляем статус публикации контента в Directus
-    await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
+    await updateSocialPlatformsStatus(contentId, adminToken, postUrl);
     
     return res.json({ 
       success: true,
       message: 'Пост успешно опубликован в Facebook',
       postId: postId,
-      permalink: postPermalink
+      postUrl: postUrl
     });
     
   } catch (error: any) {
