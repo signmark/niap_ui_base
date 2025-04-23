@@ -425,9 +425,9 @@ async function publishCarousel(
       const postId = response.data.id;
       
       // Формируем ссылку на пост
-      const permalink = `https://facebook.com/${postId}`;
+      const postUrl = `https://facebook.com/${postId}`;
       
-      return { id: postId, permalink };
+      return { id: postId, postUrl };
     } catch (attachedMediaError: any) {
       log.error(`[Facebook Direct] Ошибка с attached_media: ${attachedMediaError.message}`);
       
@@ -532,9 +532,9 @@ async function publishTextPost(
  * Обновляет статус публикации в Directus
  * @param contentId ID контента для обновления
  * @param token Токен для доступа к Directus API
- * @param permalink Ссылка на опубликованный пост (опционально)
+ * @param postUrl Ссылка на опубликованный пост (опционально)
  */
-async function updateSocialPlatformsStatus(contentId: string, token: string, permalink?: string) {
+async function updateSocialPlatformsStatus(contentId: string, token: string, postUrl?: string) {
   try {
     // Проверяем токен, и если он недействительный, получаем новый
     try {
@@ -598,7 +598,7 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, per
       ...(socialPlatforms.facebook || {}),
       status: 'published',
       publishedAt: new Date().toISOString(),
-      permalink: permalink || ''
+      postUrl: postUrl || ''
     };
     
     // Обновляем контент в Directus
