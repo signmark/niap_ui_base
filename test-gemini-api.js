@@ -31,7 +31,7 @@ const prompt = "Напиши краткое приветствие по-русс
 // Вызов API
 logStep('Настройка запроса к Gemini API...');
 
-// Конфигурация запроса для модели gemini-pro (исправленный формат)
+// Конфигурация запроса для модели gemini-1.5-flash (обновленная модель)
 const requestBody = {
   contents: [
     {
@@ -60,10 +60,10 @@ try {
   process.exit(1);
 }
 
-// Опции запроса
+// Опции запроса - используем gemini-1.5-flash, текущую модель используемую в проекте
 const options = {
   hostname: 'generativelanguage.googleapis.com',
-  path: `/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+  path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const options = {
 };
 
 logStep('Отправка запроса к Gemini API...');
-console.log('URL:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey.substring(0, 4)}...`);
+console.log('URL:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.substring(0, 4)}...`);
 console.log('Тело запроса:', JSON.stringify(requestBody, null, 2));
 
 // Отправляем запрос
@@ -95,7 +95,7 @@ const req = https.request(options, (res) => {
         
         // Выводим информацию об успешном запросе
         console.log('\n✅ Запрос успешно выполнен:');
-        console.log('📌 Модель: gemini-pro');
+        console.log('📌 Модель: gemini-1.5-flash');
         
         // Извлекаем текст из ответа
         const responseText = parsedData.candidates[0].content.parts[0].text;
