@@ -149,211 +149,256 @@ router.post('/', async (req, res) => {
       log.info(`[Facebook Direct] Найдено ${additionalImages.length + 1} изображений для карусели`);
     }
     
-    // Версия Facebook Graph API
-    const apiVersion = 'v17.0';
+    // Версия Facebook Graph API - используем актуальную версию
+    const apiVersion = 'v19.0';
 
-    // Проверяем права токена
+    // Получаем актуальный токен страницы
     log.info(`[Facebook Direct] Проверка прав токена Facebook`);
-    try {
-      // Проверка прав токена
-      const permissionsUrl = `https://graph.facebook.com/${apiVersion}/me/permissions`;
-      const permissionsResponse = await axios.get(permissionsUrl, {
-        params: { access_token: facebookAccessToken }
-      });
-      
-      log.info(`[Facebook Direct] Права токена Facebook: ${JSON.stringify(permissionsResponse.data)}`);
-      
-      // Проверка, что токен имеет доступ к странице
-      const pagesUrl = `https://graph.facebook.com/${apiVersion}/me/accounts`;
-      const pagesResponse = await axios.get(pagesUrl, {
-        params: { access_token: facebookAccessToken }
-      });
-      
-      log.info(`[Facebook Direct] Доступные страницы: ${JSON.stringify(pagesResponse.data)}`);
-      
-      // Найти нужную страницу и получить её токен
-      let pageToken = facebookAccessToken;
-      const pages = pagesResponse.data.data || [];
-      
-      for(const page of pages) {
-        if(page.id === facebookPageId) {
-          pageToken = page.access_token;
-          log.info(`[Facebook Direct] Найден токен для страницы ${facebookPageId}`);
-          break;
-        }
-      }
-      
-      if(pageToken !== facebookAccessToken) {
-        log.info(`[Facebook Direct] Используется токен страницы вместо пользовательского токена`);
-      }
-      
-      // Используем токен страницы для всех последующих запросов
-      facebookAccessToken = pageToken;
-    } catch(permError: any) {
-      log.error(`[Facebook Direct] Ошибка при проверке прав токена: ${permError.message}`);
-      if(permError.response?.data) {
-        log.error(`[Facebook Direct] Детали ошибки: ${JSON.stringify(permError.response.data)}`);
-      }
-    }
-
-    // Выбираем тип публикации на основе наличия изображений
-    if (isCarousel) {
-      // Публикуем карусель (альбом) с несколькими изображениями
-      log.info(`[Facebook Direct] Публикация карусели с ${additionalImages.length + 1} изображениями`);
-      
+    const getPageToken = async () => {
       try {
-        // Современный подход - использование batch requests или создание поста с несколькими изображениями
-        // Для карусели сначала создаем альбом
-        const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
+        // Проверка прав токена
+        const permissionsUrl = `https://graph.facebook.com/${apiVersion}/me/permissions`;
+        const permissionsResponse = await axios.get(permissionsUrl, {
+          params: { access_token: facebookAccessToken }
+        });
         
-        // Подготавливаем прикрепленные медиафайлы
-        const attachedMedia = [];
+        log.info(`[Facebook Direct] Права токена Facebook: ${JSON.stringify(permissionsResponse.data)}`);
         
-        // Загружаем каждое изображение отдельно
-        const uploadUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/photos`;
+        // Проверка, что токен имеет доступ к странице
+        const pagesUrl = `https://graph.facebook.com/${apiVersion}/me/accounts`;
+        const pagesResponse = await axios.get(pagesUrl, {
+          params: { access_token: facebookAccessToken }
+        });
         
-        // Сначала загружаем основное изображение
-        log.info(`[Facebook Direct] Загрузка основного изображения карусели: ${imageUrl}`);
-        const mainPhotoData = {
-          url: imageUrl,
-          published: false,  // Важно - не публиковать сразу
-          access_token: facebookAccessToken
-        };
+        log.info(`[Facebook Direct] Доступные страницы: ${JSON.stringify(pagesResponse.data)}`);
         
-        const mainPhotoResponse = await axios.post(uploadUrl, mainPhotoData);
-        const mainPhotoId = mainPhotoResponse.data.id;
-        log.info(`[Facebook Direct] Основное изображение загружено, ID: ${mainPhotoId}`);
-        attachedMedia.push({ media_fbid: mainPhotoId });
+        // Найти нужную страницу и получить её токен
+        let pageToken = facebookAccessToken;
+        const pages = pagesResponse.data.data || [];
         
-        // Загружаем дополнительные изображения
-        for (const additionalImageUrl of additionalImages) {
-          log.info(`[Facebook Direct] Загрузка дополнительного изображения карусели: ${additionalImageUrl}`);
-          const photoData = {
-            url: additionalImageUrl,
-            published: false,  // Не публиковать сразу
-            access_token: facebookAccessToken
-          };
-          
-          const photoResponse = await axios.post(uploadUrl, photoData);
-          const photoId = photoResponse.data.id;
-          log.info(`[Facebook Direct] Дополнительное изображение загружено, ID: ${photoId}`);
-          attachedMedia.push({ media_fbid: photoId });
+        for(const page of pages) {
+          if(page.id === facebookPageId) {
+            pageToken = page.access_token;
+            log.info(`[Facebook Direct] Найден токен для страницы ${facebookPageId}`);
+            break;
+          }
         }
         
-        // Теперь создаем пост с прикрепленными изображениями
-        const postData = {
-          message: message,
-          attached_media: attachedMedia,
-          access_token: facebookAccessToken
-        };
+        if(pageToken !== facebookAccessToken) {
+          log.info(`[Facebook Direct] Используется токен страницы вместо пользовательского токена`);
+        }
         
-        log.info(`[Facebook Direct] Создание карусельного поста с ${attachedMedia.length} изображениями`);
-        const response = await axios.post(feedUrl, postData);
-        log.info(`[Facebook Direct] Ответ от API Facebook (карусельный пост): ${JSON.stringify(response.data)}`);
+        return pageToken;
+      } catch(permError: any) {
+        log.error(`[Facebook Direct] Ошибка при проверке прав токена: ${permError.message}`);
+        if(permError.response?.data) {
+          log.error(`[Facebook Direct] Детали ошибки: ${JSON.stringify(permError.response.data)}`);
+        }
+        
+        // В случае ошибки возвращаем оригинальный токен
+        return facebookAccessToken;
+      }
+    };
+    
+    // Получаем токен страницы для использования в запросах
+    const pageAccessToken = await getPageToken();
+
+    try {
+      // Выбираем тип публикации на основе наличия изображений
+      if (isCarousel) {
+        // Публикуем карусель (альбом) с несколькими изображениями
+        log.info(`[Facebook Direct] Публикация карусели с ${additionalImages.length + 1} изображениями`);
+        
+        // Метод 1: Создаем альбом с несколькими фото
+        try {
+          // Сначала создаем альбом
+          const albumUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/albums`;
+          const albumData = new URLSearchParams();
+          albumData.append('name', content.title || 'Новый альбом');
+          albumData.append('message', message);
+          albumData.append('access_token', pageAccessToken);
+          
+          log.info('[Facebook Direct] Создание альбома для карусели');
+          const albumResponse = await axios.post(albumUrl, albumData);
+          const albumId = albumResponse.data.id;
+          log.info(`[Facebook Direct] Альбом успешно создан, ID: ${albumId}`);
+          
+          // Теперь добавляем все изображения в альбом
+          const photoUrl = `https://graph.facebook.com/${apiVersion}/${albumId}/photos`;
+          
+          // Сначала добавляем основное изображение
+          const mainPhotoData = new URLSearchParams();
+          mainPhotoData.append('url', imageUrl);
+          mainPhotoData.append('access_token', pageAccessToken);
+          
+          log.info(`[Facebook Direct] Добавление основного изображения ${imageUrl} в альбом`);
+          await axios.post(photoUrl, mainPhotoData);
+          
+          // Затем добавляем дополнительные изображения
+          for (const additionalImageUrl of additionalImages) {
+            const additionalPhotoData = new URLSearchParams();
+            additionalPhotoData.append('url', additionalImageUrl);
+            additionalPhotoData.append('access_token', pageAccessToken);
+            
+            log.info(`[Facebook Direct] Добавление дополнительного изображения ${additionalImageUrl} в альбом`);
+            await axios.post(photoUrl, additionalPhotoData);
+          }
+          
+          // Для альбома используем его ID
+          postId = albumId;
+          
+          // Для альбомов формат ссылки другой
+          postPermalink = `https://facebook.com/media/set/?set=a.${albumId}`;
+          log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
+        } catch (albumError: any) {
+          log.error(`[Facebook Direct] Ошибка при создании альбома: ${albumError.message}`);
+          
+          if (albumError.response?.data) {
+            log.error(`[Facebook Direct] Детали ошибки API Facebook: ${JSON.stringify(albumError.response.data)}`);
+          }
+          
+          // Метод 2: Если с альбомом не получилось, пробуем метод с attached_media (только для посл. версий API)
+          log.info(`[Facebook Direct] Пробуем альтернативный метод создания карусели с помощью attached_media`);
+          
+          try {
+            // Подготавливаем прикрепленные медиафайлы
+            const attachedMedia = [];
+            
+            // Загружаем каждое изображение отдельно
+            const uploadUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/photos`;
+            
+            // Сначала загружаем основное изображение
+            log.info(`[Facebook Direct] Загрузка основного изображения карусели: ${imageUrl}`);
+            const mainPhotoData = new URLSearchParams();
+            mainPhotoData.append('url', imageUrl);
+            mainPhotoData.append('published', 'false');  // Важно - не публиковать сразу
+            mainPhotoData.append('access_token', pageAccessToken);
+            
+            const mainPhotoResponse = await axios.post(uploadUrl, mainPhotoData);
+            const mainPhotoId = mainPhotoResponse.data.id;
+            log.info(`[Facebook Direct] Основное изображение загружено, ID: ${mainPhotoId}`);
+            attachedMedia.push({ media_fbid: mainPhotoId });
+            
+            // Загружаем дополнительные изображения
+            for (const additionalImageUrl of additionalImages) {
+              log.info(`[Facebook Direct] Загрузка дополнительного изображения карусели: ${additionalImageUrl}`);
+              const photoData = new URLSearchParams();
+              photoData.append('url', additionalImageUrl);
+              photoData.append('published', 'false');  // Не публиковать сразу
+              photoData.append('access_token', pageAccessToken);
+              
+              const photoResponse = await axios.post(uploadUrl, photoData);
+              const photoId = photoResponse.data.id;
+              log.info(`[Facebook Direct] Дополнительное изображение загружено, ID: ${photoId}`);
+              attachedMedia.push({ media_fbid: photoId });
+            }
+            
+            // Теперь создаем пост с прикрепленными изображениями
+            const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
+            const postData = new URLSearchParams();
+            postData.append('message', message);
+            
+            // Добавляем все медиа-вложения
+            for (let i = 0; i < attachedMedia.length; i++) {
+              postData.append(`attached_media[${i}]`, JSON.stringify(attachedMedia[i]));
+            }
+            
+            postData.append('access_token', pageAccessToken);
+            
+            log.info(`[Facebook Direct] Создание карусельного поста с ${attachedMedia.length} изображениями`);
+            const response = await axios.post(feedUrl, postData);
+            log.info(`[Facebook Direct] Ответ от API Facebook (карусельный пост): ${JSON.stringify(response.data)}`);
+            
+            postId = response.data.id;
+            postPermalink = `https://facebook.com/${postId}`;
+            log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
+          } catch (attachedError: any) {
+            log.error(`[Facebook Direct] Ошибка при методе attached_media: ${attachedError.message}`);
+            
+            if (attachedError.response?.data) {
+              log.error(`[Facebook Direct] Детали ошибки: ${JSON.stringify(attachedError.response.data)}`);
+            }
+            
+            // Если и это не сработало, публикуем просто первое изображение
+            log.info(`[Facebook Direct] Пробуем опубликовать только первое изображение`);
+            
+            // Метод 3: Простой пост с одним изображением
+            const photoUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/photos`;
+            const singlePhotoData = new URLSearchParams();
+            singlePhotoData.append('url', imageUrl);
+            singlePhotoData.append('message', message + "\n\n[Примечание: это первое изображение из серии]");
+            singlePhotoData.append('access_token', pageAccessToken);
+            
+            const photoResponse = await axios.post(photoUrl, singlePhotoData);
+            postId = photoResponse.data.id;
+            postPermalink = `https://facebook.com/${postId}`;
+            log.info(`[Facebook Direct] Опубликовано единичное изображение: ${postPermalink}`);
+          }
+        }
+      }
+      else if (imageUrl) {
+        // Публикуем пост с одним изображением
+        log.info(`[Facebook Direct] Публикация с изображением: ${imageUrl}`);
+        
+        // Прямой метод - публикуем изображение с текстом через photos endpoint
+        const photoUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/photos`;
+        const photoData = new URLSearchParams();
+        photoData.append('url', imageUrl);
+        photoData.append('message', message);
+        photoData.append('access_token', pageAccessToken);
+        
+        log.info(`[Facebook Direct] Отправка запроса на публикацию с изображением: ${photoUrl}`);
+        const response = await axios.post(photoUrl, photoData);
+        log.info(`[Facebook Direct] Ответ от API Facebook (публикация с изображением): ${JSON.stringify(response.data)}`);
         
         postId = response.data.id;
         postPermalink = `https://facebook.com/${postId}`;
-        log.info(`[Facebook Direct] Карусель успешно опубликована, permalink: ${postPermalink}`);
-      } catch (carouselError: any) {
-        log.error(`[Facebook Direct] Ошибка при публикации карусели: ${carouselError.message}`);
-        
-        if (carouselError.response?.data) {
-          log.error(`[Facebook Direct] Детали ошибки API Facebook: ${JSON.stringify(carouselError.response.data)}`);
-          
-          // Если нет прав на публикацию карусели, пробуем обычный пост с изображением
-          log.info(`[Facebook Direct] Пробуем опубликовать как обычный пост с изображением`);
-          
-          // Публикуем пост с одним изображением
-          log.info(`[Facebook Direct] Публикация с первым изображением: ${imageUrl}`);
-          
-          const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
-          const postData = {
-            message: message + "\n\n[Примечание: изображения из карусели доступны по ссылкам в посте]",
-            link: imageUrl,
-            access_token: facebookAccessToken
-          };
-          
-          log.info(`[Facebook Direct] Отправка запроса для поста с ссылкой: ${feedUrl}`);
-          const response = await axios.post(feedUrl, postData);
-          log.info(`[Facebook Direct] Ответ от API Facebook (обычный пост): ${JSON.stringify(response.data)}`);
-          
-          postId = response.data.id;
-          postPermalink = `https://facebook.com/${postId}`;
-        } else {
-          throw carouselError;
-        }
-      }
-    }
-    else if (imageUrl) {
-      // Публикуем пост с одним изображением
-      log.info(`[Facebook Direct] Публикация с изображением: ${imageUrl}`);
-      
-      try {
-        // Современный подход - создание поста в feed с приложенной фотографией
-        // Сначала загружаем фото, но не публикуем его
-        const uploadUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/photos`;
-        const uploadData = {
-          url: imageUrl,
-          published: false,  // Важно - не публиковать сразу
-          access_token: facebookAccessToken
-        };
-        
-        log.info(`[Facebook Direct] Загрузка изображения без публикации: ${uploadUrl}`);
-        const uploadResponse = await axios.post(uploadUrl, uploadData);
-        const photoId = uploadResponse.data.id;
-        log.info(`[Facebook Direct] Изображение загружено, ID: ${photoId}`);
-        
-        // Теперь создаем пост с приложенным фото
+      } else {
+        // Публикуем обычный текстовый пост
         const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
-        const postData = {
-          message: message,
-          attached_media: [{ media_fbid: photoId }],
-          access_token: facebookAccessToken
-        };
+        const postData = new URLSearchParams();
+        postData.append('message', message);
+        postData.append('access_token', pageAccessToken);
         
-        log.info(`[Facebook Direct] Создание поста с приложенным изображением: ${feedUrl}`);
+        log.info(`[Facebook Direct] Отправка запроса к Facebook API для текстового поста: ${feedUrl}`);
         const response = await axios.post(feedUrl, postData);
-        log.info(`[Facebook Direct] Ответ от API Facebook (пост с изображением): ${JSON.stringify(response.data)}`);
+        log.info(`[Facebook Direct] Ответ от API Facebook (текстовый пост): ${JSON.stringify(response.data)}`);
         
         postId = response.data.id;
-      } catch (photoError: any) {
-        log.error(`[Facebook Direct] Ошибка при публикации с изображением: ${photoError.message}`);
-        
-        if (photoError.response?.data) {
-          log.error(`[Facebook Direct] Детали ошибки API Facebook: ${JSON.stringify(photoError.response.data)}`);
-          
-          // Если нет прав на приложенные медиа, пробуем опубликовать обычный пост со ссылкой
-          log.info(`[Facebook Direct] Пробуем опубликовать как обычный пост со ссылкой на изображение`);
-          
-          const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
-          const postData = {
-            message: message,
-            link: imageUrl,
-            access_token: facebookAccessToken
-          };
-          
-          log.info(`[Facebook Direct] Отправка запроса для поста с ссылкой: ${feedUrl}`);
-          const response = await axios.post(feedUrl, postData);
-          log.info(`[Facebook Direct] Ответ от API Facebook (пост со ссылкой): ${JSON.stringify(response.data)}`);
-          
-          postId = response.data.id;
-        } else {
-          throw photoError;
-        }
+        postPermalink = `https://facebook.com/${postId}`;
       }
-    } else {
-      // Публикуем обычный текстовый пост
-      const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
-      const postData = {
-        message: message,
-        access_token: facebookAccessToken
-      };
       
-      log.info(`[Facebook Direct] Отправка запроса к Facebook API для текстового поста: ${feedUrl}`);
-      const response = await axios.post(feedUrl, postData);
-      log.info(`[Facebook Direct] Ответ от API Facebook (текстовый пост): ${JSON.stringify(response.data)}`);
+      log.info(`[Facebook Direct] Пост успешно создан, ID: ${postId}`);
+    } catch (mainError: any) {
+      log.error(`[Facebook Direct] Основная ошибка публикации: ${mainError.message}`);
       
-      postId = response.data.id;
+      if (mainError.response?.data) {
+        log.error(`[Facebook Direct] Детали ошибки: ${JSON.stringify(mainError.response.data)}`);
+      }
+      
+      // Если все основные методы не сработали, пробуем самый простой fallback
+      try {
+        log.info(`[Facebook Direct] Пробуем крайний fallback вариант - обычный текстовый пост со ссылкой`);
+        
+        const feedUrl = `https://graph.facebook.com/${apiVersion}/${facebookPageId}/feed`;
+        const fallbackData = new URLSearchParams();
+        fallbackData.append('message', message + (imageUrl ? `\n\nСмотрите изображение по ссылке: ${imageUrl}` : ''));
+        fallbackData.append('access_token', pageAccessToken);
+        
+        if (imageUrl) {
+          fallbackData.append('link', imageUrl);
+        }
+        
+        log.info(`[Facebook Direct] Отправка fallback запроса`);
+        const response = await axios.post(feedUrl, fallbackData);
+        
+        postId = response.data.id;
+        postPermalink = `https://facebook.com/${facebookPageId}/posts/${postId}`;
+        log.info(`[Facebook Direct] Fallback пост успешно опубликован: ${postPermalink}`);
+      } catch (fallbackError: any) {
+        log.error(`[Facebook Direct] Даже fallback не сработал: ${fallbackError.message}`);
+        throw mainError; // Пробрасываем исходную ошибку
+      }
     }
     
     log.info(`[Facebook Direct] Пост успешно создан, ID: ${postId}`);
