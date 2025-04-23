@@ -12,7 +12,7 @@ const router = Router();
  * с учетом изменений в Facebook Graph API v19.0+
  */
 router.post('/', async (req, res) => {
-  let postPermalink = '';
+  let postUrl = '';
   let postId = '';
   
   try {
@@ -179,7 +179,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = carouselResult.id;
-        postPermalink = carouselResult.permalink;
+        postUrl = carouselResult.postUrl;
         
       } else if (imageUrl) {
         // Публикуем пост с одним изображением
@@ -192,7 +192,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = imageResult.id;
-        postPermalink = imageResult.permalink;
+        postUrl = imageResult.postUrl;
         
       } else {
         // Публикуем обычный текстовый пост
@@ -331,7 +331,7 @@ async function publishCarousel(
   imageUrl: string,
   additionalImages: string[],
   title: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     // Метод 1: Создаем альбом и добавляем в него фото
     log.info('[Facebook Direct] Публикация карусели через создание альбома');
@@ -369,9 +369,9 @@ async function publishCarousel(
     }
     
     // Формируем ссылку на альбом
-    const permalink = `https://facebook.com/media/set/?set=a.${albumId}`;
+    const postUrl = `https://facebook.com/media/set/?set=a.${albumId}`;
     
-    return { id: albumId, permalink };
+    return { id: albumId, postUrl };
   } catch (albumError: any) {
     log.error(`[Facebook Direct] Ошибка при создании альбома: ${albumError.message}`);
     
@@ -458,7 +458,7 @@ async function publishImagePost(
   pageAccessToken: string,
   message: string,
   imageUrl: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     // Публикуем изображение напрямую
     log.info(`[Facebook Direct] Публикация поста с изображением: ${imageUrl}`);
@@ -473,9 +473,9 @@ async function publishImagePost(
     const postId = response.data.id;
     
     // Формируем ссылку на пост
-    const permalink = `https://facebook.com/${postId}`;
+    const postUrl = `https://facebook.com/${postId}`;
     
-    return { id: postId, permalink };
+    return { id: postId, postUrl };
   } catch (photoError: any) {
     log.error(`[Facebook Direct] Ошибка при публикации изображения: ${photoError.message}`);
     
@@ -496,9 +496,9 @@ async function publishImagePost(
     const postId = response.data.id;
     
     // Формируем ссылку на пост
-    const permalink = `https://facebook.com/${pageId}/posts/${postId}`;
+    const postUrl = `https://facebook.com/${pageId}/posts/${postId}`;
     
-    return { id: postId, permalink };
+    return { id: postId, postUrl };
   }
 }
 
@@ -510,7 +510,7 @@ async function publishTextPost(
   pageId: string,
   pageAccessToken: string,
   message: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   // Публикуем обычный текстовый пост
   log.info('[Facebook Direct] Публикация текстового поста');
   
@@ -523,9 +523,9 @@ async function publishTextPost(
   const postId = response.data.id;
   
   // Формируем ссылку на пост
-  const permalink = `https://facebook.com/${pageId}/posts/${postId}`;
+  const postUrl = `https://facebook.com/${pageId}/posts/${postId}`;
   
-  return { id: postId, permalink };
+  return { id: postId, postUrl };
 }
 
 /**
