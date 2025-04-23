@@ -347,7 +347,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = fallbackResult.id;
-        postUrl = fallbackResult.permalink;
+        postUrl = fallbackResult.postUrl;
         
         log.info(`[Facebook v3] Запасной вариант успешно опубликован: ID=${postId}`);
       } catch (fallbackError: any) {
@@ -448,7 +448,7 @@ async function publishCarousel(
   imageUrl: string,
   additionalImages: string[],
   title: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     // Создаем альбом
     const albumUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/albums`;
@@ -483,9 +483,9 @@ async function publishCarousel(
     }
     
     // Формируем ссылку на альбом
-    const permalink = `https://facebook.com/media/set/?set=a.${albumId}`;
+    const postUrl = `https://facebook.com/media/set/?set=a.${albumId}`;
     
-    return { id: albumId, permalink };
+    return { id: albumId, postUrl };
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при создании карусели: ${error.message}`);
     
@@ -506,24 +506,24 @@ async function publishImagePost(
   pageAccessToken: string,
   message: string,
   imageUrl: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     // Публикуем изображение с сообщением
-    const postUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/photos`;
+    const apiUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/photos`;
     const postData = new URLSearchParams();
     postData.append('url', imageUrl);
     postData.append('message', message);
     postData.append('access_token', pageAccessToken);
     
-    const response = await axios.post(postUrl, postData);
+    const response = await axios.post(apiUrl, postData);
     const postId = response.data.id;
     
     log.info(`[Facebook v3] Изображение успешно опубликовано, ID: ${postId}`);
     
     // Формируем ссылку на пост
-    const permalink = `https://facebook.com/${postId}`;
+    const postUrl = `https://facebook.com/${postId}`;
     
-    return { id: postId, permalink };
+    return { id: postId, postUrl };
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при публикации изображения: ${error.message}`);
     
@@ -543,23 +543,23 @@ async function publishTextPost(
   pageId: string,
   pageAccessToken: string,
   message: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     // Публикуем текстовый пост
-    const postUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/feed`;
+    const apiUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/feed`;
     const postData = new URLSearchParams();
     postData.append('message', message);
     postData.append('access_token', pageAccessToken);
     
-    const response = await axios.post(postUrl, postData);
+    const response = await axios.post(apiUrl, postData);
     const postId = response.data.id;
     
     log.info(`[Facebook v3] Текстовый пост успешно опубликован, ID: ${postId}`);
     
     // Формируем ссылку на пост
-    const permalink = `https://facebook.com/${pageId}/posts/${postId}`;
+    const postUrl = `https://facebook.com/${pageId}/posts/${postId}`;
     
-    return { id: postId, permalink };
+    return { id: postId, postUrl };
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при публикации текстового поста: ${error.message}`);
     
