@@ -25,11 +25,15 @@ router.post('/', async (req, res) => {
     
     log.info(`[Facebook Direct] Начало прямой публикации контента ${contentId} в Facebook`);
     
-    // Получаем данные контента из Directus через storage интерфейс
+    // Получаем данные контента из Directus
     const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
-    const content = await storage.getCampaignContentById(contentId, adminToken);
+    const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`
+      }
+    });
     
-    if (!content) {
+    if (!contentResponse.data?.data) {
       log.error(`[Facebook Direct] Контент с ID ${contentId} не найден в Directus`);
       return res.status(404).json({ 
         success: false,
@@ -37,16 +41,18 @@ router.post('/', async (req, res) => {
       });
     }
     
+    const content = contentResponse.data.data;
+    
     log.info(`[Facebook Direct] Получен контент для публикации: ${JSON.stringify({
       id: content.id,
       title: content.title,
-      contentType: content.contentType,
-      hasImage: !!content.imageUrl
+      contentType: content.content_type,
+      hasImage: !!content.image_url
     })}`);
     
     // Получаем информацию о кампании для получения настроек Facebook
-    if (!content.campaignId) {
-      log.error(`[Facebook Direct] Контент ${contentId} не содержит campaignId`);
+    if (!content.campaign_id) {
+      log.error(`[Facebook Direct] Контент ${contentId} не содержит campaign_id`);
       return res.status(400).json({ 
         success: false,
         error: 'Не указан ID кампании в контенте' 
@@ -54,20 +60,35 @@ router.post('/', async (req, res) => {
     }
     
     // Получаем данные кампании для извлечения настроек Facebook
-    const campaign = await storage.getCampaignById(content.campaignId, adminToken);
+    const campaignResponse = await directusApi.get(`/items/user_campaigns/${content.campaign_id}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`
+      }
+    });
     
-    if (!campaign) {
-      log.error(`[Facebook Direct] Кампания с ID ${content.campaignId} не найдена`);
+    if (!campaignResponse.data?.data) {
+      log.error(`[Facebook Direct] Кампания с ID ${content.campaign_id} не найдена`);
       return res.status(400).json({ 
         success: false,
         error: 'Кампания не найдена' 
       });
     }
     
+    const campaign = campaignResponse.data.data;
     log.info(`[Facebook Direct] Получены данные кампании: "${campaign.name}"`);
     
     // Извлекаем настройки Facebook из кампании
-    const socialSettings = campaign.social_media_settings || {};
+    let socialSettings = campaign.social_media_settings || {};
+    
+    // Если socialSettings - строка, парсим JSON
+    if (typeof socialSettings === 'string') {
+      try {
+        socialSettings = JSON.parse(socialSettings);
+      } catch (e) {
+        socialSettings = {};
+      }
+    }
+    
     const facebookSettings = socialSettings.facebook || {};
     
     const facebookAccessToken = facebookSettings.token;
@@ -86,8 +107,19 @@ router.post('/', async (req, res) => {
     
     // Подготавливаем данные для публикации
     const message = content.content;
-    const imageUrl = content.imageUrl;
-    const additionalImages = content.additionalImages || [];
+    const imageUrl = content.image_url;
+    
+    // Обрабатываем additional_images, если они есть
+    let additionalImages = content.additional_images || [];
+    
+    // Если additionalImages - строка, парсим JSON
+    if (typeof additionalImages === 'string') {
+      try {
+        additionalImages = JSON.parse(additionalImages);
+      } catch (e) {
+        additionalImages = [];
+      }
+    }
     
     // Определяем тип контента для публикации
     const hasImages = imageUrl || (additionalImages && additionalImages.length > 0);
@@ -232,15 +264,21 @@ router.post('/', async (req, res) => {
 async function updateSocialPlatformsStatus(contentId: string, token: string, permalink?: string) {
   try {
     // Получаем текущие данные контента
-    const content = await storage.getCampaignContentById(contentId, token);
+    const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
-    if (!content) {
+    if (!contentResponse.data?.data) {
       log.error(`[Facebook Direct] Не удалось получить контент для обновления статуса: ${contentId}`);
       return;
     }
     
+    const content = contentResponse.data.data;
+    
     // Получаем текущее состояние socialPlatforms
-    let socialPlatforms = content.socialPlatforms as Record<string, any> || {};
+    let socialPlatforms = content.social_platforms || {};
     
     // Если socialPlatforms - строка, парсим JSON
     if (typeof socialPlatforms === 'string') {
@@ -259,13 +297,21 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, per
     };
     
     // Обновляем контент в Directus
-    await storage.updateCampaignContent(contentId, { 
-      socialPlatforms: socialPlatforms
-    }, token);
+    await directusApi.patch(`/items/campaign_content/${contentId}`, {
+      social_platforms: socialPlatforms
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
     log.info(`[Facebook Direct] Статус публикации обновлен в Directus: ${contentId}`);
   } catch (error: any) {
     log.error(`[Facebook Direct] Ошибка при обновлении статуса: ${error.message}`);
+    
+    if (error.response) {
+      log.error(`[Facebook Direct] Детали ошибки Directus API: ${JSON.stringify(error.response.data)}`);
+    }
   }
 }
 
