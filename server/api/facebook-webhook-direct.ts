@@ -424,7 +424,7 @@ router.post('/', async (req, res) => {
       success: true,
       message: 'Пост успешно опубликован в Facebook',
       postId: postId,
-      permalink: postPermalink
+      postUrl: postPermalink
     });
   } catch (error: any) {
     log.error(`[Facebook Direct] Ошибка при публикации: ${error.message}`);
@@ -444,9 +444,9 @@ router.post('/', async (req, res) => {
  * Обновляет статус публикации в Directus
  * @param contentId ID контента для обновления
  * @param token Токен для доступа к Directus API
- * @param permalink Ссылка на опубликованный пост (опционально)
+ * @param postUrl Ссылка на опубликованный пост (опционально)
  */
-async function updateSocialPlatformsStatus(contentId: string, token: string, permalink?: string) {
+async function updateSocialPlatformsStatus(contentId: string, token: string, postUrl?: string) {
   try {
     // Проверяем токен, и если он недействительный, получаем новый
     try {
@@ -503,7 +503,7 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, per
     socialPlatforms.facebook = {
       status: 'published',
       publishedAt: new Date().toISOString(),
-      permalink: permalink || '' // Добавляем ссылку на пост, если она предоставлена
+      postUrl: postUrl || '' // Используем стандартное имя поля postUrl для единообразия API
     };
     
     // Обновляем контент в Directus
