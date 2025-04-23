@@ -75,18 +75,22 @@ export function registerClaudeRoutes(app: Router) {
       const { apiKey } = req.body;
       
       if (!apiKey) {
+        logger.error('[claude-routes] API key not provided in test-api-key request');
         return res.status(400).json({
           success: false,
           error: 'API ключ не указан'
         });
       }
       
+      logger.log(`[claude-routes] Testing Claude API key, length: ${apiKey.length}, starts with: ${apiKey.substring(0, 4)}...`);
       const claudeService = new ClaudeService(apiKey);
       const isValid = await claudeService.testApiKey();
       
+      logger.log(`[claude-routes] Claude API key test result: ${isValid ? 'Valid' : 'Invalid'}`);
+      
       return res.json({
         success: true,
-        isValid
+        isValid: isValid
       });
     } catch (error) {
       logger.error('[claude-routes] Error testing Claude API key:', error);

@@ -177,12 +177,18 @@ export function SettingsDialog() {
       // Для Claude API используем специальный эндпоинт проверки
       if (keyType === 'claude') {
         try {
+          console.log('Отправка ключа Claude на проверку, длина:', keyValue.length);
+          
           // Используем эндпоинт тестирования ключа Claude
           const response = await api.post('/api/claude/test-api-key', {
             apiKey: keyValue
           });
           
-          if (response.data.success && response.data.isValid) {
+          console.log('Ответ от сервера при проверке ключа Claude:', response.data);
+          
+          // Проверяем наличие success и значение isValid (важно!)
+          if (response.data.success && response.data.isValid === true) {
+            console.log('API ключ Claude прошел проверку успешно');
             setTestingState({ 
               status: 'success', 
               message: 'API ключ Claude работает' 
@@ -192,6 +198,7 @@ export function SettingsDialog() {
               description: "API ключ Claude работает корректно"
             });
           } else {
+            console.log('API ключ Claude не прошел проверку: isValid =', response.data.isValid);
             setTestingState({ 
               status: 'error', 
               message: response.data.error || 'Недействительный API ключ Claude'
