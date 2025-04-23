@@ -86,6 +86,7 @@ export class ClaudeService {
       const isValid = await this.testApiKey();
       if (!isValid) {
         logger.error(`Claude API key for user ${userId} is invalid`, 'claude');
+        logger.error(`Ключ Claude API недействителен. Возможные причины: истек срок действия, неверный формат или отозван доступ. Попробуйте получить новый ключ в личном кабинете Anthropic.`, 'claude');
         this.apiKey = null;
         return false;
       }
@@ -153,6 +154,7 @@ export class ClaudeService {
         
         if (axiosError.response?.status === 401) {
           logger.error('Claude API key is invalid or expired (401 Unauthorized)', 'claude');
+          logger.error('Проверьте ваш ключ Claude API. Возможно, ключ устарел или был отозван. Получите новый ключ в личном кабинете Anthropic и обновите его в настройках приложения.', 'claude');
         } else if (axiosError.response?.status === 400) {
           logger.error('Claude API request is malformed (400 Bad Request)', 'claude');
         } else if (axiosError.response?.status === 429) {

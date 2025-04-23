@@ -3503,10 +3503,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Предупреждение: Claude API сервис не был полностью инициализирован');
             
             if (!claudeInstance.hasApiKey()) {
-              console.error('Ошибка: Не удалось получить API ключ Claude');
+              console.error('Ошибка: Не удалось получить API ключ Claude или ключ недействителен');
               return res.status(400).json({ 
-                error: 'Не удалось получить API ключ Claude. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
-                needApiKey: true
+                error: 'Не удалось получить или проверить API ключ Claude. Возможные причины: ключ отсутствует, устарел или был отозван. Пожалуйста, добавьте новый ключ в настройках пользователя.',
+                needApiKey: true,
+                keyStatus: 'invalid'
               });
             }
           }
@@ -3546,10 +3547,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const apiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
             if (!apiKey) {
-              console.error('Ошибка получения API ключа Gemini: ключ не найден');
+              console.error('Ошибка получения API ключа Gemini: ключ не найден или недействителен');
               return res.status(400).json({ 
-                error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя.',
-                needApiKey: true
+                error: 'Не удалось получить API ключ Gemini. Пожалуйста, убедитесь, что ключ добавлен в настройках пользователя и является действительным.',
+                needApiKey: true,
+                keyStatus: 'missing'
               });
             }
             

@@ -37,6 +37,14 @@ export class GeminiService {
       
       return result !== null;
     } catch (error) {
+      // Проверяем конкретную ошибку региона
+      const errorMessage = String(error);
+      if (errorMessage.includes('User location is not supported for the API use')) {
+        logger.error('[gemini-service] Ошибка доступа к API: ваш регион не поддерживается Gemini API.');
+        logger.error('[gemini-service] Для доступа требуется VPN или сервер в поддерживаемом регионе.');
+        logger.error('[gemini-service] Подробнее: https://ai.google.dev/available_regions');
+      }
+      
       logger.error('[gemini-service] Error testing API key:', error);
       return false;
     }
