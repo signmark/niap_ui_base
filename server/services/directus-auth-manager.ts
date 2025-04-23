@@ -267,6 +267,34 @@ export class DirectusAuthManager {
     log(`Found ${activeSessions.length} active sessions`, this.logPrefix);
     return activeSessions;
   }
+  
+  /**
+   * Добавляет сессию администратора в кэш
+   * @param session Данные о сессии администратора
+   */
+  addAdminSession(session: { id: string; token: string; email?: string }): void {
+    const userId = session.id;
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 часа
+    
+    this.sessionCache[userId] = {
+      userId,
+      token: session.token,
+      refreshToken: '',
+      expiresAt,
+      user: {
+        id: userId,
+        email: session.email || 'admin@example.com',
+        first_name: 'Admin',
+        last_name: 'User',
+        role: 'admin'
+      }
+    };
+    
+    // Также сохраняем в кэше API менеджера
+    directusApiManager.cacheAuthToken(userId, session.token, expiresAt);
+    
+    log(`Admin session for user ${userId} added to cache`, this.logPrefix);
+  }
 
   /**
    * Останавливает интервал обновления сессий

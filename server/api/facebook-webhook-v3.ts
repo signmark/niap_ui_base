@@ -53,15 +53,27 @@ router.post('/', async (req, res) => {
           throw new Error('Отсутствуют учетные данные администратора в переменных окружения');
         }
         
-        // Авторизуемся в Directus
+        // Авторизуемся в Directus через directusCrud
         log.info(`[Facebook v3] Авторизация администратора с учетными данными из env`);
-        const authResult = await directusCrud.login(adminEmail, adminPassword);
         
-        if (!authResult) {
+        // Используем нативный axios для авторизации, так как мы не можем использовать directusCrud.login напрямую
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
+          email: adminEmail,
+          password: adminPassword
+        });
+        
+        if (!loginResponse.data.data.access_token) {
           throw new Error('Не удалось авторизоваться в Directus API');
         }
         
-        adminToken = authResult.token;
+        adminToken = loginResponse.data.data.access_token;
+        directusAuthManager.addAdminSession({
+          id: loginResponse.data.data.user.id,
+          token: adminToken,
+          email: adminEmail
+        });
+        
         log.info(`[Facebook v3] Успешная авторизация администратора`);
       }
     } catch (authError: any) {
@@ -84,9 +96,15 @@ router.post('/', async (req, res) => {
     
     let content;
     try {
-      const contentData = await directusCrud.read('campaign_content', contentId, adminToken);
+      // Используем прямой запрос к Directus API, так как не можем использовать directusCrud.read напрямую
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
       
-      if (!contentData) {
+      if (!contentResponse.data?.data) {
         log.error(`[Facebook v3] Контент с ID ${contentId} не найден`);
         return res.status(404).json({
           success: false,
@@ -94,7 +112,7 @@ router.post('/', async (req, res) => {
         });
       }
       
-      content = contentData;
+      content = contentResponse.data.data;
       
       log.info(`[Facebook v3] Получен контент: ${JSON.stringify({
         id: content.id,
@@ -104,6 +122,11 @@ router.post('/', async (req, res) => {
       })}`);
     } catch (contentError: any) {
       log.error(`[Facebook v3] Ошибка получения контента: ${contentError.message}`);
+      
+      if (contentError.response?.data) {
+        log.error(`[Facebook v3] Детали ошибки Directus API: ${JSON.stringify(contentError.response.data)}`);
+      }
+      
       return res.status(500).json({
         success: false,
         error: `Ошибка получения контента: ${contentError.message}`
@@ -122,9 +145,15 @@ router.post('/', async (req, res) => {
     
     let campaign;
     try {
-      const campaignData = await directusCrud.read('user_campaigns', content.campaign_id, adminToken);
+      // Используем прямой запрос к Directus API
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const campaignResponse = await axios.get(`${directusUrl}/items/user_campaigns/${content.campaign_id}`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
       
-      if (!campaignData) {
+      if (!campaignResponse.data?.data) {
         log.error(`[Facebook v3] Кампания с ID ${content.campaign_id} не найдена`);
         return res.status(404).json({
           success: false,
@@ -132,10 +161,15 @@ router.post('/', async (req, res) => {
         });
       }
       
-      campaign = campaignData;
+      campaign = campaignResponse.data.data;
       log.info(`[Facebook v3] Получены данные кампании: "${campaign.name}"`);
     } catch (campaignError: any) {
       log.error(`[Facebook v3] Ошибка получения кампании: ${campaignError.message}`);
+      
+      if (campaignError.response?.data) {
+        log.error(`[Facebook v3] Детали ошибки Directus API: ${JSON.stringify(campaignError.response.data)}`);
+      }
+      
       return res.status(500).json({
         success: false,
         error: `Ошибка получения кампании: ${campaignError.message}`
@@ -519,12 +553,21 @@ async function publishTextPost(
  */
 async function updatePublicationStatus(contentId: string, token: string, permalink?: string) {
   try {
-    // Получаем текущие данные контента
-    const contentData = await directusCrud.read('campaign_content', contentId, token);
+    // Используем прямой запрос к Directus API
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
     
-    if (!contentData) {
+    // Получаем текущие данные контента
+    const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!contentResponse.data?.data) {
       throw new Error(`Не удалось получить контент ${contentId} для обновления статуса`);
     }
+    
+    const contentData = contentResponse.data.data;
     
     // Получаем текущее состояние social_platforms
     let socialPlatforms = contentData.social_platforms || {};
@@ -552,14 +595,24 @@ async function updatePublicationStatus(contentId: string, token: string, permali
       permalink: permalink || ''
     };
     
-    // Обновляем контент в Directus
-    await directusCrud.update('campaign_content', contentId, {
+    // Обновляем контент в Directus через прямой PATCH запрос
+    await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
       social_platforms: socialPlatforms
-    }, token);
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
     
     log.info(`[Facebook v3] Статус публикации обновлен: Facebook = published`);
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при обновлении статуса: ${error.message}`);
+    
+    if (error.response?.data) {
+      log.error(`[Facebook v3] Детали ошибки Directus API: ${JSON.stringify(error.response.data)}`);
+    }
+    
     throw error;
   }
 }
