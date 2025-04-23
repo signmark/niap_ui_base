@@ -427,7 +427,7 @@ export function SettingsDialog() {
               type="password"
               value={perplexityKey}
               onChange={(e) => setPerplexityKey(e.target.value)}
-              placeholder="Введите API ключ Perplexity (начинается с prx-)"
+              placeholder="Введите API ключ Perplexity"
               className={cn("flex-1", !perplexityKey && "border-amber-400 focus-visible:ring-amber-400")}
             />
             <TooltipProvider>
@@ -470,7 +470,6 @@ export function SettingsDialog() {
             </p>
             <ul className="list-disc list-inside pl-2 text-xs">
               <li>Необходим для функции "Искать источники" на странице Источники</li>
-              <li>Формат ключа: начинается с "prx-", например "prx-y9t5v@8HL..."</li>
               <li>Ключ можно получить в <a href="https://perplexity.ai/settings" target="_blank" className="text-blue-500 hover:underline">настройках аккаунта Perplexity</a></li>
             </ul>
           </div>
