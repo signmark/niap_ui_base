@@ -587,8 +587,14 @@ export function SettingsDialog() {
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-1">
             <Label className="text-base font-medium">API Ключ Claude AI</Label>
-            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "success" : "destructive"}>
-              {apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            <Badge 
+              variant={
+                claudeTesting.status === 'success' ? "success" : 
+                (apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "outline" : "destructive")
+              }
+            >
+              {claudeTesting.status === 'success' ? "Проверен и работает" : 
+               (apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
             </Badge>
           </div>
           <div className="flex gap-2">
@@ -651,8 +657,14 @@ export function SettingsDialog() {
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-1">
             <Label className="text-base font-medium">API Ключ Google Gemini</Label>
-            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "success" : "destructive"}>
-              {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            <Badge 
+              variant={
+                geminiTesting.status === 'success' ? "success" : 
+                (apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "outline" : "destructive")
+              }
+            >
+              {geminiTesting.status === 'success' ? "Проверен и работает" : 
+               (apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
             </Badge>
           </div>
           <div className="flex gap-2">
@@ -715,8 +727,14 @@ export function SettingsDialog() {
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-1">
             <Label className="text-base font-medium">API Ключ Alibaba Qwen</Label>
-            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "success" : "destructive"}>
-              {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Настроен" : "Требуется настройка"}
+            <Badge 
+              variant={
+                qwenTesting.status === 'success' ? "success" : 
+                (apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "outline" : "destructive")
+              }
+            >
+              {qwenTesting.status === 'success' ? "Проверен и работает" : 
+               (apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
             </Badge>
           </div>
           <div className="flex gap-2">
