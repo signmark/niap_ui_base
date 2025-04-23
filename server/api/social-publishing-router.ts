@@ -382,14 +382,38 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
  */
 async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
   try {
+    // Специальная логика для Facebook - используем прямую публикацию, а не n8n
+    if (platform.toLowerCase() === 'facebook') {
+      log(`[Social Publishing] Прямая публикация контента ${contentId} в Facebook через код приложения`);
+      
+      // Вызываем напрямую Facebook webhook
+      try {
+        // Используем полный URL для webhook
+        const apiBaseUrl = process.env.API_URL || 'http://localhost:5000';
+        const response = await axios.post(`${apiBaseUrl}/api/facebook-webhook`, { contentId });
+        
+        log(`[Social Publishing] Facebook webhook ответ: ${JSON.stringify(response.data)}`);
+        return response.data;
+      } catch (fbError: any) {
+        log(`[Social Publishing] Ошибка при прямой публикации в Facebook: ${fbError.message}`);
+        
+        if (fbError.response) {
+          log(`[Social Publishing] Детали ошибки Facebook публикации: ${JSON.stringify(fbError.response.data)}`);
+        }
+        
+        throw new Error(`Ошибка при публикации в Facebook: ${fbError.message}`);
+      }
+    }
+    
+    // Стандартная логика для других платформ через n8n
     log(`[Social Publishing] Асинхронная публикация контента ${contentId} в ${platform} через n8n вебхук`);
     
     // Маппинг платформ на соответствующие n8n вебхуки
     const webhookMap: Record<string, string> = {
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
-      'instagram': 'publish-instagram',
-      'facebook': 'publish-facebook'
+      'instagram': 'publish-instagram'
+      // 'facebook' удален из маппинга, так как теперь используется прямой код
     };
     
     const webhookName = webhookMap[platform];
@@ -397,7 +421,6 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       throw new Error(`Платформа ${platform} не имеет настроенного вебхука`);
     }
     
-    // Формируем URL вебхука
     // Формируем URL вебхука
     // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
     const baseUrl = "https://n8n.nplanner.ru/webhook";
