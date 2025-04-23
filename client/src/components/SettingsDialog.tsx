@@ -199,18 +199,18 @@ export function SettingsDialog() {
             toast({
               variant: "destructive",
               title: "Ошибка API ключа",
-              description: response.data.error || 'API ключ Claude не работает'
+              description: "API ключ не прошел проверку на сервере. Проверьте ключ и попробуйте снова."
             });
           }
           return;
         } catch (err: any) {
           console.error('Ошибка при тестировании Claude ключа:', err);
           
-          let errorMessage = 'Ошибка при проверке API ключа Claude';
+          let errorMessage = 'Ошибка при проверке API ключа. Убедитесь, что ключ верный и имеет правильный формат.';
           if (err.response && err.response.data && err.response.data.error) {
-            errorMessage = err.response.data.error;
+            errorMessage = 'Ошибка при проверке ключа. Сервер вернул: ' + err.response.data.error;
           } else if (err.message) {
-            errorMessage = err.message;
+            errorMessage = 'Ошибка при проверке ключа: ' + err.message;
           }
           
           setTestingState({ 
@@ -645,7 +645,7 @@ export function SettingsDialog() {
             </p>
             <ul className="list-disc list-inside pl-2 text-xs">
               <li>Необходим для функции "Улучшить текст" при редактировании постов</li>
-              <li>Обеспечивает доступ к Claude 3.7 Sonnet для высококачественной генерации текста</li>
+              <li>Обеспечивает доступ к Claude для высококачественной генерации текста</li>
               <li>Ключ можно получить в <a href="https://console.anthropic.com/settings/keys" target="_blank" className="text-blue-500 hover:underline">настройках консоли Anthropic</a></li>
             </ul>
           </div>
@@ -715,7 +715,7 @@ export function SettingsDialog() {
             </p>
             <ul className="list-disc list-inside pl-2 text-xs">
               <li>Необходим для функции "Улучшить текст" с использованием модели Gemini</li>
-              <li>Обеспечивает доступ к Gemini 1.5 Pro для генерации текста</li>
+              <li>Обеспечивает доступ к моделям Gemini для генерации текста</li>
               <li>Ключ можно получить в <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 hover:underline">Google AI Studio</a></li>
             </ul>
           </div>
@@ -784,8 +784,8 @@ export function SettingsDialog() {
               Ключ используется для улучшения текста и генерации контента через Alibaba Qwen
             </p>
             <ul className="list-disc list-inside pl-2 text-xs">
-              <li>Необходим для функции "Улучшить текст" с использованием модели Qwen</li>
-              <li>Обеспечивает доступ к Qwen-MAX для генерации многоязычного контента</li>
+              <li>Необходим для функции "Улучшить текст" с использованием моделей Qwen</li>
+              <li>Обеспечивает доступ к моделям Qwen для генерации многоязычного контента</li>
               <li>Особенно эффективен для работы с китайским языком</li>
             </ul>
           </div>
