@@ -284,7 +284,7 @@ router.post('/', async (req, res) => {
         );
         
         postId = videoResult.id;
-        postUrl = videoResult.permalink;
+        postUrl = videoResult.postUrl;
       } else if (imageUrl) {
         // Публикуем пост с одним изображением
         log.info(`[Facebook v3] Публикация поста с изображением`);
@@ -374,7 +374,7 @@ router.post('/', async (req, res) => {
       success: true,
       message: 'Пост успешно опубликован в Facebook',
       postId: postId,
-      permalink: postUrl
+      postUrl: postUrl
     });
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка публикации: ${error.message}`);
@@ -581,12 +581,12 @@ async function publishVideoPost(
   message: string,
   videoUrl: string,
   title?: string
-): Promise<{ id: string, permalink: string }> {
+): Promise<{ id: string, postUrl: string }> {
   try {
     log.info(`[Facebook v3] Публикация видео: ${videoUrl}`);
     
     // Публикуем видео
-    const postUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/videos`;
+    const videoApiUrl = `https://graph.facebook.com/${apiVersion}/${pageId}/videos`;
     const postData = new URLSearchParams();
     postData.append('file_url', videoUrl);
     postData.append('description', message);
@@ -598,15 +598,15 @@ async function publishVideoPost(
     postData.append('access_token', pageAccessToken);
     
     log.info(`[Facebook v3] Отправка запроса на публикацию видео...`);
-    const response = await axios.post(postUrl, postData);
+    const response = await axios.post(videoApiUrl, postData);
     const postId = response.data.id;
     
     log.info(`[Facebook v3] Видео успешно отправлено на публикацию, ID: ${postId}`);
     
     // Формируем ссылку на пост с видео
-    const permalink = `https://facebook.com/${pageId}/videos/${postId}`;
+    const postUrl = `https://facebook.com/${pageId}/videos/${postId}`;
     
-    return { id: postId, permalink };
+    return { id: postId, postUrl };
   } catch (error: any) {
     log.error(`[Facebook v3] Ошибка при публикации видео: ${error.message}`);
     
@@ -621,7 +621,7 @@ async function publishVideoPost(
 /**
  * Обновляет статус публикации в Directus
  */
-async function updatePublicationStatus(contentId: string, token: string, permalink?: string) {
+async function updatePublicationStatus(contentId: string, token: string, postUrl?: string) {
   try {
     // Используем прямой запрос к Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -662,7 +662,7 @@ async function updatePublicationStatus(contentId: string, token: string, permali
       ...(socialPlatforms.facebook || {}),
       status: 'published',
       publishedAt: new Date().toISOString(),
-      postUrl: permalink || ''
+      postUrl: postUrl || ''
     };
     
     // Обновляем контент в Directus через прямой PATCH запрос
