@@ -122,6 +122,7 @@ export function SettingsDialog() {
     
     try {
       // Сначала сохраняем ключ
+      console.log('Сохраняем настройки API перед тестированием');
       await saveSettings();
       
       // Для FAL.AI есть специальный эндпоинт тестирования
@@ -180,7 +181,8 @@ export function SettingsDialog() {
           console.log('Отправка ключа Claude на проверку, длина:', keyValue.length);
           
           // Используем эндпоинт тестирования ключа Claude
-          const response = await api.post('/api/claude/test-api-key', {
+          // Исправляем URL - префикс /api/ уже добавляется в api клиенте
+          const response = await api.post('/claude/test-api-key', {
             apiKey: keyValue
           });
           
