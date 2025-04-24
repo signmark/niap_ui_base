@@ -1,7 +1,11 @@
 /**
- * Модуль агрегации сервисов аналитики
- * Экспортирует все сервисы аналитики для различных социальных платформ
+ * Индексный файл для экспорта сервисов аналитики
  */
-export * from './post-analytics';
-export * from './telegram-analytics';
-export * from './vk-analytics';
+
+import { telegramAnalyticsService } from './telegram-analytics';
+import { vkAnalyticsService } from './vk-analytics';
+
+export {
+  telegramAnalyticsService,
+  vkAnalyticsService
+};

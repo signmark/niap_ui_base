@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { directusApiManager } from '../directus';
-import { postAnalyticsService } from './new-analytics';
+import { telegramAnalyticsService, vkAnalyticsService } from './new-analytics';
 import logger from '../utils/logger';
 import { directusCrud } from './directus-crud';
 import { directusAuthManager } from './directus-auth-manager';

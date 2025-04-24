@@ -1,6 +1,7 @@
 import * as falClient from "@fal-ai/serverless-client";
 import { log } from '../utils/logger';
 import { apiKeyService } from './api-keys';
+import axios from 'axios';
 
 /**
  * Сервис для работы с fal.ai с использованием официального SDK
@@ -117,7 +118,7 @@ export class FalAiSdkService {
 
     try {
       // Пробуем быстрый запрос для проверки связи через прямой HTTP запрос
-      const axios = require('axios');
+      // axios уже импортирован в начале файла
       // Ключ должен использоваться в точно том же формате, как он хранится в Directus
       // Только логируем для отладки
       if (this.apiKey.startsWith('Key ')) {
@@ -277,7 +278,7 @@ export class FalAiSdkService {
       };
 
       // Вручную используем axios для отправки запроса
-      const axios = require('axios');
+      // axios уже импортирован в начале файла
       const response = await axios(requestConfig);
       
       console.log('Статус ответа:', response.status);

@@ -53,6 +53,7 @@ import { analyticsScheduler } from './services/analytics-scheduler';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
+import debugAnalyticsRoutes from './routes/debug-analytics';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -1299,6 +1300,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты для аналитики
   app.use('/api/analytics', analyticsRouter);
+  
+  // Регистрируем маршруты для отладки аналитики
+  app.use('/api/debug/analytics', debugAnalyticsRoutes);
   
   // Запускаем планировщик аналитики
   analyticsScheduler.start();

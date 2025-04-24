@@ -3,7 +3,7 @@
  * Позволяет подготовить метаданные аналитики для постов, которые ещё не имеют этой структуры
  */
 import { directusApiManager } from '../directus';
-import { postAnalyticsService } from './new-analytics';
+import { telegramAnalyticsService, vkAnalyticsService } from './new-analytics';
 import logger from '../utils/logger';
 import { directusCrud } from './directus-crud';
 import { directusAuthManager } from './directus-auth-manager';
@@ -64,8 +64,26 @@ export class AnalyticsInitializer {
             continue;
           }
           
-          // Инициализируем аналитику через сервис
-          const analytics = await postAnalyticsService.getPostAnalytics(postId, userId);
+          // TODO: Получаем аналитику через новые модули, вызываем соответствующие сервисы
+          // Инициализируем базовую структуру аналитики с нулевыми значениями
+          const analytics = {
+            telegram: {
+              views: 0,
+              likes: 0,
+              comments: 0,
+              shares: 0,
+              engagementRate: 0,
+              lastUpdated: new Date().toISOString()
+            },
+            vk: {
+              views: 0,
+              likes: 0,
+              comments: 0,
+              shares: 0,
+              engagementRate: 0,
+              lastUpdated: new Date().toISOString()
+            }
+          };
           
           if (analytics) {
             logger.log(`Analytics initialized for post ${postId}`, 'analytics-init');
