@@ -5,6 +5,8 @@
 import { directusApiManager } from '../directus';
 import { postAnalyticsService } from './post-analytics';
 import logger from '../utils/logger';
+import { directusCrud } from './directus-crud';
+import { directusAuthManager } from './directus-auth-manager';
 
 /**
  * Класс для инициализации и обновления аналитики постов
@@ -88,20 +90,38 @@ export class AnalyticsInitializer {
    */
   private async getAllPublishedPosts(userId: string, campaignId?: string): Promise<any[]> {
     try {
-      // Пытаемся получить токен пользователя
-      let token = await directusApiManager.getUserToken(userId);
+      // Используем directusAuthManager, как в других частях проекта
+      let token = await directusAuthManager.getAuthToken(userId);
       
-      // Если не удалось получить пользовательский токен, пробуем получить админский
+      // Если токен пользователя не найден, пробуем использовать админскую сессию
       if (!token) {
-        logger.info(`No user token available for user ${userId}, trying admin token`, 'analytics-init');
-        token = await directusApiManager.getAdminToken();
+        logger.info(`No valid token for user ${userId}, trying to authenticate admin`, 'analytics-init');
         
-        // Если и с админским токеном проблемы, логируем ошибку и возвращаем пустой массив
-        if (!token) {
-          logger.error(`Failed to get any token for user ${userId}`, 'analytics-init');
+        // Пробуем авторизоваться как админ (метод, используемый в publish-scheduler.ts)
+        const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+        const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+        
+        try {
+          // Авторизуемся через directusCrud, как в других частях проекта
+          const authResult = await directusCrud.login(email, password);
+          token = authResult.access_token;
+          
+          // Сохраняем токен в кэше
+          const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+          directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+          
+          // Также добавляем сессию в AuthManager
+          directusAuthManager.addAdminSession({
+            id: adminUserId,
+            token: token,
+            email: email
+          });
+          
+          logger.info(`Admin authentication successful for analytics`, 'analytics-init');
+        } catch (authError) {
+          logger.error(`Failed to authenticate admin for analytics: ${authError}`, 'analytics-init');
           return [];
         }
-        logger.info(`Using admin token for analytics initialization for user ${userId}`, 'analytics-init');
       }
       
       // Формируем полный фильтр в виде строкового JSON, обходя проблемы с типизацией

@@ -2,6 +2,8 @@ import axios from 'axios';
 import { directusApiManager } from '../directus';
 import { postAnalyticsService } from './post-analytics';
 import logger from '../utils/logger';
+import { directusCrud } from './directus-crud';
+import { directusAuthManager } from './directus-auth-manager';
 
 // Константы для работы с API
 const TELEGRAM_API_BASE_URL = 'https://api.telegram.org/bot';
@@ -117,8 +119,41 @@ export class AnalyticsScheduler {
       this.processedPosts = 0;
       this.totalPosts = 0;
       
-      // Используем существующий механизм получения админского токена
-      const adminToken = await directusApiManager.getAdminToken();
+      // Используем тот же метод авторизации, что и в других частях проекта
+      const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+      let adminToken;
+      
+      try {
+        // Пробуем получить токен из кеша AuthManager
+        const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+        adminToken = await directusAuthManager.getAuthToken(adminUserId);
+        
+        // Если не удалось получить из кеша, авторизуемся заново
+        if (!adminToken) {
+          logger.info('No admin token in cache, authenticating...', 'analytics-scheduler');
+          
+          // Авторизуемся через directusCrud, как в publish-scheduler.ts
+          const authResult = await directusCrud.login(email, password);
+          adminToken = authResult.access_token;
+          
+          // Сохраняем токен в кешах
+          directusApiManager.cacheAuthToken(adminUserId, adminToken, 3600); // 1 час
+          directusAuthManager.addAdminSession({
+            id: adminUserId,
+            token: adminToken,
+            email: email
+          });
+          
+          logger.info('Admin authentication successful for analytics collection', 'analytics-scheduler');
+        } else {
+          logger.info('Using cached admin token for analytics collection', 'analytics-scheduler');
+        }
+      } catch (authError) {
+        logger.error(`Failed to authenticate admin for analytics: ${authError}`, 'analytics-scheduler');
+        return;
+      }
+      
       if (!adminToken) {
         logger.error('Failed to get admin token for analytics collection', 'analytics-scheduler');
         return;
@@ -277,10 +312,45 @@ export class AnalyticsScheduler {
    */
   private async getUserSocialSettings(userId: string): Promise<any> {
     try {
-      // Получаем админский токен для гарантированного доступа к данным
-      const token = await directusApiManager.getAdminToken();
+      // Получаем токен для гарантированного доступа к данным
+      // Сначала попробуем использовать токен из AuthManager, как в других частях проекта
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      let token = await directusAuthManager.getAuthToken(adminUserId);
+      
+      // Если токен не найден, авторизуемся как админ
       if (!token) {
-        logger.error(`No admin token available for getting social settings for user ${userId}`, 'analytics-scheduler');
+        logger.info(`No admin token in cache for getting social settings for user ${userId}, authenticating...`, 'analytics-scheduler');
+        
+        const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+        const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+        
+        try {
+          // Авторизуемся через directusCrud, как в других частях проекта
+          const authResult = await directusCrud.login(email, password);
+          token = authResult.access_token;
+          
+          // Сохраняем токен в кешах
+          directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+          directusAuthManager.addAdminSession({
+            id: adminUserId,
+            token: token,
+            email: email
+          });
+          
+          logger.info(`Admin authenticated for getting social settings for user ${userId}`, 'analytics-scheduler');
+        } catch (authError) {
+          logger.error(`Failed to authenticate admin for getting social settings: ${authError}`, 'analytics-scheduler');
+          return {
+            telegram: {},
+            vk: {},
+            facebook: {},
+            instagram: {}
+          };
+        }
+      }
+      
+      if (!token) {
+        logger.error(`No token available for getting social settings for user ${userId}`, 'analytics-scheduler');
         return {
           telegram: {},
           vk: {},
