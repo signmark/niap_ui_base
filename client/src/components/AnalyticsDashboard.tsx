@@ -42,7 +42,7 @@ import api, { analytics } from '@/lib/api';
 import { LoadingSpinner } from './ui/loading-spinner';
 
 // Цвета для графиков
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#82ca9d', '#ffc658'];
 const PLATFORM_COLORS = {
   telegram: '#0088CC',
   vk: '#45668e',
@@ -240,6 +240,9 @@ export const AnalyticsDashboard: React.FC = () => {
     name: getPlatformName(platform),
     views: data.views,
     posts: data.posts,
+    likes: data.likes || 0,
+    comments: data.comments || 0,
+    shares: data.shares || 0,
     engagementRate: data.engagementRate
   }));
 
@@ -585,6 +588,9 @@ export const AnalyticsDashboard: React.FC = () => {
                     <Legend />
                     <Bar yAxisId="left" dataKey="views" name="Просмотры" fill={COLORS[0]} />
                     <Bar yAxisId="left" dataKey="posts" name="Посты" fill={COLORS[1]} />
+                    <Bar yAxisId="left" dataKey="likes" name="Лайки" fill={COLORS[3]} />
+                    <Bar yAxisId="left" dataKey="comments" name="Комментарии" fill={COLORS[4]} />
+                    <Bar yAxisId="left" dataKey="shares" name="Репосты" fill={COLORS[5]} />
                     <Bar yAxisId="right" dataKey="engagementRate" name="Вовлеченность (%)" fill={COLORS[2]} />
                   </BarChart>
                 </ResponsiveContainer>
