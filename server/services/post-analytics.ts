@@ -772,9 +772,10 @@ export class PostAnalyticsService {
       };
       
       // Получаем все посты пользователя с правильным форматированием запроса
+      // ИСПРАВЛЕНО: Запрашиваем только существующие поля (без metadata, date_created, date_updated)
       const posts = await directusService.readMany('campaign_content', {
         filter: filterObj,
-        fields: ['id', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms', 'user_id', 'campaign_id']
+        fields: ['id', 'status', 'social_platforms', 'user_id', 'campaign_id', 'title', 'content', 'created_at', 'published_at']
       }, userId);
       
       // Если не удалось получить посты, возвращаем базовую структуру
