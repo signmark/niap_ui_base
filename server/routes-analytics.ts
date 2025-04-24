@@ -1,5 +1,5 @@
 import express from 'express';
-import { postAnalyticsService } from './services/post-analytics';
+import { postAnalyticsService } from './services/new-analytics';
 import { analyticsScheduler } from './services/analytics-scheduler';
 import { analyticsInitializer } from './services/analytics-init';
 import logger from './utils/logger';

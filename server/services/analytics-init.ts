@@ -3,7 +3,7 @@
  * Позволяет подготовить метаданные аналитики для постов, которые ещё не имеют этой структуры
  */
 import { directusApiManager } from '../directus';
-import { postAnalyticsService } from './post-analytics';
+import { postAnalyticsService } from './new-analytics';
 import logger from '../utils/logger';
 import { directusCrud } from './directus-crud';
 import { directusAuthManager } from './directus-auth-manager';
