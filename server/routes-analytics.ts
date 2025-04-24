@@ -1,5 +1,5 @@
 import express from 'express';
-import { telegramAnalyticsService, vkAnalyticsService } from './services/new-analytics';
+import { telegramAnalyticsService, vkAnalyticsService, analyticsService } from './services/new-analytics';
 import { analyticsScheduler } from './services/analytics-scheduler';
 import { analyticsInitializer } from './services/analytics-init';
 import logger from './utils/logger';
@@ -88,7 +88,7 @@ router.get('/user-stats', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
-    const stats = await postAnalyticsService.getAggregatedUserStats(userId);
+    const stats = await analyticsService.getAggregatedUserStats(userId);
     
     return res.json({ success: true, data: stats });
   } catch (error) {
@@ -113,7 +113,7 @@ router.get('/post-stats/:postId', async (req, res) => {
       return res.status(400).json({ success: false, error: 'ID поста не указан' });
     }
     
-    const stats = await postAnalyticsService.getPostAnalytics(postId, userId);
+    const stats = await analyticsService.getPostAnalytics(postId, userId);
     
     return res.json({ success: true, data: stats });
   } catch (error) {
@@ -134,7 +134,7 @@ router.get('/top-posts/views', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
-    const topPosts = await postAnalyticsService.getTopPostsByViews(userId, limit);
+    const topPosts = await analyticsService.getTopPostsByViews(userId, limit);
     
     return res.json({ success: true, data: topPosts });
   } catch (error) {
@@ -155,7 +155,7 @@ router.get('/top-posts/engagement', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
-    const topPosts = await postAnalyticsService.getTopPostsByEngagement(userId, limit);
+    const topPosts = await analyticsService.getTopPostsByEngagement(userId, limit);
     
     return res.json({ success: true, data: topPosts });
   } catch (error) {
