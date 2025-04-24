@@ -15,15 +15,33 @@ const directusService = {
         logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
       }
       
-      const response = await directusApiManager.makeAuthenticatedRequest({
+      let response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/${collection}/${id}`,
         token
       });
       
-      return response.data;
+      // В случае ошибки 403 (Forbidden) и если использовался токен пользователя,
+      // попробуем с админским токеном
+      if (response?.status === 403 && token !== await directusApiManager.getAdminToken()) {
+        logger.warn(`Got 403 Forbidden with user token, trying with admin token`, 'directus-service');
+        const adminToken = await directusApiManager.getAdminToken();
+        
+        if (adminToken) {
+          response = await directusApiManager.makeAuthenticatedRequest({
+            method: 'GET',
+            path: `/items/${collection}/${id}`,
+            token: adminToken
+          });
+          logger.info(`Retry with admin token completed with status ${response?.status || 'unknown'}`, 'directus-service');
+        } else {
+          logger.error(`Failed to get admin token for retry after 403 error`, 'directus-service');
+        }
+      }
+      
+      return response?.data?.data || null;
     } catch (error) {
-      logger.error(`Error reading item from ${collection}: ${error}`, error, 'directus-service');
+      logger.error(`Error reading item from ${collection}: ${error}`, 'directus-service');
       return null;
     }
   },
@@ -50,20 +68,38 @@ const directusService = {
         queryParams.append('fields', params.fields.join(','));
       }
       
-      const response = await directusApiManager.makeAuthenticatedRequest({
+      let response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/${collection}?${queryParams.toString()}`,
         token
       });
       
+      // В случае ошибки 403 (Forbidden) и если использовался токен пользователя,
+      // попробуем с админским токеном
+      if (response?.status === 403 && token !== await directusApiManager.getAdminToken()) {
+        logger.warn(`Got 403 Forbidden with user token, trying with admin token`, 'directus-service');
+        const adminToken = await directusApiManager.getAdminToken();
+        
+        if (adminToken) {
+          response = await directusApiManager.makeAuthenticatedRequest({
+            method: 'GET',
+            path: `/items/${collection}?${queryParams.toString()}`,
+            token: adminToken
+          });
+          logger.info(`Retry with admin token completed with status ${response?.status || 'unknown'}`, 'directus-service');
+        } else {
+          logger.error(`Failed to get admin token for retry after 403 error`, 'directus-service');
+        }
+      }
+      
       if (!response || !response.data) {
-        logger.warn(`Response from Directus for ${collection} does not contain data field`, null, 'directus-service');
+        logger.warn(`Response from Directus for ${collection} does not contain data field`, 'directus-service');
         return [];
       }
       
-      return response.data.data;
+      return response.data.data || [];
     } catch (error) {
-      logger.error(`Error reading items from ${collection}: ${error}`, error, 'directus-service');
+      logger.error(`Error reading items from ${collection}: ${error}`, 'directus-service');
       return [];
     }
   },
