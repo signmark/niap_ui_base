@@ -161,20 +161,17 @@ export class AnalyticsScheduler {
         return;
       }
       
-      // Формируем запрос для получения всех постов пользователя
-      // ИСПРАВЛЕНО: Упрощаем фильтр до минимального варианта, который гарантированно работает
-      let filter: any = { status: { _in: ['published', 'scheduled'] } };
+      // ИСПРАВЛЕНО: Получаем все посты без фильтров для проверки авторизации в Directus
+      let filter: any = {}; // Пустой фильтр - запрашиваем все данные
       
-      // Если указан ID кампании, добавляем его в фильтр
-      if (specificCampaignId) {
-        filter = {
-          _and: [
-            { campaign_id: { _eq: specificCampaignId } },
-            filter
-          ]
-        };
-        logger.log(`Filtering analytics for campaign: ${specificCampaignId}`, 'analytics-scheduler');
+      // Если мы используем пользовательский токен, добавляем фильтр по user_id
+      if (userId && token !== await directusApiManager.getAdminToken()) {
+        filter = { user_id: { _eq: userId } };
+        logger.log(`Using user token, filtering by user: ${userId}`, 'analytics-scheduler');
       }
+      
+      // Логируем итоговый фильтр
+      logger.log(`Simplified analytics filter for testing: ${JSON.stringify(filter)}`, 'analytics-scheduler');
       
       // Поля, которые нам нужны для анализа
       const fields = ['id', 'title', 'content', 'social_platforms', 'metadata', 'user_id', 'campaign_id'];
