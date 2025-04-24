@@ -1,0 +1,590 @@
+9:40:33 AM [express] POST /api/analytics/collect 200 in 136ms :: {"success":true,"message":"Сбор ана…
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter={"_or":[{"status":{"_eq":"published"}},{"social_platforms":{"_nnull":true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+    method: 'get',
+    params: undefined
+  }
+}
+Failed to make authenticated request: AxiosError: Request failed with status code 403
+    at settle (file:///home/runner/workspace/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///home/runner/workspace/node_modules/axios/lib/adapters/http.js:599:11)
+    at IncomingMessage.emit (node:events:530:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at Axios.request (file:///home/runner/workspace/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DirectusApiManager.makeAuthenticatedRequest (/home/runner/workspace/server/directus.ts:219:24)
+    at async AnalyticsScheduler.collectAnalytics (/home/runner/workspace/server/services/analytics-scheduler.ts:188:24) {
+  code: 'ERR_BAD_REQUEST',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function [FormData]], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NTQ4NzYxOSwiZXhwIjoxNzQ1NDg4NTE5LCJpc3MiOiJkaXJlY3R1cyJ9.4G_WT6SOHgoPXcfKtppxrIgtU3VZ2eBNZKplxu77x40',
+      'User-Agent': 'axios/1.8.4',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    baseURL: 'https://directus.nplanner.ru',
+    method: 'get',
+    url: '/items/campaign_content?filter={"_or":[{"status":{"_eq":"published"}},{"social_platforms":{"_nnull":true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+    allowAbsoluteUrls: true,
+    data: undefined
+  },
+  request: <ref *1> ClientRequest {
+    _events: [Object: null prototype] {
+      abort: [Function (anonymous)],
+      aborted: [Function (anonymous)],
+      connect: [Function (anonymous)],
+      error: [Function (anonymous)],
+      socket: [Function (anonymous)],
+      timeout: [Function (anonymous)],
+      finish: [Function: requestOnFinish]
+    },
+    _eventsCount: 7,
+    _maxListeners: undefined,
+    outputData: [],
+    outputSize: 0,
+    writable: true,
+    destroyed: true,
+    _last: true,
+    chunkedEncoding: false,
+    shouldKeepAlive: true,
+    maxRequestsOnConnectionReached: false,
+    _defaultKeepAlive: true,
+    useChunkedEncodingByDefault: false,
+    sendDate: false,
+    _removedConnection: false,
+    _removedContLen: false,
+    _removedTE: false,
+    strictContentLength: false,
+    _contentLength: 0,
+    _hasBody: true,
+    _trailer: '',
+    finished: true,
+    _headerSent: true,
+    _closed: true,
+    socket: TLSSocket {
+      _tlsOptions: [Object],
+      _secureEstablished: true,
+      _securePending: false,
+      _newSessionPending: false,
+      _controlReleased: true,
+      secureConnecting: false,
+      _SNICallback: null,
+      servername: 'directus.nplanner.ru',
+      alpnProtocol: false,
+      authorized: true,
+      authorizationError: null,
+      encrypted: true,
+      _events: [Object: null prototype],
+      _eventsCount: 9,
+      connecting: false,
+      _hadError: false,
+      _parent: null,
+      _host: 'directus.nplanner.ru',
+      _closeAfterHandlingError: false,
+      _readableState: [ReadableState],
+      _writableState: [WritableState],
+      allowHalfOpen: false,
+      _maxListeners: undefined,
+      _sockname: null,
+      _pendingData: null,
+      _pendingEncoding: '',
+      server: undefined,
+      _server: null,
+      ssl: [TLSWrap],
+      _requestCert: true,
+      _rejectUnauthorized: true,
+      timeout: 5000,
+      parser: null,
+      _httpMessage: null,
+      [Symbol(alpncallback)]: null,
+      [Symbol(res)]: [TLSWrap],
+      [Symbol(verified)]: true,
+      [Symbol(pendingSession)]: null,
+      [Symbol(async_id_symbol)]: -1,
+      [Symbol(kHandle)]: [TLSWrap],
+      [Symbol(lastWriteQueueSize)]: 0,
+      [Symbol(timeout)]: Timeout {
+        _idleTimeout: 5000,
+        _idlePrev: [TimersList],
+        _idleNext: [Timeout],
+        _idleStart: 78811,
+        _onTimeout: [Function: bound ],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(refed)]: false,
+        [Symbol(kHasPrimitive)]: false,
+        [Symbol(asyncId)]: 18567,
+        [Symbol(triggerId)]: 18565
+      },
+      [Symbol(kBuffer)]: null,
+      [Symbol(kBufferCb)]: null,
+      [Symbol(kBufferGen)]: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kSetNoDelay)]: false,
+      [Symbol(kSetKeepAlive)]: true,
+      [Symbol(kSetKeepAliveInitialDelay)]: 1,
+      [Symbol(kBytesRead)]: 0,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(connect-options)]: [Object]
+    },
+    _header: 'GET /items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id HTTP/1.1\r\n' +
+      'Accept: application/json, text/plain, */*\r\n' +
+      'Content-Type: application/json\r\n' +
+      'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NTQ4NzYxOSwiZXhwIjoxNzQ1NDg4NTE5LCJpc3MiOiJkaXJlY3R1cyJ9.4G_WT6SOHgoPXcfKtppxrIgtU3VZ2eBNZKplxu77x40\r\n' +
+      'User-Agent: axios/1.8.4\r\n' +
+      'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+      'Host: directus.nplanner.ru\r\n' +
+      'Connection: keep-alive\r\n' +
+      '\r\n',
+    _keepAliveTimeout: 0,
+    _onPendingData: [Function: nop],
+    agent: Agent {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      defaultPort: 443,
+      protocol: 'https:',
+      options: [Object: null prototype],
+      requests: [Object: null prototype] {},
+      sockets: [Object: null prototype] {},
+      freeSockets: [Object: null prototype],
+      keepAliveMsecs: 1000,
+      keepAlive: true,
+      maxSockets: Infinity,
+      maxFreeSockets: 256,
+      scheduling: 'lifo',
+      maxTotalSockets: Infinity,
+      totalSocketCount: 2,
+      maxCachedSessions: 100,
+      _sessionCache: [Object],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false
+    },
+    socketPath: undefined,
+    method: 'GET',
+    maxHeaderSize: undefined,
+    insecureHTTPParser: undefined,
+    joinDuplicateHeaders: undefined,
+    path: '/items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+    _ended: true,
+    res: IncomingMessage {
+      _events: [Object],
+      _readableState: [ReadableState],
+      _maxListeners: undefined,
+      socket: null,
+      httpVersionMajor: 1,
+      httpVersionMinor: 1,
+      httpVersion: '1.1',
+      complete: true,
+      rawHeaders: [Array],
+      rawTrailers: [],
+      joinDuplicateHeaders: undefined,
+      aborted: false,
+      upgrade: false,
+      url: '',
+      method: null,
+      statusCode: 403,
+      statusMessage: 'Forbidden',
+      client: [TLSSocket],
+      _consuming: false,
+      _dumped: false,
+      req: [Circular *1],
+      _eventsCount: 4,
+      responseUrl: 'https://directus.nplanner.ru/items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+      redirects: [],
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kHeaders)]: [Object],
+      [Symbol(kHeadersCount)]: 18,
+      [Symbol(kTrailers)]: null,
+      [Symbol(kTrailersCount)]: 0
+    },
+    aborted: false,
+    timeoutCb: null,
+    upgradeOrConnect: false,
+    parser: null,
+    maxHeadersCount: null,
+    reusedSocket: true,
+    host: 'directus.nplanner.ru',
+    protocol: 'https:',
+    _redirectable: Writable {
+      _events: [Object],
+      _writableState: [WritableState],
+      _maxListeners: undefined,
+      _options: [Object],
+      _ended: true,
+      _ending: true,
+      _redirectCount: 0,
+      _redirects: [],
+      _requestBodyLength: 0,
+      _requestBodyBuffers: [],
+      _eventsCount: 3,
+      _onNativeResponse: [Function (anonymous)],
+      _currentRequest: [Circular *1],
+      _currentUrl: 'https://directus.nplanner.ru/items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false
+    },
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false,
+    [Symbol(kBytesWritten)]: 0,
+    [Symbol(kNeedDrain)]: false,
+    [Symbol(corked)]: 0,
+    [Symbol(kOutHeaders)]: [Object: null prototype] {
+      accept: [Array],
+      'content-type': [Array],
+      authorization: [Array],
+      'user-agent': [Array],
+      'accept-encoding': [Array],
+      host: [Array]
+    },
+    [Symbol(errored)]: null,
+    [Symbol(kHighWaterMark)]: 16384,
+    [Symbol(kRejectNonStandardBodyWrites)]: false,
+    [Symbol(kUniqueHeaders)]: null
+  },
+  response: {
+    status: 403,
+    statusText: 'Forbidden',
+    headers: Object [AxiosHeaders] {
+      'access-control-allow-credentials': 'true',
+      'access-control-expose-headers': 'Content-Range',
+      'content-length': '329',
+      'content-security-policy': "script-src 'self' 'unsafe-eval';worker-src 'self' blob:;child-src 'self' blob:;img-src 'self' data: blob: https://raw.githubusercontent.com https://avatars.githubusercontent.com;media-src 'self';connect-src 'self' https://* wss://*;default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';style-src 'self' https: 'unsafe-inline'",
+      'content-type': 'application/json; charset=utf-8',
+      date: 'Thu, 24 Apr 2025 09:40:33 GMT',
+      etag: 'W/"149-bqXW/8gJ1MAgOue/8S5wXE24t/E"',
+      vary: 'Origin',
+      'x-powered-by': 'Directus'
+    },
+    config: {
+      transitional: [Object],
+      adapter: [Array],
+      transformRequest: [Array],
+      transformResponse: [Array],
+      timeout: 0,
+      xsrfCookieName: 'XSRF-TOKEN',
+      xsrfHeaderName: 'X-XSRF-TOKEN',
+      maxContentLength: -1,
+      maxBodyLength: -1,
+      env: [Object],
+      validateStatus: [Function: validateStatus],
+      headers: [Object [AxiosHeaders]],
+      baseURL: 'https://directus.nplanner.ru',
+      method: 'get',
+      url: '/items/campaign_content?filter={"_or":[{"status":{"_eq":"published"}},{"social_platforms":{"_nnull":true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+      allowAbsoluteUrls: true,
+      data: undefined
+    },
+    request: <ref *1> ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 7,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: true,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: false,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 0,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: true,
+      socket: [TLSSocket],
+      _header: 'GET /items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NTQ4NzYxOSwiZXhwIjoxNzQ1NDg4NTE5LCJpc3MiOiJkaXJlY3R1cyJ9.4G_WT6SOHgoPXcfKtppxrIgtU3VZ2eBNZKplxu77x40\r\n' +
+        'User-Agent: axios/1.8.4\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: directus.nplanner.ru\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'GET',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: undefined,
+      joinDuplicateHeaders: undefined,
+      path: '/items/campaign_content?filter={%22_or%22:[{%22status%22:{%22_eq%22:%22published%22}},{%22social_platforms%22:{%22_nnull%22:true}}]}&fields=id,title,content,social_platforms,metadata,user_id,campaign_id',
+      _ended: true,
+      res: [IncomingMessage],
+      aborted: false,
+      timeoutCb: null,
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: true,
+      host: 'directus.nplanner.ru',
+      protocol: 'https:',
+      _redirectable: [Writable],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(kNeedDrain)]: false,
+      [Symbol(corked)]: 0,
+      [Symbol(kOutHeaders)]: [Object: null prototype],
+      [Symbol(errored)]: null,
+      [Symbol(kHighWaterMark)]: 16384,
+      [Symbol(kRejectNonStandardBodyWrites)]: false,
+      [Symbol(kUniqueHeaders)]: null
+    },
+    data: { errors: [Array] }
+  },
+  status: 403
+}
+9:40:33 AM [analytics-scheduler] No data returned from Directus for analytics collection
+9:40:33 AM [express] GET /api/analytics/status 304 in 137ms :: {"success":true,"data":{"isCollecting…
+9:40:39 AM [express] GET /api/analytics/status 304 in 390ms :: {"success":true,"data":{"isCollecting…
+9:40:45 AM [analytics-api] Получение аналитики постов: userId=53921f16-f51d-4591-80b9-8caa4fde4d13, period=90days, campaignId=undefined
+9:40:45 AM [analytics] Getting top posts by views for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:45 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},"fields":["id","title","content","metadata","date_created","date_updated","status","social_platforms","campaign"]}
+9:40:45 AM [express] GET /api/analytics/status 304 in 397ms :: {"success":true,"data":{"isCollecting…
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D&fields=id%2Ctitle%2Ccontent%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Ccampaign',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:46 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:46 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:46 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:46 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or failed to fetch them
+9:40:46 AM [analytics] Getting top posts by engagement for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:46 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},"fields":["id","title","content","metadata","date_created","date_updated","status","social_platforms","campaign"]}
+9:40:46 AM [analytics-api] Получение аналитики платформ: userId=53921f16-f51d-4591-80b9-8caa4fde4d13, period=90days, campaignId=undefined
+9:40:46 AM [analytics] Getting platform stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:46 AM [analytics] Getting aggregated stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:46 AM [analytics] Requesting posts for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with filter: user_id=53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:46 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"_and":[{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},{"status":{"_in":["published","scheduled"]}}]},"fields":["id","metadata","date_created","date_updated","status","social_platforms","user_id","campaign_id"]}
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D&fields=id%2Ctitle%2Ccontent%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Ccampaign',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:46 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:46 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:46 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:46 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or failed to fetch them
+9:40:46 AM [express] GET /api/analytics/posts 200 in 663ms :: {"success":true,"data":{"topByViews":[…
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22_and%22%3A%5B%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D%2C%7B%22status%22%3A%7B%22_in%22%3A%5B%22published%22%2C%22scheduled%22%5D%7D%7D%5D%7D&fields=id%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Cuser_id%2Ccampaign_id',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:46 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:46 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:46 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:46 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or could not fetch them
+9:40:46 AM [analytics] Returning platform stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:46 AM [analytics] Getting aggregated stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:46 AM [analytics] Requesting posts for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with filter: user_id=53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:46 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"_and":[{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},{"status":{"_in":["published","scheduled"]}}]},"fields":["id","metadata","date_created","date_updated","status","social_platforms","user_id","campaign_id"]}
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22_and%22%3A%5B%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D%2C%7B%22status%22%3A%7B%22_in%22%3A%5B%22published%22%2C%22scheduled%22%5D%7D%7D%5D%7D&fields=id%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Cuser_id%2Ccampaign_id',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:46 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:46 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:46 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:46 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or could not fetch them
+9:40:46 AM [express] GET /api/analytics/platforms 200 in 804ms :: {"success":true,"data":{"platforms…
+9:40:49 AM [analytics-api] Получение аналитики постов: userId=53921f16-f51d-4591-80b9-8caa4fde4d13, period=90days, campaignId=undefined
+9:40:49 AM [analytics] Getting top posts by views for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:49 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},"fields":["id","title","content","metadata","date_created","date_updated","status","social_platforms","campaign"]}
+9:40:49 AM [analytics-api] Получение аналитики платформ: userId=53921f16-f51d-4591-80b9-8caa4fde4d13, period=90days, campaignId=undefined
+9:40:49 AM [analytics] Getting platform stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:49 AM [analytics] Getting aggregated stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:49 AM [analytics] Requesting posts for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with filter: user_id=53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:49 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"_and":[{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},{"status":{"_in":["published","scheduled"]}}]},"fields":["id","metadata","date_created","date_updated","status","social_platforms","user_id","campaign_id"]}
+9:40:49 AM [express] GET /api/analytics/status 304 in 151ms :: {"success":true,"data":{"isCollecting…
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D&fields=id%2Ctitle%2Ccontent%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Ccampaign',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:49 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:49 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:49 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:49 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or failed to fetch them
+9:40:49 AM [analytics] Getting top posts by engagement for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:49 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},"fields":["id","title","content","metadata","date_created","date_updated","status","social_platforms","campaign"]}
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22_and%22%3A%5B%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D%2C%7B%22status%22%3A%7B%22_in%22%3A%5B%22published%22%2C%22scheduled%22%5D%7D%7D%5D%7D&fields=id%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Cuser_id%2Ccampaign_id',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:49 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:49 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:49 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:49 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or could not fetch them
+9:40:49 AM [analytics] Returning platform stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:49 AM [analytics] Getting aggregated stats for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with period 90days
+9:40:49 AM [analytics] Requesting posts for user 53921f16-f51d-4591-80b9-8caa4fde4d13 with filter: user_id=53921f16-f51d-4591-80b9-8caa4fde4d13
+9:40:49 AM [directus-service] Requesting items from campaign_content with userId 53921f16-f51d-4591-80b9-8caa4fde4d13 and filter: {"filter":{"_and":[{"user_id":{"_eq":"53921f16-f51d-4591-80b9-8caa4fde4d13"}},{"status":{"_in":["published","scheduled"]}}]},"fields":["id","metadata","date_created","date_updated","status","social_platforms","user_id","campaign_id"]}
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D&fields=id%2Ctitle%2Ccontent%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Ccampaign',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:50 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:50 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:50 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\", \"campaign\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:50 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or failed to fetch them
+9:40:50 AM [express] GET /api/analytics/posts 200 in 417ms :: {"success":true,"data":{"topByViews":[…
+Directus API Error: {
+  status: 403,
+  data: { errors: [ [Object] ] },
+  config: {
+    url: '/items/campaign_content?filter=%7B%22_and%22%3A%5B%7B%22user_id%22%3A%7B%22_eq%22%3A%2253921f16-f51d-4591-80b9-8caa4fde4d13%22%7D%7D%2C%7B%22status%22%3A%7B%22_in%22%3A%5B%22published%22%2C%22scheduled%22%5D%7D%7D%5D%7D&fields=id%2Cmetadata%2Cdate_created%2Cdate_updated%2Cstatus%2Csocial_platforms%2Cuser_id%2Ccampaign_id',
+    method: 'get',
+    params: undefined
+  }
+}
+9:40:50 AM [express] API error when fetching campaign_content: Request failed with status code 403 directus-service
+9:40:50 AM [express] Access denied (403) for campaign_content. User has insufficient permissions. directus-service
+9:40:50 AM [express] Response data: {"errors":[{"message":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","extensions":{"reason":"You don't have permission to access fields \"metadata\", \"date_created\", \"date_updated\" in collection \"campaign_content\" or they do not exist. Queried in root.","code":"FORBIDDEN"}}]} directus-service
+9:40:50 AM [null] No posts found for user 53921f16-f51d-4591-80b9-8caa4fde4d13 or could not fetch them
+9:40:50 AM [express] GET /api/analytics/platforms 200 in 423ms :: {"success":true,"data":{"platforms…
+{success: true, message: "Аналитика успешно инициализирована для 0 постов",…}
+details
+: 
+{success: true, processedCount: 0, errors: []}9:41:17 AM [scheduler] Проверка запланированных публикаций
+9:41:17 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+9:41:18 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+9:41:18 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+9:41:18 AM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+9:41:18 AM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+9:41:18 AM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+9:41:18 AM [scheduler] Получено 1 запланированных публикаций через API
+9:41:18 AM [scheduler] Найдено 1 запланированных публикаций
+9:41:18 AM [scheduler] Проверка времени публикации для контента ID f8d08270-0c72-4680-a4dd-d7b8652d7315 "Рацион питания: ключ к здоровью и энергии! 🍎💪":
+9:41:18 AM [scheduler]   - vk: уже опубликован
+9:41:18 AM [scheduler]   - facebook: запланирован на 2025-04-23T14:15:00.000Z (через -1167 мин.)
+9:41:18 AM [scheduler]   - facebook: ГОТОВ К ПУБЛИКАЦИИ
+9:41:18 AM [scheduler]   - telegram: уже опубликован
+9:41:18 AM [scheduler]   - instagram: уже опубликован
+9:41:18 AM [scheduler]   - Общее время: 2025-04-23T14:20:00.000Z (через -1162 мин.) - ИГНОРИРУЕТСЯ
+9:41:18 AM [scheduler] Найдено 1 публикаций, готовых к публикации
+9:41:18 AM [scheduler] Обнаружена неопубликованная платформа facebook в контенте ID f8d08270-0c72-4680-a4dd-d7b8652d7315, несмотря на published_at
+9:41:18 AM [scheduler] ПРОВЕРКА В БД: Контент ID f8d08270-0c72-4680-a4dd-d7b8652d7315 "Рацион питания: ключ к здоровью и энергии! 🍎💪" имеет published_at = 2025-04-23T17:20:38, но найдены неопубликованные платформы - ПРОДОЛЖАЕМ
+9:41:18 AM [scheduler] ПРОВЕРКА В БД: Контент ID f8d08270-0c72-4680-a4dd-d7b8652d7315 "Рацион питания: ключ к здоровью и энергии! 🍎💪" опубликован только в 3/4 соцсетях, продолжаем публикацию
+9:41:18 AM [scheduler] Готово к публикации 1 элементов контента
+9:41:18 AM [scheduler] Публикация контента f8d08270-0c72-4680-a4dd-d7b8652d7315 "Рацион питания: ключ к здоровью и энергии! 🍎💪"...
+9:41:18 AM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+9:41:18 AM [directus-crud] Выполнение операции read для коллекции users/me
+9:41:18 AM [scheduler] Проверка статуса платформ: опубликовано 3 из 4
+9:41:18 AM [scheduler] ИНФО: Контент f8d08270-0c72-4680-a4dd-d7b8652d7315 опубликован только в НЕКОТОРЫХ (3/4) соцсетях, продолжаем публикацию остальных
+9:41:18 AM [scheduler] Публикация контента f8d08270-0c72-4680-a4dd-d7b8652d7315: "Рацион питания: ключ к здоровью и энергии! 🍎💪"
+9:41:18 AM [scheduler] Настройки времени публикации для платформ: vk: не задано (статус: published), facebook: 2025-04-23T14:15:00.000Z (статус: scheduled), telegram: не задано (статус: published), instagram: не задано (статус: published)
+9:41:18 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+9:41:19 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+9:41:19 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+9:41:19 AM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+9:41:19 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+9:41:19 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+9:41:19 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+9:41:19 AM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+9:41:19 AM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+9:41:19 AM [scheduler] Прямой запрос для получения кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+9:41:19 AM [scheduler] Кампания найдена в списке: Правильное питание
+9:41:19 AM [scheduler] Настройки кампании: {"id":"46868c44-c6a4-4bed-accf-9ad07bba790e","hasSettings":true,"settingsType":"object","settingsKeys":["telegram","vk","instagram","facebook","youtube"],"telegramSettings":"имеются","instagramSettings":"имеются","vkSettings":"имеются","facebookSettings":"имеются","rawSettings":{"telegram":{"token":"7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU","chatId":"-1002302366310"},"vk":{"token":"vk1.a.0jlmORGkgmds1qIB5btPIIuT1FZ8C_bkGpCcowI9Ml214neQFgVMiYEnePWq48txdx3D7oTtKbEvgnEifytkkyjv1FvooFsI0y_YYPX8Cw__525Tnqt_H7C9hEEdmsqHXExr4Q3DK7CL0quCvnhrhN368Ter9yFLe6buYgpnamBXwUx4yZnRJPdBVfnPmObtZRrXw7NaZJboCqAK8sXLEA","groupId":"club228626989"},"instagram":{"token":"EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R","accessToken":null,"businessAccountId":"17841422577074562"},"facebook":{"token":"EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R","pageId":"2120362494678794"},"youtube":{"apiKey":"AIzaSyAu3J57U9Xy4xN9xMaYJlHs6VPy30bHU00","channelId":"UCh-jDILbZG-CbS-hWJuiXjA"}}}
+9:41:19 AM [scheduler] Настройки Telegram для кампании: token=задан, chatId=-1002302366310
+9:41:19 AM [scheduler] Проверка платформ для публикации контента f8d08270-0c72-4680-a4dd-d7b8652d7315 "Рацион питания: ключ к здоровью и энергии! 🍎💪":
+9:41:19 AM [scheduler]   - vk: статус "published", пропускаем
+9:41:19 AM [scheduler]   - facebook: запланирован на 2025-04-23T14:15:00.000Z, время публикации НАСТУПИЛО
+9:41:19 AM [scheduler]   - telegram: статус "published", пропускаем
+9:41:19 AM [scheduler]   - instagram: статус "published", пропускаем
+9:41:19 AM [scheduler] Итого платформ для публикации: 1 (facebook)
+9:41:19 AM [scheduler] Вызов API публикации через n8n для запланированного контента f8d08270-0c72-4680-a4dd-d7b8652d7315 на платформе facebook
+9:41:19 AM [express] [Social Publishing] Получен запрос на публикацию с телом: {"contentId":"f8d08270-0c72-4680-a4dd-d7b8652d7315","platforms":["facebook"],"userId":"53921f16-f51d-4591-80b9-8caa4fde4d13"}
+9:41:19 AM [express] [Social Publishing] Запрос на публикацию контента f8d08270-0c72-4680-a4dd-d7b8652d7315 сразу в несколько платформ: ["facebook"]
+9:41:19 AM [express] [Social Publishing] Проверка формата объекта platforms: ["facebook"]
+9:41:19 AM [express] [Social Publishing] Ожидаемые ключи платформ: telegram, vk, instagram, facebook
+9:41:19 AM [express] [Social Publishing] Полученные ключи платформ: 0
+9:41:19 AM [express] [Social Publishing] Ошибка: неверный формат объекта platforms
+9:41:19 AM [express] POST /api/publish/now 400 in 0ms :: {"success":false,"error":"Неверный формат п…
+9:41:19 AM [scheduler] Исключение при вызове API публикации: AxiosError: Request failed with status code 400
+9:41:19 AM [scheduler] Использование резервного метода публикации через n8n webhook для контента f8d08270-0c72-4680-a4dd-d7b8652d7315 на платформе facebook
+9:41:19 AM [scheduler] Сформирован URL для n8n webhook: https://n8n.nplanner.ru/webhook/publish-facebook
+9:41:19 AM [scheduler] Отправка запроса на n8n webhook https://n8n.nplanner.ru/webhook/publish-facebook для контента ID f8d08270-0c72-4680-a4dd-d7b8652d7315
+9:41:20 AM [scheduler] Ошибка при вызове n8n webhook для facebook: AxiosError: Request failed with status code 404
+9:41:20 AM [social-publishing] Платформа facebook не поддерживается для обновления статуса
+9:41:20 AM [scheduler] Ошибка при публикации контента f8d08270-0c72-4680-a4dd-d7b8652d7315 в facebook: Ошибка вызова n8n webhook: AxiosError: Request failed with status code 404
+Запрос контента по ID: f8d08270-0c72-4680-a4dd-d7b8652d7315
+Используем переданный токен авторизации для запроса контента f8d08270-0c72-4680-a4dd-d7b8652d7315
+9:41:20 AM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+9:41:20 AM [directus-crud] Выполнение операции read для коллекции users/me
+Успешно получен контент с использованием переданного токена
+✅ Контент найден в Directus: f8d08270-0c72-4680-a4dd-d7b8652d7315, user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+9:41:20 AM [scheduler] Проверка времени для платформы facebook: 2025-04-23T14:15:00.000Z vs 2025-04-24T09:41:20.248Z
+9:41:20 AM [scheduler] Платформа facebook должна была быть опубликована в 2025-04-23T14:15:00.000Z, но всё ещё в статусе scheduled
+9:41:20 AM [scheduler] Контент f8d08270-0c72-4680-a4dd-d7b8652d7315: опубликовано 3/4 платформ, ожидает публикации: 1
+9:41:20 AM [scheduler] Контент f8d08270-0c72-4680-a4dd-d7b8652d7315 имеет 1 платформ, запланированных на будущее время. Оставляем статус scheduled
+9:41:20 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+9:41:20 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+9:41:20 AM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+9:41:20 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
