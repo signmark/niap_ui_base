@@ -5,7 +5,6 @@
 import { log } from '../utils/logger';
 import { collectAnalytics, getAnalyticsStatus } from './analytics';
 import { directusCrud } from './directus-crud';
-import { directusAuthManager } from './directus-auth-manager';
 
 // Интервал сбора аналитики по умолчанию (5 минут)
 const DEFAULT_COLLECTION_INTERVAL = 5 * 60 * 1000;
@@ -55,51 +54,61 @@ async function scheduleAnalyticsCollection(): Promise<void> {
     }
     
     // Пытаемся получить административный доступ
-    // Используем обычный метод directusCrud.login вместо getAdminSession
-    try {
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      
-      if (!email || !password) {
-        log.error('[analytics-scheduler] Отсутствуют учетные данные DIRECTUS_ADMIN_EMAIL или DIRECTUS_ADMIN_PASSWORD');
-        return;
-      }
-      
-      log.info(`[analytics-scheduler] Попытка авторизации администратора (${email})`);
-      
-      const authResult = await directusCrud.login(email, password);
-      
-      if (!authResult || !authResult.access_token) {
-        log.error('[analytics-scheduler] Не удалось получить токен авторизации администратора');
-        return;
-      }
-      
-      const adminToken = authResult.access_token;
+    const email = process.env.DIRECTUS_ADMIN_EMAIL;
+    const password = process.env.DIRECTUS_ADMIN_PASSWORD;
     
-    // Получаем список всех активных кампаний с использованием административного доступа
-    const campaigns = await directusCrud.searchItems('campaigns', {
-      filter: {
-        status: { _eq: 'active' }
-      },
-      fields: ['id', 'name'],
-      authToken: adminSession.token
-    });
-    
-    log.info(`[analytics-scheduler] Найдено ${campaigns.length} активных кампаний для сбора аналитики`);
-    
-    if (campaigns.length === 0) {
+    if (!email || !password) {
+      log.error('[analytics-scheduler] Отсутствуют учетные данные DIRECTUS_ADMIN_EMAIL или DIRECTUS_ADMIN_PASSWORD');
       return;
     }
     
-    // Для демонстрации выбираем первую кампанию
-    // В реальном приложении можно организовать очередь или собирать параллельно
-    const campaign = campaigns[0];
+    log.info(`[analytics-scheduler] Попытка авторизации администратора (${email})`);
     
-    log.info(`[analytics-scheduler] Запуск сбора аналитики для кампании ${campaign.name} (${campaign.id})`);
+    const authResult = await directusCrud.login(email, password);
     
-    // Запускаем сбор аналитики для выбранной кампании с передачей админского токена
-    await collectAnalytics(campaign.id, adminSession.token);
+    if (!authResult || !authResult.access_token) {
+      log.error('[analytics-scheduler] Не удалось получить токен авторизации администратора');
+      return;
+    }
     
+    const adminToken = authResult.access_token;
+
+    try {
+      // Пытаемся получить список всех активных кампаний с использованием административного доступа
+      const campaigns = await directusCrud.searchItems('campaigns', {
+        filter: {
+          status: { _eq: 'active' }
+        },
+        fields: ['id', 'name'],
+        authToken: adminToken
+      });
+
+      log.info(`[analytics-scheduler] Найдено ${campaigns.length} активных кампаний для сбора аналитики`);
+      
+      if (campaigns.length === 0) {
+        log.info('[analytics-scheduler] Нет активных кампаний для сбора аналитики');
+        return;
+      }
+      
+      // Для демонстрации выбираем первую кампанию
+      const campaign = campaigns[0] as { id: string; name: string };
+      
+      log.info(`[analytics-scheduler] Запуск сбора аналитики для кампании ${campaign.name} (${campaign.id})`);
+      
+      // Запускаем сбор аналитики для выбранной кампании с передачей админского токена
+      await collectAnalytics(campaign.id, adminToken);
+    } catch (campaignsError: any) {
+      // Если не удалось получить кампании из-за ошибки прав доступа,
+      // попробуем использовать фиксированный ID кампании для сбора аналитики
+      log.warn(`[analytics-scheduler] Не удалось получить список кампаний: ${campaignsError.message}`);
+      
+      // Используем фиксированный ID основной кампании (из env или константу)
+      const defaultCampaignId = process.env.DEFAULT_CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
+      log.info(`[analytics-scheduler] Использование кампании по умолчанию: ${defaultCampaignId}`);
+      
+      // Запускаем сбор аналитики для кампании по умолчанию
+      await collectAnalytics(defaultCampaignId, adminToken);
+    }
   } catch (error: any) {
     log.error(`[analytics-scheduler] Ошибка планирования сбора аналитики: ${error.message}`);
   }

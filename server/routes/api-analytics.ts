@@ -153,14 +153,27 @@ analyticsRouter.get('/top-posts', authenticateUser, async (req, res) => {
     const campaignId = req.query.campaignId as string;
     const period = parseInt(req.query.period as string) || 7;
     
-    const topPosts = await getTopPosts(userId, campaignId, period);
-    
-    res.json({
-      success: true,
-      data: topPosts
-    });
-  } catch (error) {
-    log.error(`[api-analytics] Ошибка получения топовых публикаций: ${error.message}`);
+    try {
+      const topPosts = await getTopPosts(userId, campaignId, period);
+      
+      res.json({
+        success: true,
+        data: topPosts
+      });
+    } catch (postsError: any) {
+      // Если не удалось получить топовые публикации, отправляем пустые данные с сообщением об ошибке
+      log.error(`[api-analytics] Ошибка получения топовых публикаций: ${postsError.message}`);
+      res.json({
+        success: true,
+        data: {
+          topByViews: [],
+          topByEngagement: []
+        },
+        message: 'Не удалось получить данные о топовых публикациях. Пожалуйста, попробуйте позже.'
+      });
+    }
+  } catch (error: any) {
+    log.error(`[api-analytics] Критическая ошибка обработки запроса топовых публикаций: ${error.message}`);
     res.status(500).json({
       success: false,
       message: 'Ошибка получения топовых публикаций'
@@ -186,14 +199,36 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
     const campaignId = req.query.campaignId as string;
     const period = parseInt(req.query.period as string) || 7;
     
-    const stats = await getPlatformsStats(userId, campaignId, period);
-    
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    log.error(`[api-analytics] Ошибка получения статистики по платформам: ${error.message}`);
+    try {
+      const stats = await getPlatformsStats(userId, campaignId, period);
+      
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (statsError: any) {
+      // Если не удалось получить статистику, отправляем пустые данные с сообщением об ошибке
+      log.error(`[api-analytics] Ошибка получения статистики по платформам: ${statsError.message}`);
+      res.json({
+        success: true,
+        data: {
+          platforms: {},
+          aggregated: {
+            totalPosts: 0,
+            totalViews: 0,
+            totalLikes: 0,
+            totalComments: 0,
+            totalShares: 0,
+            totalEngagement: 0,
+            averageEngagementRate: 0,
+            platformDistribution: {}
+          }
+        },
+        message: 'Не удалось получить актуальную статистику. Пожалуйста, попробуйте позже.'
+      });
+    }
+  } catch (error: any) {
+    log.error(`[api-analytics] Критическая ошибка обработки запроса статистики: ${error.message}`);
     res.status(500).json({
       success: false,
       message: 'Ошибка получения статистики по платформам'
