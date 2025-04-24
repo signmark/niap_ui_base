@@ -208,19 +208,27 @@ export const AnalyticsDashboard: React.FC = () => {
   }
 
   // Извлекаем данные из ответов API
+  // Вывод полученных данных для отладки
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Analytics API response - platforms:', platformsData?.data);
+    console.log('Analytics API response - posts:', postsData?.data);
+  }
+  
   const userStats = postsData?.data ? postsData.data.aggregated || {} : {};
+  const aggregatedStats = platformsData?.data ? platformsData.data.aggregated || {} : {};
   const platforms = platformsData?.data ? platformsData.data.platforms || {} : {};
   
   // Получаем агрегированные данные для общей статистики
+  // Приоритет данных: 1) platformsData.aggregated, 2) postsData.aggregated, 3) вычисляем из platforms
   const stats = {
-    totalPosts: userStats.totalPosts || 0,
-    totalViews: userStats.totalViews || 0,
-    totalLikes: userStats.totalLikes || 0,
-    totalComments: userStats.totalComments || 0,
-    totalShares: userStats.totalShares || 0,
-    totalClicks: userStats.totalClicks || 0,
-    totalEngagements: userStats.totalEngagements || 0,
-    avgEngagementRate: userStats.avgEngagementRate || 0
+    totalPosts: aggregatedStats.totalPosts || userStats.totalPosts || 0,
+    totalViews: aggregatedStats.totalViews || userStats.totalViews || Object.values(platforms).reduce((sum, p: any) => sum + (p.views || 0), 0),
+    totalLikes: aggregatedStats.totalLikes || userStats.totalLikes || 0,
+    totalComments: aggregatedStats.totalComments || userStats.totalComments || 0,
+    totalShares: aggregatedStats.totalShares || userStats.totalShares || 0,
+    totalClicks: aggregatedStats.totalClicks || userStats.totalClicks || 0,
+    totalEngagements: aggregatedStats.totalEngagements || userStats.totalEngagements || Object.values(platforms).reduce((sum, p: any) => sum + (p.engagements || 0), 0),
+    avgEngagementRate: aggregatedStats.avgEngagementRate || userStats.avgEngagementRate || 0
   };
 
   // Получаем списки топ-постов
