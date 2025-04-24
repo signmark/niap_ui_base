@@ -30,7 +30,7 @@ import {
   TrendingUp,
   Zap
 } from 'lucide-react';
-import { apiRequest } from '@/lib/api';
+import api, { analytics } from '@/lib/api';
 import { LoadingSpinner } from './ui/loading-spinner';
 
 // Цвета для графиков
@@ -48,35 +48,27 @@ const PLATFORM_COLORS = {
 export const AnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Получение общей статистики пользователя
-  const { data: userStats, isLoading: isLoadingUserStats, error: userStatsError } = useQuery({
-    queryKey: ['/api/analytics/user-stats'],
-    queryFn: () => apiRequest.get('/api/analytics/user-stats')
-  });
-
-  // Получение топ постов по просмотрам
-  const { data: topPostsByViews, isLoading: isLoadingTopViews, error: topViewsError } = useQuery({
-    queryKey: ['/api/analytics/top-posts/views'],
-    queryFn: () => apiRequest.get('/api/analytics/top-posts/views')
-  });
-
-  // Получение топ постов по вовлеченности
-  const { data: topPostsByEngagement, isLoading: isLoadingTopEngagement, error: topEngagementError } = useQuery({
-    queryKey: ['/api/analytics/top-posts/engagement'],
-    queryFn: () => apiRequest.get('/api/analytics/top-posts/engagement')
+  // Параметры запросов
+  const [period, setPeriod] = useState('7days');
+  const campaignId = localStorage.getItem('active_campaign_id');
+  
+  // Получение статистики постов
+  const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
+    queryKey: ['/api/analytics/posts', campaignId, period],
+    queryFn: () => analytics.getPosts({ campaignId: campaignId || undefined, period })
   });
 
   // Получение статистики по платформам
-  const { data: platformStats, isLoading: isLoadingPlatformStats, error: platformStatsError } = useQuery({
-    queryKey: ['/api/analytics/platform-stats'],
-    queryFn: () => apiRequest.get('/api/analytics/platform-stats')
+  const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
+    queryKey: ['/api/analytics/platforms', campaignId, period],
+    queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period })
   });
 
   // Проверка загрузки
-  const isLoading = isLoadingUserStats || isLoadingTopViews || isLoadingTopEngagement || isLoadingPlatformStats;
+  const isLoading = isLoadingPosts || isLoadingPlatforms;
 
   // Проверка ошибок
-  const hasError = userStatsError || topViewsError || topEngagementError || platformStatsError;
+  const hasError = postsError || platformsError;
 
   // Если есть ошибка, показываем сообщение
   if (hasError) {
@@ -110,21 +102,25 @@ export const AnalyticsDashboard: React.FC = () => {
     );
   }
 
-  // Получаем данные из ответов API
-  const stats = userStats?.data || {
-    totalPosts: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    totalComments: 0,
-    totalShares: 0,
-    totalClicks: 0,
-    totalEngagements: 0,
-    avgEngagementRate: 0
+  // Извлекаем данные из ответов API
+  const userStats = postsData?.data ? postsData.data.aggregated || {} : {};
+  const platforms = platformsData?.data ? platformsData.data.platforms || {} : {};
+  
+  // Получаем агрегированные данные для общей статистики
+  const stats = {
+    totalPosts: userStats.totalPosts || 0,
+    totalViews: userStats.totalViews || 0,
+    totalLikes: userStats.totalLikes || 0,
+    totalComments: userStats.totalComments || 0,
+    totalShares: userStats.totalShares || 0,
+    totalClicks: userStats.totalClicks || 0,
+    totalEngagements: userStats.totalEngagements || 0,
+    avgEngagementRate: userStats.avgEngagementRate || 0
   };
 
-  const topViews = topPostsByViews?.data || [];
-  const topEngagement = topPostsByEngagement?.data || [];
-  const platforms = platformStats?.data || {};
+  // Получаем списки топ-постов
+  const topViews = postsData?.data ? postsData.data.topByViews || [] : [];
+  const topEngagement = postsData?.data ? postsData.data.topByEngagement || [] : [];
 
   // Данные для графика по платформам
   const platformChartData = Object.entries(platforms).map(([platform, data]: [string, any]) => ({

@@ -1295,6 +1295,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
   registerFalAiRedirectRoutes(app);
+  
+  // Регистрируем маршруты для аналитики
+  app.use('/api/analytics', analyticsRouter);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {

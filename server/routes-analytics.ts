@@ -1,8 +1,74 @@
 import express from 'express';
-import { authenticateUser } from './middleware/auth';
 import { postAnalyticsService } from './services/post-analytics';
 import { analyticsScheduler } from './services/analytics-scheduler';
 import logger from './utils/logger';
+import { directusApi } from './directus';
+import { NextFunction, Response } from 'express';
+
+// Расширяем интерфейс Request для поддержки пользовательских свойств
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        token: string;
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+        isAdmin?: boolean;
+      };
+    }
+  }
+}
+
+type Request = express.Request;
+
+// Middleware для аутентификации пользователей
+const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No authorization header provided');
+      return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      console.log('Empty token provided');
+      return res.status(401).json({ error: 'Не авторизован: Пустой токен' });
+    }
+
+    try {
+      // Получаем информацию о пользователе из Directus API
+      const response = await directusApi.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data && response.data.data) {
+        // Добавляем информацию о пользователе в объект запроса
+        req.user = {
+          id: response.data.data.id,
+          token: token,
+          email: response.data.data.email,
+          firstName: response.data.data.first_name,
+          lastName: response.data.data.last_name,
+          isAdmin: response.data.data.role && response.data.data.role.admin_access
+        };
+        next();
+      } else {
+        return res.status(401).json({ error: 'Не авторизован: Неверный токен' });
+      }
+    } catch (error) {
+      console.error('Error during token verification', error);
+      return res.status(401).json({ error: 'Не авторизован: Ошибка проверки токена' });
+    }
+  } catch (error) {
+    console.error('General auth error', error);
+    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+};
 
 // Инициализируем маршрутизатор
 const router = express.Router();

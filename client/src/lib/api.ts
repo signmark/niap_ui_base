@@ -170,4 +170,54 @@ api.interceptors.response.use(
   }
 );
 
+// Функции для работы с аналитикой
+export const analytics = {
+  // Получение аналитики постов
+  getPosts: async (params: { campaignId?: string, period?: string } = {}) => {
+    try {
+      const { campaignId, period = '7days' } = params;
+      let url = '/analytics/posts?period=' + period;
+      
+      if (campaignId) {
+        url += `&campaignId=${campaignId}`;
+      }
+      
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении аналитики постов:', error);
+      throw error;
+    }
+  },
+  
+  // Получение аналитики по платформам
+  getPlatforms: async (params: { campaignId?: string, period?: string } = {}) => {
+    try {
+      const { campaignId, period = '7days' } = params;
+      let url = '/analytics/platforms?period=' + period;
+      
+      if (campaignId) {
+        url += `&campaignId=${campaignId}`;
+      }
+      
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении аналитики платформ:', error);
+      throw error;
+    }
+  },
+  
+  // Запуск обновления аналитики вручную
+  triggerUpdate: async (contentId: string) => {
+    try {
+      const response = await api.post('/analytics/update', { contentId });
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при обновлении аналитики:', error);
+      throw error;
+    }
+  }
+};
+
 export default api;
