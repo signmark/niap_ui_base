@@ -1,0 +1,61 @@
+smm-1  | 6:05:51 PM [gemini-proxy] User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+smm-1  | 6:05:51 PM [gemini-proxy] Received generate-content request from user 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 6:05:51 PM [gemini-proxy] Getting Gemini service for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 6:05:51 PM [gemini-proxy] Getting Gemini API key for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 6:05:51 PM [gemini-proxy] Auth token present: true
+smm-1  | [DEBUG] Запрашивается ключ для сервиса: gemini, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 6:05:51 PM [api-keys] Using cached gemini API key for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 6:05:51 PM [gemini-proxy] Successfully retrieved Gemini API key for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (length: 39)
+smm-1  | 6:05:51 PM [gemini-proxy] Gemini API key starts with: AIza...vdxE
+smm-1  | 6:05:51 PM [gemini-proxy] Calling improveText for content generation with model default
+smm-1  | 6:05:51 PM [gemini-proxy] Improving text with Gemini model through proxy: gemini-1.5-pro
+smm-1  | 6:05:51 PM [gemini-proxy] Пробуем выполнить запрос с ограниченными параметрами для надежности
+smm-1  | 6:05:51 PM [gemini-proxy] Making proxy request to: https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=[API_KEY_HIDDEN]
+smm-1  | 6:05:51 PM [gemini-proxy] Trying direct connection to Gemini API first...
+smm-1  | 6:05:51 PM [gemini-proxy] Sending request through allorigins.win proxy...
+smm-1  | 6:05:51 PM [express] Direct request failed: 400 - Bad Request gemini-proxy
+smm-1  | 6:05:51 PM [gemini-proxy] Proxy access success, now making direct POST request to Gemini API...
+smm-1  | 6:05:51 PM [gemini-proxy] Trying alternative proxy service...
+smm-1  | 6:05:51 PM [express] Allorigins proxy request failed, trying alternative proxy... gemini-proxy
+smm-1  | 6:05:51 PM [express] Allorigins proxy error: 400 - Bad Request gemini-proxy
+smm-1  | 6:05:51 PM [express] Allorigins proxy data: {"error":{"code":400,"message":"User location is not supported for the API use.","status":"FAILED_PRECONDITION"}} gemini-proxy
+smm-1  | 6:05:52 PM [express] Alternative proxy request also failed gemini-proxy
+smm-1  | 6:05:52 PM [gemini-proxy] Safe mode failed, trying direct API access: Error: Empty or invalid response from Gemini API (safe mode)
+smm-1  |     at GeminiProxyService.improveText (file:///app/server/services/gemini-proxy-with-allorigins.ts:20:1509)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-gemini-allorigins.ts:24:673
+smm-1  | 6:05:52 PM [gemini-proxy] Trying direct API access for gemini-1.5-flash (bypassing proxy)...
+smm-1  | 6:05:52 PM [express] All methods failed, returning original text gemini-proxy
+smm-1  | 6:05:52 PM [gemini-proxy] Error improving text with Gemini through proxy: Error: Empty or invalid response from Gemini API (safe mode)
+smm-1  |     at GeminiProxyService.improveText (file:///app/server/services/gemini-proxy-with-allorigins.ts:20:1509)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-gemini-allorigins.ts:24:673
+smm-1  | 6:05:52 PM [gemini-proxy] Error generating content with Gemini: Error: Failed to improve text with Gemini: Empty or invalid response from Gemini API (safe mode)
+smm-1  |     at GeminiProxyService.improveText (file:///app/server/services/gemini-proxy-with-allorigins.ts:20:3310)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-gemini-allorigins.ts:24:673
+smm-1  | 6:05:52 PM [express] Error message: Failed to improve text with Gemini: Empty or invalid response from Gemini API (safe mode) gemini-proxy
+smm-1  | 6:05:52 PM [express] Error stack: Error: Failed to improve text with Gemini: Empty or invalid response from Gemini API (safe mode)
+smm-1  |     at GeminiProxyService.improveText (file:///app/server/services/gemini-proxy-with-allorigins.ts:20:3310)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-gemini-allorigins.ts:24:673 gemini-proxy
+smm-1  | 6:05:52 PM [express] POST /api/gemini-allorigins/generate-content 500 in 1314ms :: {"success":false,…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Directus keywords API response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 33,
+smm-1  |   firstKeyword: {
+smm-1  |     id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+smm-1  |     keyword: 'вайб',
+smm-1  |     trend_score: 62837,
+smm-1  |     mentions_count: 100,
+smm-1  |     campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+smm-1  |     last_checked: '2025-04-01T08:11:09.831Z',
+smm-1  |     date_created: '2025-03-31T13:53:44.984Z'
+smm-1  |   }
+smm-1  | }
+smm-1  | 6:06:00 PM [express] GET /api/keywords 304 in 41ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c8…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | Sample keywords being sent to client: array length: 3 ["рацион питания","составление рационов онлайн","автоматизация составления рационов"]
+smm-1  | 6:06:00 PM [express] GET /api/campaign-content 304 in 77ms :: {"data":[{"id":"f3996b3d-71b5-421d-a71…
