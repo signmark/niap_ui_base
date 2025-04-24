@@ -287,19 +287,28 @@ export const AnalyticsDashboard: React.FC = () => {
   }));
 
   // Данные для круговой диаграммы распределения просмотров
-  const viewsDistributionData = Object.entries(platforms).map(([platform, data]: [string, any]) => ({
-    name: getPlatformName(platform),
-    value: data.views,
-    color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#999999'
-  }));
+  const viewsDistributionData = Object.entries(platforms)
+    .filter(([_, data]: [string, any]) => data.views > 0) // Фильтруем только платформы с просмотрами
+    .map(([platform, data]: [string, any]) => ({
+      name: getPlatformName(platform),
+      value: data.views || 0,
+      color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#999999'
+    }));
 
-  // Данные для графика вовлеченности
+  // Данные для графика вовлеченности (предотвращаем нулевые значения)
   const engagementData = [
-    { name: 'Лайки', value: stats.totalLikes },
-    { name: 'Комментарии', value: stats.totalComments },
-    { name: 'Репосты', value: stats.totalShares },
-    { name: 'Клики', value: stats.totalClicks }
-  ];
+    { name: 'Лайки', value: stats.totalLikes || 0 },
+    { name: 'Комментарии', value: stats.totalComments || 0 },
+    { name: 'Репосты', value: stats.totalShares || 0 },
+    { name: 'Клики', value: stats.totalClicks || 0 }
+  ]
+  // Проверяем, есть ли хоть какие-то данные для отображения
+  .filter(item => item.value > 0);
+  
+  // Добавляем фиктивную запись с минимальным значением, если нет данных для отображения
+  if (engagementData.length === 0) {
+    engagementData.push({ name: 'Нет данных', value: 0 });
+  }
 
   return (
     <div className="space-y-4 p-2 md:p-4">
@@ -475,22 +484,36 @@ export const AnalyticsDashboard: React.FC = () => {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={viewsDistributionData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={renderCustomizedLabel}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {viewsDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
+                      {viewsDistributionData.length > 0 ? (
+                        <>
+                          <Pie
+                            data={viewsDistributionData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {viewsDistributionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </>
+                      ) : (
+                        <text
+                          x="50%"
+                          y="50%"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-muted-foreground"
+                        >
+                          Нет данных для отображения
+                        </text>
+                      )}
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
