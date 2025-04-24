@@ -61,8 +61,8 @@ export const AnalyticsDashboard: React.FC = () => {
 
   // Параметры запросов
   const [period, setPeriod] = useState('7days');
-  // Используем состояние, чтобы отслеживать изменения кампании
-  const [campaignId, setCampaignId] = useState(localStorage.getItem('active_campaign_id'));
+  // Используем кампанию из CampaignSelector, который сохраняет в selected_campaign_id
+  const [campaignId, setCampaignId] = useState(localStorage.getItem('selected_campaign_id'));
   
   // Получаем текущего пользователя для отслеживания изменений
   const { data: userData } = useQuery({
@@ -175,7 +175,9 @@ export const AnalyticsDashboard: React.FC = () => {
   useEffect(() => {
     // Функция для отслеживания изменений в localStorage
     const handleCampaignChange = (event: StorageEvent) => {
-      if (event.key === 'active_campaign_id') {
+      // Отслеживаем изменения в selected_campaign_id (используется CampaignSelector)
+      if (event.key === 'selected_campaign_id') {
+        console.log('CampaignSelector изменил кампанию:', event.newValue);
         // Обновляем состояние кампании
         setCampaignId(event.newValue);
         
@@ -191,9 +193,18 @@ export const AnalyticsDashboard: React.FC = () => {
 
     // Функция для проверки изменений напрямую (когда меняется в текущей вкладке)
     const checkLocalStorage = () => {
-      const currentCampaignId = localStorage.getItem('active_campaign_id');
+      const currentCampaignId = localStorage.getItem('selected_campaign_id');
       if (currentCampaignId !== campaignId) {
+        console.log('Обнаружено изменение кампании локально:', currentCampaignId);
         setCampaignId(currentCampaignId);
+        
+        // Сразу обновляем данные
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/posts']
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/platforms']
+        });
       }
     };
 
