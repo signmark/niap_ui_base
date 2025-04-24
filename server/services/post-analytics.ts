@@ -848,28 +848,80 @@ export class PostAnalyticsService {
    * Получает топ постов пользователя по просмотрам
    * @param userId ID пользователя
    * @param limit Ограничение количества постов (default: 10)
-   * @returns Топ постов или null при ошибке
+   * @param periodOptions Опции для фильтрации по периоду
+   * @returns Топ постов или пустой массив при ошибке
    */
-  async getTopPostsByViews(userId: string, limit: number = 10): Promise<Array<any> | null> {
+  async getTopPostsByViews(userId: string, limit: number = 10, periodOptions?: {period: string, campaignId?: string}): Promise<Array<any>> {
     try {
-      // Получаем все посты пользователя
+      logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      
+      // Получаем все посты пользователя с расширенным набором полей
       const posts = await directusService.readMany('campaign_content', {
         filter: { user_id: { _eq: userId } },
-        fields: ['id', 'title', 'content', 'metadata', 'created_at']
+        fields: ['id', 'title', 'content', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms', 'campaign']
       }, userId);
       
-      if (!posts || !Array.isArray(posts)) {
-        throw new Error('Failed to fetch user posts');
+      // Если постов нет, возвращаем пустой массив вместо null
+      if (!posts || !Array.isArray(posts) || posts.length === 0) {
+        logger.warn(`No posts found for user ${userId} or failed to fetch them`, null, 'analytics');
+        return [];
+      }
+      
+      logger.info(`Fetched ${posts.length} posts for analytics`, null, 'analytics');
+      
+      // Применяем фильтрацию по периоду, если указан
+      let filteredPosts = [...posts];
+      if (periodOptions?.period && periodOptions.period !== 'all') {
+        const now = new Date();
+        let startDate: Date;
+        
+        switch(periodOptions.period) {
+          case '1day':
+            startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case '7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90days':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            startDate = new Date(0); // С начала времен
+        }
+        
+        filteredPosts = filteredPosts.filter(post => {
+          const dateCreated = post.date_created ? new Date(post.date_created) : null;
+          const dateUpdated = post.date_updated ? new Date(post.date_updated) : null;
+          const postDate = dateUpdated || dateCreated || new Date();
+          return postDate >= startDate;
+        });
+        
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, null, 'analytics');
+      }
+      
+      // Фильтрация по кампании, если указана
+      if (periodOptions?.campaignId) {
+        filteredPosts = filteredPosts.filter(post => post.campaign === periodOptions.campaignId);
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, null, 'analytics');
       }
       
       // Фильтруем посты с аналитикой и сортируем по просмотрам
-      const postsWithAnalytics = posts
-        .filter(post => post.metadata?.analytics?.totalViews > 0)
+      const postsWithAnalytics = filteredPosts
+        .filter(post => {
+          const hasAnalytics = !!post.metadata?.analytics;
+          if (!hasAnalytics) {
+            logger.debug(`Post ${post.id} has no analytics data`, null, 'analytics');
+          }
+          return hasAnalytics;
+        })
         .map(post => ({
           id: post.id,
           title: post.title || 'Без заголовка',
           content: post.content,
-          createdAt: post.created_at,
+          createdAt: post.date_created,
           views: post.metadata?.analytics?.totalViews || 0,
           engagements: post.metadata?.analytics?.totalEngagements || 0,
           engagementRate: post.metadata?.analytics?.avgEngagementRate || 0,
@@ -879,10 +931,11 @@ export class PostAnalyticsService {
         .sort((a, b) => b.views - a.views)
         .slice(0, limit);
       
+      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by views`, null, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
       logger.error(`Error getting top posts by views: ${error}`, error, 'analytics');
-      return null;
+      return [];
     }
   }
   
@@ -890,28 +943,80 @@ export class PostAnalyticsService {
    * Получает топ постов пользователя по вовлеченности
    * @param userId ID пользователя
    * @param limit Ограничение количества постов (default: 10)
-   * @returns Топ постов или null при ошибке
+   * @param periodOptions Опции для фильтрации по периоду
+   * @returns Топ постов или пустой массив при ошибке
    */
-  async getTopPostsByEngagement(userId: string, limit: number = 10): Promise<Array<any> | null> {
+  async getTopPostsByEngagement(userId: string, limit: number = 10, periodOptions?: {period: string, campaignId?: string}): Promise<Array<any>> {
     try {
-      // Получаем все посты пользователя
+      logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      
+      // Получаем все посты пользователя с расширенным набором полей
       const posts = await directusService.readMany('campaign_content', {
         filter: { user_id: { _eq: userId } },
-        fields: ['id', 'title', 'content', 'metadata', 'created_at']
+        fields: ['id', 'title', 'content', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms', 'campaign']
       }, userId);
       
-      if (!posts || !Array.isArray(posts)) {
-        throw new Error('Failed to fetch user posts');
+      // Если постов нет, возвращаем пустой массив вместо null
+      if (!posts || !Array.isArray(posts) || posts.length === 0) {
+        logger.warn(`No posts found for user ${userId} or failed to fetch them`, null, 'analytics');
+        return [];
+      }
+      
+      logger.info(`Fetched ${posts.length} posts for analytics`, null, 'analytics');
+      
+      // Применяем фильтрацию по периоду, если указан
+      let filteredPosts = [...posts];
+      if (periodOptions?.period && periodOptions.period !== 'all') {
+        const now = new Date();
+        let startDate: Date;
+        
+        switch(periodOptions.period) {
+          case '1day':
+            startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case '7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90days':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            startDate = new Date(0); // С начала времен
+        }
+        
+        filteredPosts = filteredPosts.filter(post => {
+          const dateCreated = post.date_created ? new Date(post.date_created) : null;
+          const dateUpdated = post.date_updated ? new Date(post.date_updated) : null;
+          const postDate = dateUpdated || dateCreated || new Date();
+          return postDate >= startDate;
+        });
+        
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, null, 'analytics');
+      }
+      
+      // Фильтрация по кампании, если указана
+      if (periodOptions?.campaignId) {
+        filteredPosts = filteredPosts.filter(post => post.campaign === periodOptions.campaignId);
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, null, 'analytics');
       }
       
       // Фильтруем посты с аналитикой и сортируем по вовлеченности
-      const postsWithAnalytics = posts
-        .filter(post => post.metadata?.analytics?.totalViews > 0)
+      const postsWithAnalytics = filteredPosts
+        .filter(post => {
+          const hasAnalytics = !!post.metadata?.analytics;
+          if (!hasAnalytics) {
+            logger.debug(`Post ${post.id} has no analytics data`, null, 'analytics');
+          }
+          return hasAnalytics;
+        })
         .map(post => ({
           id: post.id,
           title: post.title || 'Без заголовка',
           content: post.content,
-          createdAt: post.created_at,
+          createdAt: post.date_created,
           views: post.metadata?.analytics?.totalViews || 0,
           engagements: post.metadata?.analytics?.totalEngagements || 0,
           engagementRate: post.metadata?.analytics?.avgEngagementRate || 0,
@@ -921,29 +1026,35 @@ export class PostAnalyticsService {
         .sort((a, b) => b.engagementRate - a.engagementRate)
         .slice(0, limit);
       
+      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by engagement`, null, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
       logger.error(`Error getting top posts by engagement: ${error}`, error, 'analytics');
-      return null;
+      return [];
     }
   }
   
   /**
    * Получает статистику по платформам для пользователя
    * @param userId ID пользователя
-   * @returns Статистика по платформам или null при ошибке
+   * @param periodOptions Опции для фильтрации по периоду
+   * @returns Статистика по платформам или пустой объект при ошибке
    */
-  async getPlatformStats(userId: string): Promise<Record<string, any> | null> {
+  async getPlatformStats(userId: string, periodOptions?: {period: string, campaignId?: string}): Promise<Record<string, any>> {
     try {
-      const aggregatedStats = await this.getAggregatedUserStats(userId);
+      logger.info(`Getting platform stats for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      
+      const aggregatedStats = await this.getAggregatedUserStats(userId, periodOptions);
       if (!aggregatedStats) {
-        return null;
+        logger.warn(`No aggregated stats found for user ${userId}`, null, 'analytics');
+        return this.getEmptyAggregatedStats().byPlatform;
       }
       
+      logger.info(`Returning platform stats for user ${userId}`, null, 'analytics');
       return aggregatedStats.byPlatform;
     } catch (error) {
       logger.error(`Error getting platform stats: ${error}`, error, 'analytics');
-      return null;
+      return this.getEmptyAggregatedStats().byPlatform;
     }
   }
   
