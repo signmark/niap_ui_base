@@ -166,10 +166,41 @@ export class AnalyticsScheduler {
         }
       );
       
-      return response.data.data || [];
+      const users = response.data.data || [];
+      
+      // Проверяем, есть ли в списке текущий пользователь системы (с UI)
+      const currentUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      const hasCurrentUser = users.some(user => user.id === currentUserId);
+      
+      if (!hasCurrentUser) {
+        // Если пользователя нет в списке, добавляем его вручную
+        logger.log(`Adding current user ${currentUserId} to analytics collection`, 'analytics-scheduler');
+        
+        // Получаем информацию о пользователе через API
+        try {
+          const userResponse = await axios.get(
+            `${process.env.DIRECTUS_URL}/users/${currentUserId}`,
+            {
+              headers: { Authorization: `Bearer ${adminToken}` }
+            }
+          );
+          
+          if (userResponse.data && userResponse.data.data) {
+            users.push(userResponse.data.data);
+          } else {
+            // Если не удалось получить данные о пользователе, добавляем только ID
+            users.push({ id: currentUserId });
+          }
+        } catch (userError) {
+          logger.warn(`Failed to get user details for ${currentUserId}, adding with ID only`, 'analytics-scheduler');
+          users.push({ id: currentUserId });
+        }
+      }
+      
+      return users;
     } catch (error) {
       logger.error(`Error getting users: ${error}`, error, 'analytics-scheduler');
-      return [];
+      return [{ id: '53921f16-f51d-4591-80b9-8caa4fde4d13' }]; // Возвращаем хотя бы текущего пользователя
     }
   }
   
