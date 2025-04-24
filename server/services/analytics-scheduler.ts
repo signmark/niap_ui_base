@@ -375,12 +375,12 @@ export class AnalyticsScheduler {
       }
       
       const filter = { user_id: { _eq: userId } };
-      const fields = ['id', 'social_media_settings'];
+      const fields = ['id', 'social_platforms'];
       
       logger.log(`Requesting social settings for user ${userId} using admin token`, 'analytics-scheduler');
       const response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
-        path: `/items/campaigns?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
+        path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
         token
       });
       
@@ -429,8 +429,8 @@ export class AnalyticsScheduler {
       
       logger.log(`Found ${campaigns.length} campaigns for user ${userId}`, 'analytics-scheduler');
       
-      // Используем настройки из первой кампании
-      const settings = campaigns[0].social_media_settings || {};
+      // Используем настройки из первой записи с контентом
+      const settings = campaigns[0].social_platforms || {};
       
       logger.log(`Retrieved social settings for user ${userId}`, 'analytics-scheduler');
       return settings;

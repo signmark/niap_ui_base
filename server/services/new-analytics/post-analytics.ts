@@ -725,10 +725,13 @@ export class PostAnalyticsService {
       queryParams.append('filter', JSON.stringify(filter));
       queryParams.append('fields', fields.join(','));
       
+      // Получаем токен для доступа к API
+      const token = await directusApiManager.getUserToken(userId);
+      
       const response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/campaign_content?${queryParams.toString()}`,
-        userId: userId
+        token
       });
       
       const posts = response?.data?.data || [];
@@ -849,10 +852,24 @@ export class PostAnalyticsService {
       logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с нужными полями
-      const posts = await directusCrud.readMany('campaign_content', {
-        filter: { user_id: { _eq: userId } },
-        fields: ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at']
-      }, userId);
+      // Используем URL-параметры для построения запроса
+      const filter = { user_id: { _eq: userId } };
+      const fields = ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at'];
+      
+      const queryParams = new URLSearchParams();
+      queryParams.append('filter', JSON.stringify(filter));
+      queryParams.append('fields', fields.join(','));
+      
+      // Получаем токен для доступа к API
+      const token = await directusApiManager.getUserToken(userId);
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaign_content?${queryParams.toString()}`,
+        token
+      });
+      
+      const posts = response?.data?.data || [];
       
       // Если постов нет, возвращаем пустой массив вместо null
       if (!posts || !Array.isArray(posts) || posts.length === 0) {
@@ -970,10 +987,24 @@ export class PostAnalyticsService {
       logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с нужными полями
-      const posts = await directusCrud.readMany('campaign_content', {
-        filter: { user_id: { _eq: userId } },
-        fields: ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at']
-      }, userId);
+      // Используем URL-параметры для построения запроса
+      const filter = { user_id: { _eq: userId } };
+      const fields = ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at'];
+      
+      const queryParams = new URLSearchParams();
+      queryParams.append('filter', JSON.stringify(filter));
+      queryParams.append('fields', fields.join(','));
+      
+      // Получаем токен для доступа к API
+      const token = await directusApiManager.getUserToken(userId);
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaign_content?${queryParams.toString()}`,
+        token
+      });
+      
+      const posts = response?.data?.data || [];
       
       // Если постов нет, возвращаем пустой массив вместо null
       if (!posts || !Array.isArray(posts) || posts.length === 0) {
