@@ -842,7 +842,7 @@ function calculatePercentage(value: number, max: number): number {
  */
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
   const RADIAN = Math.PI / 180;
-  const radius = outerRadius * 0.8;
+  const radius = outerRadius * 0.65;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -853,8 +853,9 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
       fill="white" 
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
+      fontSize="10"
     >
-      {`${name} ${(percent * 100).toFixed(0)}%`}
+      {`${(percent * 100).toFixed(0)}%`}
     </text>
   ) : null;
 };
