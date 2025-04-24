@@ -3,10 +3,8 @@
  * Хранит и обрабатывает аналитические данные для публикаций в различных соцсетях
  */
 
-import logger from '../utils/logger';
-import directusService from '../directus';
-
-// Используем глобальный экземпляр сервиса для работы с Directus
+import logger from '../../utils/logger';
+import directusService from '../../directus';
 
 /**
  * Интерфейс для статистики по платформе
@@ -942,7 +940,7 @@ export class PostAnalyticsService {
       logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by views`, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
-      logger.error(`Error getting top posts by views: ${error}`, 'analytics');
+      logger.error(`Error getting top posts by views: ${error}`, error, 'analytics');
       return [];
     }
   }
@@ -1063,7 +1061,7 @@ export class PostAnalyticsService {
       logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by engagement`, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
-      logger.error(`Error getting top posts by engagement: ${error}`, 'analytics');
+      logger.error(`Error getting top posts by engagement: ${error}`, error, 'analytics');
       return [];
     }
   }
@@ -1087,7 +1085,7 @@ export class PostAnalyticsService {
       logger.info(`Returning platform stats for user ${userId}`, 'analytics');
       return aggregatedStats.byPlatform;
     } catch (error) {
-      logger.error(`Error getting platform stats: ${error}`, 'analytics');
+      logger.error(`Error getting platform stats: ${error}`, error, 'analytics');
       return this.getEmptyAggregatedStats().byPlatform;
     }
   }
