@@ -296,7 +296,7 @@ export const AnalyticsDashboard: React.FC = () => {
     }));
 
   // Создаем данные для графика вовлеченности
-  const rawEngagementData = [
+  const engagementData = [
     { name: 'Лайки', value: stats.totalLikes || 0 },
     { name: 'Комментарии', value: stats.totalComments || 0 },
     { name: 'Репосты', value: stats.totalShares || 0 },
@@ -304,10 +304,7 @@ export const AnalyticsDashboard: React.FC = () => {
   ];
   
   // Проверяем, есть ли хоть какие-то ненулевые данные
-  const hasAnyData = rawEngagementData.some(item => item.value > 0);
-  
-  // Используем реальные данные без минимальных значений
-  const engagementData = rawEngagementData;
+  const hasAnyEngagementData = engagementData.some(item => item.value > 0);
 
   return (
     <div className="space-y-4 p-2 md:p-4">
@@ -527,7 +524,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <CardContent className="p-0">
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    {hasAnyData ? (
+                    {hasAnyEngagementData ? (
                       <BarChart
                         data={engagementData}
                         margin={{
