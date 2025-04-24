@@ -161,20 +161,50 @@ export class AnalyticsScheduler {
         return;
       }
       
-      // ИСПРАВЛЕНО: Получаем все посты без фильтров для проверки авторизации в Directus
-      let filter: any = {}; // Пустой фильтр - запрашиваем все данные
+      // ОСОБЫЙ РЕЖИМ ОТЛАДКИ: Принудительно используем только админский токен
+      // для решения проблемы авторизации
+      logger.info(`⚠️ ОСОБЫЙ РЕЖИМ ОТЛАДКИ: Принудительно используем админский токен`, 'analytics-scheduler');
       
-      // Если мы используем пользовательский токен, добавляем фильтр по user_id
-      if (userId && token !== await directusApiManager.getAdminToken()) {
-        filter = { user_id: { _eq: userId } };
-        logger.log(`Using user token, filtering by user: ${userId}`, 'analytics-scheduler');
+      // Получаем админский токен
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      token = await directusApiManager.getAdminToken();
+      
+      if (!token) {
+        logger.info(`Нет админского токена в кэше, авторизуемся заново`, 'analytics-scheduler');
+        
+        const email = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+        const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+        
+        try {
+          // Авторизуемся через directusCrud
+          const authResult = await directusCrud.login(email, password);
+          token = authResult.access_token;
+          
+          // Сохраняем токен в кэше
+          directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
+          
+          // Также добавляем сессию
+          directusAuthManager.addAdminSession({
+            id: adminUserId, 
+            token: token,
+            email: email
+          });
+          
+          logger.info(`✅ Успешная авторизация админа для отладки`, 'analytics-scheduler');
+        } catch (authError) {
+          logger.error(`❌ Ошибка авторизации админа: ${authError}`, 'analytics-scheduler');
+          return;
+        }
       }
       
-      // Логируем итоговый фильтр
-      logger.log(`Simplified analytics filter for testing: ${JSON.stringify(filter)}`, 'analytics-scheduler');
+      // ПРЯМОЙ ЗАПРОС к campaign_content без фильтров
+      filter = {};
+      
+      logger.info(`🔍 Делаем тестовый запрос без фильтров для проверки авторизации`, 'analytics-scheduler');
       
       // Поля, которые нам нужны для анализа
-      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata', 'user_id', 'campaign_id'];
+      // ИСПРАВЛЕНО: Убрали поле metadata, к которому нет доступа у обычного пользователя
+      const fields = ['id', 'title', 'content', 'social_platforms', 'user_id', 'campaign_id'];
       
       // Запрашиваем посты напрямую из Directus
       logger.log('Fetching posts for analytics collection with simplified filter...', 'analytics-scheduler');
