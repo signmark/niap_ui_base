@@ -56,11 +56,15 @@ const directusService = {
         token
       });
       
+      if (!response || !response.data) {
+        logger.warn(`Response from Directus for ${collection} does not contain data field`, null, 'directus-service');
+        return { data: [] };
+      }
+      
       return response.data;
     } catch (error) {
       logger.error(`Error reading items from ${collection}: ${error}`, error, 'directus-service');
-      // Возвращаем пустой массив вместо null, чтобы избежать ошибок при обработке результата
-      return [];
+      return { data: [] };
     }
   },
   
@@ -174,7 +178,7 @@ export class PostAnalyticsService {
   async getPostAnalytics(postId: string, userId: string): Promise<PostAnalytics | null> {
     try {
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusService.read('content_campaigns', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
@@ -187,7 +191,7 @@ export class PostAnalyticsService {
         metadata.analytics = this.initializeAnalytics();
         
         // Сохраняем обновленные метаданные
-        await directusService.update('campaign_content', postId, { metadata }, userId);
+        await directusService.update('content_campaigns', postId, { metadata }, userId);
       }
       
       return metadata.analytics;
@@ -706,7 +710,7 @@ export class PostAnalyticsService {
       logger.info(`Getting aggregated stats for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
       
       // Получаем все посты пользователя
-      const posts = await directusService.readMany('campaign_content', {
+      const posts = await directusService.readMany('content_campaigns', {
         filter: { user_id: { _eq: userId } },
         fields: ['id', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms']
       }, userId);
