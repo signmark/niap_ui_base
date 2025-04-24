@@ -81,37 +81,83 @@ export class AnalyticsInitializer {
   }
   
   /**
-   * Получает все опубликованные посты пользователя
+   * Получает все опубликованные посты пользователя или кампании
    * @param userId ID пользователя
+   * @param campaignId Опциональный ID кампании для фильтрации
    * @returns Список опубликованных постов
    */
-  private async getAllPublishedPosts(userId: string): Promise<any[]> {
+  private async getAllPublishedPosts(userId: string, campaignId?: string): Promise<any[]> {
     try {
+      // Получаем токен пользователя
       const token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        logger.error(`No token available for user ${userId}`, null, 'analytics-init');
+        return [];
       }
       
-      // Получаем все публикации со статусом "published"
-      const filter = {
+      // Формируем полный фильтр в виде строкового JSON, обходя проблемы с типизацией
+      let filterObj: any = {
         _and: [
           { user_id: { _eq: userId } },
-          { status: { _eq: 'published' } }
+          { 
+            _or: [
+              { status: { _eq: 'published' } },
+              { social_platforms: { _nnull: true } }  // Также включаем посты с social_platforms
+            ]
+          }
         ]
       };
       
-      // Получаем только необходимые поля
-      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata'];
+      // Если указан ID кампании, добавляем его в существующий _and массив
+      if (campaignId) {
+        filterObj._and.push({ campaign_id: { _eq: campaignId } });
+      }
       
+      // Используем полностью типизированный объект для запроса
+      const filter = filterObj;
+      
+      // Получаем только необходимые поля
+      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata', 'campaign_id', 'user_id'];
+      
+      logger.log(`Requesting published posts for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
+      
+      // Делаем запрос с использованием токена пользователя
       const response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
         token
       });
       
-      return response?.data?.data || [];
+      // Проверяем и обрабатываем ответ
+      if (!response || !response.data) {
+        logger.warn(`No response or data field in response for posts query`, 'analytics-init');
+        return [];
+      }
+      
+      const posts = response.data.data || [];
+      
+      if (!Array.isArray(posts)) {
+        logger.warn(`Posts data is not an array`, 'analytics-init');
+        return [];
+      }
+      
+      // Фильтруем только посты, опубликованные хотя бы на одной платформе
+      const publishedPosts = posts.filter(post => {
+        const socialPlatforms = post.social_platforms || {};
+        
+        // Проверяем, есть ли хотя бы одна платформа со статусом "published"
+        return Object.entries(socialPlatforms).some(([_, platformData]: [string, any]) => 
+          platformData && 
+          typeof platformData === 'object' && 
+          platformData.status === 'published' && 
+          platformData.postUrl
+        );
+      });
+      
+      logger.log(`Found ${publishedPosts.length} published posts out of ${posts.length} total posts`, 'analytics-init');
+      return publishedPosts;
     } catch (error) {
-      logger.error(`Error getting published posts: ${error}`, error, 'analytics-init');
+      logger.error(`Error getting published posts for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}: ${error}`, error, 'analytics-init');
       return [];
     }
   }

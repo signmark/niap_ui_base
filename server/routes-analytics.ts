@@ -296,7 +296,7 @@ router.get('/posts', async (req, res) => {
     const period = req.query.period as string || 'all';
     const campaignId = req.query.campaignId as string;
     
-    logger.info(`Получение аналитики постов: userId=${userId}, period=${period}, campaignId=${campaignId}`, null, 'analytics-api');
+    logger.info(`Получение аналитики постов: userId=${userId}, period=${period}, campaignId=${campaignId}`, 'analytics-api');
     
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
@@ -338,7 +338,7 @@ router.get('/platforms', async (req, res) => {
     const period = req.query.period as string || 'all';
     const campaignId = req.query.campaignId as string;
     
-    logger.info(`Получение аналитики платформ: userId=${userId}, period=${period}, campaignId=${campaignId}`, null, 'analytics-api');
+    logger.info(`Получение аналитики платформ: userId=${userId}, period=${period}, campaignId=${campaignId}`, 'analytics-api');
     
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
