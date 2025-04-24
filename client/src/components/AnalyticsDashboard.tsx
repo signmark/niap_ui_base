@@ -79,10 +79,16 @@ export const AnalyticsDashboard: React.FC = () => {
     { value: 'all', label: 'За всё время' },
   ];
   
+  // Преобразуем campaignId из строки/null в строку/undefined (чтобы исправить типы)
+  const campaignIdParam = campaignId === null ? undefined : campaignId;
+
   // Получение статистики постов
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
     queryKey: ['/api/analytics/posts', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPosts({ campaignId, period }),
+    queryFn: () => analytics.getPosts({ 
+      campaignId: campaignIdParam, 
+      period 
+    }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
@@ -90,7 +96,10 @@ export const AnalyticsDashboard: React.FC = () => {
   // Получение статистики по платформам
   const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
     queryKey: ['/api/analytics/platforms', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPlatforms({ campaignId, period }),
+    queryFn: () => analytics.getPlatforms({ 
+      campaignId: campaignIdParam, 
+      period 
+    }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });

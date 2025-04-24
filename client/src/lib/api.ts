@@ -179,10 +179,15 @@ export const analytics = {
       let url = '/analytics/posts?period=' + period;
       
       if (campaignId) {
+        console.log('Запрос аналитики постов с campaignId:', campaignId);
         url += `&campaignId=${campaignId}`;
+      } else {
+        console.log('Запрос аналитики постов БЕЗ campaignId');
       }
       
+      console.log('Полный URL запроса постов:', url);
       const response = await api.get(url);
+      console.log('Ответ API на запрос постов:', response.data);
       return response.data;
     } catch (error) {
       console.error('Ошибка при получении аналитики постов:', error);
@@ -197,10 +202,15 @@ export const analytics = {
       let url = '/analytics/platforms?period=' + period;
       
       if (campaignId) {
+        console.log('Запрос аналитики платформ с campaignId:', campaignId);
         url += `&campaignId=${campaignId}`;
+      } else {
+        console.log('Запрос аналитики платформ БЕЗ campaignId');
       }
       
+      console.log('Полный URL запроса платформ:', url);
       const response = await api.get(url);
+      console.log('Ответ API на запрос платформ:', response.data);
       return response.data;
     } catch (error) {
       console.error('Ошибка при получении аналитики платформ:', error);

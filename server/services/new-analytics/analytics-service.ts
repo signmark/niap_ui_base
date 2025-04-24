@@ -531,10 +531,10 @@ class AnalyticsService {
         status: { _eq: 'published' }
       };
       
-      // Добавляем фильтр по кампании, если указан
-      if (options.campaignId) {
-        filters.campaign = { _eq: options.campaignId };
-      }
+      // Временно отключаем фильтрацию по campaignId из-за ошибки доступа к полю campaign
+      // if (options.campaignId) {
+      //   filters.campaign = { _eq: options.campaignId };
+      // }
       
       // Добавляем фильтр по периоду, если указан
       if (options.period && options.period !== 'all') {
