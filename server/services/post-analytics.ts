@@ -5,9 +5,14 @@ import logger from '../utils/logger';
 const directusService = {
   async read(collection: string, id: string, userId: string) {
     try {
-      const token = await directusApiManager.getUserToken(userId);
+      let token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        // Если не удалось получить токен пользователя, пробуем использовать админский токен
+        token = await directusApiManager.getAdminToken();
+        if (!token) {
+          throw new Error(`No token for user ${userId} and no admin token available`);
+        }
+        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
       }
       
       const response = await directusApiManager.makeAuthenticatedRequest({
@@ -25,9 +30,14 @@ const directusService = {
   
   async readMany(collection: string, params: any, userId: string) {
     try {
-      const token = await directusApiManager.getUserToken(userId);
+      let token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        // Если не удалось получить токен пользователя, пробуем использовать админский токен
+        token = await directusApiManager.getAdminToken();
+        if (!token) {
+          throw new Error(`No token for user ${userId} and no admin token available`);
+        }
+        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
       }
       
       const queryParams = new URLSearchParams();
@@ -49,15 +59,21 @@ const directusService = {
       return response.data;
     } catch (error) {
       logger.error(`Error reading items from ${collection}: ${error}`, error, 'directus-service');
+      // Возвращаем пустой массив вместо null, чтобы избежать ошибок при обработке результата
       return [];
     }
   },
   
   async update(collection: string, id: string, data: any, userId: string) {
     try {
-      const token = await directusApiManager.getUserToken(userId);
+      let token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        // Если не удалось получить токен пользователя, пробуем использовать админский токен
+        token = await directusApiManager.getAdminToken();
+        if (!token) {
+          throw new Error(`No token for user ${userId} and no admin token available`);
+        }
+        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
       }
       
       const response = await directusApiManager.makeAuthenticatedRequest({

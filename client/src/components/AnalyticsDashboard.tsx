@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart,
@@ -284,9 +285,39 @@ export const AnalyticsDashboard: React.FC = () => {
         <Card className="border-dashed">
           <CardContent className="pt-4 pb-3">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <RefreshCw size={16} className="animate-spin text-primary" />
-                <span className="font-medium">Статус сбора аналитики</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RefreshCw size={16} className="animate-spin text-primary" />
+                  <span className="font-medium">Статус сбора аналитики</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} className="text-muted-foreground" />
+                  <Select
+                    value={period}
+                    onValueChange={(value) => {
+                      setPeriod(value);
+                      // Перезагружаем данные при изменении периода
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/posts']
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/platforms']
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px] h-8">
+                      <SelectValue placeholder="Выберите период" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {periodOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="flex flex-col gap-2">
@@ -301,14 +332,56 @@ export const AnalyticsDashboard: React.FC = () => {
       )}
       
       {/* Информация о последнем обновлении */}
-      {!analyticsStatus.isCollecting && analyticsStatus.lastCollectionTime && (
+      {/* Информация о последнем обновлении или селектор периода по умолчанию */}
+      {!analyticsStatus.isCollecting && (
         <Card className="border-dashed border-muted">
           <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Последнее обновление: {new Date(analyticsStatus.lastCollectionTime).toLocaleString()}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {analyticsStatus.lastCollectionTime ? (
+                  <>
+                    <Clock size={16} className="text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Последнее обновление: {new Date(analyticsStatus.lastCollectionTime).toLocaleString()}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={16} className="text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Данные аналитики отсутствуют. Нажмите "Инициализировать" для сбора.
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-muted-foreground" />
+                <Select
+                  value={period}
+                  onValueChange={(value) => {
+                    setPeriod(value);
+                    // Перезагружаем данные при изменении периода
+                    queryClient.invalidateQueries({
+                      queryKey: ['/api/analytics/posts']
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ['/api/analytics/platforms']
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-[180px] h-8">
+                    <SelectValue placeholder="Выберите период" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periodOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
