@@ -103,7 +103,7 @@ export class AnalyticsScheduler {
     return this.totalPosts;
   }
 
-  async collectAnalytics(): Promise<void> {
+  async collectAnalytics(specificUserId?: string): Promise<void> {
     // Если сбор уже идет, не запускаем повторно
     if (this.isCollecting) {
       logger.log('Analytics collection is already in progress', 'analytics-scheduler');
@@ -111,13 +111,45 @@ export class AnalyticsScheduler {
     }
     
     try {
-      logger.log('Starting analytics collection...', 'analytics-scheduler');
+      logger.log(`Starting analytics collection${specificUserId ? ` for user ${specificUserId}` : ''}...`, 'analytics-scheduler');
       this.isCollecting = true;
       this.processedPosts = 0;
       this.totalPosts = 0;
       
-      // Получаем список всех пользователей
-      const users = await this.getAllUsers();
+      let users = [];
+      
+      // Если указан конкретный пользователь, получаем только его данные
+      if (specificUserId) {
+        // Получаем информацию о конкретном пользователе
+        try {
+          const adminToken = await directusApiManager.getAdminToken();
+          if (!adminToken) {
+            throw new Error('Failed to get admin token');
+          }
+          
+          const response = await axios.get(
+            `${process.env.DIRECTUS_URL}/users/${specificUserId}`,
+            {
+              headers: { Authorization: `Bearer ${adminToken}` }
+            }
+          );
+          
+          if (response.data && response.data.data) {
+            users = [response.data.data];
+            logger.log(`Successfully retrieved specific user with ID ${specificUserId}`, 'analytics-scheduler');
+          } else {
+            // Если не удалось получить данные о пользователе, добавляем только ID
+            users = [{ id: specificUserId }];
+            logger.log(`Could not retrieve user details for ${specificUserId}, using ID only`, 'analytics-scheduler');
+          }
+        } catch (error) {
+          logger.warn(`Failed to get specific user ${specificUserId}, using ID only: ${error}`, 'analytics-scheduler');
+          users = [{ id: specificUserId }];
+        }
+      } else {
+        // Получаем список всех пользователей
+        users = await this.getAllUsers();
+      }
       
       // Для каждого пользователя собираем аналитику постов
       for (const user of users) {
@@ -166,41 +198,10 @@ export class AnalyticsScheduler {
         }
       );
       
-      const users = response.data.data || [];
-      
-      // Проверяем, есть ли в списке текущий пользователь системы (с UI)
-      const currentUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-      const hasCurrentUser = users.some(user => user.id === currentUserId);
-      
-      if (!hasCurrentUser) {
-        // Если пользователя нет в списке, добавляем его вручную
-        logger.log(`Adding current user ${currentUserId} to analytics collection`, 'analytics-scheduler');
-        
-        // Получаем информацию о пользователе через API
-        try {
-          const userResponse = await axios.get(
-            `${process.env.DIRECTUS_URL}/users/${currentUserId}`,
-            {
-              headers: { Authorization: `Bearer ${adminToken}` }
-            }
-          );
-          
-          if (userResponse.data && userResponse.data.data) {
-            users.push(userResponse.data.data);
-          } else {
-            // Если не удалось получить данные о пользователе, добавляем только ID
-            users.push({ id: currentUserId });
-          }
-        } catch (userError) {
-          logger.warn(`Failed to get user details for ${currentUserId}, adding with ID only`, 'analytics-scheduler');
-          users.push({ id: currentUserId });
-        }
-      }
-      
-      return users;
+      return response.data.data || [];
     } catch (error) {
       logger.error(`Error getting users: ${error}`, error, 'analytics-scheduler');
-      return [{ id: '53921f16-f51d-4591-80b9-8caa4fde4d13' }]; // Возвращаем хотя бы текущего пользователя
+      return [];
     }
   }
   
