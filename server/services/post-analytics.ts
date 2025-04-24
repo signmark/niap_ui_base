@@ -58,13 +58,13 @@ const directusService = {
       
       if (!response || !response.data) {
         logger.warn(`Response from Directus for ${collection} does not contain data field`, null, 'directus-service');
-        return { data: [] };
+        return [];
       }
       
-      return response.data;
+      return response.data.data;
     } catch (error) {
       logger.error(`Error reading items from ${collection}: ${error}`, error, 'directus-service');
-      return { data: [] };
+      return [];
     }
   },
   
