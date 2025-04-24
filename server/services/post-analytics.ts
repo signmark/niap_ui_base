@@ -1,62 +1,63 @@
-import { directusApiManager } from '../directus';
+import { directusApiManager, directusApi } from '../directus';
 import logger from '../utils/logger';
 
 // Простой интерфейс для работы с Directus
 const directusService = {
   async read(collection: string, id: string, userId: string) {
     try {
-      let token = await directusApiManager.getUserToken(userId);
+      const token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        // Если не удалось получить токен пользователя, пробуем использовать админский токен
-        token = await directusApiManager.getAdminToken();
-        if (!token) {
-          throw new Error(`No token for user ${userId} and no admin token available`);
-        }
-        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
+        logger.error(`No valid token for user ${userId}`, 'directus-service');
+        return null;
       }
+
+      logger.info(`Requesting item from ${collection} with ID ${id} for user ${userId}`, 'directus-service');
       
-      let response = await directusApiManager.makeAuthenticatedRequest({
-        method: 'GET',
-        path: `/items/${collection}/${id}`,
-        token
-      });
-      
-      // В случае ошибки 403 (Forbidden) и если использовался токен пользователя,
-      // попробуем с админским токеном
-      if (response?.status === 403 && token !== await directusApiManager.getAdminToken()) {
-        logger.warn(`Got 403 Forbidden with user token, trying with admin token`, 'directus-service');
-        const adminToken = await directusApiManager.getAdminToken();
+      // Используем напрямую directusApi для лучшей обработки ошибок
+      try {
+        const response = await directusApi.get(`/items/${collection}/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (adminToken) {
-          response = await directusApiManager.makeAuthenticatedRequest({
-            method: 'GET',
-            path: `/items/${collection}/${id}`,
-            token: adminToken
-          });
-          logger.info(`Retry with admin token completed with status ${response?.status || 'unknown'}`, 'directus-service');
+        // Проверка и логирование успешного ответа
+        if (response && response.data && response.data.data) {
+          logger.info(`Successfully fetched item from ${collection} with ID ${id}`, 'directus-service');
+          return response.data.data;
         } else {
-          logger.error(`Failed to get admin token for retry after 403 error`, 'directus-service');
+          logger.warn(`Response from Directus API for ${collection}/${id} has unexpected format`, 'directus-service');
+          return null;
         }
+      } catch (error: any) {
+        logger.error(`API error when fetching ${collection}/${id}: ${error.message}`, 'directus-service');
+        
+        // Если получили ошибку доступа, выведем детальную информацию
+        if (error.response && error.response.status === 403) {
+          logger.error(`Access denied (403) for ${collection}/${id}. User has insufficient permissions.`, 'directus-service');
+          logger.error(`Response data: ${JSON.stringify(error.response.data)}`, 'directus-service');
+        } else if (error.response && error.response.status === 404) {
+          logger.error(`Item not found (404) for ${collection}/${id}.`, 'directus-service');
+        }
+        
+        return null;
       }
-      
-      return response?.data?.data || null;
     } catch (error) {
-      logger.error(`Error reading item from ${collection}: ${error}`, 'directus-service');
+      logger.error(`Error reading item from ${collection}: ${error instanceof Error ? error.message : String(error)}`, 'directus-service');
       return null;
     }
   },
   
   async readMany(collection: string, params: any, userId: string) {
     try {
-      let token = await directusApiManager.getUserToken(userId);
+      const token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        // Если не удалось получить токен пользователя, пробуем использовать админский токен
-        token = await directusApiManager.getAdminToken();
-        if (!token) {
-          throw new Error(`No token for user ${userId} and no admin token available`);
-        }
-        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
+        logger.error(`No valid token for user ${userId}`, 'directus-service');
+        return [];
       }
+      
+      // Добавим подробное логирование
+      logger.info(`Requesting items from ${collection} with userId ${userId} and filter: ${JSON.stringify(params)}`, 'directus-service');
       
       const queryParams = new URLSearchParams();
       
@@ -68,64 +69,79 @@ const directusService = {
         queryParams.append('fields', params.fields.join(','));
       }
       
-      let response = await directusApiManager.makeAuthenticatedRequest({
-        method: 'GET',
-        path: `/items/${collection}?${queryParams.toString()}`,
-        token
-      });
-      
-      // В случае ошибки 403 (Forbidden) и если использовался токен пользователя,
-      // попробуем с админским токеном
-      if (response?.status === 403 && token !== await directusApiManager.getAdminToken()) {
-        logger.warn(`Got 403 Forbidden with user token, trying with admin token`, 'directus-service');
-        const adminToken = await directusApiManager.getAdminToken();
+      // Используем напрямую directusApi для лучшей обработки ошибок
+      // и добавляем заголовки авторизации напрямую
+      try {
+        const response = await directusApi.get(`/items/${collection}?${queryParams.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (adminToken) {
-          response = await directusApiManager.makeAuthenticatedRequest({
-            method: 'GET',
-            path: `/items/${collection}?${queryParams.toString()}`,
-            token: adminToken
-          });
-          logger.info(`Retry with admin token completed with status ${response?.status || 'unknown'}`, 'directus-service');
+        // Проверка и логирование успешного ответа
+        if (response && response.data && response.data.data) {
+          logger.info(`Successfully fetched ${response.data.data.length} items from ${collection}`, 'directus-service');
+          return response.data.data;
         } else {
-          logger.error(`Failed to get admin token for retry after 403 error`, 'directus-service');
+          logger.warn(`Response from Directus API for ${collection} has unexpected format`, 'directus-service');
+          return [];
         }
-      }
-      
-      if (!response || !response.data) {
-        logger.warn(`Response from Directus for ${collection} does not contain data field`, 'directus-service');
+      } catch (error: any) {
+        logger.error(`API error when fetching ${collection}: ${error.message}`, 'directus-service');
+        
+        // Если получили ошибку доступа, выведем детальную информацию
+        if (error.response && error.response.status === 403) {
+          logger.error(`Access denied (403) for ${collection}. User has insufficient permissions.`, 'directus-service');
+          logger.error(`Response data: ${JSON.stringify(error.response.data)}`, 'directus-service');
+        }
+        
         return [];
       }
-      
-      return response.data.data || [];
     } catch (error) {
-      logger.error(`Error reading items from ${collection}: ${error}`, 'directus-service');
+      logger.error(`Error reading items from ${collection}: ${error instanceof Error ? error.message : String(error)}`, 'directus-service');
       return [];
     }
   },
   
   async update(collection: string, id: string, data: any, userId: string) {
     try {
-      let token = await directusApiManager.getUserToken(userId);
+      const token = await directusApiManager.getUserToken(userId);
       if (!token) {
-        // Если не удалось получить токен пользователя, пробуем использовать админский токен
-        token = await directusApiManager.getAdminToken();
-        if (!token) {
-          throw new Error(`No token for user ${userId} and no admin token available`);
-        }
-        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
+        logger.error(`No valid token for user ${userId}`, 'directus-service');
+        return null;
       }
+
+      logger.info(`Updating item in ${collection} with ID ${id} for user ${userId}`, 'directus-service');
       
-      const response = await directusApiManager.makeAuthenticatedRequest({
-        method: 'PATCH',
-        path: `/items/${collection}/${id}`,
-        token,
-        data
-      });
-      
-      return response.data;
+      // Используем напрямую directusApi для лучшей обработки ошибок
+      try {
+        const response = await directusApi.patch(`/items/${collection}/${id}`, data, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Проверка и логирование успешного ответа
+        if (response && response.data && response.data.data) {
+          logger.info(`Successfully updated item in ${collection} with ID ${id}`, 'directus-service');
+          return response.data.data;
+        } else {
+          logger.warn(`Response from Directus API for updating ${collection}/${id} has unexpected format`, 'directus-service');
+          return null;
+        }
+      } catch (apiError: any) {
+        logger.error(`API error when updating ${collection}/${id}: ${apiError.message}`, 'directus-service');
+        
+        // Если получили ошибку доступа, выведем детальную информацию
+        if (apiError.response && apiError.response.status === 403) {
+          logger.error(`Access denied (403) for updating ${collection}/${id}. User has insufficient permissions.`, 'directus-service');
+          logger.error(`Response data: ${JSON.stringify(apiError.response.data)}`, 'directus-service');
+        }
+        
+        return null;
+      }
     } catch (error) {
-      logger.error(`Error updating item in ${collection}: ${error}`, error, 'directus-service');
+      logger.error(`Error updating item in ${collection}: ${error instanceof Error ? error.message : String(error)}`, 'directus-service');
       return null;
     }
   }
@@ -745,10 +761,20 @@ export class PostAnalyticsService {
     try {
       logger.info(`Getting aggregated stats for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
-      // Получаем все посты пользователя
+      logger.info(`Requesting posts for user ${userId} with filter: user_id=${userId}`, 'analytics');
+      
+      // Создаем фильтр и явно преобразуем его в строку
+      const filterObj = {
+        _and: [
+          { user_id: { _eq: userId } },
+          { status: { _in: ['published', 'scheduled'] } }
+        ]
+      };
+      
+      // Получаем все посты пользователя с правильным форматированием запроса
       const posts = await directusService.readMany('campaign_content', {
-        filter: { user_id: { _eq: userId } },
-        fields: ['id', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms']
+        filter: filterObj,
+        fields: ['id', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms', 'user_id', 'campaign_id']
       }, userId);
       
       // Если не удалось получить посты, возвращаем базовую структуру
