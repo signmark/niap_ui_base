@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +31,11 @@ import {
   TrendingUp,
   Zap,
   RefreshCw,
-  Database
+  Database,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  Calendar
 } from 'lucide-react';
 import api, { analytics } from '@/lib/api';
 import { LoadingSpinner } from './ui/loading-spinner';
@@ -57,6 +61,15 @@ export const AnalyticsDashboard: React.FC = () => {
   const [period, setPeriod] = useState('7days');
   const campaignId = localStorage.getItem('active_campaign_id');
   
+  // Опции периодов
+  const periodOptions = [
+    { value: '1day', label: 'За 24 часа' },
+    { value: '7days', label: 'За 7 дней' },
+    { value: '30days', label: 'За 30 дней' },
+    { value: '90days', label: 'За 90 дней' },
+    { value: 'all', label: 'За всё время' },
+  ];
+  
   // Получение статистики постов
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
     queryKey: ['/api/analytics/posts', campaignId, period],
@@ -69,6 +82,13 @@ export const AnalyticsDashboard: React.FC = () => {
     queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period })
   });
   
+  // Получение статуса сбора аналитики
+  const { data: statusData, isLoading: isLoadingStatus, refetch: refetchStatus } = useQuery({
+    queryKey: ['/api/analytics/status'],
+    queryFn: () => analytics.getStatus(),
+    refetchInterval: 5000, // Обновляем каждые 5 секунд, если идет сбор данных
+  });
+  
   // Мутация для ручного сбора аналитики
   const collectAnalyticsMutation = useMutation({
     mutationFn: analytics.collectAll,
@@ -78,6 +98,10 @@ export const AnalyticsDashboard: React.FC = () => {
         description: "Данные будут обновлены в течение нескольких минут",
         variant: "default"
       });
+      
+      // Сразу запрашиваем статус сбора
+      refetchStatus();
+      
       // Обновляем данные после успешного запроса
       setTimeout(() => {
         queryClient.invalidateQueries({
@@ -86,7 +110,10 @@ export const AnalyticsDashboard: React.FC = () => {
         queryClient.invalidateQueries({
           queryKey: ['/api/analytics/platforms']
         });
-      }, 10000); // Даем 10 секунд на сбор данных
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/status']
+        });
+      }, 15000); // Даем 15 секунд на сбор данных
     },
     onError: (error) => {
       toast({
@@ -124,6 +151,15 @@ export const AnalyticsDashboard: React.FC = () => {
   const isLoading = isLoadingPosts || isLoadingPlatforms || 
                     collectAnalyticsMutation.isPending || 
                     initializeAnalyticsMutation.isPending;
+  
+  // Получаем статус сбора аналитики
+  const analyticsStatus = statusData?.data || {
+    isCollecting: false,
+    lastCollectionTime: null,
+    processedPosts: 0,
+    totalPosts: 0,
+    progress: 0
+  };
 
   // Проверка ошибок
   const hasError = postsError || platformsError;
@@ -223,7 +259,7 @@ export const AnalyticsDashboard: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleRefreshAnalytics}
-            disabled={collectAnalyticsMutation.isPending}
+            disabled={collectAnalyticsMutation.isPending || analyticsStatus.isCollecting}
             className="flex items-center gap-1"
           >
             <RefreshCw className="h-4 w-4" /> 
@@ -234,7 +270,7 @@ export const AnalyticsDashboard: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleInitializeAnalytics}
-            disabled={initializeAnalyticsMutation.isPending}
+            disabled={initializeAnalyticsMutation.isPending || analyticsStatus.isCollecting}
             className="flex items-center gap-1"
           >
             <Database className="h-4 w-4" /> 
@@ -242,6 +278,41 @@ export const AnalyticsDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Статус сбора аналитики */}
+      {analyticsStatus.isCollecting && (
+        <Card className="border-dashed">
+          <CardContent className="pt-4 pb-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <RefreshCw size={16} className="animate-spin text-primary" />
+                <span className="font-medium">Статус сбора аналитики</span>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <div className="text-sm text-muted-foreground">
+                  Обработано {analyticsStatus.processedPosts} из {analyticsStatus.totalPosts} публикаций
+                </div>
+                <Progress value={analyticsStatus.progress} className="h-2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Информация о последнем обновлении */}
+      {!analyticsStatus.isCollecting && analyticsStatus.lastCollectionTime && (
+        <Card className="border-dashed border-muted">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Последнее обновление: {new Date(analyticsStatus.lastCollectionTime).toLocaleString()}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
