@@ -316,7 +316,7 @@ export class AnalyticsScheduler {
   private async getUserSocialSettings(userId: string): Promise<any> {
     try {
       // ИСПРАВЛЕНО: Получаем токен пользователя, а не админа
-      let token = await directusAuthManager.getUserToken(userId);
+      let token = await directusApiManager.getUserToken(userId);
       
       // Если токен не найден, авторизуемся как админ для запасного варианта
       if (!token) {
