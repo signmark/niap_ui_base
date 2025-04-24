@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { directusApiManager } from '../directus';
-import { telegramAnalyticsService, vkAnalyticsService } from './new-analytics';
+import { telegramAnalyticsService, vkAnalyticsService, analyticsService } from './new-analytics';
 import logger from '../utils/logger';
 import { directusCrud } from './directus-crud';
 import { directusAuthManager } from './directus-auth-manager';
@@ -487,7 +487,7 @@ export class AnalyticsScheduler {
       }
       
       // Обновляем статистику в нашей базе
-      await postAnalyticsService.updateStats(postId, 'telegram', userId, {
+      await analyticsService.updateStats(postId, 'telegram', userId, {
         views: viewCount
       });
       

@@ -175,7 +175,7 @@ router.get('/platform-stats', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
-    const platformStats = await postAnalyticsService.getPlatformStats(userId);
+    const platformStats = await analyticsService.getPlatformStats(userId);
     
     return res.json({ success: true, data: platformStats });
   } catch (error) {
@@ -279,7 +279,7 @@ router.post('/update-stats/:postId', async (req, res) => {
     }
     
     // Обновляем статистику поста
-    const updatedStats = await postAnalyticsService.updateStats(postId, platform, userId, stats);
+    const updatedStats = await analyticsService.updateStats(postId, platform, userId, stats);
     
     return res.json({ success: true, data: updatedStats });
   } catch (error) {
@@ -311,10 +311,10 @@ router.get('/posts', async (req, res) => {
     };
     
     // Получаем топ посты по просмотрам для отображения в аналитике
-    const postsData = await postAnalyticsService.getTopPostsByViews(userId, limit, periodOptions);
+    const postsData = await analyticsService.getTopPostsByViews(userId, limit, periodOptions);
     
     // Получаем также топ посты по вовлеченности для полноты данных
-    const engagementData = await postAnalyticsService.getTopPostsByEngagement(userId, limit, periodOptions);
+    const engagementData = await analyticsService.getTopPostsByEngagement(userId, limit, periodOptions);
     
     return res.json({ 
       success: true, 
@@ -353,10 +353,10 @@ router.get('/platforms', async (req, res) => {
     };
     
     // Получаем статистику по платформам
-    const platformStats = await postAnalyticsService.getPlatformStats(userId, periodOptions);
+    const platformStats = await analyticsService.getPlatformStats(userId, periodOptions);
     
     // Получаем агрегированную статистику пользователя
-    const aggregatedStats = await postAnalyticsService.getAggregatedUserStats(userId, periodOptions);
+    const aggregatedStats = await analyticsService.getAggregatedUserStats(userId, periodOptions);
     
     return res.json({ 
       success: true, 
