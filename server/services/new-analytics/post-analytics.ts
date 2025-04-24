@@ -711,15 +711,27 @@ export class PostAnalyticsService {
       
       // Запрашиваем посты пользователя
       logger.info(`Requesting posts for user ${userId} with filter: user_id=${userId}`, 'analytics');
-      const posts = await directusCrud.readMany('campaign_content', {
-        filter: { 
-          _and: [
-            { user_id: { _eq: userId } },
-            { status: { _in: ['published', 'scheduled'] } }
-          ]
-        },
-        fields: ['id', 'status', 'social_platforms', 'user_id', 'campaign_id', 'title', 'content', 'created_at', 'published_at']
-      }, userId);
+      
+      // Используем URL-параметры для построения запроса
+      const filter = {
+        _and: [
+          { user_id: { _eq: userId } },
+          { status: { _in: ['published', 'scheduled'] } }
+        ]
+      };
+      const fields = ['id', 'status', 'social_platforms', 'user_id', 'campaign_id', 'title', 'content', 'created_at', 'published_at'];
+      
+      const queryParams = new URLSearchParams();
+      queryParams.append('filter', JSON.stringify(filter));
+      queryParams.append('fields', fields.join(','));
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaign_content?${queryParams.toString()}`,
+        userId: userId
+      });
+      
+      const posts = response?.data?.data || [];
       
       // Если постов нет, возвращаем пустую статистику
       if (!posts || !Array.isArray(posts) || posts.length === 0) {
