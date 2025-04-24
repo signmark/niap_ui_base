@@ -176,5 +176,68 @@ router.post('/update-stats/:postId', async (req, res) => {
   }
 });
 
+/**
+ * API для фронтенда: получение аналитики по постам
+ */
+router.get('/posts', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Не авторизован' });
+    }
+    
+    // Получаем топ посты по просмотрам для отображения в аналитике
+    const postsData = await postAnalyticsService.getTopPostsByViews(userId, limit);
+    
+    // Получаем также топ посты по вовлеченности для полноты данных
+    const engagementData = await postAnalyticsService.getTopPostsByEngagement(userId, limit);
+    
+    return res.json({ 
+      success: true, 
+      data: {
+        topByViews: postsData || [],
+        topByEngagement: engagementData || [],
+        lastUpdated: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    logger.error(`Error fetching posts analytics: ${error}`, error, 'analytics-api');
+    return res.status(500).json({ success: false, error: 'Ошибка получения аналитики постов' });
+  }
+});
+
+/**
+ * API для фронтенда: получение аналитики по платформам
+ */
+router.get('/platforms', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Не авторизован' });
+    }
+    
+    // Получаем статистику по платформам
+    const platformStats = await postAnalyticsService.getPlatformStats(userId);
+    
+    // Получаем агрегированную статистику пользователя
+    const aggregatedStats = await postAnalyticsService.getAggregatedUserStats(userId);
+    
+    return res.json({ 
+      success: true, 
+      data: {
+        platforms: platformStats || {},
+        aggregated: aggregatedStats || {},
+        lastUpdated: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    logger.error(`Error fetching platform stats: ${error}`, error, 'analytics-api');
+    return res.status(500).json({ success: false, error: 'Ошибка получения статистики по платформам' });
+  }
+});
+
 // Экспортируем маршрутизатор
 export default router;
