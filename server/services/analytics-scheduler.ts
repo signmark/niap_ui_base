@@ -65,8 +65,9 @@ export class AnalyticsScheduler {
   
   /**
    * Запускает процесс сбора аналитики для всех постов
+   * Метод публичный для возможности ручного запуска сбора аналитики
    */
-  private async collectAnalytics(): Promise<void> {
+  async collectAnalytics(): Promise<void> {
     try {
       logger.log('Starting analytics collection...', 'analytics-scheduler');
       

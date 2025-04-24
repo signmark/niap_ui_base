@@ -49,6 +49,7 @@ import facebookWebhookRoutes from './api/facebook-webhook-v2';
 import facebookWebhookV3Routes from './api/facebook-webhook-v3';
 import facebookWebhookDirectTestRoutes from './api/facebook-webhook-direct-test';
 import analyticsRouter from './routes-analytics';
+import { analyticsScheduler } from './services/analytics-scheduler';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
@@ -1298,6 +1299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты для аналитики
   app.use('/api/analytics', analyticsRouter);
+  
+  // Запускаем планировщик аналитики
+  analyticsScheduler.start();
+  console.log('Analytics scheduler has been started');
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {

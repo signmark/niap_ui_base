@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import {
   BarChart,
   Bar,
@@ -28,7 +29,9 @@ import {
   MessageSquare,
   MousePointerClick,
   TrendingUp,
-  Zap
+  Zap,
+  RefreshCw,
+  Database
 } from 'lucide-react';
 import api, { analytics } from '@/lib/api';
 import { LoadingSpinner } from './ui/loading-spinner';
@@ -47,6 +50,8 @@ const PLATFORM_COLORS = {
  */
 export const AnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Параметры запросов
   const [period, setPeriod] = useState('7days');
@@ -63,12 +68,75 @@ export const AnalyticsDashboard: React.FC = () => {
     queryKey: ['/api/analytics/platforms', campaignId, period],
     queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period })
   });
-
+  
+  // Мутация для ручного сбора аналитики
+  const collectAnalyticsMutation = useMutation({
+    mutationFn: analytics.collectAll,
+    onSuccess: () => {
+      toast({
+        title: "Сбор аналитики запущен",
+        description: "Данные будут обновлены в течение нескольких минут",
+        variant: "default"
+      });
+      // Обновляем данные после успешного запроса
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/posts']
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/platforms']
+        });
+      }, 10000); // Даем 10 секунд на сбор данных
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось запустить сбор аналитики",
+        variant: "destructive"
+      });
+      console.error("Ошибка при запуске сбора аналитики:", error);
+    }
+  });
+  
+  // Мутация для инициализации аналитики
+  const initializeAnalyticsMutation = useMutation({
+    mutationFn: analytics.initialize,
+    onSuccess: (data) => {
+      toast({
+        title: "Аналитика инициализирована",
+        description: `Подготовлено ${data?.details?.processedCount || 0} постов для сбора аналитики`,
+        variant: "default"
+      });
+      // Запускаем сбор данных после инициализации
+      collectAnalyticsMutation.mutate();
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось инициализировать аналитику",
+        variant: "destructive"
+      });
+      console.error("Ошибка при инициализации аналитики:", error);
+    }
+  });
+  
   // Проверка загрузки
-  const isLoading = isLoadingPosts || isLoadingPlatforms;
+  const isLoading = isLoadingPosts || isLoadingPlatforms || 
+                    collectAnalyticsMutation.isPending || 
+                    initializeAnalyticsMutation.isPending;
 
   // Проверка ошибок
   const hasError = postsError || platformsError;
+  
+  // Функция для обновления аналитики
+  const handleRefreshAnalytics = () => {
+    collectAnalyticsMutation.mutate();
+  };
+  
+  // Функция для инициализации аналитики
+  const handleInitializeAnalytics = () => {
+    initializeAnalyticsMutation.mutate();
+  };
 
   // Если есть ошибка, показываем сообщение
   if (hasError) {
@@ -147,7 +215,33 @@ export const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 p-2 md:p-4">
-      <h1 className="text-2xl font-bold">Аналитика публикаций</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Аналитика публикаций</h1>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshAnalytics}
+            disabled={collectAnalyticsMutation.isPending}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className="h-4 w-4" /> 
+            Обновить данные
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={handleInitializeAnalytics}
+            disabled={initializeAnalyticsMutation.isPending}
+            className="flex items-center gap-1"
+          >
+            <Database className="h-4 w-4" /> 
+            Инициализировать
+          </Button>
+        </div>
+      </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">

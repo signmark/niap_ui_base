@@ -208,13 +208,35 @@ export const analytics = {
     }
   },
   
-  // Запуск обновления аналитики вручную
+  // Запуск обновления аналитики вручную для конкретного поста
   triggerUpdate: async (contentId: string) => {
     try {
       const response = await api.post('/analytics/update', { contentId });
       return response.data;
     } catch (error) {
-      console.error('Ошибка при обновлении аналитики:', error);
+      console.error('Ошибка при обновлении аналитики поста:', error);
+      throw error;
+    }
+  },
+  
+  // Запуск обновления аналитики для всех постов пользователя
+  collectAll: async () => {
+    try {
+      const response = await api.post('/analytics/collect');
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при запуске сбора аналитики:', error);
+      throw error;
+    }
+  },
+  
+  // Инициализирует аналитику для постов, у которых её ещё нет
+  initialize: async () => {
+    try {
+      const response = await api.post('/analytics/initialize');
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при инициализации аналитики:', error);
       throw error;
     }
   }

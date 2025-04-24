@@ -1,6 +1,7 @@
 import express from 'express';
 import { postAnalyticsService } from './services/post-analytics';
 import { analyticsScheduler } from './services/analytics-scheduler';
+import { analyticsInitializer } from './services/analytics-init';
 import logger from './utils/logger';
 import { directusApi } from './directus';
 import { NextFunction, Response } from 'express';
@@ -194,20 +195,54 @@ router.post('/collect', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
-    // Проверяем, что пользователь имеет права администратора
-    if (!req.user?.isAdmin) {
-      return res.status(403).json({ success: false, error: 'Недостаточно прав' });
-    }
-    
     // Запускаем сбор аналитики вручную
     // Это асинхронный процесс, поэтому отправляем ответ до его завершения
-    // В реальном приложении можно использовать websocket для уведомления о завершении
+    logger.log(`User ${userId} manually triggered analytics collection`, 'analytics-api');
     analyticsScheduler.collectAnalytics();
     
-    return res.json({ success: true, message: 'Сбор аналитики запущен' });
+    return res.json({ success: true, message: 'Сбор аналитики успешно запущен' });
   } catch (error) {
     logger.error(`Error initiating analytics collection: ${error}`, error, 'analytics-api');
     return res.status(500).json({ success: false, error: 'Ошибка запуска сбора аналитики' });
+  }
+});
+
+/**
+ * Инициализация аналитики для всех постов пользователя
+ * Этот маршрут создает структуры аналитики для постов, у которых её ещё нет
+ */
+router.post('/initialize', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Не авторизован' });
+    }
+    
+    logger.log(`User ${userId} requested analytics initialization for all posts`, 'analytics-api');
+    
+    // Запускаем инициализацию аналитики для постов пользователя
+    const result = await analyticsInitializer.initializeAnalyticsForUser(userId);
+    
+    if (result.success) {
+      // После инициализации сразу запускаем сбор реальных данных
+      analyticsScheduler.collectAnalytics();
+      
+      return res.json({ 
+        success: true, 
+        message: `Аналитика успешно инициализирована для ${result.processedCount} постов`,
+        details: result
+      });
+    } else {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка инициализации аналитики', 
+        details: result
+      });
+    }
+  } catch (error) {
+    logger.error(`Error initializing analytics: ${error}`, error, 'analytics-api');
+    return res.status(500).json({ success: false, error: 'Ошибка инициализации аналитики' });
   }
 });
 
