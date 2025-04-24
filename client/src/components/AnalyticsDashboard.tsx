@@ -61,21 +61,13 @@ export const AnalyticsDashboard: React.FC = () => {
 
   // Параметры запросов
   const [period, setPeriod] = useState('7days');
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(
-    localStorage.getItem('active_campaign_id') || undefined
-  );
+  // Используем только глобальный селектор кампании из localStorage
+  const campaignId = localStorage.getItem('active_campaign_id');
   
   // Получаем текущего пользователя для отслеживания изменений
   const { data: userData } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: () => api.get('/api/auth/me')
-  });
-  
-  // Получаем список кампаний пользователя
-  const { data: campaignsData } = useQuery({
-    queryKey: ['/api/campaigns', userData?.data?.id],
-    queryFn: () => api.get('/api/campaigns'),
-    enabled: !!userData?.data?.id // Запрос будет выполнен только если есть ID пользователя
   });
   
   // Опции периодов
@@ -89,16 +81,16 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Получение статистики постов
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
-    queryKey: ['/api/analytics/posts', selectedCampaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPosts({ campaignId: selectedCampaignId, period }),
+    queryKey: ['/api/analytics/posts', campaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPosts({ campaignId, period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
 
   // Получение статистики по платформам
   const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
-    queryKey: ['/api/analytics/platforms', selectedCampaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPlatforms({ campaignId: selectedCampaignId, period }),
+    queryKey: ['/api/analytics/platforms', campaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPlatforms({ campaignId, period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
@@ -177,7 +169,7 @@ export const AnalyticsDashboard: React.FC = () => {
     queryClient.invalidateQueries({
       queryKey: ['/api/analytics/platforms']
     });
-  }, [selectedCampaignId, userData?.data?.id, queryClient]);
+  }, [campaignId, userData?.data?.id, queryClient]);
   
   // Отслеживаем изменения кампании через localStorage
   useEffect(() => {
@@ -416,35 +408,15 @@ export const AnalyticsDashboard: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Селектор кампании */}
-                <div className="flex items-center gap-2">
-                  <FolderOpen size={16} className="text-muted-foreground" />
-                  <Select
-                    value={selectedCampaignId}
-                    onValueChange={(value) => {
-                      setSelectedCampaignId(value);
-                      // Перезагружаем данные при изменении кампании
-                      queryClient.invalidateQueries({
-                        queryKey: ['/api/analytics/posts']
-                      });
-                      queryClient.invalidateQueries({
-                        queryKey: ['/api/analytics/platforms']
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="w-[180px] h-8">
-                      <SelectValue placeholder="Все кампании" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Все кампании</SelectItem>
-                      {campaignsData?.data?.map((campaign: any) => (
-                        <SelectItem key={campaign.id} value={campaign.id}>
-                          {campaign.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Текущая выбранная кампания */}
+                {campaignId && (
+                  <div className="flex items-center gap-2">
+                    <FolderOpen size={16} className="text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Используйте селектор кампаний в верхней части экрана
+                    </span>
+                  </div>
+                )}
                 
                 {/* Селектор периода */}
                 <div className="flex items-center gap-2">
