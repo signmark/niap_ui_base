@@ -851,9 +851,14 @@ export class PostAnalyticsService {
     try {
       logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
-      // Получаем все посты пользователя с нужными полями
-      // Используем URL-параметры для построения запроса
-      const filter = { user_id: { _eq: userId } };
+      // Получаем опубликованные посты пользователя с нужными полями
+      // Используем URL-параметры для построения запроса с фильтрацией по статусу
+      const filter = { 
+        _and: [
+          { user_id: { _eq: userId } }, 
+          { status: { _in: ['published'] } }
+        ] 
+      };
       const fields = ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at'];
       
       const queryParams = new URLSearchParams();
@@ -986,9 +991,14 @@ export class PostAnalyticsService {
     try {
       logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
-      // Получаем все посты пользователя с нужными полями
-      // Используем URL-параметры для построения запроса
-      const filter = { user_id: { _eq: userId } };
+      // Получаем опубликованные посты пользователя с нужными полями
+      // Используем URL-параметры для построения запроса с фильтрацией по статусу
+      const filter = { 
+        _and: [
+          { user_id: { _eq: userId } }, 
+          { status: { _in: ['published'] } }
+        ] 
+      };
       const fields = ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at'];
       
       const queryParams = new URLSearchParams();
