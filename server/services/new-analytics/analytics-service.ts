@@ -562,17 +562,10 @@ class AnalyticsService {
       }
       
       // Получаем посты через Directus API
-      const query = {
+      const result = await directusCrud.list('campaign_content', {
         fields: ['*', 'social_platforms', 'user_id', 'campaign'],
-        filter: filters
-      };
-      
-      const result = await directusCrud.search('items/campaign_content', {
-        params: {
-          fields: ['*', 'social_platforms', 'user_id', 'campaign'],
-          filter: filters,
-          limit: 100 // Ограничиваем количество результатов
-        }
+        filter: filters,
+        limit: 100 // Ограничиваем количество результатов
       });
       
       if (!result || !result.data) {

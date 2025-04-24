@@ -534,7 +534,7 @@ export class AnalyticsScheduler {
       const views = postData.views?.count || 0;
       
       // Обновляем статистику в нашей базе
-      await postAnalyticsService.updateStats(postId, 'vk', userId, {
+      await analyticsService.updateStats(postId, 'vk', userId, {
         views,
         likes,
         comments,
@@ -596,7 +596,7 @@ export class AnalyticsScheduler {
       }
       
       // Обновляем статистику в нашей базе
-      await postAnalyticsService.updateStats(postId, 'facebook', userId, {
+      await analyticsService.updateStats(postId, 'facebook', userId, {
         views,
         likes,
         comments,
@@ -664,7 +664,7 @@ export class AnalyticsScheduler {
       const comments = mediaData.comments_count || 0;
       
       // Обновляем статистику в нашей базе
-      await postAnalyticsService.updateStats(postId, 'instagram', userId, {
+      await analyticsService.updateStats(postId, 'instagram', userId, {
         views,
         likes,
         comments,
