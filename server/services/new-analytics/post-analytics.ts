@@ -4,7 +4,8 @@
  */
 
 import logger from '../../utils/logger';
-import directusService from '../../directus';
+import { directusCrud } from '../directus-crud';
+import { directusApiManager } from '../../directus';
 
 /**
  * Интерфейс для статистики по платформе
@@ -85,7 +86,7 @@ export class PostAnalyticsService {
       logger.info(`Getting analytics for post ${postId}`, 'analytics');
       
       // Получаем пост из Directus
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -186,7 +187,7 @@ export class PostAnalyticsService {
       logger.info(`Incrementing views for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -231,7 +232,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -256,7 +257,7 @@ export class PostAnalyticsService {
       logger.info(`Incrementing likes for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -301,7 +302,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -326,7 +327,7 @@ export class PostAnalyticsService {
       logger.info(`Incrementing comments for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -371,7 +372,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -396,7 +397,7 @@ export class PostAnalyticsService {
       logger.info(`Incrementing shares for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -441,7 +442,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -466,7 +467,7 @@ export class PostAnalyticsService {
       logger.info(`Incrementing clicks for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -511,7 +512,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -552,7 +553,7 @@ export class PostAnalyticsService {
       logger.info(`Updating stats for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -624,7 +625,7 @@ export class PostAnalyticsService {
       socialPlatforms[platform].analytics.engagementRate = views > 0 ? Math.round((engagements / views) * 100) : 0;
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -654,7 +655,7 @@ export class PostAnalyticsService {
       logger.info(`Setting stats for post ${postId} on platform ${platform}`, 'analytics');
       
       // Получаем пост
-      const post = await directusService.read('campaign_content', postId, userId);
+      const post = await directusCrud.read('campaign_content', postId, userId);
       if (!post) {
         logger.warn(`Post ${postId} not found`, 'analytics');
         return null;
@@ -687,7 +688,7 @@ export class PostAnalyticsService {
       }
       
       // Обновляем пост в Directus
-      await directusService.update('campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: socialPlatforms
       }, userId);
       
@@ -710,7 +711,7 @@ export class PostAnalyticsService {
       
       // Запрашиваем посты пользователя
       logger.info(`Requesting posts for user ${userId} with filter: user_id=${userId}`, 'analytics');
-      const posts = await directusService.readMany('campaign_content', {
+      const posts = await directusCrud.readMany('campaign_content', {
         filter: { 
           _and: [
             { user_id: { _eq: userId } },
@@ -836,7 +837,7 @@ export class PostAnalyticsService {
       logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с нужными полями
-      const posts = await directusService.readMany('campaign_content', {
+      const posts = await directusCrud.readMany('campaign_content', {
         filter: { user_id: { _eq: userId } },
         fields: ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at']
       }, userId);
@@ -957,7 +958,7 @@ export class PostAnalyticsService {
       logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с нужными полями
-      const posts = await directusService.readMany('campaign_content', {
+      const posts = await directusCrud.readMany('campaign_content', {
         filter: { user_id: { _eq: userId } },
         fields: ['id', 'title', 'content', 'status', 'social_platforms', 'campaign_id', 'created_at', 'published_at']
       }, userId);
