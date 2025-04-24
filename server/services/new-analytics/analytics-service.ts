@@ -469,9 +469,9 @@ class AnalyticsService {
       };
       
       // Сохраняем обновленный пост
-      await directusCrud.update('items/campaign_content', postId, {
+      await directusCrud.update('campaign_content', postId, {
         social_platforms: post.social_platforms
-      });
+      }, { userId });
       
       return {
         success: true,
@@ -501,17 +501,16 @@ class AnalyticsService {
         }
       };
       
-      const result = await directusCrud.getItem('items/campaign_content', postId, {
-        params: {
-          fields: ['*', 'social_platforms', 'user_id', 'campaign']
-        }
+      const result = await directusCrud.getById('campaign_content', postId, {
+        fields: ['*', 'social_platforms', 'user_id', 'campaign'],
+        userId
       });
       
-      if (!result || !result.data) {
+      if (!result) {
         return null;
       }
       
-      return result.data;
+      return result;
     } catch (error) {
       logger.error(`Error getting post by ID: ${error}`, error as Error, 'analytics-service');
       return null;
@@ -565,14 +564,15 @@ class AnalyticsService {
       const result = await directusCrud.list('campaign_content', {
         fields: ['*', 'social_platforms', 'user_id', 'campaign'],
         filter: filters,
-        limit: 100 // Ограничиваем количество результатов
+        limit: 100, // Ограничиваем количество результатов
+        userId
       });
       
-      if (!result || !result.data) {
+      if (!result) {
         return [];
       }
       
-      return result.data;
+      return result;
     } catch (error) {
       logger.error(`Error getting user posts: ${error}`, error as Error, 'analytics-service');
       return [];
