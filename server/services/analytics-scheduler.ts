@@ -213,10 +213,12 @@ export class AnalyticsScheduler {
    */
   private async getUserPublishedPosts(userId: string): Promise<Array<any>> {
     try {
-      // Получаем посты со статусом "published" или посты, у которых socialPlatforms содержит "status": "published"
-      const token = await directusApiManager.getUserToken(userId);
+      // Сначала попробуем получить админский токен вместо токена пользователя,
+      // т.к. пользовательский токен может иметь ограничения на доступ
+      const token = await directusApiManager.getAdminToken();
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        logger.error(`No admin token available for user ${userId}`, null, 'analytics-scheduler');
+        return [];
       }
       
       const filter = {
@@ -233,20 +235,38 @@ export class AnalyticsScheduler {
       
       const fields = ['id', 'title', 'content', 'social_platforms', 'metadata'];
       
+      // Делаем запрос с использованием админского токена
+      logger.log(`Requesting published posts for user ${userId} using admin token`, 'analytics-scheduler');
       const response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
         token
       });
       
-      const posts = response?.data?.data || [];
-      
-      if (!Array.isArray(posts)) {
+      // Более надежная проверка структуры ответа
+      if (!response) {
+        logger.warn(`Empty response when getting posts for user ${userId}`, 'analytics-scheduler');
         return [];
       }
       
+      // Проверяем, содержит ли ответ поле data
+      if (!response.data) {
+        logger.warn(`Response does not contain data field for user ${userId}`, 'analytics-scheduler');
+        return [];
+      }
+      
+      // Проверяем, содержит ли data поле data (особенность Directus API)
+      const posts = response.data.data || [];
+      
+      if (!Array.isArray(posts)) {
+        logger.warn(`Posts data is not an array for user ${userId}`, 'analytics-scheduler');
+        return [];
+      }
+      
+      logger.log(`Found ${posts.length} posts for user ${userId}`, 'analytics-scheduler');
+      
       // Фильтруем посты, которые были опубликованы хотя бы на одной платформе
-      return posts.filter(post => {
+      const publishedPosts = posts.filter(post => {
         const socialPlatforms = post.social_platforms || {};
         
         // Проверяем, есть ли хотя бы одна платформа со статусом "published"
@@ -254,6 +274,9 @@ export class AnalyticsScheduler {
           platform && platform.status === 'published' && platform.postUrl
         );
       });
+      
+      logger.log(`After filtering, found ${publishedPosts.length} published posts for user ${userId}`, 'analytics-scheduler');
+      return publishedPosts;
     } catch (error) {
       logger.error(`Error getting published posts for user ${userId}: ${error}`, error, 'analytics-scheduler');
       return [];
@@ -276,7 +299,17 @@ export class AnalyticsScheduler {
       const settings = await this.getUserSocialSettings(userId);
       
       // Проверяем и собираем аналитику для каждой платформы
-      for (const [platform, data] of Object.entries(socialPlatforms)) {
+      for (const [platform, platformData] of Object.entries(socialPlatforms)) {
+        // Проверяем, что platformData это объект, а не примитив
+        if (typeof platformData !== 'object' || platformData === null) {
+          logger.warn(`Platform data for ${platform} is not an object: ${JSON.stringify(platformData)}`, 'analytics-scheduler');
+          continue;
+        }
+        
+        // Приводим к типу any для дальнейшей обработки
+        const data = platformData as any;
+        
+        // Проверяем наличие необходимых полей
         if (data && data.status === 'published' && data.postUrl) {
           switch (platform) {
             case 'telegram':
@@ -294,6 +327,8 @@ export class AnalyticsScheduler {
             default:
               logger.warn(`Unknown platform: ${platform}`, 'analytics-scheduler');
           }
+        } else {
+          logger.warn(`Post ${postId} has platform ${platform} but it's not fully published or missing URL: ${JSON.stringify(data)}`, 'analytics-scheduler');
         }
       }
     } catch (error) {
@@ -308,30 +343,77 @@ export class AnalyticsScheduler {
    */
   private async getUserSocialSettings(userId: string): Promise<any> {
     try {
-      // Получаем все кампании пользователя (предполагается, что настройки хранятся в кампаниях)
-      const token = await directusApiManager.getUserToken(userId);
+      // Получаем админский токен для гарантированного доступа к данным
+      const token = await directusApiManager.getAdminToken();
       if (!token) {
-        throw new Error(`No token for user ${userId}`);
+        logger.error(`No admin token available for getting social settings for user ${userId}`, 'analytics-scheduler');
+        return {
+          telegram: {},
+          vk: {},
+          facebook: {},
+          instagram: {}
+        };
       }
       
       const filter = { user_id: { _eq: userId } };
       const fields = ['id', 'social_media_settings'];
       
+      logger.log(`Requesting social settings for user ${userId} using admin token`, 'analytics-scheduler');
       const response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/campaigns?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
         token
       });
       
-      const campaigns = response?.data?.data || [];
-      
-      if (!Array.isArray(campaigns) || campaigns.length === 0) {
-        throw new Error(`No campaigns found for user ${userId}`);
+      // Проверяем структуру ответа
+      if (!response) {
+        logger.warn(`Empty response when getting campaigns for user ${userId}`, 'analytics-scheduler');
+        return {
+          telegram: {},
+          vk: {},
+          facebook: {},
+          instagram: {}
+        };
       }
       
-      // Используем настройки из первой кампании (предполагается, что настройки одинаковы для всех кампаний пользователя)
+      if (!response.data) {
+        logger.warn(`Response does not contain data field for campaigns of user ${userId}`, 'analytics-scheduler');
+        return {
+          telegram: {},
+          vk: {},
+          facebook: {},
+          instagram: {}
+        };
+      }
+      
+      const campaigns = response.data.data || [];
+      
+      if (!Array.isArray(campaigns)) {
+        logger.warn(`Campaigns data is not an array for user ${userId}`, 'analytics-scheduler');
+        return {
+          telegram: {},
+          vk: {},
+          facebook: {},
+          instagram: {}
+        };
+      }
+      
+      if (campaigns.length === 0) {
+        logger.warn(`No campaigns found for user ${userId}`, 'analytics-scheduler');
+        return {
+          telegram: {},
+          vk: {},
+          facebook: {},
+          instagram: {}
+        };
+      }
+      
+      logger.log(`Found ${campaigns.length} campaigns for user ${userId}`, 'analytics-scheduler');
+      
+      // Используем настройки из первой кампании
       const settings = campaigns[0].social_media_settings || {};
       
+      logger.log(`Retrieved social settings for user ${userId}`, 'analytics-scheduler');
       return settings;
     } catch (error) {
       logger.error(`Error getting user social settings: ${error}`, error, 'analytics-scheduler');
