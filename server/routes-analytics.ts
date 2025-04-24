@@ -284,23 +284,34 @@ router.get('/posts', async (req, res) => {
   try {
     const userId = req.user?.id;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const period = req.query.period as string || 'all';
+    const campaignId = req.query.campaignId as string;
+    
+    logger.info(`Получение аналитики постов: userId=${userId}, period=${period}, campaignId=${campaignId}`, null, 'analytics-api');
     
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
+    // Формирование параметров для запроса в зависимости от периода
+    const periodOptions = {
+      period,
+      campaignId
+    };
+    
     // Получаем топ посты по просмотрам для отображения в аналитике
-    const postsData = await postAnalyticsService.getTopPostsByViews(userId, limit);
+    const postsData = await postAnalyticsService.getTopPostsByViews(userId, limit, periodOptions);
     
     // Получаем также топ посты по вовлеченности для полноты данных
-    const engagementData = await postAnalyticsService.getTopPostsByEngagement(userId, limit);
+    const engagementData = await postAnalyticsService.getTopPostsByEngagement(userId, limit, periodOptions);
     
     return res.json({ 
       success: true, 
       data: {
         topByViews: postsData || [],
         topByEngagement: engagementData || [],
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        period: period
       }
     });
   } catch (error) {
@@ -315,23 +326,34 @@ router.get('/posts', async (req, res) => {
 router.get('/platforms', async (req, res) => {
   try {
     const userId = req.user?.id;
+    const period = req.query.period as string || 'all';
+    const campaignId = req.query.campaignId as string;
+    
+    logger.info(`Получение аналитики платформ: userId=${userId}, period=${period}, campaignId=${campaignId}`, null, 'analytics-api');
     
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
+    // Формирование параметров для запроса в зависимости от периода
+    const periodOptions = {
+      period,
+      campaignId
+    };
+    
     // Получаем статистику по платформам
-    const platformStats = await postAnalyticsService.getPlatformStats(userId);
+    const platformStats = await postAnalyticsService.getPlatformStats(userId, periodOptions);
     
     // Получаем агрегированную статистику пользователя
-    const aggregatedStats = await postAnalyticsService.getAggregatedUserStats(userId);
+    const aggregatedStats = await postAnalyticsService.getAggregatedUserStats(userId, periodOptions);
     
     return res.json({ 
       success: true, 
       data: {
         platforms: platformStats || {},
         aggregated: aggregatedStats || {},
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        period: period
       }
     });
   } catch (error) {

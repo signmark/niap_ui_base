@@ -123,6 +123,49 @@ export interface PostAnalytics {
 export class PostAnalyticsService {
   
   /**
+   * Возвращает пустую статистику при отсутствии данных
+   * @returns Базовая пустая структура агрегированной статистики
+   */
+  private getEmptyAggregatedStats(): Record<string, any> {
+    return {
+      totalPosts: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
+      totalShares: 0,
+      totalClicks: 0,
+      totalEngagements: 0,
+      avgEngagementRate: 0,
+      byPlatform: {
+        telegram: {
+          posts: 0,
+          views: 0,
+          engagements: 0,
+          engagementRate: 0
+        },
+        vk: {
+          posts: 0,
+          views: 0,
+          engagements: 0,
+          engagementRate: 0
+        },
+        instagram: {
+          posts: 0,
+          views: 0,
+          engagements: 0,
+          engagementRate: 0
+        },
+        facebook: {
+          posts: 0,
+          views: 0,
+          engagements: 0,
+          engagementRate: 0
+        }
+      }
+    };
+  }
+  
+  /**
    * Получает и при необходимости инициализирует аналитику поста
    * @param postId ID поста
    * @param userId ID пользователя
@@ -658,21 +701,63 @@ export class PostAnalyticsService {
    * @param userId ID пользователя
    * @returns Агрегированная статистика или null при ошибке
    */
-  async getAggregatedUserStats(userId: string): Promise<Record<string, any> | null> {
+  async getAggregatedUserStats(userId: string, periodOptions?: {period: string, campaignId?: string}): Promise<Record<string, any> | null> {
     try {
+      logger.info(`Getting aggregated stats for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      
       // Получаем все посты пользователя
       const posts = await directusService.readMany('campaign_content', {
         filter: { user_id: { _eq: userId } },
-        fields: ['id', 'metadata']
+        fields: ['id', 'metadata', 'date_created', 'date_updated', 'status', 'social_platforms']
       }, userId);
       
-      if (!posts || !Array.isArray(posts)) {
-        throw new Error('Failed to fetch user posts');
+      // Если не удалось получить посты, возвращаем базовую структуру
+      if (!posts || !Array.isArray(posts) || posts.length === 0) {
+        logger.warn(`No posts found for user ${userId} or could not fetch them`, null, 'analytics');
+        
+        // Возвращаем пустую структуру статистики вместо null
+        return this.getEmptyAggregatedStats();
+      }
+      
+      // Фильтрация постов по периоду, если указан
+      let filteredPosts = [...posts];
+      if (periodOptions?.period && periodOptions.period !== 'all') {
+        const now = new Date();
+        let startDate: Date;
+        
+        switch(periodOptions.period) {
+          case '1day':
+            startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case '7days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case '90days':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            startDate = new Date(0); // С начала времен
+        }
+        
+        filteredPosts = filteredPosts.filter(post => {
+          const dateCreated = post.date_created ? new Date(post.date_created) : null;
+          const dateUpdated = post.date_updated ? new Date(post.date_updated) : null;
+          const postDate = dateUpdated || dateCreated || new Date();
+          return postDate >= startDate;
+        });
+      }
+      
+      // Фильтрация по кампании, если указана
+      if (periodOptions?.campaignId) {
+        filteredPosts = filteredPosts.filter(post => post.campaign === periodOptions.campaignId);
       }
       
       // Инициализируем статистику
       const result = {
-        totalPosts: posts.length,
+        totalPosts: filteredPosts.length,
         totalViews: 0,
         totalLikes: 0,
         totalComments: 0,
