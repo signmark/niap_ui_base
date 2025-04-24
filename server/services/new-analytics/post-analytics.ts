@@ -924,7 +924,7 @@ export class PostAnalyticsService {
         logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, 'analytics');
       }
       
-      // Фильтруем посты с аналитикой и сортируем по просмотрам
+      // Отображаем посты и подсчитываем аналитику (даже если нет просмотров)
       const postsWithAnalytics = filteredPosts
         .map(post => {
           const socialPlatforms = post.social_platforms || {};
@@ -934,19 +934,22 @@ export class PostAnalyticsService {
           
           // Собираем данные из всех платформ
           Object.entries(socialPlatforms).forEach(([platform, platformData]) => {
-            if (platformData && typeof platformData === 'object' && platformData.analytics) {
-              const stats = platformData.analytics;
-              
-              // Накапливаем данные для расчета общей статистики
-              totalViews += stats.views || 0;
-              
-              // Учитываем вовлеченность
-              const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
-              totalEngagements += engagements;
-              
-              // Если есть просмотры, добавляем платформу в список
-              if (stats.views > 0) {
+            if (platformData && typeof platformData === 'object') {
+              // Добавляем платформу в список, если она опубликована
+              if (platformData.status === 'published' && platformData.postUrl) {
                 platforms.push(platform);
+              }
+              
+              // Если есть аналитика, считаем её
+              if (platformData.analytics) {
+                const stats = platformData.analytics;
+                
+                // Накапливаем данные для расчета общей статистики
+                totalViews += stats.views || 0;
+                
+                // Учитываем вовлеченность
+                const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
+                totalEngagements += engagements;
               }
             }
           });
@@ -959,14 +962,15 @@ export class PostAnalyticsService {
             title: post.title || 'Без заголовка',
             content: post.content,
             createdAt: post.created_at,
+            publishedAt: post.published_at,
             views: totalViews,
             engagements: totalEngagements,
             engagementRate: engagementRate,
             platforms: platforms
           };
         })
-        // Фильтруем посты без просмотров
-        .filter(post => post.views > 0)
+        // Включаем все опубликованные посты, даже без просмотров
+        .filter(post => post.platforms.length > 0)
         // Сортируем по просмотрам от большего к меньшему
         .sort((a, b) => b.views - a.views)
         // Ограничиваем количество результатов
@@ -1064,7 +1068,7 @@ export class PostAnalyticsService {
         logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, 'analytics');
       }
       
-      // Фильтруем посты с аналитикой и сортируем по вовлеченности
+      // Отображаем посты и подсчитываем аналитику (даже если нет просмотров)
       const postsWithAnalytics = filteredPosts
         .map(post => {
           const socialPlatforms = post.social_platforms || {};
@@ -1074,19 +1078,22 @@ export class PostAnalyticsService {
           
           // Собираем данные из всех платформ
           Object.entries(socialPlatforms).forEach(([platform, platformData]) => {
-            if (platformData && typeof platformData === 'object' && platformData.analytics) {
-              const stats = platformData.analytics;
-              
-              // Накапливаем данные для расчета общей статистики
-              totalViews += stats.views || 0;
-              
-              // Учитываем вовлеченность
-              const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
-              totalEngagements += engagements;
-              
-              // Если есть просмотры, добавляем платформу в список
-              if (stats.views > 0) {
+            if (platformData && typeof platformData === 'object') {
+              // Добавляем платформу в список, если она опубликована
+              if (platformData.status === 'published' && platformData.postUrl) {
                 platforms.push(platform);
+              }
+              
+              // Если есть аналитика, считаем её
+              if (platformData.analytics) {
+                const stats = platformData.analytics;
+                
+                // Накапливаем данные для расчета общей статистики
+                totalViews += stats.views || 0;
+                
+                // Учитываем вовлеченность
+                const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
+                totalEngagements += engagements;
               }
             }
           });
@@ -1099,14 +1106,15 @@ export class PostAnalyticsService {
             title: post.title || 'Без заголовка',
             content: post.content,
             createdAt: post.created_at,
+            publishedAt: post.published_at,
             views: totalViews,
             engagements: totalEngagements,
             engagementRate: engagementRate,
             platforms: platforms
           };
         })
-        // Фильтруем посты без просмотров
-        .filter(post => post.views > 0)
+        // Включаем все опубликованные посты, даже без просмотров
+        .filter(post => post.platforms.length > 0)
         // Сортируем по вовлеченности от большего к меньшему
         .sort((a, b) => b.engagementRate - a.engagementRate)
         // Ограничиваем количество результатов
