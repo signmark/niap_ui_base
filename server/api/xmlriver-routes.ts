@@ -642,13 +642,16 @@ export function registerXmlRiverRoutes(app: Express): void {
             log(`[${requestId}] Falling back to XMLRiver for keyword search`, 'xmlriver-api');
             log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`, 'xmlriver-api');
             
-            // Для тестирования, используем предустановленный ключ для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
-            if (userId === '53921f16-f51d-4591-80b9-8caa4fde4d13') {
-              // Используем известный ключ из скриншота
-              const hardcodedKey = JSON.stringify({"user":"16797","key":"f7947eff83104621deb713275fe3260bfde4f001"});
-              log(`[${requestId}] Используем предустановленный ключ для тестирования XML River для пользователя ${userId}`, 'xmlriver-api');
+            // Получаем ключ API для пользователя из сервиса ключей
+            const apiKeyObj = await apiKeyService.getApiKey(userId, 'xmlriver', tokenAuth);
               
-              // Пытаемся получить ключевые слова напрямую с этим ключом
+            if (apiKeyObj && apiKeyObj.key) {
+              // Используем ключ из базы данных
+              const apiKeyData = JSON.parse(apiKeyObj.key);
+              const hardcodedKey = JSON.stringify(apiKeyData);
+              log(`[${requestId}] Используем ключ из базы данных для пользователя ${userId}`, 'xmlriver-api');
+              
+              // Пытаемся получить ключевые слова с полученным ключом
               keywords = await xmlRiverClient.getKeywordsWithConfig(query, hardcodedKey, requestId);
             } else {
               // Пытаемся получить ключ из сервиса API ключей

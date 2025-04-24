@@ -27,7 +27,15 @@ export function registerFalAiTestRoutes(app: Express) {
       }
       
       // Получаем API ключ из сервиса ключей
-      const apiKey = await apiKeyService.getApiKey(userId || '53921f16-f51d-4591-80b9-8caa4fde4d13', 'fal_ai', token || undefined);
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Не авторизован",
+          message: "Для использования API FAL.AI требуется авторизация"
+        });
+      }
+      
+      const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token || undefined);
       
       if (!apiKey) {
         return res.status(404).json({
