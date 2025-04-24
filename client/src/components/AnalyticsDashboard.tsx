@@ -295,20 +295,25 @@ export const AnalyticsDashboard: React.FC = () => {
       color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#999999'
     }));
 
-  // Данные для графика вовлеченности (предотвращаем нулевые значения)
-  const engagementData = [
+  // Создаем данные для графика вовлеченности
+  const rawEngagementData = [
     { name: 'Лайки', value: stats.totalLikes || 0 },
     { name: 'Комментарии', value: stats.totalComments || 0 },
     { name: 'Репосты', value: stats.totalShares || 0 },
     { name: 'Клики', value: stats.totalClicks || 0 }
-  ]
-  // Проверяем, есть ли хоть какие-то данные для отображения
-  .filter(item => item.value > 0);
+  ];
   
-  // Добавляем фиктивную запись с минимальным значением, если нет данных для отображения
-  if (engagementData.length === 0) {
-    engagementData.push({ name: 'Нет данных', value: 0 });
-  }
+  // Проверяем, есть ли хоть какие-то ненулевые данные
+  const hasAnyData = rawEngagementData.some(item => item.value > 0);
+  
+  // Если есть ненулевые данные, используем их; если все нули, используем все равно основные категории
+  const engagementData = hasAnyData 
+    ? rawEngagementData 
+    : rawEngagementData.map(item => ({
+        ...item,
+        // Добавляем минимальное значение 1 для каждой категории, чтобы график был виден
+        value: 1
+      }));
 
   return (
     <div className="space-y-4 p-2 md:p-4">
