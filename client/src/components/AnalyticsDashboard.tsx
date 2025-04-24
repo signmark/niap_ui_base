@@ -306,14 +306,8 @@ export const AnalyticsDashboard: React.FC = () => {
   // Проверяем, есть ли хоть какие-то ненулевые данные
   const hasAnyData = rawEngagementData.some(item => item.value > 0);
   
-  // Если есть ненулевые данные, используем их; если все нули, используем все равно основные категории
-  const engagementData = hasAnyData 
-    ? rawEngagementData 
-    : rawEngagementData.map(item => ({
-        ...item,
-        // Добавляем минимальное значение 1 для каждой категории, чтобы график был виден
-        value: 1
-      }));
+  // Используем реальные данные без минимальных значений
+  const engagementData = rawEngagementData;
 
   return (
     <div className="space-y-4 p-2 md:p-4">
@@ -533,21 +527,34 @@ export const AnalyticsDashboard: React.FC = () => {
               <CardContent className="p-0">
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={engagementData}
-                      margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#8884d8" name="Количество" />
-                    </BarChart>
+                    {hasAnyData ? (
+                      <BarChart
+                        data={engagementData}
+                        margin={{
+                          top: 20,
+                          right: 30,
+                          left: 20,
+                          bottom: 5,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#8884d8" name="Количество" />
+                      </BarChart>
+                    ) : (
+                      <text
+                        x="50%"
+                        y="50%"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="16"
+                        fill="#888"
+                      >
+                        Нет данных для отображения
+                      </text>
+                    )}
                   </ResponsiveContainer>
                 </div>
               </CardContent>
