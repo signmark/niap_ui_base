@@ -235,18 +235,28 @@ export class PostAnalyticsService {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      // Получаем или инициализируем аналитику из метаданных поста
-      const metadata = post.metadata || {};
+      // Получаем social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      if (!metadata.analytics) {
-        // Инициализируем структуру аналитики, если её нет
-        metadata.analytics = this.initializeAnalytics();
-        
-        // Сохраняем обновленные метаданные
-        await directusService.update('campaign_content', postId, { metadata }, userId);
-      }
+      // Инициализируем структуру аналитики, сохраняя любые существующие данные
+      const analytics = this.initializeAnalytics();
       
-      return metadata.analytics;
+      // Перенос существующей аналитики из social_platforms в нашу структуру
+      Object.keys(socialPlatforms).forEach(platform => {
+        if (socialPlatforms[platform] && socialPlatforms[platform].analytics) {
+          analytics.byPlatform[platform] = {
+            ...analytics.byPlatform[platform], // Дефолтные значения
+            ...socialPlatforms[platform].analytics // Перезаписываем существующими значениями
+          };
+        }
+      });
+      
+      // Пересчитываем общую статистику
+      analytics.totalViews = this.calculateTotalViews(analytics);
+      analytics.totalEngagements = this.calculateTotalEngagements(analytics);
+      analytics.avgEngagementRate = this.calculateAvgEngagementRate(analytics);
+      
+      return analytics;
     } catch (error) {
       logger.error(`Error getting post analytics: ${error}`, error, 'analytics');
       return null;
