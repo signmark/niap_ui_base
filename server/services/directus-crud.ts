@@ -63,6 +63,27 @@ export class DirectusCrud {
       return response.data.data;
     });
   }
+  
+  /**
+   * Ищет записи в коллекции Directus с расширенными опциями поиска
+   * @param collection Название коллекции
+   * @param options Дополнительные опции запроса
+   * @returns Список найденных записей
+   */
+  async searchItems<T>(collection: string, options: DirectusRequestOptions = {}): Promise<T[]> {
+    return this.executeOperation<T[]>('list', collection, async () => {
+      const { authToken, userId } = options;
+      const params = this.buildParams(options);
+      
+      const response = await directusApiManager.request({
+        url: `/items/${collection}`,
+        method: 'get',
+        params
+      }, authToken || userId);
+
+      return response.data.data;
+    });
+  }
 
   /**
    * Получает конкретную запись из коллекции Directus по ID
@@ -111,6 +132,18 @@ export class DirectusCrud {
 
       return response.data.data;
     });
+  }
+  
+  /**
+   * Псевдоним для метода update (используется в сервисе аналитики)
+   * @param collection Название коллекции
+   * @param id ID записи
+   * @param data Данные для обновления
+   * @param options Дополнительные опции запроса
+   * @returns Обновленная запись
+   */
+  async updateItem<T>(collection: string, id: string | number, data: Record<string, any>, options: DirectusRequestOptions = {}): Promise<T> {
+    return this.update<T>(collection, id, data, options);
   }
 
   /**

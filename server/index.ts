@@ -14,6 +14,7 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import { initializeHeavyServices } from './optimize-startup';
 // Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
@@ -215,8 +216,8 @@ app.use((req, res, next) => {
       log("Continuing server startup despite Vite initialization error");
     }
 
-    // Используем стандартный порт 5001 или порт из переменной окружения
-    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5001;
+    // Используем стандартный порт 5000 или порт из переменной окружения
+    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
     console.log(`=== STARTING SERVER ON PORT ${PORT} ===`);
     log(`Attempting to start server on port ${PORT}...`);
 
@@ -226,6 +227,9 @@ app.use((req, res, next) => {
       
       // Печатаем URL-адрес приложения
       console.log(`=== SERVER URL: http://0.0.0.0:${PORT} ===`);
+      
+      // Инициализируем тяжелые сервисы после успешного запуска сервера
+      initializeHeavyServices();
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

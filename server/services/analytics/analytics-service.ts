@@ -185,7 +185,9 @@ export async function collectAnalytics(campaignId: string): Promise<boolean> {
     // Получаем все опубликованные посты
     const posts = await directusCrud.searchItems('campaign_content', {
       filter,
-      fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
+      fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at'],
+      // Используем токен административного пользователя, если он передан
+      ...(arguments.length > 1 && arguments[1] ? { authToken: arguments[1] } : {})
     });
     
     log.info(`[analytics-service] Найдено ${posts.length} постов для обработки`);
