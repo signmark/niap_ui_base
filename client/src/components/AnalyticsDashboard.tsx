@@ -61,8 +61,8 @@ export const AnalyticsDashboard: React.FC = () => {
 
   // Параметры запросов
   const [period, setPeriod] = useState('7days');
-  // Используем только глобальный селектор кампании из localStorage
-  const campaignId = localStorage.getItem('active_campaign_id');
+  // Используем состояние, чтобы отслеживать изменения кампании
+  const [campaignId, setCampaignId] = useState(localStorage.getItem('active_campaign_id'));
   
   // Получаем текущего пользователя для отслеживания изменений
   const { data: userData } = useQuery({
@@ -173,8 +173,13 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Отслеживаем изменения кампании через localStorage
   useEffect(() => {
+    // Функция для отслеживания изменений в localStorage
     const handleCampaignChange = (event: StorageEvent) => {
       if (event.key === 'active_campaign_id') {
+        // Обновляем состояние кампании
+        setCampaignId(event.newValue);
+        
+        // Перезапрашиваем данные аналитики
         queryClient.invalidateQueries({
           queryKey: ['/api/analytics/posts']
         });
@@ -184,11 +189,25 @@ export const AnalyticsDashboard: React.FC = () => {
       }
     };
 
+    // Функция для проверки изменений напрямую (когда меняется в текущей вкладке)
+    const checkLocalStorage = () => {
+      const currentCampaignId = localStorage.getItem('active_campaign_id');
+      if (currentCampaignId !== campaignId) {
+        setCampaignId(currentCampaignId);
+      }
+    };
+
+    // Проверяем каждую секунду изменения в localStorage
+    const interval = setInterval(checkLocalStorage, 1000);
+
+    // Также слушаем событие storage для изменений в других вкладках
     window.addEventListener('storage', handleCampaignChange);
+    
     return () => {
       window.removeEventListener('storage', handleCampaignChange);
+      clearInterval(interval);
     };
-  }, [queryClient]);
+  }, [queryClient, campaignId, setCampaignId]);
   
   // Проверка загрузки
   const isLoading = isLoadingPosts || isLoadingPlatforms || 
