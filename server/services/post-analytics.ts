@@ -12,7 +12,7 @@ const directusService = {
         if (!token) {
           throw new Error(`No token for user ${userId} and no admin token available`);
         }
-        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
+        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
       }
       
       const response = await directusApiManager.makeAuthenticatedRequest({
@@ -37,7 +37,7 @@ const directusService = {
         if (!token) {
           throw new Error(`No token for user ${userId} and no admin token available`);
         }
-        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
+        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
       }
       
       const queryParams = new URLSearchParams();
@@ -77,7 +77,7 @@ const directusService = {
         if (!token) {
           throw new Error(`No token for user ${userId} and no admin token available`);
         }
-        logger.info(`Using admin token instead of user token for ${userId}`, null, 'directus-service');
+        logger.info(`Using admin token instead of user token for ${userId}`, 'directus-service');
       }
       
       const response = await directusApiManager.makeAuthenticatedRequest({
@@ -707,7 +707,7 @@ export class PostAnalyticsService {
    */
   async getAggregatedUserStats(userId: string, periodOptions?: {period: string, campaignId?: string}): Promise<Record<string, any> | null> {
     try {
-      logger.info(`Getting aggregated stats for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      logger.info(`Getting aggregated stats for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя
       const posts = await directusService.readMany('campaign_content', {
@@ -857,7 +857,7 @@ export class PostAnalyticsService {
    */
   async getTopPostsByViews(userId: string, limit: number = 10, periodOptions?: {period: string, campaignId?: string}): Promise<Array<any>> {
     try {
-      logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      logger.info(`Getting top posts by views for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с расширенным набором полей
       const posts = await directusService.readMany('campaign_content', {
@@ -871,7 +871,7 @@ export class PostAnalyticsService {
         return [];
       }
       
-      logger.info(`Fetched ${posts.length} posts for analytics`, null, 'analytics');
+      logger.info(`Fetched ${posts.length} posts for analytics`, 'analytics');
       
       // Применяем фильтрацию по периоду, если указан
       let filteredPosts = [...posts];
@@ -903,13 +903,13 @@ export class PostAnalyticsService {
           return postDate >= startDate;
         });
         
-        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, null, 'analytics');
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, 'analytics');
       }
       
       // Фильтрация по кампании, если указана
       if (periodOptions?.campaignId) {
         filteredPosts = filteredPosts.filter(post => post.campaign === periodOptions.campaignId);
-        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, null, 'analytics');
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, 'analytics');
       }
       
       // Фильтруем посты с аналитикой и сортируем по просмотрам
@@ -935,7 +935,7 @@ export class PostAnalyticsService {
         .sort((a, b) => b.views - a.views)
         .slice(0, limit);
       
-      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by views`, null, 'analytics');
+      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by views`, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
       logger.error(`Error getting top posts by views: ${error}`, error, 'analytics');
@@ -952,7 +952,7 @@ export class PostAnalyticsService {
    */
   async getTopPostsByEngagement(userId: string, limit: number = 10, periodOptions?: {period: string, campaignId?: string}): Promise<Array<any>> {
     try {
-      logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      logger.info(`Getting top posts by engagement for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       // Получаем все посты пользователя с расширенным набором полей
       const posts = await directusService.readMany('campaign_content', {
@@ -966,7 +966,7 @@ export class PostAnalyticsService {
         return [];
       }
       
-      logger.info(`Fetched ${posts.length} posts for analytics`, null, 'analytics');
+      logger.info(`Fetched ${posts.length} posts for analytics`, 'analytics');
       
       // Применяем фильтрацию по периоду, если указан
       let filteredPosts = [...posts];
@@ -998,13 +998,13 @@ export class PostAnalyticsService {
           return postDate >= startDate;
         });
         
-        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, null, 'analytics');
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying period filter: ${periodOptions.period}`, 'analytics');
       }
       
       // Фильтрация по кампании, если указана
       if (periodOptions?.campaignId) {
         filteredPosts = filteredPosts.filter(post => post.campaign === periodOptions.campaignId);
-        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, null, 'analytics');
+        logger.info(`Filtered to ${filteredPosts.length} posts after applying campaign filter`, 'analytics');
       }
       
       // Фильтруем посты с аналитикой и сортируем по вовлеченности
@@ -1030,7 +1030,7 @@ export class PostAnalyticsService {
         .sort((a, b) => b.engagementRate - a.engagementRate)
         .slice(0, limit);
       
-      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by engagement`, null, 'analytics');
+      logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by engagement`, 'analytics');
       return postsWithAnalytics;
     } catch (error) {
       logger.error(`Error getting top posts by engagement: ${error}`, error, 'analytics');
@@ -1046,7 +1046,7 @@ export class PostAnalyticsService {
    */
   async getPlatformStats(userId: string, periodOptions?: {period: string, campaignId?: string}): Promise<Record<string, any>> {
     try {
-      logger.info(`Getting platform stats for user ${userId} with period ${periodOptions?.period}`, null, 'analytics');
+      logger.info(`Getting platform stats for user ${userId} with period ${periodOptions?.period}`, 'analytics');
       
       const aggregatedStats = await this.getAggregatedUserStats(userId, periodOptions);
       if (!aggregatedStats) {
@@ -1054,7 +1054,7 @@ export class PostAnalyticsService {
         return this.getEmptyAggregatedStats().byPlatform;
       }
       
-      logger.info(`Returning platform stats for user ${userId}`, null, 'analytics');
+      logger.info(`Returning platform stats for user ${userId}`, 'analytics');
       return aggregatedStats.byPlatform;
     } catch (error) {
       logger.error(`Error getting platform stats: ${error}`, error, 'analytics');
