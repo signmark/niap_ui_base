@@ -36,7 +36,8 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
-  Calendar
+  Calendar,
+  FolderOpen
 } from 'lucide-react';
 import api, { analytics } from '@/lib/api';
 import { LoadingSpinner } from './ui/loading-spinner';
@@ -60,12 +61,21 @@ export const AnalyticsDashboard: React.FC = () => {
 
   // Параметры запросов
   const [period, setPeriod] = useState('7days');
-  const campaignId = localStorage.getItem('active_campaign_id');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(
+    localStorage.getItem('active_campaign_id') || undefined
+  );
   
   // Получаем текущего пользователя для отслеживания изменений
   const { data: userData } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: () => api.get('/api/auth/me')
+  });
+  
+  // Получаем список кампаний пользователя
+  const { data: campaignsData } = useQuery({
+    queryKey: ['/api/campaigns', userData?.data?.id],
+    queryFn: () => api.get('/api/campaigns'),
+    enabled: !!userData?.data?.id // Запрос будет выполнен только если есть ID пользователя
   });
   
   // Опции периодов
@@ -79,16 +89,16 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Получение статистики постов
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
-    queryKey: ['/api/analytics/posts', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPosts({ campaignId: campaignId || undefined, period }),
+    queryKey: ['/api/analytics/posts', selectedCampaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPosts({ campaignId: selectedCampaignId, period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
 
   // Получение статистики по платформам
   const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
-    queryKey: ['/api/analytics/platforms', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period }),
+    queryKey: ['/api/analytics/platforms', selectedCampaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPlatforms({ campaignId: selectedCampaignId, period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
@@ -167,7 +177,7 @@ export const AnalyticsDashboard: React.FC = () => {
     queryClient.invalidateQueries({
       queryKey: ['/api/analytics/platforms']
     });
-  }, [campaignId, userData?.data?.id, queryClient]);
+  }, [selectedCampaignId, userData?.data?.id, queryClient]);
   
   // Отслеживаем изменения кампании через localStorage
   useEffect(() => {
@@ -405,32 +415,65 @@ export const AnalyticsDashboard: React.FC = () => {
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-muted-foreground" />
-                <Select
-                  value={period}
-                  onValueChange={(value) => {
-                    setPeriod(value);
-                    // Перезагружаем данные при изменении периода
-                    queryClient.invalidateQueries({
-                      queryKey: ['/api/analytics/posts']
-                    });
-                    queryClient.invalidateQueries({
-                      queryKey: ['/api/analytics/platforms']
-                    });
-                  }}
-                >
-                  <SelectTrigger className="w-[180px] h-8">
-                    <SelectValue placeholder="Выберите период" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {periodOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-3">
+                {/* Селектор кампании */}
+                <div className="flex items-center gap-2">
+                  <FolderOpen size={16} className="text-muted-foreground" />
+                  <Select
+                    value={selectedCampaignId}
+                    onValueChange={(value) => {
+                      setSelectedCampaignId(value);
+                      // Перезагружаем данные при изменении кампании
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/posts']
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/platforms']
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px] h-8">
+                      <SelectValue placeholder="Все кампании" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Все кампании</SelectItem>
+                      {campaignsData?.data?.map((campaign: any) => (
+                        <SelectItem key={campaign.id} value={campaign.id}>
+                          {campaign.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Селектор периода */}
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} className="text-muted-foreground" />
+                  <Select
+                    value={period}
+                    onValueChange={(value) => {
+                      setPeriod(value);
+                      // Перезагружаем данные при изменении периода
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/posts']
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/analytics/platforms']
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px] h-8">
+                      <SelectValue placeholder="Выберите период" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {periodOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardContent>
