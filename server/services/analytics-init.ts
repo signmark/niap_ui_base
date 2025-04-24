@@ -20,13 +20,31 @@ export class AnalyticsInitializer {
    */
   async initializeAnalyticsForUser(userId: string, campaignId?: string): Promise<{ success: boolean, processedCount: number, errors: string[] }> {
     try {
-      logger.log(`Starting analytics initialization for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
+      // ИСПРАВЛЕНО: Добавляем подробное логирование для отладки
+      logger.info(`🔄 Starting analytics initialization for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
+      
+      // ДОБАВЛЕНО: Проверка наличия пользовательского токена перед началом работы
+      const hasUserToken = await directusApiManager.getUserToken(userId) ? true : false;
+      const hasAdminToken = await directusApiManager.getAdminToken() ? true : false;
+      logger.info(`🔑 Token availability check - User token: ${hasUserToken ? 'YES' : 'NO'}, Admin token: ${hasAdminToken ? 'YES' : 'NO'}`, 'analytics-init');
       
       // Получаем список всех публикаций пользователя (с опциональной фильтрацией по кампании)
+      logger.info(`🔍 Fetching posts for user ${userId}${campaignId ? ` in campaign ${campaignId}` : ''}...`, 'analytics-init');
       const publishedPosts = await this.getAllPublishedPosts(userId, campaignId);
       const errors: string[] = [];
       
-      logger.log(`Found ${publishedPosts.length} published posts for user ${userId}${campaignId ? ` in campaign ${campaignId}` : ''}`, 'analytics-init');
+      // ИЗМЕНЕНО: Улучшенное логирование с диагностической информацией
+      if (publishedPosts.length === 0) {
+        logger.warn(`⚠️ No published posts found for user ${userId}${campaignId ? ` in campaign ${campaignId}` : ''}`, 'analytics-init');
+        
+        // Дополнительная диагностическая информация
+        logger.info(`📊 Diagnostic info: userId=${userId}, campaignId=${campaignId || 'none'}, tokensAvailable=${hasUserToken ? 'user' : ''}${hasUserToken && hasAdminToken ? '+' : ''}${hasAdminToken ? 'admin' : ''}${!hasUserToken && !hasAdminToken ? 'NONE!' : ''}`, 'analytics-init');
+      } else {
+        logger.info(`✅ Found ${publishedPosts.length} published posts for initialization`, 'analytics-init');
+        // Логируем ID найденных постов для отладки
+        const postIds = publishedPosts.map(post => post.id).join(', ');
+        logger.info(`📄 Post IDs for initialization: ${postIds}`, 'analytics-init');
+      }
       
       let processedCount = 0;
       
@@ -131,16 +149,12 @@ export class AnalyticsInitializer {
         }
       }
       
-      // Формируем полный фильтр в виде строкового JSON, обходя проблемы с типизацией
+      // ИСПРАВЛЕНО: Упрощаем фильтр для получения всех постов пользователя с social_platforms
+      // Используем более простой фильтр для начала
       let filterObj: any = {
         _and: [
-          { user_id: { _eq: userId } },
-          { 
-            _or: [
-              { status: { _eq: 'published' } },
-              { social_platforms: { _nnull: true } }  // Также включаем посты с social_platforms
-            ]
-          }
+          { user_id: { _eq: userId } }
+          // Убираем фильтр по статусу и social_platforms, чтобы получить все посты
         ]
       };
       
@@ -148,6 +162,8 @@ export class AnalyticsInitializer {
       if (campaignId) {
         filterObj._and.push({ campaign_id: { _eq: campaignId } });
       }
+      
+      logger.log(`Filter object for analytics posts query: ${JSON.stringify(filterObj)}`, 'analytics-init');
       
       // Используем полностью типизированный объект для запроса
       const filter = filterObj;
@@ -195,17 +211,47 @@ export class AnalyticsInitializer {
         return [];
       }
       
-      // Фильтруем только посты, опубликованные хотя бы на одной платформе
+      // ИСПРАВЛЕНО: Смягчаем условия фильтрации и добавляем подробное логирование
+      // Выведем содержимое нескольких постов для отладки
+      if (posts.length > 0) {
+        for (let i = 0; i < Math.min(3, posts.length); i++) {
+          logger.log(`Sample post ${i+1}: ID=${posts[i].id}, social_platforms=${JSON.stringify(posts[i].social_platforms)}`, 'analytics-init');
+        }
+      } else {
+        logger.warn(`No posts found for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
+      }
+      
+      // ИСПРАВЛЕНО: Принимаем ВСЕ посты, у которых есть хоть какая-то информация в social_platforms
+      // независимо от наличия URL, т.к. посты могут иметь другие статусы, требующие аналитики
       const publishedPosts = posts.filter(post => {
         const socialPlatforms = post.social_platforms || {};
         
-        // Проверяем, есть ли хотя бы одна платформа со статусом "published"
-        return Object.entries(socialPlatforms).some(([_, platformData]: [string, any]) => 
-          platformData && 
-          typeof platformData === 'object' && 
-          platformData.status === 'published' && 
-          platformData.postUrl
-        );
+        // Проверяем, что социальные платформы не пустые и содержат хоть какие-то данные
+        const hasAnySocialPlatforms = Object.keys(socialPlatforms).length > 0;
+        
+        // Если есть хоть какая-то информация о социальных платформах, принимаем пост
+        if (hasAnySocialPlatforms) {
+          // Выводим подробную информацию о социальных платформах для диагностики
+          if (posts.indexOf(post) < 3) {
+            const platforms = Object.keys(socialPlatforms).join(', ');
+            logger.info(`✅ Post ${post.id} has social_platforms data for: ${platforms}`, 'analytics-init');
+            
+            // Проверяем наличие URL для каждой платформы
+            Object.entries(socialPlatforms).forEach(([platform, platformData]: [string, any]) => {
+              const hasUrl = platformData && 
+                           typeof platformData === 'object' && 
+                           platformData.postUrl;
+              
+              const status = platformData && typeof platformData === 'object' ? platformData.status : 'unknown';
+              
+              logger.info(`  - Platform ${platform}: status=${status}, has URL=${hasUrl ? 'YES' : 'NO'}`, 'analytics-init');
+            });
+          }
+          
+          return true; // Принимаем ВСЕ посты с social_platforms
+        }
+        
+        return false;
       });
       
       logger.log(`Found ${publishedPosts.length} published posts out of ${posts.length} total posts`, 'analytics-init');
