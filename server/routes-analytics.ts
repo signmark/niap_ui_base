@@ -195,12 +195,18 @@ router.post('/collect', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Не авторизован' });
     }
     
+    // Проверяем, указан ли ID кампании
+    const campaignId = req.body.campaignId as string;
+    
     // Запускаем сбор аналитики вручную
     // Это асинхронный процесс, поэтому отправляем ответ до его завершения
-    logger.log(`User ${userId} manually triggered analytics collection`, 'analytics-api');
-    analyticsScheduler.collectAnalytics(userId);
+    logger.log(`User ${userId} manually triggered analytics collection${campaignId ? ` for campaign ${campaignId}` : ''}`, 'analytics-api');
+    analyticsScheduler.collectAnalytics(campaignId);
     
-    return res.json({ success: true, message: 'Сбор аналитики успешно запущен' });
+    return res.json({ 
+      success: true, 
+      message: `Сбор аналитики успешно запущен${campaignId ? ` для кампании ${campaignId}` : ''}` 
+    });
   } catch (error) {
     logger.error(`Error initiating analytics collection: ${error}`, error, 'analytics-api');
     return res.status(500).json({ success: false, error: 'Ошибка запуска сбора аналитики' });
@@ -221,12 +227,15 @@ router.post('/initialize', async (req, res) => {
     
     logger.log(`User ${userId} requested analytics initialization for all posts`, 'analytics-api');
     
+    // Проверяем, указан ли ID кампании
+    const campaignId = req.body.campaignId as string;
+    
     // Запускаем инициализацию аналитики для постов пользователя
-    const result = await analyticsInitializer.initializeAnalyticsForUser(userId);
+    const result = await analyticsInitializer.initializeAnalyticsForUser(userId, campaignId);
     
     if (result.success) {
       // После инициализации сразу запускаем сбор реальных данных
-      analyticsScheduler.collectAnalytics(userId);
+      analyticsScheduler.collectAnalytics(campaignId);
       
       return res.json({ 
         success: true, 

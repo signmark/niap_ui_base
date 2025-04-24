@@ -104,7 +104,7 @@ export class AnalyticsScheduler {
     return this.totalPosts;
   }
 
-  async collectAnalytics(specificUserId?: string): Promise<void> {
+  async collectAnalytics(specificCampaignId?: string): Promise<void> {
     // Если сбор уже идет, не запускаем повторно
     if (this.isCollecting) {
       logger.log('Analytics collection is already in progress', 'analytics-scheduler');
@@ -112,68 +112,101 @@ export class AnalyticsScheduler {
     }
     
     try {
-      logger.log(`Starting analytics collection${specificUserId ? ` for user ${specificUserId}` : ''}...`, 'analytics-scheduler');
+      logger.log(`Starting analytics collection${specificCampaignId ? ` for campaign ${specificCampaignId}` : ''}...`, 'analytics-scheduler');
       this.isCollecting = true;
       this.processedPosts = 0;
       this.totalPosts = 0;
       
-      let users = [];
-      
-      // Если указан конкретный пользователь, получаем только его данные
-      if (specificUserId) {
-        // Получаем информацию о конкретном пользователе
-        try {
-          const adminToken = await directusApiManager.getAdminToken();
-          if (!adminToken) {
-            throw new Error('Failed to get admin token');
-          }
-          
-          const response = await axios.get(
-            `${process.env.DIRECTUS_URL}/users/${specificUserId}`,
-            {
-              headers: { Authorization: `Bearer ${adminToken}` }
-            }
-          );
-          
-          if (response.data && response.data.data) {
-            users = [response.data.data];
-            logger.log(`Successfully retrieved specific user with ID ${specificUserId}`, 'analytics-scheduler');
-          } else {
-            // Если не удалось получить данные о пользователе, добавляем только ID
-            users = [{ id: specificUserId }];
-            logger.log(`Could not retrieve user details for ${specificUserId}, using ID only`, 'analytics-scheduler');
-          }
-        } catch (error) {
-          logger.warn(`Failed to get specific user ${specificUserId}, using ID only: ${error}`, 'analytics-scheduler');
-          users = [{ id: specificUserId }];
-        }
-      } else {
-        // Получаем список всех пользователей
-        users = await this.getAllUsers();
+      // Используем существующий механизм получения админского токена
+      const adminToken = await directusApiManager.getAdminToken();
+      if (!adminToken) {
+        logger.error('Failed to get admin token for analytics collection', 'analytics-scheduler');
+        return;
       }
       
-      // Для каждого пользователя собираем аналитику постов
-      for (const user of users) {
-        const userId = user.id;
+      // Формируем запрос для получения опубликованных постов
+      let filter: any = {
+        _or: [
+          { status: { _eq: 'published' } },
+          { social_platforms: { _nnull: true } }
+        ]
+      };
+      
+      // Если указан ID кампании, добавляем его в фильтр
+      if (specificCampaignId) {
+        filter = {
+          _and: [
+            { campaign_id: { _eq: specificCampaignId } },
+            filter
+          ]
+        };
+        logger.log(`Filtering analytics for campaign: ${specificCampaignId}`, 'analytics-scheduler');
+      }
+      
+      // Поля, которые нам нужны для анализа
+      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata', 'user_id', 'campaign_id'];
+      
+      // Запрашиваем посты напрямую из Directus
+      logger.log('Fetching published posts for analytics collection...', 'analytics-scheduler');
+      
+      // Используем существующий механизм запросов к Directus
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
+        token: adminToken
+      });
+      
+      if (!response || !response.data || !response.data.data) {
+        logger.warn('No data returned from Directus for analytics collection', 'analytics-scheduler');
+        return;
+      }
+      
+      const allPosts = response.data.data;
+      if (!Array.isArray(allPosts)) {
+        logger.warn('Post data is not an array', 'analytics-scheduler');
+        return;
+      }
+      
+      // Фильтруем посты с опубликованными платформами
+      const publishedPosts = allPosts.filter(post => {
+        if (!post.social_platforms) return false;
         
-        // Получаем только опубликованные посты пользователя
-        const publishedPosts = await this.getUserPublishedPosts(userId);
-        
-        // Увеличиваем общее количество постов для отслеживания прогресса
-        this.totalPosts += publishedPosts.length;
-        
-        logger.log(`Processing ${publishedPosts.length} published posts for user ${userId}`, 'analytics-scheduler');
-        
-        // Для каждого поста собираем аналитику по всем платформам
-        for (const post of publishedPosts) {
-          await this.collectPostAnalytics(post, userId);
+        // Проверяем, есть ли хотя бы одна платформа со статусом "published"
+        return Object.entries(post.social_platforms).some(([_, platformData]: [string, any]) => 
+          platformData && 
+          typeof platformData === 'object' && 
+          platformData.status === 'published' && 
+          platformData.postUrl
+        );
+      });
+      
+      logger.log(`Found ${publishedPosts.length} published posts for analytics from ${allPosts.length} total posts`, 'analytics-scheduler');
+      
+      // Устанавливаем общее количество постов для отображения прогресса
+      this.totalPosts = publishedPosts.length;
+      
+      // Обрабатываем каждый опубликованный пост
+      for (const post of publishedPosts) {
+        try {
+          // Проверяем наличие user_id в посте
+          if (!post.user_id) {
+            logger.warn(`Post ${post.id} doesn't have user_id, skipping analytics collection`, 'analytics-scheduler');
+            continue;
+          }
+          
+          // Собираем аналитику для поста
+          await this.collectPostAnalytics(post, post.user_id);
           this.processedPosts++; // Увеличиваем счетчик обработанных постов
+          
+          logger.log(`Collected analytics for post ${post.id} (${this.processedPosts}/${this.totalPosts})`, 'analytics-scheduler');
+        } catch (error) {
+          logger.error(`Error collecting analytics for post ${post.id}: ${error}`, error, 'analytics-scheduler');
         }
       }
       
       // Обновляем время последнего сбора аналитики
       this.lastCollectionTime = new Date();
-      logger.log('Analytics collection completed', 'analytics-scheduler');
+      logger.log(`Analytics collection completed for ${this.processedPosts} posts`, 'analytics-scheduler');
     } catch (error) {
       logger.error(`Error in analytics collection: ${error}`, error, 'analytics-scheduler');
     } finally {
@@ -181,107 +214,8 @@ export class AnalyticsScheduler {
     }
   }
   
-  /**
-   * Получает список всех пользователей
-   * @returns Список пользователей
-   */
-  private async getAllUsers(): Promise<Array<any>> {
-    try {
-      const adminToken = await directusApiManager.getAdminToken();
-      if (!adminToken) {
-        throw new Error('Failed to get admin token');
-      }
-      
-      const response = await axios.get(
-        `${process.env.DIRECTUS_URL}/users`,
-        {
-          headers: { Authorization: `Bearer ${adminToken}` }
-        }
-      );
-      
-      return response.data.data || [];
-    } catch (error) {
-      logger.error(`Error getting users: ${error}`, error, 'analytics-scheduler');
-      return [];
-    }
-  }
-  
-  /**
-   * Получает опубликованные посты пользователя
-   * @param userId ID пользователя
-   * @returns Список опубликованных постов
-   */
-  private async getUserPublishedPosts(userId: string): Promise<Array<any>> {
-    try {
-      // Сначала попробуем получить админский токен вместо токена пользователя,
-      // т.к. пользовательский токен может иметь ограничения на доступ
-      const token = await directusApiManager.getAdminToken();
-      if (!token) {
-        logger.error(`No admin token available for user ${userId}`, null, 'analytics-scheduler');
-        return [];
-      }
-      
-      const filter = {
-        _and: [
-          { user_id: { _eq: userId } },
-          {
-            _or: [
-              { status: { _eq: 'published' } },
-              { social_platforms: { _nnull: true } }
-            ]
-          }
-        ]
-      };
-      
-      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata'];
-      
-      // Делаем запрос с использованием админского токена
-      logger.log(`Requesting published posts for user ${userId} using admin token`, 'analytics-scheduler');
-      const response = await directusApiManager.makeAuthenticatedRequest({
-        method: 'GET',
-        path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
-        token
-      });
-      
-      // Более надежная проверка структуры ответа
-      if (!response) {
-        logger.warn(`Empty response when getting posts for user ${userId}`, 'analytics-scheduler');
-        return [];
-      }
-      
-      // Проверяем, содержит ли ответ поле data
-      if (!response.data) {
-        logger.warn(`Response does not contain data field for user ${userId}`, 'analytics-scheduler');
-        return [];
-      }
-      
-      // Проверяем, содержит ли data поле data (особенность Directus API)
-      const posts = response.data.data || [];
-      
-      if (!Array.isArray(posts)) {
-        logger.warn(`Posts data is not an array for user ${userId}`, 'analytics-scheduler');
-        return [];
-      }
-      
-      logger.log(`Found ${posts.length} posts for user ${userId}`, 'analytics-scheduler');
-      
-      // Фильтруем посты, которые были опубликованы хотя бы на одной платформе
-      const publishedPosts = posts.filter(post => {
-        const socialPlatforms = post.social_platforms || {};
-        
-        // Проверяем, есть ли хотя бы одна платформа со статусом "published"
-        return Object.values(socialPlatforms).some((platform: any) => 
-          platform && platform.status === 'published' && platform.postUrl
-        );
-      });
-      
-      logger.log(`After filtering, found ${publishedPosts.length} published posts for user ${userId}`, 'analytics-scheduler');
-      return publishedPosts;
-    } catch (error) {
-      logger.error(`Error getting published posts for user ${userId}: ${error}`, error, 'analytics-scheduler');
-      return [];
-    }
-  }
+  // Методы получения пользователей и их постов удалены, 
+  // теперь мы напрямую запрашиваем контент для кампаний
   
   /**
    * Собирает аналитику для конкретного поста

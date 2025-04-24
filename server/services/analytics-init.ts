@@ -13,17 +13,18 @@ export class AnalyticsInitializer {
   /**
    * Инициализирует аналитику для всех публикаций пользователя
    * @param userId ID пользователя
+   * @param campaignId Опциональный ID кампании для фильтрации
    * @returns Результат инициализации
    */
-  async initializeAnalyticsForUser(userId: string): Promise<{ success: boolean, processedCount: number, errors: string[] }> {
+  async initializeAnalyticsForUser(userId: string, campaignId?: string): Promise<{ success: boolean, processedCount: number, errors: string[] }> {
     try {
-      logger.log(`Starting analytics initialization for user ${userId}`, 'analytics-init');
+      logger.log(`Starting analytics initialization for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
       
-      // Получаем список всех публикаций пользователя
-      const publishedPosts = await this.getAllPublishedPosts(userId);
+      // Получаем список всех публикаций пользователя (с опциональной фильтрацией по кампании)
+      const publishedPosts = await this.getAllPublishedPosts(userId, campaignId);
       const errors: string[] = [];
       
-      logger.log(`Found ${publishedPosts.length} published posts for user ${userId}`, 'analytics-init');
+      logger.log(`Found ${publishedPosts.length} published posts for user ${userId}${campaignId ? ` in campaign ${campaignId}` : ''}`, 'analytics-init');
       
       let processedCount = 0;
       
@@ -61,7 +62,7 @@ export class AnalyticsInitializer {
         }
       }
       
-      logger.log(`Analytics initialization completed for user ${userId}. Processed ${processedCount} posts with ${errors.length} errors.`, 'analytics-init');
+      logger.log(`Analytics initialization completed for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}. Processed ${processedCount} posts with ${errors.length} errors.`, 'analytics-init');
       
       return {
         success: errors.length === 0,
@@ -69,7 +70,7 @@ export class AnalyticsInitializer {
         errors
       };
     } catch (error) {
-      const errorMessage = `Error initializing analytics for user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      const errorMessage = `Error initializing analytics for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}: ${error instanceof Error ? error.message : 'Unknown error'}`;
       logger.error(errorMessage, error, 'analytics-init');
       return {
         success: false,
