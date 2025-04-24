@@ -340,5 +340,40 @@ router.get('/platforms', async (req, res) => {
   }
 });
 
+/**
+ * API для получения статуса сбора аналитики
+ */
+router.get('/status', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Не авторизован' });
+    }
+    
+    // Получаем статус из планировщика аналитики
+    const status = {
+      isCollecting: analyticsScheduler.isCollectingAnalytics(),
+      lastCollectionTime: analyticsScheduler.getLastCollectionTime(),
+      processedPosts: analyticsScheduler.getProcessedPostsCount(),
+      totalPosts: analyticsScheduler.getTotalPostsCount(),
+      progress: 0
+    };
+    
+    // Вычисляем прогресс в процентах, если есть данные
+    if (status.totalPosts > 0) {
+      status.progress = Math.floor((status.processedPosts / status.totalPosts) * 100);
+    }
+    
+    return res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    logger.error(`Error fetching analytics status: ${error}`, error, 'analytics-api');
+    return res.status(500).json({ success: false, error: 'Ошибка получения статуса аналитики' });
+  }
+});
+
 // Экспортируем маршрутизатор
 export default router;
