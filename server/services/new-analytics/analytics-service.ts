@@ -556,8 +556,8 @@ class AnalyticsService {
             startDate = new Date(0); // начало эпохи
         }
         
-        // Добавляем фильтр по дате
-        filters.date_created = { _gte: startDate.toISOString() };
+        // Добавляем фильтр по дате, используя правильное имя поля
+        filters.created_at = { _gte: startDate.toISOString() };
       }
       
       // Получаем посты через Directus API

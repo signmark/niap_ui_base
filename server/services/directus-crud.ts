@@ -49,7 +49,23 @@ export class DirectusCrud {
       
       const params: Record<string, any> = {};
       
-      if (filter) params.filter = filter;
+      if (filter) {
+        // Логирование для отладки
+        console.log('DEBUG FILTER:', JSON.stringify(filter));
+        
+        // Проверяем, есть ли date_created в фильтре, и если есть, заменяем на created_at
+        if (filter.date_created) {
+          console.log('Заменяем date_created на created_at в фильтре');
+          filter.created_at = filter.date_created;
+          delete filter.date_created;
+        }
+        
+        params.filter = filter;
+        
+        // Логирование после изменений
+        console.log('ПРЕОБРАЗОВАННЫЙ FILTER:', JSON.stringify(params.filter));
+      }
+      
       if (sort && sort.length > 0) params.sort = sort;
       if (limit) params.limit = limit;
       if (page) params.page = page;
