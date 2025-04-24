@@ -82,24 +82,18 @@ export const AnalyticsDashboard: React.FC = () => {
   // Преобразуем campaignId из строки/null в строку/undefined (чтобы исправить типы)
   const campaignIdParam = campaignId === null ? undefined : campaignId;
 
-  // Получение статистики постов
+  // Получаем все посты, так как сервер не может фильтровать по campaign_id из-за прав доступа
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
-    queryKey: ['/api/analytics/posts', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPosts({ 
-      campaignId: campaignIdParam, 
-      period 
-    }),
+    queryKey: ['/api/analytics/posts', period, userData?.data?.id],
+    queryFn: () => analytics.getPosts({ period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
 
-  // Получение статистики по платформам
+  // Получаем все платформы, так как сервер не может фильтровать по campaign_id из-за прав доступа
   const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
-    queryKey: ['/api/analytics/platforms', campaignId, period, userData?.data?.id],
-    queryFn: () => analytics.getPlatforms({ 
-      campaignId: campaignIdParam, 
-      period 
-    }),
+    queryKey: ['/api/analytics/platforms', period, userData?.data?.id],
+    queryFn: () => analytics.getPlatforms({ period }),
     // Автоматически обновляем данные при изменении пользователя или кампании
     staleTime: 0
   });
@@ -293,8 +287,33 @@ export const AnalyticsDashboard: React.FC = () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('Analytics API response - platforms:', platformsData?.data);
     console.log('Analytics API response - posts:', postsData?.data);
+    console.log('Current campaignId:', campaignId);
   }
   
+  // Получаем все данные
+  const rawTopViews = postsData?.data?.topByViews || [];
+  const rawTopEngagement = postsData?.data?.topByEngagement || [];
+  
+  // Фильтруем данные по ID кампании на стороне клиента
+  // Проверяем каждый пост на принадлежность к нужной кампании
+  const filterPostsByCampaign = (posts: any[]) => {
+    if (!campaignId) return posts; // Если ID кампании не выбран, возвращаем все посты
+    
+    console.log(`Фильтрация постов по кампании: ${campaignId}`);
+    return posts.filter(post => {
+      // В базе данных поле называется campaign_id
+      const postCampaignId = post.campaign_id;
+      
+      console.log(`Пост ${post.id}: campaign_id=${postCampaignId}`);
+      return postCampaignId === campaignId;
+    });
+  };
+  
+  // Фильтруем посты по кампании
+  const filteredTopViews = filterPostsByCampaign(rawTopViews);
+  const filteredTopEngagement = filterPostsByCampaign(rawTopEngagement);
+  
+  // Используем фильтрованные данные
   const userStats = postsData?.data ? postsData.data.aggregated || {} : {};
   const aggregatedStats = platformsData?.data ? platformsData.data.aggregated || {} : {};
   const platforms = platformsData?.data ? platformsData.data.platforms || {} : {};
