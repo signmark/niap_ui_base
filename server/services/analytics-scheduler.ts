@@ -43,12 +43,13 @@ export class AnalyticsScheduler {
     logger.log(`Starting analytics scheduler with interval ${this.interval}ms`, 'analytics-scheduler');
     this.isRunning = true;
     
-    // Запускаем сбор аналитики сразу при старте сервиса
-    this.collectAnalytics();
+    // Сразу не запускаем сбор аналитики при старте сервиса, так как нужен ID пользователя
     
     // Устанавливаем интервал для сбора аналитики
     this.schedulerId = setInterval(() => {
-      this.collectAnalytics();
+      // Для автоматического сбора не используем конкретных пользователей
+      // Сбор будет инициирован вручную или через API для каждого пользователя
+      logger.log('Scheduled analytics collection interval triggered, but skipping auto-collection', 'analytics-scheduler');
     }, this.interval);
   }
   
