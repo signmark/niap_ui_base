@@ -334,20 +334,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error incrementing views: ${error}`, error, 'analytics');
+      logger.error(`Error incrementing views: ${error}`, 'analytics');
       return null;
     }
   }
@@ -393,20 +401,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error incrementing likes: ${error}`, error, 'analytics');
+      logger.error(`Error incrementing likes: ${error}`, 'analytics');
       return null;
     }
   }
@@ -452,20 +468,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error incrementing comments: ${error}`, error, 'analytics');
+      logger.error(`Error incrementing comments: ${error}`, 'analytics');
       return null;
     }
   }
@@ -511,20 +535,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error incrementing shares: ${error}`, error, 'analytics');
+      logger.error(`Error incrementing shares: ${error}`, 'analytics');
       return null;
     }
   }
@@ -570,20 +602,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error incrementing clicks: ${error}`, error, 'analytics');
+      logger.error(`Error incrementing clicks: ${error}`, 'analytics');
       return null;
     }
   }
@@ -660,20 +700,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error updating stats: ${error}`, error, 'analytics');
+      logger.error(`Error updating stats: ${error}`, 'analytics');
       return null;
     }
   }
@@ -744,20 +792,28 @@ export class PostAnalyticsService {
       // Пересчитываем коэффициент вовлеченности для платформы
       this.recalculateEngagementRate(analytics, platform);
       
-      // Сохраняем обновленную аналитику
+      // Получаем текущий пост
       const post = await directusService.read('campaign_content', postId, userId);
       if (!post) {
         throw new Error(`Post not found: ${postId}`);
       }
       
-      const metadata = post.metadata || {};
-      metadata.analytics = analytics;
+      // Получаем текущие social_platforms или инициализируем пустой объект
+      const socialPlatforms = post.social_platforms || {};
       
-      await directusService.update('campaign_content', postId, { metadata }, userId);
+      // Обновляем аналитику в объекте соответствующей платформы
+      if (socialPlatforms[platform]) {
+        // Добавляем аналитические данные в платформу
+        socialPlatforms[platform].analytics = analytics.byPlatform[platform];
+        socialPlatforms[platform].last_analytics_update = new Date().toISOString();
+      }
+      
+      // Обновляем пост в Directus с новым объектом social_platforms
+      await directusService.update('campaign_content', postId, { social_platforms: socialPlatforms }, userId);
       
       return analytics;
     } catch (error) {
-      logger.error(`Error setting stats: ${error}`, error, 'analytics');
+      logger.error(`Error setting stats: ${error}`, 'analytics');
       return null;
     }
   }
