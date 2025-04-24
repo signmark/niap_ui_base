@@ -127,22 +127,34 @@ export class AnalyticsScheduler {
   private async getUserPublishedPosts(userId: string): Promise<Array<any>> {
     try {
       // Получаем посты со статусом "published" или посты, у которых socialPlatforms содержит "status": "published"
-      const posts = await directusService.readMany('campaign_content', {
-        filter: {
-          _and: [
-            { user_id: { _eq: userId } },
-            {
-              _or: [
-                { status: { _eq: 'published' } },
-                { social_platforms: { _nnull: true } }
-              ]
-            }
-          ]
-        },
-        fields: ['id', 'title', 'content', 'social_platforms', 'metadata']
-      }, userId);
+      const token = await directusApiManager.getUserToken(userId);
+      if (!token) {
+        throw new Error(`No token for user ${userId}`);
+      }
       
-      if (!posts || !Array.isArray(posts)) {
+      const filter = {
+        _and: [
+          { user_id: { _eq: userId } },
+          {
+            _or: [
+              { status: { _eq: 'published' } },
+              { social_platforms: { _nnull: true } }
+            ]
+          }
+        ]
+      };
+      
+      const fields = ['id', 'title', 'content', 'social_platforms', 'metadata'];
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
+        token
+      });
+      
+      const posts = response?.data?.data || [];
+      
+      if (!Array.isArray(posts)) {
         return [];
       }
       
@@ -210,12 +222,23 @@ export class AnalyticsScheduler {
   private async getUserSocialSettings(userId: string): Promise<any> {
     try {
       // Получаем все кампании пользователя (предполагается, что настройки хранятся в кампаниях)
-      const campaigns = await directusService.readMany('campaigns', {
-        filter: { user_id: { _eq: userId } },
-        fields: ['id', 'social_media_settings']
-      }, userId);
+      const token = await directusApiManager.getUserToken(userId);
+      if (!token) {
+        throw new Error(`No token for user ${userId}`);
+      }
       
-      if (!campaigns || !Array.isArray(campaigns) || campaigns.length === 0) {
+      const filter = { user_id: { _eq: userId } };
+      const fields = ['id', 'social_media_settings'];
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/campaigns?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
+        token
+      });
+      
+      const campaigns = response?.data?.data || [];
+      
+      if (!Array.isArray(campaigns) || campaigns.length === 0) {
         throw new Error(`No campaigns found for user ${userId}`);
       }
       

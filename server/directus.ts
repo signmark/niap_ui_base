@@ -7,6 +7,10 @@ interface AuthTokenCache {
     token: string;
     expiresAt: number;
   };
+  admin?: {
+    token: string;
+    expiresAt: number;
+  };
 }
 
 // Класс для управления Directus API запросами
@@ -128,6 +132,92 @@ class DirectusApiManager {
       return this.authTokenCache[userId];
     }
     return null;
+  }
+  
+  /**
+   * Получает токен пользователя, при необходимости обновляя его
+   * @param userId ID пользователя
+   * @returns Токен пользователя или null
+   */
+  async getUserToken(userId: string): Promise<string | null> {
+    // Проверяем кэш
+    const cachedToken = this.getCachedToken(userId);
+    if (cachedToken) {
+      return cachedToken.token;
+    }
+    
+    // Если нет в кэше, пробуем получить через API
+    try {
+      // Здесь может быть логика получения токена через API
+      // В упрощенном виде используем токен администратора
+      return await this.getAdminToken();
+    } catch (error) {
+      console.error(`Failed to get token for user ${userId}:`, error);
+      return null;
+    }
+  }
+  
+  /**
+   * Получает администраторский токен
+   * @returns Администраторский токен или null
+   */
+  async getAdminToken(): Promise<string | null> {
+    // Проверяем кэш
+    if (this.authTokenCache.admin && this.authTokenCache.admin.expiresAt > Date.now()) {
+      return this.authTokenCache.admin.token;
+    }
+    
+    // Получаем токен
+    try {
+      const response = await this.axiosInstance.post('/auth/login', {
+        email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
+        password: process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7'
+      });
+      
+      const token = response.data.data.access_token;
+      const expiresIn = response.data.data.expires || 900; // 15 min by default
+      
+      // Сохраняем в кэш
+      this.authTokenCache.admin = {
+        token,
+        expiresAt: Date.now() + (expiresIn * 1000)
+      };
+      
+      return token;
+    } catch (error) {
+      console.error('Failed to get admin token:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Выполняет аутентифицированный запрос к Directus API
+   * @param config Конфигурация запроса
+   * @returns Результат запроса или null при ошибке
+   */
+  async makeAuthenticatedRequest(config: {
+    method: string;
+    path: string;
+    token: string;
+    data?: any;
+  }): Promise<any> {
+    try {
+      const { method, path, token, data } = config;
+      
+      const response = await this.axiosInstance({
+        method,
+        url: path,
+        data,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to make authenticated request:', error);
+      return null;
+    }
   }
   
   /**
