@@ -88,11 +88,20 @@ export class AnalyticsInitializer {
    */
   private async getAllPublishedPosts(userId: string, campaignId?: string): Promise<any[]> {
     try {
-      // Получаем токен пользователя
-      const token = await directusApiManager.getUserToken(userId);
+      // Пытаемся получить токен пользователя
+      let token = await directusApiManager.getUserToken(userId);
+      
+      // Если не удалось получить пользовательский токен, пробуем получить админский
       if (!token) {
-        logger.error(`No token available for user ${userId}`, null, 'analytics-init');
-        return [];
+        logger.info(`No user token available for user ${userId}, trying admin token`, 'analytics-init');
+        token = await directusApiManager.getAdminToken();
+        
+        // Если и с админским токеном проблемы, логируем ошибку и возвращаем пустой массив
+        if (!token) {
+          logger.error(`Failed to get any token for user ${userId}`, 'analytics-init');
+          return [];
+        }
+        logger.info(`Using admin token for analytics initialization for user ${userId}`, 'analytics-init');
       }
       
       // Формируем полный фильтр в виде строкового JSON, обходя проблемы с типизацией
@@ -121,12 +130,30 @@ export class AnalyticsInitializer {
       
       logger.log(`Requesting published posts for user ${userId}${campaignId ? ` and campaign ${campaignId}` : ''}`, 'analytics-init');
       
-      // Делаем запрос с использованием токена пользователя
-      const response = await directusApiManager.makeAuthenticatedRequest({
+      // Делаем запрос с имеющимся токеном (пользовательским или админским)
+      let response = await directusApiManager.makeAuthenticatedRequest({
         method: 'GET',
         path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
         token
       });
+      
+      // В случае ошибки 403 (Forbidden) и если использовался токен пользователя,
+      // попробуем с админским токеном
+      if (response?.status === 403 && token !== await directusApiManager.getAdminToken()) {
+        logger.warn(`Got 403 Forbidden with user token, trying with admin token`, 'analytics-init');
+        const adminToken = await directusApiManager.getAdminToken();
+        
+        if (adminToken) {
+          response = await directusApiManager.makeAuthenticatedRequest({
+            method: 'GET',
+            path: `/items/campaign_content?filter=${JSON.stringify(filter)}&fields=${fields.join(',')}`,
+            token: adminToken
+          });
+          logger.info(`Retry with admin token for analytics data completed with status ${response?.status || 'unknown'}`, 'analytics-init');
+        } else {
+          logger.error(`Failed to get admin token for retry after 403 error`, 'analytics-init');
+        }
+      }
       
       // Проверяем и обрабатываем ответ
       if (!response || !response.data) {
