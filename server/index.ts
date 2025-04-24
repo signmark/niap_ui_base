@@ -68,7 +68,7 @@ API маршруты:
 
 Конфигурация сервера:
 - NODE_ENV: ${process.env.NODE_ENV || 'не задано'}
-- PORT: ${process.env.PORT || '5000 (по умолчанию)'}
+- PORT: ${process.env.PORT || '5001 (по умолчанию)'}
     </pre>
   </body>
   </html>
@@ -215,8 +215,8 @@ app.use((req, res, next) => {
       log("Continuing server startup despite Vite initialization error");
     }
 
-    // Используем стандартный порт 5000 или порт из переменной окружения
-    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+    // Используем стандартный порт 5001 или порт из переменной окружения
+    const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5001;
     console.log(`=== STARTING SERVER ON PORT ${PORT} ===`);
     log(`Attempting to start server on port ${PORT}...`);
 
