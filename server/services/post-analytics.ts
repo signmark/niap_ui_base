@@ -930,29 +930,40 @@ export class PostAnalyticsService {
       let postsWithAnalytics = 0;
       
       posts.forEach(post => {
-        const analytics = post.metadata?.analytics;
-        if (analytics) {
-          postsWithAnalytics++;
-          
-          // Агрегируем общую статистику
-          result.totalViews += analytics.totalViews || 0;
-          result.totalEngagements += analytics.totalEngagements || 0;
-          
-          // Агрегируем статистику по платформам
-          Object.entries(analytics.byPlatform).forEach(([platform, stats]) => {
+        const socialPlatforms = post.social_platforms || {};
+        let hasAnalytics = false;
+        
+        // Проверяем наличие аналитики в каждой платформе
+        Object.entries(socialPlatforms).forEach(([platform, platformData]) => {
+          // Проверяем, что это объект платформы и в нём есть аналитика
+          if (platformData && typeof platformData === 'object' && platformData.analytics) {
+            const stats = platformData.analytics;
+            hasAnalytics = true;
+            
+            // Подсчет активных постов на платформе (с просмотрами)
             if (stats.views > 0) {
               result.byPlatform[platform].posts++;
             }
             
+            // Агрегируем данные по платформе
             result.byPlatform[platform].views += stats.views || 0;
             result.totalLikes += stats.likes || 0;
             result.totalComments += stats.comments || 0;
             result.totalShares += stats.shares || 0;
             result.totalClicks += stats.clicks || 0;
             
+            // Считаем общие просмотры для расчета общего ER
+            result.totalViews += stats.views || 0;
+            
+            // Считаем вовлеченность по платформе
             const platformEngagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
             result.byPlatform[platform].engagements += platformEngagements;
-          });
+            result.totalEngagements += platformEngagements;
+          }
+        });
+        
+        if (hasAnalytics) {
+          postsWithAnalytics++;
         }
       });
       
@@ -1043,25 +1054,50 @@ export class PostAnalyticsService {
       
       // Фильтруем посты с аналитикой и сортируем по просмотрам
       const postsWithAnalytics = filteredPosts
-        .filter(post => {
-          const hasAnalytics = !!post.metadata?.analytics;
-          if (!hasAnalytics) {
-            logger.debug(`Post ${post.id} has no analytics data`, null, 'analytics');
-          }
-          return hasAnalytics;
+        .map(post => {
+          const socialPlatforms = post.social_platforms || {};
+          let totalViews = 0;
+          let totalEngagements = 0;
+          const platforms = [];
+          
+          // Собираем данные из всех платформ
+          Object.entries(socialPlatforms).forEach(([platform, platformData]) => {
+            if (platformData && typeof platformData === 'object' && platformData.analytics) {
+              const stats = platformData.analytics;
+              
+              // Накапливаем данные для расчета общей статистики
+              totalViews += stats.views || 0;
+              
+              // Учитываем вовлеченность
+              const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
+              totalEngagements += engagements;
+              
+              // Если есть просмотры, добавляем платформу в список
+              if (stats.views > 0) {
+                platforms.push(platform);
+              }
+            }
+          });
+          
+          // Рассчитываем рейтинг вовлеченности
+          const engagementRate = totalViews > 0 ? Math.round((totalEngagements / totalViews) * 100) : 0;
+          
+          return {
+            id: post.id,
+            title: post.title || 'Без заголовка',
+            content: post.content,
+            createdAt: post.created_at,
+            views: totalViews,
+            engagements: totalEngagements,
+            engagementRate: engagementRate,
+            platforms: platforms
+          };
         })
-        .map(post => ({
-          id: post.id,
-          title: post.title || 'Без заголовка',
-          content: post.content,
-          createdAt: post.date_created,
-          views: post.metadata?.analytics?.totalViews || 0,
-          engagements: post.metadata?.analytics?.totalEngagements || 0,
-          engagementRate: post.metadata?.analytics?.avgEngagementRate || 0,
-          platforms: Object.keys(post.metadata?.analytics?.byPlatform || {})
-            .filter(platform => post.metadata?.analytics?.byPlatform[platform]?.views > 0)
-        }))
+        // Фильтруем посты без просмотров
+        .filter(post => post.views > 0)
+        // Сортируем по просмотрам от большего к меньшему
         .sort((a, b) => b.views - a.views)
+        // Ограничиваем количество результатов
         .slice(0, limit);
       
       logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by views`, 'analytics');
@@ -1138,25 +1174,50 @@ export class PostAnalyticsService {
       
       // Фильтруем посты с аналитикой и сортируем по вовлеченности
       const postsWithAnalytics = filteredPosts
-        .filter(post => {
-          const hasAnalytics = !!post.metadata?.analytics;
-          if (!hasAnalytics) {
-            logger.debug(`Post ${post.id} has no analytics data`, null, 'analytics');
-          }
-          return hasAnalytics;
+        .map(post => {
+          const socialPlatforms = post.social_platforms || {};
+          let totalViews = 0;
+          let totalEngagements = 0;
+          const platforms = [];
+          
+          // Собираем данные из всех платформ
+          Object.entries(socialPlatforms).forEach(([platform, platformData]) => {
+            if (platformData && typeof platformData === 'object' && platformData.analytics) {
+              const stats = platformData.analytics;
+              
+              // Накапливаем данные для расчета общей статистики
+              totalViews += stats.views || 0;
+              
+              // Учитываем вовлеченность
+              const engagements = (stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.clicks || 0);
+              totalEngagements += engagements;
+              
+              // Если есть просмотры, добавляем платформу в список
+              if (stats.views > 0) {
+                platforms.push(platform);
+              }
+            }
+          });
+          
+          // Рассчитываем рейтинг вовлеченности
+          const engagementRate = totalViews > 0 ? Math.round((totalEngagements / totalViews) * 100) : 0;
+          
+          return {
+            id: post.id,
+            title: post.title || 'Без заголовка',
+            content: post.content,
+            createdAt: post.created_at,
+            views: totalViews,
+            engagements: totalEngagements,
+            engagementRate: engagementRate,
+            platforms: platforms
+          };
         })
-        .map(post => ({
-          id: post.id,
-          title: post.title || 'Без заголовка',
-          content: post.content,
-          createdAt: post.date_created,
-          views: post.metadata?.analytics?.totalViews || 0,
-          engagements: post.metadata?.analytics?.totalEngagements || 0,
-          engagementRate: post.metadata?.analytics?.avgEngagementRate || 0,
-          platforms: Object.keys(post.metadata?.analytics?.byPlatform || {})
-            .filter(platform => post.metadata?.analytics?.byPlatform[platform]?.views > 0)
-        }))
+        // Фильтруем посты без просмотров
+        .filter(post => post.views > 0)
+        // Сортируем по вовлеченности от большего к меньшему
         .sort((a, b) => b.engagementRate - a.engagementRate)
+        // Ограничиваем количество результатов
         .slice(0, limit);
       
       logger.info(`Returning ${postsWithAnalytics.length} posts with analytics data, sorted by engagement`, 'analytics');
