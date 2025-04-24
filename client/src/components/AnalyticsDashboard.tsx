@@ -167,12 +167,12 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Функция для обновления аналитики
   const handleRefreshAnalytics = () => {
-    collectAnalyticsMutation.mutate();
-  };
-  
-  // Функция для инициализации аналитики
-  const handleInitializeAnalytics = () => {
-    initializeAnalyticsMutation.mutate();
+    // Если нет данных аналитики, сначала инициализируем, потом собираем
+    if (!analyticsStatus.lastCollectionTime) {
+      initializeAnalyticsMutation.mutate();
+    } else {
+      collectAnalyticsMutation.mutate();
+    }
   };
 
   // Если есть ошибка, показываем сообщение
@@ -271,22 +271,11 @@ export const AnalyticsDashboard: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleRefreshAnalytics}
-            disabled={collectAnalyticsMutation.isPending || analyticsStatus.isCollecting}
+            disabled={collectAnalyticsMutation.isPending || initializeAnalyticsMutation.isPending || analyticsStatus.isCollecting}
             className="flex items-center gap-1"
           >
             <RefreshCw className="h-4 w-4" /> 
             Обновить данные
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleInitializeAnalytics}
-            disabled={initializeAnalyticsMutation.isPending || analyticsStatus.isCollecting}
-            className="flex items-center gap-1"
-          >
-            <Database className="h-4 w-4" /> 
-            Инициализировать
           </Button>
         </div>
       </div>
@@ -360,7 +349,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   <>
                     <AlertCircle size={16} className="text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                      Данные аналитики отсутствуют. Нажмите "Инициализировать" для сбора.
+                      Данные аналитики отсутствуют. Нажмите "Обновить данные" для сбора.
                     </span>
                   </>
                 )}
