@@ -1,6 +1,79 @@
-import { DirectusAuthManager } from '../directus';
-import { directusService } from './directus-crud';
+import { directusApiManager } from '../directus';
 import logger from '../utils/logger';
+
+// Простой интерфейс для работы с Directus
+const directusService = {
+  async read(collection: string, id: string, userId: string) {
+    try {
+      const token = await directusApiManager.getUserToken(userId);
+      if (!token) {
+        throw new Error(`No token for user ${userId}`);
+      }
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/${collection}/${id}`,
+        token
+      });
+      
+      return response.data;
+    } catch (error) {
+      logger.error(`Error reading item from ${collection}: ${error}`, error, 'directus-service');
+      return null;
+    }
+  },
+  
+  async readMany(collection: string, params: any, userId: string) {
+    try {
+      const token = await directusApiManager.getUserToken(userId);
+      if (!token) {
+        throw new Error(`No token for user ${userId}`);
+      }
+      
+      const queryParams = new URLSearchParams();
+      
+      if (params.filter) {
+        queryParams.append('filter', JSON.stringify(params.filter));
+      }
+      
+      if (params.fields) {
+        queryParams.append('fields', params.fields.join(','));
+      }
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'GET',
+        path: `/items/${collection}?${queryParams.toString()}`,
+        token
+      });
+      
+      return response.data;
+    } catch (error) {
+      logger.error(`Error reading items from ${collection}: ${error}`, error, 'directus-service');
+      return [];
+    }
+  },
+  
+  async update(collection: string, id: string, data: any, userId: string) {
+    try {
+      const token = await directusApiManager.getUserToken(userId);
+      if (!token) {
+        throw new Error(`No token for user ${userId}`);
+      }
+      
+      const response = await directusApiManager.makeAuthenticatedRequest({
+        method: 'PATCH',
+        path: `/items/${collection}/${id}`,
+        token,
+        data
+      });
+      
+      return response.data;
+    } catch (error) {
+      logger.error(`Error updating item in ${collection}: ${error}`, error, 'directus-service');
+      return null;
+    }
+  }
+};
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 

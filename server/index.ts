@@ -14,6 +14,8 @@ import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import { analyticsScheduler } from './services/analytics-scheduler';
+import analyticsRouter from './routes-analytics';
 // Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
