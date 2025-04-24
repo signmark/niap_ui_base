@@ -260,12 +260,17 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Получаем агрегированные данные для общей статистики
   // Приоритет данных: 1) platformsData.aggregated, 2) postsData.aggregated, 3) вычисляем из platforms
+  // Рассчитываем суммы из платформ, если они не предоставлены в агрегированных данных
+  const platformTotalLikes = Object.values(platforms).reduce((sum, p: any) => sum + (p.likes || 0), 0);
+  const platformTotalComments = Object.values(platforms).reduce((sum, p: any) => sum + (p.comments || 0), 0);
+  const platformTotalShares = Object.values(platforms).reduce((sum, p: any) => sum + (p.shares || 0), 0);
+  
   const stats = {
     totalPosts: aggregatedStats.totalPosts || userStats.totalPosts || 0,
     totalViews: aggregatedStats.totalViews || userStats.totalViews || Object.values(platforms).reduce((sum, p: any) => sum + (p.views || 0), 0),
-    totalLikes: aggregatedStats.totalLikes || userStats.totalLikes || 0,
-    totalComments: aggregatedStats.totalComments || userStats.totalComments || 0,
-    totalShares: aggregatedStats.totalShares || userStats.totalShares || 0,
+    totalLikes: aggregatedStats.totalLikes || userStats.totalLikes || platformTotalLikes,
+    totalComments: aggregatedStats.totalComments || userStats.totalComments || platformTotalComments,
+    totalShares: aggregatedStats.totalShares || userStats.totalShares || platformTotalShares,
     totalClicks: aggregatedStats.totalClicks || userStats.totalClicks || 0,
     totalEngagements: aggregatedStats.totalEngagements || userStats.totalEngagements || Object.values(platforms).reduce((sum, p: any) => sum + (p.engagements || 0), 0),
     avgEngagementRate: aggregatedStats.avgEngagementRate || userStats.avgEngagementRate || 0
@@ -295,12 +300,12 @@ export const AnalyticsDashboard: React.FC = () => {
       color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#999999'
     }));
 
-  // Создаем данные для графика вовлеченности
+  // Создаем данные для графика вовлеченности с цветами
   const engagementData = [
-    { name: 'Лайки', value: stats.totalLikes || 0 },
-    { name: 'Комментарии', value: stats.totalComments || 0 },
-    { name: 'Репосты', value: stats.totalShares || 0 },
-    { name: 'Клики', value: stats.totalClicks || 0 }
+    { name: 'Лайки', value: stats.totalLikes || 0, fill: '#FF6B6B' },
+    { name: 'Комментарии', value: stats.totalComments || 0, fill: '#4ECDC4' },
+    { name: 'Репосты', value: stats.totalShares || 0, fill: '#FFD166' },
+    { name: 'Клики', value: stats.totalClicks || 0, fill: '#6A7FDB' }
   ];
   
   // Проверяем, есть ли хоть какие-то ненулевые данные
@@ -538,7 +543,11 @@ export const AnalyticsDashboard: React.FC = () => {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="value" fill="#8884d8" name="Количество" />
+                        <Bar dataKey="value" name="Количество">
+                          {engagementData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     ) : (
                       <text
