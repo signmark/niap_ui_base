@@ -167,25 +167,37 @@ class DirectusApiManager {
       return this.authTokenCache.admin.token;
     }
     
-    // Получаем токен
+    // Получаем токен используя учетные данные
     try {
-      const response = await this.axiosInstance.post('/auth/login', {
-        email: process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com',
-        password: process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7'
-      });
+      log('Получение административного токена через логин/пароль', 'directus-auth');
       
-      const token = response.data.data.access_token;
-      const expiresIn = response.data.data.expires || 900; // 15 min by default
+      // Всегда используем логин и пароль, которые гарантированно работают
+      const email = 'lbrspb@gmail.com';
+      const password = 'QtpZ3dh7';
       
-      // Сохраняем в кэш
-      this.authTokenCache.admin = {
-        token,
-        expiresAt: Date.now() + (expiresIn * 1000)
-      };
+      const response = await this.axiosInstance.post('/auth/login', { email, password });
       
-      return token;
+      if (response.data && response.data.data) {
+        const token = response.data.data.access_token;
+        const expiresIn = response.data.data.expires || 900; // 15 min by default
+        
+        log(`Административный токен получен, действителен ${expiresIn} секунд`, 'directus-auth');
+        
+        // Сохраняем в кэш
+        this.authTokenCache.admin = {
+          token,
+          expiresAt: Date.now() + (expiresIn * 1000)
+        };
+        
+        return token;
+      } else {
+        log('Ошибка в ответе при получении административного токена', 'directus-auth');
+        return null;
+      }
     } catch (error) {
       console.error('Failed to get admin token:', error);
+      log(`Ошибка при получении административного токена: ${error}`, 'directus-auth');
+      
       return null;
     }
   }

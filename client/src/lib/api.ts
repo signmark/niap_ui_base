@@ -239,6 +239,17 @@ export const analytics = {
       console.error('Ошибка при инициализации аналитики:', error);
       throw error;
     }
+  },
+  
+  // Получение статуса сбора аналитики
+  getStatus: async () => {
+    try {
+      const response = await api.get('/analytics/status');
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении статуса сбора аналитики:', error);
+      throw error;
+    }
   }
 };
 

@@ -14,8 +14,12 @@ const INSTAGRAM_API_BASE_URL = 'https://graph.facebook.com/v18.0';
  */
 export class AnalyticsScheduler {
   private isRunning: boolean = false;
+  private isCollecting: boolean = false;
   private schedulerId: NodeJS.Timeout | null = null;
   private interval: number = 5 * 60 * 1000; // 5 минут в миллисекундах
+  private lastCollectionTime: Date | null = null;
+  private processedPosts: number = 0;
+  private totalPosts: number = 0;
   
   /**
    * Конструктор класса
@@ -67,9 +71,50 @@ export class AnalyticsScheduler {
    * Запускает процесс сбора аналитики для всех постов
    * Метод публичный для возможности ручного запуска сбора аналитики
    */
+  /**
+   * Проверяет, идет ли в данный момент сбор аналитики
+   * @returns Признак активного сбора аналитики
+   */
+  isCollectingAnalytics(): boolean {
+    return this.isCollecting;
+  }
+  
+  /**
+   * Возвращает время последнего сбора аналитики
+   * @returns Время последнего сбора аналитики
+   */
+  getLastCollectionTime(): Date | null {
+    return this.lastCollectionTime;
+  }
+  
+  /**
+   * Возвращает количество обработанных постов
+   * @returns Количество обработанных постов
+   */
+  getProcessedPostsCount(): number {
+    return this.processedPosts;
+  }
+  
+  /**
+   * Возвращает общее количество постов для обработки
+   * @returns Общее количество постов
+   */
+  getTotalPostsCount(): number {
+    return this.totalPosts;
+  }
+
   async collectAnalytics(): Promise<void> {
+    // Если сбор уже идет, не запускаем повторно
+    if (this.isCollecting) {
+      logger.log('Analytics collection is already in progress', 'analytics-scheduler');
+      return;
+    }
+    
     try {
       logger.log('Starting analytics collection...', 'analytics-scheduler');
+      this.isCollecting = true;
+      this.processedPosts = 0;
+      this.totalPosts = 0;
       
       // Получаем список всех пользователей
       const users = await this.getAllUsers();
@@ -81,17 +126,25 @@ export class AnalyticsScheduler {
         // Получаем только опубликованные посты пользователя
         const publishedPosts = await this.getUserPublishedPosts(userId);
         
+        // Увеличиваем общее количество постов для отслеживания прогресса
+        this.totalPosts += publishedPosts.length;
+        
         logger.log(`Processing ${publishedPosts.length} published posts for user ${userId}`, 'analytics-scheduler');
         
         // Для каждого поста собираем аналитику по всем платформам
         for (const post of publishedPosts) {
           await this.collectPostAnalytics(post, userId);
+          this.processedPosts++; // Увеличиваем счетчик обработанных постов
         }
       }
       
+      // Обновляем время последнего сбора аналитики
+      this.lastCollectionTime = new Date();
       logger.log('Analytics collection completed', 'analytics-scheduler');
     } catch (error) {
       logger.error(`Error in analytics collection: ${error}`, error, 'analytics-scheduler');
+    } finally {
+      this.isCollecting = false; // В любом случае снимаем флаг активного сбора
     }
   }
   
