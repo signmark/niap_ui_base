@@ -637,9 +637,17 @@ const PostCard: React.FC<{
   title: string;
   views: number;
   engagementRate: number;
-  platforms: string[];
+  platforms: string[] | Record<string, any>;
   rank: number;
 }> = ({ title, views, engagementRate, platforms, rank }) => {
+  // Преобразуем platforms в массив, если это объект
+  const platformsList = Array.isArray(platforms)
+    ? platforms
+    : Object.keys(platforms).filter(key => 
+        platforms[key] === true || 
+        (typeof platforms[key] === 'object' && platforms[key]?.selected === true)
+      );
+      
   return (
     <div className="flex items-start space-x-4 p-4 border rounded-lg shadow-sm">
       <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold">
@@ -658,7 +666,7 @@ const PostCard: React.FC<{
           </div>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          {platforms.map((platform) => (
+          {platformsList.length > 0 && platformsList.map((platform) => (
             <span
               key={platform}
               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground"
