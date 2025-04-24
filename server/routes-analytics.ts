@@ -201,7 +201,8 @@ router.post('/collect', async (req, res) => {
     // Запускаем сбор аналитики вручную
     // Это асинхронный процесс, поэтому отправляем ответ до его завершения
     logger.log(`User ${userId} manually triggered analytics collection${campaignId ? ` for campaign ${campaignId}` : ''}`, 'analytics-api');
-    analyticsScheduler.collectAnalytics(campaignId);
+    // ИСПРАВЛЕНО: Передаем userId в метод collectAnalytics для использования пользовательского токена
+    analyticsScheduler.collectAnalytics(campaignId, userId);
     
     return res.json({ 
       success: true, 
@@ -235,7 +236,8 @@ router.post('/initialize', async (req, res) => {
     
     if (result.success) {
       // После инициализации сразу запускаем сбор реальных данных
-      analyticsScheduler.collectAnalytics(campaignId);
+      // ИСПРАВЛЕНО: Передаем userId в метод collectAnalytics для использования пользовательского токена
+      analyticsScheduler.collectAnalytics(campaignId, userId);
       
       return res.json({ 
         success: true, 
