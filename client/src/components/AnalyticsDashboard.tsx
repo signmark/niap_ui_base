@@ -62,6 +62,12 @@ export const AnalyticsDashboard: React.FC = () => {
   const [period, setPeriod] = useState('7days');
   const campaignId = localStorage.getItem('active_campaign_id');
   
+  // Получаем текущего пользователя для отслеживания изменений
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: () => api.get('/api/auth/me')
+  });
+  
   // Опции периодов
   const periodOptions = [
     { value: '1day', label: 'За 24 часа' },
@@ -73,14 +79,18 @@ export const AnalyticsDashboard: React.FC = () => {
   
   // Получение статистики постов
   const { data: postsData, isLoading: isLoadingPosts, error: postsError } = useQuery({
-    queryKey: ['/api/analytics/posts', campaignId, period],
-    queryFn: () => analytics.getPosts({ campaignId: campaignId || undefined, period })
+    queryKey: ['/api/analytics/posts', campaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPosts({ campaignId: campaignId || undefined, period }),
+    // Автоматически обновляем данные при изменении пользователя или кампании
+    staleTime: 0
   });
 
   // Получение статистики по платформам
   const { data: platformsData, isLoading: isLoadingPlatforms, error: platformsError } = useQuery({
-    queryKey: ['/api/analytics/platforms', campaignId, period],
-    queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period })
+    queryKey: ['/api/analytics/platforms', campaignId, period, userData?.data?.id],
+    queryFn: () => analytics.getPlatforms({ campaignId: campaignId || undefined, period }),
+    // Автоматически обновляем данные при изменении пользователя или кампании
+    staleTime: 0
   });
   
   // Получение статуса сбора аналитики
@@ -147,6 +157,36 @@ export const AnalyticsDashboard: React.FC = () => {
       console.error("Ошибка при инициализации аналитики:", error);
     }
   });
+  
+  // Отслеживаем изменения кампании и пользователя
+  useEffect(() => {
+    // При изменении кампании или пользователя обновляем данные
+    queryClient.invalidateQueries({
+      queryKey: ['/api/analytics/posts']
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['/api/analytics/platforms']
+    });
+  }, [campaignId, userData?.data?.id, queryClient]);
+  
+  // Отслеживаем изменения кампании через localStorage
+  useEffect(() => {
+    const handleCampaignChange = (event: StorageEvent) => {
+      if (event.key === 'active_campaign_id') {
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/posts']
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['/api/analytics/platforms']
+        });
+      }
+    };
+
+    window.addEventListener('storage', handleCampaignChange);
+    return () => {
+      window.removeEventListener('storage', handleCampaignChange);
+    };
+  }, [queryClient]);
   
   // Проверка загрузки
   const isLoading = isLoadingPosts || isLoadingPlatforms || 
@@ -635,43 +675,48 @@ const PostCard: React.FC<{
   platforms: string[] | Record<string, any>;
   rank: number;
 }> = ({ title, views, engagementRate, platforms, rank }) => {
-  // Преобразуем platforms в массив, если это объект
-  const platformsList = Array.isArray(platforms)
-    ? platforms
-    : Object.keys(platforms).filter(key => 
-        platforms[key] === true || 
-        (typeof platforms[key] === 'object' && platforms[key]?.selected === true)
-      );
-      
+  // Преобразуем платформы в массив, если они переданы как объект
+  const platformList = Array.isArray(platforms) 
+    ? platforms 
+    : Object.keys(platforms).filter(key => platforms[key]?.selected || platforms[key]?.status === 'published');
+  
   return (
-    <div className="flex items-start space-x-4 p-4 border rounded-lg shadow-sm">
-      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold">
-        {rank}
-      </div>
-      <div className="flex-1">
-        <h3 className="font-medium line-clamp-2">{title}</h3>
-        <div className="flex flex-wrap gap-2 mt-2">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Eye className="h-4 w-4 mr-1" />
-            {views}
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            {rank}
           </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <TrendingUp className="h-4 w-4 mr-1" />
-            {engagementRate}%
+          <div className="grid gap-1">
+            <h3 className="font-semibold">{title}</h3>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Eye className="h-4 w-4" />
+                <span>{views}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <ArrowUpRight className="h-4 w-4" />
+                <span>{engagementRate}%</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {platformList.map((platform) => (
+                <div 
+                  key={platform}
+                  className="px-2 py-0.5 text-xs rounded-full bg-muted"
+                  style={{ 
+                    backgroundColor: `${PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS]}20`,
+                    color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] 
+                  }}
+                >
+                  {getPlatformName(platform)}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {platformsList.length > 0 && platformsList.map((platform) => (
-            <span
-              key={platform}
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground"
-            >
-              {getPlatformName(platform)}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -680,52 +725,65 @@ const PostCard: React.FC<{
  */
 const PlatformCard: React.FC<{
   platform: string;
-  stats: any;
+  stats: {
+    views: number;
+    posts: number;
+    likes?: number;
+    comments?: number;
+    shares?: number;
+    clicks?: number;
+    engagementRate: number;
+  };
 }> = ({ platform, stats }) => {
+  // Определение цвета платформы
+  const color = PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#999999';
+  
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-md font-medium">{getPlatformName(platform)}</CardTitle>
-        <CardDescription>{stats.posts} публикаций</CardDescription>
+        <CardTitle className="text-base font-medium">{getPlatformName(platform)}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium">Просмотры</span>
-            <span className="text-sm">{stats.views}</span>
+      <CardContent className="pb-2">
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Публикации</span>
+            <span className="font-medium">{stats.posts}</span>
           </div>
-          <Progress value={calculatePercentage(stats.views, 10000)} className="h-2" />
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium">Вовлеченность</span>
-            <span className="text-sm">{stats.engagementRate}%</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Просмотры</span>
+            <span className="font-medium">{stats.views}</span>
           </div>
-          <Progress value={stats.engagementRate} className="h-2" />
-        </div>
-        
-        <div className="pt-2">
-          <div className="flex justify-between text-sm">
-            <div className="flex items-center">
-              <ThumbsUp className="h-4 w-4 mr-1" />
-              <span>{stats.likes || 0}</span>
+          {stats.likes !== undefined && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Лайки</span>
+              <span className="font-medium">{stats.likes}</span>
             </div>
-            <div className="flex items-center">
-              <MessageSquare className="h-4 w-4 mr-1" />
-              <span>{stats.comments || 0}</span>
+          )}
+          {stats.comments !== undefined && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Комментарии</span>
+              <span className="font-medium">{stats.comments}</span>
             </div>
-            <div className="flex items-center">
-              <Share2 className="h-4 w-4 mr-1" />
-              <span>{stats.shares || 0}</span>
+          )}
+          {stats.shares !== undefined && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Репосты</span>
+              <span className="font-medium">{stats.shares}</span>
             </div>
-            <div className="flex items-center">
-              <MousePointerClick className="h-4 w-4 mr-1" />
-              <span>{stats.clicks || 0}</span>
-            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Вовлеченность</span>
+            <span className="font-medium">{stats.engagementRate}%</span>
           </div>
         </div>
       </CardContent>
+      <CardFooter className="pt-0">
+        <Progress 
+          value={calculatePercentage(stats.views, 1000)} 
+          className="h-1.5" 
+          indicatorClassName={`bg-[${color}]`}
+        />
+      </CardFooter>
     </Card>
   );
 };
@@ -748,8 +806,7 @@ function getPlatformName(platform: string): string {
  * Расчет процента от максимального значения
  */
 function calculatePercentage(value: number, max: number): number {
-  if (max <= 0) return 0;
-  return Math.min(100, (value / max) * 100);
+  return Math.min(100, Math.round((value / max) * 100));
 }
 
 /**
@@ -757,19 +814,19 @@ function calculatePercentage(value: number, max: number): number {
  */
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
   const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const radius = outerRadius * 0.8;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
+  return percent > 0.05 ? (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
     >
-      {`${(percent * 100).toFixed(0)}%`}
+      {`${name} ${(percent * 100).toFixed(0)}%`}
     </text>
-  );
+  ) : null;
 };
