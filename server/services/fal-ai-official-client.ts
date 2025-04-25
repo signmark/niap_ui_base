@@ -244,97 +244,102 @@ export class FalAiOfficialClient {
     
     const urls: string[] = [];
     
-    // Функция рекурсивного извлечения URL с логированием
-    const extract = (obj: any, path = '') => {
-      if (!obj) return;
+    // Проверяем формат ответа от Juggernaut-Flux API (данные в data.images[].url)
+    if (result.data && result.data.images && Array.isArray(result.data.images)) {
+      console.log(`[fal-ai-official] Обнаружен формат ответа Juggernaut-Flux API с ${result.data.images.length} изображениями`);
       
-      // Для изображений в формате нового API
-      if (obj.output && obj.output.images && Array.isArray(obj.output.images)) {
-        console.log(`[fal-ai-official] Найден массив изображений в поле ${path}.output.images (${obj.output.images.length} элементов)`);
-        obj.output.images.forEach((img: any, i: number) => {
-          if (typeof img === 'string' && this.isImageUrl(img)) {
-            console.log(`[fal-ai-official] ${path}.output.images[${i}] - прямой URL: ${img}`);
-            urls.push(img);
-          } else if (img && img.url && typeof img.url === 'string' && this.isImageUrl(img.url)) {
-            console.log(`[fal-ai-official] ${path}.output.images[${i}].url - URL: ${img.url}`);
-            urls.push(img.url);
-          } else {
-            console.log(`[fal-ai-official] ${path}.output.images[${i}] - не URL:`, JSON.stringify(img).substring(0, 100));
-          }
-        });
-      } 
-      
-      // Для одиночного изображения
-      else if (obj.output && obj.output.image && typeof obj.output.image === 'string' && this.isImageUrl(obj.output.image)) {
-        console.log(`[fal-ai-official] ${path}.output.image - прямой URL: ${obj.output.image}`);
-        urls.push(obj.output.image);
+      for (const img of result.data.images) {
+        if (img && img.url && typeof img.url === 'string' && this.isImageUrl(img.url)) {
+          console.log(`[fal-ai-official] Найден URL изображения в data.images[].url: ${img.url}`);
+          urls.push(img.url);
+        }
       }
       
-      // Для прямого массива изображений
-      else if (obj.images && Array.isArray(obj.images)) {
-        console.log(`[fal-ai-official] Найден массив изображений в поле ${path}.images (${obj.images.length} элементов)`);
-        obj.images.forEach((img: any, i: number) => {
-          if (typeof img === 'string' && this.isImageUrl(img)) {
-            console.log(`[fal-ai-official] ${path}.images[${i}] - прямой URL: ${img}`);
-            urls.push(img);
-          } else if (img && img.url && typeof img.url === 'string' && this.isImageUrl(img.url)) {
-            console.log(`[fal-ai-official] ${path}.images[${i}].url - URL: ${img.url}`);
-            urls.push(img.url);
-          } else {
-            console.log(`[fal-ai-official] ${path}.images[${i}] - не URL:`, JSON.stringify(img).substring(0, 100));
-          }
-        });
+      if (urls.length > 0) {
+        console.log(`[fal-ai-official] Извлечено ${urls.length} URL изображений из Juggernaut-Flux API`);
+        return urls;
+      }
+    }
+    
+    // Для стандартного API с изображениями в output.images (для других моделей)
+    if (result.output && result.output.images && Array.isArray(result.output.images)) {
+      console.log(`[fal-ai-official] Найдены изображения в output.images (${result.output.images.length} шт.)`);
+      
+      for (const img of result.output.images) {
+        if (typeof img === 'string' && this.isImageUrl(img)) {
+          console.log(`[fal-ai-official] Найден прямой URL: ${img}`);
+          urls.push(img);
+        } else if (img && img.url && typeof img.url === 'string') {
+          console.log(`[fal-ai-official] Найден URL в объекте: ${img.url}`);
+          urls.push(img.url);
+        }
       }
       
-      // Для прямого свойства изображения
-      else if (obj.image && typeof obj.image === 'string' && this.isImageUrl(obj.image)) {
-        console.log(`[fal-ai-official] ${path}.image - прямой URL: ${obj.image}`);
-        urls.push(obj.image);
+      if (urls.length > 0) {
+        console.log(`[fal-ai-official] Извлечено ${urls.length} URL изображений из output.images`);
+        return urls;
       }
+    }
+    
+    // Рекурсивный поиск для всех остальных случаев
+    const findImageUrls = (obj: any, path = ''): string[] => {
+      const foundUrls: string[] = [];
       
-      // Для документации fal-ai flux-api
-      else if (obj.content_url && typeof obj.content_url === 'string' && this.isImageUrl(obj.content_url)) {
-        console.log(`[fal-ai-official] ${path}.content_url - URL: ${obj.content_url}`);
-        urls.push(obj.content_url);
-      }
+      if (!obj || typeof obj !== 'object') return foundUrls;
       
-      // Проверяем наличие поля images_url для моделей rundiffusion
-      else if (obj.images_url && Array.isArray(obj.images_url)) {
-        console.log(`[fal-ai-official] Найден массив URL в поле ${path}.images_url (${obj.images_url.length} элементов)`);
-        obj.images_url.forEach((url: any, i: number) => {
-          if (typeof url === 'string' && this.isImageUrl(url)) {
-            console.log(`[fal-ai-official] ${path}.images_url[${i}] - URL: ${url}`);
-            urls.push(url);
-          }
-        });
-      }
-      
-      // Проверяем наличие поля image_url
-      else if (obj.image_url && typeof obj.image_url === 'string' && this.isImageUrl(obj.image_url)) {
-        console.log(`[fal-ai-official] ${path}.image_url - URL: ${obj.image_url}`);
-        urls.push(obj.image_url);
-      }
-      
-      // Для вложенных объектов - рекурсивный обход
-      else if (obj && typeof obj === 'object') {
-        Object.entries(obj).forEach(([key, val]) => {
-          const newPath = path ? `${path}.${key}` : key;
+      // Проверка на массив объектов с полем url
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          const item = obj[i];
+          const itemPath = `${path}[${i}]`;
           
-          if (val && (typeof val === 'object' || Array.isArray(val))) {
-            extract(val, newPath);
-          } else if (typeof val === 'string' && this.isImageUrl(val)) {
-            console.log(`[fal-ai-official] ${newPath} - URL: ${val}`);
-            urls.push(val);
+          if (typeof item === 'string' && this.isImageUrl(item)) {
+            console.log(`[fal-ai-official] Найден URL изображения в ${itemPath}: ${item}`);
+            foundUrls.push(item);
+          } else if (item && typeof item === 'object') {
+            // Рекурсивный поиск в объекте
+            const nestedUrls = findImageUrls(item, itemPath);
+            foundUrls.push(...nestedUrls);
           }
-        });
+        }
+      } else {
+        // Обработка всех полей объекта
+        for (const [key, value] of Object.entries(obj)) {
+          const keyPath = path ? `${path}.${key}` : key;
+          
+          // Проверка специальных названий полей
+          if (key === 'url' && typeof value === 'string' && this.isImageUrl(value)) {
+            console.log(`[fal-ai-official] Найден URL изображения в ${keyPath}: ${value}`);
+            foundUrls.push(value);
+          } else if (key === 'image_url' && typeof value === 'string' && this.isImageUrl(value)) {
+            console.log(`[fal-ai-official] Найден URL изображения в ${keyPath}: ${value}`);
+            foundUrls.push(value);
+          } else if (key === 'content_url' && typeof value === 'string' && this.isImageUrl(value)) {
+            console.log(`[fal-ai-official] Найден URL изображения в ${keyPath}: ${value}`);
+            foundUrls.push(value);
+          } else if (typeof value === 'string' && this.isImageUrl(value)) {
+            console.log(`[fal-ai-official] Найден URL изображения в ${keyPath}: ${value}`);
+            foundUrls.push(value);
+          } else if (value && typeof value === 'object') {
+            // Рекурсивный поиск для объектов и массивов
+            const nestedUrls = findImageUrls(value, keyPath);
+            foundUrls.push(...nestedUrls);
+          }
+        }
       }
+      
+      return foundUrls;
     };
     
-    // Запускаем извлечение
-    extract(result);
+    // Запускаем полный рекурсивный поиск
+    const recursiveUrls = findImageUrls(result);
+    if (recursiveUrls.length > 0) {
+      console.log(`[fal-ai-official] Найдено ${recursiveUrls.length} URL изображений через рекурсивный поиск`);
+      urls.push(...recursiveUrls);
+    }
     
     if (urls.length > 0) {
-      console.log(`[fal-ai-official] Извлечено ${urls.length} URL изображений`);
+      console.log(`[fal-ai-official] Всего извлечено ${urls.length} URL изображений`);
     } else {
       console.warn('[fal-ai-official] Не удалось извлечь URL изображений из ответа API');
     }

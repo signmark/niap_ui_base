@@ -61,8 +61,8 @@ router.get('/api/fal-ai-models', async (req, res) => {
   }
 });
 
-// Генерация изображения с использованием универсального сервиса
-router.post('/api/generate-universal-image', async (req, res) => {
+// Генерация изображения с использованием универсального сервиса по API
+router.post('/api/fal-ai-images', async (req, res) => {
   try {
     // Валидация запроса
     const { prompt, negativePrompt, width, height, numImages, model } = req.body;
@@ -110,7 +110,7 @@ router.post('/api/generate-universal-image', async (req, res) => {
 
     res.json({
       success: true,
-      data: imageUrls
+      images: imageUrls
     });
   } catch (error: any) {
     console.error('[api] Ошибка при генерации изображения:', error);
