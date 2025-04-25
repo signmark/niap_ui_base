@@ -10,6 +10,8 @@ import { getVkAnalytics } from './vk-analytics';
 import { getInstagramAnalytics } from './instagram-analytics';
 import { getFacebookAnalytics } from './facebook-analytics';
 import { extractTelegramIds, extractVkIds, extractInstagramId, extractFacebookId } from './url-extractor';
+import axios from 'axios';
+import { directusAuthManager } from '../directus-auth-manager';
 
 // Статус обработки аналитики 
 interface AnalyticsCollectionStatus {
@@ -123,13 +125,29 @@ function initializeAnalyticsStructure(post: any): any {
  */
 async function getCampaignSocialSettings(campaignId: string): Promise<any> {
   try {
-    // Получаем информацию о кампании, включая настройки социальных сетей
-    const campaigns = await directusCrud.searchItems('campaigns', {
-      filter: {
-        id: { _eq: campaignId }
+    // Используем прямой axios запрос вместо directusCrud
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    // Пытаемся получить токен администратора
+    const adminSession = await directusAuthManager.getAdminSession();
+    
+    if (!adminSession || !adminSession.token) {
+      log.warn('[analytics-service] Не удалось получить токен администратора');
+      return getDefaultSocialSettings();
+    }
+    
+    // Запрашиваем информацию о кампании напрямую через axios
+    const response = await axios.get(`${directusUrl}/items/campaigns`, {
+      params: {
+        filter: { id: { _eq: campaignId } },
+        fields: ['id', 'social_media_settings']
       },
-      fields: ['id', 'social_media_settings']
+      headers: {
+        'Authorization': `Bearer ${adminSession.token}`
+      }
     });
+    
+    const campaigns = response.data?.data || [];
     
     if (!campaigns || campaigns.length === 0) {
       log.warn(`[analytics-service] Не найдена кампания с ID ${campaignId}`);
@@ -207,15 +225,31 @@ export async function collectAnalytics(campaignId: string, authToken?: string): 
     // Используем правильное имя поля campaign_id
     filter.campaign_id = { _eq: campaignId };
     
-    // Получаем все опубликованные посты
+    // Получаем все опубликованные посты с использованием прямого axios запроса
     let posts = [];
     try {
-      posts = await directusCrud.searchItems('campaign_content', {
-        filter,
-        fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at'],
-        // Используем токен административного пользователя, если он передан
-        ...(authToken ? { authToken } : {})
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = authToken || (adminSession ? adminSession.token : null);
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      
+      posts = response.data?.data || [];
       
       log.info(`[analytics-service] Найдено ${posts.length} постов для обработки`);
     } catch (postsError: any) {
@@ -312,11 +346,25 @@ export async function collectAnalytics(campaignId: string, authToken?: string): 
         }
       }
       
-      // Сохраняем обновленный пост в Directus
+      // Сохраняем обновленный пост в Directus с использованием прямого axios запроса
       try {
-        await directusCrud.updateItem('campaign_content', post.id, {
-          social_platforms: updatedPost.social_platforms
-        });
+        // Получаем токен администратора для обновления
+        const adminSession = await directusAuthManager.getAdminSession();
+        const token = authToken || (adminSession ? adminSession.token : null);
+        
+        if (!token) {
+          throw new Error('Не удалось получить токен для обновления поста');
+        }
+        
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        
+        // Отправляем PATCH запрос для обновления данных
+        await axios.patch(
+          `${directusUrl}/items/campaign_content/${post.id}`, 
+          { social_platforms: updatedPost.social_platforms },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        
         log.info(`[analytics-service] Обновлены данные аналитики для поста ${post.id}`);
       } catch (updateError: any) {
         log.error(`[analytics-service] Ошибка обновления поста ${post.id}: ${updateError.message}`);
@@ -371,11 +419,36 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
       };
     }
     
-    // Получаем все опубликованные посты
-    const posts = await directusCrud.searchItems('campaign_content', {
-      filter,
-      fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
-    });
+    // Получаем все опубликованные посты с использованием прямого axios запроса
+    let posts = [];
+    try {
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = adminSession ? adminSession.token : null;
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      posts = response.data?.data || [];
+    } catch (error) {
+      log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
+      // В случае ошибки возвращаем пустой массив
+      posts = [];
+    }
     
     // Обрабатываем посты для вычисления общего количества просмотров и вовлеченности
     const processedPosts = posts.map(post => {
@@ -469,11 +542,36 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       };
     }
     
-    // Получаем все опубликованные посты
-    const posts = await directusCrud.searchItems('campaign_content', {
-      filter,
-      fields: ['id', 'campaign_id', 'social_platforms', 'created_at']
-    });
+    // Получаем все опубликованные посты с использованием прямого axios запроса
+    let posts = [];
+    try {
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = adminSession ? adminSession.token : null;
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      posts = response.data?.data || [];
+    } catch (error) {
+      log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
+      // В случае ошибки возвращаем пустой массив
+      posts = [];
+    }
     
     // Начальные значения для агрегированных метрик
     const aggregated: AggregatedMetrics = {
