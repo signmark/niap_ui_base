@@ -6,6 +6,7 @@
 
 import axios from 'axios';
 import { apiKeyService } from './api-keys';
+import { falAiFluxClient } from './fal-ai-flux-client';
 
 // Типы поддерживаемых моделей
 export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'flux/juggernaut-xl-lora' | 'flux/juggernaut-xl-lightning' | 'flux/flux-lora';
@@ -285,40 +286,42 @@ class FalAiUniversalService {
     // Определяем модель и формируем URL запроса
     const model = this.normalizeModelName(options.model);
     
-    // Формируем URL для запроса
-    let apiUrl = '';
+    // Проверяем, является ли это моделью Flux (Schnell или новые Flux-модели)
+    const isFluxModel = model === 'schnell' || model.startsWith('flux/');
     
-    // Обработка моделей из пространства имен flux
-    if (model === 'schnell') {
-      apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
-    } else if (model.startsWith('flux/')) {
-      // Для новых моделей flux используем прямой API URL
-      apiUrl = `https://queue.fal.run/fal-ai/${model}`;
-    } else {
-      // Стандартный формат URL для остальных моделей
-      apiUrl = `https://queue.fal.run/fal-ai/${model}`;
+    if (isFluxModel) {
+      console.log(`[fal-ai-universal] Обнаружена модель Flux: ${model}, используем специальный клиент`);
+      
+      // Используем специальный клиент для моделей Flux
+      try {
+        return await falAiFluxClient.generateImages({
+          prompt: options.prompt,
+          negative_prompt: options.negativePrompt,
+          width: options.width,
+          height: options.height,
+          num_images: options.numImages,
+          model: model,
+          apiKey: apiKey
+        });
+      } catch (error: any) {
+        console.error(`[fal-ai-universal] Ошибка при генерации изображений через Flux-клиент: ${error.message}`);
+        throw error;
+      }
     }
     
-    // Определяем тип контента - всегда изображение, видео не поддерживаются
-    const isVideoModel = false; // Никакие модели теперь не считаются видеомоделями
+    // Формируем URL для запроса (только для не-Flux моделей)
+    const apiUrl = `https://queue.fal.run/fal-ai/${model}`;
     console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
     
-    // Подготавливаем данные запроса - с учетом типа модели
-    let requestData: any = {
+    // Подготавливаем данные запроса
+    const requestData: any = {
       prompt: options.prompt,
       negative_prompt: options.negativePrompt || '',
       width: options.width || 1024,
       height: options.height || 1024,
       num_images: options.numImages || 1,
-      num_inference_steps: isVideoModel ? 30 : 10 // Разное количество шагов для видео и изображений
+      num_inference_steps: 10
     };
-    
-    // Добавляем специфичные параметры для видеомоделей
-    if (isVideoModel) {
-      requestData.fps = options.fps || 24; // Кадров в секунду (по умолчанию 24)
-      requestData.duration = options.duration || 3.0; // Длительность в секундах (по умолчанию 3 сек)
-      requestData.num_images = 1; // Для видео всегда генерируем только одно
-    }
     
     // Настраиваем заголовки запроса
     const headers = {
@@ -339,6 +342,7 @@ class FalAiUniversalService {
       console.log(`[fal-ai-universal] Получен ответ, статус: ${response.status}`);
       
       // Обрабатываем различные варианты ответа
+      
       // Вариант 1: Изображения уже есть в ответе
       const directImageUrls = this.extractImageUrls(response.data);
       if (directImageUrls.length > 0) {
@@ -348,7 +352,7 @@ class FalAiUniversalService {
       
       // Вариант 2: Асинхронная обработка через status_url
       if (response.data && response.data.status === 'IN_QUEUE' && response.data.status_url) {
-        console.log(`[fal-ai-universal] Запрос в очереди, получен status_url`);
+        console.log(`[fal-ai-universal] Запрос в очереди, получен status_url: ${response.data.status_url}`);
         
         // Ожидаем окончания генерации
         const result = await this.waitForResult(response.data.status_url, apiKey);
@@ -360,37 +364,14 @@ class FalAiUniversalService {
         }
       }
       
-      // Вариант 3: Запрос имеет request_id, но нет прямого результата
-      if (response.data && response.data.request_id) {
-        console.log(`[fal-ai-universal] Получен request_id: ${response.data.request_id}`);
-        
-        // Запрашиваем информацию о запросе
-        const requestInfoUrl = `https://queue.fal.run/fal-ai/flux/requests/${response.data.request_id}`;
-        
-        try {
-          const requestResponse = await axios.get(requestInfoUrl, {
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          
-          // Извлекаем URL из информации о запросе
-          const requestImageUrls = this.extractImageUrls(requestResponse.data);
-          if (requestImageUrls.length > 0) {
-            return requestImageUrls;
-          }
-        } catch (requestError: any) {
-          console.error(`[fal-ai-universal] Ошибка при получении информации о запросе: ${requestError.message}`);
-        }
-      }
-      
       // Если все методы не привели к результату
-      throw new Error(`Не удалось получить URL ${isVideoModel ? 'видео' : 'изображений'} из ответа API`);
+      throw new Error(`Не удалось получить URL изображений из ответа API`);
     } catch (error: any) {
-      console.error(`[fal-ai-universal] Ошибка при генерации ${isVideoModel ? 'видео' : 'изображений'}: ${error.message}`);
+      console.error(`[fal-ai-universal] Ошибка при генерации: ${error.message}`);
       
       if (error.response) {
-        console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}, данные: ${JSON.stringify(error.response.data)}`);
+        console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}`, 
+          error.response.data ? JSON.stringify(error.response.data).substring(0, 500) : 'No data');
       }
       
       throw error;
