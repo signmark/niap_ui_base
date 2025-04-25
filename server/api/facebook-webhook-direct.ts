@@ -502,12 +502,14 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, pos
       }
     }
     
+    log.info(`[Facebook Direct] Контент ID: ${contentId}`);
     log.info(`[Facebook Direct] Текущие social_platforms до обновления: ${JSON.stringify(socialPlatforms)}`);
+    log.info(`[Facebook Direct] Проверка на наличие других платформ: ${Object.keys(socialPlatforms).join(', ')}`);
     
-    // Создаем копию существующих данных для сохранения информации о других платформах
-    const updatedPlatforms = { ...socialPlatforms };
+    // Глубокая копия объекта socialPlatforms для сохранения всех данных
+    const updatedPlatforms = JSON.parse(JSON.stringify(socialPlatforms));
     
-    // Обновляем только информацию о Facebook, сохраняя данные других платформ
+    // Обновляем ТОЛЬКО информацию о Facebook, принудительно сохраняя все данные других платформ
     updatedPlatforms.facebook = {
       // Сохраняем предыдущие настройки, если они были
       ...(socialPlatforms.facebook || {}),
@@ -520,6 +522,10 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, pos
     };
     
     log.info(`[Facebook Direct] Обновленные social_platforms: ${JSON.stringify(updatedPlatforms)}`);
+    log.info(`[Facebook Direct] После обновления есть следующие платформы: ${Object.keys(updatedPlatforms).join(', ')}`);
+    log.info(`[Facebook Direct] Подтверждение сохранения VK данных: ${JSON.stringify(updatedPlatforms.vk || "отсутствует")}`);
+    log.info(`[Facebook Direct] Подтверждение сохранения Telegram данных: ${JSON.stringify(updatedPlatforms.telegram || "отсутствует")}`);
+    log.info(`[Facebook Direct] Подтверждение сохранения Instagram данных: ${JSON.stringify(updatedPlatforms.instagram || "отсутствует")}`);
     
     // Присваиваем обновленный объект
     socialPlatforms = updatedPlatforms;
