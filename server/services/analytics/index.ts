@@ -11,5 +11,8 @@ export * from './vk-analytics';
 export * from './instagram-analytics';
 export * from './facebook-analytics';
 
+// Экспортируем данные fallback для случаев недоступности Directus
+export * from './fallback-data';
+
 // Экспортируем основной сервис аналитики
 export * from './analytics-service';

@@ -5,7 +5,15 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
-import { collectAnalytics, getAnalyticsStatus, getPlatformsStats, getTopPosts } from '../services/analytics';
+import { 
+  collectAnalytics, 
+  getAnalyticsStatus, 
+  getPlatformsStats, 
+  getTopPosts,
+  getFallbackAnalyticsStatus,
+  getFallbackPlatformsStats,
+  getFallbackTopPosts
+} from '../services/analytics';
 import { directusApi } from '../directus';
 
 // Создаем роутер для маршрутов аналитики
@@ -94,16 +102,14 @@ analyticsRouter.get('/status', authenticateUser, (req, res) => {
     } catch (statusError: any) {
       log.error(`[api-analytics] Ошибка получения статуса: ${statusError.message}`);
       
-      // Возвращаем дефолтный статус в случае ошибки
+      // Используем данные fallback вместо пустых значений
+      const fallbackStatus = getFallbackAnalyticsStatus();
+      log.info(`[api-analytics] Возвращаем fallback-данные для статуса аналитики`);
+      
       res.json({
         success: true,
-        status: {
-          isCollecting: false,
-          lastCollectionTime: null,
-          progress: 0,
-          error: "Не удалось получить текущий статус сбора аналитики"
-        },
-        message: "Информация о статусе сбора аналитики временно недоступна"
+        status: fallbackStatus,
+        message: "Используются временные данные из-за недоступности сервиса аналитики"
       });
     }
   } catch (error: any) {
@@ -187,15 +193,17 @@ analyticsRouter.get('/top-posts', authenticateUser, async (req, res) => {
         data: topPosts
       });
     } catch (postsError: any) {
-      // Если не удалось получить топовые публикации, отправляем пустые данные с сообщением об ошибке
+      // Если не удалось получить топовые публикации, используем fallback-данные
       log.error(`[api-analytics] Ошибка получения топовых публикаций: ${postsError.message}`);
+      
+      // Используем fallback-данные вместо пустых значений
+      const fallbackPosts = getFallbackTopPosts();
+      log.info(`[api-analytics] Возвращаем fallback-данные для топовых публикаций`);
+      
       res.json({
         success: true,
-        data: {
-          topByViews: [],
-          topByEngagement: []
-        },
-        message: 'Не удалось получить данные о топовых публикациях. Пожалуйста, попробуйте позже.'
+        data: fallbackPosts,
+        message: 'Используются временные данные из-за недоступности сервиса аналитики'
       });
     }
   } catch (error: any) {
@@ -233,24 +241,17 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
         data: stats
       });
     } catch (statsError: any) {
-      // Если не удалось получить статистику, отправляем пустые данные с сообщением об ошибке
+      // Если не удалось получить статистику, используем fallback-данные
       log.error(`[api-analytics] Ошибка получения статистики по платформам: ${statsError.message}`);
+      
+      // Используем fallback-данные вместо пустых значений
+      const fallbackStats = getFallbackPlatformsStats();
+      log.info(`[api-analytics] Возвращаем fallback-данные для статистики платформ`);
+      
       res.json({
         success: true,
-        data: {
-          platforms: {},
-          aggregated: {
-            totalPosts: 0,
-            totalViews: 0,
-            totalLikes: 0,
-            totalComments: 0,
-            totalShares: 0,
-            totalEngagement: 0,
-            averageEngagementRate: 0,
-            platformDistribution: {}
-          }
-        },
-        message: 'Не удалось получить актуальную статистику. Пожалуйста, попробуйте позже.'
+        data: fallbackStats,
+        message: 'Используются временные данные из-за недоступности сервиса аналитики'
       });
     }
   } catch (error: any) {
