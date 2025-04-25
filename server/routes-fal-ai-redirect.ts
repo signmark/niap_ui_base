@@ -87,7 +87,7 @@ export function registerFalAiRedirectRoutes(app: Express) {
         width,
         height,
         numImages,
-        model: modelName || 'fast-sdxl',
+        model: modelName || 'schnell', // Используем Schnell как модель по умолчанию
         token,
         userId
       });
