@@ -25,11 +25,16 @@ const AiImageTester: React.FC = () => {
   const [error, setError] = useState('');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [availableModels, setAvailableModels] = useState<Array<{id: string, name: string, description: string}>>([
-    { id: 'rundiffusion-fal/juggernaut-flux-lora', name: 'Juggernaut Flux Lora', description: 'Высочайшее качество изображений' },
+    { id: 'rundiffusion-fal/juggernaut-flux-lora', name: 'Juggernaut Flux Lora', description: 'Высочайшее качество изображений (рекомендуется)' },
     { id: 'rundiffusion-fal/juggernaut-flux/lightning', name: 'Juggernaut Flux Lightning', description: 'Баланс скорости и качества' },
     { id: 'fal-ai/flux-lora', name: 'Flux Lora', description: 'Альтернативная Flux модель' },
     { id: 'schnell', name: 'Schnell', description: 'Быстрая базовая модель FAL.AI' },
-    { id: 'fooocus', name: 'Fooocus', description: 'Продвинутая композиция' }
+    { id: 'fal-ai/fast-sdxl', name: 'Fast SDXL', description: 'Быстрая генерация с высоким качеством' },
+    { id: 'fal-ai/lcm-sdxl', name: 'LCM-SDXL', description: 'Сверхбыстрая генерация (ниже качество)' },
+    { id: 'fooocus', name: 'Fooocus', description: 'Продвинутая композиция' },
+    { id: 'fal-ai/juggernaut-xl-v9', name: 'Juggernaut XL', description: 'Детализированные реалистичные изображения' },
+    { id: 'fal-ai/illusion-xl-v1', name: 'Illusion XL', description: 'Художественные и креативные изображения' },
+    { id: 'stable-diffusion-xl', name: 'Stable Diffusion XL', description: 'Классическая универсальная модель' }
   ]);
   
   // Загружаем список моделей при монтировании компонента
@@ -58,7 +63,7 @@ const AiImageTester: React.FC = () => {
     setError('');
     
     try {
-      const response = await axios.post('/api/generate-universal-image', {
+      const response = await axios.post('/api/fal-ai-images', {
         prompt,
         negativePrompt: negativePrompt || undefined,
         width,
@@ -67,8 +72,8 @@ const AiImageTester: React.FC = () => {
         model
       });
 
-      if (response.data.success && Array.isArray(response.data.data)) {
-        const images = response.data.data.map((url: string) => ({
+      if (response.data.success && Array.isArray(response.data.images)) {
+        const images = response.data.images.map((url: string) => ({
           url,
           model
         }));

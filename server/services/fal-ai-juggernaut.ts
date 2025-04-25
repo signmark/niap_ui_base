@@ -38,9 +38,10 @@ export class FalAiJuggernautService {
    * @param authToken Токен авторизации (опционально)
    * @returns Успешность инициализации
    */
-  async initializeFromApiKeyService(userId?: string, authToken?: string): Promise<boolean> {
+  async initializeFromApiKeyService(userId: string = '', authToken?: string): Promise<boolean> {
     try {
       console.log('[fal-ai-juggernaut] Инициализация из API Key Service...');
+      // Используем пустую строку как значение по умолчанию, если userId не передан
       const apiKey = await apiKeyService.getApiKey(userId, 'fal_ai', authToken);
       
       if (!apiKey) {
