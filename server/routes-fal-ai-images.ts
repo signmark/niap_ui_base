@@ -94,18 +94,25 @@ export function registerFalAiImageRoutes(app: Express) {
     try {
       console.log(`[fal-ai] GET /api/fal-ai-models запрошен с query params:`, req.query);
       
-      // Список поддерживаемых моделей
+      // Список поддерживаемых моделей - с новыми моделями вверху
       const models = [
+        // Новые модели сверху
         {
-          id: 'fast-sdxl',
-          name: 'Fast SDXL',
-          description: 'Быстрая версия Stable Diffusion XL'
+          id: 'flux/juggernaut-xl-lora',
+          name: 'Juggernaut Flux Lora',
+          description: 'Топовое качество детализированных изображений'
         },
         {
-          id: 'sdxl',
-          name: 'Stable Diffusion XL',
-          description: 'Полная версия Stable Diffusion XL'
+          id: 'flux/juggernaut-xl-lightning',
+          name: 'Juggernaut Flux Lightning',
+          description: 'Средняя скорость и хорошее качество изображений'
         },
+        {
+          id: 'flux/flux-lora',
+          name: 'Flux Lora',
+          description: 'Альтернативная модель высокого качества'
+        },
+        // Существующие модели
         {
           id: 'schnell',
           name: 'Schnell',
@@ -117,19 +124,14 @@ export function registerFalAiImageRoutes(app: Express) {
           description: 'Fooocus - мощная модель с продвинутой композицией'
         },
         {
-          id: 'rundiffusion-fal/juggernaut-flux/lightning',
-          name: 'Juggernaut Flux Lightning',
-          description: 'Средняя скорость и хорошее качество изображений'
+          id: 'sdxl',
+          name: 'Stable Diffusion XL',
+          description: 'Полная версия Stable Diffusion XL'
         },
         {
-          id: 'rundiffusion-fal/juggernaut-flux-lora',
-          name: 'Juggernaut Flux Lora',
-          description: 'Топовое качество детализированных изображений'
-        },
-        {
-          id: 'fal-ai/flux-lora',
-          name: 'Flux Lora',
-          description: 'Альтернативная модель высокого качества'
+          id: 'fast-sdxl',
+          name: 'Fast SDXL',
+          description: 'Быстрая версия Stable Diffusion XL'
         }
       ];
       

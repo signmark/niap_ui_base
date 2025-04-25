@@ -8,7 +8,7 @@ import axios from 'axios';
 import { apiKeyService } from './api-keys';
 
 // Типы поддерживаемых моделей
-export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'rundiffusion-fal/juggernaut-flux/lightning' | 'rundiffusion-fal/juggernaut-flux-lora';
+export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'flux/juggernaut-xl-lora' | 'flux/juggernaut-xl-lightning' | 'flux/flux-lora';
 
 // Параметры для генерации медиафайлов (изображений или видео)
 export interface FalAiGenerateOptions {
@@ -275,9 +275,9 @@ class FalAiUniversalService {
       apiUrl = `https://queue.fal.run/fal-ai/${model}`;
     }
     
-    // Определяем тип контента - видео или изображение
-    const isVideoModel = model.includes('rundiffusion');
-    console.log(`[fal-ai-universal] Генерация ${isVideoModel ? 'видео' : 'изображений'} с моделью: ${model}, URL: ${apiUrl}`);
+    // Определяем тип контента - всегда изображение, видео не поддерживаются
+    const isVideoModel = false; // Никакие модели теперь не считаются видеомоделями
+    console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
     
     // Подготавливаем данные запроса - с учетом типа модели
     let requestData: any = {

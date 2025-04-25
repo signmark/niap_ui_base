@@ -49,19 +49,19 @@ interface ImageGenerationDialogProps {
 
 // Определяем список моделей по умолчанию с новыми моделями вверху
 const DEFAULT_MODELS = [
-  // Новые модели сверху
+  // Новые модели сверху - используются реальные идентификаторы моделей FAL.AI
   {
-    id: 'rundiffusion-fal/juggernaut-flux-lora',
+    id: 'flux/juggernaut-xl-lora',
     name: 'Juggernaut Flux Lora',
     description: 'Топовое качество детализированных изображений'
   },
   {
-    id: 'rundiffusion-fal/juggernaut-flux/lightning',
+    id: 'flux/juggernaut-xl-lightning',
     name: 'Juggernaut Flux Lightning',
     description: 'Средняя скорость и хорошее качество изображений'
   },
   {
-    id: 'fal-ai/flux-lora',
+    id: 'flux/flux-lora',
     name: 'Flux Lora',
     description: 'Альтернативная модель высокого качества'
   },
