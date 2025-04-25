@@ -61,7 +61,7 @@ export class FalAiDirectClient {
         negative_prompt: options.negative_prompt || '',
         width: options.width || 1024,
         height: options.height || 1024,
-        num_outputs: options.num_images || 1
+        num_images: options.num_images || 1  // Исправлено с num_outputs на num_images
       };
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
