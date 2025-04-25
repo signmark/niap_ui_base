@@ -7,6 +7,7 @@
 import axios from 'axios';
 import { apiKeyService } from './api-keys';
 import { falAiFluxClient } from './fal-ai-flux-client';
+import { falAiDirectClient } from './fal-ai-direct-client';
 
 // Типы поддерживаемых моделей
 export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'flux/juggernaut-xl-lora' | 'flux/juggernaut-xl-lightning' | 'flux/flux-lora';
@@ -286,15 +287,17 @@ class FalAiUniversalService {
     // Определяем модель и формируем URL запроса
     const model = this.normalizeModelName(options.model);
     
-    // Проверяем, является ли это моделью Flux (Schnell или новые Flux-модели)
+    // Определяем тип модели для выбора клиента
     const isFluxModel = model === 'schnell' || model.startsWith('flux/');
+    const isStandardModel = model === 'fast-sdxl' || model === 'sdxl';
     
-    if (isFluxModel) {
-      console.log(`[fal-ai-universal] Обнаружена модель Flux: ${model}, используем специальный клиент`);
+    // Для моделей Flux и стандартных моделей пробуем сначала прямой клиент
+    if (isFluxModel || isStandardModel) {
+      console.log(`[fal-ai-universal] Используем прямой REST API клиент для модели: ${model}`);
       
-      // Используем специальный клиент для моделей Flux
       try {
-        return await falAiFluxClient.generateImages({
+        // Используем прямой REST API клиент без асинхронной обработки
+        return await falAiDirectClient.generateImages({
           prompt: options.prompt,
           negative_prompt: options.negativePrompt,
           width: options.width,
@@ -303,9 +306,31 @@ class FalAiUniversalService {
           model: model,
           apiKey: apiKey
         });
-      } catch (error: any) {
-        console.error(`[fal-ai-universal] Ошибка при генерации изображений через Flux-клиент: ${error.message}`);
-        throw error;
+      } catch (directError: any) {
+        console.error(`[fal-ai-universal] Ошибка при прямом доступе к API: ${directError.message}`);
+        
+        // Если модель Flux и прямой клиент не сработал, пробуем через специальный Flux-клиент
+        if (isFluxModel) {
+          console.log(`[fal-ai-universal] Пробуем Flux-клиент для модели: ${model}`);
+          
+          try {
+            return await falAiFluxClient.generateImages({
+              prompt: options.prompt,
+              negative_prompt: options.negativePrompt,
+              width: options.width,
+              height: options.height,
+              num_images: options.numImages,
+              model: model,
+              apiKey: apiKey
+            });
+          } catch (fluxError: any) {
+            console.error(`[fal-ai-universal] Ошибка при генерации через Flux-клиент: ${fluxError.message}`);
+            throw fluxError;
+          }
+        } else {
+          // Для стандартных моделей просто пробуем legacy-вариант дальше
+          console.log(`[fal-ai-universal] Для стандартной модели ${model} используем legacy-подход`);
+        }
       }
     }
     
