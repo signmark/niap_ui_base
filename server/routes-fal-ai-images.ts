@@ -17,9 +17,14 @@ router.get('/api/fal-ai-models', async (req, res) => {
     // Использует официальные имена моделей, проверенные в фактической работе
     const models = [
       { 
+        id: 'schnell', 
+        name: 'Schnell', 
+        description: 'Оригинальная модель FAL.AI (рекомендуется)' 
+      },
+      { 
         id: 'fal-ai/fast-sdxl', 
         name: 'Fast SDXL', 
-        description: 'Быстрая генерация с высоким качеством (рекомендуется)' 
+        description: 'Быстрая генерация с высоким качеством' 
       },
       { 
         id: 'fal-ai/lcm-sdxl', 
@@ -95,7 +100,7 @@ router.post('/api/generate-universal-image', async (req, res) => {
       width: width || 1024,
       height: height || 1024,
       numImages: numImages || 1,
-      model: model || 'fal-ai/fast-sdxl', // Используем официальную модель по умолчанию
+      model: model || 'schnell', // Используем Schnell по умолчанию
       token
     };
 
