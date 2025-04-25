@@ -55,16 +55,18 @@ export class FalAiDirectClient {
       };
     } else if (options.model === 'schnell') {
       // Специальный URL для Schnell (в соответствии с официальной документацией)
-      apiUrl = 'https://hub.fal.ai/v1/schnell';
+      apiUrl = 'https://api.fal.ai/v1/fal-ai/flux/schnell';
       requestData = {
-        prompt: options.prompt,
-        negative_prompt: options.negative_prompt || '',
-        image_size: {
-          width: options.width || 1024,
-          height: options.height || 1024
-        },
-        num_inference_steps: 4, // Рекомендуемое значение из документации
-        num_images: options.num_images || 1
+        input: {
+          prompt: options.prompt,
+          negative_prompt: options.negative_prompt || '',
+          image_size: {
+            width: options.width || 1024,
+            height: options.height || 1024
+          },
+          num_inference_steps: 4, // Рекомендуемое значение из документации
+          num_images: options.num_images || 1
+        }
       };
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus

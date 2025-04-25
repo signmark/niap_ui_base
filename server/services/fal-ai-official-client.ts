@@ -140,7 +140,7 @@ export class FalAiOfficialClient {
   private formatModelId(model: string): string {
     // Маппинг моделей на их идентификаторы для официального клиента
     const modelMap: Record<string, string> = {
-      'schnell': 'fal-ai/schnell',
+      'schnell': 'fal-ai/flux/schnell',
       'fast-sdxl': 'fal-ai/fast-sdxl',
       'sdxl': 'fal-ai/stable-diffusion/sdxl-lightning',
       'fooocus': 'fal-ai/fooocus',
@@ -186,9 +186,10 @@ export class FalAiOfficialClient {
     console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${options.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}`);
 
     // Специфические параметры для разных моделей
-    if (options.model === 'schnell' || options.model === 'fal-ai/schnell') {
+    if (options.model === 'schnell' || options.model === 'fal-ai/schnell' || options.model === 'fal-ai/flux/schnell') {
       return {
-        ...baseParams,
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt || options.negativePrompt || '',
         image_size: {
           width: options.width || 1024,
           height: options.height || 1024
