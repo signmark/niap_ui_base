@@ -62,14 +62,14 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
       
       log.info(`[api-analytics] User authenticated: ${req.user.id} (${req.user.email || 'no email'})`);
       next();
-    } catch (error) {
+    } catch (error: any) {
       log.error(`[api-analytics] Error validating token: ${error.message}`);
       return res.status(401).json({ 
         success: false,
         message: 'Не авторизован: Ошибка проверки токена' 
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     log.error(`[api-analytics] Authentication error: ${error.message}`);
     return res.status(500).json({ 
       success: false,
@@ -84,14 +84,30 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
  */
 analyticsRouter.get('/status', authenticateUser, (req, res) => {
   try {
-    const status = getAnalyticsStatus();
-    
-    res.json({
-      success: true,
-      status
-    });
-  } catch (error) {
-    log.error(`[api-analytics] Ошибка получения статуса: ${error.message}`);
+    try {
+      const status = getAnalyticsStatus();
+      
+      res.json({
+        success: true,
+        status
+      });
+    } catch (statusError: any) {
+      log.error(`[api-analytics] Ошибка получения статуса: ${statusError.message}`);
+      
+      // Возвращаем дефолтный статус в случае ошибки
+      res.json({
+        success: true,
+        status: {
+          isCollecting: false,
+          lastCollectionTime: null,
+          progress: 0,
+          error: "Не удалось получить текущий статус сбора аналитики"
+        },
+        message: "Информация о статусе сбора аналитики временно недоступна"
+      });
+    }
+  } catch (error: any) {
+    log.error(`[api-analytics] Критическая ошибка обработки запроса статуса: ${error.message}`);
     res.status(500).json({
       success: false,
       message: 'Ошибка получения статуса сбора аналитики'
@@ -118,16 +134,26 @@ analyticsRouter.post('/collect', authenticateUser, async (req, res) => {
     // В данной реализации считаем, что фронтенд не даст выбрать кампанию, 
     // к которой нет доступа, но дополнительная проверка не помешает
     
-    const result = await collectAnalytics(campaignId);
-    
-    res.json({
-      success: result,
-      message: result 
-        ? 'Сбор аналитики запущен успешно' 
-        : 'Не удалось запустить сбор аналитики (возможно, процесс уже запущен)'
-    });
-  } catch (error) {
-    log.error(`[api-analytics] Ошибка запуска сбора аналитики: ${error.message}`);
+    try {
+      const result = await collectAnalytics(campaignId);
+      
+      res.json({
+        success: result,
+        message: result 
+          ? 'Сбор аналитики запущен успешно' 
+          : 'Не удалось запустить сбор аналитики (возможно, процесс уже запущен)'
+      });
+    } catch (collectError: any) {
+      log.error(`[api-analytics] Ошибка запуска сбора аналитики: ${collectError.message}`);
+      
+      // Отправляем информацию об ошибке, но с кодом 200 чтобы клиент мог отобразить ошибку
+      res.json({
+        success: false,
+        message: 'Не удалось запустить сбор аналитики. Возможные причины: отсутствие прав доступа или временная недоступность сервиса. Пожалуйста, попробуйте позже.'
+      });
+    }
+  } catch (error: any) {
+    log.error(`[api-analytics] Критическая ошибка обработки запроса сбора аналитики: ${error.message}`);
     res.status(500).json({
       success: false,
       message: 'Ошибка запуска сбора аналитики'
