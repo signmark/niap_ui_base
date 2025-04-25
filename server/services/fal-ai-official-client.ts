@@ -29,7 +29,7 @@ export class FalAiOfficialClient {
     
     // Добавляем префикс 'Key ' к API ключу, если его еще нет
     const formattedKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
-    console.log(`[fal-ai-official] Форматированный ключ: ${formattedKey.substring(0, 10)}...`);
+    console.log(`[fal-ai-official] Ключ отформатирован ${apiKey.startsWith('Key ') ? '(сохранен префикс)' : '(добавлен префикс Key)'}`);
 
     // Настраиваем официальный клиент FAL.AI
     fal.config({
