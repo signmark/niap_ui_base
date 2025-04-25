@@ -47,9 +47,15 @@ interface ImageGenerationDialogProps {
   onClose: () => void;
 }
 
-// Определяем список моделей по умолчанию с новыми моделями вверху
+// Определяем список моделей по умолчанию с Schnell на первом месте
 const DEFAULT_MODELS = [
-  // Новые модели сверху - используются реальные идентификаторы моделей FAL.AI
+  // Schnell как рекомендуемая модель по умолчанию (сверху списка)
+  {
+    id: 'schnell',
+    name: 'Schnell',
+    description: 'Schnell - высококачественная модель для быстрой генерации (рекомендуется)'
+  },
+  // Другие модели
   {
     id: 'flux/juggernaut-xl-lora',
     name: 'Juggernaut Flux Lora',
@@ -64,12 +70,6 @@ const DEFAULT_MODELS = [
     id: 'flux/flux-lora',
     name: 'Flux Lora',
     description: 'Альтернативная модель высокого качества'
-  },
-  // Старые модели внизу
-  {
-    id: 'schnell',
-    name: 'Schnell',
-    description: 'Schnell - высококачественная модель для быстрой генерации'
   },
   {
     id: 'fooocus',
@@ -107,7 +107,7 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<string>("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
+  const [modelType, setModelType] = useState<string>("schnell"); // По умолчанию используем schnell как предпочтительную модель
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
@@ -135,8 +135,8 @@ export function ImageGenerationDialog({
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
-    // Устанавливаем fast-sdxl как модель по умолчанию, исключая Schnell из списка
-    setModelType("fast-sdxl");
+    // Устанавливаем schnell как модель по умолчанию
+    setModelType("schnell");
     setStylePreset("photographic");
     setNumImages(3);
     setSavePrompt(true);
