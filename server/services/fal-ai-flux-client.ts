@@ -24,18 +24,62 @@ export class FalAiFluxClient {
   async generateImages(options: FluxGenerateOptions): Promise<string[]> {
     console.log(`[fal-ai-flux] Генерация изображений с использованием модели ${options.model}`);
 
-    // Формируем URL для запроса
-    const apiUrl = `https://queue.fal.run/fal-ai/${options.model}`;
+    // Новый формат URL для API FAL.AI
+    // Базовый URL для моделей FAL.AI: https://api.fal.ai/
     
-    // Формируем данные запроса
-    const requestData = {
-      prompt: options.prompt,
-      negative_prompt: options.negative_prompt || '',
-      width: options.width || 1024,
-      height: options.height || 1024,
-      num_images: options.num_images || 1,
-      num_inference_steps: 30 // Используем увеличенное значение для более качественного результата
-    };
+    let apiUrl = '';
+    let modelId = '';
+    
+    if (options.model === 'schnell') {
+      // Для schnell используем специальный endpoint
+      apiUrl = 'https://api.fal.ai/v1/schnell/generate';
+      modelId = 'schnell';
+    } else if (options.model.startsWith('flux/')) {
+      // Для новых моделей Flux используем единый endpoint
+      const modelName = options.model.replace('flux/', '');
+      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      modelId = modelName;
+      console.log(`[fal-ai-flux] Используем endpoint для Flux с моделью ${modelId}`);
+    } else {
+      // Для других моделей используем стандартный endpoint
+      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      modelId = options.model;
+    }
+    
+    // Формируем данные запроса в зависимости от модели
+    let requestData: any = {};
+    
+    if (options.model === 'schnell') {
+      // Для schnell используем формат согласно документации
+      requestData = {
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt || '',
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_outputs: options.num_images || 1
+      };
+    } else if (options.model.startsWith('flux/')) {
+      // Для моделей Flux используем поле model_name
+      requestData = {
+        model_name: modelId,
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt || '',
+        image_width: options.width || 1024,
+        image_height: options.height || 1024,
+        num_images: options.num_images || 1,
+        seed: Math.floor(Math.random() * 1000000) // Случайный seed для разнообразия результатов
+      };
+    } else {
+      // Для стандартных моделей
+      requestData = {
+        model_name: modelId,
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt || '',
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    }
     
     // Формируем заголовки запроса
     const headers = {
@@ -95,7 +139,10 @@ export class FalAiFluxClient {
     console.log(`[fal-ai-flux] Ожидание завершения генерации для request_id: ${requestId}`);
     
     const maxAttempts = 60; // Максимальное количество попыток (2 минуты при 2-секундном интервале)
-    const requestUrl = `https://queue.fal.run/fal-ai/flux/requests/${requestId}`;
+    
+    // URL для получения статуса запроса в новом формате API FAL.AI
+    const requestUrl = `https://api.fal.ai/v1/jobs/${requestId}`;
+    console.log(`[fal-ai-flux] URL для проверки статуса: ${requestUrl}`);
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
@@ -104,12 +151,22 @@ export class FalAiFluxClient {
         const response = await axios.get(requestUrl, {
           headers: {
             'Authorization': apiKey,
+            'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
         
+        console.log(`[fal-ai-flux] Получен ответ статуса, HTTP код: ${response.status}`);
+        
+        // Логируем ответ для отладки
+        try {
+          console.log(`[fal-ai-flux] Структура ответа:`, JSON.stringify(response.data).substring(0, 300) + '...');
+        } catch (e) {
+          console.log(`[fal-ai-flux] Не удалось сериализовать ответ`);
+        }
+        
         // Проверяем, завершена ли генерация
-        if (response.data.status === 'COMPLETED') {
+        if (response.data.status === 'COMPLETED' || response.data.state === 'COMPLETED') {
           console.log(`[fal-ai-flux] Генерация завершена, извлекаем URL изображений`);
           
           // Проверяем наличие изображений в ответе
@@ -118,14 +175,41 @@ export class FalAiFluxClient {
             console.log(`[fal-ai-flux] Найдено ${imageUrls.length} URL изображений`);
             return imageUrls;
           }
-        } else if (response.data.status === 'FAILED' || response.data.status === 'CANCELED') {
-          throw new Error(`Генерация изображения не удалась: ${response.data.status}`);
+          
+          // Если результат не найден в основном ответе, пытаемся получить через output
+          if (response.data.output_url) {
+            console.log(`[fal-ai-flux] Найден output_url, получаем дополнительные данные`);
+            try {
+              const outputResponse = await axios.get(response.data.output_url, {
+                headers: { 'Accept': 'application/json' }
+              });
+              
+              const outputUrls = this.extractImageUrls(outputResponse.data);
+              if (outputUrls.length > 0) {
+                console.log(`[fal-ai-flux] Найдено ${outputUrls.length} URL изображений в output`);
+                return outputUrls;
+              }
+            } catch (outputError: any) {
+              console.error(`[fal-ai-flux] Ошибка при получении output данных: ${outputError.message}`);
+            }
+          }
+        } else if (response.data.status === 'FAILED' || response.data.state === 'FAILED' || 
+                  response.data.status === 'CANCELED' || response.data.state === 'CANCELED') {
+          // Логируем детали ошибки, если они есть
+          if (response.data.error) {
+            console.error(`[fal-ai-flux] Ошибка генерации: ${JSON.stringify(response.data.error)}`);
+          }
+          throw new Error(`Генерация изображения не удалась: ${response.data.status || response.data.state}`);
         }
         
         // Ждем перед следующей попыткой
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error: any) {
         console.error(`[fal-ai-flux] Ошибка при проверке статуса: ${error.message}`);
+        if (error.response) {
+          console.error(`[fal-ai-flux] Детали ошибки HTTP: ${error.response.status}`, 
+            error.response.data ? JSON.stringify(error.response.data).substring(0, 200) : 'No data');
+        }
         
         // Ждем перед следующей попыткой
         await new Promise(resolve => setTimeout(resolve, 2000));
