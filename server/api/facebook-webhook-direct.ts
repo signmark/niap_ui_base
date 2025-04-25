@@ -502,12 +502,27 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, pos
       }
     }
     
-    // Обновляем статус Facebook
-    socialPlatforms.facebook = {
+    log.info(`[Facebook Direct] Текущие social_platforms до обновления: ${JSON.stringify(socialPlatforms)}`);
+    
+    // Создаем копию существующих данных для сохранения информации о других платформах
+    const updatedPlatforms = { ...socialPlatforms };
+    
+    // Обновляем только информацию о Facebook, сохраняя данные других платформ
+    updatedPlatforms.facebook = {
+      // Сохраняем предыдущие настройки, если они были
+      ...(socialPlatforms.facebook || {}),
+      // Обновляем статус публикации
       status: 'published',
       publishedAt: new Date().toISOString(),
-      postUrl: postUrl || '' // Используем стандартное имя поля postUrl для единообразия API
+      postUrl: postUrl || '', // Используем стандартное имя поля postUrl для единообразия API
+      // Сохраняем selected, если был задан ранее (важно для интерфейса)
+      selected: socialPlatforms.facebook?.selected || true
     };
+    
+    log.info(`[Facebook Direct] Обновленные social_platforms: ${JSON.stringify(updatedPlatforms)}`);
+    
+    // Присваиваем обновленный объект
+    socialPlatforms = updatedPlatforms;
     
     // Обновляем контент в Directus
     await directusApi.patch(`/items/campaign_content/${contentId}`, {
