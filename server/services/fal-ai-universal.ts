@@ -8,20 +8,22 @@ import axios from 'axios';
 import { apiKeyService } from './api-keys';
 
 // Типы поддерживаемых моделей
-export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus';
+export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'rundiffusion-fal/juggernaut-flux/lightning' | 'rundiffusion-fal/juggernaut-flux-lora';
 
-// Параметры для генерации изображений
+// Параметры для генерации медиафайлов (изображений или видео)
 export interface FalAiGenerateOptions {
-  prompt: string;
-  negativePrompt?: string;
-  width?: number;
-  height?: number;
-  numImages?: number;
-  model?: string | FalAiModelName;
-  token?: string;
-  userId?: string;
-  contentId?: string;
-  campaignId?: string;
+  prompt: string;                // Промт для генерации
+  negativePrompt?: string;       // Негативный промт
+  width?: number;                // Ширина изображения/видео
+  height?: number;               // Высота изображения/видео
+  numImages?: number;            // Количество изображений (для видео обычно 1)
+  model?: string | FalAiModelName; // Модель для генерации
+  token?: string;                // Токен авторизации
+  userId?: string;               // ID пользователя для получения API ключа
+  contentId?: string;            // ID контента (для аналитики)
+  campaignId?: string;           // ID кампании (для аналитики)
+  fps?: number;                  // Кадров в секунду (только для видео)
+  duration?: number;             // Длительность в секундах (только для видео)
 }
 
 // Основной класс сервиса
@@ -120,24 +122,24 @@ class FalAiUniversalService {
   }
 
   /**
-   * Извлекает URL изображений из любого формата ответа API
+   * Извлекает URL медиафайлов (изображений или видео) из любого формата ответа API
    * @param data Данные ответа от API
-   * @returns Массив URL изображений
+   * @returns Массив URL медиафайлов
    */
   private extractImageUrls(data: any): string[] {
     if (!data) return [];
     
-    console.log(`[fal-ai-universal] Извлечение URL изображений из ответа типа: ${typeof data}`);
+    console.log(`[fal-ai-universal] Извлечение URL медиафайлов из ответа типа: ${typeof data}`);
     
-    let imageUrls: string[] = [];
+    let mediaUrls: string[] = [];
     
-    // Функция для рекурсивного поиска URL изображений
+    // Функция для рекурсивного поиска URL медиафайлов
     const findUrls = (obj: any) => {
       if (!obj) return;
       
       // Прямая строка с URL
       if (typeof obj === 'string' && this.isValidImageUrl(obj)) {
-        imageUrls.push(obj);
+        mediaUrls.push(obj);
         return;
       }
       
@@ -145,7 +147,7 @@ class FalAiUniversalService {
       if (Array.isArray(obj)) {
         obj.forEach(item => {
           if (typeof item === 'string' && this.isValidImageUrl(item)) {
-            imageUrls.push(item);
+            mediaUrls.push(item);
           } else {
             findUrls(item);
           }
@@ -159,17 +161,29 @@ class FalAiUniversalService {
         if (obj.images && Array.isArray(obj.images)) {
           obj.images.forEach((img: any) => {
             if (typeof img === 'string' && this.isValidImageUrl(img)) {
-              imageUrls.push(img);
+              mediaUrls.push(img);
             } else if (img && img.url && this.isValidImageUrl(img.url)) {
-              imageUrls.push(img.url);
+              mediaUrls.push(img.url);
             } else {
               findUrls(img);
             }
           });
+        } else if (obj.videos && Array.isArray(obj.videos)) {
+          obj.videos.forEach((video: any) => {
+            if (typeof video === 'string' && this.isValidImageUrl(video)) {
+              mediaUrls.push(video);
+            } else if (video && video.url && this.isValidImageUrl(video.url)) {
+              mediaUrls.push(video.url);
+            } else {
+              findUrls(video);
+            }
+          });
+        } else if (obj.video && typeof obj.video === 'string' && this.isValidImageUrl(obj.video)) {
+          mediaUrls.push(obj.video);
         } else if (obj.image && typeof obj.image === 'string' && this.isValidImageUrl(obj.image)) {
-          imageUrls.push(obj.image);
+          mediaUrls.push(obj.image);
         } else if (obj.url && typeof obj.url === 'string' && this.isValidImageUrl(obj.url)) {
-          imageUrls.push(obj.url);
+          mediaUrls.push(obj.url);
         } else if (obj.output) {
           findUrls(obj.output);
         } else {
@@ -185,39 +199,48 @@ class FalAiUniversalService {
     findUrls(data);
     
     // Логируем результат
-    console.log(`[fal-ai-universal] Найдено ${imageUrls.length} URL изображений`);
-    if (imageUrls.length > 0) {
-      console.log(`[fal-ai-universal] Первый URL: ${imageUrls[0].substring(0, 100)}...`);
+    console.log(`[fal-ai-universal] Найдено ${mediaUrls.length} URL медиафайлов`);
+    if (mediaUrls.length > 0) {
+      console.log(`[fal-ai-universal] Первый URL: ${mediaUrls[0].substring(0, 100)}...`);
     }
     
-    return imageUrls;
+    return mediaUrls;
   }
 
   /**
-   * Проверяет, является ли строка допустимым URL изображения
+   * Проверяет, является ли строка допустимым URL изображения или видео
    * @param url Строка для проверки
-   * @returns true, если строка является URL изображения
+   * @returns true, если строка является URL изображения или видео
    */
   private isValidImageUrl(url: string): boolean {
     if (!url || typeof url !== 'string') return false;
     
-    // Проверяем, что URL содержит признаки изображения или валидного CDN-хоста
+    // Проверяем, что URL содержит признаки изображения/видео или валидного CDN-хоста
     return (
       url.includes('fal.media') || 
+      // Изображения
       url.includes('.jpg') || 
       url.includes('.jpeg') || 
       url.includes('.png') || 
-      url.includes('.webp') || 
+      url.includes('.webp') ||
+      // Видео
+      url.includes('.mp4') ||
+      url.includes('.webm') ||
+      url.includes('.mov') ||
+      url.includes('.avi') ||
+      // Общие CDN и пути
       url.includes('cdn.') || 
       url.includes('images.') ||
-      url.includes('/image/')
+      url.includes('videos.') ||
+      url.includes('/image/') ||
+      url.includes('/video/')
     );
   }
 
   /**
-   * Генерирует изображения с использованием выбранной модели
+   * Генерирует медиаконтент (изображения или видео) с использованием выбранной модели
    * @param options Параметры генерации
-   * @returns Массив URL сгенерированных изображений
+   * @returns Массив URL сгенерированных изображений или видео
    */
   async generateImages(options: FalAiGenerateOptions): Promise<string[]> {
     // Получаем API ключ
@@ -252,17 +275,26 @@ class FalAiUniversalService {
       apiUrl = `https://queue.fal.run/fal-ai/${model}`;
     }
     
-    console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
+    // Определяем тип контента - видео или изображение
+    const isVideoModel = model.includes('rundiffusion');
+    console.log(`[fal-ai-universal] Генерация ${isVideoModel ? 'видео' : 'изображений'} с моделью: ${model}, URL: ${apiUrl}`);
     
-    // Подготавливаем данные запроса - единые для всех моделей
+    // Подготавливаем данные запроса - с учетом типа модели
     let requestData: any = {
       prompt: options.prompt,
       negative_prompt: options.negativePrompt || '',
       width: options.width || 1024,
       height: options.height || 1024,
       num_images: options.numImages || 1,
-      num_inference_steps: 10 // Фиксированное значение для всех моделей без исключений
+      num_inference_steps: isVideoModel ? 30 : 10 // Разное количество шагов для видео и изображений
     };
+    
+    // Добавляем специфичные параметры для видеомоделей
+    if (isVideoModel) {
+      requestData.fps = options.fps || 24; // Кадров в секунду (по умолчанию 24)
+      requestData.duration = options.duration || 3.0; // Длительность в секундах (по умолчанию 3 сек)
+      requestData.num_images = 1; // Для видео всегда генерируем только одно
+    }
     
     // Настраиваем заголовки запроса
     const headers = {
@@ -329,9 +361,9 @@ class FalAiUniversalService {
       }
       
       // Если все методы не привели к результату
-      throw new Error('Не удалось получить URL изображений из ответа API');
+      throw new Error(`Не удалось получить URL ${isVideoModel ? 'видео' : 'изображений'} из ответа API`);
     } catch (error: any) {
-      console.error(`[fal-ai-universal] Ошибка при генерации изображений: ${error.message}`);
+      console.error(`[fal-ai-universal] Ошибка при генерации ${isVideoModel ? 'видео' : 'изображений'}: ${error.message}`);
       
       if (error.response) {
         console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}, данные: ${JSON.stringify(error.response.data)}`);

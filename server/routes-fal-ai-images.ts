@@ -113,6 +113,18 @@ export function registerFalAiImageRoutes(app: Express) {
           id: 'fooocus',
           name: 'Fooocus',
           description: 'Fooocus - мощная модель с продвинутой композицией'
+        },
+        {
+          id: 'rundiffusion-fal/juggernaut-flux/lightning',
+          name: 'Rundiffusion Juggernaut Flux Lightning',
+          description: 'Генерация видео - Средняя скорость и качество',
+          type: 'video'
+        },
+        {
+          id: 'rundiffusion-fal/juggernaut-flux-lora',
+          name: 'Rundiffusion Juggernaut Flux Lora',
+          description: 'Генерация видео - Топовое качество',
+          type: 'video'
         }
       ];
       
