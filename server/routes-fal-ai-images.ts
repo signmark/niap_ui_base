@@ -120,12 +120,24 @@ router.post('/api/fal-ai-images', async (req, res) => {
     
     let imageUrls: string[] = [];
     
-    // Проверяем, является ли модель одной из моделей Juggernaut
+    // Определяем, какой сервис использовать для генерации изображений
+    // Разделяем модели на категории для корректной обработки
     const isJuggernautModel = 
       model === 'rundiffusion-fal/juggernaut-flux-lora' || 
       model === 'rundiffusion-fal/juggernaut-flux/lightning' ||
       model === 'fal-ai/flux-lora';
     
+    const isStandardModel = 
+      model === 'stable-diffusion-xl' || 
+      model === 'fal-ai/fast-sdxl' || 
+      model === 'fal-ai/lcm-sdxl' ||
+      model === 'fal-ai/juggernaut-xl-v9' ||
+      model === 'fal-ai/illusion-xl-v1' ||
+      model === 'fooocus';
+      
+    const isSchnellModel = model === 'schnell';
+    
+    // Перенаправляем запрос на соответствующий сервис
     if (isJuggernautModel) {
       // Инициализируем сервис Juggernaut с API ключом
       falAiJuggernautService.initialize(token);
@@ -142,8 +154,19 @@ router.post('/api/fal-ai-images', async (req, res) => {
       
       console.log(`[api] Используем специализированный сервис для модели Juggernaut: ${model}`);
       imageUrls = await falAiJuggernautService.generateImages(juggernautOptions);
+    } else if (isSchnellModel) {
+      console.log(`[api] Используем специальный endpoint для модели Schnell`);
+      // Для Schnell используем прямой endpoint через falAiUniversalService, но указываем специфический путь
+      imageUrls = await falAiUniversalService.generateWithSchnell({
+        prompt,
+        negativePrompt,
+        width: width || 1024,
+        height: height || 1024,
+        numImages: numImages || 1,
+        token
+      });
     } else {
-      // Для других моделей используем универсальный сервис
+      // Для других стандартных моделей используем универсальный сервис
       console.log(`[api] Используем универсальный сервис для модели: ${model}`);
       imageUrls = await falAiUniversalService.generateImages(generateOptions);
     }

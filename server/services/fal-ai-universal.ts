@@ -56,6 +56,58 @@ class FalAiUniversalService {
     // Возвращаем название модели как есть без специальных преобразований
     return modelName;
   }
+  
+  /**
+   * Специализированный метод для генерации изображений с помощью модели Schnell
+   * @param options Параметры генерации (без указания модели, так как это всегда Schnell)
+   * @returns Массив URL сгенерированных изображений
+   */
+  async generateWithSchnell(options: Omit<FalAiGenerateOptions, 'model'>): Promise<string[]> {
+    console.log(`[fal-ai-universal] Генерация изображений с использованием модели Schnell (специальный метод)`);
+    
+    // Получаем API ключ
+    let apiKey: string | null = null;
+    
+    if (options.token && options.userId) {
+      apiKey = await apiKeyService.getApiKey(options.userId, 'fal_ai', options.token);
+      
+      if (!apiKey) {
+        throw new Error('API ключ FAL.AI не найден для пользователя');
+      }
+      
+      apiKey = this.formatApiKey(apiKey);
+    } else if (options.token) {
+      // Если передан только токен, используем его напрямую
+      apiKey = this.formatApiKey(options.token);
+    } else {
+      throw new Error('Отсутствует токен или userId для получения API ключа');
+    }
+    
+    // Для Schnell всегда используем прямой API
+    try {
+      // Проверяем, содержит ли ключ префикс, и добавляем его при необходимости
+      let directApiKey = apiKey;
+      if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+        directApiKey = `Key ${directApiKey}`;
+        console.log('[fal-ai-universal] Добавлен префикс Key для Schnell API');
+      }
+      
+      console.log('[fal-ai-universal] Отправляем запрос к Schnell API напрямую');
+      
+      return await falAiDirectClient.generateImages({
+        model: 'schnell',
+        apiKey: directApiKey,
+        prompt: options.prompt,
+        negative_prompt: options.negativePrompt,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.numImages || 1
+      });
+    } catch (error: any) {
+      console.error(`[fal-ai-universal] Ошибка при использовании Schnell API: ${error.message}`);
+      throw new Error(`Ошибка генерации с Schnell: ${error.message}`);
+    }
+  }
 
   /**
    * Форматирует API ключ в правильный формат для FAL.AI
