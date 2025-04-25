@@ -3,15 +3,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Smile } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EmojiPickerReact from 'emoji-picker-react';
+import EmojiPickerComponent from 'emoji-picker-react';
 import { Theme } from 'emoji-picker-react';
 import { useThemeStore } from '@/lib/themeStore';
 
-interface CustomEmojiPickerProps {
+interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
 }
 
-export function EmojiPicker({ onEmojiSelect }: CustomEmojiPickerProps) {
+export function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { colorMode } = useThemeStore();
   
@@ -36,12 +36,12 @@ export function EmojiPicker({ onEmojiSelect }: CustomEmojiPickerProps) {
       
       <PopoverContent className="w-auto p-0" side="bottom" align="start">
         <div className="emoji-picker-container">
-          <EmojiPickerReact
-            onEmojiClick={(emojiData) => {
-              onEmojiSelect(emojiData.emoji);
+          <EmojiPickerComponent
+            onEmojiClick={(emojiObject) => {
+              onEmojiSelect(emojiObject.emoji);
               setIsOpen(false);
             }}
-            searchPlaceHolder="Поиск эмодзи..."
+            searchPlaceholder="Поиск эмодзи..."
             width={320}
             height={400}
             previewConfig={{
