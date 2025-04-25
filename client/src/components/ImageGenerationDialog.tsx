@@ -47,6 +47,45 @@ interface ImageGenerationDialogProps {
   onClose: () => void;
 }
 
+// Определяем список моделей по умолчанию для случая, когда API недоступен
+const DEFAULT_MODELS = [
+  {
+    id: 'fast-sdxl',
+    name: 'Fast SDXL',
+    description: 'Быстрая версия Stable Diffusion XL'
+  },
+  {
+    id: 'sdxl',
+    name: 'Stable Diffusion XL',
+    description: 'Полная версия Stable Diffusion XL'
+  },
+  {
+    id: 'schnell',
+    name: 'Schnell',
+    description: 'Schnell - высококачественная модель для быстрой генерации'
+  },
+  {
+    id: 'fooocus',
+    name: 'Fooocus',
+    description: 'Fooocus - мощная модель с продвинутой композицией'
+  },
+  {
+    id: 'rundiffusion-fal/juggernaut-flux/lightning',
+    name: 'Juggernaut Flux Lightning',
+    description: 'Средняя скорость и хорошее качество изображений'
+  },
+  {
+    id: 'rundiffusion-fal/juggernaut-flux-lora',
+    name: 'Juggernaut Flux Lora',
+    description: 'Топовое качество детализированных изображений'
+  },
+  {
+    id: 'fal-ai/flux-lora',
+    name: 'Flux Lora',
+    description: 'Альтернативная модель высокого качества'
+  }
+];
+
 export function ImageGenerationDialog({
   campaignId,
   contentId,
