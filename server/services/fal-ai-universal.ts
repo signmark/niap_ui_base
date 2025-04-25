@@ -92,8 +92,9 @@ class FalAiUniversalService {
         console.log('[fal-ai-universal] Добавлен префикс Key для Schnell API');
       }
       
-      console.log('[fal-ai-universal] Отправляем запрос к Schnell API напрямую');
+      console.log('[fal-ai-universal] Отправляем запрос к Schnell API напрямую (endpoint: /v1/schnell)');
       
+      // Обновляем запрос в соответствии с официальной документацией FAL.AI
       return await falAiDirectClient.generateImages({
         model: 'schnell',
         apiKey: directApiKey,
@@ -105,6 +106,13 @@ class FalAiUniversalService {
       });
     } catch (error: any) {
       console.error(`[fal-ai-universal] Ошибка при использовании Schnell API: ${error.message}`);
+      
+      // Добавляем больше логирования для диагностики проблемы
+      if (error.response) {
+        console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}`, 
+          error.response.data ? JSON.stringify(error.response.data).substring(0, 300) : 'No data');
+      }
+      
       throw new Error(`Ошибка генерации с Schnell: ${error.message}`);
     }
   }

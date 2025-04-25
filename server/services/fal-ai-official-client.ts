@@ -189,8 +189,11 @@ export class FalAiOfficialClient {
     if (options.model === 'schnell' || options.model === 'fal-ai/schnell') {
       return {
         ...baseParams,
-        width: options.width || 1024,
-        height: options.height || 1024,
+        image_size: {
+          width: options.width || 1024,
+          height: options.height || 1024
+        },
+        num_inference_steps: 4, // Значение по умолчанию из документации
         num_images: numImages
       };
     } else if (options.model === 'fast-sdxl' || options.model === 'fal-ai/fast-sdxl') {
