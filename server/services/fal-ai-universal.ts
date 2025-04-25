@@ -147,7 +147,17 @@ class FalAiUniversalService {
           cleanKey = cleanKey.substring(4).trim();
         }
         
-        return await falAiOfficialClient.generateImages({
+        // Добавляем расширенное логирование
+        console.log(`[fal-ai-universal] Отправляем запрос в официальный клиент:`, {
+          model,
+          prompt: options.prompt,
+          negativePrompt: options.negativePrompt,
+          width: options.width,
+          height: options.height,
+          numImages: options.numImages || 1
+        });
+        
+        const result = await falAiOfficialClient.generateImages({
           model: model,
           token: cleanKey, // Для SDK нужен чистый ключ без префикса "Key"
           prompt: options.prompt,
@@ -156,6 +166,11 @@ class FalAiUniversalService {
           height: options.height,
           num_images: options.numImages // Здесь используем camelCase, который преобразуется в snake_case внутри метода
         });
+        
+        // Логируем результат для анализа
+        console.log(`[fal-ai-universal] Результат от официального клиента:`, result);
+        
+        return result;
       } catch (officialError: any) {
         console.error(`[fal-ai-universal] Ошибка при использовании официального клиента для модели ${model}: ${officialError.message}`);
         
