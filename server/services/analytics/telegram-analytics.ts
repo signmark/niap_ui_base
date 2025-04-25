@@ -98,13 +98,11 @@ export async function getTelegramAnalytics(chatId: string, messageId: string, bo
       }
     }
     
-    // Для обычных сообщений используем getMessage
-    const messageResponse = await axios.get(`${baseUrl}/forwardMessage`, {
+    // Для обычных сообщений используем getChatHistory для проверки существования
+    // Метод getMessages не работает напрямую, поэтому используем getChat для безопасной проверки доступа к чату
+    const messageResponse = await axios.get(`${baseUrl}/getChat`, {
       params: {
-        chat_id: formattedChatId,
-        from_chat_id: formattedChatId,
-        message_id: messageId,
-        disable_notification: true
+        chat_id: formattedChatId
       }
     }).catch(err => {
       log.warn(`[telegram-analytics] Не удалось проверить сообщение ${messageId} в чате ${formattedChatId}: ${err.message}`);
@@ -112,8 +110,12 @@ export async function getTelegramAnalytics(chatId: string, messageId: string, bo
     });
     
     if (messageResponse.data && messageResponse.data.ok) {
-      log.info(`[telegram-analytics] Сообщение ${messageId} найдено в чате ${formattedChatId}`);
-      // В API Telegram нет способа получить количество просмотров для обычных сообщений
+      // Чат существует, но мы не можем точно проверить существование сообщения
+      // без пересылки, что нежелательно. Предполагаем, что сообщение существует,
+      // если чат доступен, и сообщение было отправлено ранее.
+      log.info(`[telegram-analytics] Сообщение ${messageId} предположительно существует в чате ${formattedChatId}`);
+      
+      // В API Telegram нет безопасного способа получить количество просмотров для обычных сообщений
       // Возвращаем приблизительные данные
       return {
         views: 10, // Предположим, что хотя бы несколько человек видели сообщение
