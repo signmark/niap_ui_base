@@ -13,43 +13,33 @@ export function registerFalAiImageRoutes(app: Express) {
 // Получить список доступных моделей
 router.get('/api/fal-ai-models', async (req, res) => {
   try {
-    // Статический список поддерживаемых моделей
-    // В будущем можно сделать динамическое получение с помощью FAL API
+    // Статический список поддерживаемых моделей FAL.AI
+    // Использует официальные имена моделей, проверенные в фактической работе
     const models = [
       { 
-        id: 'flux/juggernaut-xl-lightning', 
-        name: 'Juggernaut Flux Lightning', 
-        description: 'Быстрая и высококачественная генерация' 
-      },
-      { 
-        id: 'flux/juggernaut-xl-lora', 
-        name: 'Juggernaut Flux Lora', 
-        description: 'Детализированные художественные изображения' 
-      },
-      { 
-        id: 'flux/flux-lora', 
-        name: 'Flux Lora', 
-        description: 'Базовая модель Flux' 
-      },
-      { 
-        id: 'schnell', 
-        name: 'Schnell', 
-        description: 'Оригинальная модель FAL.AI' 
-      },
-      { 
-        id: 'fooocus', 
-        name: 'Fooocus', 
-        description: 'Усовершенствованная композиция' 
-      },
-      { 
-        id: 'fast-sdxl', 
+        id: 'fal-ai/fast-sdxl', 
         name: 'Fast SDXL', 
-        description: 'Быстрая версия SDXL' 
+        description: 'Быстрая генерация с высоким качеством (рекомендуется)' 
       },
       { 
-        id: 'sdxl', 
-        name: 'SDXL', 
-        description: 'Высококачественная модель с широкими возможностями' 
+        id: 'fal-ai/lcm-sdxl', 
+        name: 'LCM-SDXL', 
+        description: 'Сверхбыстрая генерация (ниже качество)' 
+      },
+      { 
+        id: 'fal-ai/juggernaut-xl-v9', 
+        name: 'Juggernaut XL', 
+        description: 'Детализированные реалистичные изображения' 
+      },
+      { 
+        id: 'fal-ai/juggernaut-xl-v7', 
+        name: 'Juggernaut XL V7', 
+        description: 'Высококачественная генерация с детализацией' 
+      },
+      { 
+        id: 'fal-ai/illusion-xl-v1', 
+        name: 'Illusion XL', 
+        description: 'Художественные и креативные изображения' 
       }
     ];
 
@@ -79,17 +69,23 @@ router.post('/api/generate-universal-image', async (req, res) => {
       });
     }
 
-    // Получаем токен авторизации из заголовка
+    // Получаем токен авторизации из заголовка или используем FAL_AI_API_KEY из переменных окружения
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') 
+    let token = authHeader.startsWith('Bearer ') 
       ? authHeader.substring(7) 
       : authHeader;
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Отсутствует токен авторизации'
-      });
+      // Используем сохраненный API ключ, если заголовок не предоставлен
+      token = process.env.FAL_AI_API_KEY || '';
+      
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Отсутствует токен авторизации'
+        });
+      }
+      console.log('[api] Используем FAL_AI_API_KEY из переменных окружения');
     }
 
     // Создаем параметры для генерации
@@ -99,7 +95,7 @@ router.post('/api/generate-universal-image', async (req, res) => {
       width: width || 1024,
       height: height || 1024,
       numImages: numImages || 1,
-      model: model || 'flux/juggernaut-xl-lightning',
+      model: model || 'fal-ai/fast-sdxl', // Используем официальную модель по умолчанию
       token
     };
 

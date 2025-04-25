@@ -32,9 +32,10 @@ export class FalAiDirectClient {
     // Нормализуем API ключ
     const apiKey = this.formatApiKey(options.apiKey);
     
+    // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
     if (options.model === 'fast-sdxl') {
       // Специальный URL для быстрого SDXL
-      apiUrl = 'https://api.fal.ai/v1/fast-sdxl/image';
+      apiUrl = 'https://hub.fal.ai/v1/fast-sdxl/image';
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
@@ -44,7 +45,7 @@ export class FalAiDirectClient {
       };
     } else if (options.model === 'sdxl') {
       // Стандартный SDXL
-      apiUrl = 'https://api.fal.ai/v1/stable-diffusion/sdxl-lightning';
+      apiUrl = 'https://hub.fal.ai/v1/stable-diffusion/sdxl-lightning';
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
@@ -54,7 +55,7 @@ export class FalAiDirectClient {
       };
     } else if (options.model === 'schnell') {
       // Специальный URL для Schnell
-      apiUrl = 'https://api.fal.ai/v1/schnell/generate';
+      apiUrl = 'https://hub.fal.ai/v1/schnell/generate';
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
@@ -64,7 +65,7 @@ export class FalAiDirectClient {
       };
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
-      apiUrl = 'https://api.fal.ai/v1/fooocus/generate';
+      apiUrl = 'https://hub.fal.ai/v1/fooocus/generate';
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
@@ -75,7 +76,7 @@ export class FalAiDirectClient {
     } else if (options.model.startsWith('flux/')) {
       // Выделяем имя модели из пространства имен flux
       const modelName = options.model.replace('flux/', '');
-      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      apiUrl = 'https://hub.fal.ai/v1/images/generate';
       requestData = {
         model_name: modelName,
         prompt: options.prompt,
@@ -86,7 +87,7 @@ export class FalAiDirectClient {
       };
     } else {
       // Для других моделей используем общий endpoint
-      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      apiUrl = 'https://hub.fal.ai/v1/images/generate';
       requestData = {
         model_name: options.model,
         prompt: options.prompt,

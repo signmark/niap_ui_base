@@ -171,8 +171,13 @@ class FalAiOfficialClient {
       
       // Настраиваем клиент с API ключом
       fal.config({
-        credentials: cleanKey
+        credentials: cleanKey,
+        // Решает проблемы с DNS в некоторых средах Replit
+        proxyUrl: 'https://hub.fal.ai'
+        // debug: true - не поддерживается в текущей версии SDK
       });
+      
+      console.log('[fal-ai-official] Клиент FAL.AI настроен с API ключом (первые 5 символов):', cleanKey.substring(0, 5) + '...');
       
       // Создаем параметры запроса
       const input: any = {
@@ -229,7 +234,19 @@ class FalAiOfficialClient {
         // Для @fal-ai/client результат часто содержит поле data
         const resultData = result.data || result;
         
-        // Проверяем output структуру (наиболее распространенная)
+        // Новая структура API для fast-sdxl и других новых моделей 
+        if (resultData.data && resultData.data.images && Array.isArray(resultData.data.images)) {
+          console.log('[fal-ai-official] Найден массив изображений в data.images');
+          const imageUrls = resultData.data.images
+            .filter((img: any) => (img && img.url && this.isImageUrl(img.url)))
+            .map((img: any) => img.url);
+          
+          if (imageUrls.length > 0) {
+            return imageUrls;
+          }
+        }
+        
+        // Проверяем output структуру (старый формат)
         if (resultData.output) {
           // Стандартный формат Flux имеет output.image_url или output.images[]
           if (resultData.output.image_url && this.isImageUrl(resultData.output.image_url)) {

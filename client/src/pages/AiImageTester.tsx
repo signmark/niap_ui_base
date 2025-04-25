@@ -64,10 +64,6 @@ const AiImageTester: React.FC = () => {
         height,
         numImages,
         model
-      }, {
-        headers: {
-          'Authorization': 'Bearer test-token' // Тестовый токен для демонстрации
-        }
       });
 
       if (response.data.success && Array.isArray(response.data.data)) {
