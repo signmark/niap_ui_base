@@ -17,36 +17,90 @@ class FacebookService {
    * @returns Токен доступа страницы
    */
   async getPageAccessToken(userAccessToken: string, pageId: string): Promise<string> {
+    // Создаем уникальный ID операции для отслеживания в логах
+    const operationId = `fb_token_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
     try {
-      log.info(`[Facebook] Получение токена страницы для ${pageId}`);
+      log.info(`[${operationId}] [Facebook] Получение токена страницы для ${pageId}`);
+      
+      // Проверяем, имеет ли userAccessToken префикс "Key "
+      let accessToken = userAccessToken;
+      if (accessToken.startsWith('Key ')) {
+        log.info(`[${operationId}] [Facebook] Удаление префикса 'Key ' из токена пользователя`);
+        accessToken = accessToken.substring(4);
+      }
+      
+      // Проверка на пустой токен
+      if (!accessToken || accessToken.trim() === '') {
+        throw new Error('Пустой токен доступа пользователя');
+      }
+      
+      log.info(`[${operationId}] [Facebook] Длина токена пользователя: ${accessToken.length} символов`);
+      log.info(`[${operationId}] [Facebook] Префикс токена: ${accessToken.substring(0, 10)}...`);
       
       // Получаем список страниц пользователя
       const pagesUrl = `https://graph.facebook.com/${this.apiVersion}/me/accounts`;
-      const pagesResponse = await axios.get(pagesUrl, {
-        params: { access_token: userAccessToken }
-      });
       
-      if (!pagesResponse.data?.data) {
-        throw new Error('Не удалось получить список страниц');
+      let pagesResponse;
+      try {
+        pagesResponse = await axios.get(pagesUrl, {
+          params: { access_token: accessToken }
+        });
+      } catch (axiosError: any) {
+        log.error(`[${operationId}] [Facebook] Ошибка Axios: ${axiosError.message}`);
+        
+        if (axiosError.response?.data) {
+          log.error(`[${operationId}] [Facebook] Детали ошибки API: ${JSON.stringify(axiosError.response.data)}`);
+          
+          // Анализ ошибок Facebook API
+          if (axiosError.response.data.error) {
+            const fbError = axiosError.response.data.error;
+            
+            if (fbError.code === 190) {
+              throw new Error(`Недействительный токен Facebook: ${fbError.message}`);
+            }
+          }
+        }
+        
+        // В случае неуспешного запроса возвращаем токен пользователя
+        log.warn(`[${operationId}] [Facebook] Не удалось получить список страниц, используем токен пользователя по умолчанию`);
+        return accessToken;
       }
       
-      log.info(`[Facebook] Получено ${pagesResponse.data.data.length} страниц`);
+      if (!pagesResponse.data?.data) {
+        log.warn(`[${operationId}] [Facebook] Ответ API не содержит данных о страницах, используем токен пользователя`);
+        return accessToken;
+      }
       
-      // Ищем нужную страницу
-      const pages = pagesResponse.data.data || [];
-      let pageAccessToken = userAccessToken; // По умолчанию используем токен пользователя
+      // Ищем нужную страницу и получаем ее токен
+      const pages = pagesResponse.data.data;
+      log.info(`[${operationId}] [Facebook] Получено ${pages.length} страниц`);
+      
+      // Логируем список ID страниц
+      if (pages.length > 0) {
+        const pageIds = pages.map((p: any) => p.id).join(', ');
+        log.info(`[${operationId}] [Facebook] ID доступных страниц: ${pageIds}`);
+      }
+      
+      let pageAccessToken = accessToken; // По умолчанию используем токен пользователя
+      let foundPage = false;
       
       for (const page of pages) {
         if (page.id === pageId) {
           pageAccessToken = page.access_token;
-          log.info(`[Facebook] Найден токен для страницы ${pageId}`);
+          log.info(`[${operationId}] [Facebook] Найден токен для страницы ${pageId} (${page.name})`);
+          foundPage = true;
           break;
         }
       }
       
+      if (!foundPage) {
+        log.warn(`[${operationId}] [Facebook] Страница ${pageId} не найдена в списке доступных страниц, используем токен пользователя`);
+      }
+      
       return pageAccessToken;
     } catch (error: any) {
-      log.error(`[Facebook] Ошибка получения токена страницы: ${error.message}`);
+      log.error(`[${operationId}] [Facebook] Ошибка получения токена страницы: ${error.message}`);
       throw error;
     }
   }
@@ -60,42 +114,116 @@ class FacebookService {
    * @returns Результат публикации с ID и URL поста
    */
   async publishImageWithText(pageId: string, token: string, imageUrl: string, text: string): Promise<{ id: string, permalink: string }> {
+    // Создаем уникальный ID операции для отслеживания в логах
+    const operationId = `fb_post_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
     try {
-      log.info(`[Facebook] Публикация изображения с текстом на странице ${pageId}`);
+      log.info(`[${operationId}] [Facebook] Публикация изображения с текстом на странице ${pageId}`);
+      log.info(`[${operationId}] [Facebook] URL изображения: ${imageUrl && imageUrl.substring(0, 50)}...`);
+      log.info(`[${operationId}] [Facebook] Длина текста: ${text ? text.length : 0} символов`);
       
-      // Создаем POST запрос для публикации фото с текстом
-      const apiUrl = `https://graph.facebook.com/${this.apiVersion}/${pageId}/photos`;
-      
-      const response = await axios.post(apiUrl, null, {
-        params: {
-          url: imageUrl,
-          caption: text,
-          access_token: token,
-          published: true
-        }
-      });
-      
-      if (!response.data?.id) {
-        throw new Error('Не удалось опубликовать изображение: нет ID в ответе API');
+      // Проверяем формат URL изображения
+      if (!imageUrl || !imageUrl.startsWith('http')) {
+        throw new Error(`Некорректный URL изображения: ${imageUrl}`);
       }
       
-      // Получаем permalink поста на основе ID
-      const postId = response.data.id;
-      const postUrl = await this.getPostPermalink(pageId, postId, token);
-      
-      log.info(`[Facebook] Публикация успешно создана: ${postUrl}`);
-      
-      return {
-        id: postId,
-        permalink: postUrl
-      };
+      // Попробуем разные варианты отправки запроса
+      try {
+        // Метод 1: Через URLSearchParams (формат form-data)
+        log.info(`[${operationId}] [Facebook] Попытка публикации через URLSearchParams`);
+        
+        // Создаем POST запрос для публикации фото с текстом
+        const apiUrl = `https://graph.facebook.com/${this.apiVersion}/${pageId}/photos`;
+        
+        const formData = new URLSearchParams();
+        formData.append('url', imageUrl);
+        formData.append('caption', text);
+        formData.append('access_token', token);
+        formData.append('published', 'true');
+        
+        log.info(`[${operationId}] [Facebook] Отправка запроса на ${apiUrl}`);
+        
+        const response = await axios.post(apiUrl, formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+        
+        if (!response.data?.id) {
+          throw new Error('Нет ID в ответе API (URLSearchParams)');
+        }
+        
+        // Получаем permalink поста на основе ID
+        const postId = response.data.id;
+        log.info(`[${operationId}] [Facebook] Публикация создана, ID: ${postId}`);
+        
+        const postUrl = await this.getPostPermalink(pageId, postId, token);
+        
+        log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${postUrl}`);
+        
+        return {
+          id: postId,
+          permalink: postUrl
+        };
+      } catch (method1Error: any) {
+        log.error(`[${operationId}] [Facebook] Ошибка метода 1 (URLSearchParams): ${method1Error.message}`);
+        
+        if (method1Error.response?.data) {
+          log.error(`[${operationId}] [Facebook] Детали ошибки API (метод 1): ${JSON.stringify(method1Error.response.data)}`);
+        }
+        
+        // Метод 2: Через params в axios (запрос как query string)
+        log.info(`[${operationId}] [Facebook] Попытка публикации через axios params`);
+        
+        const apiUrl = `https://graph.facebook.com/${this.apiVersion}/${pageId}/photos`;
+        
+        const response = await axios.post(apiUrl, null, {
+          params: {
+            url: imageUrl,
+            caption: text,
+            access_token: token,
+            published: true
+          }
+        });
+        
+        if (!response.data?.id) {
+          throw new Error('Нет ID в ответе API (axios params)');
+        }
+        
+        // Получаем permalink поста на основе ID
+        const postId = response.data.id;
+        log.info(`[${operationId}] [Facebook] Публикация создана, ID: ${postId}`);
+        
+        const postUrl = await this.getPostPermalink(pageId, postId, token);
+        
+        log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${postUrl}`);
+        
+        return {
+          id: postId,
+          permalink: postUrl
+        };
+      }
     } catch (error: any) {
-      log.error(`[Facebook] Ошибка публикации: ${error.message}`);
+      log.error(`[${operationId}] [Facebook] Ошибка публикации: ${error.message}`);
       
       if (error.response?.data) {
-        log.error(`[Facebook] Детали ошибки API: ${JSON.stringify(error.response.data)}`);
+        log.error(`[${operationId}] [Facebook] Детали ошибки API: ${JSON.stringify(error.response.data)}`);
+        
+        // Анализируем конкретные ошибки Facebook API для лучшей диагностики
+        if (error.response.data.error) {
+          const fbError = error.response.data.error;
+          log.error(`[${operationId}] [Facebook] Код ошибки API: ${fbError.code}, тип: ${fbError.type}, сообщение: ${fbError.message}`);
+          
+          // Проверяем конкретные коды ошибок
+          if (fbError.code === 190) {
+            log.error(`[${operationId}] [Facebook] Ошибка токена! Токен недействителен или срок его действия истек.`);
+          } else if (fbError.code === 100) {
+            log.error(`[${operationId}] [Facebook] Ошибка параметров в запросе! Проверьте URL изображения.`);
+          }
+        }
       }
       
+      // Повторно выбрасываем исключение
       throw error;
     }
   }
@@ -139,8 +267,17 @@ class FacebookService {
    * @returns Результат публикации
    */
   async publishToFacebook(content: CampaignContent, settings: any): Promise<SocialPublication> {
+    // Создаем уникальный ID операции для отслеживания в логах
+    const operationId = `fb_pub_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
     try {
-      log.info(`[Facebook] Начало публикации контента ${content.id} в Facebook`);
+      log.info(`[${operationId}] [Facebook] Начало публикации контента ${content.id} в Facebook`);
+      log.info(`[${operationId}] [Facebook] Анализ настроек: ${JSON.stringify({
+        hasToken: !!settings.token, 
+        hasPageId: !!settings.pageId,
+        tokenPrefix: settings.token ? settings.token.substring(0, 10) + '...' : 'нет',
+        pageIdMask: settings.pageId ? `${settings.pageId.substring(0, 5)}...` : 'нет'
+      })}`);
       
       const { token, pageId } = settings;
       
@@ -152,16 +289,29 @@ class FacebookService {
       const imageUrl = content.imageUrl;
       const text = content.content || '';
       
+      log.info(`[${operationId}] [Facebook] Данные поста: ${JSON.stringify({
+        hasImage: !!imageUrl,
+        imageUrlPrefix: imageUrl ? imageUrl.substring(0, 30) + '...' : 'нет',
+        textLength: text ? text.length : 0,
+        textPrefix: text ? text.substring(0, 30) + '...' : 'нет'
+      })}`);
+      
       if (!imageUrl) {
         throw new Error('Отсутствует URL изображения для публикации в Facebook');
       }
       
       // Получаем токен страницы на основе токена пользователя
-      log.info(`[Facebook] Получение токена страницы ${pageId}`);
+      log.info(`[${operationId}] [Facebook] Получение токена страницы ${pageId}`);
       const pageAccessToken = await this.getPageAccessToken(token, pageId);
       
+      if (!pageAccessToken) {
+        throw new Error('Не удалось получить токен доступа страницы');
+      }
+      
+      log.info(`[${operationId}] [Facebook] Токен страницы получен: ${pageAccessToken.substring(0, 10)}...`);
+      
       // Публикуем фото с текстом
-      log.info(`[Facebook] Публикация на странице ${pageId}`);
+      log.info(`[${operationId}] [Facebook] Публикация на странице ${pageId}`);
       const { id, permalink } = await this.publishImageWithText(
         pageId,
         pageAccessToken,
@@ -169,7 +319,7 @@ class FacebookService {
         text
       );
       
-      log.info(`[Facebook] Публикация успешно создана: ${permalink}`);
+      log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${permalink}`);
       
       // Возвращаем результат публикации
       return {
@@ -180,7 +330,25 @@ class FacebookService {
         postId: id
       };
     } catch (error: any) {
-      log.error(`[Facebook] Ошибка публикации: ${error.message}`);
+      log.error(`[${operationId}] [Facebook] Ошибка публикации: ${error.message}`);
+      
+      // Проверяем, есть ли вложенные ошибки от API
+      if (error.response?.data) {
+        log.error(`[${operationId}] [Facebook] Ответ API: ${JSON.stringify(error.response.data)}`);
+        
+        if (error.response.data.error) {
+          const fbError = error.response.data.error;
+          log.error(`[${operationId}] [Facebook] Код ошибки API: ${fbError.code}, тип: ${fbError.type}, сообщение: ${fbError.message}`);
+          
+          // Возвращаем более детализированное сообщение об ошибке
+          return {
+            platform: 'facebook',
+            status: 'failed',
+            publishedAt: null,
+            error: `Ошибка API Facebook: [${fbError.code}] ${fbError.message}`
+          };
+        }
+      }
       
       return {
         platform: 'facebook',

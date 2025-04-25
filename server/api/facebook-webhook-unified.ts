@@ -123,6 +123,7 @@ router.post('/', async (req, res) => {
     }
     
     // Конвертируем данные контента в формат, понятный сервису
+    // Требуемые поля для типа CampaignContent из shared/schema.ts
     const campaignContent = {
       id: content.id,
       userId: content.user_id,
@@ -132,7 +133,7 @@ router.post('/', async (req, res) => {
       title: content.title,
       imageUrl: content.image_url,
       socialPlatforms: content.social_platforms,
-      // Добавляем обязательные поля для типа CampaignContent
+      // Добавляем все обязательные поля для типа CampaignContent
       createdAt: content.date_created ? new Date(content.date_created) : new Date(),
       keywords: content.keywords || [],
       additionalImages: content.additional_images || [],
@@ -142,7 +143,12 @@ router.post('/', async (req, res) => {
       scheduledAt: content.scheduled_at ? new Date(content.scheduled_at) : null,
       tags: content.tags || [],
       author: content.author || null,
-      metadata: content.metadata || {}
+      metadata: content.metadata || {},
+      // Добавляем недостающие поля, которые требуются по схеме
+      prompt: content.prompt || '',
+      hashtags: content.hashtags || [],
+      links: content.links || [],
+      publishedAt: content.published_at ? new Date(content.published_at) : null
     };
     
     // Публикуем контент с помощью сервиса Facebook
