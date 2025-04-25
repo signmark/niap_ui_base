@@ -10,7 +10,17 @@ import { falAiDirectClient } from './fal-ai-direct-client';
 import { falAiOfficialClient } from './fal-ai-official-client';
 
 // Типы поддерживаемых моделей
-export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'flux/juggernaut-xl-lora' | 'flux/juggernaut-xl-lightning' | 'flux/flux-lora';
+export type FalAiModelName = 
+  | 'fast-sdxl' 
+  | 'sdxl' 
+  | 'schnell' 
+  | 'fooocus' 
+  | 'flux/juggernaut-xl-lora' 
+  | 'flux/juggernaut-xl-lightning' 
+  | 'flux/flux-lora'
+  | 'rundiffusion-fal/juggernaut-flux/lightning'
+  | 'rundiffusion-fal/juggernaut-flux-lora'
+  | 'fal-ai/flux-lora';
 
 // Параметры для генерации медиафайлов (изображений или видео)
 export interface FalAiGenerateOptions {

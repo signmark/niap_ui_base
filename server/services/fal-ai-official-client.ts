@@ -125,11 +125,24 @@ export class FalAiOfficialClient {
       'fast-sdxl': 'fal-ai/fast-sdxl',
       'sdxl': 'fal-ai/stable-diffusion/sdxl-lightning',
       'fooocus': 'fal-ai/fooocus',
+      'flux/juggernaut-xl-lightning': 'rundiffusion-fal/juggernaut-flux/lightning',
+      'flux/juggernaut-xl-lora': 'rundiffusion-fal/juggernaut-flux-lora',
+      'flux/flux-lora': 'fal-ai/flux-lora',
     };
 
-    // Если модель начинается с flux/, преобразуем ее в правильный формат
-    if (model.startsWith('flux/')) {
+    // Если модель начинается с flux/ и не найдена в маппинге
+    if (model.startsWith('flux/') && !modelMap[model]) {
       return `fal-ai/${model}`;
+    }
+    
+    // Если модель содержит полный путь с rundiffusion-fal, оставляем как есть
+    if (model.startsWith('rundiffusion-fal/')) {
+      return model;
+    }
+    
+    // Если модель содержит полный путь с fal-ai, оставляем как есть
+    if (model.startsWith('fal-ai/')) {
+      return model;
     }
 
     // Возвращаем маппинг или исходную модель, если маппинг не найден
@@ -182,7 +195,18 @@ export class FalAiOfficialClient {
         height: options.height || 1024,
         num_images: numImages
       };
-    } else if (options.model.includes('flux/') || options.model.includes('fal-ai/flux/')) {
+    } 
+    // Обработка моделей rundiffusion-fal
+    else if (options.model.includes('rundiffusion-fal/juggernaut-flux')) {
+      return {
+        ...baseParams,
+        image_width: options.width || 1024,
+        image_height: options.height || 1024,
+        num_images: numImages
+      };
+    }
+    // Обработка моделей flux/
+    else if (options.model.includes('flux/') || options.model.includes('fal-ai/flux')) {
       return {
         ...baseParams,
         image_width: options.width || 1024,
