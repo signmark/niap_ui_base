@@ -891,22 +891,15 @@ export function ImageGenerationDialog({
               <SelectValue placeholder="Выберите модель" />
             </SelectTrigger>
             <SelectContent>
-              {availableModels.length > 0 ? (
-                availableModels.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    <div className="flex flex-col">
-                      <span>{model.name}</span>
-                      <span className="text-xs text-gray-500">{model.description}</span>
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <>
-                  <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
-                  <SelectItem value="fooocus">Fooocus</SelectItem>
-                  <SelectItem value="schnell">Flux (Schnell)</SelectItem>
-                </>
-              )}
+              {/* Всегда используем локальный список моделей из константы DEFAULT_MODELS */}
+              {DEFAULT_MODELS.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  <div className="flex flex-col">
+                    <span>{model.name}</span>
+                    <span className="text-xs text-gray-500">{model.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
