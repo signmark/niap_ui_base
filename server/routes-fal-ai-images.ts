@@ -116,15 +116,18 @@ export function registerFalAiImageRoutes(app: Express) {
         },
         {
           id: 'rundiffusion-fal/juggernaut-flux/lightning',
-          name: 'Rundiffusion Juggernaut Flux Lightning',
-          description: 'Генерация видео - Средняя скорость и качество',
-          type: 'video'
+          name: 'Juggernaut Flux Lightning',
+          description: 'Средняя скорость и хорошее качество изображений'
         },
         {
           id: 'rundiffusion-fal/juggernaut-flux-lora',
-          name: 'Rundiffusion Juggernaut Flux Lora',
-          description: 'Генерация видео - Топовое качество',
-          type: 'video'
+          name: 'Juggernaut Flux Lora',
+          description: 'Топовое качество детализированных изображений'
+        },
+        {
+          id: 'fal-ai/flux-lora',
+          name: 'Flux Lora',
+          description: 'Альтернативная модель высокого качества'
         }
       ];
       
