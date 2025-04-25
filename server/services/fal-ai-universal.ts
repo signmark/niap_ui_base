@@ -141,10 +141,10 @@ class FalAiUniversalService {
           model: model,
           token: cleanKey, // Для SDK нужен чистый ключ без префикса "Key"
           prompt: options.prompt,
-          negative_prompt: options.negativePrompt,
+          negative_prompt: options.negativePrompt, // Здесь используем camelCase, который преобразуется в snake_case внутри метода
           width: options.width,
           height: options.height,
-          num_images: options.numImages
+          num_images: options.numImages // Здесь используем camelCase, который преобразуется в snake_case внутри метода
         });
       } catch (officialError: any) {
         console.error(`[fal-ai-universal] Ошибка при использовании официального клиента для модели ${model}: ${officialError.message}`);
@@ -199,10 +199,10 @@ class FalAiUniversalService {
             model: model,
             token: cleanKey,
             prompt: options.prompt,
-            negative_prompt: options.negativePrompt,
+            negative_prompt: options.negative_prompt || options.negativePrompt,
             width: options.width,
             height: options.height,
-            num_images: options.numImages
+            num_images: options.num_images || options.numImages
           });
         } catch (officialError: any) {
           console.error(`[fal-ai-universal] Ошибка при использовании официального клиента: ${officialError.message}`);

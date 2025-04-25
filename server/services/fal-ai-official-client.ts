@@ -8,12 +8,16 @@ import { apiKeyService } from './api-keys';
 
 export interface GenerateImageOptions {
   prompt: string;
-  negative_prompt?: string;
+  negative_prompt?: string;  // Используем snake_case для соответствия API FAL.AI
   width?: number;
   height?: number;
-  num_images?: number;
+  num_images?: number;       // Используем snake_case для соответствия API FAL.AI
   model: string;
-  token?: string; // Добавляем опционально токен для авторизации
+  token?: string;            // Опционально токен для авторизации
+  
+  // Поддержка camelCase для совместимости с универсальным сервисом
+  negativePrompt?: string;   // Алиас для negative_prompt
+  numImages?: number;        // Алиас для num_images
 }
 
 export class FalAiOfficialClient {
@@ -140,7 +144,7 @@ export class FalAiOfficialClient {
     // Базовые параметры, общие для всех моделей
     const baseParams = {
       prompt: options.prompt,
-      negative_prompt: options.negative_prompt || '',
+      negative_prompt: options.negative_prompt || options.negativePrompt || '',
     };
 
     // Специфические параметры для разных моделей
