@@ -17,35 +17,70 @@ export function extractTelegramIds(telegramUrl: string): { chatId: string, messa
     // Формат 2: https://t.me/channel_name/123
     // Формат 3: https://t.me/channel_name/123?comment=456
     
-    const url = new URL(telegramUrl);
-    
-    if (!url.pathname.startsWith('/c/') && !url.pathname.includes('/')) {
-      log.warn(`[url-extractor] Некорректный формат URL Telegram: ${telegramUrl}`);
+    // Проверка на пустой или некорректный URL
+    if (!telegramUrl || !telegramUrl.includes('t.me')) {
+      log.warn(`[url-extractor] Некорректный URL Telegram: ${telegramUrl}`);
       return null;
     }
     
-    const pathParts = url.pathname.split('/').filter(Boolean);
-    
-    // Получаем chatId и messageId в зависимости от формата URL
-    let chatId: string;
-    let messageId: string;
-    
-    if (pathParts[0] === 'c') {
-      // Приватный канал или чат: /c/1234567890/123
-      chatId = pathParts[1];
-      messageId = pathParts[2];
-    } else {
-      // Публичный канал: /channel_name/123
-      chatId = pathParts[0];
-      messageId = pathParts[1];
+    try {
+      const url = new URL(telegramUrl);
+      
+      if (!url.pathname.includes('/')) {
+        log.warn(`[url-extractor] Некорректный формат пути URL Telegram: ${telegramUrl}`);
+        return null;
+      }
+      
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      
+      // Получаем chatId и messageId в зависимости от формата URL
+      let chatId: string;
+      let messageId: string;
+      
+      if (pathParts[0] === 'c') {
+        // Приватный канал или чат: /c/1234567890/123
+        chatId = pathParts[1];
+        messageId = pathParts[2];
+        
+        // Для приватных каналов нужно добавить -100 в начало
+        if (!chatId.startsWith('-100')) {
+          chatId = `-100${chatId}`;
+        }
+      } else {
+        // Публичный канал: /channel_name/123
+        chatId = `@${pathParts[0]}`;
+        messageId = pathParts[1];
+      }
+      
+      if (!chatId || !messageId) {
+        log.warn(`[url-extractor] Не удалось извлечь идентификаторы из URL Telegram: ${telegramUrl}`);
+        return null;
+      }
+      
+      return { chatId, messageId };
+    } catch (urlError: any) {
+      // Если URL некорректный, пытаемся разобрать его вручную
+      log.warn(`[url-extractor] Ошибка разбора URL, пытаемся разобрать вручную: ${telegramUrl}`);
+      
+      // Проверяем, содержит ли URL информацию о чате и сообщении
+      const match = telegramUrl.match(/t\.me\/(c\/)?([^/]+)\/(\d+)/);
+      if (match) {
+        const isPrivate = match[1] === 'c/';
+        let chatId = match[2];
+        const messageId = match[3];
+        
+        if (isPrivate && !chatId.startsWith('-100')) {
+          chatId = `-100${chatId}`;
+        } else if (!isPrivate) {
+          chatId = `@${chatId}`;
+        }
+        
+        return { chatId, messageId };
+      }
     }
     
-    if (!chatId || !messageId) {
-      log.warn(`[url-extractor] Не удалось извлечь идентификаторы из URL Telegram: ${telegramUrl}`);
-      return null;
-    }
-    
-    return { chatId, messageId };
+    log.warn(`[url-extractor] Не удалось извлечь идентификаторы из URL Telegram: ${telegramUrl}`);
+    return null;
   } catch (error: any) {
     log.error(`[url-extractor] Ошибка извлечения идентификаторов Telegram: ${error.message}`);
     return null;
