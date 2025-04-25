@@ -13,6 +13,7 @@ export interface GenerateImageOptions {
   height?: number;
   num_images?: number;
   model: string;
+  token?: string; // Добавляем опционально токен для авторизации
 }
 
 export class FalAiOfficialClient {
@@ -50,17 +51,17 @@ export class FalAiOfficialClient {
   async generateImages(options: GenerateImageOptions): Promise<string[]> {
     console.log(`[fal-ai-official] Генерация изображений с использованием модели ${options.model}`);
     
-    // Получаем API ключ из переменной окружения (как в тестовом скрипте)
-    const apiKey = process.env.FAL_AI_API_KEY;
+    // Определяем API ключ в порядке приоритета:
+    // 1. Переданный токен (options.token)
+    // 2. Переменная окружения FAL_AI_API_KEY
+    let apiKey = options.token || process.env.FAL_AI_API_KEY;
     
     if (!apiKey) {
-      throw new Error('API ключ FAL.AI не найден');
+      throw new Error('API ключ FAL.AI не найден ни в параметрах, ни в переменных окружения');
     }
     
-    // Инициализируем клиент, если еще не сделано
-    if (!this.initialized) {
-      this.initialize(apiKey);
-    }
+    // Инициализируем клиент с корректным ключом
+    this.initialize(apiKey);
 
     try {
       // Подготавливаем ID модели для официального клиента
