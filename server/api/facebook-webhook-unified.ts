@@ -131,7 +131,18 @@ router.post('/', async (req, res) => {
       contentType: content.content_type || 'text',
       title: content.title,
       imageUrl: content.image_url,
-      socialPlatforms: content.social_platforms
+      socialPlatforms: content.social_platforms,
+      // Добавляем обязательные поля для типа CampaignContent
+      createdAt: content.date_created ? new Date(content.date_created) : new Date(),
+      keywords: content.keywords || [],
+      additionalImages: content.additional_images || [],
+      videoUrl: content.video_url || null,
+      additionalMedia: content.additional_media || [],
+      status: content.status || 'draft',
+      scheduledAt: content.scheduled_at ? new Date(content.scheduled_at) : null,
+      tags: content.tags || [],
+      author: content.author || null,
+      metadata: content.metadata || {}
     };
     
     // Публикуем контент с помощью сервиса Facebook

@@ -185,6 +185,7 @@ class FacebookService {
       return {
         platform: 'facebook',
         status: 'failed',
+        publishedAt: null,
         error: `Ошибка публикации в Facebook: ${error.message}`
       };
     }

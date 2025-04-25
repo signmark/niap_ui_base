@@ -2908,6 +2908,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
+  // Регистрируем унифицированный вебхук Facebook (основной)
+  app.use('/api/facebook', facebookWebhookUnifiedRoutes);
+  
+  // Старые вебхуки сохранены для обратной совместимости
   app.use('/api/facebook-webhook', facebookWebhookRoutes); // Прямая интеграция с Facebook API v2
   app.use('/api/facebook-webhook-v3', facebookWebhookV3Routes); // Улучшенная интеграция с Facebook API v3
   app.use('/api/facebook-test', facebookWebhookDirectTestRoutes); // Тестовый маршрут для прямой публикации в Facebook
