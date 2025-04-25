@@ -159,9 +159,16 @@ export function ImageGenerationDialog({
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await api.get('/api/fal-ai-models');
+        // Добавляем случайный параметр для предотвращения кеширования
+        const response = await api.get('/api/fal-ai-models?nocache=' + Date.now());
         if (response.data?.success && response.data?.models) {
           console.log('Загружены модели для генерации:', response.data.models);
+          
+          // Подробное логирование моделей для отладки
+          response.data.models.forEach((model: any, index: number) => {
+            console.log(`Модель ${index + 1}:`, model.id, model.name, model.description);
+          });
+          
           setAvailableModels(response.data.models);
         }
       } catch (error) {

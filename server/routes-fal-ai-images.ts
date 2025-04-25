@@ -90,8 +90,10 @@ export function registerFalAiImageRoutes(app: Express) {
   });
 
   // Маршрут для получения списка доступных моделей FAL.AI
-  app.get('/api/fal-ai-models', async (_req: Request, res: Response) => {
+  app.get('/api/fal-ai-models', async (req: Request, res: Response) => {
     try {
+      console.log(`[fal-ai] GET /api/fal-ai-models запрошен с query params:`, req.query);
+      
       // Список поддерживаемых моделей
       const models = [
         {
@@ -131,11 +133,16 @@ export function registerFalAiImageRoutes(app: Express) {
         }
       ];
       
+      console.log(`[fal-ai] Отправка ${models.length} моделей клиенту:`, 
+        models.map(m => `${m.id} (${m.name})`).join(', '));
+      
       return res.json({
         success: true,
-        models
+        models,
+        timestamp: Date.now() // Добавляем временную метку для избежания кеширования
       });
     } catch (error: any) {
+      console.error('[fal-ai] Ошибка при получении списка моделей:', error);
       return res.status(500).json({
         success: false,
         error: error.message || 'Произошла ошибка при получении списка моделей'
