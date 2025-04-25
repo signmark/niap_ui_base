@@ -43,41 +43,58 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       });
     }
     
-    // Проверяем, что платформы указаны и это объект
-    if (!platforms || typeof platforms !== 'object') {
-      log(`[Social Publishing] Ошибка: платформы не указаны или не являются объектом: ${JSON.stringify(platforms)}`);
+    // Проверяем, что платформы указаны и это объект или массив
+    if (!platforms || (typeof platforms !== 'object' && !Array.isArray(platforms))) {
+      log(`[Social Publishing] Ошибка: платформы не указаны или имеют неверный тип: ${JSON.stringify(platforms)}`);
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать платформы для публикации'
       });
     }
     
-    // Валидируем, что платформы имеют ожидаемый формат {platformName: boolean}
+    // Поддерживаем два формата: объект {platformName: boolean} и массив строк ["platform1", "platform2"]
     log(`[Social Publishing] Проверка формата объекта platforms: ${JSON.stringify(platforms)}`);
     const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook'];
-    const receivedPlatformKeys = Object.keys(platforms);
     
-    log(`[Social Publishing] Ожидаемые ключи платформ: ${validPlatformKeys.join(', ')}`);
-    log(`[Social Publishing] Полученные ключи платформ: ${receivedPlatformKeys.join(', ')}`);
+    let selectedPlatforms: string[] = [];
     
-    // Проверяем, что хотя бы один ключ валидный и его значение - boolean
-    // Не требуем все ключи, так как могут быть отправлены только нужные платформы
-    const validFormat = receivedPlatformKeys.length > 0 && receivedPlatformKeys.some(key => 
-      validPlatformKeys.includes(key) && typeof platforms[key] === 'boolean'
-    );
-    
-    if (!validFormat) {
-      log(`[Social Publishing] Ошибка: неверный формат объекта platforms`);
-      return res.status(400).json({
-        success: false,
-        error: 'Неверный формат платформ. Ожидается объект с ключами: telegram, vk, instagram, facebook'
-      });
+    // Обработка формата массива ["facebook", "telegram", ...]
+    if (Array.isArray(platforms)) {
+      log(`[Social Publishing] Обнаружен формат массива для platforms`);
+      
+      // Фильтруем только валидные платформы
+      selectedPlatforms = platforms.filter(platform => 
+        typeof platform === 'string' && validPlatformKeys.includes(platform)
+      );
+      
+      log(`[Social Publishing] Валидные платформы из массива: ${selectedPlatforms.join(', ')}`);
+    } 
+    // Обработка объектного формата {facebook: true, telegram: false, ...}
+    else {
+      log(`[Social Publishing] Обнаружен объектный формат для platforms`);
+      const receivedPlatformKeys = Object.keys(platforms);
+      
+      log(`[Social Publishing] Ожидаемые ключи платформ: ${validPlatformKeys.join(', ')}`);
+      log(`[Social Publishing] Полученные ключи платформ: ${receivedPlatformKeys.join(', ')}`);
+      
+      // Проверяем, что хотя бы один ключ валидный и его значение - boolean
+      const validFormat = receivedPlatformKeys.length > 0 && receivedPlatformKeys.some(key => 
+        validPlatformKeys.includes(key) && typeof platforms[key] === 'boolean'
+      );
+      
+      if (!validFormat) {
+        log(`[Social Publishing] Ошибка: неверный формат объекта platforms`);
+        return res.status(400).json({
+          success: false,
+          error: 'Неверный формат платформ. Ожидается объект с ключами: telegram, vk, instagram, facebook или массив строк'
+        });
+      }
+      
+      // Получаем список выбранных платформ (где значение true)
+      selectedPlatforms = Object.entries(platforms)
+        .filter(([_, selected]) => selected === true)
+        .map(([name]) => name);
     }
-
-    // Получаем список выбранных платформ (где значение true)
-    const selectedPlatforms = Object.entries(platforms)
-      .filter(([_, selected]) => selected === true)
-      .map(([name]) => name);
     
     if (selectedPlatforms.length === 0) {
       return res.status(400).json({
