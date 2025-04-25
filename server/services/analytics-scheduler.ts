@@ -6,28 +6,47 @@ import { log } from '../utils/logger';
 import { collectAnalytics, getAnalyticsStatus } from './analytics';
 import { directusCrud } from './directus-crud';
 
-// Интервал сбора аналитики по умолчанию (5 минут)
-const DEFAULT_COLLECTION_INTERVAL = 5 * 60 * 1000;
-
 // Таймер сбора аналитики
 let analyticsTimer: NodeJS.Timeout | null = null;
 
 /**
- * Запускает планировщик сбора аналитики
- * @param interval Интервал сбора в миллисекундах (по умолчанию 5 минут)
+ * Запускает планировщик сбора аналитики по расписанию в 8:00 утра каждый день
  */
-export function startAnalyticsScheduler(interval: number = DEFAULT_COLLECTION_INTERVAL): void {
+export function startAnalyticsScheduler(): void {
   if (analyticsTimer) {
-    clearInterval(analyticsTimer);
+    clearTimeout(analyticsTimer);
   }
   
-  log.info(`[analytics-scheduler] Запуск планировщика аналитики с интервалом ${interval / 60000} минут`);
+  // Рассчитываем время до следующего запуска в 8:00 утра
+  const scheduleNextCollection = () => {
+    const now = new Date();
+    const next8AM = new Date(now);
+    next8AM.setHours(8, 0, 0, 0);
+    
+    // Если сейчас уже после 8 утра, планируем на завтра
+    if (now >= next8AM) {
+      next8AM.setDate(next8AM.getDate() + 1);
+    }
+    
+    const timeUntilNext = next8AM.getTime() - now.getTime();
+    
+    log.info(`[analytics-scheduler] Запуск планировщика аналитики на ${next8AM.toLocaleString()}. Времени до запуска: ${Math.round(timeUntilNext / 60000)} минут`);
+    
+    // Устанавливаем таймер до 8:00 следующего утра
+    analyticsTimer = setTimeout(() => {
+      // Запускаем сбор аналитики
+      scheduleAnalyticsCollection().finally(() => {
+        // После завершения сбора, планируем следующий на 8:00 завтра
+        scheduleNextCollection();
+      });
+    }, timeUntilNext);
+  };
   
-  // Инициируем первый сбор сразу при запуске планировщика
-  scheduleAnalyticsCollection();
+  // Если нужен первый сбор сразу при запуске планировщика, раскомментируйте
+  // scheduleAnalyticsCollection();
   
-  // Устанавливаем таймер для регулярного сбора
-  analyticsTimer = setInterval(scheduleAnalyticsCollection, interval);
+  // Запускаем планировщик
+  scheduleNextCollection();
 }
 
 /**
@@ -35,7 +54,7 @@ export function startAnalyticsScheduler(interval: number = DEFAULT_COLLECTION_IN
  */
 export function stopAnalyticsScheduler(): void {
   if (analyticsTimer) {
-    clearInterval(analyticsTimer);
+    clearTimeout(analyticsTimer);
     analyticsTimer = null;
     log.info('[analytics-scheduler] Планировщик аналитики остановлен');
   }
