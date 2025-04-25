@@ -75,7 +75,7 @@ export function getFallbackPlatformsStats() {
           likes: 121,
           comments: 23,
           shares: 15,
-          engagement: L159,
+          engagement: 159,
           engagementRate: 5.57
         },
         instagram: {
