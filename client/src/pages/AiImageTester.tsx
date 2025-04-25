@@ -17,7 +17,7 @@ type GeneratedImage = {
 const AiImageTester: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
-  const [model, setModel] = useState('flux/juggernaut-xl-lightning');
+  const [model, setModel] = useState('rundiffusion-fal/juggernaut-flux-lora');
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(1024);
   const [numImages, setNumImages] = useState(1);
@@ -25,10 +25,11 @@ const AiImageTester: React.FC = () => {
   const [error, setError] = useState('');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [availableModels, setAvailableModels] = useState<Array<{id: string, name: string, description: string}>>([
-    { id: 'flux/juggernaut-xl-lightning', name: 'Juggernaut Flux Lightning', description: 'Fast and high quality' },
-    { id: 'flux/juggernaut-xl-lora', name: 'Juggernaut Flux Lora', description: 'High quality detailed images' },
-    { id: 'schnell', name: 'Schnell', description: 'Original FAL.AI model' },
-    { id: 'fooocus', name: 'Fooocus', description: 'Advanced composition model' }
+    { id: 'rundiffusion-fal/juggernaut-flux-lora', name: 'Juggernaut Flux Lora', description: 'Высочайшее качество изображений' },
+    { id: 'rundiffusion-fal/juggernaut-flux/lightning', name: 'Juggernaut Flux Lightning', description: 'Баланс скорости и качества' },
+    { id: 'fal-ai/flux-lora', name: 'Flux Lora', description: 'Альтернативная Flux модель' },
+    { id: 'schnell', name: 'Schnell', description: 'Быстрая базовая модель FAL.AI' },
+    { id: 'fooocus', name: 'Fooocus', description: 'Продвинутая композиция' }
   ]);
   
   // Загружаем список моделей при монтировании компонента

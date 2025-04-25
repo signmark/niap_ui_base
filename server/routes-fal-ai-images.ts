@@ -1,5 +1,6 @@
 import express, { Express } from 'express';
 import { falAiUniversalService, FalAiGenerateOptions } from './services/fal-ai-universal';
+import { falAiJuggernautService } from './services/fal-ai-juggernaut';
 
 // Создаем роутер для маршрутов FAL.AI
 const router = express.Router();
@@ -17,9 +18,24 @@ router.get('/api/fal-ai-models', async (req, res) => {
     // Использует официальные имена моделей, проверенные в фактической работе
     const models = [
       { 
+        id: 'rundiffusion-fal/juggernaut-flux-lora', 
+        name: 'Juggernaut Flux Lora', 
+        description: 'Высочайшее качество изображений (рекомендуется)' 
+      },
+      { 
+        id: 'rundiffusion-fal/juggernaut-flux/lightning', 
+        name: 'Juggernaut Flux Lightning', 
+        description: 'Баланс скорости и качества' 
+      },
+      { 
+        id: 'fal-ai/flux-lora', 
+        name: 'Flux Lora', 
+        description: 'Альтернативная Flux модель' 
+      },
+      { 
         id: 'schnell', 
         name: 'Schnell', 
-        description: 'Оригинальная модель FAL.AI (рекомендуется)' 
+        description: 'Быстрая базовая модель FAL.AI' 
       },
       { 
         id: 'fal-ai/fast-sdxl', 
@@ -35,11 +51,6 @@ router.get('/api/fal-ai-models', async (req, res) => {
         id: 'fal-ai/juggernaut-xl-v9', 
         name: 'Juggernaut XL', 
         description: 'Детализированные реалистичные изображения' 
-      },
-      { 
-        id: 'fal-ai/juggernaut-xl-v7', 
-        name: 'Juggernaut XL V7', 
-        description: 'Высококачественная генерация с детализацией' 
       },
       { 
         id: 'fal-ai/illusion-xl-v1', 
@@ -100,13 +111,42 @@ router.post('/api/fal-ai-images', async (req, res) => {
       width: width || 1024,
       height: height || 1024,
       numImages: numImages || 1,
-      model: model || 'schnell', // Используем Schnell по умолчанию
+      model: model || 'rundiffusion-fal/juggernaut-flux-lora', // Используем Juggernaut по умолчанию
       token
     };
 
-    // Вызываем универсальный сервис для генерации
+    // Выбираем правильный сервис в зависимости от модели
     console.log(`[api] Запрос на генерацию изображения с моделью ${generateOptions.model}`);
-    const imageUrls = await falAiUniversalService.generateImages(generateOptions);
+    
+    let imageUrls: string[] = [];
+    
+    // Проверяем, является ли модель одной из моделей Juggernaut
+    const isJuggernautModel = 
+      model === 'rundiffusion-fal/juggernaut-flux-lora' || 
+      model === 'rundiffusion-fal/juggernaut-flux/lightning' ||
+      model === 'fal-ai/flux-lora';
+    
+    if (isJuggernautModel) {
+      // Инициализируем сервис Juggernaut с API ключом
+      falAiJuggernautService.initialize(token);
+      
+      // Создаем параметры специально для Juggernaut моделей
+      const juggernautOptions = {
+        prompt,
+        negativePrompt,
+        width: width || 1024,
+        height: height || 1024,
+        numImages: numImages || 1,
+        model: model
+      };
+      
+      console.log(`[api] Используем специализированный сервис для модели Juggernaut: ${model}`);
+      imageUrls = await falAiJuggernautService.generateImages(juggernautOptions);
+    } else {
+      // Для других моделей используем универсальный сервис
+      console.log(`[api] Используем универсальный сервис для модели: ${model}`);
+      imageUrls = await falAiUniversalService.generateImages(generateOptions);
+    }
 
     // Проверяем результат и форматируем его для тестовых скриптов
     if (imageUrls && imageUrls.length > 0) {
