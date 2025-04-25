@@ -78,7 +78,7 @@ async function testModel(modelName, prompt, negativePrompt = "") {
     console.log(JSON.stringify(response.data, null, 2));
     
     // Если мы получили изображения
-    if (response.data && response.data.images && response.data.images.length > 0) {
+    if (response.data && response.data.success === true && response.data.images && Array.isArray(response.data.images) && response.data.images.length > 0) {
       console.log('✅ Успешно получены изображения:');
       
       response.data.images.forEach((url, index) => {
@@ -90,10 +90,19 @@ async function testModel(modelName, prompt, negativePrompt = "") {
     } else {
       console.error('❌ Ответ не содержит URLs изображений в ожидаемом формате');
       
-      // Проверим, есть ли URLs в других местах ответа
+      // Показываем структуру ответа для отладки
       if (response.data && typeof response.data === 'object') {
-        console.log('Пытаемся найти URLs в других полях ответа:');
+        console.log('Структура ответа API:');
+        console.log(`Ключи в корне ответа: ${Object.keys(response.data).join(', ')}`);
         
+        if (response.data.success !== undefined) {
+          console.log(`Флаг success: ${response.data.success}`);
+        }
+        
+        if (response.data.error) {
+          console.log(`Ошибка API: ${response.data.error}`);
+        }
+          
         // Рекурсивная функция для поиска URL изображений в объекте
         const findImageUrls = (obj, path = '') => {
           let urls = [];

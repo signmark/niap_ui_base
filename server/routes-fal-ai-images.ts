@@ -108,10 +108,28 @@ router.post('/api/fal-ai-images', async (req, res) => {
     console.log(`[api] Запрос на генерацию изображения с моделью ${generateOptions.model}`);
     const imageUrls = await falAiUniversalService.generateImages(generateOptions);
 
-    res.json({
-      success: true,
-      images: imageUrls
-    });
+    // Проверяем результат и форматируем его для тестовых скриптов
+    if (imageUrls && imageUrls.length > 0) {
+      console.log(`[api] Успешно получено ${imageUrls.length} изображений`);
+      
+      // Логирование для отладки
+      imageUrls.forEach((url, index) => {
+        console.log(`[api] Изображение ${index + 1}: ${url}`);
+      });
+      
+      // Отправляем результат в формате, совместимом с тестами
+      res.json({
+        success: true,
+        images: imageUrls
+      });
+    } else {
+      console.warn(`[api] Сервис вернул пустой массив URL изображений`);
+      res.json({
+        success: false,
+        images: [],
+        error: "Не удалось получить URL изображений"
+      });
+    }
   } catch (error: any) {
     console.error('[api] Ошибка при генерации изображения:', error);
     res.status(500).json({
