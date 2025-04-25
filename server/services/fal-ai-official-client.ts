@@ -172,16 +172,26 @@ class FalAiOfficialClient {
         credentials: cleanKey,
       });
       
-      // Вызываем API с использованием официального SDK
-      const result = await fal.run({
-        modelId: options.model,
-        input,
-      });
-      
-      console.log(`[fal-ai-official] Получен ответ от API для модели ${options.model}`);
-      
-      // Извлекаем URL изображений из ответа
-      return this.extractImageUrls(result);
+      try {
+        // Вызываем API с использованием официального SDK
+        const result = await fal.run(options.model, {
+          input: input
+        });
+        
+        console.log(`[fal-ai-official] Получен ответ от API для модели ${options.model}`);
+        
+        // Извлекаем URL изображений из ответа
+        return this.extractImageUrls(result);
+      } catch (runError: any) {
+        console.error(`[fal-ai-official] Ошибка при вызове fal.run: ${runError.message}`);
+        
+        if (runError.message.includes('credentials') || runError.message.includes('401')) {
+          throw new Error(`Ошибка аутентификации FAL.AI: ${runError.message}`);
+        } else if (runError.message.includes('not found') || runError.message.includes('404')) {
+          throw new Error(`Модель ${options.model} не найдена: ${runError.message}`);
+        }
+        throw runError;
+      }
     } catch (error: any) {
       console.error(`[fal-ai-official] Ошибка при генерации изображений: ${error.message}`);
       throw error;
