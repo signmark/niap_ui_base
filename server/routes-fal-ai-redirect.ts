@@ -8,7 +8,13 @@ import express, { Express } from 'express';
 // Создаем маршрутизатор
 const router = express.Router();
 
+// Глобальная переменная для хранения экземпляра Express
+let expressApp: Express;
+
 export function registerFalAiRedirectRoutes(app: Express) {
+  // Сохраняем ссылку на Express приложение для использования в маршрутах
+  expressApp = app;
+  
   app.use('/', router);
   console.log('[express] FAL.AI redirect routes registered');
 }
@@ -19,7 +25,16 @@ router.post('/api/generate-universal-image', (req, res) => {
   
   // Перенаправляем на новый маршрут с сохранением всех параметров
   req.url = '/api/fal-ai-images';
-  app._router.handle(req, res);
+  
+  if (expressApp && expressApp._router) {
+    expressApp._router.handle(req, res);
+  } else {
+    console.error('[express] [fal-ai-redirect] Express app не инициализирован');
+    res.status(500).json({
+      success: false,
+      error: 'Внутренняя ошибка сервера при перенаправлении'
+    });
+  }
 });
 
 export default router;

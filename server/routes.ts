@@ -9,6 +9,7 @@ import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
+import { registerFalAiImageRoutes } from './routes-fal-ai-images';
 import { registerClaudeRoutes } from './routes-claude';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
@@ -1294,6 +1295,7 @@ function parseArrayField(value: any, itemId?: string): any[] {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
+  registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
