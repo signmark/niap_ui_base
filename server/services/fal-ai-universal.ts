@@ -89,14 +89,23 @@ class FalAiUniversalService {
         
         if (status === 'COMPLETED' && statusResponse.data.response_url) {
           // Получаем результат
-          const resultResponse = await axios.get(statusResponse.data.response_url, {
-            headers: {
-              'Authorization': apiKey,
-              'Accept': 'application/json'
+          try {
+            const resultResponse = await axios.get(statusResponse.data.response_url, {
+              headers: {
+                'Authorization': apiKey,
+                'Accept': 'application/json'
+              }
+            });
+            return resultResponse.data;
+          } catch (responseError: any) {
+            console.log(`[fal-ai-universal] Ошибка при получении результата, возможно модель Flux возвращает результат напрямую: ${responseError.message}`);
+            
+            // Для новых моделей Flux результат может быть уже в statusResponse
+            if (statusResponse.data.images || statusResponse.data.image) {
+              return statusResponse.data;
             }
-          });
-          return resultResponse.data;
-        } else if (status === 'COMPLETED' && statusResponse.data.images) {
+          }
+        } else if (status === 'COMPLETED' && (statusResponse.data.images || statusResponse.data.image)) {
           // Результат уже доступен в текущем ответе
           return statusResponse.data;
         } else if (status === 'FAILED' || status === 'CANCELED') {
@@ -131,6 +140,13 @@ class FalAiUniversalService {
     
     console.log(`[fal-ai-universal] Извлечение URL медиафайлов из ответа типа: ${typeof data}`);
     
+    // Добавляем отладочную информацию для анализа структуры ответа
+    try {
+      console.log('[fal-ai-universal] Структура данных:', JSON.stringify(data).substring(0, 500) + '...');
+    } catch (e) {
+      console.log('[fal-ai-universal] Невозможно сериализовать структуру данных');
+    }
+    
     let mediaUrls: string[] = [];
     
     // Функция для рекурсивного поиска URL медиафайлов
@@ -157,9 +173,13 @@ class FalAiUniversalService {
       
       // Объект
       if (typeof obj === 'object') {
-        // Приоритетная проверка известных полей
+        // Проверка специфических форматов ответа новых моделей Flux
         if (obj.images && Array.isArray(obj.images)) {
-          obj.images.forEach((img: any) => {
+          console.log('[fal-ai-universal] Найдено поле images в ответе', obj.images.length);
+          obj.images.forEach((img: any, index: number) => {
+            console.log(`[fal-ai-universal] Обработка изображения ${index}:`, 
+              typeof img === 'string' ? img.substring(0, 50) + '...' : (img && typeof img === 'object' ? 'Object' : 'Unknown'));
+            
             if (typeof img === 'string' && this.isValidImageUrl(img)) {
               mediaUrls.push(img);
             } else if (img && img.url && this.isValidImageUrl(img.url)) {
@@ -185,6 +205,7 @@ class FalAiUniversalService {
         } else if (obj.url && typeof obj.url === 'string' && this.isValidImageUrl(obj.url)) {
           mediaUrls.push(obj.url);
         } else if (obj.output) {
+          console.log('[fal-ai-universal] Найдено поле output в ответе');
           findUrls(obj.output);
         } else {
           // Рекурсивный поиск во всех остальных полях
@@ -267,9 +288,12 @@ class FalAiUniversalService {
     // Формируем URL для запроса
     let apiUrl = '';
     
-    // Schnell - это Flux, поэтому используем специальный endpoint
+    // Обработка моделей из пространства имен flux
     if (model === 'schnell') {
       apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
+    } else if (model.startsWith('flux/')) {
+      // Для новых моделей flux используем прямой API URL
+      apiUrl = `https://queue.fal.run/fal-ai/${model}`;
     } else {
       // Стандартный формат URL для остальных моделей
       apiUrl = `https://queue.fal.run/fal-ai/${model}`;
