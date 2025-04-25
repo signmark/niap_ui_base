@@ -101,14 +101,15 @@ export class FalAiOfficialClient {
         throw new Error('В ответе API не найдены URL изображений');
       }
     } catch (error: any) {
-      console.error(`[fal-ai-official] Ошибка при генерации изображений: ${error.message}`);
+      console.error(`[fal-ai-official] Ошибка при генерации изображений с моделью ${options.model}: ${error.message}`);
       
       if (error.response) {
         console.error(`[fal-ai-official] Статус ошибки: ${error.response.status}`, 
           error.response.data ? JSON.stringify(error.response.data).substring(0, 300) : 'No data');
       }
       
-      throw error;
+      // Бросаем ошибку с дополнительной информацией о используемых параметрах
+      throw new Error(`Ошибка при генерации изображений с моделью ${options.model}: ${error.message}. Проверьте API ключ и параметры запроса.`);
     }
   }
 
@@ -141,11 +142,16 @@ export class FalAiOfficialClient {
    * @returns Подготовленные параметры для API запроса
    */
   private prepareInputParams(options: GenerateImageOptions): any {
-    // Базовые параметры, общие для всех моделей
+    // Определяем базовые параметры, с поддержкой как snake_case, так и camelCase форматов
     const baseParams = {
       prompt: options.prompt,
       negative_prompt: options.negative_prompt || options.negativePrompt || '',
     };
+
+    // Используем значения из snake_case или camelCase параметров
+    const numImages = options.num_images || options.numImages || 1;
+    
+    console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${options.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}`);
 
     // Специфические параметры для разных моделей
     if (options.model === 'schnell' || options.model === 'fal-ai/schnell') {
@@ -153,35 +159,35 @@ export class FalAiOfficialClient {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages
       };
     } else if (options.model === 'fast-sdxl' || options.model === 'fal-ai/fast-sdxl') {
       return {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages
       };
     } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
       return {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages
       };
     } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
       return {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages
       };
     } else if (options.model.includes('flux/') || options.model.includes('fal-ai/flux/')) {
       return {
         ...baseParams,
         image_width: options.width || 1024,
         image_height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages
       };
     }
 
@@ -190,7 +196,7 @@ export class FalAiOfficialClient {
       ...baseParams,
       width: options.width || 1024,
       height: options.height || 1024,
-      num_images: options.num_images || 1
+      num_images: numImages
     };
   }
 

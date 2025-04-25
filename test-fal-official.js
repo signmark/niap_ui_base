@@ -5,84 +5,62 @@
  * node test-fal-official.js
  */
 
-import * as fal from '@fal-ai/client';
+const axios = require('axios');
+require('dotenv').config();
 
-// Получаем ключ API из переменной окружения
-const apiKey = process.env.FAL_AI_API_KEY;
-
-// Функция для проверки API
 async function testFalApi() {
-  console.log('\n=== Тестирование FAL.AI API с официальным клиентом ===\n');
-  
-  if (!apiKey) {
-    console.error('Ошибка: API ключ не указан в переменной FAL_AI_API_KEY');
-    process.exit(1);
-  }
-  
-  // Маскируем ключ для логов
-  const maskedKey = apiKey.substring(0, 6) + '...';
-  console.log(`Используемый API ключ (маскирован): ${maskedKey}`);
-  
   try {
-    // Настройка клиента
-    const client = new fal.BrowserClient({
-      // Если ключ не начинается с "Key ", то добавляем
-      credentials: apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`
-    });
+    console.log('Тестирование API генерации изображений FAL.AI с официальным клиентом...');
     
-    console.log('\nПытаемся сгенерировать изображение с помощью модели schnell...');
+    // Используем API-ключ из .env файла
+    const apiKey = process.env.FAL_AI_API_KEY;
+    if (!apiKey) {
+      throw new Error('FAL_AI_API_KEY не найден в .env файле');
+    }
     
-    // Генерация изображения
-    const result = await client.run(
-      'fal-ai/schnell',
+    // Подготавливаем тестовые параметры
+    const testRequest = {
+      prompt: "A cute cat playing with a ball, high quality, detailed, 4k",
+      negativePrompt: "blurry, low quality, distorted",
+      model: "schnell", // Используем быструю модель для теста
+      token: apiKey
+    };
+    
+    console.log(`Параметры запроса: ${JSON.stringify(testRequest, null, 2)}`);
+    
+    // Отправляем запрос через наш универсальный FAL.AI сервис
+    const response = await axios.post(
+      'http://localhost:5000/api/fal-ai-images',
+      testRequest,
       {
-        prompt: "A cute cat with blue eyes sitting in a garden",
-        negative_prompt: "bad quality, blurry",
-        num_images: 1,
-        width: 512,
-        height: 512
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
     
-    console.log('\nУспешно получен ответ от API!');
+    console.log(`Статус ответа: ${response.status}`);
     
-    if (result && result.images && result.images.length > 0) {
-      console.log(`Количество полученных изображений: ${result.images.length}`);
-      console.log(`URL первого изображения: ${result.images[0].url}`);
+    // Если мы получили ответ с изображениями
+    if (response.data && response.data.images && response.data.images.length > 0) {
+      console.log('✅ Успешно получили изображения:');
+      response.data.images.forEach((url, index) => {
+        console.log(`  Изображение ${index + 1}: ${url}`);
+      });
     } else {
-      console.log('Структура ответа:', JSON.stringify(result).substring(0, 300) + '...');
+      console.error('❌ Ответ не содержит URLs изображений:', JSON.stringify(response.data));
     }
     
-    console.log('\n✅ Тест прошел успешно! API ключ работает корректно.');
-    return true;
   } catch (error) {
-    console.error('\n❌ Ошибка при тестировании API:');
-    console.error(`Сообщение ошибки: ${error.message}`);
+    console.error('❌ Ошибка при тестировании API:');
+    console.error(`Сообщение: ${error.message}`);
     
     if (error.response) {
-      console.error(`Статус ошибки: ${error.response.status}`);
-      console.error('Данные ответа:', error.response.data ? 
-        JSON.stringify(error.response.data).substring(0, 300) : 'Нет данных');
+      console.error(`Статус ответа: ${error.response.status}`);
+      console.error('Данные ответа:', JSON.stringify(error.response.data, null, 2));
     }
-    
-    console.error('\nВозможные причины проблемы:');
-    console.error('1. Неверный API ключ или формат');
-    console.error('2. Истек срок действия API ключа');
-    console.error('3. Недостаточно привилегий для доступа к модели');
-    console.error('4. Проблемы с соединением или с сервером FAL.AI');
-    
-    return false;
   }
 }
 
 // Запускаем тест
-testFalApi()
-  .then(success => {
-    if (!success) {
-      process.exit(1);
-    }
-  })
-  .catch(err => {
-    console.error('Неожиданная ошибка:', err);
-    process.exit(1);
-  });
+testFalApi();
