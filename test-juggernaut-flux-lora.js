@@ -1,6 +1,6 @@
 /**
- * Тестовый скрипт для проверки генерации изображений с использованием модели Juggernaut Flux Lightning
- * Используется улучшенная обработка API ключа
+ * Тестовый скрипт для проверки генерации изображений с использованием модели Juggernaut Flux Lora
+ * Использует улучшенную обработку API ключа и результат должен быть лучшего качества
  */
 
 import axios from 'axios';
@@ -12,8 +12,8 @@ import { fileURLToPath } from 'url';
 // Инициализация dotenv
 config();
 
-async function testJuggernautFluxLightning() {
-  console.log('Начинаем тест генерации изображений с моделью Juggernaut Flux Lightning...');
+async function testJuggernautFluxLora() {
+  console.log('Начинаем тест генерации изображений с моделью Juggernaut Flux Lora...');
   
   const prompt = 'A serene landscape with mountains and a lake, photorealistic';
   
@@ -31,7 +31,7 @@ async function testJuggernautFluxLightning() {
     // Делаем запрос к нашему API для генерации изображений
     const response = await axios.post('http://localhost:5000/api/fal-ai-images', {
       prompt,
-      model: 'rundiffusion-fal/juggernaut-flux/lightning',
+      model: 'rundiffusion-fal/juggernaut-flux-lora',
       width: 1024,
       height: 1024,
       numImages: 1
@@ -55,8 +55,8 @@ async function testJuggernautFluxLightning() {
       });
       
       // Сохраняем результаты в файл для последующего анализа
-      await fs.writeFile('juggernaut-flux-lightning-results.json', JSON.stringify(response.data, null, 2));
-      console.log('Результаты сохранены в файл juggernaut-flux-lightning-results.json');
+      await fs.writeFile('juggernaut-flux-lora-results.json', JSON.stringify(response.data, null, 2));
+      console.log('Результаты сохранены в файл juggernaut-flux-lora-results.json');
       
       console.log('Тест успешно завершен!');
     } else {
@@ -74,7 +74,7 @@ async function testJuggernautFluxLightning() {
 }
 
 // Запускаем тест
-testJuggernautFluxLightning();
+testJuggernautFluxLora();
 
 // Для поддержки ES модулей
-export { testJuggernautFluxLightning };
+export { testJuggernautFluxLora };
