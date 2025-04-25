@@ -50,6 +50,7 @@ import instagramWebhookRoutes from './api/instagram-webhook-direct';
 import facebookWebhookRoutes from './api/facebook-webhook-v2';
 import facebookWebhookV3Routes from './api/facebook-webhook-v3';
 import facebookWebhookDirectTestRoutes from './api/facebook-webhook-direct-test';
+import facebookWebhookUnifiedRoutes from './api/facebook-webhook-unified';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';

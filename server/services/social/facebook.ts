@@ -4,8 +4,7 @@
  */
 
 import { facebookService } from '../social-platforms/facebook-service';
-import { CampaignContent } from '../../types/campaign';
-import { SocialPlatform, SocialPublication } from '../../types/social';
+import { CampaignContent, SocialPlatform, SocialPublication } from '@shared/schema';
 
 export class FacebookSocialService {
   /**
