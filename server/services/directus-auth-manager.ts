@@ -295,6 +295,49 @@ export class DirectusAuthManager {
     
     log(`Admin session for user ${userId} added to cache`, this.logPrefix);
   }
+  
+  /**
+   * Получает сессию администратора для API запросов
+   * @returns Информация о сессии администратора или null, если не удалось получить
+   */
+  async getAdminSession(): Promise<{ token: string; id: string } | null> {
+    try {
+      // Пытаемся авторизоваться с учетными данными администратора
+      const email = process.env.DIRECTUS_ADMIN_EMAIL;
+      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      
+      if (!email || !password) {
+        log('Missing DIRECTUS_ADMIN_EMAIL or DIRECTUS_ADMIN_PASSWORD environment variables', this.logPrefix);
+        return null;
+      }
+      
+      log(`Attempting to login as admin (${email})`, this.logPrefix);
+      
+      const authResult = await directusCrud.login(email, password);
+      
+      // Получаем информацию о пользователе администратора
+      const adminUser = await directusCrud.getCurrentUser({
+        authToken: authResult.access_token
+      });
+      
+      // Сохраняем сессию в кэше
+      this.addAdminSession({
+        id: adminUser.id,
+        token: authResult.access_token,
+        email: adminUser.email
+      });
+      
+      log(`Admin login successful (${adminUser.id})`, this.logPrefix);
+      
+      return {
+        token: authResult.access_token,
+        id: adminUser.id
+      };
+    } catch (error) {
+      log(`Error getting admin session: ${(error as Error).message}`, this.logPrefix);
+      return null;
+    }
+  }
 
   /**
    * Останавливает интервал обновления сессий

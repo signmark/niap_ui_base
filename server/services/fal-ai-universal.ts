@@ -6,22 +6,36 @@
 
 import axios from 'axios';
 import { apiKeyService } from './api-keys';
+import { falAiDirectClient } from './fal-ai-direct-client';
+import { falAiOfficialClient } from './fal-ai-official-client';
 
 // Типы поддерживаемых моделей
-export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus';
+export type FalAiModelName = 
+  | 'fast-sdxl' 
+  | 'sdxl' 
+  | 'schnell' 
+  | 'fooocus' 
+  | 'flux/juggernaut-xl-lora' 
+  | 'flux/juggernaut-xl-lightning' 
+  | 'flux/flux-lora'
+  | 'rundiffusion-fal/juggernaut-flux/lightning'
+  | 'rundiffusion-fal/juggernaut-flux-lora'
+  | 'fal-ai/flux-lora';
 
-// Параметры для генерации изображений
+// Параметры для генерации медиафайлов (изображений или видео)
 export interface FalAiGenerateOptions {
-  prompt: string;
-  negativePrompt?: string;
-  width?: number;
-  height?: number;
-  numImages?: number;
-  model?: string | FalAiModelName;
-  token?: string;
-  userId?: string;
-  contentId?: string;
-  campaignId?: string;
+  prompt: string;                // Промт для генерации
+  negativePrompt?: string;       // Негативный промт
+  width?: number;                // Ширина изображения/видео
+  height?: number;               // Высота изображения/видео
+  numImages?: number;            // Количество изображений (для видео обычно 1)
+  model?: string | FalAiModelName; // Модель для генерации
+  token?: string;                // Токен авторизации
+  userId?: string;               // ID пользователя для получения API ключа
+  contentId?: string;            // ID контента (для аналитики)
+  campaignId?: string;           // ID кампании (для аналитики)
+  fps?: number;                  // Кадров в секунду (только для видео)
+  duration?: number;             // Длительность в секундах (только для видео)
 }
 
 // Основной класс сервиса
@@ -34,9 +48,6 @@ class FalAiUniversalService {
    * @returns Нормализованное название модели
    */
   private normalizeModelName(modelName: string | FalAiModelName = 'fast-sdxl'): string {
-    // ВАЖНО: Все модели, включая Schnell, обрабатываются одинаково
-    // без специальной обработки для отдельных моделей
-    
     // Проверяем, содержит ли уже путь к модели
     if (typeof modelName === 'string' && modelName.includes('/')) {
       return modelName; // Уже полный путь
@@ -44,6 +55,66 @@ class FalAiUniversalService {
     
     // Возвращаем название модели как есть без специальных преобразований
     return modelName;
+  }
+  
+  /**
+   * Специализированный метод для генерации изображений с помощью модели Schnell
+   * @param options Параметры генерации (без указания модели, так как это всегда Schnell)
+   * @returns Массив URL сгенерированных изображений
+   */
+  async generateWithSchnell(options: Omit<FalAiGenerateOptions, 'model'>): Promise<string[]> {
+    console.log(`[fal-ai-universal] Генерация изображений с использованием модели Schnell (специальный метод)`);
+    
+    // Получаем API ключ
+    let apiKey: string | null = null;
+    
+    if (options.token && options.userId) {
+      apiKey = await apiKeyService.getApiKey(options.userId, 'fal_ai', options.token);
+      
+      if (!apiKey) {
+        throw new Error('API ключ FAL.AI не найден для пользователя');
+      }
+      
+      apiKey = this.formatApiKey(apiKey);
+    } else if (options.token) {
+      // Если передан только токен, используем его напрямую
+      apiKey = this.formatApiKey(options.token);
+    } else {
+      throw new Error('Отсутствует токен или userId для получения API ключа');
+    }
+    
+    // Для Schnell всегда используем прямой API
+    try {
+      // Проверяем, содержит ли ключ префикс, и добавляем его при необходимости
+      let directApiKey = apiKey;
+      if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+        directApiKey = `Key ${directApiKey}`;
+        console.log('[fal-ai-universal] Добавлен префикс Key для Schnell API');
+      }
+      
+      console.log('[fal-ai-universal] Отправляем запрос к Schnell API напрямую (endpoint: /v1/schnell)');
+      
+      // Обновляем запрос в соответствии с официальной документацией FAL.AI
+      return await falAiDirectClient.generateImages({
+        model: 'schnell',
+        apiKey: directApiKey,
+        prompt: options.prompt,
+        negative_prompt: options.negativePrompt,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.numImages || 1
+      });
+    } catch (error: any) {
+      console.error(`[fal-ai-universal] Ошибка при использовании Schnell API: ${error.message}`);
+      
+      // Добавляем больше логирования для диагностики проблемы
+      if (error.response) {
+        console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}`, 
+          error.response.data ? JSON.stringify(error.response.data).substring(0, 300) : 'No data');
+      }
+      
+      throw new Error(`Ошибка генерации с Schnell: ${error.message}`);
+    }
   }
 
   /**
@@ -54,170 +125,53 @@ class FalAiUniversalService {
   private formatApiKey(apiKey: string): string {
     if (!apiKey) return '';
     
-    if (!apiKey.startsWith('Key ') && apiKey.includes(':')) {
-      return `Key ${apiKey}`;
+    // Удаляем любые существующие префиксы и пробелы
+    let cleanKey = apiKey.trim();
+    if (cleanKey.startsWith('Key ')) {
+      cleanKey = cleanKey.substring(4).trim();
+    }
+    if (cleanKey.startsWith('Bearer ')) {
+      cleanKey = cleanKey.substring(7).trim();
     }
     
-    return apiKey;
+    // Добавляем правильный префикс "Key" для FAL.AI API
+    return `Key ${cleanKey}`;
   }
 
   /**
-   * Ожидает окончания асинхронной генерации изображений
-   * @param statusUrl URL для проверки статуса
-   * @param apiKey API ключ для авторизации
-   * @returns Данные с результатом генерации
-   */
-  private async waitForResult(statusUrl: string, apiKey: string): Promise<any> {
-    console.log(`[fal-ai-universal] Ожидание результата, URL: ${statusUrl}`);
-    
-    let maxAttempts = 60; // Максимум 60 попыток (около 3 минут при 3-секундном интервале)
-    let attempt = 0;
-    
-    while (attempt < maxAttempts) {
-      try {
-        const statusResponse = await axios.get(statusUrl, {
-          headers: {
-            'Authorization': apiKey,
-            'Accept': 'application/json'
-          }
-        });
-        
-        const status = statusResponse.data?.status;
-        console.log(`[fal-ai-universal] Текущий статус: ${status}, попытка ${attempt + 1}/${maxAttempts}`);
-        
-        if (status === 'COMPLETED' && statusResponse.data.response_url) {
-          // Получаем результат
-          const resultResponse = await axios.get(statusResponse.data.response_url, {
-            headers: {
-              'Authorization': apiKey,
-              'Accept': 'application/json'
-            }
-          });
-          return resultResponse.data;
-        } else if (status === 'COMPLETED' && statusResponse.data.images) {
-          // Результат уже доступен в текущем ответе
-          return statusResponse.data;
-        } else if (status === 'FAILED' || status === 'CANCELED') {
-          throw new Error(`Генерация изображения не удалась: ${status}`);
-        }
-        
-        // Ждем 3 секунды перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        attempt++;
-      } catch (error: any) {
-        console.error(`[fal-ai-universal] Ошибка при проверке статуса: ${error.message}`);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        attempt++;
-        
-        // Если достигли предела попыток, выбрасываем ошибку
-        if (attempt >= maxAttempts) {
-          throw new Error('Время ожидания генерации изображения истекло');
-        }
-      }
-    }
-    
-    throw new Error('Время ожидания генерации изображения истекло');
-  }
-
-  /**
-   * Извлекает URL изображений из любого формата ответа API
-   * @param data Данные ответа от API
-   * @returns Массив URL изображений
-   */
-  private extractImageUrls(data: any): string[] {
-    if (!data) return [];
-    
-    console.log(`[fal-ai-universal] Извлечение URL изображений из ответа типа: ${typeof data}`);
-    
-    let imageUrls: string[] = [];
-    
-    // Функция для рекурсивного поиска URL изображений
-    const findUrls = (obj: any) => {
-      if (!obj) return;
-      
-      // Прямая строка с URL
-      if (typeof obj === 'string' && this.isValidImageUrl(obj)) {
-        imageUrls.push(obj);
-        return;
-      }
-      
-      // Массив
-      if (Array.isArray(obj)) {
-        obj.forEach(item => {
-          if (typeof item === 'string' && this.isValidImageUrl(item)) {
-            imageUrls.push(item);
-          } else {
-            findUrls(item);
-          }
-        });
-        return;
-      }
-      
-      // Объект
-      if (typeof obj === 'object') {
-        // Приоритетная проверка известных полей
-        if (obj.images && Array.isArray(obj.images)) {
-          obj.images.forEach((img: any) => {
-            if (typeof img === 'string' && this.isValidImageUrl(img)) {
-              imageUrls.push(img);
-            } else if (img && img.url && this.isValidImageUrl(img.url)) {
-              imageUrls.push(img.url);
-            } else {
-              findUrls(img);
-            }
-          });
-        } else if (obj.image && typeof obj.image === 'string' && this.isValidImageUrl(obj.image)) {
-          imageUrls.push(obj.image);
-        } else if (obj.url && typeof obj.url === 'string' && this.isValidImageUrl(obj.url)) {
-          imageUrls.push(obj.url);
-        } else if (obj.output) {
-          findUrls(obj.output);
-        } else {
-          // Рекурсивный поиск во всех остальных полях
-          for (const key in obj) {
-            findUrls(obj[key]);
-          }
-        }
-      }
-    };
-    
-    // Запускаем рекурсивный поиск
-    findUrls(data);
-    
-    // Логируем результат
-    console.log(`[fal-ai-universal] Найдено ${imageUrls.length} URL изображений`);
-    if (imageUrls.length > 0) {
-      console.log(`[fal-ai-universal] Первый URL: ${imageUrls[0].substring(0, 100)}...`);
-    }
-    
-    return imageUrls;
-  }
-
-  /**
-   * Проверяет, является ли строка допустимым URL изображения
+   * Проверяет, является ли строка допустимым URL изображения или видео
    * @param url Строка для проверки
-   * @returns true, если строка является URL изображения
+   * @returns true, если строка является URL изображения или видео
    */
   private isValidImageUrl(url: string): boolean {
     if (!url || typeof url !== 'string') return false;
     
-    // Проверяем, что URL содержит признаки изображения или валидного CDN-хоста
+    // Проверяем, что URL содержит признаки изображения/видео или валидного CDN-хоста
     return (
       url.includes('fal.media') || 
+      // Изображения
       url.includes('.jpg') || 
       url.includes('.jpeg') || 
       url.includes('.png') || 
-      url.includes('.webp') || 
+      url.includes('.webp') ||
+      // Видео
+      url.includes('.mp4') ||
+      url.includes('.webm') ||
+      url.includes('.mov') ||
+      url.includes('.avi') ||
+      // Общие CDN и пути
       url.includes('cdn.') || 
       url.includes('images.') ||
-      url.includes('/image/')
+      url.includes('videos.') ||
+      url.includes('/image/') ||
+      url.includes('/video/')
     );
   }
 
   /**
-   * Генерирует изображения с использованием выбранной модели
+   * Генерирует медиаконтент (изображения или видео) с использованием выбранной модели
    * @param options Параметры генерации
-   * @returns Массив URL сгенерированных изображений
+   * @returns Массив URL сгенерированных изображений или видео
    */
   async generateImages(options: FalAiGenerateOptions): Promise<string[]> {
     // Получаем API ключ
@@ -238,106 +192,125 @@ class FalAiUniversalService {
       throw new Error('Отсутствует токен или userId для получения API ключа');
     }
     
-    // Определяем модель и формируем URL запроса
+    // Определяем модель
     const model = this.normalizeModelName(options.model);
     
-    // Формируем URL для запроса
-    let apiUrl = '';
-    
-    // Schnell - это Flux, поэтому используем специальный endpoint
-    if (model === 'schnell') {
-      apiUrl = 'https://queue.fal.run/fal-ai/flux/schnell';
-    } else {
-      // Стандартный формат URL для остальных моделей
-      apiUrl = `https://queue.fal.run/fal-ai/${model}`;
-    }
-    
-    console.log(`[fal-ai-universal] Генерация изображений с моделью: ${model}, URL: ${apiUrl}`);
-    
-    // Подготавливаем данные запроса - единые для всех моделей
-    let requestData: any = {
-      prompt: options.prompt,
-      negative_prompt: options.negativePrompt || '',
-      width: options.width || 1024,
-      height: options.height || 1024,
-      num_images: options.numImages || 1,
-      num_inference_steps: 10 // Фиксированное значение для всех моделей без исключений
-    };
-    
-    // Настраиваем заголовки запроса
-    const headers = {
-      'Authorization': apiKey,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    };
-    
-    // Отправляем запрос к API
-    try {
-      console.log(`[fal-ai-universal] Отправляем запрос к ${apiUrl}`);
+    // Сначала проверяем, является ли модель Flux или другой моделью с путём (vendor/model)
+    if (model.includes('/')) {
+      // Для Flux и других моделей с путём используем официальный клиент с SDK
+      console.log(`[fal-ai-universal] Модель с путём (${model}), используем официальный клиент`);
       
-      const response = await axios.post(apiUrl, requestData, {
-        headers,
-        timeout: 60000 // 1 минута на инициацию запроса
-      });
-      
-      console.log(`[fal-ai-universal] Получен ответ, статус: ${response.status}`);
-      
-      // Обрабатываем различные варианты ответа
-      // Вариант 1: Изображения уже есть в ответе
-      const directImageUrls = this.extractImageUrls(response.data);
-      if (directImageUrls.length > 0) {
-        console.log(`[fal-ai-universal] Найдены прямые URL в ответе: ${directImageUrls.length}`);
-        return directImageUrls;
-      }
-      
-      // Вариант 2: Асинхронная обработка через status_url
-      if (response.data && response.data.status === 'IN_QUEUE' && response.data.status_url) {
-        console.log(`[fal-ai-universal] Запрос в очереди, получен status_url`);
-        
-        // Ожидаем окончания генерации
-        const result = await this.waitForResult(response.data.status_url, apiKey);
-        
-        // Извлекаем URL из результата
-        const asyncImageUrls = this.extractImageUrls(result);
-        if (asyncImageUrls.length > 0) {
-          return asyncImageUrls;
+      try {
+        // Создаем чистый ключ без префикса для официального SDK
+        let cleanKey = apiKey.trim();
+        if (cleanKey.startsWith('Key ')) {
+          cleanKey = cleanKey.substring(4).trim();
         }
-      }
-      
-      // Вариант 3: Запрос имеет request_id, но нет прямого результата
-      if (response.data && response.data.request_id) {
-        console.log(`[fal-ai-universal] Получен request_id: ${response.data.request_id}`);
         
-        // Запрашиваем информацию о запросе
-        const requestInfoUrl = `https://queue.fal.run/fal-ai/flux/requests/${response.data.request_id}`;
+        // Добавляем расширенное логирование
+        console.log(`[fal-ai-universal] Отправляем запрос в официальный клиент:`, {
+          model,
+          prompt: options.prompt,
+          negativePrompt: options.negativePrompt,
+          width: options.width,
+          height: options.height,
+          numImages: options.numImages || 1
+        });
+        
+        const result = await falAiOfficialClient.generateImages({
+          model: model,
+          token: cleanKey, // Для SDK нужен чистый ключ без префикса "Key"
+          prompt: options.prompt,
+          negative_prompt: options.negativePrompt, // Здесь используем camelCase, который преобразуется в snake_case внутри метода
+          width: options.width,
+          height: options.height,
+          num_images: options.numImages // Здесь используем camelCase, который преобразуется в snake_case внутри метода
+        });
+        
+        // Логируем результат для анализа
+        console.log(`[fal-ai-universal] Результат от официального клиента:`, result);
+        
+        return result;
+      } catch (officialError: any) {
+        console.error(`[fal-ai-universal] Ошибка при использовании официального клиента для модели ${model}: ${officialError.message}`);
+        
+        // Если официальный клиент не сработал, пробуем прямой клиент
+        console.log(`[fal-ai-universal] Пробуем прямой клиент для модели ${model}`);
         
         try {
-          const requestResponse = await axios.get(requestInfoUrl, {
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          
-          // Извлекаем URL из информации о запросе
-          const requestImageUrls = this.extractImageUrls(requestResponse.data);
-          if (requestImageUrls.length > 0) {
-            return requestImageUrls;
+          // Для прямого API может потребоваться другой формат ключа
+          let directApiKey = apiKey;
+          // Если ключ не имеет префикса, добавим его для прямого API
+          if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+            directApiKey = `Key ${directApiKey}`;
+            console.log('[fal-ai-universal] Добавлен префикс Key для прямого API');
           }
-        } catch (requestError: any) {
-          console.error(`[fal-ai-universal] Ошибка при получении информации о запросе: ${requestError.message}`);
+          
+          return await falAiDirectClient.generateImages({
+            model: model,
+            apiKey: directApiKey,
+            prompt: options.prompt,
+            negative_prompt: options.negativePrompt,
+            width: options.width,
+            height: options.height,
+            num_images: options.numImages
+          });
+        } catch (directError: any) {
+          console.error(`[fal-ai-universal] Ошибка при использовании прямого клиента: ${directError.message}`);
+          // Если обе попытки не удались, выбрасываем оригинальную ошибку от официального клиента
+          throw officialError;
         }
       }
+    } else {
+      // Для классических моделей (schnell, fooocus, sdxl) используем прямой клиент
+      console.log(`[fal-ai-universal] Классическая модель (${model}), используем прямой клиент`);
       
-      // Если все методы не привели к результату
-      throw new Error('Не удалось получить URL изображений из ответа API');
-    } catch (error: any) {
-      console.error(`[fal-ai-universal] Ошибка при генерации изображений: ${error.message}`);
-      
-      if (error.response) {
-        console.error(`[fal-ai-universal] Статус ошибки: ${error.response.status}, данные: ${JSON.stringify(error.response.data)}`);
+      try {
+        // Для прямого API может потребоваться другой формат ключа
+        let directApiKey = apiKey;
+        // Если ключ не имеет префикса, добавим его для прямого API
+        if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+          directApiKey = `Key ${directApiKey}`;
+          console.log('[fal-ai-universal] Добавлен префикс Key для прямого API');
+        }
+        
+        return await falAiDirectClient.generateImages({
+          model: model,
+          apiKey: directApiKey,
+          prompt: options.prompt,
+          negative_prompt: options.negativePrompt,
+          width: options.width,
+          height: options.height,
+          num_images: options.numImages
+        });
+      } catch (directError: any) {
+        console.error(`[fal-ai-universal] Ошибка при использовании прямого клиента для модели ${model}: ${directError.message}`);
+        
+        // Даже для классических моделей можно попробовать официальный клиент как запасной вариант
+        console.log(`[fal-ai-universal] Пробуем официальный клиент для модели ${model}`);
+        
+        try {
+          // Создаем чистый ключ без префикса для официального SDK
+          let cleanKey = apiKey.trim();
+          if (cleanKey.startsWith('Key ')) {
+            cleanKey = cleanKey.substring(4).trim();
+          }
+          
+          return await falAiOfficialClient.generateImages({
+            model: model,
+            token: cleanKey,
+            prompt: options.prompt,
+            negative_prompt: options.negativePrompt, // Pass this to official client which will map it internally
+            width: options.width,
+            height: options.height,
+            num_images: options.numImages // Pass this to official client which will map it internally
+          });
+        } catch (officialError: any) {
+          console.error(`[fal-ai-universal] Ошибка при использовании официального клиента: ${officialError.message}`);
+          // Если обе попытки не удались, выбрасываем оригинальную ошибку от прямого клиента
+          throw directError;
+        }
       }
-      
-      throw error;
     }
   }
 }

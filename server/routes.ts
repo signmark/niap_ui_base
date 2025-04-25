@@ -9,6 +9,7 @@ import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
+import { registerFalAiImageRoutes } from './routes-fal-ai-images';
 import { registerClaudeRoutes } from './routes-claude';
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
@@ -37,6 +38,7 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
+import { analyticsRouter } from './routes/api-analytics';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
@@ -1293,6 +1295,7 @@ function parseArrayField(value: any, itemId?: string): any[] {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
+  registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
@@ -2919,6 +2922,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Registering publishing routes...');
   registerPublishingRoutes(app);
   console.log('API routes registered successfully');
+  
+  // Регистрируем маршруты аналитики
+  console.log('Registering analytics routes...');
+  app.use('/api/analytics', analyticsRouter);
+  console.log('Analytics routes registered successfully');
   
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);

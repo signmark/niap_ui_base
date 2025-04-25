@@ -1,20 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { directusApi } from "@/lib/directus";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+import { getToken } from "@/lib/auth";
+import AnalyticsPieChart from "@/components/analytics/AnalyticsPieChart";
+import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
+
+// Типы для аналитики
+interface AnalyticsStatusResponse {
+  success: boolean;
+  status: {
+    isCollecting: boolean;
+    lastCollectionTime: string | null;
+    progress: number;
+    error: string | null;
+  };
+}
+
+interface PlatformMetrics {
+  posts: number;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  engagement: number;
+  engagementRate: number;
+}
+
+interface AggregatedMetrics {
+  totalPosts: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  totalShares: number;
+  totalEngagement: number;
+  averageEngagementRate: number;
+  platformDistribution: {
+    [platform: string]: PlatformMetrics;
+  };
+}
+
+interface PlatformsStatsResponse {
+  success: boolean;
+  data: {
+    platforms: Record<string, PlatformMetrics>;
+    aggregated: AggregatedMetrics;
+  };
+}
+
+interface TopPostsResponse {
+  success: boolean;
+  data: {
+    topByViews: any[];
+    topByEngagement: any[];
+  };
+}
+
+// Цвета для платформ
+const PLATFORM_COLORS = {
+  telegram: "#2AABEE",
+  vk: "#4C75A3",
+  facebook: "#3b5998",
+  instagram: "#E4405F"
+};
+
+// Цвета для типов взаимодействия
+const ENGAGEMENT_COLORS = {
+  likes: "#FF6384",
+  comments: "#36A2EB",
+  shares: "#FFCE56"
+};
 
 export default function Analytics() {
-  const [dateRange, setDateRange] = useState({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-    to: new Date()
-  });
+  const { toast } = useToast();
+  const [period, setPeriod] = useState(7); // период в днях
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isCollectingAnalytics, setIsCollectingAnalytics] = useState(false);
 
   // Используем глобальный стор для выбранной кампании
   const { selectedCampaign } = useCampaignStore();
   const campaignId = selectedCampaign?.id || "";
+
+  // Функция для форматирования числа с разделителями тысяч
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('ru-RU').format(num);
+  };
 
   // Получаем список всех кампаний
   const { data: campaignsResponse } = useQuery({
@@ -82,77 +158,638 @@ export default function Analytics() {
     enabled: !!campaignId
   });
 
-  const formatDate = (date: Date) => {
+  // Получаем статус сбора аналитики
+  const { 
+    data: analyticsStatusData,
+    isLoading: isLoadingStatus,
+    refetch: refetchStatus
+  } = useQuery<AnalyticsStatusResponse>({
+    queryKey: ["analytics_status"],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch('/api/analytics/status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Не удалось получить статус аналитики');
+      }
+      return await response.json();
+    },
+    refetchInterval: isCollectingAnalytics ? 2000 : false // Обновляем каждые 2 секунды, если идет сбор
+  });
+
+  // Получаем статистику по платформам
+  const {
+    data: platformsStatsData,
+    isLoading: isLoadingPlatformsStats,
+    refetch: refetchPlatformsStats
+  } = useQuery<PlatformsStatsResponse>({
+    queryKey: ["platforms_stats", campaignId, period],
+    queryFn: async () => {
+      if (!campaignId) throw new Error('Не выбрана кампания');
+      
+      const token = await getToken();
+      const response = await fetch(`/api/analytics/platforms-stats?campaignId=${campaignId}&period=${period}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Не удалось получить статистику по платформам');
+      }
+      return await response.json();
+    },
+    enabled: !!campaignId
+  });
+
+  // Получаем топовые публикации
+  const {
+    data: topPostsData,
+    isLoading: isLoadingTopPosts,
+    refetch: refetchTopPosts
+  } = useQuery<TopPostsResponse>({
+    queryKey: ["top_posts", campaignId, period],
+    queryFn: async () => {
+      if (!campaignId) throw new Error('Не выбрана кампания');
+      
+      const token = await getToken();
+      const response = await fetch(`/api/analytics/top-posts?campaignId=${campaignId}&period=${period}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Не удалось получить топовые публикации');
+      }
+      return await response.json();
+    },
+    enabled: !!campaignId
+  });
+
+  // Форматирование данных для круговой диаграммы
+  const getPieChartData = () => {
+    if (!platformsStatsData?.data?.platforms) return [];
+    
+    return Object.entries(platformsStatsData.data.platforms)
+      .filter(([_, metrics]) => metrics.views > 0)
+      .map(([platform, metrics]) => ({
+        name: platform,
+        value: metrics.views,
+        color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#888'
+      }));
+  };
+  
+  // Форматирование данных для графика типов вовлеченности
+  const getEngagementChartData = () => {
+    if (!platformsStatsData?.data?.aggregated) return [];
+    
+    return [
+      {
+        name: 'Лайки',
+        value: platformsStatsData.data.aggregated.totalLikes,
+        color: ENGAGEMENT_COLORS.likes
+      },
+      {
+        name: 'Комментарии',
+        value: platformsStatsData.data.aggregated.totalComments,
+        color: ENGAGEMENT_COLORS.comments
+      },
+      {
+        name: 'Репосты',
+        value: platformsStatsData.data.aggregated.totalShares,
+        color: ENGAGEMENT_COLORS.shares
+      }
+    ];
+  };
+
+  // Обновляем данные при изменении выбранной кампании или периода
+  useEffect(() => {
+    if (campaignId) {
+      refetchPlatformsStats();
+      refetchTopPosts();
+    }
+  }, [campaignId, period, refetchPlatformsStats, refetchTopPosts]);
+
+  // Обновляем статус аналитики и состояние isCollectingAnalytics
+  useEffect(() => {
+    if (analyticsStatusData?.status?.isCollecting !== undefined) {
+      setIsCollectingAnalytics(analyticsStatusData.status.isCollecting);
+    }
+  }, [analyticsStatusData]);
+
+  // Запускаем сбор аналитики
+  const startCollectingAnalytics = async () => {
+    if (!campaignId) {
+      toast({
+        title: "Ошибка",
+        description: "Не выбрана кампания",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const response = await fetch('/api/analytics/collect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ campaignId })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Сбор аналитики запущен",
+          description: "Процесс может занять некоторое время"
+        });
+        setIsCollectingAnalytics(true);
+        refetchStatus();
+      } else {
+        toast({
+          title: "Ошибка",
+          description: data.message || "Не удалось запустить сбор аналитики",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось запустить сбор аналитики",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Обновляем данные аналитики
+  const refreshAnalytics = () => {
+    refetchPlatformsStats();
+    refetchTopPosts();
+    refetchStatus();
+    
+    toast({
+      title: "Обновление данных",
+      description: "Данные аналитики обновляются"
+    });
+  };
+
+  // Обработчик изменения периода
+  const handlePeriodChange = (newPeriod: number) => {
+    setPeriod(newPeriod);
+  };
+
+  const formatDateFromString = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <h1 className="text-2xl font-bold">Аналитика публикаций</h1>
 
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            {formatDate(dateRange.from)} - {formatDate(dateRange.to)}
+        <Button 
+          className="flex items-center gap-2"
+          onClick={refreshAnalytics}
+          disabled={isCollectingAnalytics}
+          size="sm"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Обновить данные
+        </Button>
+      </div>
+
+      <div className="bg-muted/20 rounded-lg p-4 border flex justify-between items-center">
+        {analyticsStatusData?.status?.lastCollectionTime && !isCollectingAnalytics ? (
+          <div className="text-sm">
+            Последнее обновление: {formatDateFromString(analyticsStatusData.status.lastCollectionTime)}
           </div>
-          <DateRangePicker
-            from={dateRange.from}
-            to={dateRange.to}
-            onSelect={(range) => {
-              if (range?.from && range?.to) {
-                setDateRange({ from: range.from, to: range.to });
-              }
-            }}
-          />
+        ) : (
+          <div className="text-sm">
+            {isCollectingAnalytics ? "Сбор аналитики..." : "Нет данных о последнем обновлении"}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={period === 7 ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handlePeriodChange(7)}
+          >
+            За 7 дней
+          </Button>
+          <Button 
+            variant={period === 30 ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handlePeriodChange(30)}
+          >
+            За 30 дней
+          </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Keywords</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingKeywords ? (
-              <div className="flex items-center">
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                <span>Loading...</span>
+      {analyticsStatusData?.status?.isCollecting && (
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">Сбор аналитики...</div>
+            <div className="text-sm font-medium">{analyticsStatusData.status.progress}%</div>
+          </div>
+          <Progress value={analyticsStatusData.status.progress} className="w-full" />
+        </div>
+      )}
+
+      <Tabs defaultValue="overview" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Обзор</TabsTrigger>
+          <TabsTrigger value="publications">Публикации</TabsTrigger>
+          <TabsTrigger value="platforms">Платформы</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Просмотры</CardTitle>
+                <CardDescription>Общее количество просмотров</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex items-center">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-8 w-8 text-primary" />
+                    <div className="text-3xl font-bold">
+                      {formatNumber(platformsStatsData?.data?.aggregated?.totalViews || 0)}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Вовлеченность</CardTitle>
+                <CardDescription>Средний показатель вовлеченности</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex items-center">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-8 w-8 text-primary" />
+                    <div className="text-3xl font-bold">
+                      {(platformsStatsData?.data?.aggregated?.averageEngagementRate || 0).toFixed(2)}%
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Публикации</CardTitle>
+                <CardDescription>Опубликованные посты</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex items-center">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                ) : (
+                  <div className="text-3xl font-bold">
+                    {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Взаимодействия</CardTitle>
+                <CardDescription>Все взаимодействия с постами</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex items-center">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>Загрузка...</span>
+                  </div>
+                ) : (
+                  <div className="text-3xl font-bold">
+                    {formatNumber(
+                      (platformsStatsData?.data?.aggregated?.totalLikes || 0) +
+                      (platformsStatsData?.data?.aggregated?.totalComments || 0) +
+                      (platformsStatsData?.data?.aggregated?.totalShares || 0)
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Распределение просмотров</CardTitle>
+                <CardDescription>Просмотры по платформам</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2 flex justify-center">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center justify-center h-60">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : getPieChartData().length > 0 ? (
+                  <div className="h-60">
+                    <AnalyticsPieChart data={getPieChartData()} height={250} />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-60 text-muted-foreground">
+                    Нет данных о просмотрах
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Типы вовлеченности</CardTitle>
+                <CardDescription>Распределение по типам взаимодействий</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center justify-center h-60">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : getEngagementChartData().some(item => item.value > 0) ? (
+                  <div className="h-60">
+                    <AnalyticsBarChart data={getEngagementChartData()} height={250} />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-60 text-muted-foreground">
+                    Нет данных о вовлеченности
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="publications" className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Топ по просмотрам</CardTitle>
+                <CardDescription>Посты с наибольшим охватом</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingTopPosts ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {topPostsData?.data?.topByViews && topPostsData.data.topByViews.length > 0 ? (
+                      topPostsData.data.topByViews.map((post, index) => (
+                        <div key={post.id} className="flex flex-col space-y-2 border-b pb-3 last:border-0">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-medium text-sm">
+                                {index + 1}
+                              </div>
+                              <div className="font-semibold">{post.title}</div>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Eye className="h-4 w-4" />
+                              <span className="font-medium">{formatNumber(post.totalViews)}</span>
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground pl-8">
+                            {post.content.length > 80 ? `${post.content.substring(0, 80)}...` : post.content}
+                          </div>
+                          <div className="flex gap-4 pl-8 text-sm">
+                            <div className="flex items-center gap-1">
+                              <ThumbsUp className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.likes || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageSquare className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.comments || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Share2 className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.shares || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-6">
+                        Нет данных о публикациях
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Топ по вовлеченности</CardTitle>
+                <CardDescription>Посты с наибольшим взаимодействием</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingTopPosts ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {topPostsData?.data?.topByEngagement && topPostsData.data.topByEngagement.length > 0 ? (
+                      topPostsData.data.topByEngagement.map((post, index) => (
+                        <div key={post.id} className="flex flex-col space-y-2 border-b pb-3 last:border-0">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-medium text-sm">
+                                {index + 1}
+                              </div>
+                              <div className="font-semibold">{post.title}</div>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Zap className="h-4 w-4" />
+                              <span className="font-medium">{post.engagementRate.toFixed(2)}%</span>
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground pl-8">
+                            {post.content.length > 80 ? `${post.content.substring(0, 80)}...` : post.content}
+                          </div>
+                          <div className="flex gap-4 pl-8 text-sm">
+                            <div className="flex items-center gap-1">
+                              <ThumbsUp className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.likes || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageSquare className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.comments || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Share2 className="h-3 w-3" />
+                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
+                                return acc + (platform.analytics?.shares || 0);
+                              }, 0) : 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-6">
+                        Нет данных о публикациях
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="platforms" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isLoadingPlatformsStats ? (
+              <div className="col-span-2 flex justify-center items-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
-              <p className="text-3xl font-bold">{totalKeywords}</p>
+              <>
+                {platformsStatsData?.data?.platforms ? (
+                  Object.entries(platformsStatsData.data.platforms)
+                    .filter(([_, metrics]) => metrics.posts > 0)
+                    .map(([platform, metrics]) => (
+                      <Card key={platform} className="overflow-hidden">
+                        <CardHeader>
+                          <CardTitle className="capitalize flex items-center gap-2">
+                            {platform === 'telegram' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#2AABEE"><path d="M22.17,3.32c-0.15,0.07-0.3,0.14-0.45,0.2c-1.3,0.55-2.6,1.11-3.9,1.66c-1.8,0.77-3.61,1.52-5.41,2.28 c-1.87,0.79-3.73,1.58-5.6,2.37c-0.12,0.05-0.16,0.12-0.16,0.25c0.03,0.63,0.02,1.27,0.01,1.9c0,0.9-0.01,1.8,0,2.7 c0,0.96,0,1.92,0.01,2.89c0.01,0.03,0.01,0.05,0.02,0.08c0.01,0.07,0.04,0.09,0.12,0.05c0.34-0.17,0.68-0.33,1.02-0.49 c0.67-0.33,1.34-0.66,2.02-0.98c0.39-0.19,0.78-0.37,1.16-0.56c0.8-0.39,1.61-0.79,2.41-1.18c0.57-0.28,1.15-0.56,1.72-0.84 c0.35-0.17,0.71-0.34,1.06-0.52c0.52-0.25,1.04-0.51,1.55-0.76c0.63-0.31,1.26-0.62,1.89-0.92c0.06-0.03,0.09-0.05,0.15-0.02 c0.02,0.01,0.06,0.02,0.08,0.01c0.02-0.01,0.04-0.05,0.04-0.08c0-0.04-0.03-0.06-0.05-0.07c-0.03-0.03-0.07-0.05-0.11-0.07 c-0.01,0-0.02-0.01-0.03-0.01c-0.19-0.15-0.38-0.29-0.57-0.44c-0.34-0.26-0.69-0.53-1.03-0.79c-0.71-0.55-1.43-1.1-2.14-1.65 c-0.59-0.45-1.18-0.91-1.77-1.36c-0.63-0.49-1.26-0.97-1.89-1.46c-0.67-0.51-1.35-1.03-2.02-1.55c-0.02-0.01-0.04-0.04-0.06-0.06 c-0.01-0.01-0.02-0.03-0.05-0.02c-0.03,0.02,0,0.05,0,0.07c0.03,0.16,0.05,0.32,0.08,0.49c0.16,0.92,0.32,1.85,0.48,2.77 c0.16,0.95,0.33,1.9,0.49,2.85c0.13,0.75,0.26,1.5,0.39,2.25c0.15,0.88,0.3,1.77,0.45,2.65c0.17,0.97,0.33,1.94,0.5,2.91 c0.16,0.92,0.32,1.84,0.48,2.76c0.01,0.08,0.04,0.11,0.12,0.08c0.09-0.03,0.19-0.06,0.28-0.09c0.92-0.31,1.84-0.61,2.76-0.92 c0.04-0.01,0.07-0.03,0.09-0.07c0.08-0.17,0.16-0.34,0.24-0.5c0.15-0.31,0.3-0.62,0.45-0.93c0.08-0.17,0.17-0.33,0.25-0.5 c0.05-0.09,0.1-0.18,0.15-0.28c0.01-0.02,0.02-0.04,0.03-0.07c0.02-0.04,0-0.08-0.04-0.1c-0.03-0.02-0.06-0.02-0.09,0 c-0.1,0.06-0.21,0.11-0.31,0.17c-0.42,0.23-0.84,0.45-1.26,0.68c-0.29,0.16-0.58,0.31-0.87,0.47c-0.46,0.25-0.93,0.5-1.39,0.75 c-0.33,0.18-0.66,0.36-0.99,0.53c-0.13,0.07-0.21,0.05-0.25-0.09c-0.08-0.29-0.16-0.58-0.23-0.87c-0.12-0.47-0.24-0.94-0.36-1.41 c-0.18-0.72-0.37-1.44-0.55-2.16c-0.16-0.65-0.33-1.29-0.49-1.94c-0.15-0.58-0.3-1.16-0.44-1.74c-0.2-0.8-0.4-1.6-0.6-2.39 c-0.16-0.64-0.32-1.28-0.48-1.92c-0.17-0.66-0.33-1.32-0.5-1.98c-0.02-0.1-0.05-0.19-0.07-0.29c-0.01-0.04-0.03-0.06-0.08-0.07 c-0.03,0-0.06,0-0.09,0c-0.05,0-0.06,0.03-0.06,0.07c0,0.09,0,0.18,0,0.28c0,1.01,0,2.02,0,3.02c0,0.88,0,1.77,0,2.65 c0,0.96,0,1.92,0,2.89c0,0.74,0,1.49,0,2.23c0,0.74,0,1.47,0,2.21c0,0.58,0,1.16,0,1.74c0,0.04,0,0.09,0,0.13 c0,0.05,0.02,0.07,0.06,0.07c0.01,0,0.03,0,0.04,0c0.07-0.02,0.12-0.07,0.16-0.13c0.15-0.22,0.29-0.44,0.44-0.66 c0.19-0.28,0.38-0.56,0.57-0.85c0.25-0.37,0.5-0.75,0.75-1.12c0.27-0.4,0.54-0.79,0.8-1.19c0.27-0.4,0.54-0.8,0.8-1.21 c0.27-0.41,0.54-0.83,0.82-1.24c0.25-0.38,0.5-0.76,0.75-1.14c0.25-0.38,0.5-0.77,0.75-1.15c0.24-0.37,0.49-0.74,0.73-1.11 c0.16-0.24,0.31-0.48,0.47-0.72c0.03-0.05,0.04-0.1,0.01-0.15c-0.15-0.31-0.29-0.62-0.44-0.93c-0.16-0.33-0.31-0.66-0.47-0.98 c-0.08-0.16-0.15-0.32-0.23-0.48c-0.07-0.15-0.14-0.29-0.22-0.44c-0.09-0.19-0.18-0.38-0.27-0.57c-0.16-0.32-0.31-0.65-0.47-0.97 c-0.16-0.33-0.32-0.67-0.48-1c-0.1-0.21-0.21-0.42-0.31-0.64c-0.12-0.25-0.24-0.5-0.37-0.74c-0.13-0.27-0.26-0.53-0.39-0.8 c-0.06-0.11-0.11-0.22-0.17-0.32c-0.02-0.04-0.05-0.06-0.1-0.04c-0.09,0.03-0.18,0.06-0.27,0.09c-0.01,0-0.02,0.01-0.03,0.01 c-0.57,0.19-1.13,0.38-1.7,0.57c-0.23,0.08-0.46,0.15-0.69,0.23c-0.91,0.3-1.81,0.61-2.72,0.91c-0.48,0.16-0.95,0.32-1.43,0.48 c-0.74,0.25-1.48,0.5-2.22,0.74c-0.1,0.03-0.11,0.05-0.1,0.16c0.02,0.32,0.06,0.64,0.09,0.96c0.01,0.03,0.02,0.05,0.04,0.06 c0.08,0.04,0.16,0.09,0.24,0.13c0.46,0.23,0.91,0.47,1.37,0.7c0.61,0.31,1.22,0.63,1.84,0.94c0.3,0.15,0.6,0.31,0.9,0.46 c0.5,0.26,1,0.51,1.5,0.77c0.28,0.14,0.56,0.29,0.84,0.43c0.42,0.22,0.85,0.43,1.27,0.65c0.24,0.12,0.48,0.25,0.72,0.37 c0.25,0.13,0.49,0.25,0.74,0.38c0.22,0.11,0.44,0.23,0.66,0.34c0.25,0.13,0.5,0.26,0.75,0.38c0.18,0.09,0.36,0.19,0.54,0.28 c0.27,0.14,0.54,0.28,0.81,0.42c0.16,0.08,0.32,0.16,0.48,0.25c0.26,0.13,0.51,0.26,0.77,0.39c0.11,0.06,0.21,0.11,0.32,0.17 c0.24,0.12,0.49,0.25,0.73,0.37c0.12,0.06,0.24,0.13,0.36,0.19c0.06,0.03,0.08,0.03,0.14,0c0.19-0.09,0.38-0.18,0.57-0.27 c0.94-0.44,1.88-0.88,2.82-1.33c0.5-0.24,1-0.47,1.49-0.71c0.2-0.09,0.4-0.19,0.6-0.28c0.2-0.09,0.4-0.19,0.6-0.28 c0.19-0.09,0.38-0.18,0.57-0.27c0.95-0.45,1.91-0.9,2.86-1.35c0.82-0.39,1.65-0.78,2.47-1.17c0.91-0.43,1.83-0.86,2.74-1.3 c0.93-0.44,1.86-0.88,2.79-1.32c0.88-0.41,1.75-0.83,2.63-1.24c0.35-0.17,0.7-0.33,1.05-0.5c0.07-0.03,0.09-0.07,0.08-0.14 c-0.01-0.16-0.01-0.32,0-0.48c0.01-0.12-0.02-0.25-0.04-0.37c-0.01-0.06-0.04-0.09-0.1-0.09c-0.1,0-0.19,0-0.29,0 c-2.02,0-4.04,0-6.06,0C22.17,3.32,22.17,3.32,22.17,3.32z"></path></svg>
+                            )}
+                            {platform === 'vk' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#4C75A3"><path d="M21.547,7h-0.03c-0.65,0-1.147,0.433-1.317,1.026c-0.6,1.94-2.035,4.194-3.952,4.344 c0.129-2.772,0.73-6.555,3.566-7.163C20.435,5.068,20.999,5.5,21.547,5.5c0.828,0,1.5-0.672,1.5-1.5S22.375,2.5,21.547,2.5 c-1.572,0-2.945,1.016-3.43,2.487c-3.757,1.233-4.366,7.029-4.369,10.899C13.69,16.048,13.5,16.169,13.5,16.5v3 c0,1.103,0.897,2,2,2h5c1.103,0,2-0.897,2-2v-3c0-0.304-0.068-0.59-0.188-0.847c2.03-1.44,2.959-4.048,3.039-4.25 c0.168-0.602,0.684-0.916,1.196-0.916h0.03c0.828,0,1.5-0.672,1.5-1.5S22.375,7,21.547,7z"></path><path d="M7.5,13.5h-1V19h1c0.553,0,1-0.447,1-1v-3.5C8.5,13.947,8.053,13.5,7.5,13.5z"></path><path d="M10.47,2.049c0.331,0.142,0.514,0.5,0.514,0.914V8.5c0,0.276,0.224,0.5,0.5,0.5s0.5-0.224,0.5-0.5V2.963 c0-0.75-0.356-1.442-0.949-1.862C10.752,0.87,10.424,0.71,10.094,0.57C9.376,0.244,8.5,0.75,8.5,1.5v1.463 C8.5,3.602,9.262,4.31,10.47,2.049z"></path><path d="M5,9.5h1c0.553,0,1-0.447,1-1v-1c0-0.553-0.447-1-1-1H5c-0.553,0-1,0.447-1,1v1C4,9.053,4.447,9.5,5,9.5z"></path><path d="M5.5,11.5c-1.103,0-2,0.897-2,2V18c0,0.553,0.447,1,1,1h1c0.553,0,1-0.447,1-1v-4.5C6.5,12.397,6.103,11.5,5.5,11.5z"></path></svg>
+                            )}
+                            {platform === 'facebook' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3b5998"><path d="M20,3H4C3.447,3,3,3.448,3,4v16c0,0.552,0.447,1,1,1h8.615v-6.96h-2.338v-2.725h2.338v-2c0-2.325,1.42-3.592,3.5-3.592 c0.699-0.002,1.399,0.034,2.095,0.107v2.42h-1.435c-1.128,0-1.348,0.538-1.348,1.325v1.735h2.697l-0.35,2.725h-2.348V21H20 c0.553,0,1-0.448,1-1V4C21,3.448,20.553,3,20,3z"></path></svg>
+                            )}
+                            {platform === 'instagram' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M 12 3 C 7.041 3 3 7.041 3 12 C 3 16.959 7.041 21 12 21 C 16.959 21 21 16.959 21 12 C 21 7.041 16.959 3 12 3 z M 12 5 C 16.004 5 19 7.998 19 12 C 19 16.002 16.004 19 12 19 C 7.996 19 5 16.002 5 12 C 5 7.998 7.996 5 12 5 z M 18 6 C 18 7.104 17.104 8 16 8 C 14.896 8 14 7.104 14 6 C 14 4.896 14.896 4 16 4 C 17.104 4 18 4.896 18 6 z M 12 7 C 9.255 7 7 9.255 7 12 C 7 14.745 9.255 17 12 17 C 14.745 17 17 14.745 17 12 C 17 9.255 14.745 7 12 7 z M 12 9 C 13.675 9 15 10.325 15 12 C 15 13.675 13.675 15 12 15 C 10.325 15 9 13.675 9 12 C 9 10.325 10.325 9 12 9 z"></path></svg>
+                            )}
+                            {platform}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Публикации</div>
+                              <div className="text-2xl font-bold">{metrics.posts}</div>
+                            </div>
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Просмотры</div>
+                              <div className="text-2xl font-bold">{formatNumber(metrics.views)}</div>
+                            </div>
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Лайки</div>
+                              <div className="text-2xl font-bold">{formatNumber(metrics.likes)}</div>
+                            </div>
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Комментарии</div>
+                              <div className="text-2xl font-bold">{formatNumber(metrics.comments)}</div>
+                            </div>
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Репосты</div>
+                              <div className="text-2xl font-bold">{formatNumber(metrics.shares)}</div>
+                            </div>
+                            <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
+                              <div className="text-sm text-muted-foreground">Вовлеченность</div>
+                              <div className="text-2xl font-bold">{metrics.engagementRate.toFixed(2)}%</div>
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <Progress value={metrics.engagementRate * 10} max={100} className="h-2" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                ) : (
+                  <div className="col-span-2 text-center text-muted-foreground">
+                    Нет данных о платформах
+                  </div>
+                )}
+              </>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Campaigns</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{campaigns?.length || 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Contents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingContent ? (
-              <div className="flex items-center">
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                <span>Loading...</span>
+          </div>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle>Запуск сбора аналитики</CardTitle>
+                <Button 
+                  onClick={startCollectingAnalytics}
+                  disabled={isCollectingAnalytics || !campaignId}
+                >
+                  {isCollectingAnalytics ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Сбор данных...
+                    </>
+                  ) : (
+                    'Собрать аналитику'
+                  )}
+                </Button>
               </div>
-            ) : (
-              <p className="text-3xl font-bold">{totalContent}</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              <CardDescription>
+                Обновление аналитики для всех публикаций в текущей кампании
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {isCollectingAnalytics ? (
+                  <div className="space-y-2">
+                    <div>Сбор и обработка данных по публикациям во всех социальных сетях...</div>
+                    <Progress value={analyticsStatusData?.status?.progress || 0} max={100} className="h-2" />
+                    <div className="text-right text-xs">{analyticsStatusData?.status?.progress || 0}%</div>
+                  </div>
+                ) : (
+                  <div>Запустите сбор аналитики, чтобы получить актуальные данные о просмотрах, лайках, комментариях и репостах для всех публикаций в выбранной кампании.</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

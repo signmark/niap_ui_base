@@ -1,123 +1,40 @@
 /**
- * Маршруты для перенаправления запросов генерации изображений 
- * от устаревших эндпоинтов к универсальному интерфейсу
+ * Модуль перенаправления устаревших маршрутов FAL.AI на новые
+ * Обеспечивает совместимость с ранее созданными тестами и интеграциями
  */
 
-import { Express, Request, Response } from 'express';
-import { log } from './utils/logger';
-import { falAiUniversalService } from './services/fal-ai-universal';
-import { storage } from './storage';
-import axios from 'axios';
+import express, { Express } from 'express';
 
-/**
- * Регистрирует маршруты для перенаправления запросов к универсальному интерфейсу
- * @param app Express приложение
- */
+// Создаем маршрутизатор
+const router = express.Router();
+
+// Глобальная переменная для хранения экземпляра Express
+let expressApp: Express;
+
 export function registerFalAiRedirectRoutes(app: Express) {
-  // Middleware для извлечения userId из запроса
-  const extractUserId = (req: Request): string | undefined => {
-    // Выводим все заголовки и ищем x-user-id для отладки
-    console.log("DEBUG Headers:", Object.keys(req.headers).join(", "));
-    
-    // Проверяем все варианты заголовка x-user-id (с разными регистрами)
-    const userIdHeader = 
-      req.headers['x-user-id'] || 
-      req.headers['X-User-Id'] || 
-      req.headers['X-USER-ID'] ||
-      req.headers['x-userid'];
-      
-    // Также проверяем в body.userId, если есть
-    const bodyUserId = req.body?.userId;
-    
-    // Затем свойство userId, установленное middleware
-    const propUserId = (req as any).userId;
-    
-    console.log(`DEBUG UserId sources: header=${userIdHeader}, body=${bodyUserId}, prop=${propUserId}`);
-    
-    return userIdHeader as string || bodyUserId || propUserId;
-  };
-
-  // Прокси-маршрут для перенаправления обычных запросов к универсальному интерфейсу, 
-  // заменяет оригинальный маршрут /api/generate-image
-  app.post('/api/generate-image', async (req: Request, res: Response) => {
-    try {
-      // Детальный вывод всех заголовков запроса
-      console.log("Headers for /api/generate-image:", JSON.stringify(req.headers));
-      
-      const { prompt, negativePrompt, width, height, numImages, modelName, savePrompt, contentId, userId: bodyUserId } = req.body;
-      
-      // Получаем userId и токен из запроса
-      let userId = extractUserId(req) || bodyUserId;
-      const authHeader = req.headers['authorization'] as string;
-      const token = authHeader?.replace('Bearer ', '');
-      
-      // Если userId не найден, но есть токен, попробуем получить userId из токена
-      if (!userId && token) {
-        try {
-          console.log("Attempting to extract userId from token...");
-          // Можно использовать /api/auth/me эндпоинт для получения userId из токена
-          const response = await axios.get(`${req.protocol}://${req.get('host')}/api/auth/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (response.data && response.data.user && response.data.user.id) {
-            userId = response.data.user.id;
-            console.log(`Successfully extracted userId from token: ${userId}`);
-          }
-        } catch (error) {
-          console.log("Failed to extract userId from token:", error);
-        }
-      }
-      
-      console.log(`DEBUG Auth: userId=${userId}, authHeader exists: ${!!authHeader}, token exists: ${!!token}`);
-      
-      log(`[fal-ai-redirect] Получен запрос на универсальную генерацию изображения, модель: ${modelName}`);
-      
-      if (!userId || !token) {
-        return res.status(401).json({
-          success: false,
-          error: "Требуется авторизация для генерации изображений"
-        });
-      }
-      
-      // Вызываем универсальный сервис для генерации изображений
-      const imageUrls = await falAiUniversalService.generateImages({
-        prompt,
-        negativePrompt,
-        width,
-        height,
-        numImages,
-        model: modelName || 'fast-sdxl',
-        token,
-        userId
-      });
-      
-      log(`[fal-ai-redirect] Сгенерировано ${imageUrls.length} изображений через универсальный интерфейс`);
-      
-      // Сохраняем промт, если указан флаг savePrompt и есть contentId
-      if (savePrompt && contentId) {
-        try {
-          log(`[fal-ai-redirect] Сохраняем промт для контента ${contentId}`);
-          await storage.updateCampaignContent(contentId, {
-            prompt
-          });
-        } catch (promptError: any) {
-          log(`[fal-ai-redirect] Ошибка при сохранении промта: ${promptError.message}`);
-          // Продолжаем выполнение даже при ошибке сохранения промта
-        }
-      }
-      
-      return res.json({
-        success: true,
-        data: imageUrls
-      });
-    } catch (error: any) {
-      log(`[fal-ai-redirect] Ошибка при генерации изображений: ${error.message}`);
-      
-      return res.status(500).json({
-        success: false,
-        error: error.message || "Произошла ошибка при генерации изображений"
-      });
-    }
-  });
+  // Сохраняем ссылку на Express приложение для использования в маршрутах
+  expressApp = app;
+  
+  app.use('/', router);
+  console.log('[express] FAL.AI redirect routes registered');
 }
+
+// Маршрут перенаправления с устаревшего (generate-universal-image) на новый (fal-ai-images)
+router.post('/api/generate-universal-image', (req, res) => {
+  console.log('[express] [fal-ai-redirect] Получен запрос на универсальную генерацию изображения, модель:', req.body.model);
+  
+  // Перенаправляем на новый маршрут с сохранением всех параметров
+  req.url = '/api/fal-ai-images';
+  
+  if (expressApp && expressApp._router) {
+    expressApp._router.handle(req, res);
+  } else {
+    console.error('[express] [fal-ai-redirect] Express app не инициализирован');
+    res.status(500).json({
+      success: false,
+      error: 'Внутренняя ошибка сервера при перенаправлении'
+    });
+  }
+});
+
+export default router;

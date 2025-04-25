@@ -47,6 +47,47 @@ interface ImageGenerationDialogProps {
   onClose: () => void;
 }
 
+// Определяем список моделей по умолчанию с Schnell на первом месте
+const DEFAULT_MODELS = [
+  // Schnell как рекомендуемая модель по умолчанию (сверху списка)
+  {
+    id: 'schnell',
+    name: 'Schnell',
+    description: 'Schnell - высококачественная модель для быстрой генерации (рекомендуется)'
+  },
+  // Другие модели
+  {
+    id: 'flux/juggernaut-xl-lora',
+    name: 'Juggernaut Flux Lora',
+    description: 'Топовое качество детализированных изображений'
+  },
+  {
+    id: 'flux/juggernaut-xl-lightning',
+    name: 'Juggernaut Flux Lightning',
+    description: 'Средняя скорость и хорошее качество изображений'
+  },
+  {
+    id: 'flux/flux-lora',
+    name: 'Flux Lora',
+    description: 'Альтернативная модель высокого качества'
+  },
+  {
+    id: 'fooocus',
+    name: 'Fooocus',
+    description: 'Fooocus - мощная модель с продвинутой композицией'
+  },
+  {
+    id: 'sdxl',
+    name: 'Stable Diffusion XL',
+    description: 'Полная версия Stable Diffusion XL'
+  },
+  {
+    id: 'fast-sdxl',
+    name: 'Fast SDXL',
+    description: 'Быстрая версия Stable Diffusion XL'
+  }
+];
+
 export function ImageGenerationDialog({
   campaignId,
   contentId,
@@ -66,11 +107,12 @@ export function ImageGenerationDialog({
   const [platform, setPlatform] = useState<"instagram" | "telegram" | "vk" | "facebook">("instagram");
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-  const [modelType, setModelType] = useState<string>("fast-sdxl"); // По умолчанию используем fast-sdxl для быстрой генерации
+  const [modelType, setModelType] = useState<string>("schnell"); // По умолчанию используем schnell как предпочтительную модель
   const [stylePreset, setStylePreset] = useState<string>("photographic"); // Стиль изображения по умолчанию
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
   const [savePrompt, setSavePrompt] = useState<boolean>(true); // Флаг для сохранения промта в БД
+  const [availableModels, setAvailableModels] = useState<{id: string, name: string, description: string, type?: string}[]>([]); // Список моделей с сервера
   
   // При монтировании компонента и при изменении входных параметров сбрасываем и инициализируем значения
   useEffect(() => {
@@ -93,8 +135,8 @@ export function ImageGenerationDialog({
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
-    // Устанавливаем fast-sdxl как модель по умолчанию, исключая Schnell из списка
-    setModelType("fast-sdxl");
+    // Устанавливаем schnell как модель по умолчанию
+    setModelType("schnell");
     setStylePreset("photographic");
     setNumImages(3);
     setSavePrompt(true);
@@ -153,6 +195,30 @@ export function ImageGenerationDialog({
     }
     
   }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от всех важных параметров
+  
+  // При монтировании компонента загружаем доступные модели FAL.AI
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        // Добавляем случайный параметр для предотвращения кеширования
+        const response = await api.get('/api/fal-ai-models?nocache=' + Date.now());
+        if (response.data?.success && response.data?.models) {
+          console.log('Загружены модели для генерации:', response.data.models);
+          
+          // Подробное логирование моделей для отладки
+          response.data.models.forEach((model: any, index: number) => {
+            console.log(`Модель ${index + 1}:`, model.id, model.name, model.description);
+          });
+          
+          setAvailableModels(response.data.models);
+        }
+      } catch (error) {
+        console.error('Ошибка при получении списка моделей:', error);
+      }
+    };
+
+    fetchModels();
+  }, []); // Выполняем только один раз при монтировании компонента
   
   const { toast } = useToast();
   
@@ -816,14 +882,23 @@ export function ImageGenerationDialog({
                '(детализированная)'}
             </span>
           </Label>
-          <Select value={modelType} onValueChange={(value) => setModelType(value)}>
+          <Select 
+            value={modelType} 
+            onValueChange={(value) => {
+              setModelType(value);
+              console.log(`Выбрана модель: ${value}`);
+            }}
+          >
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Выберите модель" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
-              <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Flux (Schnell)</SelectItem>
+              {/* Всегда используем локальный список моделей из константы DEFAULT_MODELS */}
+              {DEFAULT_MODELS.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  {model.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

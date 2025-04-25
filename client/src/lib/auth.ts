@@ -220,3 +220,24 @@ export const logout = async () => {
     throw error;
   }
 };
+
+/**
+ * Получает текущий токен аутентификации из localStorage
+ * Используется для API запросов, требующих авторизации
+ * @returns Promise<string> Токен доступа
+ */
+export const getToken = async (): Promise<string> => {
+  const token = localStorage.getItem('auth_token');
+  
+  // Если токен отсутствует, попробуем обновить его
+  if (!token) {
+    try {
+      return await refreshAccessToken();
+    } catch (error) {
+      console.error('Не удалось получить токен аутентификации:', error);
+      throw new Error('Токен аутентификации недоступен');
+    }
+  }
+  
+  return token;
+};
