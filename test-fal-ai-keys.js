@@ -8,7 +8,7 @@
  */
 
 // Импортируем библиотеку
-import { FAL } from '@fal-ai/serverless-client';
+import * as fal from '@fal-ai/serverless-client';
 
 // Получаем ключ API из командной строки или из переменной окружения
 let apiKey = process.argv[2] || process.env.FAL_AI_API_KEY;
@@ -31,12 +31,12 @@ async function testFalApi() {
   }
   
   // Маскируем ключ для логов
-  const maskedKey = `Key ${apiKey.substring(4, 8)}...`;
+  const maskedKey = `${apiKey.substring(0, 8)}...`;
   console.log(`Используемый API ключ (маскирован): ${maskedKey}`);
   
   try {
     // Настраиваем клиент FAL.AI с ключом
-    const falClient = new FAL({
+    fal.config({
       credentials: apiKey,
       proxyUrl: "https://hub.fal.ai" // Использование прокси для обхода проблем с DNS
     });
@@ -44,7 +44,7 @@ async function testFalApi() {
     console.log('\nПытаемся получить доступные модели...');
     
     // Попытка выполнить простой запрос для проверки работы API
-    const result = await falClient.subscribe("fal-ai/schnell", {
+    const result = await fal.subscribe("fal-ai/schnell", {
       input: {
         prompt: "A cute cat with blue eyes",
         negative_prompt: "",
