@@ -71,6 +71,10 @@ export function ImageGenerationDialog({
   const [numImages, setNumImages] = useState<number>(3); // Количество изображений для генерации (по умолчанию 3)
   const [generatedPrompt, setGeneratedPrompt] = useState<string>(""); // Сохраняем сгенерированный промт
   const [savePrompt, setSavePrompt] = useState<boolean>(true); // Флаг для сохранения промта в БД
+  const [availableModels, setAvailableModels] = useState<{id: string, name: string, description: string, type?: string}[]>([]); // Список моделей с сервера
+  const [fps, setFps] = useState<number>(24); // Кадров в секунду для видео
+  const [duration, setDuration] = useState<number>(3); // Длительность видео в секундах
+  const [isVideoModel, setIsVideoModel] = useState<boolean>(false); // Флаг для определения типа модели (видео или изображение)
   
   // При монтировании компонента и при изменении входных параметров сбрасываем и инициализируем значения
   useEffect(() => {
@@ -153,6 +157,23 @@ export function ImageGenerationDialog({
     }
     
   }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от всех важных параметров
+  
+  // При монтировании компонента загружаем доступные модели FAL.AI
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await api.get('/api/fal-ai-models');
+        if (response.data?.success && response.data?.models) {
+          console.log('Загружены модели для генерации:', response.data.models);
+          setAvailableModels(response.data.models);
+        }
+      } catch (error) {
+        console.error('Ошибка при получении списка моделей:', error);
+      }
+    };
+
+    fetchModels();
+  }, []); // Выполняем только один раз при монтировании компонента
   
   const { toast } = useToast();
   
@@ -391,6 +412,8 @@ export function ImageGenerationDialog({
         numImages?: number;
         stylePreset?: string;
         savePrompt?: boolean;
+        fps?: number;        // Кадров в секунду для видео
+        duration?: number;   // Длительность видео в секундах
         modelParams?: {
           use_api_path?: boolean;
           direct_urls?: boolean;
@@ -424,8 +447,15 @@ export function ImageGenerationDialog({
           modelName: modelType,
           numImages: numImages, // Используем выбранное пользователем значение
           stylePreset,
-          savePrompt: activeTab === "prompt" ? false : false // Отключаем флаг сохранения на сервере для тестирования моделей
+          savePrompt: activeTab === "prompt" ? false : false, // Отключаем флаг сохранения на сервере для тестирования моделей
         };
+        
+        // Если выбрана видеомодель, добавляем параметры видео
+        if (isVideoModel) {
+          requestData.fps = fps;
+          requestData.duration = duration;
+          console.log(`Добавлены параметры видео: FPS=${fps}, длительность=${duration} сек`);
+        }
         
         // Дополнительное логирование для вкладки тестирования моделей
         if (activeTab === "models") {
@@ -463,6 +493,13 @@ export function ImageGenerationDialog({
             numImages,
             savePrompt: false // Отключаем флаг сохранения на сервере, так как мы уже сохранили
           };
+          
+          // Если выбрана видеомодель, добавляем параметры видео
+          if (isVideoModel) {
+            requestData.fps = fps;
+            requestData.duration = duration;
+            console.log(`Добавлены параметры видео для текстового режима: FPS=${fps}, длительность=${duration} сек`);
+          }
         } else {
           // Если промт еще не был сгенерирован
           console.log("Генерация нового промта на основе текста через DeepSeek");
@@ -816,14 +853,47 @@ export function ImageGenerationDialog({
                '(детализированная)'}
             </span>
           </Label>
-          <Select value={modelType} onValueChange={(value) => setModelType(value)}>
+          <Select 
+            value={modelType} 
+            onValueChange={(value) => {
+              setModelType(value);
+              
+              // Проверяем, является ли выбранная модель видеомоделью
+              const selectedModel = availableModels.find(m => m.id === value);
+              const isVideo = selectedModel?.type === 'video';
+              setIsVideoModel(isVideo);
+              
+              // Если выбрана видеомодель, устанавливаем количество изображений в 1
+              if (isVideo) {
+                setNumImages(1);
+              }
+              
+              console.log(`Выбрана модель: ${value}, тип: ${isVideo ? 'видео' : 'изображение'}`);
+            }}
+          >
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Выберите модель" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
-              <SelectItem value="fooocus">Fooocus</SelectItem>
-              <SelectItem value="schnell">Flux (Schnell)</SelectItem>
+              {availableModels.length > 0 ? (
+                availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex flex-col">
+                      <span>{model.name}</span>
+                      {model.type === 'video' && (
+                        <span className="text-xs text-green-600 font-semibold">ВИДЕО</span>
+                      )}
+                      <span className="text-xs text-gray-500">{model.description}</span>
+                    </div>
+                  </SelectItem>
+                ))
+              ) : (
+                <>
+                  <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
+                  <SelectItem value="fooocus">Fooocus</SelectItem>
+                  <SelectItem value="schnell">Flux (Schnell)</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -848,6 +918,43 @@ export function ImageGenerationDialog({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Параметры видео - отображаются только при выборе видеомодели */}
+        {isVideoModel && (
+          <div className="mt-2 space-y-3 border p-3 rounded-md border-green-200 bg-green-50">
+            <h4 className="text-sm font-medium text-green-700">Параметры видео</h4>
+            
+            <div className="space-y-1">
+              <Label className="text-xs">Кадров в секунду (FPS)</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="number"
+                  min={12}
+                  max={30}
+                  value={fps}
+                  onChange={(e) => setFps(Math.max(12, Math.min(30, parseInt(e.target.value) || 24)))}
+                  className="w-16 h-8 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">(от 12 до 30)</span>
+              </div>
+            </div>
+            
+            <div className="space-y-1">
+              <Label className="text-xs">Длительность (сек)</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={duration}
+                  onChange={(e) => setDuration(Math.max(1, Math.min(5, parseInt(e.target.value) || 3)))}
+                  className="w-16 h-8 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">(от 1 до 5)</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => {
