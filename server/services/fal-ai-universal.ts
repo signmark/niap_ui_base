@@ -292,10 +292,10 @@ class FalAiUniversalService {
             model: model,
             token: cleanKey,
             prompt: options.prompt,
-            negativePrompt: options.negativePrompt, // Pass this to official client which will map it internally
+            negative_prompt: options.negativePrompt, // Pass this to official client which will map it internally
             width: options.width,
             height: options.height,
-            numImages: options.numImages // Pass this to official client which will map it internally
+            num_images: options.numImages // Pass this to official client which will map it internally
           });
         } catch (officialError: any) {
           console.error(`[fal-ai-universal] Ошибка при использовании официального клиента: ${officialError.message}`);
