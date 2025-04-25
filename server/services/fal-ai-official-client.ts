@@ -3,8 +3,8 @@
  * Основан на официальной библиотеке для максимальной совместимости
  */
 
-import * as falClient from '@fal-ai/client';
-import { apiKeyService } from './api-key-service';
+import { fal, createFalClient } from '@fal-ai/client';
+import { apiKeyService } from './api-keys';
 
 export interface OfficialGenerateOptions {
   prompt: string;                // Промт для генерации
@@ -20,73 +20,6 @@ export interface OfficialGenerateOptions {
 }
 
 class FalAiOfficialClient {
-  /**
-   * Инициализирует SDK FAL.AI с API ключом
-   * @param apiKey API ключ FAL.AI
-   */
-  private initializeClient(apiKey: string): void {
-    // Удаляем префиксы, если они есть
-    let cleanKey = apiKey.trim();
-    if (cleanKey.startsWith('Key ')) {
-      cleanKey = cleanKey.substring(4).trim();
-    }
-    if (cleanKey.startsWith('Bearer ')) {
-      cleanKey = cleanKey.substring(7).trim();
-    }
-    
-    console.log('[fal-ai-official] Инициализация SDK с API ключом');
-    
-    falClient.setup({
-      credentials: cleanKey,
-    });
-  }
-  
-  /**
-   * Получает модель FAL.AI по имени
-   * @param modelName Имя модели
-   * @returns Объект модели или строка с именем
-   */
-  private getModelId(modelName: string): string {
-    // Если модель начинается с flux/, сохраняем полное имя
-    return modelName;
-  }
-  
-  /**
-   * Нормализует параметры запроса для различных моделей
-   * @param modelName Имя модели
-   * @param options Параметры генерации
-   * @returns Параметры, адаптированные для конкретной модели
-   */
-  private normalizeParams(modelName: string, options: OfficialGenerateOptions): any {
-    const baseParams: any = {
-      prompt: options.prompt,
-    };
-    
-    // Добавляем негативный промт, если он указан
-    if (options.negativePrompt) {
-      baseParams.negative_prompt = options.negativePrompt;
-    }
-    
-    // Добавляем размеры, если они указаны
-    if (options.width && options.height) {
-      baseParams.width = options.width;
-      baseParams.height = options.height;
-    }
-    
-    // Добавляем количество изображений, если оно указано
-    if (options.numImages) {
-      baseParams.num_images = options.numImages;
-    }
-    
-    // Для моделей Flux может потребоваться другой формат запроса
-    if (modelName.startsWith('flux/')) {
-      // Параметры для моделей Flux могут отличаться
-      console.log(`[fal-ai-official] Используем специальные параметры для модели Flux: ${modelName}`);
-    }
-    
-    return baseParams;
-  }
-  
   /**
    * Проверяет, является ли строка URL изображения
    * @param url Строка для проверки
@@ -202,24 +135,50 @@ class FalAiOfficialClient {
         throw new Error('Отсутствует токен или userId для получения API ключа');
       }
       
-      // Инициализируем клиент с API ключом
-      this.initializeClient(apiKey);
+      // Создаем параметры запроса
+      const input: any = {
+        prompt: options.prompt,
+      };
       
-      // Получаем ID модели
-      const modelId = this.getModelId(options.model);
+      // Добавляем негативный промт, если он указан
+      if (options.negativePrompt) {
+        input.negative_prompt = options.negativePrompt;
+      }
       
-      // Нормализуем параметры для конкретной модели
-      const params = this.normalizeParams(options.model, options);
+      // Добавляем размеры, если они указаны
+      if (options.width && options.height) {
+        input.width = options.width;
+        input.height = options.height;
+      }
       
-      console.log(`[fal-ai-official] Вызов API для модели ${modelId} с параметрами:`, params);
+      // Добавляем количество изображений, если оно указано
+      if (options.numImages) {
+        input.num_images = options.numImages;
+      }
       
-      // Вызываем API с использованием официального SDK
-      const result = await falClient.run({
-        modelId: modelId,
-        input: params,
+      console.log(`[fal-ai-official] Вызов API для модели ${options.model} с параметрами:`, input);
+      
+      // Очищаем API ключ от префиксов
+      let cleanKey = apiKey.trim();
+      if (cleanKey.startsWith('Key ')) {
+        cleanKey = cleanKey.substring(4).trim();
+      }
+      if (cleanKey.startsWith('Bearer ')) {
+        cleanKey = cleanKey.substring(7).trim();
+      }
+      
+      // Настраиваем клиент с API ключом
+      fal.config({
+        credentials: cleanKey,
       });
       
-      console.log(`[fal-ai-official] Получен ответ от API для модели ${modelId}`);
+      // Вызываем API с использованием официального SDK
+      const result = await fal.run({
+        modelId: options.model,
+        input,
+      });
+      
+      console.log(`[fal-ai-official] Получен ответ от API для модели ${options.model}`);
       
       // Извлекаем URL изображений из ответа
       return this.extractImageUrls(result);
