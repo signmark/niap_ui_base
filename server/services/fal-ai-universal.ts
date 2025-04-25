@@ -178,9 +178,17 @@ class FalAiUniversalService {
         console.log(`[fal-ai-universal] Пробуем прямой клиент для модели ${model}`);
         
         try {
+          // Для прямого API может потребоваться другой формат ключа
+          let directApiKey = apiKey;
+          // Если ключ не имеет префикса, добавим его для прямого API
+          if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+            directApiKey = `Key ${directApiKey}`;
+            console.log('[fal-ai-universal] Добавлен префикс Key для прямого API');
+          }
+          
           return await falAiDirectClient.generateImages({
             model: model,
-            apiKey: apiKey, // Для прямого API нужен ключ с префиксом "Key"
+            apiKey: directApiKey,
             prompt: options.prompt,
             negative_prompt: options.negativePrompt,
             width: options.width,
@@ -198,9 +206,17 @@ class FalAiUniversalService {
       console.log(`[fal-ai-universal] Классическая модель (${model}), используем прямой клиент`);
       
       try {
+        // Для прямого API может потребоваться другой формат ключа
+        let directApiKey = apiKey;
+        // Если ключ не имеет префикса, добавим его для прямого API
+        if (!directApiKey.startsWith('Key ') && !directApiKey.startsWith('Bearer ')) {
+          directApiKey = `Key ${directApiKey}`;
+          console.log('[fal-ai-universal] Добавлен префикс Key для прямого API');
+        }
+        
         return await falAiDirectClient.generateImages({
           model: model,
-          apiKey: apiKey,
+          apiKey: directApiKey,
           prompt: options.prompt,
           negative_prompt: options.negativePrompt,
           width: options.width,

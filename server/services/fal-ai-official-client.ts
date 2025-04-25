@@ -32,16 +32,28 @@ export class FalAiOfficialClient {
       throw new Error('API ключ не может быть пустым');
     }
     
-    // Добавляем префикс 'Key ' к API ключу, если его еще нет
-    const formattedKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
-    console.log(`[fal-ai-official] Ключ отформатирован ${apiKey.startsWith('Key ') ? '(сохранен префикс)' : '(добавлен префикс Key)'}`);
+    // Удаляем любые префиксы для работы с SDK
+    let cleanKey = apiKey.trim();
+    
+    // Удаляем префикс "Key " или "Bearer " если он есть
+    if (cleanKey.startsWith('Key ')) {
+      cleanKey = cleanKey.substring(4).trim();
+    } else if (cleanKey.startsWith('Bearer ')) {
+      cleanKey = cleanKey.substring(7).trim();
+    }
+    
+    console.log('[fal-ai-official] Ключ обработан для инициализации SDK');
 
-    // Настраиваем официальный клиент FAL.AI
-    fal.config({
-      credentials: formattedKey,
-      // Используем прокси для обхода проблем с DNS
-      proxyUrl: 'https://hub.fal.ai'
-    });
+    // Настраиваем официальный клиент FAL.AI с ЧИСТЫМ ключом (без префикса)
+    try {
+      fal.config({
+        credentials: cleanKey
+      });
+      console.log('[fal-ai-official] Клиент успешно инициализирован');
+    } catch (error) {
+      console.error(`[fal-ai-official] Ошибка при инициализации клиента: ${(error as Error).message}`);
+      throw error;
+    }
 
     this.initialized = true;
     console.log('[fal-ai-official] Клиент успешно инициализирован');
