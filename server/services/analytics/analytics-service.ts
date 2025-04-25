@@ -357,11 +357,8 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
     
     // Добавляем фильтр по кампании, если он указан
     if (campaignId) {
-      // Проверяем оба возможных имени поля (campaign_id или campaign)
-      filter._or = [
-        { campaign_id: { _eq: campaignId } },
-        { campaign: { _eq: campaignId } }
-      ];
+      // Используем только поле campaign_id
+      filter.campaign_id = { _eq: campaignId };
     }
     
     // Если указан период, добавляем фильтр по дате публикации
@@ -377,7 +374,7 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
     // Получаем все опубликованные посты
     const posts = await directusCrud.searchItems('campaign_content', {
       filter,
-      fields: ['id', 'title', 'content', 'campaign_id', 'campaign', 'social_platforms', 'created_at']
+      fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
     });
     
     // Обрабатываем посты для вычисления общего количества просмотров и вовлеченности
@@ -414,7 +411,7 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
         content: post.content,
         imageUrl: post.image_url,
         createdAt: post.created_at,
-        campaignId: post.campaign_id || post.campaign,
+        campaignId: post.campaign_id,
         totalViews,
         totalEngagement,
         engagementRate,
@@ -458,11 +455,8 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     
     // Добавляем фильтр по кампании, если он указан
     if (campaignId) {
-      // Проверяем оба возможных имени поля (campaign_id или campaign)
-      filter._or = [
-        { campaign_id: { _eq: campaignId } },
-        { campaign: { _eq: campaignId } }
-      ];
+      // Используем только поле campaign_id
+      filter.campaign_id = { _eq: campaignId };
     }
     
     // Если указан период, добавляем фильтр по дате публикации
@@ -478,28 +472,12 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     // Получаем все опубликованные посты
     const posts = await directusCrud.searchItems('campaign_content', {
       filter,
-      fields: ['id', 'social_platforms', 'created_at']
+      fields: ['id', 'campaign_id', 'social_platforms', 'created_at']
     });
     
-    // Инициализируем структуру для хранения метрик по платформам
-    const platforms: Record<string, {
-      posts: number,
-      views: number,
-      likes: number,
-      comments: number,
-      shares: number,
-      engagement: number,
-      engagementRate: number
-    }> = {
-      telegram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      vk: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      instagram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 }
-    };
-    
-    // Агрегированные метрики по всем платформам
+    // Начальные значения для агрегированных метрик
     const aggregated: AggregatedMetrics = {
-      totalPosts: 0,
+      totalPosts: posts.length,
       totalViews: 0,
       totalLikes: 0,
       totalComments: 0,
@@ -509,10 +487,47 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       platformDistribution: {}
     };
     
-    // Обрабатываем посты для агрегации метрик по платформам
+    // Статистика по каждой платформе
+    const platformStats: Record<string, any> = {
+      telegram: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      vk: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      instagram: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      facebook: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      }
+    };
+    
+    // Обрабатываем каждый пост
     posts.forEach(post => {
       if (!post.social_platforms) return;
       
+      // Обрабатываем каждую платформу
       Object.keys(post.social_platforms).forEach(platform => {
         const platformData = post.social_platforms[platform];
         
@@ -522,22 +537,22 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         }
         
         // Увеличиваем счетчик постов для платформы
-        platforms[platform].posts += 1;
-        aggregated.totalPosts += 1;
+        platformStats[platform].posts++;
         
-        // Добавляем метрики
+        // Суммируем метрики
         const views = platformData.analytics.views || 0;
         const likes = platformData.analytics.likes || 0;
         const comments = platformData.analytics.comments || 0;
         const shares = platformData.analytics.shares || 0;
         const engagement = likes + comments + shares;
         
-        platforms[platform].views += views;
-        platforms[platform].likes += likes;
-        platforms[platform].comments += comments;
-        platforms[platform].shares += shares;
-        platforms[platform].engagement += engagement;
+        platformStats[platform].views += views;
+        platformStats[platform].likes += likes;
+        platformStats[platform].comments += comments;
+        platformStats[platform].shares += shares;
+        platformStats[platform].engagement += engagement;
         
+        // Добавляем к общим метрикам
         aggregated.totalViews += views;
         aggregated.totalLikes += likes;
         aggregated.totalComments += comments;
@@ -547,25 +562,26 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     });
     
     // Вычисляем коэффициенты вовлеченности для каждой платформы
-    Object.keys(platforms).forEach(platform => {
-      if (platforms[platform].views > 0) {
-        platforms[platform].engagementRate = (platforms[platform].engagement / platforms[platform].views) * 100;
-      }
+    Object.keys(platformStats).forEach(platform => {
+      const stats = platformStats[platform];
+      stats.engagementRate = stats.views > 0 ? (stats.engagement / stats.views) * 100 : 0;
     });
     
     // Вычисляем средний коэффициент вовлеченности
-    if (aggregated.totalViews > 0) {
-      aggregated.averageEngagementRate = (aggregated.totalEngagement / aggregated.totalViews) * 100;
-    }
+    aggregated.averageEngagementRate = aggregated.totalViews > 0 ? 
+      (aggregated.totalEngagement / aggregated.totalViews) * 100 : 0;
     
-    // Формируем распределение по платформам для возврата
-    aggregated.platformDistribution = platforms;
+    // Заполняем распределение по платформам
+    aggregated.platformDistribution = platformStats;
     
-    return { platforms, aggregated };
+    return {
+      platforms: platformStats,
+      aggregated
+    };
   } catch (error: any) {
     log.error(`[analytics-service] Ошибка получения статистики платформ: ${error.message}`);
-    return { 
-      platforms: {}, 
+    return {
+      platforms: {},
       aggregated: {
         totalPosts: 0,
         totalViews: 0,
@@ -575,7 +591,7 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         totalEngagement: 0,
         averageEngagementRate: 0,
         platformDistribution: {}
-      } 
+      }
     };
   }
 }
