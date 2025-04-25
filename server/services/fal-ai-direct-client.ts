@@ -136,15 +136,22 @@ export class FalAiDirectClient {
   
   /**
    * Форматирует API ключ в правильный формат для FAL.AI
+   * Согласно документации https://docs.fal.ai/, ключ должен быть в формате "Key {key}"
    */
   private formatApiKey(apiKey: string): string {
     if (!apiKey) return '';
     
-    if (!apiKey.startsWith('Key ') && apiKey.includes(':')) {
-      return `Key ${apiKey}`;
+    // Удаляем любые существующие префиксы и пробелы
+    let cleanKey = apiKey.trim();
+    if (cleanKey.startsWith('Key ')) {
+      cleanKey = cleanKey.substring(4).trim();
+    }
+    if (cleanKey.startsWith('Bearer ')) {
+      cleanKey = cleanKey.substring(7).trim();
     }
     
-    return apiKey;
+    // Добавляем правильный префикс "Key" для FAL.AI API
+    return `Key ${cleanKey}`;
   }
   
   /**

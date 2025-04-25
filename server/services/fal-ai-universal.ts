@@ -8,6 +8,7 @@ import axios from 'axios';
 import { apiKeyService } from './api-keys';
 import { falAiFluxClient } from './fal-ai-flux-client';
 import { falAiDirectClient } from './fal-ai-direct-client';
+import { falAiOfficialClient } from './fal-ai-official-client';
 
 // Типы поддерживаемых моделей
 export type FalAiModelName = 'fast-sdxl' | 'sdxl' | 'schnell' | 'fooocus' | 'flux/juggernaut-xl-lora' | 'flux/juggernaut-xl-lightning' | 'flux/flux-lora';
@@ -58,11 +59,17 @@ class FalAiUniversalService {
   private formatApiKey(apiKey: string): string {
     if (!apiKey) return '';
     
-    if (!apiKey.startsWith('Key ') && apiKey.includes(':')) {
-      return `Key ${apiKey}`;
+    // Удаляем любые существующие префиксы и пробелы
+    let cleanKey = apiKey.trim();
+    if (cleanKey.startsWith('Key ')) {
+      cleanKey = cleanKey.substring(4).trim();
+    }
+    if (cleanKey.startsWith('Bearer ')) {
+      cleanKey = cleanKey.substring(7).trim();
     }
     
-    return apiKey;
+    // Согласно документации FAL.AI, ключ должен передаваться с префиксом 'Key'
+    return `Key ${cleanKey}`;
   }
 
   /**
