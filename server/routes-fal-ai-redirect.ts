@@ -6,6 +6,7 @@
 import { Express, Request, Response } from 'express';
 import { log } from './utils/logger';
 import { falAiUniversalService } from './services/fal-ai-universal';
+import { falAiOfficialClient } from './services/fal-ai-official-client';
 import { storage } from './storage';
 import axios from 'axios';
 
@@ -80,16 +81,15 @@ export function registerFalAiRedirectRoutes(app: Express) {
         });
       }
       
-      // Вызываем универсальный сервис для генерации изображений
-      const imageUrls = await falAiUniversalService.generateImages({
+      // Вызываем официальный клиент для генерации изображений
+      // Рабочий подход, который использует тот же метод, что и в тестовом скрипте
+      const imageUrls = await falAiOfficialClient.generateImages({
         prompt,
-        negativePrompt,
+        negative_prompt: negativePrompt,
         width,
         height,
-        numImages,
-        model: modelName || 'schnell', // Используем Schnell как модель по умолчанию
-        token,
-        userId
+        num_images: numImages,
+        model: modelName || 'schnell' // Используем Schnell как модель по умолчанию
       });
       
       log(`[fal-ai-redirect] Сгенерировано ${imageUrls.length} изображений через универсальный интерфейс`);

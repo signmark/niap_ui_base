@@ -1,34 +1,261 @@
 /**
- * Официальный клиент для FAL.AI с использованием @fal-ai/client
- * Полностью использует официальное SDK для максимальной совместимости
+ * Официальный клиент для FAL.AI API
+ * Реализация использует официальную библиотеку @fal-ai/client
  */
 
 import { fal } from '@fal-ai/client';
-import { apiKeyService } from './api-keys';
+import { apiKeyService } from './api-keys'; 
 
-export interface OfficialGenerateOptions {
-  prompt: string;                // Промт для генерации
-  negativePrompt?: string;       // Негативный промт
-  width?: number;                // Ширина изображения
-  height?: number;               // Высота изображения
-  numImages?: number;            // Количество изображений
-  model: string;                 // Модель для генерации
-  token?: string;                // Токен авторизации или API ключ
-  userId?: string;               // ID пользователя для получения API ключа
-  contentId?: string;            // ID контента (для аналитики)
-  campaignId?: string;           // ID кампании (для аналитики)
+export interface GenerateImageOptions {
+  prompt: string;
+  negative_prompt?: string;
+  width?: number;
+  height?: number;
+  num_images?: number;
+  model: string;
 }
 
-class FalAiOfficialClient {
+export class FalAiOfficialClient {
+  private initialized = false;
+
+  /**
+   * Инициализирует клиент с API ключом
+   * @param apiKey API ключ для FAL.AI
+   */
+  initialize(apiKey: string): void {
+    if (!apiKey) {
+      throw new Error('API ключ не может быть пустым');
+    }
+
+    // Настраиваем официальный клиент FAL.AI
+    fal.config({
+      credentials: apiKey,
+      // Используем прокси для обхода проблем с DNS
+      proxyUrl: 'https://hub.fal.ai'
+    });
+
+    this.initialized = true;
+    console.log('[fal-ai-official] Клиент успешно инициализирован');
+  }
+
+  /**
+   * Генерирует изображения с использованием официального клиента FAL.AI
+   * @param options Параметры генерации
+   * @returns Массив URL сгенерированных изображений
+   */
+  async generateImages(options: GenerateImageOptions): Promise<string[]> {
+    console.log(`[fal-ai-official] Генерация изображений с использованием модели ${options.model}`);
+    
+    // Получаем API ключ
+    // Параметр 'fal_ai' должен соответствовать типу из ApiServiceName
+    const apiKey = await apiKeyService.getApiKey('53921f16-f51d-4591-80b9-8caa4fde4d13', 'fal_ai');
+    
+    if (!apiKey) {
+      throw new Error('API ключ FAL.AI не найден');
+    }
+    
+    // Инициализируем клиент, если еще не сделано
+    if (!this.initialized) {
+      this.initialize(apiKey);
+    }
+
+    try {
+      // Подготавливаем ID модели для официального клиента
+      const modelId = this.formatModelId(options.model);
+      
+      // Подготавливаем параметры запроса
+      const input = this.prepareInputParams(options);
+      
+      console.log(`[fal-ai-official] Запрос к модели ${modelId} с параметрами:`, JSON.stringify(input).substring(0, 300));
+      
+      // Отправляем запрос используя официальный клиент
+      console.log('[fal-ai-official] Ожидаем ответ...');
+      const result = await fal.subscribe(modelId, {
+        input,
+        onQueueUpdate: (update) => {
+          console.log(`[fal-ai-official] Статус: ${update.status}`);
+          // Надежно обрабатываем логи, если они есть
+          if ((update as any).logs) {
+            console.log('[fal-ai-official] Логи:', (update as any).logs);
+          }
+        }
+      });
+      
+      console.log('[fal-ai-official] Получен ответ:', JSON.stringify(result).substring(0, 300) + '...');
+      
+      // Извлекаем URL изображений из результата
+      const imageUrls = this.extractImageUrls(result);
+      
+      if (imageUrls.length > 0) {
+        console.log(`[fal-ai-official] Найдено ${imageUrls.length} URL изображений:`, imageUrls);
+        return imageUrls;
+      } else {
+        throw new Error('В ответе API не найдены URL изображений');
+      }
+    } catch (error: any) {
+      console.error(`[fal-ai-official] Ошибка при генерации изображений: ${error.message}`);
+      
+      if (error.response) {
+        console.error(`[fal-ai-official] Статус ошибки: ${error.response.status}`, 
+          error.response.data ? JSON.stringify(error.response.data).substring(0, 300) : 'No data');
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Форматирует ID модели для официального клиента
+   * @param model Имя модели
+   * @returns Форматированный ID модели для официального клиента
+   */
+  private formatModelId(model: string): string {
+    // Маппинг моделей на их идентификаторы для официального клиента
+    const modelMap: Record<string, string> = {
+      'schnell': 'fal-ai/schnell',
+      'fast-sdxl': 'fal-ai/fast-sdxl',
+      'sdxl': 'fal-ai/stable-diffusion/sdxl-lightning',
+      'fooocus': 'fal-ai/fooocus',
+    };
+
+    // Если модель начинается с flux/, преобразуем ее в правильный формат
+    if (model.startsWith('flux/')) {
+      return `fal-ai/${model}`;
+    }
+
+    // Возвращаем маппинг или исходную модель, если маппинг не найден
+    return modelMap[model] || model;
+  }
+
+  /**
+   * Подготавливает параметры запроса в зависимости от модели
+   * @param options Параметры генерации
+   * @returns Подготовленные параметры для API запроса
+   */
+  private prepareInputParams(options: GenerateImageOptions): any {
+    // Базовые параметры, общие для всех моделей
+    const baseParams = {
+      prompt: options.prompt,
+      negative_prompt: options.negative_prompt || '',
+    };
+
+    // Специфические параметры для разных моделей
+    if (options.model === 'schnell' || options.model === 'fal-ai/schnell') {
+      return {
+        ...baseParams,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    } else if (options.model === 'fast-sdxl' || options.model === 'fal-ai/fast-sdxl') {
+      return {
+        ...baseParams,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
+      return {
+        ...baseParams,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
+      return {
+        ...baseParams,
+        width: options.width || 1024,
+        height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    } else if (options.model.includes('flux/') || options.model.includes('fal-ai/flux/')) {
+      return {
+        ...baseParams,
+        image_width: options.width || 1024,
+        image_height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
+    }
+
+    // Для неизвестных моделей используем стандартные параметры
+    return {
+      ...baseParams,
+      width: options.width || 1024,
+      height: options.height || 1024,
+      num_images: options.num_images || 1
+    };
+  }
+
+  /**
+   * Извлекает URL изображений из ответа API
+   * @param result Результат вызова API
+   * @returns Массив URL изображений
+   */
+  private extractImageUrls(result: any): string[] {
+    if (!result) return [];
+    
+    const urls: string[] = [];
+    
+    // Функция рекурсивного извлечения URL
+    const extract = (obj: any) => {
+      // Для изображений в формате нового API
+      if (obj.output && obj.output.images && Array.isArray(obj.output.images)) {
+        obj.output.images.forEach((img: any) => {
+          if (typeof img === 'string' && this.isImageUrl(img)) {
+            urls.push(img);
+          } else if (img && img.url && typeof img.url === 'string' && this.isImageUrl(img.url)) {
+            urls.push(img.url);
+          }
+        });
+      } 
+      
+      // Для одиночного изображения
+      else if (obj.output && obj.output.image && typeof obj.output.image === 'string' && this.isImageUrl(obj.output.image)) {
+        urls.push(obj.output.image);
+      }
+      
+      // Для прямого массива изображений
+      else if (obj.images && Array.isArray(obj.images)) {
+        obj.images.forEach((img: any) => {
+          if (typeof img === 'string' && this.isImageUrl(img)) {
+            urls.push(img);
+          } else if (img && img.url && typeof img.url === 'string' && this.isImageUrl(img.url)) {
+            urls.push(img.url);
+          }
+        });
+      }
+      
+      // Для прямого свойства изображения
+      else if (obj.image && typeof obj.image === 'string' && this.isImageUrl(obj.image)) {
+        urls.push(obj.image);
+      }
+      
+      // Для вложенных объектов - рекурсивный обход
+      else if (obj && typeof obj === 'object') {
+        Object.values(obj).forEach(val => {
+          if (val && (typeof val === 'object' || Array.isArray(val))) {
+            extract(val);
+          } else if (typeof val === 'string' && this.isImageUrl(val)) {
+            urls.push(val);
+          }
+        });
+      }
+    };
+    
+    // Запускаем извлечение
+    extract(result);
+    
+    return urls;
+  }
+
   /**
    * Проверяет, является ли строка URL изображения
    * @param url Строка для проверки
-   * @returns true, если строка является URL изображения
+   * @returns true, если строка похожа на URL изображения
    */
   private isImageUrl(url: string): boolean {
     if (!url || typeof url !== 'string') return false;
     
-    // Проверяем, что URL содержит признаки изображения или валидного CDN-хоста
     return (
       url.includes('fal.media') || 
       url.includes('.jpg') || 
@@ -39,257 +266,6 @@ class FalAiOfficialClient {
       url.includes('images.') ||
       url.includes('/image/')
     );
-  }
-  
-  /**
-   * Извлекает URL изображений из ответа API
-   * @param data Ответ API
-   * @returns Массив URL изображений
-   */
-  private extractImageUrls(data: any): string[] {
-    if (!data) return [];
-    
-    console.log('[fal-ai-official] Извлечение URL изображений из ответа');
-    
-    // Логируем структуру ответа для отладки
-    try {
-      console.log('[fal-ai-official] Структура ответа:', JSON.stringify(data).substring(0, 500) + '...');
-    } catch (e) {
-      console.log('[fal-ai-official] Невозможно сериализовать ответ для логирования');
-    }
-    
-    const urls: string[] = [];
-    
-    // Проверяем стандартные форматы ответа в зависимости от модели
-    
-    // Формат Juggernaut Flux: непосредственно в output.image_url
-    if (data.output && data.output.image_url && this.isImageUrl(data.output.image_url)) {
-      console.log('[fal-ai-official] Найден URL в output.image_url:', data.output.image_url);
-      urls.push(data.output.image_url);
-      return urls;
-    }
-    
-    // Формат множественных изображений: output.images[]
-    if (data.output && data.output.images && Array.isArray(data.output.images)) {
-      console.log(`[fal-ai-official] Найден массив в output.images, элементов: ${data.output.images.length}`);
-      data.output.images.forEach((image: any) => {
-        if (typeof image === 'string' && this.isImageUrl(image)) {
-          urls.push(image);
-        } else if (image && image.url && this.isImageUrl(image.url)) {
-          urls.push(image.url);
-        }
-      });
-      
-      if (urls.length > 0) {
-        return urls;
-      }
-    }
-    
-    // Общий формат: рекурсивный поиск URL в любых полях объекта
-    const extractRecursive = (obj: any) => {
-      if (!obj) return;
-      
-      // Если это строка с URL
-      if (typeof obj === 'string' && this.isImageUrl(obj)) {
-        urls.push(obj);
-        return;
-      }
-      
-      // Если это массив
-      if (Array.isArray(obj)) {
-        obj.forEach(item => extractRecursive(item));
-        return;
-      }
-      
-      // Если это объект
-      if (typeof obj === 'object') {
-        // Проверяем известные поля
-        if (obj.images && Array.isArray(obj.images)) {
-          obj.images.forEach((img: any) => {
-            if (typeof img === 'string' && this.isImageUrl(img)) {
-              urls.push(img);
-            } else if (img && img.url && this.isImageUrl(img.url)) {
-              urls.push(img.url);
-            } else {
-              extractRecursive(img);
-            }
-          });
-        } else if (obj.image && typeof obj.image === 'string' && this.isImageUrl(obj.image)) {
-          urls.push(obj.image);
-        } else if (obj.url && typeof obj.url === 'string' && this.isImageUrl(obj.url)) {
-          urls.push(obj.url);
-        } else {
-          // Обрабатываем все остальные свойства
-          for (const key in obj) {
-            extractRecursive(obj[key]);
-          }
-        }
-      }
-    };
-    
-    // Запускаем извлечение
-    extractRecursive(data);
-    
-    console.log(`[fal-ai-official] Найдено ${urls.length} URL изображений`);
-    return urls;
-  }
-  
-  /**
-   * Генерирует изображения с использованием FAL.AI API через официальный SDK
-   * @param options Параметры генерации
-   * @returns Массив URL сгенерированных изображений
-   */
-  async generateImages(options: OfficialGenerateOptions): Promise<string[]> {
-    try {
-      console.log(`[fal-ai-official] Запрос на генерацию изображений с моделью ${options.model}`);
-      
-      // Получаем API ключ
-      let apiKey: string | null = null;
-      
-      if (options.token && options.userId) {
-        // Получаем ключ из сервиса API ключей
-        apiKey = await apiKeyService.getApiKey(options.userId, 'fal_ai', options.token);
-        
-        if (!apiKey) {
-          throw new Error('API ключ FAL.AI не найден для пользователя');
-        }
-      } else if (options.token) {
-        // Если передан только токен, используем его напрямую
-        apiKey = options.token;
-      } else {
-        throw new Error('Отсутствует токен или userId для получения API ключа');
-      }
-      
-      // Очищаем API ключ от префиксов
-      let cleanKey = apiKey.trim();
-      if (cleanKey.startsWith('Key ')) {
-        cleanKey = cleanKey.substring(4).trim();
-      }
-      if (cleanKey.startsWith('Bearer ')) {
-        cleanKey = cleanKey.substring(7).trim();
-      }
-      
-      // Настраиваем клиент с API ключом
-      fal.config({
-        credentials: cleanKey,
-        // Решает проблемы с DNS в некоторых средах Replit
-        proxyUrl: 'https://hub.fal.ai'
-        // debug: true - не поддерживается в текущей версии SDK
-      });
-      
-      console.log('[fal-ai-official] Клиент FAL.AI настроен с API ключом (первые 5 символов):', cleanKey.substring(0, 5) + '...');
-      
-      // Создаем параметры запроса
-      const input: any = {
-        prompt: options.prompt
-      };
-      
-      // Добавляем негативный промт
-      if (options.negativePrompt) {
-        input.negative_prompt = options.negativePrompt;
-      }
-      
-      // Добавляем размеры
-      if (options.width && options.height) {
-        // Некоторые модели используют формат {width, height}, а некоторые - отдельные поля
-        // Добавляем оба варианта для максимальной совместимости
-        input.width = options.width;
-        input.height = options.height;
-        
-        // Для моделей Flux
-        input.image_size = {
-          width: options.width,
-          height: options.height
-        };
-      }
-      
-      // Добавляем количество изображений
-      if (options.numImages) {
-        input.num_images = options.numImages;
-      }
-      
-      console.log(`[fal-ai-official] Генерация с SDK: модель=${options.model}, параметры:`, JSON.stringify(input));
-      
-      try {
-        // Используем метод subscribe из SDK для асинхронной обработки запроса
-        const result = await fal.subscribe(options.model, {
-          input: input,
-          logs: true,
-          onQueueUpdate: (update: any) => {
-            console.log(`[fal-ai-official] Статус: ${update.status}`);
-            if (update.status === "IN_PROGRESS" && update.logs) {
-              update.logs.forEach((log: any) => {
-                console.log(`[fal-ai-official] Лог модели: ${log.message || log}`);
-              });
-            }
-          }
-        });
-        
-        console.log(`[fal-ai-official] Получен результат: requestId = ${result.requestId}`);
-        
-        // Извлекаем URL изображений из результата
-        // В различных версиях SDK структура результата может отличаться
-        // Проверяем все возможные структуры
-        
-        // Для @fal-ai/client результат часто содержит поле data
-        const resultData = result.data || result;
-        
-        // Новая структура API для fast-sdxl и других новых моделей 
-        if (resultData.data && resultData.data.images && Array.isArray(resultData.data.images)) {
-          console.log('[fal-ai-official] Найден массив изображений в data.images');
-          const imageUrls = resultData.data.images
-            .filter((img: any) => (img && img.url && this.isImageUrl(img.url)))
-            .map((img: any) => img.url);
-          
-          if (imageUrls.length > 0) {
-            return imageUrls;
-          }
-        }
-        
-        // Проверяем output структуру (старый формат)
-        if (resultData.output) {
-          // Стандартный формат Flux имеет output.image_url или output.images[]
-          if (resultData.output.image_url && this.isImageUrl(resultData.output.image_url)) {
-            console.log('[fal-ai-official] Найден URL в output.image_url');
-            return [resultData.output.image_url];
-          } else if (resultData.output.images && Array.isArray(resultData.output.images)) {
-            console.log('[fal-ai-official] Найден массив URL в output.images');
-            const imageUrls = resultData.output.images
-              .filter((img: any) => {
-                // Обрабатываем как строки URL, так и объекты с полем url
-                return (typeof img === 'string' && this.isImageUrl(img)) || 
-                       (img && img.url && this.isImageUrl(img.url));
-              })
-              .map((img: any) => {
-                return typeof img === 'string' ? img : img.url;
-              });
-            
-            if (imageUrls.length > 0) {
-              return imageUrls;
-            }
-          }
-        }
-        
-        // Если стандартные поля не найдены, используем извлечение из всего объекта
-        return this.extractImageUrls(result);
-      } catch (error: any) {
-        console.error(`[fal-ai-official] Ошибка при вызове fal.subscribe: ${error.message}`);
-        
-        // Обработка типичных ошибок
-        if (error.message.includes('credentials') || error.message.includes('401')) {
-          throw new Error(`Ошибка аутентификации FAL.AI: ${error.message}`);
-        } else if (error.message.includes('not found') || error.message.includes('404')) {
-          throw new Error(`Модель ${options.model} не найдена: ${error.message}`);
-        } else if (error.message.includes('timeout')) {
-          throw new Error(`Превышено время ожидания модели ${options.model}: ${error.message}`);
-        }
-        
-        throw error;
-      }
-    } catch (error: any) {
-      console.error(`[fal-ai-official] Ошибка при генерации изображений: ${error.message}`);
-      throw error;
-    }
   }
 }
 
