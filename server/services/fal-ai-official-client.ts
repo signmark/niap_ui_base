@@ -210,11 +210,11 @@ class FalAiOfficialClient {
         const result = await fal.subscribe(options.model, {
           input: input,
           logs: true,
-          onQueueUpdate: (update) => {
+          onQueueUpdate: (update: any) => {
             console.log(`[fal-ai-official] Статус: ${update.status}`);
             if (update.status === "IN_PROGRESS" && update.logs) {
-              update.logs.forEach(log => {
-                console.log(`[fal-ai-official] Лог модели: ${log.message}`);
+              update.logs.forEach((log: any) => {
+                console.log(`[fal-ai-official] Лог модели: ${log.message || log}`);
               });
             }
           }
@@ -223,14 +223,21 @@ class FalAiOfficialClient {
         console.log(`[fal-ai-official] Получен результат: requestId = ${result.requestId}`);
         
         // Извлекаем URL изображений из результата
-        if (result.output && (result.output.image_url || result.output.images)) {
+        // В различных версиях SDK структура результата может отличаться
+        // Проверяем все возможные структуры
+        
+        // Для @fal-ai/client результат часто содержит поле data
+        const resultData = result.data || result;
+        
+        // Проверяем output структуру (наиболее распространенная)
+        if (resultData.output) {
           // Стандартный формат Flux имеет output.image_url или output.images[]
-          if (result.output.image_url && this.isImageUrl(result.output.image_url)) {
+          if (resultData.output.image_url && this.isImageUrl(resultData.output.image_url)) {
             console.log('[fal-ai-official] Найден URL в output.image_url');
-            return [result.output.image_url];
-          } else if (result.output.images && Array.isArray(result.output.images)) {
+            return [resultData.output.image_url];
+          } else if (resultData.output.images && Array.isArray(resultData.output.images)) {
             console.log('[fal-ai-official] Найден массив URL в output.images');
-            const imageUrls = result.output.images
+            const imageUrls = resultData.output.images
               .filter((img: any) => {
                 // Обрабатываем как строки URL, так и объекты с полем url
                 return (typeof img === 'string' && this.isImageUrl(img)) || 

@@ -1,154 +1,123 @@
-import { Express, Request, Response } from 'express';
-import { log } from './utils/logger';
-import { falAiUniversalService } from './services/fal-ai-universal';
+import express, { Express } from 'express';
+import { falAiUniversalService, FalAiGenerateOptions } from './services/fal-ai-universal';
 
-/**
- * Регистрирует универсальный интерфейс для работы с различными моделями генерации изображений FAL.AI
- * Поддерживает различные модели (schnell, sdxl, fast-sdxl, fooocus и др.)
- * 
- * @param app Express приложение
- */
+// Создаем роутер для маршрутов FAL.AI
+const router = express.Router();
+
+// Функция для регистрации маршрутов в Express приложении
 export function registerFalAiImageRoutes(app: Express) {
-  // Вспомогательная функция для получения токена из запроса
-  const getAuthTokenFromRequest = (req: Request): string | null => {
-    const authHeader = req.headers.authorization;
-    return authHeader && authHeader.startsWith('Bearer ') 
-      ? authHeader.substring(7) // Убираем 'Bearer ' из начала
-      : null;
-  };
-  
-  // Промежуточное ПО для аутентификации запросов
-  const authenticateUser = (req: Request, res: Response, next: any) => {
-    // Получаем токен из заголовка авторизации
-    const token = getAuthTokenFromRequest(req);
-      
+  app.use('/', router);
+  console.log('[express] FAL.AI Universal Image Generation routes registered');
+}
+
+// Получить список доступных моделей
+router.get('/api/fal-ai-models', async (req, res) => {
+  try {
+    // Статический список поддерживаемых моделей
+    // В будущем можно сделать динамическое получение с помощью FAL API
+    const models = [
+      { 
+        id: 'flux/juggernaut-xl-lightning', 
+        name: 'Juggernaut Flux Lightning', 
+        description: 'Быстрая и высококачественная генерация' 
+      },
+      { 
+        id: 'flux/juggernaut-xl-lora', 
+        name: 'Juggernaut Flux Lora', 
+        description: 'Детализированные художественные изображения' 
+      },
+      { 
+        id: 'flux/flux-lora', 
+        name: 'Flux Lora', 
+        description: 'Базовая модель Flux' 
+      },
+      { 
+        id: 'schnell', 
+        name: 'Schnell', 
+        description: 'Оригинальная модель FAL.AI' 
+      },
+      { 
+        id: 'fooocus', 
+        name: 'Fooocus', 
+        description: 'Усовершенствованная композиция' 
+      },
+      { 
+        id: 'fast-sdxl', 
+        name: 'Fast SDXL', 
+        description: 'Быстрая версия SDXL' 
+      },
+      { 
+        id: 'sdxl', 
+        name: 'SDXL', 
+        description: 'Высококачественная модель с широкими возможностями' 
+      }
+    ];
+
+    res.json({
+      success: true,
+      models
+    });
+  } catch (error) {
+    console.error('[api] Ошибка при получении списка моделей:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Не удалось получить список моделей'
+    });
+  }
+});
+
+// Генерация изображения с использованием универсального сервиса
+router.post('/api/generate-universal-image', async (req, res) => {
+  try {
+    // Валидация запроса
+    const { prompt, negativePrompt, width, height, numImages, model } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Не указан промт для генерации'
+      });
+    }
+
+    // Получаем токен авторизации из заголовка
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : authHeader;
+
     if (!token) {
       return res.status(401).json({
         success: false,
-        error: 'Требуется авторизация'
+        error: 'Отсутствует токен авторизации'
       });
     }
-    next();
-  };
 
-  // Маршрут для генерации изображений через универсальный интерфейс FAL.AI
-  app.post('/api/generate-universal-image', authenticateUser, async (req: Request, res: Response) => {
-    try {
-      const { prompt, negativePrompt, width, height, numImages, model } = req.body;
-      
-      if (!prompt) {
-        return res.status(400).json({
-          success: false,
-          error: 'Необходимо указать промпт для генерации'
-        });
-      }
-      
-      const token = getAuthTokenFromRequest(req) || '';
-      
-      log(`[fal-ai-images] Запрос на генерацию изображения: модель=${model || 'sdxl'}, количество=${numImages || 1}`);
-      
-      const results = await falAiUniversalService.generateImages({
-        prompt,
-        negativePrompt,
-        width,
-        height,
-        numImages,
-        model,
-        token
-      });
-      
-      return res.json({
-        success: true,
-        data: results
-      });
-    } catch (error: any) {
-      log(`[fal-ai-images] Ошибка при генерации изображения: ${error.message}`);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Произошла ошибка при генерации изображения'
-      });
-    }
-  });
+    // Создаем параметры для генерации
+    const generateOptions: FalAiGenerateOptions = {
+      prompt,
+      negativePrompt,
+      width: width || 1024,
+      height: height || 1024,
+      numImages: numImages || 1,
+      model: model || 'flux/juggernaut-xl-lightning',
+      token
+    };
 
-  // Маршрут для проверки статуса API FAL.AI
-  app.get('/api/fal-ai-status', async (_req: Request, res: Response) => {
-    try {
-      // Упрощенная проверка статуса
-      return res.json({
-        success: true,
-        status: {
-          available: true,
-          message: 'FAL.AI API доступен'
-        }
-      });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Произошла ошибка при проверке статуса API'
-      });
-    }
-  });
+    // Вызываем универсальный сервис для генерации
+    console.log(`[api] Запрос на генерацию изображения с моделью ${generateOptions.model}`);
+    const imageUrls = await falAiUniversalService.generateImages(generateOptions);
 
-  // Маршрут для получения списка доступных моделей FAL.AI
-  app.get('/api/fal-ai-models', async (req: Request, res: Response) => {
-    try {
-      console.log(`[fal-ai] GET /api/fal-ai-models запрошен с query params:`, req.query);
-      
-      // Список поддерживаемых моделей - с новыми моделями вверху
-      const models = [
-        // Новые модели сверху
-        {
-          id: 'flux/juggernaut-xl-lora',
-          name: 'Juggernaut Flux Lora',
-          description: 'Топовое качество детализированных изображений'
-        },
-        {
-          id: 'flux/juggernaut-xl-lightning',
-          name: 'Juggernaut Flux Lightning',
-          description: 'Средняя скорость и хорошее качество изображений'
-        },
-        {
-          id: 'flux/flux-lora',
-          name: 'Flux Lora',
-          description: 'Альтернативная модель высокого качества'
-        },
-        // Существующие модели
-        {
-          id: 'schnell',
-          name: 'Schnell',
-          description: 'Schnell - высококачественная модель для быстрой генерации'
-        },
-        {
-          id: 'fooocus',
-          name: 'Fooocus',
-          description: 'Fooocus - мощная модель с продвинутой композицией'
-        },
-        {
-          id: 'sdxl',
-          name: 'Stable Diffusion XL',
-          description: 'Полная версия Stable Diffusion XL'
-        },
-        {
-          id: 'fast-sdxl',
-          name: 'Fast SDXL',
-          description: 'Быстрая версия Stable Diffusion XL'
-        }
-      ];
-      
-      console.log(`[fal-ai] Отправка ${models.length} моделей клиенту:`, 
-        models.map(m => `${m.id} (${m.name})`).join(', '));
-      
-      return res.json({
-        success: true,
-        models,
-        timestamp: Date.now() // Добавляем временную метку для избежания кеширования
-      });
-    } catch (error: any) {
-      console.error('[fal-ai] Ошибка при получении списка моделей:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Произошла ошибка при получении списка моделей'
-      });
-    }
-  });
-}
+    res.json({
+      success: true,
+      data: imageUrls
+    });
+  } catch (error: any) {
+    console.error('[api] Ошибка при генерации изображения:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Не удалось сгенерировать изображение'
+    });
+  }
+});
+
+export default router;
