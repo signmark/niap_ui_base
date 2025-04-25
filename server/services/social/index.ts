@@ -2,7 +2,7 @@ import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication
 import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
-import { facebookService } from './facebook';
+import { facebookSocialService } from './facebook';
 import { log } from '../../utils/logger';
 import { publishScheduler } from '../publish-scheduler';
 
@@ -48,6 +48,9 @@ export class SocialPublishingService {
         
         case 'instagram':
           return await instagramService.publishToPlatform(content, platform, settings);
+          
+        case 'facebook':
+          return await facebookSocialService.publish(content, settings.facebook || {});
         
         // Для остальных платформ возвращаем ошибку
         default:
@@ -95,7 +98,7 @@ export class SocialPublishingService {
       case 'facebook':
         // Добавлен специальный обработчик для Facebook
         log(`Вызов специального обработчика для Facebook`, 'social-publishing');
-        return await facebookService.updatePublicationStatus(contentId, platform, publicationResult);
+        return await facebookSocialService.updatePublicationStatus(contentId, platform, publicationResult);
       
       default:
         log(`Платформа ${platform} не поддерживается для обновления статуса`, 'social-publishing');
