@@ -47,18 +47,25 @@ interface ImageGenerationDialogProps {
   onClose: () => void;
 }
 
-// Определяем список моделей по умолчанию для случая, когда API недоступен
+// Определяем список моделей по умолчанию с новыми моделями вверху
 const DEFAULT_MODELS = [
+  // Новые модели сверху
   {
-    id: 'fast-sdxl',
-    name: 'Fast SDXL',
-    description: 'Быстрая версия Stable Diffusion XL'
+    id: 'rundiffusion-fal/juggernaut-flux-lora',
+    name: 'Juggernaut Flux Lora',
+    description: 'Топовое качество детализированных изображений'
   },
   {
-    id: 'sdxl',
-    name: 'Stable Diffusion XL',
-    description: 'Полная версия Stable Diffusion XL'
+    id: 'rundiffusion-fal/juggernaut-flux/lightning',
+    name: 'Juggernaut Flux Lightning',
+    description: 'Средняя скорость и хорошее качество изображений'
   },
+  {
+    id: 'fal-ai/flux-lora',
+    name: 'Flux Lora',
+    description: 'Альтернативная модель высокого качества'
+  },
+  // Старые модели внизу
   {
     id: 'schnell',
     name: 'Schnell',
@@ -70,19 +77,14 @@ const DEFAULT_MODELS = [
     description: 'Fooocus - мощная модель с продвинутой композицией'
   },
   {
-    id: 'rundiffusion-fal/juggernaut-flux/lightning',
-    name: 'Juggernaut Flux Lightning',
-    description: 'Средняя скорость и хорошее качество изображений'
+    id: 'sdxl',
+    name: 'Stable Diffusion XL',
+    description: 'Полная версия Stable Diffusion XL'
   },
   {
-    id: 'rundiffusion-fal/juggernaut-flux-lora',
-    name: 'Juggernaut Flux Lora',
-    description: 'Топовое качество детализированных изображений'
-  },
-  {
-    id: 'fal-ai/flux-lora',
-    name: 'Flux Lora',
-    description: 'Альтернативная модель высокого качества'
+    id: 'fast-sdxl',
+    name: 'Fast SDXL',
+    description: 'Быстрая версия Stable Diffusion XL'
   }
 ];
 
@@ -894,10 +896,7 @@ export function ImageGenerationDialog({
               {/* Всегда используем локальный список моделей из константы DEFAULT_MODELS */}
               {DEFAULT_MODELS.map((model) => (
                 <SelectItem key={model.id} value={model.id}>
-                  <div className="flex flex-col">
-                    <span>{model.name}</span>
-                    <span className="text-xs text-gray-500">{model.description}</span>
-                  </div>
+                  {model.name}
                 </SelectItem>
               ))}
             </SelectContent>
