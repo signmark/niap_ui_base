@@ -26,10 +26,14 @@ export class FalAiOfficialClient {
     if (!apiKey) {
       throw new Error('API ключ не может быть пустым');
     }
+    
+    // Добавляем префикс 'Key ' к API ключу, если его еще нет
+    const formattedKey = apiKey.startsWith('Key ') ? apiKey : `Key ${apiKey}`;
+    console.log(`[fal-ai-official] Форматированный ключ: ${formattedKey.substring(0, 10)}...`);
 
     // Настраиваем официальный клиент FAL.AI
     fal.config({
-      credentials: apiKey,
+      credentials: formattedKey,
       // Используем прокси для обхода проблем с DNS
       proxyUrl: 'https://hub.fal.ai'
     });
@@ -46,9 +50,8 @@ export class FalAiOfficialClient {
   async generateImages(options: GenerateImageOptions): Promise<string[]> {
     console.log(`[fal-ai-official] Генерация изображений с использованием модели ${options.model}`);
     
-    // Получаем API ключ
-    // Параметр 'fal_ai' должен соответствовать типу из ApiServiceName
-    const apiKey = await apiKeyService.getApiKey('53921f16-f51d-4591-80b9-8caa4fde4d13', 'fal_ai');
+    // Получаем API ключ из переменной окружения (как в тестовом скрипте)
+    const apiKey = process.env.FAL_AI_API_KEY;
     
     if (!apiKey) {
       throw new Error('API ключ FAL.AI не найден');

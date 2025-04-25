@@ -5,7 +5,6 @@
 
 import { Express, Request, Response } from 'express';
 import { log } from './utils/logger';
-import { falAiUniversalService } from './services/fal-ai-universal';
 import { falAiOfficialClient } from './services/fal-ai-official-client';
 import { storage } from './storage';
 import axios from 'axios';
