@@ -77,21 +77,33 @@ class FalAiOfficialClient {
       // Если это объект, обрабатываем каждое свойство
       if (obj && typeof obj === 'object') {
         // Проверяем специфические для FAL.AI форматы ответа
+        
+        // Формат Juggernaut Flux Lightning: { images: [{ url: 'https://...' }] }
         if (obj.images && Array.isArray(obj.images)) {
-          obj.images.forEach((image: any) => {
+          console.log(`[fal-ai-official] Обнаружен массив images: содержит ${obj.images.length} элементов`);
+          
+          obj.images.forEach((image: any, index: number) => {
+            console.log(`[fal-ai-official] Обработка элемента images[${index}]:`, 
+              typeof image === 'object' ? JSON.stringify(image).substring(0, 100) : String(image).substring(0, 100));
+            
             if (typeof image === 'string' && this.isImageUrl(image)) {
               urls.push(image);
+              console.log(`[fal-ai-official] Добавлена строка URL из images[${index}]`);
             } else if (image && image.url && this.isImageUrl(image.url)) {
               urls.push(image.url);
+              console.log(`[fal-ai-official] Добавлен URL из объекта images[${index}].url`);
             } else {
               extract(image);
             }
           });
         } else if (obj.image && typeof obj.image === 'string' && this.isImageUrl(obj.image)) {
           urls.push(obj.image);
+          console.log(`[fal-ai-official] Добавлен URL из поля image`);
         } else if (obj.url && typeof obj.url === 'string' && this.isImageUrl(obj.url)) {
           urls.push(obj.url);
+          console.log(`[fal-ai-official] Добавлен URL из поля url`);
         } else if (obj.output) {
+          console.log(`[fal-ai-official] Обнаружено поле output, выполняется извлечение`);
           extract(obj.output);
         } else {
           // Обрабатываем все остальные свойства объекта
@@ -173,24 +185,45 @@ class FalAiOfficialClient {
       });
       
       try {
-        // Вызываем API с использованием официального SDK
-        const result = await fal.run(options.model, {
-          input: input
+        // Вызываем API с использованием официального SDK, используя метод subscribe для асинхронных запросов
+        console.log(`[fal-ai-official] Запуск подписки на результат для модели ${options.model}`);
+        
+        const result = await fal.subscribe(options.model, {
+          input: input,
+          logs: true,
+          onQueueUpdate: (update) => {
+            console.log(`[fal-ai-official] Статус: ${update.status}`);
+            if (update.status === "IN_PROGRESS" && update.logs) {
+              update.logs.map((log) => log.message).forEach(msg => 
+                console.log(`[fal-ai-official] Лог модели: ${msg}`)
+              );
+            }
+          },
         });
         
-        console.log(`[fal-ai-official] Получен ответ от API для модели ${options.model}`);
+        console.log(`[fal-ai-official] Получен ответ от API для модели ${options.model} (requestId: ${result.requestId})`);
         
-        // Извлекаем URL изображений из ответа
-        return this.extractImageUrls(result);
-      } catch (runError: any) {
-        console.error(`[fal-ai-official] Ошибка при вызове fal.run: ${runError.message}`);
-        
-        if (runError.message.includes('credentials') || runError.message.includes('401')) {
-          throw new Error(`Ошибка аутентификации FAL.AI: ${runError.message}`);
-        } else if (runError.message.includes('not found') || runError.message.includes('404')) {
-          throw new Error(`Модель ${options.model} не найдена: ${runError.message}`);
+        // В результате метода subscribe результат находится в свойстве data
+        if (result && result.data) {
+          return this.extractImageUrls(result.data);
+        } else {
+          console.log('[fal-ai-official] Предупреждение: Результат не содержит данных в поле data');
+          // Пробуем извлечь из полного ответа на случай, если структура другая
+          return this.extractImageUrls(result);
         }
-        throw runError;
+      } catch (subscribeError: any) {
+        console.error(`[fal-ai-official] Ошибка при вызове fal.subscribe: ${subscribeError.message}`);
+        
+        if (subscribeError.message.includes('credentials') || subscribeError.message.includes('401')) {
+          throw new Error(`Ошибка аутентификации FAL.AI: ${subscribeError.message}`);
+        } else if (subscribeError.message.includes('not found') || subscribeError.message.includes('404')) {
+          throw new Error(`Модель ${options.model} не найдена: ${subscribeError.message}`);
+        } else if (subscribeError.message.includes('response') && subscribeError.message.includes('timeout')) {
+          throw new Error(`Превышено время ожидания ответа от модели ${options.model}: ${subscribeError.message}`);
+        } else if (subscribeError.message.includes('queue')) {
+          throw new Error(`Ошибка очереди запросов для модели ${options.model}: ${subscribeError.message}`);
+        }
+        throw subscribeError;
       }
     } catch (error: any) {
       console.error(`[fal-ai-official] Ошибка при генерации изображений: ${error.message}`);

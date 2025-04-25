@@ -111,7 +111,29 @@ class FalAiUniversalService {
             
             // Для новых моделей Flux результат может быть уже в statusResponse
             if (statusResponse.data.images || statusResponse.data.image) {
+              console.log(`[fal-ai-universal] Найдены данные изображений в statusResponse, используем их напрямую`);
               return statusResponse.data;
+            }
+            
+            // Пробуем получить результат через основной URL (без /status)
+            if (statusResponse.data.status === 'COMPLETED') {
+              try {
+                // Удаляем /status из URL для получения результата
+                const baseUrl = statusUrl.replace('/status', '');
+                console.log(`[fal-ai-universal] Пробуем получить результат через основной URL: ${baseUrl}`);
+                
+                const resultResponse = await axios.get(baseUrl, {
+                  headers: {
+                    'Authorization': apiKey,
+                    'Accept': 'application/json'
+                  }
+                });
+                
+                console.log(`[fal-ai-universal] Успешно получен результат через основной URL`);
+                return resultResponse.data;
+              } catch (baseUrlError: any) {
+                console.error(`[fal-ai-universal] Ошибка при получении результата через основной URL: ${baseUrlError.message}`);
+              }
             }
           }
         } else if (status === 'COMPLETED' && (statusResponse.data.images || statusResponse.data.image)) {
