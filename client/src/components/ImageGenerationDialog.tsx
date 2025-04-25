@@ -846,16 +846,14 @@ export function ImageGenerationDialog({
             </SelectTrigger>
             <SelectContent>
               {availableModels.length > 0 ? (
-                availableModels
-                  .filter(model => model.type !== 'video') // Отфильтровываем видеомодели
-                  .map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex flex-col">
-                        <span>{model.name}</span>
-                        <span className="text-xs text-gray-500">{model.description}</span>
-                      </div>
-                    </SelectItem>
-                  ))
+                availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex flex-col">
+                      <span>{model.name}</span>
+                      <span className="text-xs text-gray-500">{model.description}</span>
+                    </div>
+                  </SelectItem>
+                ))
               ) : (
                 <>
                   <SelectItem value="fast-sdxl">Fast SDXL</SelectItem>
