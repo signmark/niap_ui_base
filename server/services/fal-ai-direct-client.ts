@@ -62,74 +62,28 @@ export class FalAiDirectClient {
         height: options.height || 1024,
         num_outputs: options.num_images || 1
       };
-    } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
+    } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
-      apiUrl = 'https://api.fal.ai/v1/fal-ai/fooocus';
+      apiUrl = 'https://api.fal.ai/v1/fooocus/generate';
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        image_size: options.width && options.height 
-          ? { width: options.width, height: options.height }
-          : { width: 1024, height: 1024 },
+        width: options.width || 1024,
+        height: options.height || 1024,
         num_images: options.num_images || 1
       };
-    } else if (options.model.startsWith('flux/') || (options.model.includes('/') && !options.model.startsWith('flux/'))) {
-      // Обработка моделей с вендором (например "rundiffusion-fal/juggernaut-flux/lightning")
-      if (options.model.includes('/') && !options.model.startsWith('flux/')) {
-        // Для новой структуры URL в формате vendor/model (например rundiffusion-fal/juggernaut-flux/lightning)
-        // Используем прямой запрос в формате https://queue.fal.run/vendor/model
-        const modelParts = options.model.split('/');
-        let vendor, model;
-        
-        if (modelParts.length >= 2) {
-          // Обрабатываем случай "vendor/model" или "vendor/model/variant"
-          vendor = modelParts[0];
-          
-          // Если есть третья часть (вариант), используем ее в URL
-          if (modelParts.length >= 3) {
-            model = `${modelParts[1]}/${modelParts[2]}`;
-          } else {
-            model = modelParts[1];
-          }
-          
-          apiUrl = `https://queue.fal.run/${encodeURIComponent(vendor)}/${encodeURIComponent(model)}`;
-          console.log(`[fal-ai-direct] Использование URL нового формата: ${apiUrl}`);
-          
-          // Данные для моделей нового типа согласно документации
-          requestData = {
-            prompt: options.prompt,
-            negative_prompt: options.negative_prompt || '',
-            image_size: options.width && options.height 
-              ? { width: options.width, height: options.height }
-              : "landscape_4_3",
-            num_images: options.num_images || 1
-          };
-        } else {
-          // Fallback к старому формату для моделей Flux
-          const modelName = options.model.replace('flux/', '');
-          apiUrl = 'https://api.fal.ai/v1/images/generate';
-          requestData = {
-            model_name: modelName,
-            prompt: options.prompt,
-            negative_prompt: options.negative_prompt || '',
-            image_width: options.width || 1024,
-            image_height: options.height || 1024,
-            num_images: options.num_images || 1
-          };
-        }
-      } else {
-        // Старый формат для моделей Flux
-        const modelName = options.model.replace('flux/', '');
-        apiUrl = 'https://api.fal.ai/v1/images/generate';
-        requestData = {
-          model_name: modelName,
-          prompt: options.prompt,
-          negative_prompt: options.negative_prompt || '',
-          image_width: options.width || 1024,
-          image_height: options.height || 1024,
-          num_images: options.num_images || 1
-        };
-      }
+    } else if (options.model.startsWith('flux/')) {
+      // Выделяем имя модели из пространства имен flux
+      const modelName = options.model.replace('flux/', '');
+      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      requestData = {
+        model_name: modelName,
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt || '',
+        image_width: options.width || 1024,
+        image_height: options.height || 1024,
+        num_images: options.num_images || 1
+      };
     } else {
       // Для других моделей используем общий endpoint
       apiUrl = 'https://api.fal.ai/v1/images/generate';
