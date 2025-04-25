@@ -1,20 +1,19 @@
 /**
- * Тестовый скрипт для проверки работы FAL.AI API с использованием нового официального клиента
+ * Тестовый скрипт для проверки работы FAL.AI API с Flux моделью
  * 
  * Использование: 
- * node test-fal-official.js
+ * node test-fal-flux-model.js
  */
 
 import axios from 'axios';
 import { config } from 'dotenv';
-import { createRequire } from 'module';
 
 // Инициализируем dotenv
 config();
 
-async function testFalApi() {
+async function testFluxModel() {
   try {
-    console.log('Тестирование API генерации изображений FAL.AI с официальным клиентом...');
+    console.log('Тестирование API генерации изображений FAL.AI с Flux/Juggernaut моделью...');
     
     // Используем API-ключ из .env файла
     const apiKey = process.env.FAL_AI_API_KEY;
@@ -22,11 +21,13 @@ async function testFalApi() {
       throw new Error('FAL_AI_API_KEY не найден в .env файле');
     }
     
-    // Подготавливаем тестовые параметры
+    // Подготавливаем тестовые параметры для Flux модели
     const testRequest = {
-      prompt: "A cute cat playing with a ball, high quality, detailed, 4k",
+      prompt: "A scenic mountain landscape, high quality, detailed, 4k",
       negativePrompt: "blurry, low quality, distorted",
-      model: "schnell", // Используем быструю модель для теста
+      model: "flux/juggernaut-xl-lightning", // Используем модель Flux
+      width: 1024,
+      height: 1024,
       token: apiKey
     };
     
@@ -73,4 +74,4 @@ async function testFalApi() {
 }
 
 // Запускаем тест
-testFalApi();
+testFluxModel();
