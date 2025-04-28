@@ -220,61 +220,21 @@
     @apply z-10 bg-background pb-6;
   }
   
-  /* Полностью новые стили для модального эмодзи-пикера */
-  .emoji-picker-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  .emoji-picker-modal {
+  /* Упрощенные стили для эмодзи-пикера в Popover */
+  .emoji-picker-container {
     position: relative;
-    background-color: var(--background);
-    border-radius: 12px;
-    padding: 4px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-    max-width: 90vw;
-    max-height: 90vh;
-    overflow: hidden;
+    z-index: 50; 
   }
   
-  /* Заголовок модального окна */
-  .emoji-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
+  /* Стили для Popover контейнера */
+  .emoji-popover {
+    z-index: 50;
+    max-height: 450px;
+    overflow: visible;
   }
   
-  /* Кнопка закрытия */
-  .emoji-close-button {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-  }
-  
-  .emoji-close-button:hover {
-    background-color: var(--accent);
-  }
-  
-  /* Стили для самого эмодзи-пикера */
-  .emoji-picker-modal .EmojiPickerReact {
+  /* Стили для компонента эмодзи-пикера */
+  .emoji-picker-react-component {
     border: none !important;
     box-shadow: none !important;
     --epr-hover-bg-color: var(--accent) !important;
@@ -283,29 +243,38 @@
     --epr-search-border-color: var(--border) !important;
   }
   
-  /* Стили скроллбара внутри эмодзи-пикера - для Chrome и Safari */
-  .emoji-picker-modal .epr-body::-webkit-scrollbar {
+  /* Стили для скроллбара эмодзи-пикера - Chrome и Safari */
+  .emoji-picker-container .epr-body::-webkit-scrollbar {
     width: 6px;
   }
   
-  .emoji-picker-modal .epr-body::-webkit-scrollbar-track {
+  .emoji-picker-container .epr-body::-webkit-scrollbar-track {
     background: transparent;
   }
   
-  .emoji-picker-modal .epr-body::-webkit-scrollbar-thumb {
+  .emoji-picker-container .epr-body::-webkit-scrollbar-thumb {
     background-color: rgba(128, 128, 128, 0.5);
     border-radius: 6px;
   }
   
   /* Стили скроллбара - для Firefox */
-  .emoji-picker-modal .epr-body {
+  .emoji-picker-container .epr-body {
     scrollbar-width: thin;
     scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+    padding-right: 5px; /* Немного места для скроллбара */
   }
   
-  /* Стили для категорий */
-  .emoji-picker-modal .epr-category-nav {
-    padding: 4px 0;
+  /* Переопределяем шаблон событий для перехвата кликов */
+  .emoji-picker-container .EmojiPickerReact {
+    pointer-events: auto !important;
+  }
+  
+  .emoji-picker-container .epr-emoji {
+    pointer-events: auto !important;
+  }
+  
+  .emoji-picker-container .epr-category-nav {
+    pointer-events: auto !important;
   }
   
   .resize-handle {
