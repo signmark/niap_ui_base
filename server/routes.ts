@@ -27,6 +27,7 @@ import { apifyService } from "./services/apify";
 import { log } from "./utils/logger";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
+import testRoutes from './api/test-routes';
 import { 
   validateTelegramToken,
   validateVkToken,
