@@ -36,6 +36,7 @@ interface ContentItem {
   content: string;
   originalContent?: string;
   imagePrompt?: string;
+  prompt?: string; // Добавляем поле prompt, которое приходит из n8n
   [key: string]: any; // Для других возможных полей
 }
 
@@ -156,7 +157,17 @@ export function ImageGenerationDialog({
     
     // Сначала проверим, если в initialContent есть поле originalContent, которое передаётся из ContentPlanGenerator
     const contentObject = typeof initialContent === 'object' ? initialContent as ContentItem : null;
-    const originalContent = contentObject?.originalContent || contentObject?.imagePrompt || null;
+    // Проверяем наличие всех возможных полей для использования как промпт
+    const originalContent = contentObject?.prompt || contentObject?.originalContent || contentObject?.imagePrompt || null;
+    
+    // Добавляем отладку для проверки полей
+    if (contentObject) {
+      console.log('Доступные поля контента для использования как промпт:', {
+        prompt: contentObject.prompt || 'отсутствует',
+        originalContent: contentObject.originalContent || 'отсутствует',
+        imagePrompt: contentObject.imagePrompt || 'отсутствует'
+      });
+    }
     
     if (contentId && initialPrompt) {
       // Редактирование с сохраненным промтом - используем его
