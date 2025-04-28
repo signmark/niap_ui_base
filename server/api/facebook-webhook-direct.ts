@@ -167,8 +167,13 @@ router.post('/', async (req, res) => {
     
     
     // Подготавливаем данные для публикации
-    const message = content.content;
+    // Очищаем HTML-теги из контента, сохраняя структуру текста
+    const message = cleanHtmlForFacebook(content.content);
     const imageUrl = content.image_url;
+    
+    log.info(`[Facebook Direct] Текст для публикации обработан (удалены HTML-теги)`);
+    log.debug(`[Facebook Direct] Исходный текст: ${content.content.substring(0, 100)}${content.content.length > 100 ? '...' : ''}`);
+    log.debug(`[Facebook Direct] Обработанный текст: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`);
     
     // Обрабатываем additional_images, если они есть
     let additionalImages = content.additional_images || [];
