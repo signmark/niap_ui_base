@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из входного узла\nconst inputData = $input.item.json;\n\n// ПОЛНЫЙ ЛОГ ВХОДНЫХ ДАННЫХ\nconsole.log(\"ПОЛНЫЕ ВХОДНЫЕ ДАННЫЕ:\", JSON.stringify(inputData, null, 2));\n\n// Получаем данные контента\nconst contentData = $node[\"Получение контента\"].json;\n\n// Получаем данные для Telegram\nconst telegramData = $node[\"Подготовка данных для Telegram\"].json;\n\n// Получаем тип контента\nconst contentType = telegramData.content_type;\n\n// Подготавливаем базовую структуру для обновления\nlet socialPlatforms = {};\n\n// Получаем текущие данные о социальных платформах, если они есть\nif (contentData.social_platforms) {\n  try {\n    // Если это строка JSON, преобразуем в объект\n    if (typeof contentData.social_platforms === 'string') {\n      socialPlatforms = JSON.parse(contentData.social_platforms);\n    } else {\n      // Если это уже объект, используем его\n      socialPlatforms = { ...contentData.social_platforms };\n    }\n  } catch (error) {\n    console.error(\"Ошибка при разборе social_platforms:\", error);\n    socialPlatforms = {};\n  }\n}\n\n// Получаем ответ Telegram из входа\nconst telegramResponse = $json;\n\n// Универсально определяем chatId и messageId\nlet chatId, messageId;\nif (telegramResponse && telegramResponse.ok) {\n  if (Array.isArray(telegramResponse.result) && telegramResponse.result.length > 0) {\n    // Альбом\n    chatId = telegramResponse.result[0].chat.id.toString();\n    messageId = telegramResponse.result[0].message_id;\n  } else if (telegramResponse.result && telegramResponse.result.chat) {\n    // Одиночное сообщение (текст, фото, видео)\n    chatId = telegramResponse.result.chat.id.toString();\n    messageId = telegramResponse.result.message_id;\n  }\n}\n\n// Формируем ссылку\nlet postUrl = \"\";\nif (chatId && messageId) {\n  if (chatId.startsWith('-100')) {\n    postUrl = `https://t.me/c/${chatId.substring(4)}/${messageId}`;\n  } else if (chatId.startsWith('@')) {\n    postUrl = `https://t.me/${chatId.substring(1)}/${messageId}`;\n  } else if (chatId.startsWith('-')) {\n    postUrl = `https://t.me/c/${chatId}/${messageId}`;\n  } else {\n    postUrl = `https://t.me`;\n  }\n}\n\n// Формируем результат\nif (telegramResponse && telegramResponse.ok) {\n  socialPlatforms.telegram = {\n    status: \"published\",\n    postUrl: postUrl,\n    platform: \"telegram\",\n    publishedAt: new Date().toISOString()\n  };\n  console.log(\"Публикация в Telegram успешна:\", postUrl);\n} else {\n  socialPlatforms.telegram = {\n    status: \"failed\",\n    error: telegramResponse ? JSON.stringify(telegramResponse) : \"Нет ответа от Telegram API\",\n    platform: \"telegram\",\n    updatedAt: new Date().toISOString()\n  };\n  console.error(\"Ошибка публикации в Telegram:\", telegramResponse);\n}\n\n// Возвращаем обновленные данные\nreturn {\n  social_platforms: JSON.stringify(socialPlatforms)\n};"
+      },
+      "id": "c6730a41-1bc1-48d7-a7e8-bbdf0913201a",
+      "name": "Подготовка данных обновления1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Подготовка данных обновления1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d69b135e70f406a0ace9f751f1d688634763e75d1dec57b0a74654d8144965c4"
+  }
+}

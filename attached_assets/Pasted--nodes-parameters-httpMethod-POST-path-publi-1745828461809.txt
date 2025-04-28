@@ -1,0 +1,1400 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-telegram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9416af46-e920-487e-b4f6-a0afd34880de",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1680,
+        260
+      ],
+      "webhookId": "b6c74558-b6c0-4eee-92b3-c60ac29f70c2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Подготовка параметров\nreturn {\n  contentId: $input.item.json.body.contentId,\n  campaignId: $input.item.json.body.campaignId\n};"
+      },
+      "id": "01d7d3e5-f0e3-482f-9551-58df453e5018",
+      "name": "Подготовка параметров",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "campaign_content",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b842fcb2-3a00-4e31-b9c2-5433dddb561f",
+      "name": "Получение контента",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1280,
+        260
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "d8e930a0-69f9-4440-9456-da313cf84bbf",
+      "name": "Контент найден?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1020,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "user_campaigns",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.campaign_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "03918946-b418-4f0d-8a42-bef099ec20d7",
+      "name": "Получение настроек кампании",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -780,
+        240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из предыдущих нод\nconst content = $node[\"Получение контента\"].json || {};\nconst campaign = $node[\"Получение настроек кампании\"].json || {};\n\n// Получаем настройки Telegram из кампании\nlet telegramToken, telegramChatId;\n\nif (campaign.social_media_settings) {\n  try {\n    const settings = typeof campaign.social_media_settings === 'string' \n      ? JSON.parse(campaign.social_media_settings) \n      : campaign.social_media_settings;\n    \n    if (settings.telegram) {\n      telegramToken = settings.telegram.token;\n      telegramChatId = settings.telegram.chatId;\n    }\n  } catch (error) {\n    console.error(\"Ошибка при разборе настроек:\", error);\n  }\n}\n\n// Улучшенная функция форматирования сообщения\nfunction formatTelegramMessage(message) {\n  if (!message) return \"\";\n  \n  // Удаляем все HTML-комментарии\n  let formatted = message.replace(/<!--.*?-->/gs, '');\n\n  // Обрабатываем основные теги\n  formatted = formatted\n    .replace(/<strong\\b[^>]*>(.*?)<\\/strong>/gi, '<b>$1</b>')\n    .replace(/<b\\b[^>]*>(.*?)<\\/b>/gi, '<b>$1</b>')\n    .replace(/<em\\b[^>]*>(.*?)<\\/em>/gi, '<i>$1</i>')\n    .replace(/<i\\b[^>]*>(.*?)<\\/i>/gi, '<i>$1</i>')\n    .replace(/<h[1-6]\\b[^>]*>(.*?)<\\/h[1-6]>/gi, '<b>$1</b>\\n')\n    .replace(/<\\/?p\\b[^>]*>/gi, '\\n')\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/?div\\b[^>]*>/gi, '\\n');\n\n  // Удаляем все неподдерживаемые теги, но сохраняем их содержимое\n  formatted = formatted.replace(/<(\\/?)([a-z][a-z0-9]*)\\b[^>]*>/gi, (match, slash, tag) => {\n    const supportedTags = ['b', 'i', 'u', 's', 'a', 'code', 'pre', 'span'];\n    return supportedTags.includes(tag.toLowerCase()) ? `<${slash}${tag}>` : '';\n  });\n\n  // Удаляем все атрибуты из оставшихся тегов\n  formatted = formatted.replace(/<([a-z]+)\\b[^>]*>/gi, '<$1>');\n\n  // Балансируем теги (автоматически закрываем незакрытые)\n  const tagStack = [];\n  formatted = formatted.replace(/<(\\/?)(b|i|u|s|a|code|pre)>/gi, (match, slash, tag) => {\n    if (slash) {\n      // Закрывающий тег\n      const lastTag = tagStack.pop();\n      if (lastTag !== tag.toLowerCase()) {\n        // Если теги не совпадают, восстанавливаем порядок\n        tagStack.push(lastTag);\n        return '';\n      }\n      return `</${tag}>`;\n    } else {\n      // Открывающий тег\n      tagStack.push(tag.toLowerCase());\n      return `<${tag}>`;\n    }\n  });\n\n  // Закрываем все оставшиеся открытые теги\n  let closedTags = '';\n  while (tagStack.length > 0) {\n    const tag = tagStack.pop();\n    closedTags += `</${tag}>`;\n  }\n  formatted += closedTags;\n\n  // Очищаем лишние переносы строк\n  formatted = formatted\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n\n  // Ограничение длины сообщения удалено\n\n  return formatted;\n}\n\n// Определяем тип контента и подготавливаем данные\nlet contentType = 'text';\nlet message = formatTelegramMessage(content.content);\nlet imageUrl = content.image_url;\nlet videoUrl = content.video_url;\nlet media = [];\n\nconst hasAdditionalImages = Array.isArray(content.additional_images) && \n                         content.additional_images.length > 0;\n\nif (imageUrl && hasAdditionalImages) {\n  contentType = 'album';\n  media.push({\n    type: 'photo',\n    media: imageUrl,\n    caption: message,\n    parse_mode: 'HTML'\n  });\n  \n  content.additional_images.forEach(additionalImageUrl => {\n    media.push({\n      type: 'photo',\n      media: additionalImageUrl\n    });\n  });\n  \n  media = JSON.stringify(media);\n} else if (videoUrl) {\n  contentType = 'video';\n} else if (imageUrl) {\n  contentType = 'image';\n}\nconst messageLength = message ? message.length : 0;\nconst longMessage = messageLength > 1000;\n\nreturn {\n  content_id: content.id,\n  campaign_id: content.campaign_id,\n  telegram_token: telegramToken,\n  telegram_chat_id: telegramChatId,\n  content_type: contentType,\n  message: message,\n  image_url: imageUrl,\n  video_url: videoUrl,\n  media: media,\n  long_message: longMessage,\n  message_length: messageLength\n};"
+      },
+      "id": "d0f9c13c-7083-4d7e-a97a-82aa159f9fde",
+      "name": "Подготовка данных для Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5b5b8e2e-aa29-4659-921b-6d2bea4344a1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cca2c928-8b1a-4db7-bbf5-9f01c2669c44",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "db12a6e2-5a70-439d-ab93-0ac6cdbfc3ff",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "album",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Album"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9c2c4b45-e9f2-438b-bd40-5d1cd9494bbe",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "video",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Video"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -320,
+        220
+      ],
+      "id": "03977703-f5e9-4c84-a66c-3bb6ef3e3587",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendMessage\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3
+            }
+          }
+        }
+      },
+      "id": "bf974f8e-3a66-4b7b-a54a-2d3039b945c2",
+      "name": "Отправка текста1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        320,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $json.telegram_token + \"/sendMediaGroup\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.telegram_chat_id }}"
+            },
+            {
+              "name": "media",
+              "value": "={{ $json.media }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b811915-c39b-4f43-a5e2-079f2e6e06e2",
+      "name": "Отправка альбома1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        320,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $json.telegram_token + \"/sendVideo\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.telegram_chat_id }}"
+            },
+            {
+              "name": "video",
+              "value": "={{ $json.video_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "af69152b-2a4f-4ee7-a67b-daa13c3d4774",
+      "name": "Отправка видео1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        320,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из входного узла\nconst inputData = $input.item.json;\n\n// ПОЛНЫЙ ЛОГ ВХОДНЫХ ДАННЫХ\nconsole.log(\"ПОЛНЫЕ ВХОДНЫЕ ДАННЫЕ:\", JSON.stringify(inputData, null, 2));\n\n// Получаем данные контента\nconst contentData = $node[\"Получение контента\"].json;\n\n// Получаем данные для Telegram\nconst telegramData = $node[\"Подготовка данных для Telegram\"].json;\n\n// Получаем тип контента\nconst contentType = telegramData.content_type;\n\n// Подготавливаем базовую структуру для обновления\nlet socialPlatforms = {};\n\n// Получаем текущие данные о социальных платформах, если они есть\nif (contentData.social_platforms) {\n  try {\n    // Если это строка JSON, преобразуем в объект\n    if (typeof contentData.social_platforms === 'string') {\n      socialPlatforms = JSON.parse(contentData.social_platforms);\n    } else {\n      // Если это уже объект, используем его\n      socialPlatforms = { ...contentData.social_platforms };\n    }\n  } catch (error) {\n    console.error(\"Ошибка при разборе social_platforms:\", error);\n    socialPlatforms = {};\n  }\n}\n\n// Получаем ответ Telegram из входа\nconst telegramResponse = $json;\n\n// Универсально определяем chatId и messageId\nlet chatId, messageId;\nif (telegramResponse && telegramResponse.ok) {\n  if (Array.isArray(telegramResponse.result) && telegramResponse.result.length > 0) {\n    // Альбом\n    chatId = telegramResponse.result[0].chat.id.toString();\n    messageId = telegramResponse.result[0].message_id;\n  } else if (telegramResponse.result && telegramResponse.result.chat) {\n    // Одиночное сообщение (текст, фото, видео)\n    chatId = telegramResponse.result.chat.id.toString();\n    messageId = telegramResponse.result.message_id;\n  }\n}\n\n// Формируем ссылку\nlet postUrl = \"\";\nif (chatId && messageId) {\n  if (chatId.startsWith('-100')) {\n    postUrl = `https://t.me/c/${chatId.substring(4)}/${messageId}`;\n  } else if (chatId.startsWith('@')) {\n    postUrl = `https://t.me/${chatId.substring(1)}/${messageId}`;\n  } else if (chatId.startsWith('-')) {\n    postUrl = `https://t.me/c/${chatId}/${messageId}`;\n  } else {\n    postUrl = `https://t.me`;\n  }\n}\n\n// Формируем результат\nif (telegramResponse && telegramResponse.ok) {\n  socialPlatforms.telegram = {\n    status: \"published\",\n    postUrl: postUrl,\n    platform: \"telegram\",\n    publishedAt: new Date().toISOString()\n  };\n  console.log(\"Публикация в Telegram успешна:\", postUrl);\n} else {\n  socialPlatforms.telegram = {\n    status: \"failed\",\n    error: telegramResponse ? JSON.stringify(telegramResponse) : \"Нет ответа от Telegram API\",\n    platform: \"telegram\",\n    updatedAt: new Date().toISOString()\n  };\n  console.error(\"Ошибка публикации в Telegram:\", telegramResponse);\n}\n\n// Возвращаем обновленные данные\nreturn {\n  social_platforms: JSON.stringify(socialPlatforms)\n};"
+      },
+      "id": "c6730a41-1bc1-48d7-a7e8-bbdf0913201a",
+      "name": "Подготовка данных обновления1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "campaign_content",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Подготовка данных для Telegram').item.json.content_id }}",
+            "campaign_id": "={{ $('Подготовка данных для Telegram').item.json.campaign_id }}",
+            "published_at": "={{ $now }}",
+            "social_platforms": "={{ $json.social_platforms }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "campaign_id",
+              "displayName": "campaign_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content_type",
+              "displayName": "content_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "keywords",
+              "displayName": "keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scheduled_at",
+              "displayName": "scheduled_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "social_platforms",
+              "displayName": "social_platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "additional_images",
+              "displayName": "additional_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "additional_media",
+              "displayName": "additional_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "70196c1a-e4f9-4b5f-ac75-068bcb02ca39",
+      "name": "Обновление статуса1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1480,
+        220
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "dc7d0962-7eec-4d84-ab06-984e0a5f0fb7",
+      "name": "Завершение1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1700,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b22ca3e7-62d7-42ea-8b00-0fe00a5b9e27",
+              "leftValue": "={{ $json.message_length }}",
+              "rightValue": 4000,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -100,
+        -140
+      ],
+      "id": "33f9fbf9-a85f-4154-a7c9-2b53901b4a1a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendPhoto\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "photo",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c24e9d86-f89b-4f94-91ba-bb452f5baa5b",
+      "name": "Отправка изображения с описанием",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        320,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendPhoto\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "photo",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.image_url }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d0c72a4-ce17-4027-8a1b-b43c64cea9a3",
+      "name": "Отправка изображения без описания",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        140,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b22ca3e7-62d7-42ea-8b00-0fe00a5b9e27",
+              "leftValue": "={{ $json.long_message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -100,
+        100
+      ],
+      "id": "ac6a3687-be9f-4ccb-b61b-ee0673568b56",
+      "name": "Длинное описание?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendMessage\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3
+            }
+          }
+        }
+      },
+      "id": "f63df187-d1b5-46ba-9ee7-aa2bfb819b33",
+      "name": "Отправка текста2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        500,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = [$(\"Подготовка данных для Telegram\").first().json];\n\nconst MAX_LENGTH = 4000;\nconst result = [];\n\ninput.forEach(item => {\n  const message = item.message || '';\n  if (message.length <= MAX_LENGTH) {\n    result.push({ message });\n  } else {\n    // Разбиваем на предложения\n    const sentences = message.match(/[^.!?]+[.!?]+[\\s\\n]*/g) || [message];\n    let chunk = '';\n\n    for (let i = 0; i < sentences.length; i++) {\n      // Если добавление предложения не превышает лимит — добавляем\n      if ((chunk + sentences[i]).length <= MAX_LENGTH) {\n        chunk += sentences[i];\n      } else {\n        // Если chunk не пустой — отправляем его в результат\n        if (chunk) {\n          result.push({ message: chunk.trim() });\n        }\n        // Если текущее предложение само длиннее лимита — делим его принудительно\n        if (sentences[i].length > MAX_LENGTH) {\n          let start = 0;\n          while (start < sentences[i].length) {\n            result.push({ message: sentences[i].substr(start, MAX_LENGTH).trim() });\n            start += MAX_LENGTH;\n          }\n          chunk = '';\n        } else {\n          // Иначе начинаем новый chunk с текущего предложения\n          chunk = sentences[i];\n        }\n      }\n    }\n    // Добавляем остаток, если есть\n    if (chunk) {\n      result.push({ message: chunk.trim() });\n    }\n  }\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        20
+      ],
+      "id": "ad6d170b-4faf-436e-b5e3-f25d47750d8e",
+      "name": "Разбивка на части по 4000сим"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = [$(\"Подготовка данных для Telegram\").first().json];\n\nconst MAX_LENGTH = 4000;\nconst result = [];\n\ninput.forEach(item => {\n  const message = item.message || '';\n  if (message.length <= MAX_LENGTH) {\n    result.push({ message });\n  } else {\n    // Разбиваем на предложения\n    const sentences = message.match(/[^.!?]+[.!?]+[\\s\\n]*/g) || [message];\n    let chunk = '';\n\n    for (let i = 0; i < sentences.length; i++) {\n      // Если добавление предложения не превышает лимит — добавляем\n      if ((chunk + sentences[i]).length <= MAX_LENGTH) {\n        chunk += sentences[i];\n      } else {\n        // Если chunk не пустой — отправляем его в результат\n        if (chunk) {\n          result.push({ message: chunk.trim() });\n        }\n        // Если текущее предложение само длиннее лимита — делим его принудительно\n        if (sentences[i].length > MAX_LENGTH) {\n          let start = 0;\n          while (start < sentences[i].length) {\n            result.push({ message: sentences[i].substr(start, MAX_LENGTH).trim() });\n            start += MAX_LENGTH;\n          }\n          chunk = '';\n        } else {\n          // Иначе начинаем новый chunk с текущего предложения\n          chunk = sentences[i];\n        }\n      }\n    }\n    // Добавляем остаток, если есть\n    if (chunk) {\n      result.push({ message: chunk.trim() });\n    }\n  }\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        -240
+      ],
+      "id": "7077e0b2-2921-4a7b-a34b-8200a1e334a3",
+      "name": "Разбивка на части по 4000сим1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b22ca3e7-62d7-42ea-8b00-0fe00a5b9e27",
+              "leftValue": "={{ $json.long_message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -100,
+        420
+      ],
+      "id": "3361c8da-22aa-49b2-9f34-cac026717d53",
+      "name": "Длинное описание?1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b22ca3e7-62d7-42ea-8b00-0fe00a5b9e27",
+              "leftValue": "={{ $json.long_message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -100,
+        700
+      ],
+      "id": "95ed65ee-e6c7-41f1-bfd0-e7d8c24a4509",
+      "name": "Длинное описание?2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $json.telegram_token + \"/sendMediaGroup\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.telegram_chat_id }}"
+            },
+            {
+              "name": "media",
+              "value": "={{ JSON.stringify(JSON.parse($json.media).map(item => (({caption, ...rest}) => rest)(item))) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b4190a10-1e27-4c05-9ef2-ec56c2f66214",
+      "name": "Отправка альбома2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        140,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendMessage\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3
+            }
+          }
+        }
+      },
+      "id": "b904f8a4-77e6-4c23-b838-c36dd60bdc23",
+      "name": "Отправка текста3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        500,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = [$(\"Подготовка данных для Telegram\").first().json];\n\nconst MAX_LENGTH = 4000;\nconst result = [];\n\ninput.forEach(item => {\n  const message = item.message || '';\n  if (message.length <= MAX_LENGTH) {\n    result.push({ message });\n  } else {\n    // Разбиваем на предложения\n    const sentences = message.match(/[^.!?]+[.!?]+[\\s\\n]*/g) || [message];\n    let chunk = '';\n\n    for (let i = 0; i < sentences.length; i++) {\n      // Если добавление предложения не превышает лимит — добавляем\n      if ((chunk + sentences[i]).length <= MAX_LENGTH) {\n        chunk += sentences[i];\n      } else {\n        // Если chunk не пустой — отправляем его в результат\n        if (chunk) {\n          result.push({ message: chunk.trim() });\n        }\n        // Если текущее предложение само длиннее лимита — делим его принудительно\n        if (sentences[i].length > MAX_LENGTH) {\n          let start = 0;\n          while (start < sentences[i].length) {\n            result.push({ message: sentences[i].substr(start, MAX_LENGTH).trim() });\n            start += MAX_LENGTH;\n          }\n          chunk = '';\n        } else {\n          // Иначе начинаем новый chunk с текущего предложения\n          chunk = sentences[i];\n        }\n      }\n    }\n    // Добавляем остаток, если есть\n    if (chunk) {\n      result.push({ message: chunk.trim() });\n    }\n  }\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        340
+      ],
+      "id": "e1984cb1-166d-4e7c-bffd-00b29aaf3635",
+      "name": "Разбивка на части по 4000сим2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $json.telegram_token + \"/sendVideo\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.telegram_chat_id }}"
+            },
+            {
+              "name": "video",
+              "value": "={{ $json.video_url }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7d9b85df-c828-4ac7-baef-f79242f8349a",
+      "name": "Отправка видео2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        140,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.telegram.org/bot\" + $('Подготовка данных для Telegram').first().json.telegram_token + \"/sendMessage\" }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Подготовка данных для Telegram').first().json.telegram_chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "disable_web_page_preview",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 3
+            }
+          }
+        }
+      },
+      "id": "894a16c8-91e8-4c25-9bfb-c393d16d6d0a",
+      "name": "Отправка текста4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        500,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = [$(\"Подготовка данных для Telegram\").first().json];\n\nconst MAX_LENGTH = 4000;\nconst result = [];\n\ninput.forEach(item => {\n  const message = item.message || '';\n  if (message.length <= MAX_LENGTH) {\n    result.push({ message });\n  } else {\n    // Разбиваем на предложения\n    const sentences = message.match(/[^.!?]+[.!?]+[\\s\\n]*/g) || [message];\n    let chunk = '';\n\n    for (let i = 0; i < sentences.length; i++) {\n      // Если добавление предложения не превышает лимит — добавляем\n      if ((chunk + sentences[i]).length <= MAX_LENGTH) {\n        chunk += sentences[i];\n      } else {\n        // Если chunk не пустой — отправляем его в результат\n        if (chunk) {\n          result.push({ message: chunk.trim() });\n        }\n        // Если текущее предложение само длиннее лимита — делим его принудительно\n        if (sentences[i].length > MAX_LENGTH) {\n          let start = 0;\n          while (start < sentences[i].length) {\n            result.push({ message: sentences[i].substr(start, MAX_LENGTH).trim() });\n            start += MAX_LENGTH;\n          }\n          chunk = '';\n        } else {\n          // Иначе начинаем новый chunk с текущего предложения\n          chunk = sentences[i];\n        }\n      }\n    }\n    // Добавляем остаток, если есть\n    if (chunk) {\n      result.push({ message: chunk.trim() });\n    }\n  }\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        660
+      ],
+      "id": "a5617f23-ec27-41e6-9401-12b59ae57fa9",
+      "name": "Разбивка на части по 4000сим3"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Подготовка параметров",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка параметров": {
+      "main": [
+        [
+          {
+            "node": "Получение контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение контента": {
+      "main": [
+        [
+          {
+            "node": "Контент найден?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Контент найден?": {
+      "main": [
+        [
+          {
+            "node": "Получение настроек кампании",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Получение настроек кампании": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных для Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка данных для Telegram": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Длинное описание?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Длинное описание?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Длинное описание?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка текста1": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка альбома1": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка видео1": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка данных обновления1": {
+      "main": [
+        [
+          {
+            "node": "Обновление статуса1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обновление статуса1": {
+      "main": [
+        [
+          {
+            "node": "Завершение1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Разбивка на части по 4000сим1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отправка текста1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка изображения с описанием": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка изображения без описания": {
+      "main": [
+        [
+          {
+            "node": "Разбивка на части по 4000сим",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Длинное описание?": {
+      "main": [
+        [
+          {
+            "node": "Отправка изображения без описания",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отправка изображения с описанием",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка текста2": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбивка на части по 4000сим": {
+      "main": [
+        [
+          {
+            "node": "Отправка текста2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбивка на части по 4000сим1": {
+      "main": [
+        [
+          {
+            "node": "Отправка текста1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Длинное описание?1": {
+      "main": [
+        [
+          {
+            "node": "Отправка альбома2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отправка альбома1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Длинное описание?2": {
+      "main": [
+        [
+          {
+            "node": "Отправка видео2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отправка видео1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка альбома2": {
+      "main": [
+        [
+          {
+            "node": "Разбивка на части по 4000сим2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка текста3": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбивка на части по 4000сим2": {
+      "main": [
+        [
+          {
+            "node": "Отправка текста3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка видео2": {
+      "main": [
+        [
+          {
+            "node": "Разбивка на части по 4000сим3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка текста4": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбивка на части по 4000сим3": {
+      "main": [
+        [
+          {
+            "node": "Отправка текста4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "n8n.nplanner.ru",
+          "user-agent": "axios/1.8.4",
+          "content-length": "52",
+          "accept": "application/json, text/plain, */*",
+          "accept-encoding": "gzip, compress, deflate, br",
+          "content-type": "application/json",
+          "x-forwarded-for": "34.46.86.230",
+          "x-forwarded-host": "n8n.nplanner.ru",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "5d95b47c7b4b",
+          "x-real-ip": "34.46.86.230"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "contentId": "825f3d27-9bdf-4c66-9387-9317c47cb0c6"
+        },
+        "webhookUrl": "https://n8n.nplanner.ru/webhook/publish-telegram",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d69b135e70f406a0ace9f751f1d688634763e75d1dec57b0a74654d8144965c4"
+  }
+}
