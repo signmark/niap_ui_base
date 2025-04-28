@@ -1,0 +1,1235 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-instagram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "41478911-5721-44ea-9a0d-1464a6348cd4",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -3880,
+        320
+      ],
+      "webhookId": "publish-instagram"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Подготовка параметров\nreturn {\n  contentId: $input.item.json.body.contentId,\n  campaignId: $input.item.json.body.campaignId\n};"
+      },
+      "id": "d41ec3d1-56e6-4f95-87aa-10ba830350e0",
+      "name": "Подготовка параметров",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3700,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "campaign_content",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff41eef2-3070-4fdc-a2e2-85fcfc1c3248",
+      "name": "Получение контента",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3480,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "8447700c-aa71-4ca9-b367-de4c59b131c8",
+      "name": "Контент найден?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -3220,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "user_campaigns",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.campaign_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5a9665e-6424-465a-b523-82d3a1d68a98",
+      "name": "Получение настроек кампании",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2960,
+        180
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из предыдущих нод\nconst content = $node[\"Получение контента\"].json || {};\nconst campaign = $node[\"Получение настроек кампании\"].json || {};\n\n// Получаем настройки Instagram из кампании\nlet instagramAccessToken, instagramAccountId;\n\nif (campaign.social_media_settings) {\n  try {\n    const settings = typeof campaign.social_media_settings === 'string' \n      ? JSON.parse(campaign.social_media_settings) \n      : campaign.social_media_settings;\n    \n    if (settings.instagram) {\n      instagramAccessToken = settings.instagram.access_token;\n      instagramAccountId = settings.instagram.account_id;\n    }\n  } catch (error) {\n    console.error(\"Ошибка при разборе настроек:\", error);\n  }\n}\n\n// Очищаем текст от ВСЕХ HTML-тегов, оставляем только переносы строк\nfunction cleanTextForInstagram(text) {\n  if (!text) return \"\";\n\n  // Заменяем блоковые теги (<p>, <div>) и <br> на переносы строк\n  let cleanedText = text\n    .replace(/<\\/?(p|div|h[1-6]|ul|ol|li|blockquote)[^>]*>/g, \"\\n\")  // Блоковые элементы → \\n\n    .replace(/<br\\s*\\/?>/g, \"\\n\");                                    // <br> → \\n\n\n  // Удаляем ВСЕ остальные HTML-теги (включая <strong>, <em>, <a> и т.д.)\n  cleanedText = cleanedText.replace(/<[^>]*>/g, \"\");\n\n  // Убираем лишние пробелы и переносы\n  cleanedText = cleanedText\n    .replace(/\\n\\s*\\n/g, \"\\n\\n\")  // Убираем множественные пустые строки\n    .trim();\n\n  // Обрезаем до 2200 символов (ограничение Instagram)\n  if (cleanedText.length > 2200) {\n    cleanedText = cleanedText.substring(0, 2197) + \"...\";\n  }\n\n  return cleanedText;\n}\n\n// Собираем изображения\nlet images_url = [];\nif (content.image_url) images_url.push(content.image_url);\nif (Array.isArray(content.additional_images)) {\n  images_url = images_url.concat(content.additional_images.filter(Boolean));\n}\n\n// Собираем видео\nlet videos_url = [];\nif (content.video_url) videos_url.push(content.video_url);\nif (Array.isArray(content.additional_media)) {\n  videos_url = videos_url.concat(content.additional_media.filter(Boolean));\n}\n\n// Определяем тип контента (video/image/error)\nlet contentType = \"error\";\nif (videos_url.length > 0) {\n  contentType = \"video\";\n} else if (images_url.length > 0) {\n  contentType = \"image\";\n}\n\n// Очищаем текст поста (никакого форматирования, только переносы строк)\nlet message = cleanTextForInstagram(content.content);\n\n// Возвращаем данные для публикации\nreturn {\n  content_id: content.id,\n  campaign_id: content.campaign_id,\n  instagram_access_token: instagramAccessToken,\n  instagram_account_id: instagramAccountId,\n  content_type: contentType,\n  message: message,\n  images_url: images_url,\n  videos_url: videos_url\n};"
+      },
+      "id": "c152b93b-4c39-4627-80c3-f31ed72d5d3c",
+      "name": "Подготовка данных для Instagram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2760,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.content_type }}",
+              "value2": "image"
+            }
+          ],
+          "boolean": [
+            {
+              "value1": "={{ $json.content_type === \"video\" }}\n",
+              "value2": "={{ true }}"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      },
+      "id": "cd686d25-3ee2-4ac4-a307-b029c25f973a",
+      "name": "Проверка типа контента",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -2340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffdaee59-acb6-427e-94f0-639509de990f",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1e1750dc-1ec9-4def-8110-8cc29df53764",
+      "name": "Успешное создание медиа?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -720,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные\nconst instagramData = $node[\"Подготовка данных для Instagram\"].json;\nlet media, carousel;\n\ntry {\n  media = $node[\"Публикация media\"].json;\n} catch (e) {\n  media = null;\n}\n\ntry {\n  carousel = $node[\"Публикация поста с каруселью\"].json;\n} catch (e) {\n  carousel = null;\n}\n\nconst publishResponse = media || carousel || {};\n\n\n// Подготавливаем данные для social_platforms\nlet socialPlatforms = {};\n\n// Получаем текущие данные о социальных платформах\nif ($node[\"Получение контента\"].json.social_platforms) {\n  try {\n    socialPlatforms = typeof $node[\"Получение контента\"].json.social_platforms === 'string' \n      ? JSON.parse($node[\"Получение контента\"].json.social_platforms) \n      : $node[\"Получение контента\"].json.social_platforms;\n  } catch (error) {\n    console.error(\"Ошибка при разборе social_platforms:\", error);\n  }\n}\n\n// Проверяем успешность публикации\nif (publishResponse && publishResponse.id) {\n  // Формируем базовые данные о публикации\n  const instagramPost = {\n    status: \"published\",\n    postId: publishResponse.id,\n    platform: \"instagram\",\n    publishedAt: new Date().toISOString(),\n    postUrl: \"\" // Инициализируем поле\n  };\n  \n  // Если есть данные из ноды \"Получение permalink\" (добавьте эту ноду в workflow)\n  if ($node[\"Получение permalink\"]?.json?.permalink) {\n    instagramPost.postUrl = $node[\"Получение permalink\"].json.permalink;\n  } \n  // Альтернативный вариант - формируем URL вручную если знаем shortcode\n  else if (publishResponse.shortcode) {\n    instagramPost.postUrl = `https://www.instagram.com/p/${publishResponse.shortcode}/`;\n  }\n  // Если нет данных о ссылке, оставляем поле пустым\n  else {\n    console.warn(\"Не удалось получить permalink для поста\");\n  }\n  \n  socialPlatforms.instagram = instagramPost;\n  console.log(\"Публикация в Instagram успешна:\", publishResponse.id);\n} else {\n  socialPlatforms.instagram = {\n    status: \"failed\",\n    error: JSON.stringify(publishResponse) || \"Нет ответа от Instagram API\",\n    platform: \"instagram\",\n    updatedAt: new Date().toISOString()\n  };\n  console.error(\"Ошибка публикации в Instagram:\", publishResponse);\n}\n\nreturn {\n  social_platforms: JSON.stringify(socialPlatforms),\n  // Дополнительно возвращаем данные для отладки\n  debug: {\n    publishResponse,\n    permalinkData: $node[\"Получение permalink\"]?.json\n  }\n};"
+      },
+      "id": "8ee04917-76c1-4c89-baf1-80d7c3ec93b8",
+      "name": "Подготовка данных обновления",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "campaign_content",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Подготовка данных для Instagram').first().json.content_id }}",
+            "campaign_id": "={{ $('Подготовка данных для Instagram').first().json.campaign_id }}",
+            "published_at": "={{ $now }}",
+            "social_platforms": "={{ $json.social_platforms }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "campaign_id",
+              "displayName": "campaign_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content_type",
+              "displayName": "content_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "keywords",
+              "displayName": "keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scheduled_at",
+              "displayName": "scheduled_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "social_platforms",
+              "displayName": "social_platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "additional_images",
+              "displayName": "additional_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "additional_media",
+              "displayName": "additional_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f91cb54e-6863-4d5d-9364-47512887d09a",
+      "name": "Обновление статуса",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        200,
+        280
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "62a28382-4976-4801-a8a1-1cfc79fd5a6d",
+      "name": "Завершение",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  social_platforms: JSON.stringify({\n    instagram: {\n      status: \"failed\",\n      error: \"Контент не найден или отсутствует изображение\",\n      platform: \"instagram\",\n      updatedAt: new Date().toISOString()\n    }\n  })\n};"
+      },
+      "id": "61cc62f5-92fc-4387-be38-a742f4ef833a",
+      "name": "Ошибка контента",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.images_url[0] }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Получение настроек кампании').item.json.social_media_settings.instagram.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1580,
+        -20
+      ],
+      "id": "e3cd02f0-29a8-4c16-840d-09cca488ef0b",
+      "name": "Создание media",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1580,
+        -220
+      ],
+      "name": "Сохранить creation_id",
+      "id": "97cceda8-79df-4c1c-97c3-065f4858173c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media_publish",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Сохранить creation_id').first().json.creation_id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        -20
+      ],
+      "name": "Публикация media",
+      "id": "cb7cda2a-64e1-4a15-b5af-df663559ea69"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $json.id }}?fields=permalink,shortcode&access_token={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -300,
+        100
+      ],
+      "id": "c639a959-0ab8-46e6-ace4-662ffe24a9f9",
+      "name": "Получение permalink"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "278b7f6d-f8c1-4947-b036-541fc29ae917",
+              "leftValue": "={{ $json.content_type === \"video\" }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2540,
+        180
+      ],
+      "id": "e62a3dc4-7676-4cb2-87fd-1ecb1f7486eb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"media_type\": \"REELS\",\n  \"video_url\": \"{{ $json.videos_url }}\",\n  \"caption\": \"{{ $json.message }}\",\n  \"access_token\": \"{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2260,
+        20
+      ],
+      "id": "88301578-52d6-4574-8c3a-b77cce6f42f6",
+      "name": "Контент с видео",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        -220
+      ],
+      "id": "e05f8aa6-5219-447b-b15a-3ac4a708bfa6",
+      "name": "Wait",
+      "webhookId": "4fd138c6-87ed-4f7d-abe9-d0819548242f"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.creation_id }}?fields=status_code&access_token={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1380,
+        -220
+      ],
+      "id": "1555db59-3ec1-43d5-9e3f-dd08ba224e2b",
+      "name": "Проверить статус"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c7e1d62b-53b7-4bf5-a0ef-47d19dd38687",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -920,
+        -200
+      ],
+      "id": "5d13e89a-a128-4871-b77d-feae8d77ab7b",
+      "name": "Видео обработано?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ee7c640e-5a05-4f9a-9a9c-bf0ca1e99a21",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "ERROR",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1180,
+        -220
+      ],
+      "id": "23f93a49-0b3f-4435-a5fb-1d1f473116ea",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "id",
+              "renameField": true,
+              "outputFieldName": "child_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        200
+      ],
+      "id": "e2e48ef0-5b62-4431-9ef8-20fc2e33efef",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6080cdd7-2f74-403b-9700-87adc43a0c99",
+              "leftValue": "={{ Array.isArray($json[\"images_url\"]) ? $json[\"images_url\"] : [$json[\"images_url\"]] }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "array",
+                "operation": "lengthLte",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2140,
+        220
+      ],
+      "id": "c558bc5c-f371-4867-ac89-e98f499a36c3",
+      "name": "проверка карусель"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "images_url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1940,
+        260
+      ],
+      "id": "3108d070-db37-4466-814c-a4cf3f0bef7d",
+      "name": "разделение"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.images_url }}"
+            },
+            {
+              "name": "is_carousel_item",
+              "value": "=true"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 300
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1780,
+        260
+      ],
+      "id": "9f79281c-dfd1-4297-86fc-01487f002a4d",
+      "name": "Создание частей карусели",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "=CAROUSEL"
+            },
+            {
+              "name": "children",
+              "value": "={{ $json.child_id.join(',') }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $('Подготовка данных для Instagram').first().json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1440,
+        200
+      ],
+      "id": "6e220fb8-7ff5-4379-81d3-49ee97d69c4c",
+      "name": "Создание карусели",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Получение настроек кампании').first().json.social_media_settings.instagram.businessAccountId }}/media_publish",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Получение настроек кампании').first().json.social_media_settings.instagram.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1200,
+        180
+      ],
+      "name": "Публикация поста с каруселью",
+      "id": "b0b74906-eb7d-4382-baf7-eeec716a7378"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Подготовка параметров",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка параметров": {
+      "main": [
+        [
+          {
+            "node": "Получение контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение контента": {
+      "main": [
+        [
+          {
+            "node": "Контент найден?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Контент найден?": {
+      "main": [
+        [
+          {
+            "node": "Получение настроек кампании",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение настроек кампании": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных для Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка данных для Instagram": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка типа контента": {
+      "main": [
+        [
+          {
+            "node": "проверка карусель",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Успешное создание медиа?": {
+      "main": [
+        [
+          {
+            "node": "Получение permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка данных обновления": {
+      "main": [
+        [
+          {
+            "node": "Обновление статуса",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обновление статуса": {
+      "main": [
+        [
+          {
+            "node": "Завершение",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ошибка контента": {
+      "main": [
+        [
+          {
+            "node": "Обновление статуса",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создание media": {
+      "main": [
+        [
+          {
+            "node": "Сохранить creation_id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сохранить creation_id": {
+      "main": [
+        [
+          {
+            "node": "Проверить статус",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Публикация media": {
+      "main": [
+        [
+          {
+            "node": "Успешное создание медиа?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение permalink": {
+      "main": [
+        [
+          {
+            "node": "Подготовка данных обновления",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Контент с видео",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Проверка типа контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Контент с видео": {
+      "main": [
+        [
+          {
+            "node": "Сохранить creation_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Сохранить creation_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверить статус": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Видео обработано?": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Публикация media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Видео обработано?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Создание карусели",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "проверка карусель": {
+      "main": [
+        [
+          {
+            "node": "Создание media",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "разделение",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "разделение": {
+      "main": [
+        [
+          {
+            "node": "Создание частей карусели",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создание частей карусели": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создание карусели": {
+      "main": [
+        [
+          {
+            "node": "Публикация поста с каруселью",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка контента",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Публикация поста с каруселью": {
+      "main": [
+        [
+          {
+            "node": "Успешное создание медиа?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "n8n.nplanner.ru",
+          "user-agent": "axios/1.8.4",
+          "content-length": "52",
+          "accept": "application/json, text/plain, */*",
+          "accept-encoding": "gzip, compress, deflate, br",
+          "content-type": "application/json",
+          "x-forwarded-for": "34.46.86.230",
+          "x-forwarded-host": "n8n.nplanner.ru",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "5d95b47c7b4b",
+          "x-real-ip": "34.46.86.230"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "contentId": "a25f9ef3-801d-4098-a123-4d9c1a368117"
+        },
+        "webhookUrl": "https://n8n.nplanner.ru/webhook/publish-instagram",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d69b135e70f406a0ace9f751f1d688634763e75d1dec57b0a74654d8144965c4"
+  }
+}
