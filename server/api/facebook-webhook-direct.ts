@@ -57,7 +57,10 @@ router.post('/', async (req, res) => {
   let postId = '';
   
   try {
-    const { contentId, ignoreStatus = false } = req.body;
+    // Всегда игнорируем статус для Facebook
+    // Это позволяет публиковать контент независимо от его текущего статуса (draft, scheduled, published)
+    const { contentId } = req.body;
+    const ignoreStatus = true; // Всегда игнорируем статус для Facebook
     
     if (!contentId) {
       return res.status(400).json({ 
