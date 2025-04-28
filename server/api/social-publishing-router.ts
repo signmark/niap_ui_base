@@ -215,9 +215,10 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         const updateStatusUrl = `${appBaseUrl}/api/publish/auto-update-status`;
         
         // Отправляем запрос без ожидания результата
+        // Убираем необходимость передачи токена в body, так как
+        // новая версия эндпоинта сама получает токены из сессий
         axios.post(updateStatusUrl, { 
-          contentId,
-          token: adminToken
+          contentId
         }).catch(error => {
           log(`[Social Publishing] Ошибка при запросе обновления статуса: ${error.message}`);
         });
@@ -417,9 +418,10 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       const updateStatusUrl = `${appBaseUrl}/api/publish/auto-update-status`;
       
       // Отправляем запрос, чтобы проверить статусы всех платформ
+      // Убираем необходимость передачи токена в body, так как
+      // новая версия эндпоинта сама получает токены из сессий
       await axios.post(updateStatusUrl, { 
-        contentId,
-        token: adminToken
+        contentId
       });
       
       log(`[Social Publishing] Отправлен запрос на проверку статусов платформ вместо прямой установки статуса "published"`)
@@ -601,7 +603,7 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат обновления статуса
  */
-router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
+router.post('/publish/auto-update-status', async (req, res) => {
   try {
     const { contentId } = req.body;
     
@@ -615,12 +617,27 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
     log(`[Social Publishing] Запрос на автоматическое обновление статуса публикации для контента ${contentId}`);
     
     // Получаем токен для работы с Directus API
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    // 1. Сначала пробуем получить токен из directusAuthManager
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    const sessions = directusAuthManager.getAllActiveSessions();
+    let adminToken = '';
+    
+    // 2. Берем самый свежий токен из активных сессий
+    if (sessions.length > 0) {
+      adminToken = sessions[0].token;
+      log(`[Social Publishing] Используется токен администратора из активной сессии`);
+    } else {
+      // 3. Если не нашли сессию, используем токен из env
+      adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      log(`[Social Publishing] Активные сессии не найдены, используется токен из переменных окружения`);
+    }
     
     // Получаем текущие данные контента через storage
+    log(`[Social Publishing] Получение контента ${contentId} через хранилище`);
     const content = await storage.getCampaignContentById(contentId, adminToken);
     
     if (!content) {
+      log(`[Social Publishing] Контент ${contentId} не найден через хранилище`);
       return res.status(404).json({
         success: false,
         error: 'Контент не найден'
@@ -634,30 +651,112 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
       socialPlatformsType: content.socialPlatforms ? typeof content.socialPlatforms : 'undefined'
     })}`);
     
-    // Автоматически обновляем статус на "published", так как этот эндпоинт вызывается
-    // сразу после публикации во все выбранные платформы
-    const updatedContent = await storage.updateCampaignContent(
-      contentId,
-      { status: 'published', publishedAt: new Date() },
-      adminToken
+    // Проверяем социальные платформы контента
+    const socialPlatforms = content.socialPlatforms || {};
+    
+    // Фильтруем только выбранные платформы
+    const selectedPlatforms = Object.entries(socialPlatforms)
+      .filter(([_, data]: [string, any]) => data.selected)
+      .map(([plt, _]) => plt);
+      
+    log(`[Social Publishing] Выбранные платформы (${selectedPlatforms.length}): ${selectedPlatforms.join(', ')}`);
+    
+    if (selectedPlatforms.length === 0) {
+      log(`[Social Publishing] Нет выбранных платформ для контента ${contentId}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Нет выбранных платформ для публикации'
+      });
+    }
+    
+    // Проверяем, все ли выбранные платформы опубликованы
+    const allSelectedPublished = selectedPlatforms.every(plt => 
+      socialPlatforms[plt]?.status === 'published'
     );
     
-    if (updatedContent) {
-      log(`[Social Publishing] Успешно установлен статус "published" для контента ${contentId} (автоматически)`);
+    // Проверяем, есть ли среди выбранных платформ те, что в ожидании публикации
+    const hasSelectedPending = selectedPlatforms.some(plt => 
+      socialPlatforms[plt]?.status === 'pending'
+    );
+    
+    // Подробное логирование для отладки
+    log(`[Social Publishing] Статусы выбранных платформ:`);
+    selectedPlatforms.forEach(plt => {
+      log(`[Social Publishing]   - ${plt}: ${socialPlatforms[plt]?.status}`);
+    });
+    
+    // Обновляем общий статус только если все выбранные платформы опубликованы
+    if (allSelectedPublished) {
+      log(`[Social Publishing] Все выбранные платформы опубликованы, обновляем общий статус на "published"`);
+      
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { status: 'published' },
+        adminToken
+      );
+      
+      if (updatedContent) {
+        log(`[Social Publishing] Успешно установлен статус "published" для контента ${contentId}`);
+        return res.status(200).json({
+          success: true,
+          message: 'Контент отмечен как опубликованный',
+          result: {
+            contentId,
+            status: 'published',
+            allPlatformsPublished: true
+          }
+        });
+      } else {
+        log(`[Social Publishing] Ошибка при обновлении статуса контента ${contentId}`);
+        return res.status(500).json({
+          success: false,
+          message: 'Не удалось обновить статус контента',
+          error: 'Ошибка при обновлении статуса в Directus'
+        });
+      }
+    } else if (hasSelectedPending) {
+      // Если есть хотя бы одна платформа в ожидании, оставляем статус без изменений
+      log(`[Social Publishing] Есть платформы в ожидании, статус не меняем`);
       return res.status(200).json({
         success: true,
-        message: 'Контент автоматически отмечен как опубликованный',
+        message: 'Некоторые платформы все еще ожидают публикации',
         result: {
           contentId,
-          status: 'published'
+          status: content.status,
+          allPlatformsPublished: false,
+          pendingPlatforms: selectedPlatforms.filter(plt => socialPlatforms[plt]?.status === 'pending')
         }
       });
     } else {
-      return res.status(500).json({
-        success: false,
-        message: 'Не удалось обновить статус контента',
-        error: 'Ошибка при обновлении статуса в Directus'
-      });
+      // Если все выбранные платформы имеют статус, отличный от published и pending
+      // (например, failed или error), то устанавливаем статус failed
+      log(`[Social Publishing] Все выбранные платформы имеют статус, отличный от published и pending`);
+      
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { status: 'failed' },
+        adminToken
+      );
+      
+      if (updatedContent) {
+        log(`[Social Publishing] Установлен статус "failed" для контента ${contentId}`);
+        return res.status(200).json({
+          success: true,
+          message: 'Контент отмечен как не опубликованный (failed)',
+          result: {
+            contentId,
+            status: 'failed',
+            allPlatformsPublished: false
+          }
+        });
+      } else {
+        log(`[Social Publishing] Ошибка при обновлении статуса контента ${contentId} на "failed"`);
+        return res.status(500).json({
+          success: false,
+          message: 'Не удалось обновить статус контента',
+          error: 'Ошибка при обновлении статуса в Directus'
+        });
+      }
     }
   } catch (error: any) {
     log(`[Social Publishing] Ошибка при автоматическом обновлении статуса: ${error.message}`);
