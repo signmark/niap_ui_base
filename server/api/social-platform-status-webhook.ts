@@ -34,7 +34,7 @@ async function getContentData(contentId: string, token: string): Promise<any> {
       }
     );
     return response.data.data;
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Ошибка при получении данных контента ${contentId}: ${error.message}`);
     return null;
   }

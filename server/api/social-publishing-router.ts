@@ -202,25 +202,30 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         }
       }
       
-      // Проверяем, есть ли успешные публикации
-      const hasSuccessfulPublications = publishResults.some(result => result.success);
+      // Проверяем результат публикации для каждой платформы
+      // Теперь без автоматического обновления статуса на "published"
+      // Статус будет обновляться через вебхуки от платформ или API обратного вызова
       
-      if (hasSuccessfulPublications) {
-        // Автоматически обновляем общий статус контента на "published"
-        try {
-          log(`[Social Publishing] Автоматическое обновление статуса для контента ${contentId} после успешной публикации`);
-          
-          await storage.updateCampaignContent(
-            contentId,
-            { status: 'published', publishedAt: new Date() },
-            adminToken
-          );
-          
-          log(`[Social Publishing] Статус контента успешно обновлен на "published"`);
-        } catch (statusError: any) {
-          log(`[Social Publishing] Ошибка при обновлении статуса контента: ${statusError.message}`);
-          // Продолжаем работу даже при ошибке обновления статуса
-        }
+      log(`[Social Publishing] Запрос на автоматическое обновление статуса публикации для контента ${contentId}`);
+      
+      // Оповещаем систему о необходимости проверить статусы платформ
+      try {
+        // Формируем запрос на endpoint auto-update-status
+        const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+        const updateStatusUrl = `${appBaseUrl}/api/publish/auto-update-status`;
+        
+        // Отправляем запрос без ожидания результата
+        axios.post(updateStatusUrl, { 
+          contentId,
+          token: adminToken
+        }).catch(error => {
+          log(`[Social Publishing] Ошибка при запросе обновления статуса: ${error.message}`);
+        });
+        
+        log(`[Social Publishing] Запрос на проверку статусов платформ отправлен`);
+      } catch (statusError: any) {
+        log(`[Social Publishing] Ошибка при отправке запроса на обновление статусов: ${statusError.message}`);
+        // Продолжаем работу даже при ошибке
       }
       
       return res.status(200).json({
@@ -406,11 +411,18 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
         adminToken = sessions[0].token;
       }
       
-      await storage.updateCampaignContent(
+      // Запрос на проверку статусов всех платформ
+      // Вместо автоматической установки статуса
+      const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+      const updateStatusUrl = `${appBaseUrl}/api/publish/auto-update-status`;
+      
+      // Отправляем запрос, чтобы проверить статусы всех платформ
+      await axios.post(updateStatusUrl, { 
         contentId,
-        { status: 'published', publishedAt: new Date() },
-        adminToken
-      );
+        token: adminToken
+      });
+      
+      log(`[Social Publishing] Отправлен запрос на проверку статусов платформ вместо прямой установки статуса "published"`)
       
       log(`[Social Publishing] Статус контента ${contentId} успешно обновлен на "published"`);
     } catch (statusError: any) {
