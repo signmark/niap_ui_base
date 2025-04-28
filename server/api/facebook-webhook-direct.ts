@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
   let postId = '';
   
   try {
-    const { contentId } = req.body;
+    const { contentId, ignoreStatus = false } = req.body;
     
     if (!contentId) {
       return res.status(400).json({ 
@@ -66,7 +66,7 @@ router.post('/', async (req, res) => {
       });
     }
     
-    log.info(`[Facebook Direct] Начало прямой публикации контента ${contentId} в Facebook`);
+    log.info(`[Facebook Direct] Начало прямой публикации контента ${contentId} в Facebook (ignoreStatus: ${ignoreStatus})`);
     
     // Получаем данные контента из Directus
     // Получаем токен из активных сессий администратора через DirectusAuthManager
@@ -471,6 +471,8 @@ router.post('/', async (req, res) => {
     // Обновляем статус публикации контента в Directus
     await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
     
+    log.info(`[Facebook Direct] Успешная публикация с ID: ${postId}, URL: ${postPermalink}`);
+    
     return res.json({ 
       success: true,
       message: 'Пост успешно опубликован в Facebook',
@@ -596,5 +598,194 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, pos
     }
   }
 }
+
+/**
+ * Маршрут для принудительной публикации в Facebook любого контента, независимо от статуса
+ * Игнорирует проверки на статус "scheduled"
+ */
+router.post('/force-publish', async (req, res) => {
+  let postPermalink = '';
+  let postId = '';
+  
+  try {
+    const { contentId } = req.body;
+    
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Не указан ID контента для публикации в Facebook' 
+      });
+    }
+    
+    log.info(`[Facebook Force Publish] Начало принудительной публикации контента ${contentId} в Facebook (ignoreStatus=true)`);
+    
+    // Получаем данные контента из Directus
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    
+    // Получаем токен из активных сессий администратора или используем токен из переменных окружения
+    let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const sessions = directusAuthManager.getAllActiveSessions();
+    
+    if (sessions.length > 0) {
+      // Берем самый свежий токен из активных сессий
+      adminToken = sessions[0].token;
+      log.info(`[Facebook Force Publish] Используется токен администратора из активной сессии`);
+    } else {
+      log.info(`[Facebook Force Publish] Активные сессии не найдены, используется токен из переменных окружения`);
+    }
+    
+    if (!adminToken) {
+      throw new Error('Отсутствует административный токен для Directus API');
+    }
+    
+    // Устанавливаем флаг игнорирования статуса
+    req.body.ignoreStatus = true;
+    
+    // Получаем данные контента из Directus
+    const contentResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`
+      }
+    });
+    
+    if (!contentResponse.data?.data) {
+      log.error(`[Facebook Force Publish] Контент с ID ${contentId} не найден в Directus`);
+      return res.status(404).json({ 
+        success: false,
+        error: 'Контент не найден в базе данных' 
+      });
+    }
+    
+    const content = contentResponse.data.data;
+    
+    log.info(`[Facebook Force Publish] Получен контент для публикации: ${JSON.stringify({
+      id: content.id,
+      title: content.title,
+      contentType: content.content_type,
+      hasImage: !!content.image_url,
+      status: content.status  // Логируем текущий статус
+    })}`);
+    
+    // Получаем информацию о кампании для получения настроек Facebook
+    if (!content.campaign_id) {
+      log.error(`[Facebook Force Publish] Контент ${contentId} не содержит campaign_id`);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Не указан ID кампании в контенте' 
+      });
+    }
+    
+    // Получаем данные кампании для извлечения настроек Facebook
+    const campaignResponse = await directusApi.get(`/items/user_campaigns/${content.campaign_id}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`
+      }
+    });
+    
+    if (!campaignResponse.data?.data) {
+      log.error(`[Facebook Force Publish] Кампания с ID ${content.campaign_id} не найдена`);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Кампания не найдена' 
+      });
+    }
+    
+    const campaign = campaignResponse.data.data;
+    log.info(`[Facebook Force Publish] Получены данные кампании: "${campaign.name}"`);
+    
+    // Извлекаем настройки Facebook из кампании
+    let socialSettings = campaign.social_media_settings || {};
+    
+    // Если socialSettings - строка, парсим JSON
+    if (typeof socialSettings === 'string') {
+      try {
+        socialSettings = JSON.parse(socialSettings);
+      } catch (e) {
+        socialSettings = {};
+      }
+    }
+    
+    const facebookSettings = socialSettings.facebook || {};
+    
+    const facebookAccessToken = facebookSettings.token;
+    const facebookPageId = facebookSettings.pageId;
+    
+    if (!facebookAccessToken || !facebookPageId) {
+      log.error('[Facebook Force Publish] Отсутствуют токен доступа или ID страницы Facebook в настройках кампании');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Не настроены учетные данные Facebook (токен и/или ID страницы) в настройках кампании' 
+      });
+    }
+    
+    log.info(`[Facebook Force Publish] Используются настройки из кампании: токен ${facebookAccessToken.substring(0, 10)}... и страница ${facebookPageId}`);
+    
+    // Подготавливаем данные для публикации
+    // Очищаем HTML-теги из контента, сохраняя структуру текста
+    const message = cleanHtmlForFacebook(content.content);
+    const imageUrl = content.image_url;
+    
+    if (!imageUrl) {
+      log.error(`[Facebook Force Publish] Отсутствует URL изображения для публикации`);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Отсутствует URL изображения для публикации в Facebook' 
+      });
+    }
+    
+    log.info(`[Facebook Force Publish] Текст публикации обработан, изображение: ${imageUrl}`);
+    
+    // Версия Facebook Graph API - используем актуальную версию
+    const apiVersion = 'v19.0';
+    
+    try {
+      // Получаем токен страницы (из SDK)
+      const facebookService = await import('../services/social-platforms/facebook-service').then(m => m.facebookService);
+      const pageAccessToken = await facebookService.getPageAccessToken(facebookAccessToken, facebookPageId);
+      
+      // Публикуем изображение с текстом
+      const { id, permalink } = await facebookService.publishImageWithText(
+        facebookPageId,
+        pageAccessToken,
+        imageUrl,
+        message
+      );
+      
+      postId = id;
+      postPermalink = permalink;
+      
+      log.info(`[Facebook Force Publish] Публикация успешно создана: ${permalink}`);
+      
+      // Обновляем статус публикации контента в Directus
+      await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
+      
+      return res.json({ 
+        success: true,
+        message: 'Пост успешно опубликован в Facebook',
+        postId: postId,
+        postUrl: postPermalink
+      });
+    } catch (publishError: any) {
+      log.error(`[Facebook Force Publish] Ошибка при публикации через SDK: ${publishError.message}`);
+      
+      if (publishError.response?.data) {
+        log.error(`[Facebook Force Publish] Детали ошибки: ${JSON.stringify(publishError.response.data)}`);
+      }
+      
+      throw publishError; // Пробрасываем ошибку дальше для обработки в основном catch блоке
+    }
+  } catch (error: any) {
+    log.error(`[Facebook Force Publish] Ошибка при публикации: ${error.message}`);
+    
+    if (error.response) {
+      log.error(`[Facebook Force Publish] Детали ошибки Facebook API: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    return res.status(500).json({ 
+      success: false,
+      error: `Ошибка при принудительной публикации в Facebook: ${error.message}` 
+    });
+  }
+});
 
 export default router;
