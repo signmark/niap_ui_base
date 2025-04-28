@@ -143,8 +143,13 @@ export function ImageGenerationDialog({
     
     // Обработка промта по приоритетам:
     // 1. Если это редактирование существующего контента (contentId) и есть промт, используем его
-    // 2. Если это новый контент, всегда начинаем с пустого промта
-    // 3. Если есть контент, подготавливаем его для возможной генерации промта
+    // 2. Если есть originalContent в initialContent (использовать как промпт), используем его
+    // 3. Если это новый контент, всегда начинаем с пустого промта
+    // 4. Если есть контент, подготавливаем его для возможной генерации промта
+    
+    // Сначала проверим, если в initialContent есть поле originalContent, которое передаётся из ContentPlanGenerator
+    const contentObject = typeof initialContent === 'object' ? initialContent : null;
+    const originalContent = contentObject?.originalContent || contentObject?.imagePrompt || null;
     
     if (contentId && initialPrompt) {
       // Редактирование с сохраненным промтом - используем его
@@ -152,6 +157,12 @@ export function ImageGenerationDialog({
       setPrompt(cleanPrompt);
       setGeneratedPrompt(cleanPrompt);
       console.log('Использован сохраненный промт из БД:', cleanPrompt.substring(0, 100) + '...');
+    } else if (originalContent) {
+      // Используем originalContent как промпт
+      const cleanPrompt = simpleCleanHtml(originalContent);
+      setPrompt(cleanPrompt);
+      setGeneratedPrompt(cleanPrompt);
+      console.log('Использован оригинальный контент как промпт:', cleanPrompt.substring(0, 100) + '...');
     } else {
       // Либо новый контент, либо редактирование без промта - в любом случае сбрасываем
       setPrompt("");
@@ -166,9 +177,19 @@ export function ImageGenerationDialog({
       }
     }
     
+    // Обрабатываем initialContent, который может быть строкой или объектом
     if (initialContent) {
+      let contentText = '';
+      
+      // Если initialContent - объект, извлекаем текст из поля content
+      if (typeof initialContent === 'object' && initialContent !== null) {
+        contentText = contentObject?.content || '';
+      } else if (typeof initialContent === 'string') {
+        contentText = initialContent;
+      }
+      
       // Очищаем теги из начального контента
-      const cleanedContent = simpleCleanHtml(initialContent);
+      const cleanedContent = simpleCleanHtml(contentText);
       setContent(cleanedContent);
       console.log('Установлен контент для текущего поста:', cleanedContent.substring(0, 100) + '...');
     } else {

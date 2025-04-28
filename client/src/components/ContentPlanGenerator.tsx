@@ -789,7 +789,16 @@ export function ContentPlanGenerator({
           <Button 
             onClick={() => {
               // Выбираем только те элементы контент-плана, которые были отмечены пользователем
-              const selectedContent = Array.from(selectedContentItems).map(index => generatedContentPlan[index]);
+              const selectedContent = Array.from(selectedContentItems).map(index => {
+                const item = generatedContentPlan[index];
+                // Сохраняем оригинальный текст контента в поле originalContent 
+                // для использования его в качестве промпта для генерации изображений
+                return {
+                  ...item,
+                  originalContent: item.content, // Сохраняем оригинальный текст как промпт для генерации изображений
+                  imagePrompt: item.content // Дополнительное поле для совместимости с существующим кодом
+                };
+              });
               
               if (selectedContent.length === 0) {
                 toast({
@@ -800,7 +809,7 @@ export function ContentPlanGenerator({
                 return;
               }
               
-              console.log("Сохраняем выбранный контент:", selectedContent);
+              console.log("Сохраняем выбранный контент с оригинальным текстом для промптов:", selectedContent);
               
               if (onPlanGenerated) {
                 // Вызываем с параметром true для закрытия диалога
