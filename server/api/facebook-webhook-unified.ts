@@ -157,18 +157,29 @@ router.post('/', async (req, res) => {
       { token: facebookAccessToken, pageId: facebookPageId }
     );
     
+    // В любом случае обновляем статус в базе данных - независимо от результата
+    log.info(`[Facebook] Получен результат публикации: status=${publicationResult.status}, postUrl=${publicationResult.postUrl || 'нет'}`);
+    
+    try {
+      // Обновляем статус публикации в базе данных
+      const updatedContent = await facebookService.updatePublicationStatus(
+        contentId,
+        'facebook',
+        publicationResult
+      );
+      
+      log.info(`[Facebook] Статус публикации в базе данных обновлен: ${updatedContent ? 'успешно' : 'сбой при обновлении'}`);
+    } catch (error: any) {
+      // Если произошла ошибка при обновлении статуса, логируем её, но не прерываем выполнение
+      log.error(`[Facebook] Ошибка при обновлении статуса в базе: ${error.message || 'неизвестная ошибка'}`);
+      // Продолжаем выполнение - важно вернуть результат публикации клиенту
+    }
+    
     if (publicationResult.status === 'published') {
       postUrl = publicationResult.postUrl || '';
       postId = publicationResult.postId || '';
       
       log.info(`[Facebook] Публикация успешно создана: ${postUrl}`);
-      
-      // Обновляем статус публикации в базе данных
-      await facebookService.updatePublicationStatus(
-        contentId,
-        'facebook',
-        publicationResult
-      );
       
       return res.json({
         success: true,
@@ -177,8 +188,12 @@ router.post('/', async (req, res) => {
         postId
       });
     } else {
-      // В случае ошибки публикации
-      throw new Error(publicationResult.error || 'Неизвестная ошибка публикации');
+      // В случае ошибки публикации возвращаем ошибку, но статус уже обновлен
+      return res.status(500).json({
+        success: false,
+        error: publicationResult.error || 'Неизвестная ошибка публикации',
+        status: 'failed'
+      });
     }
   } catch (error: any) {
     log.error(`[Facebook] Ошибка: ${error.message}`);

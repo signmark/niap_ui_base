@@ -429,26 +429,44 @@ class FacebookService {
       const updatedPlatforms = JSON.parse(JSON.stringify(socialPlatforms));
       
       // 4. Обновляем ТОЛЬКО данные Facebook, сохраняя данные других платформ
+      // ВАЖНО: Сначала глубоко копируем все существующие платформы
+      for (const platform of Object.keys(socialPlatforms)) {
+        if (platform !== 'facebook') {
+          updatedPlatforms[platform] = JSON.parse(JSON.stringify(socialPlatforms[platform] || {}));
+        }
+      }
+      
+      // Теперь безопасно обновляем данные Facebook
       updatedPlatforms.facebook = {
-        ...(socialPlatforms.facebook || {}),
-        status: publicationResult.status,
+        ...(socialPlatforms.facebook || {}),  // Сохраняем существующие данные
+        status: publicationResult.status,     // Обновляем статус
         publishedAt: publicationResult.publishedAt ? new Date(publicationResult.publishedAt).toISOString() : null,
-        postUrl: publicationResult.postUrl || socialPlatforms.facebook?.postUrl || '',
-        postId: publicationResult.postId || socialPlatforms.facebook?.postId || '',
-        error: publicationResult.error || null,
-        selected: socialPlatforms.facebook?.selected || true
+        selected: true,                       // Всегда устанавливаем selected в true
+        // Сохраняем postUrl и postId, если они предоставлены в публикации
+        ...(publicationResult.postUrl ? { postUrl: publicationResult.postUrl } : {}),
+        ...(publicationResult.postId ? { postId: publicationResult.postId } : {}),
+        // Устанавливаем поле error только если он существует
+        ...(publicationResult.error ? { error: publicationResult.error } : { error: null })
       };
       
       log.info(`[${operationId}] Обновлена информация для Facebook: ${JSON.stringify(updatedPlatforms.facebook)}`);
       log.info(`[${operationId}] Платформы после обновления: ${Object.keys(updatedPlatforms).join(', ')}`);
       
-      // 5. Проверка сохранности данных других платформ
+      // 5. Дополнительная проверка сохранности данных других платформ
       for (const platform of Object.keys(socialPlatforms)) {
         if (platform !== 'facebook' && !updatedPlatforms[platform]) {
           log.error(`[${operationId}] КРИТИЧЕСКАЯ ОШИБКА: потеряны данные платформы ${platform}`);
           // Восстанавливаем потерянную платформу
-          updatedPlatforms[platform] = socialPlatforms[platform];
+          updatedPlatforms[platform] = JSON.parse(JSON.stringify(socialPlatforms[platform] || {}));
         }
+      }
+      
+      // Логирование итоговых данных всех платформ для отладки
+      log.info(`[${operationId}] Итоговые данные platform -> status:`);
+      for (const [platform, platformData] of Object.entries(updatedPlatforms)) {
+        // Безопасный доступ к свойствам с проверкой типа
+        const data = platformData as Record<string, any>;
+        log.info(`[${operationId}]   - ${platform}: ${data.status || 'no status'} (${data.postUrl ? 'имеет URL' : 'без URL'})`);
       }
       
       // 6. Обновляем данные в Directus
