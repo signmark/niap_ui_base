@@ -7999,11 +7999,32 @@ https://t.me/channelname/ - description`;
           }
         }
         
+        // Определяем, все ли выбранные платформы опубликованы
+        const allPlatformsPublished = Object.entries(updatedSocialPlatforms)
+          .filter(([_, data]: [string, any]) => data.selected)
+          .every(([_, data]: [string, any]) => data.status === 'published');
+          
+        const hasPendingPublications = Object.entries(updatedSocialPlatforms)
+          .filter(([_, data]: [string, any]) => data.selected)
+          .some(([_, data]: [string, any]) => data.status === 'pending');
+          
+        // Вычисляем новый общий статус публикации
+        let newStatus = content.status;
+        
+        // Обновляем общий статус:
+        // 1. Только если все выбранные платформы опубликованы - статус "published" 
+        // 2. Если есть платформы в ожидании (pending) - оставляем текущий статус
+        if (allPlatformsPublished) {
+          newStatus = 'published';
+          console.log(`[${contentId}] Все выбранные платформы опубликованы, устанавливаем общий статус "published"`);
+        } else if (hasPendingPublications) {
+          console.log(`[${contentId}] Есть платформы в ожидании публикации, сохраняем текущий статус "${content.status}"`);
+        }
+        
         // Обновляем статусы в базе данных
         await directusApi.patch(`/items/campaign_content/${contentId}`, {
           social_platforms: updatedSocialPlatforms,
-          // Если хотя бы одна платформа опубликована успешно, меняем статус на published
-          status: publishResults.some(r => r.status === 'published') ? 'published' : content.status
+          status: newStatus
         }, {
           headers: {
             Authorization: `Bearer ${token}`
