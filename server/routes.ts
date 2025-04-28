@@ -49,6 +49,7 @@ import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
 import facebookWebhookRoutes from './api/facebook-webhook-v2';
 import facebookWebhookV3Routes from './api/facebook-webhook-v3';
+import facebookWebhookDirectRoutes from './api/facebook-webhook-direct';
 import facebookWebhookDirectTestRoutes from './api/facebook-webhook-direct-test';
 import facebookWebhookUnifiedRoutes from './api/facebook-webhook-unified';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
@@ -2914,6 +2915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Старые вебхуки сохранены для обратной совместимости
   app.use('/api/facebook-webhook', facebookWebhookRoutes); // Прямая интеграция с Facebook API v2
   app.use('/api/facebook-webhook-v3', facebookWebhookV3Routes); // Улучшенная интеграция с Facebook API v3
+  app.use('/api/facebook-webhook-direct', facebookWebhookDirectRoutes); // Маршрут для прямой публикации в Facebook
   app.use('/api/facebook-test', facebookWebhookDirectTestRoutes); // Тестовый маршрут для прямой публикации в Facebook
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
   
