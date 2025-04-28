@@ -1022,23 +1022,6 @@ export default function Trends() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => searchNewSources()}
-            disabled={isSearching || !isValidCampaignSelected}
-          >
-            {isSearching ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Поиск источников...
-              </>
-            ) : (
-              <>
-                <Search className="mr-2 h-4 w-4" />
-                Найти источники
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
             onClick={() => collectTrends()}
             disabled={isCollecting || !isValidCampaignSelected}
           >
