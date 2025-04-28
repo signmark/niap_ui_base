@@ -1,0 +1,99 @@
+[
+  {
+    "success": true,
+    "data": {
+      "contentPlan": [
+        {
+          "title": "Как автоматизировать ваш SMM: лучшие инструменты",
+          "content": "<p>Автоматизация социальных сетей может сэкономить вам массу времени. Узнайте, какие инструменты помогут вам в этом.</p>",
+          "contentType": "text-image",
+          "scheduledAt": "2025-04-28T15:28:00.000Z",
+          "hashtags": [
+            "#автоматизация",
+            "#SMM",
+            "#маркетинг",
+            "#соцсети"
+          ],
+          "keywords": [
+            "автоматизация",
+            "SMM",
+            "инструменты"
+          ],
+          "prompt": "Digital tools for social media automation on a desk"
+        },
+        {
+          "title": "Вкусные и здоровые завтраки на неделю",
+          "content": "<p>Начните свой день правильно с этими простыми и вкусными рецептами завтраков.</p>",
+          "contentType": "video-text",
+          "scheduledAt": "2025-05-01T18:05:00.000Z",
+          "hashtags": [
+            "#ПП",
+            "завтрак",
+            "здоровье",
+            "рецепты"
+          ],
+          "keywords": [
+            "завтрак",
+            "ПП",
+            "рецепты"
+          ],
+          "prompt": "Healthy breakfast dishes on a table"
+        },
+        {
+          "title": "Как создать индивидуальный план питания",
+          "content": "<p>Узнайте, как создать индивидуальный план питания, который подходит именно вам.</p>",
+          "contentType": "text-image",
+          "scheduledAt": "2025-05-04T11:25:00.000Z",
+          "hashtags": [
+            "#питание",
+            "ПП",
+            "здоровье",
+            "диета"
+          ],
+          "keywords": [
+            "план питания",
+            "индивидуальный",
+            "здоровье"
+          ],
+          "prompt": "Personalized meal plan on a tablet"
+        },
+        {
+          "title": "Автопостинг в Instagram: как это работает",
+          "content": "<p>Автопостинг может значительно упростить вашу работу в Instagram. Узнайте, как его настроить.</p>",
+          "contentType": "video-text",
+          "scheduledAt": "2025-05-06T10:58:00.000Z",
+          "hashtags": [
+            "#автопостинг",
+            "Instagram",
+            "SMM",
+            "маркетинг"
+          ],
+          "keywords": [
+            "автопостинг",
+            "Instagram",
+            "настройка"
+          ],
+          "prompt": "Smartphone showing Instagram autoposting setup"
+        },
+        {
+          "title": "Лучшие рецепты для баланса питания",
+          "content": "<p>Откройте для себя рецепты, которые помогут вам поддерживать баланс питания каждый день.</p>",
+          "contentType": "text-image",
+          "scheduledAt": "2025-05-09T14:10:00.000Z",
+          "hashtags": [
+            "#баланс",
+            "питание",
+            "рецепты",
+            "здоровье"
+          ],
+          "keywords": [
+            "баланс питания",
+            "рецепты",
+            "здоровье"
+          ],
+          "prompt": "Balanced meal dishes on a dining table"
+        }
+      ]
+    }
+  }
+]

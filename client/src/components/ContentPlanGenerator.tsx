@@ -244,6 +244,9 @@ export function ContentPlanGenerator({
           
           // Нормализуем структуру данных для предварительного просмотра
           const normalizedContentPlan = contentPlanData.map((item: any) => {
+            // Проверяем наличие поля prompt в оригинальных данных
+            console.log("Проверка наличия prompt в элементе:", item.prompt ? "Есть prompt" : "Нет prompt");
+            
             // Создаем стандартизированный объект с ожидаемыми полями
             return {
               title: item.title || "Без названия",
@@ -253,7 +256,11 @@ export function ContentPlanGenerator({
               hashtags: item.hashtags || [],
               keywords: item.keywords || [],
               imageUrl: item.imageUrl || item.image_url || null,
-              videoUrl: item.videoUrl || item.video_url || null
+              videoUrl: item.videoUrl || item.video_url || null,
+              // Сохраняем prompt из оригинальных данных
+              prompt: item.prompt || null, 
+              // Также добавляем поле для сохранения исходного контента как промпта
+              originalPrompt: item.prompt || null
             };
           });
           
