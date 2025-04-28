@@ -31,9 +31,9 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
   try {
     log(`[Social Publishing] Получен запрос на публикацию с телом: ${JSON.stringify(req.body)}`);
     
-    const { contentId, platforms } = req.body;
+    const { contentId, platforms, force = true } = req.body;
     
-    log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ: ${JSON.stringify(platforms)}`);
+    log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ: ${JSON.stringify(platforms)} (принудительная публикация: ${force})`);
     
     if (!contentId) {
       log(`[Social Publishing] Ошибка: не указан contentId`);
@@ -174,15 +174,19 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           if (platform === 'facebook') {
             log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
             
-            // Проверяем, нужна ли принудительная публикация
-            const forcePublish = req.query.force === 'true' || req.body.force === true;
+            // Принудительная публикация всегда активна для метода publish/now
+            const forcePublish = true;
             
-            if (forcePublish) {
-              log(`[Social Publishing] Запрос на ПРИНУДИТЕЛЬНУЮ публикацию Facebook для контента ${contentId}`);
-            }
+            log(`[Social Publishing] Запрос на ПРИНУДИТЕЛЬНУЮ публикацию Facebook для контента ${contentId}`);
             
-            // Отправляем запрос на публикацию через метод publishViaN8nAsync с форс-параметром
-            result = await publishViaN8nAsync(contentId, platform, forcePublish);
+            // Отправляем запрос на принудительную публикацию через direct webhook
+            const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+            const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
+            
+            log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
+            
+            const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
+            result = facebookResponse.data;
           } else {
             // Для остальных платформ используем n8n вебхук
             result = await publishViaN8nAsync(contentId, platform);
