@@ -69,19 +69,18 @@ export class PublishScheduler {
         return;
       }
       
-      // Используем directus api для запроса
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      // Facebook pending контент может быть в любом статусе, поэтому не фильтруем по статусу
+      // Единый URL для Directus API - используем для всех запросов
+      const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Создаем axios инстанс с правильными заголовками
       const directusApi = axios.create({
-        baseURL: directusUrl,
+        baseURL: apiDirectusUrl,
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
         }
       });
-      
-      // Facebook pending контент может быть в любом статусе, поэтому не фильтруем по статусу
-      // Используем URL для Directus
-      const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
       log(`Запрос контента для поиска Facebook pending через URL ${apiDirectusUrl}/items/campaign_content`, 'scheduler');
       
       const response = await axios.get(`${apiDirectusUrl}/items/campaign_content`, {
@@ -436,8 +435,8 @@ export class PublishScheduler {
       
       try {
         // Прямой запрос с параметрами фильтрации
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-        log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
+        const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        log(`Прямой запрос axios к ${apiDirectusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
         
         const headers = {
           'Authorization': `Bearer ${authToken}`,
@@ -445,7 +444,7 @@ export class PublishScheduler {
         };
         
         // Запрос с фильтром ТОЛЬКО по статусу "scheduled"
-        const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        const response = await axios.get(`${apiDirectusUrl}/items/campaign_content`, {
           headers,
           params: {
             filter: JSON.stringify({
@@ -574,9 +573,9 @@ export class PublishScheduler {
       for (const content of contentToPublish) {
         try {
           // Делаем прямой запрос к Directus API для получения свежих данных
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
           const response = await axios.get(
-            `${directusUrl}/items/campaign_content/${content.id}`,
+            `${apiDirectusUrl}/items/campaign_content/${content.id}`,
             {
               headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -649,7 +648,7 @@ export class PublishScheduler {
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
                 await axios.patch(
-                  `${directusUrl}/items/campaign_content/${content.id}`,
+                  `${apiDirectusUrl}/items/campaign_content/${content.id}`,
                   { 
                     status: 'published',
                     published_at: new Date().toISOString()
