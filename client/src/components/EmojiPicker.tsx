@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Smile } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -15,6 +15,35 @@ interface EmojiPickerProps {
 export function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { colorMode } = useThemeStore();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Обработчик скроллинга внутри эмодзи-пикера
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleWheel = (e: WheelEvent) => {
+      if (containerRef.current && containerRef.current.contains(e.target as Node)) {
+        const emojiBody = containerRef.current.querySelector('.epr-body') as HTMLElement;
+        
+        if (emojiBody) {
+          // Прокрутка содержимого эмодзи-пикера
+          emojiBody.scrollTop += e.deltaY;
+          
+          // Предотвращаем прокрутку страницы
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+    
+    // Добавляем слушатель события колеса мыши
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      // Удаляем слушатель при закрытии
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, [isOpen]);
   
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -42,6 +71,7 @@ export function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
         onClick={(e) => e.stopPropagation()} // Предотвращаем закрытие при клике на контейнер
       >
         <div 
+          ref={containerRef}
           className="emoji-picker-container"
           onClick={(e) => e.stopPropagation()} // Дублируем для надежности
         >
