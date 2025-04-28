@@ -220,7 +220,7 @@
     @apply z-10 bg-background pb-6;
   }
   
-  /* Стили для эмодзи-пикера - упрощенный вариант */
+  /* Стили для эмодзи-пикера с Perfect Scrollbar */
   .emoji-picker-container {
     position: relative;
   }
@@ -230,15 +230,46 @@
     overflow: hidden;
   }
   
-  /* Стили для скроллинга внутри эмодзи-пикера */
-  .emoji-picker-container .EmojiPickerReact {
-    border-radius: 8px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  /* Стили для PerfectScrollbar */
+  .emoji-wrapper {
+    max-height: 400px;
+    position: relative;
   }
   
-  /* Контейнер с эмодзи */
-  .emoji-picker-container .epr-body {
-    height: 350px !important;
+  /* Контейнер для Perfect Scrollbar */
+  .ps-emoji-container {
+    max-height: 400px;
+    overflow: hidden;
+  }
+  
+  /* Улучшенный стиль для контейнера эмодзи */
+  .emoji-popover {
+    z-index: 50;
+  }
+  
+  /* Стили для эмодзи-пикера внутри Perfect Scrollbar */
+  .ps-emoji-container .EmojiPickerReact {
+    border-radius: 8px;
+    box-shadow: none;
+    height: 100%;
+  }
+  
+  /* Улучшаем стиль для полосы прокрутки в Perfect Scrollbar */
+  .ps__rail-y {
+    width: 8px;
+    background-color: transparent;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  
+  .ps__rail-y:hover {
+    opacity: 0.9;
+  }
+  
+  .ps__thumb-y {
+    width: 6px;
+    background-color: #888;
+    border-radius: 3px;
   }
   
   .resize-handle {
