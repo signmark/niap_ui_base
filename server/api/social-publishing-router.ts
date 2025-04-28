@@ -128,7 +128,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     selectedPlatforms.forEach(platform => {
       platformsData[platform] = {
         selected: true,
-        status: 'pending' // Начальный статус - ожидание публикации
+        status: 'pending' // Начальный статус - ожидание публикации для всех платформ
       };
     });
     
@@ -307,18 +307,12 @@ router.post('/publish', authMiddleware, async (req, res) => {
           // Получаем базовый URL приложения для формирования полного пути
           const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
           
-          // Проверяем, нужна ли принудительная публикация
-          const forcePublish = req.query.force === 'true' || req.body.force === true;
+          // Всегда используем принудительную публикацию для Facebook
+          const forcePublish = true;
           
-          // Выбираем соответствующий эндпоинт на основе флага force
-          let facebookWebhookUrl = '';
-          if (forcePublish) {
-            facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
-            log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
-          } else {
-            facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
-            log(`[Social Publishing] Отправка запроса на стандартную публикацию Facebook: ${facebookWebhookUrl}`);
-          }
+          // Всегда используем маршрут принудительной публикации для Facebook
+          const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
+          log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
           
           const response = await axios.post(facebookWebhookUrl, { contentId });
           
@@ -484,15 +478,9 @@ async function publishViaN8nAsync(contentId: string, platform: string, forcePubl
         // Получаем базовый URL приложения для формирования полного пути
         const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
         
-        // Выбираем соответствующий эндпоинт на основе флага force
-        let facebookWebhookUrl = '';
-        if (forcePublish) {
-          facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
-          log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
-        } else {
-          facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
-          log(`[Social Publishing] Отправка запроса на стандартную публикацию Facebook: ${facebookWebhookUrl}`);
-        }
+        // Всегда используем принудительную публикацию для Facebook
+        const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
+        log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
         
         const response = await axios.post(facebookWebhookUrl, { contentId });
         
@@ -699,8 +687,9 @@ router.post('/publish/auto-update-status', async (req, res) => {
     );
     
     // Проверяем, есть ли среди выбранных платформ те, что в ожидании публикации
+    // Исключаем Facebook из проверки, так как он всегда должен быть в статусе published
     const hasSelectedPending = selectedPlatforms.some(plt => 
-      socialPlatforms[plt]?.status === 'pending'
+      plt !== 'facebook' && socialPlatforms[plt]?.status === 'pending'
     );
     
     // Подробное логирование для отладки
