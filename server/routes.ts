@@ -2919,6 +2919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/facebook-webhook-v3', facebookWebhookV3Routes); // Улучшенная интеграция с Facebook API v3
   app.use('/api/facebook-webhook-direct', facebookWebhookDirectRoutes); // Маршрут для прямой публикации в Facebook
   app.use('/api/facebook-test', facebookWebhookDirectTestRoutes); // Тестовый маршрут для прямой публикации в Facebook
+  app.use('/api/test', testRoutes); // Тестовые маршруты для проверки функциональности (включая очистку HTML для Facebook)
   app.use('/api', socialPlatformStatusWebhookRoutes); // Универсальный вебхук для обновления статусов соцсетей
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
   
