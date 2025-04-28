@@ -3,6 +3,49 @@ import axios from 'axios';
 import log from '../utils/logger';
 import { directusApi } from '../lib/directus';
 
+/**
+ * Очищает HTML-теги, сохраняя структуру текста
+ * Функция преобразует HTML-форматирование в текстовое форматирование для Facebook
+ * @param htmlText HTML-текст для очистки
+ * @returns Текст без HTML-тегов, но с сохраненной структурой
+ */
+function cleanHtmlForFacebook(htmlText: string): string {
+  if (!htmlText) return '';
+  
+  // Сохраняем абзацы и переносы строк
+  let cleanText = htmlText
+    // Сначала заменяем закрывающие теги параграфов на двойной перенос
+    .replace(/<\/p>/gi, '\n\n')
+    // Заменяем теги переноса строк
+    .replace(/<br\s*\/?>/gi, '\n')
+    // Заменяем закрывающие теги для заголовков и списков
+    .replace(/<\/(h1|h2|h3|h4|h5|h6|li|ul|ol)>/gi, '\n')
+    // Заменяем закрывающие теги для div
+    .replace(/<\/div>/gi, '\n');
+    
+  // Удаляем все оставшиеся HTML-теги
+  cleanText = cleanText.replace(/<[^>]*>/g, '');
+  
+  // Удаляем множественные переносы строк (более двух) и заменяем их на двойной перенос
+  cleanText = cleanText.replace(/\n{3,}/g, '\n\n');
+  
+  // Добавляем эмоджи вместо маркеров списка
+  cleanText = cleanText.replace(/^\s*•\s*/gm, '• ');
+  
+  // Заменяем HTML-сущности
+  cleanText = cleanText
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–');
+  
+  return cleanText.trim();
+}
+
 const router = Router();
 
 /**
