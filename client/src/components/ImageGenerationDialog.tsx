@@ -32,6 +32,13 @@ async function extractKeywordsFromText(text: string): Promise<string[]> {
   return []; // Всегда возвращаем пустой массив
 }
 
+interface ContentItem {
+  content: string;
+  originalContent?: string;
+  imagePrompt?: string;
+  [key: string]: any; // Для других возможных полей
+}
+
 interface ImageGenerationDialogProps {
   campaignId?: string;
   contentId?: string; // ID контента для привязки изображений
@@ -41,7 +48,7 @@ interface ImageGenerationDialogProps {
     brandImage: string;
     productsServices: string;
   };
-  initialContent?: string; // Начальный контент для подсказки
+  initialContent?: string | ContentItem; // Начальный контент для подсказки, может быть строкой или объектом
   initialPrompt?: string; // Готовый промт из контент-плана
   onImageGenerated?: (imageUrl: string, promptText?: string) => void;
   onClose: () => void;
@@ -148,7 +155,7 @@ export function ImageGenerationDialog({
     // 4. Если есть контент, подготавливаем его для возможной генерации промта
     
     // Сначала проверим, если в initialContent есть поле originalContent, которое передаётся из ContentPlanGenerator
-    const contentObject = typeof initialContent === 'object' ? initialContent : null;
+    const contentObject = typeof initialContent === 'object' ? initialContent as ContentItem : null;
     const originalContent = contentObject?.originalContent || contentObject?.imagePrompt || null;
     
     if (contentId && initialPrompt) {
@@ -183,7 +190,8 @@ export function ImageGenerationDialog({
       
       // Если initialContent - объект, извлекаем текст из поля content
       if (typeof initialContent === 'object' && initialContent !== null) {
-        contentText = contentObject?.content || '';
+        const contentItem = initialContent as ContentItem;
+        contentText = contentItem.content || '';
       } else if (typeof initialContent === 'string') {
         contentText = initialContent;
       }
