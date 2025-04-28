@@ -52,6 +52,7 @@ import facebookWebhookV3Routes from './api/facebook-webhook-v3';
 import facebookWebhookDirectRoutes from './api/facebook-webhook-direct';
 import facebookWebhookDirectTestRoutes from './api/facebook-webhook-direct-test';
 import facebookWebhookUnifiedRoutes from './api/facebook-webhook-unified';
+import socialPlatformStatusWebhookRoutes from './api/social-platform-status-webhook';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
@@ -2917,6 +2918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/facebook-webhook-v3', facebookWebhookV3Routes); // Улучшенная интеграция с Facebook API v3
   app.use('/api/facebook-webhook-direct', facebookWebhookDirectRoutes); // Маршрут для прямой публикации в Facebook
   app.use('/api/facebook-test', facebookWebhookDirectTestRoutes); // Тестовый маршрут для прямой публикации в Facebook
+  app.use('/api', socialPlatformStatusWebhookRoutes); // Универсальный вебхук для обновления статусов соцсетей
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
   
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
