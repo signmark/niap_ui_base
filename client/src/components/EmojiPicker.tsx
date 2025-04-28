@@ -116,9 +116,10 @@ export function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
           </div>
           
           <EmojiPickerComponent
+            // Специальный обработчик для выбора эмодзи
             onEmojiClick={(emojiObject) => {
+              // Только добавляем эмодзи, но не закрываем пикер
               onEmojiSelect(emojiObject.emoji);
-              setIsOpen(false);
             }}
             searchPlaceholder="Поиск эмодзи..."
             width={320}

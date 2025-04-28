@@ -245,6 +245,34 @@
     overflow: hidden;
   }
   
+  /* Заголовок модального окна */
+  .emoji-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  
+  /* Кнопка закрытия */
+  .emoji-close-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  
+  .emoji-close-button:hover {
+    background-color: var(--accent);
+  }
+  
   /* Стили для самого эмодзи-пикера */
   .emoji-picker-modal .EmojiPickerReact {
     border: none !important;
