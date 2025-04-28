@@ -154,7 +154,7 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
       social_platforms: updatedSocialPlatforms
     };
     
-    // Если все платформы опубликованы, обновляем общий статус
+    // Проверяем статусы всех платформ
     const allPublished = Object.values(updatedSocialPlatforms).every(
       (p: any) => p.status === 'published'
     );
@@ -167,11 +167,22 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
       (p: any) => p.status === 'pending'
     );
     
-    // Обновляем общий статус только если все платформы в одинаковом состоянии
+    // Логируем текущие состояния всех платформ для отладки
+    log.info(`[${requestId}] Анализ статусов: allPublished=${allPublished}, hasFailures=${hasFailures}, hasPending=${hasPending}`);
+    
+    // Обновляем общий статус с более строгой логикой:
+    // 1. Только если все платформы опубликованы - статус "published"
+    // 2. Если есть ошибки, но нет ожидающих публикации - статус "failed"
+    // 3. Если есть платформы в ожидании - общий статус не меняем
     if (allPublished) {
+      log.info(`[${requestId}] Установка общего статуса 'published' - все платформы опубликованы`);
       updates['status'] = 'published';
     } else if (hasFailures && !hasPending) {
+      log.info(`[${requestId}] Установка общего статуса 'failed' - есть ошибки и нет ожидающих публикации`);
       updates['status'] = 'failed';
+    } else if (hasPending) {
+      log.info(`[${requestId}] Общий статус не изменен - есть платформы в ожидании публикации`);
+      // Общий статус не меняем, т.к. некоторые платформы ещё ожидают публикации
     }
 
     log.info(`[${requestId}] Платформы после обновления: ${getPlatformNames(updatedSocialPlatforms).join(', ')}`);
