@@ -80,8 +80,15 @@ export class PublishScheduler {
       });
       
       // Facebook pending контент может быть в любом статусе, поэтому не фильтруем по статусу
-      // Ищем по наличию социальных платформ
-      const response = await directusApi.get('/items/campaign_content', {
+      // Используем URL для Directus
+      const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      log(`Запрос контента для поиска Facebook pending через URL ${apiDirectusUrl}/items/campaign_content`, 'scheduler');
+      
+      const response = await axios.get(`${apiDirectusUrl}/items/campaign_content`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
         params: {
           limit: 20, // Ограничиваем количество для производительности
           sort: '-date_created' // Сортируем по дате создания (новые сначала)
@@ -138,9 +145,17 @@ export class PublishScheduler {
             publishedAt: new Date().toISOString()
           };
           
-          // Сохраняем изменения
-          await directusApi.patch(`/items/campaign_content/${content.id}`, {
+          // Сохраняем изменения через прямой URL-запрос
+          const updateUrl = `${apiDirectusUrl}/items/campaign_content/${content.id}`;
+          log(`Обновление Facebook статуса через прямой URL ${updateUrl}`, 'scheduler');
+          
+          await axios.patch(updateUrl, {
             social_platforms: socialPlatforms
+          }, {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
           });
           
           log(`Facebook для контента ${content.id} обновлен на published`, 'scheduler');
@@ -155,8 +170,13 @@ export class PublishScheduler {
           
           // Обновляем общий статус контента, если он не published и нет других pending
           if (!hasOtherPending && content.status !== 'published') {
-            await directusApi.patch(`/items/campaign_content/${content.id}`, {
+            await axios.patch(`${apiDirectusUrl}/items/campaign_content/${content.id}`, {
               status: 'published'
+            }, {
+              headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+              }
             });
             log(`Статус контента ${content.id} обновлен на published`, 'scheduler');
           }
