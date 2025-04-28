@@ -681,9 +681,9 @@ export class PublishScheduler {
         try {
           // Дополнительно проверяем существование контента непосредственно перед публикацией
           try {
-            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
             const checkResponse = await axios.get(
-              `${directusUrl}/items/campaign_content/${content.id}`,
+              `${apiDirectusUrl}/items/campaign_content/${content.id}`,
               {
                 headers: {
                   'Authorization': `Bearer ${authToken}`,
@@ -788,11 +788,11 @@ export class PublishScheduler {
       // Пробуем с системным токеном через прямой запрос
       if (systemToken) {
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
           log(`Прямой запрос для получения кампании: ${content.campaignId}`, 'scheduler');
           
           // Делаем прямой запрос без параметров
-          const response = await axios.get(`${directusUrl}/items/user_campaigns`, {
+          const response = await axios.get(`${apiDirectusUrl}/items/user_campaigns`, {
             headers: {
               'Authorization': `Bearer ${systemToken}`,
               'Content-Type': 'application/json'
@@ -953,9 +953,9 @@ export class PublishScheduler {
           
           // Отдельной операцией устанавливаем publishedAt через прямой запрос к API
           try {
-            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const apiDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
             await axios.patch(
-              `${directusUrl}/items/campaign_content/${content.id}`,
+              `${apiDirectusUrl}/items/campaign_content/${content.id}`,
               { published_at: new Date().toISOString() },
               { headers: { 'Authorization': `Bearer ${tokenToUse}` } }
             );
