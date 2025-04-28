@@ -272,6 +272,27 @@ router.post('/publish', authMiddleware, async (req, res) => {
         // Для Instagram теперь всегда используем n8n вебхук
         log(`[Social Publishing] Instagram публикации перенаправляются через n8n`);
         return publishViaN8n(contentId, 'instagram', req, res);
+      
+      case 'facebook':
+        // Для Facebook используем прямую публикацию через API
+        log(`[Social Publishing] Facebook публикации обрабатываются через прямой API, не через n8n`);
+        // Формируем прямой запрос к facebook-webhook
+        try {
+          const apiBaseUrl = process.env.API_URL || 'http://localhost:5000';
+          const response = await axios.post(`${apiBaseUrl}/api/facebook-webhook`, { contentId });
+          
+          return res.status(200).json({
+            success: true,
+            message: `Контент успешно отправлен на публикацию в Facebook`,
+            result: response.data
+          });
+        } catch (fbError: any) {
+          log(`[Social Publishing] Ошибка при прямой публикации в Facebook: ${fbError.message}`);
+          return res.status(500).json({
+            success: false,
+            error: `Ошибка при публикации в Facebook: ${fbError.message}`
+          });
+        }
         
       default:
         return res.status(400).json({

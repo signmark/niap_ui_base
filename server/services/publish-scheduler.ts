@@ -848,10 +848,10 @@ export class PublishScheduler {
           log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
         }
         
-        // Определяем URL для API запроса "Опубликовать сейчас" через n8n webhooks
+        // Определяем URL для API запроса "Опубликовать сейчас"
         const appUrl = process.env.APP_URL || 'http://localhost:5000';
-        // ИСПРАВЛЕНИЕ: Используем именно n8n webhooks через соц. публикатор, как и для запросов с фронтенда
-        const publishUrl = `${appUrl}/api/publish/now`;
+        // Используем route /api/publish, который маршрутизирует запросы по платформам
+        const publishUrl = `${appUrl}/api/publish`;
         
         // Используем тот же метод публикации, что и через UI (n8n webhooks)
         log(`Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platform}`, 'scheduler');
@@ -862,8 +862,7 @@ export class PublishScheduler {
           
           const apiResponse = await axios.post(publishUrl, {
             contentId: content.id,
-            platforms: [platformName], // ВАЖНО: Передаем только имя платформы как строку
-            userId: content.userId
+            platform: platformName // ВАЖНО: Используем формат одиночной платформы для /api/publish
           }, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
@@ -872,7 +871,8 @@ export class PublishScheduler {
           });
           
           // Проверяем успешность публикации
-          const resultFromApi = apiResponse.data?.results?.[platform];
+          // Для маршрута /api/publish результат приходит прямо в data, а не в data.results
+          const resultFromApi = apiResponse.data;
           
           if (resultFromApi?.success) {
             // Используем успешный результат из API
