@@ -7401,6 +7401,8 @@ https://t.me/channelname/ - description`;
           additional_images: Array.isArray(req.body.additionalImages) ? req.body.additionalImages : [],
           // Проверяем, что keywords это массив
           keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
+          // Сохраняем поле prompt, который приходит от клиента
+          prompt: req.body.prompt || null,
           status: req.body.status || "draft",
           user_id: userId
           // created_at генерируется автоматически в БД
