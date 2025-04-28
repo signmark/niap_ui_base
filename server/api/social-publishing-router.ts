@@ -361,6 +361,7 @@ router.post('/publish', authMiddleware, async (req, res) => {
             
             try {
               // Получаем админ токен для доступа к API
+              const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
               const adminToken = await directusAuthManager.getSystemAdminToken();
               
               // Получаем текущее состояние контента
@@ -569,7 +570,15 @@ async function publishViaN8nAsync(contentId: string, platform: string, forcePubl
           
           try {
             // Получаем токен администратора для обновления статуса
-            const adminToken = await directusAuthManager.getSystemAdminToken();
+            const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+            // Используем метод, который точно существует в интерфейсе
+            const sessions = directusAuthManager.getAllActiveSessions();
+            let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+            
+            // Если есть активные сессии, берем токен из них
+            if (sessions.length > 0) {
+              adminToken = sessions[0].token;
+            }
             
             // Получаем контент для обновления
             const content = await storage.getCampaignContentById(contentId, adminToken);
@@ -805,11 +814,17 @@ router.post('/publish/auto-update-status', async (req, res) => {
       socialPlatforms[plt]?.status === 'published'
     );
     
+    // Специальная обработка для Facebook - если единственная выбранная платформа это Facebook,
+    // и он имеет статус pending, то считаем его как pending для сохранения возможности повторной публикации
+    const onlyFacebookPending = selectedPlatforms.length === 1 && 
+                               selectedPlatforms[0] === 'facebook' && 
+                               socialPlatforms.facebook?.status === 'pending';
+    
     // Проверяем, есть ли среди выбранных платформ те, что в ожидании публикации
-    // Исключаем Facebook из проверки, так как он всегда должен быть в статусе published
+    // Включаем Facebook в проверку, если он единственная платформа
     const hasSelectedPending = selectedPlatforms.some(plt => 
-      plt !== 'facebook' && socialPlatforms[plt]?.status === 'pending'
-    );
+      socialPlatforms[plt]?.status === 'pending'
+    ) || onlyFacebookPending;
     
     // Подробное логирование для отладки
     log(`[Social Publishing] Статусы выбранных платформ:`);
