@@ -287,8 +287,13 @@ router.post('/publish', authMiddleware, async (req, res) => {
         log(`[Social Publishing] Facebook публикации обрабатываются через прямой API, не через n8n`);
         // Формируем прямой запрос к facebook-webhook-direct
         try {
-          // Используем относительный путь для запроса к локальному API
-          const response = await axios.post(`/api/facebook-webhook-direct`, { contentId });
+          // Получаем базовый URL приложения для формирования полного пути
+          const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+          const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
+          
+          log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+          
+          const response = await axios.post(facebookWebhookUrl, { contentId });
           
           log(`[Social Publishing] Успешный ответ от Facebook webhook-direct: ${JSON.stringify(response.data)}`);
           
@@ -440,8 +445,13 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       
       // Вызываем напрямую Facebook webhook-direct
       try {
-        // Используем относительный путь для запроса к локальному API
-        const response = await axios.post(`/api/facebook-webhook-direct`, { contentId });
+        // Получаем базовый URL приложения для формирования полного пути
+        const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+        const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
+        
+        log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+        
+        const response = await axios.post(facebookWebhookUrl, { contentId });
         
         log(`[Social Publishing] Facebook webhook-direct ответ: ${JSON.stringify(response.data)}`);
         return response.data;
