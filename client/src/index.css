@@ -220,6 +220,30 @@
     @apply z-10 bg-background pb-6;
   }
   
+  /* Стили для эмодзи-пикера */
+  .emoji-picker-container {
+    isolation: isolate;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Предотвращает скролл за пределами контейнера */
+  .emoji-picker-container .EmojiPickerReact {
+    overflow: hidden !important;
+  }
+  
+  /* Исправляет скролл в эмодзи-пикере */
+  .emoji-picker-container .epr-body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+  
+  /* Предотвращает скролл основной страницы при скролле эмодзи */
+  .emoji-picker-container .epr-emoji-category-label {
+    overscroll-behavior: contain;
+  }
+  
   .resize-handle {
     resize: both;
     overflow: auto;
