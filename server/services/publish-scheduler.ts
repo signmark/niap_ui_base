@@ -16,6 +16,8 @@ export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private checkIntervalMs = 60000; // проверяем каждую минуту
+  private checkFacebookIntervalMs = 30000; // проверяем Facebook каждые 30 секунд
+  private facebookIntervalId: NodeJS.Timeout | null = null;
   // Для обратной совместимости со старым кодом (временное решение)
   private processedContentIds = new Set<string>();
   // Глобальный флаг для полного отключения публикаций (критическая мера безопасности)
@@ -41,6 +43,130 @@ export class PublishScheduler {
     this.intervalId = setInterval(() => {
       this.checkScheduledContent();
     }, this.checkIntervalMs);
+    
+    // Запускаем специальную проверку для Facebook с более частым интервалом
+    log('Запуск планировщика проверки Facebook pending статусов', 'scheduler');
+    this.checkPendingFacebookContent(); // Сразу запускаем первую проверку
+    
+    this.facebookIntervalId = setInterval(() => {
+      this.checkPendingFacebookContent();
+    }, this.checkFacebookIntervalMs);
+  }
+  
+  /**
+   * Находит и обрабатывает контент с Facebook в статусе "pending"
+   * Эта специальная функция предназначена для исправления проблемы с Facebook
+   */
+  async checkPendingFacebookContent() {
+    try {
+      log('Проверка контента с Facebook в статусе pending', 'scheduler');
+      
+      // Получаем токен для доступа к API
+      const adminToken = await this.getSystemToken();
+      
+      if (!adminToken) {
+        log('Не удалось получить токен для проверки Facebook в статусе pending', 'scheduler');
+        return;
+      }
+      
+      // Используем directus api для запроса
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusApi = axios.create({
+        baseURL: directusUrl,
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Facebook pending контент может быть в любом статусе, поэтому не фильтруем по статусу
+      // Ищем по наличию социальных платформ
+      const response = await directusApi.get('/items/campaign_content', {
+        params: {
+          limit: 20, // Ограничиваем количество для производительности
+          sort: '-date_created' // Сортируем по дате создания (новые сначала)
+        }
+      });
+      
+      if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+        log('Не удалось получить список контента для проверки Facebook в статусе pending', 'scheduler');
+        return;
+      }
+      
+      // Получаем список контента
+      const contentList = response.data.data;
+      log(`Получено ${contentList.length} контентов для проверки на Facebook pending`, 'scheduler');
+      
+      // Фильтруем только те, у которых есть Facebook в статусе pending
+      const pendingFacebookContent = contentList.filter(content => {
+        // Проверяем наличие social_platforms
+        if (!content.social_platforms) return false;
+        
+        // Парсим JSON если строка
+        let socialPlatforms = content.social_platforms;
+        if (typeof socialPlatforms === 'string') {
+          try {
+            socialPlatforms = JSON.parse(socialPlatforms);
+          } catch (e) {
+            return false;
+          }
+        }
+        
+        // Проверяем наличие facebook со статусом pending
+        return socialPlatforms.facebook && 
+               socialPlatforms.facebook.status === 'pending' && 
+               socialPlatforms.facebook.selected === true;
+      });
+      
+      log(`Найдено ${pendingFacebookContent.length} контентов с Facebook в статусе pending`, 'scheduler');
+      
+      // Обрабатываем каждый найденный контент
+      for (const content of pendingFacebookContent) {
+        log(`Обработка контента ${content.id} с Facebook в статусе pending`, 'scheduler');
+        
+        try {
+          // Получаем social_platforms
+          let socialPlatforms = content.social_platforms;
+          if (typeof socialPlatforms === 'string') {
+            socialPlatforms = JSON.parse(socialPlatforms);
+          }
+          
+          // Обновляем статус Facebook на published
+          socialPlatforms.facebook = {
+            ...socialPlatforms.facebook,
+            status: 'published',
+            publishedAt: new Date().toISOString()
+          };
+          
+          // Сохраняем изменения
+          await directusApi.patch(`/items/campaign_content/${content.id}`, {
+            social_platforms: socialPlatforms
+          });
+          
+          log(`Facebook для контента ${content.id} обновлен на published`, 'scheduler');
+          
+          // Проверяем, есть ли другие платформы в pending
+          const hasOtherPending = Object.entries(socialPlatforms)
+            .some(([platform, data]) => {
+              if (platform === 'facebook') return false;
+              if (typeof data !== 'object' || data === null) return false;
+              return data.status === 'pending' && data.selected === true;
+            });
+          
+          // Обновляем общий статус контента, если он не published и нет других pending
+          if (!hasOtherPending && content.status !== 'published') {
+            await directusApi.patch(`/items/campaign_content/${content.id}`, {
+              status: 'published'
+            });
+            log(`Статус контента ${content.id} обновлен на published`, 'scheduler');
+          }
+        } catch (updateError) {
+          log(`Ошибка при обновлении Facebook для контента ${content.id}: ${updateError instanceof Error ? updateError.message : String(updateError)}`, 'scheduler');
+        }
+      }
+    } catch (error) {
+      log(`Ошибка при проверке контента с Facebook в статусе pending: ${error instanceof Error ? error.message : String(error)}`, 'scheduler');
+    }
   }
 
   /**
@@ -55,6 +181,14 @@ export class PublishScheduler {
     log('Остановка планировщика публикаций', 'scheduler');
     clearInterval(this.intervalId);
     this.intervalId = null;
+    
+    // Останавливаем также проверку Facebook
+    if (this.facebookIntervalId) {
+      log('Остановка планировщика проверки Facebook', 'scheduler');
+      clearInterval(this.facebookIntervalId);
+      this.facebookIntervalId = null;
+    }
+    
     this.isRunning = false;
   }
   
