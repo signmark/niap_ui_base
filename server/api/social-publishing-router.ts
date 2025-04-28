@@ -173,14 +173,16 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           let result;
           if (platform === 'facebook') {
             log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
-            // Отправляем запрос на прямой эндпоинт Facebook
-            const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
-            const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
             
-            log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+            // Проверяем, нужна ли принудительная публикация
+            const forcePublish = req.query.force === 'true' || req.body.force === true;
             
-            const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
-            result = facebookResponse.data;
+            if (forcePublish) {
+              log(`[Social Publishing] Запрос на ПРИНУДИТЕЛЬНУЮ публикацию Facebook для контента ${contentId}`);
+            }
+            
+            // Отправляем запрос на публикацию через метод publishViaN8nAsync с форс-параметром
+            result = await publishViaN8nAsync(contentId, platform, forcePublish);
           } else {
             // Для остальных платформ используем n8n вебхук
             result = await publishViaN8nAsync(contentId, platform);
@@ -300,9 +302,19 @@ router.post('/publish', authMiddleware, async (req, res) => {
         try {
           // Получаем базовый URL приложения для формирования полного пути
           const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
-          const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
           
-          log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+          // Проверяем, нужна ли принудительная публикация
+          const forcePublish = req.query.force === 'true' || req.body.force === true;
+          
+          // Выбираем соответствующий эндпоинт на основе флага force
+          let facebookWebhookUrl = '';
+          if (forcePublish) {
+            facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
+            log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
+          } else {
+            facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
+            log(`[Social Publishing] Отправка запроса на стандартную публикацию Facebook: ${facebookWebhookUrl}`);
+          }
           
           const response = await axios.post(facebookWebhookUrl, { contentId });
           
@@ -310,7 +322,7 @@ router.post('/publish', authMiddleware, async (req, res) => {
           
           return res.status(200).json({
             success: true,
-            message: `Контент успешно отправлен на публикацию в Facebook`,
+            message: `Контент успешно отправлен на публикацию в Facebook${forcePublish ? ' (принудительно)' : ''}`,
             result: response.data
           });
         } catch (fbError: any) {
@@ -454,21 +466,29 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
  * Асинхронно публикует контент через n8n вебхук и возвращает результат (для использования с Promise)
  * @param contentId ID контента для публикации
  * @param platform Платформа для публикации
+ * @param forcePublish Принудительная публикация для Facebook, игнорирующая статус
  * @returns Результат публикации
  */
-async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
+async function publishViaN8nAsync(contentId: string, platform: string, forcePublish: boolean = false): Promise<any> {
   try {
     // Специальная логика для Facebook - используем прямую публикацию, а не n8n
     if (platform.toLowerCase() === 'facebook') {
-      log(`[Social Publishing] Прямая публикация контента ${contentId} в Facebook через direct webhook`);
+      log(`[Social Publishing] Прямая публикация контента ${contentId} в Facebook через direct webhook${forcePublish ? ' (принудительная)' : ''}`);
       
       // Вызываем напрямую Facebook webhook-direct
       try {
         // Получаем базовый URL приложения для формирования полного пути
         const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
-        const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
         
-        log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+        // Выбираем соответствующий эндпоинт на основе флага force
+        let facebookWebhookUrl = '';
+        if (forcePublish) {
+          facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct/force-publish`;
+          log(`[Social Publishing] Отправка запроса на принудительную публикацию Facebook: ${facebookWebhookUrl}`);
+        } else {
+          facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
+          log(`[Social Publishing] Отправка запроса на стандартную публикацию Facebook: ${facebookWebhookUrl}`);
+        }
         
         const response = await axios.post(facebookWebhookUrl, { contentId });
         
