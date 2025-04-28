@@ -9,7 +9,7 @@ import { directusApi } from '../lib/directus';
  * @param htmlText HTML-текст для очистки
  * @returns Текст без HTML-тегов, но с сохраненной структурой
  */
-function cleanHtmlForFacebook(htmlText: string): string {
+export function cleanHtmlForFacebook(htmlText: string): string {
   if (!htmlText) return '';
   
   // Сохраняем абзацы и переносы строк
