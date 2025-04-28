@@ -174,7 +174,12 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           if (platform === 'facebook') {
             log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
             // Отправляем запрос на прямой эндпоинт Facebook
-            const facebookResponse = await axios.post('/api/facebook-webhook-direct', { contentId });
+            const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+            const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
+            
+            log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
+            
+            const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
             result = facebookResponse.data;
           } else {
             // Для остальных платформ используем n8n вебхук

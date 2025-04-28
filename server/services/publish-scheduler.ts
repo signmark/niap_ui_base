@@ -850,20 +850,33 @@ export class PublishScheduler {
         
         // Определяем URL для API запроса "Опубликовать сейчас"
         const appUrl = process.env.APP_URL || 'http://localhost:5000';
-        // Используем route /api/publish, который маршрутизирует запросы по платформам
-        const publishUrl = `${appUrl}/api/publish`;
         
-        // Используем тот же метод публикации, что и через UI (n8n webhooks)
-        log(`Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platform}`, 'scheduler');
+        // Передаем имя платформы как строку, чтобы избежать ошибки "Platform [object Object] is not supported yet"
+        const platformName = typeof platform === 'string' ? platform : String(platform);
+        
+        // Для Facebook используем специальный прямой URL, для остальных - стандартный
+        let publishUrl;
+        let logMessage;
+        
+        if (platformName.toLowerCase() === 'facebook') {
+          // Используем прямой маршрут для Facebook
+          publishUrl = `${appUrl}/api/facebook-webhook-direct`;
+          logMessage = `Вызов прямого API публикации Facebook для запланированного контента ${content.id}`;
+          log(logMessage, 'scheduler');
+        } else {
+          // Используем route /api/publish для остальных платформ, которые маршрутизирует запросы через n8n
+          publishUrl = `${appUrl}/api/publish`;
+          logMessage = `Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platformName}`;
+          log(logMessage, 'scheduler');
+        }
         
         try {
-          // Передаем имя платформы как строку, чтобы избежать ошибки "Platform [object Object] is not supported yet"
-          const platformName = typeof platform === 'string' ? platform : String(platform);
+          // Параметры различаются в зависимости от платформы
+          const requestData = platformName.toLowerCase() === 'facebook' 
+            ? { contentId: content.id } // для Facebook
+            : { contentId: content.id, platform: platformName }; // для остальных платформ
           
-          const apiResponse = await axios.post(publishUrl, {
-            contentId: content.id,
-            platform: platformName // ВАЖНО: Используем формат одиночной платформы для /api/publish
-          }, {
+          const apiResponse = await axios.post(publishUrl, requestData, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'
