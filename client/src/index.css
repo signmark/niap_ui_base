@@ -220,56 +220,64 @@
     @apply z-10 bg-background pb-6;
   }
   
-  /* Стили для эмодзи-пикера с Perfect Scrollbar */
-  .emoji-picker-container {
-    position: relative;
+  /* Полностью новые стили для модального эмодзи-пикера */
+  .emoji-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
   }
   
-  /* Временно отключаем скролл на основной странице, когда пикер открыт */
-  body.emoji-picker-open {
+  .emoji-picker-modal {
+    position: relative;
+    background-color: var(--background);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    max-width: 90vw;
+    max-height: 90vh;
     overflow: hidden;
   }
   
-  /* Стили для PerfectScrollbar */
-  .emoji-wrapper {
-    max-height: 400px;
-    position: relative;
+  /* Стили для самого эмодзи-пикера */
+  .emoji-picker-modal .EmojiPickerReact {
+    border: none !important;
+    box-shadow: none !important;
+    --epr-hover-bg-color: var(--accent) !important;
+    --epr-focus-bg-color: var(--accent) !important;
+    --epr-highlight-color: var(--primary) !important;
+    --epr-search-border-color: var(--border) !important;
   }
   
-  /* Контейнер для Perfect Scrollbar */
-  .ps-emoji-container {
-    max-height: 400px;
-    overflow: hidden;
-  }
-  
-  /* Улучшенный стиль для контейнера эмодзи */
-  .emoji-popover {
-    z-index: 50;
-  }
-  
-  /* Стили для эмодзи-пикера внутри Perfect Scrollbar */
-  .ps-emoji-container .EmojiPickerReact {
-    border-radius: 8px;
-    box-shadow: none;
-    height: 100%;
-  }
-  
-  /* Улучшаем стиль для полосы прокрутки в Perfect Scrollbar */
-  .ps__rail-y {
-    width: 8px;
-    background-color: transparent;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-  }
-  
-  .ps__rail-y:hover {
-    opacity: 0.9;
-  }
-  
-  .ps__thumb-y {
+  /* Стили скроллбара внутри эмодзи-пикера - для Chrome и Safari */
+  .emoji-picker-modal .epr-body::-webkit-scrollbar {
     width: 6px;
-    background-color: #888;
-    border-radius: 3px;
+  }
+  
+  .emoji-picker-modal .epr-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .emoji-picker-modal .epr-body::-webkit-scrollbar-thumb {
+    background-color: rgba(128, 128, 128, 0.5);
+    border-radius: 6px;
+  }
+  
+  /* Стили скроллбара - для Firefox */
+  .emoji-picker-modal .epr-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+  }
+  
+  /* Стили для категорий */
+  .emoji-picker-modal .epr-category-nav {
+    padding: 4px 0;
   }
   
   .resize-handle {
