@@ -760,7 +760,46 @@ router.post('/force-publish', async (req, res) => {
       log.info(`[Facebook Force Publish] Публикация успешно создана: ${permalink}`);
       
       // Обновляем статус публикации контента в Directus
-      await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
+      try {
+        log.info(`[Facebook Force Publish] Принудительное обновление статуса для Facebook на "published"`);
+        await updateSocialPlatformsStatus(contentId, adminToken, postPermalink);
+        
+        // Дополнительно проверяем успешность обновления статуса
+        const updatedContent = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        
+        // Проверяем, что статус Facebook действительно обновился
+        const socialPlatforms = updatedContent.data.data.social_platforms || {};
+        
+        if (socialPlatforms.facebook?.status !== 'published') {
+          log.warn(`[Facebook Force Publish] Статус Facebook не обновился автоматически, применяем дополнительное обновление`);
+          
+          // Если статус не обновился, делаем принудительное обновление
+          const updatedPlatforms = JSON.parse(JSON.stringify(socialPlatforms));
+          updatedPlatforms.facebook = {
+            ...(socialPlatforms.facebook || {}),
+            status: 'published',
+            publishedAt: new Date().toISOString(),
+            postUrl: postPermalink,
+            selected: socialPlatforms.facebook?.selected || true
+          };
+          
+          // Сохраняем обновленные платформы
+          await directusApi.patch(`/items/campaign_content/${contentId}`, {
+            social_platforms: updatedPlatforms
+          }, {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          
+          log.info(`[Facebook Force Publish] Принудительное обновление статуса выполнено успешно`);
+        } else {
+          log.info(`[Facebook Force Publish] Статус Facebook успешно обновлен на "published"`);
+        }
+      } catch (statusError) {
+        log.error(`[Facebook Force Publish] Ошибка при обновлении статуса: ${statusError.message}`);
+        // Продолжаем выполнение даже при ошибке обновления статуса
+      }
       
       return res.json({ 
         success: true,

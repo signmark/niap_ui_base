@@ -187,6 +187,43 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             
             const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
             result = facebookResponse.data;
+            
+            // Дополнительное обновление статуса Facebook на "published"
+            if (result.success) {
+              log(`[Social Publishing] Дополнительное обновление статуса Facebook на "published" после успешной публикации`);
+              
+              try {
+                // Получаем текущее состояние контента
+                const content = await storage.getCampaignContentById(contentId, adminToken);
+                
+                if (content && content.socialPlatforms) {
+                  let socialPlatforms = typeof content.socialPlatforms === 'string'
+                    ? JSON.parse(content.socialPlatforms)
+                    : content.socialPlatforms;
+                  
+                  // Обновляем статус Facebook
+                  socialPlatforms.facebook = {
+                    ...(socialPlatforms.facebook || {}),
+                    status: 'published',
+                    publishedAt: new Date().toISOString(),
+                    postUrl: result.postUrl || '',
+                    selected: true
+                  };
+                  
+                  // Сохраняем обновленные платформы
+                  await storage.updateCampaignContent(
+                    contentId,
+                    { socialPlatforms },
+                    adminToken
+                  );
+                  
+                  log(`[Social Publishing] Статус Facebook успешно обновлен на "published" после публикации`);
+                }
+              } catch (statusUpdateError) {
+                log(`[Social Publishing] Ошибка при дополнительном обновлении статуса Facebook: ${statusUpdateError.message}`);
+                // Продолжаем выполнение даже при ошибке обновления статуса
+              }
+            }
           } else {
             // Для остальных платформ используем n8n вебхук
             result = await publishViaN8nAsync(contentId, platform);
@@ -317,6 +354,46 @@ router.post('/publish', authMiddleware, async (req, res) => {
           const response = await axios.post(facebookWebhookUrl, { contentId });
           
           log(`[Social Publishing] Успешный ответ от Facebook webhook-direct: ${JSON.stringify(response.data)}`);
+          
+          // Дополнительная проверка и обновление статуса Facebook после успешной публикации
+          if (response.data.success) {
+            log(`[Social Publishing] Дополнительное обновление статуса Facebook через универсальный маршрут`);
+            
+            try {
+              // Получаем админ токен для доступа к API
+              const adminToken = await directusAuthManager.getSystemAdminToken();
+              
+              // Получаем текущее состояние контента
+              const content = await storage.getCampaignContentById(contentId, adminToken);
+              
+              if (content && content.socialPlatforms) {
+                let socialPlatforms = typeof content.socialPlatforms === 'string'
+                  ? JSON.parse(content.socialPlatforms)
+                  : content.socialPlatforms;
+                
+                // Обновляем статус Facebook
+                socialPlatforms.facebook = {
+                  ...(socialPlatforms.facebook || {}),
+                  status: 'published',
+                  publishedAt: new Date().toISOString(),
+                  postUrl: response.data.postUrl || '',
+                  selected: true
+                };
+                
+                // Сохраняем обновленные платформы
+                await storage.updateCampaignContent(
+                  contentId,
+                  { socialPlatforms },
+                  adminToken
+                );
+                
+                log(`[Social Publishing] Статус Facebook успешно обновлен на "published" для отдельной публикации`);
+              }
+            } catch (statusUpdateError: any) {
+              log(`[Social Publishing] Ошибка при дополнительном обновлении статуса Facebook: ${statusUpdateError.message}`);
+              // Продолжаем выполнение даже при ошибке обновления статуса
+            }
+          }
           
           return res.status(200).json({
             success: true,
@@ -485,6 +562,48 @@ async function publishViaN8nAsync(contentId: string, platform: string, forcePubl
         const response = await axios.post(facebookWebhookUrl, { contentId });
         
         log(`[Social Publishing] Facebook webhook-direct ответ: ${JSON.stringify(response.data)}`);
+        
+        // Дополнительное обновление статуса Facebook на "published" после асинхронной публикации
+        if (response.data.success) {
+          log(`[Social Publishing] Дополнительное обновление статуса Facebook на "published" после асинхронной публикации`);
+          
+          try {
+            // Получаем токен администратора для обновления статуса
+            const adminToken = await directusAuthManager.getSystemAdminToken();
+            
+            // Получаем контент для обновления
+            const content = await storage.getCampaignContentById(contentId, adminToken);
+            
+            if (content && content.socialPlatforms) {
+              // Проверяем и преобразуем socialPlatforms при необходимости
+              let socialPlatforms = typeof content.socialPlatforms === 'string'
+                ? JSON.parse(content.socialPlatforms)
+                : content.socialPlatforms;
+              
+              // Обновляем статус Facebook
+              socialPlatforms.facebook = {
+                ...(socialPlatforms.facebook || {}),
+                status: 'published',
+                publishedAt: new Date().toISOString(),
+                postUrl: response.data.postUrl || '',
+                selected: true
+              };
+              
+              // Сохраняем обновленные платформы
+              await storage.updateCampaignContent(
+                contentId,
+                { socialPlatforms },
+                adminToken
+              );
+              
+              log(`[Social Publishing] Статус Facebook успешно обновлен на "published" после асинхронной публикации`);
+            }
+          } catch (statusUpdateError: any) {
+            log(`[Social Publishing] Ошибка при дополнительном обновлении статуса Facebook после асинхронной публикации: ${statusUpdateError.message}`);
+            // Продолжаем выполнение даже при ошибке обновления статуса
+          }
+        }
+        
         return response.data;
       } catch (fbError: any) {
         log(`[Social Publishing] Ошибка при прямой публикации в Facebook: ${fbError.message}`);
