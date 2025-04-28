@@ -119,7 +119,7 @@ async function checkScheduledPublications() {
 
 ## 4. Обработка статусов публикации
 
-### 4.1. Жизненный цикл статусов
+### 4.1. Жизненный цикл статусов контента
 
 1. **draft** - контент создан, но не опубликован
 2. **publishing** - процесс публикации начат
@@ -134,12 +134,20 @@ async function checkScheduledPublications() {
 ```javascript
 {
   social_platforms: {
-    telegram: { status: "published", url: "...", published_at: "..." },
-    vk: { status: "error", error: "...", last_attempt: "..." },
-    instagram: { status: "scheduled", schedule_time: "..." }
+    telegram: { status: "pending", url: null, published_at: null },
+    vk: { status: "published", url: "...", published_at: "..." },
+    instagram: { status: "error", error: "...", last_attempt: "..." },
+    facebook: { status: "scheduled", schedule_time: "..." }
   }
 }
 ```
+
+#### 4.2.1. Статусы для отдельных платформ
+
+1. **pending** - публикация запущена, но результат еще не получен (начальный статус при "Опубликовать сейчас")
+2. **published** - контент успешно опубликован на данной платформе
+3. **error** - возникла ошибка при публикации на данной платформе
+4. **scheduled** - контент запланирован к публикации на данной платформе
 
 ### 4.3. Обновление статусов через вебхуки
 
