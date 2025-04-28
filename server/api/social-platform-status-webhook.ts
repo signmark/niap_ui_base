@@ -171,16 +171,40 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     log.info(`[${requestId}] Анализ статусов: allPublished=${allPublished}, hasFailures=${hasFailures}, hasPending=${hasPending}`);
     
     // Обновляем общий статус с более строгой логикой:
-    // 1. Только если все платформы опубликованы - статус "published"
+    // 1. Только если все *выбранные* платформы опубликованы - статус "published"
     // 2. Если есть ошибки, но нет ожидающих публикации - статус "failed"
     // 3. Если есть платформы в ожидании - общий статус не меняем
-    if (allPublished) {
-      log.info(`[${requestId}] Установка общего статуса 'published' - все платформы опубликованы`);
+    
+    // Фильтруем только выбранные платформы
+    const selectedPlatforms = Object.entries(updatedSocialPlatforms)
+      .filter(([_, data]: [string, any]) => data.selected)
+      .map(([plt, _]) => plt);
+      
+    // Проверяем, все ли выбранные платформы опубликованы
+    const allSelectedPublished = selectedPlatforms.length > 0 && 
+      selectedPlatforms.every(plt => 
+        updatedSocialPlatforms[plt]?.status === 'published'
+      );
+      
+    // Проверяем, есть ли среди выбранных платформ те, что в ожидании публикации
+    const hasSelectedPending = selectedPlatforms.some(plt => 
+      updatedSocialPlatforms[plt]?.status === 'pending'
+    );
+    
+    // Подробное логирование для отладки
+    log.info(`[${requestId}] Выбранные платформы (${selectedPlatforms.length}): ${selectedPlatforms.join(', ')}`);
+    log.info(`[${requestId}] Статусы выбранных платформ:`);
+    selectedPlatforms.forEach(plt => {
+      log.info(`[${requestId}]   - ${plt}: ${updatedSocialPlatforms[plt]?.status}`);
+    });
+    
+    if (allSelectedPublished) {
+      log.info(`[${requestId}] Установка общего статуса 'published' - все ВЫБРАННЫЕ платформы опубликованы`);
       updates['status'] = 'published';
-    } else if (hasFailures && !hasPending) {
+    } else if (hasFailures && !hasSelectedPending) {
       log.info(`[${requestId}] Установка общего статуса 'failed' - есть ошибки и нет ожидающих публикации`);
       updates['status'] = 'failed';
-    } else if (hasPending) {
+    } else if (hasSelectedPending) {
       log.info(`[${requestId}] Общий статус не изменен - есть платформы в ожидании публикации`);
       // Общий статус не меняем, т.к. некоторые платформы ещё ожидают публикации
     }
