@@ -220,54 +220,25 @@
     @apply z-10 bg-background pb-6;
   }
   
-  /* Стили для эмодзи-пикера */
+  /* Стили для эмодзи-пикера - упрощенный вариант */
   .emoji-picker-container {
-    isolation: isolate;
     position: relative;
+  }
+  
+  /* Временно отключаем скролл на основной странице, когда пикер открыт */
+  body.emoji-picker-open {
     overflow: hidden;
   }
   
-  /* Предотвращает скролл за пределами контейнера */
+  /* Стили для скроллинга внутри эмодзи-пикера */
   .emoji-picker-container .EmojiPickerReact {
-    overflow: hidden !important;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
   }
   
-  /* Исправляет скролл в эмодзи-пикере */
+  /* Контейнер с эмодзи */
   .emoji-picker-container .epr-body {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior: contain;
-    max-height: 350px !important; /* Фиксированная высота для скролла */
-    pointer-events: auto !important; /* Убедиться, что события мыши улавливаются */
-  }
-  
-  /* Категории внутри пикера */
-  .emoji-picker-container .epr-category-nav {
-    pointer-events: auto !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    flex-wrap: nowrap !important;
-    -ms-overflow-style: none !important; /* для IE и Edge */
-    scrollbar-width: none !important; /* для Firefox */
-  }
-  
-  /* Скрываем скроллбар для горизонтального скролла категорий */
-  .emoji-picker-container .epr-category-nav::-webkit-scrollbar {
-    display: none !important;
-  }
-  
-  /* Предотвращает скролл основной страницы при скролле эмодзи */
-  .emoji-picker-container .epr-emoji-category-label,
-  .emoji-picker-container .epr-search-container,
-  .emoji-picker-container .epr-preview {
-    overscroll-behavior: contain;
-    pointer-events: auto !important;
-  }
-  
-  /* Сами эмодзи */
-  .emoji-picker-container .epr-emoji {
-    cursor: pointer !important;
-    pointer-events: auto !important;
+    height: 350px !important;
   }
   
   .resize-handle {
