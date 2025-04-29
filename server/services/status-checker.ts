@@ -5,7 +5,7 @@
  */
 
 import axios from 'axios';
-import { log } from '../utils/logger';
+import { log, DEBUG_LEVELS } from '../utils/logger';
 import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
 
@@ -61,15 +61,22 @@ class PublicationStatusChecker {
    * с кэшированием для минимизации авторизаций
    */
   private async getAdminToken(): Promise<string | null> {
+    // Проверяем режим вывода логов
+    const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
+    
     if (this.adminTokenCache && (Date.now() - this.adminTokenTimestamp) < this.tokenExpirationMs) {
-      log('Использование кэшированного токена администратора', 'status-checker');
+      if (isVerboseMode) {
+        log('Использование кэшированного токена администратора', 'status-checker');
+      }
       return this.adminTokenCache;
     }
     
     // Сначала пробуем получить токен из переменных окружения
     const envToken = process.env.DIRECTUS_ADMIN_TOKEN;
     if (envToken) {
-      log('Использование токена администратора из переменных окружения', 'status-checker');
+      if (isVerboseMode) {
+        log('Использование токена администратора из переменных окружения', 'status-checker');
+      }
       this.adminTokenCache = envToken;
       this.adminTokenTimestamp = Date.now();
       return envToken;
@@ -82,11 +89,15 @@ class PublicationStatusChecker {
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
       if (!email || !password) {
-        log('Отсутствуют учетные данные администратора для авторизации', 'status-checker');
+        if (isVerboseMode) {
+          log('Отсутствуют учетные данные администратора для авторизации', 'status-checker');
+        }
         return null;
       }
       
-      log('Попытка авторизации администратора с учетными данными из env', 'status-checker');
+      if (isVerboseMode) {
+        log('Попытка авторизации администратора с учетными данными из env', 'status-checker');
+      }
       
       const authResponse = await axios.post(`${directusUrl}/auth/login`, {
         email,
@@ -95,7 +106,9 @@ class PublicationStatusChecker {
       
       if (authResponse?.data?.data?.access_token) {
         const token = authResponse.data.data.access_token;
-        log('Получен новый токен администратора', 'status-checker');
+        if (isVerboseMode) {
+          log('Получен новый токен администратора', 'status-checker');
+        }
         
         // Кэшируем токен
         this.adminTokenCache = token;
@@ -104,10 +117,14 @@ class PublicationStatusChecker {
         return token;
       }
       
-      log('Не удалось получить токен из ответа авторизации', 'status-checker');
+      if (isVerboseMode) {
+        log('Не удалось получить токен из ответа авторизации', 'status-checker');
+      }
       return null;
     } catch (error: any) {
-      log(`Ошибка при авторизации администратора: ${error.message}`, 'status-checker');
+      if (isVerboseMode) {
+        log(`Ошибка при авторизации администратора: ${error.message}`, 'status-checker');
+      }
       return null;
     }
   }
@@ -121,13 +138,20 @@ class PublicationStatusChecker {
    */
   private async checkPublicationStatuses() {
     try {
+      // Проверяем режим вывода логов
+      const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
+      
       // Снижаем уровень детализации логов
-      log('Проверка статусов публикаций', 'status-checker');
+      if (isVerboseMode) {
+        log('Проверка статусов публикаций', 'status-checker');
+      }
       
       // Получаем токен администратора для запросов
       const adminToken = await this.getAdminToken();
       if (!adminToken) {
-        log('Не удалось получить токен администратора для проверки статусов', 'status-checker');
+        if (isVerboseMode) {
+          log('Не удалось получить токен администратора для проверки статусов', 'status-checker');
+        }
         return;
       }
       
@@ -150,7 +174,9 @@ class PublicationStatusChecker {
       );
       
       if (!response?.data?.data || !Array.isArray(response.data.data)) {
-        log('API вернул некорректный формат данных', 'status-checker');
+        if (isVerboseMode) {
+          log('API вернул некорректный формат данных', 'status-checker');
+        }
         return;
       }
       

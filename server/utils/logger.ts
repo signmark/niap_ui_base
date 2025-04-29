@@ -14,8 +14,20 @@ export const DEBUG_LEVELS = {
   // Отладка публикаций
   PUBLISHING: true,
   // Отладка социальных платформ
-  SOCIAL: true
+  SOCIAL: true,
+  // Отладка сервиса проверки статусов
+  STATUS_CHECKER: false
 };
+
+/**
+ * Список сообщений, которые не нужно выводить в логи
+ */
+const FILTERED_MESSAGES = [
+  "Request failed with status code 401",  // Ошибки авторизации
+  "Unauthorized",
+  "Ошибка авторизации",
+  "Не удалось получить токен"
+];
 
 /**
  * Проверяет, нужно ли выводить отладочные сообщения для конкретного источника
@@ -42,6 +54,11 @@ export function logMessage(message: string, source = "express", level = "info") 
   // Проверка на отладочные сообщения
   if (level === "debug" && !shouldDebug(source)) {
     return; // Не выводим отладочные сообщения, если отладка выключена
+  }
+  
+  // Фильтруем ошибки авторизации и другие известные ошибки
+  if (level === "error" && FILTERED_MESSAGES.some(msg => message.includes(msg))) {
+    return; // Пропускаем фильтруемые ошибки
   }
   
   const time = new Date().toLocaleTimeString();
@@ -82,6 +99,11 @@ export function logMessage(message: string, source = "express", level = "info") 
  * @param source Источник сообщения (по умолчанию "express")
  */
 export function info(message: string, source = "express") {
+  // Фильтруем некоторые часто повторяющиеся информационные сообщения
+  if (FILTERED_MESSAGES.some(msg => message.includes(msg))) {
+    return;
+  }
+  
   const time = new Date().toLocaleTimeString();
   console.log(`${time} [${source}] ${message}`);
 }
@@ -93,6 +115,18 @@ export function info(message: string, source = "express") {
  * @param source Источник сообщения (по умолчанию "express")
  */
 export function error(message: string, error?: any, source = "express") {
+  // Фильтруем ошибки авторизации и другие известные ошибки
+  if (FILTERED_MESSAGES.some(msg => message.includes(msg) || (error && typeof error === 'string' && error.includes(msg)))) {
+    // Пропускаем фильтруемые ошибки
+    return;
+  }
+
+  // Дополнительная проверка ошибки axios
+  if (error && typeof error === 'object' && error.response && error.response.status === 401) {
+    // Пропускаем ошибки 401 Unauthorized
+    return;
+  }
+
   const time = new Date().toLocaleTimeString();
   console.error(`${time} [${source}] ${message}`, error || '');
 }
