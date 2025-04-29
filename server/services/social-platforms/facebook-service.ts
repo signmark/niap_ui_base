@@ -106,6 +106,116 @@ class FacebookService {
   }
   
   /**
+   * Публикует текст без изображения на странице Facebook
+   * @param pageId ID страницы Facebook
+   * @param token Токен доступа страницы
+   * @param text Текст публикации
+   * @returns Результат публикации с ID и URL поста
+   */
+  async publishTextOnly(pageId: string, token: string, text: string): Promise<{ id: string, permalink: string }> {
+    // Создаем уникальный ID операции для отслеживания в логах
+    const operationId = `fb_text_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    try {
+      log.info(`[${operationId}] [Facebook] Публикация текста на странице ${pageId}`);
+      log.info(`[${operationId}] [Facebook] Длина текста: ${text ? text.length : 0} символов`);
+      
+      // Попробуем разные варианты отправки запроса
+      try {
+        // Метод 1: Через URLSearchParams (формат form-data)
+        log.info(`[${operationId}] [Facebook] Попытка публикации текста через URLSearchParams`);
+        
+        // Создаем POST запрос для публикации текста
+        const apiUrl = `https://graph.facebook.com/${this.apiVersion}/${pageId}/feed`;
+        
+        const formData = new URLSearchParams();
+        formData.append('message', text);
+        formData.append('access_token', token);
+        
+        log.info(`[${operationId}] [Facebook] Отправка запроса на ${apiUrl}`);
+        
+        const response = await axios.post(apiUrl, formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+        
+        if (!response.data?.id) {
+          throw new Error('Нет ID в ответе API (URLSearchParams)');
+        }
+        
+        // Получаем permalink поста на основе ID
+        const postId = response.data.id;
+        log.info(`[${operationId}] [Facebook] Публикация создана, ID: ${postId}`);
+        
+        const postUrl = await this.getPostPermalink(pageId, postId, token);
+        
+        log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${postUrl}`);
+        
+        return {
+          id: postId,
+          permalink: postUrl
+        };
+      } catch (method1Error: any) {
+        log.error(`[${operationId}] [Facebook] Ошибка метода 1 (URLSearchParams): ${method1Error.message}`);
+        
+        if (method1Error.response?.data) {
+          log.error(`[${operationId}] [Facebook] Детали ошибки API (метод 1): ${JSON.stringify(method1Error.response.data)}`);
+        }
+        
+        // Метод 2: Через params в axios (запрос как query string)
+        log.info(`[${operationId}] [Facebook] Попытка публикации через axios params`);
+        
+        const apiUrl = `https://graph.facebook.com/${this.apiVersion}/${pageId}/feed`;
+        
+        const response = await axios.post(apiUrl, null, {
+          params: {
+            message: text,
+            access_token: token
+          }
+        });
+        
+        if (!response.data?.id) {
+          throw new Error('Нет ID в ответе API (axios params)');
+        }
+        
+        // Получаем permalink поста на основе ID
+        const postId = response.data.id;
+        log.info(`[${operationId}] [Facebook] Публикация создана, ID: ${postId}`);
+        
+        const postUrl = await this.getPostPermalink(pageId, postId, token);
+        
+        log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${postUrl}`);
+        
+        return {
+          id: postId,
+          permalink: postUrl
+        };
+      }
+    } catch (error: any) {
+      log.error(`[${operationId}] [Facebook] Ошибка публикации текста: ${error.message}`);
+      
+      if (error.response?.data) {
+        log.error(`[${operationId}] [Facebook] Детали ошибки API: ${JSON.stringify(error.response.data)}`);
+        
+        // Анализируем конкретные ошибки Facebook API для лучшей диагностики
+        if (error.response.data.error) {
+          const fbError = error.response.data.error;
+          log.error(`[${operationId}] [Facebook] Код ошибки API: ${fbError.code}, тип: ${fbError.type}, сообщение: ${fbError.message}`);
+          
+          // Проверяем конкретные коды ошибок
+          if (fbError.code === 190) {
+            log.error(`[${operationId}] [Facebook] Ошибка токена! Токен недействителен или срок его действия истек.`);
+          }
+        }
+      }
+      
+      // Повторно выбрасываем исключение
+      throw error;
+    }
+  }
+  
+  /**
    * Публикует текст с изображением на странице Facebook
    * @param pageId ID страницы Facebook
    * @param token Токен доступа страницы
@@ -296,8 +406,10 @@ class FacebookService {
         textPrefix: text ? text.substring(0, 30) + '...' : 'нет'
       })}`);
       
-      if (!imageUrl) {
-        throw new Error('Отсутствует URL изображения для публикации в Facebook');
+      // В обновленной версии не требуем обязательное наличие изображения
+      // Фейсбук поддерживает текстовые посты без изображений
+      if (!imageUrl && !text) {
+        throw new Error('Необходимо указать либо изображение, либо текст для публикации в Facebook');
       }
       
       // Получаем токен страницы на основе токена пользователя
@@ -310,14 +422,29 @@ class FacebookService {
       
       log.info(`[${operationId}] [Facebook] Токен страницы получен: ${pageAccessToken.substring(0, 10)}...`);
       
-      // Публикуем фото с текстом
+      // Выбираем метод публикации в зависимости от наличия изображения
       log.info(`[${operationId}] [Facebook] Публикация на странице ${pageId}`);
-      const { id, permalink } = await this.publishImageWithText(
-        pageId,
-        pageAccessToken,
-        imageUrl,
-        text
-      );
+      
+      let id, permalink;
+      
+      if (imageUrl && imageUrl.startsWith('http')) {
+        // Если есть изображение, публикуем фото с текстом
+        log.info(`[${operationId}] [Facebook] Публикация изображения с текстом`);
+        ({ id, permalink } = await this.publishImageWithText(
+          pageId,
+          pageAccessToken,
+          imageUrl,
+          text
+        ));
+      } else {
+        // Если изображения нет, публикуем только текст
+        log.info(`[${operationId}] [Facebook] Публикация только текста (без изображения)`);
+        ({ id, permalink } = await this.publishTextOnly(
+          pageId,
+          pageAccessToken,
+          text
+        ));
+      }
       
       log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${permalink}`);
       

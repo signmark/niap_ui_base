@@ -1,148 +1,294 @@
-import { Request, Response, Router } from 'express';
-import { log } from '../utils/logger';
-import { storage } from '../storage';
-import { directusApiManager } from '../directus';
-import axios from 'axios';
+/**
+ * API маршруты для принудительного обновления статуса контента
+ * Позволяет проверить все выбранные платформы и обновить общий статус
+ */
 
-const router = Router();
+import { Router } from 'express';
+import { directusApi } from '../directus';
+import axios from 'axios';
+import { log } from '../utils/logger';
+import { SocialPlatform } from '@shared/schema';
+
+export const forceUpdateStatusRouter = Router();
 
 /**
- * Маршрут для принудительного обновления статуса контента 
- * Проверяет все социальные платформы и если все имеют статус "published", 
+ * Маршрут для принудительного обновления статуса контента
+ * Проверяет все выбранные платформы и, если все имеют статус "published",
  * устанавливает общий статус контента в "published"
  */
-router.post('/publish/force-update-status', async (req: Request, res: Response) => {
+forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (req, res) => {
+  const contentId = req.params.contentId;
+  const operationId = `force_update_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  
+  log.info(`[${operationId}] Принудительное обновление статуса для контента ${contentId}`);
+  
   try {
-    const { contentId } = req.body;
-    
-    if (!contentId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Необходимо указать contentId'
-      });
-    }
-    
-    log(`[Force Update Status] Запрос на принудительное обновление статуса для контента ${contentId}`, 'api');
-    
-    // Получаем данные о контенте
-    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    // Получаем API URL системы
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
     
-    // Пробуем получить токен из активных сессий
-    const sessions = directusAuthManager.getAllActiveSessions();
+    // Получаем токен из заголовка Authorization или из переменных окружения
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
     let token = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const authHeader = req.headers.authorization;
     
-    if (sessions.length > 0) {
-      token = sessions[0].token;
-      log(`[Force Update Status] Использован токен из активной сессии`, 'api');
-    } else if (!token) {
-      log(`[Force Update Status] Не найден токен для обновления статуса`, 'api');
-      return res.status(500).json({
-        success: false,
-        error: 'Не удалось получить действительный токен для обновления статуса'
-      });
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else {
+      // Если токен не указан в заголовке, пробуем получить из активных сессий
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      if (sessions.length > 0) {
+        // Берем самый свежий токен из активных сессий
+        token = sessions[0].token;
+        log.info(`[${operationId}] Используем токен из активных сессий`);
+      } else if (!token) {
+        log.error(`[${operationId}] Не найден токен авторизации`);
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Не найден токен авторизации' 
+        });
+      }
     }
     
-    // Получаем текущие данные контента
-    const content = await storage.getCampaignContentById(contentId, token);
+    // 1. Получаем текущие данные контента
+    log.info(`[${operationId}] Получение данных контента ${contentId}`);
+    const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     
-    if (!content) {
-      log(`[Force Update Status] Контент с ID ${contentId} не найден`, 'api');
-      return res.status(404).json({
-        success: false,
-        error: `Контент с ID ${contentId} не найден`
-      });
+    if (!contentResponse.data?.data) {
+      throw new Error(`Контент с ID ${contentId} не найден`);
     }
     
-    // Получаем текущие данные о платформах из поля socialPlatforms
-    let socialPlatforms = content.socialPlatforms || {};
+    const content = contentResponse.data.data;
+    log.info(`[${operationId}] Контент получен: ${content.id}, от user_id: ${content.user_id}`);
+    
+    // 2. Обрабатываем текущее значение social_platforms
+    let socialPlatforms = content.social_platforms || {};
     
     // Если socialPlatforms - строка, парсим JSON
     if (typeof socialPlatforms === 'string') {
       try {
         socialPlatforms = JSON.parse(socialPlatforms);
       } catch (e) {
+        log.error(`[${operationId}] Ошибка парсинга social_platforms: ${e}`);
         socialPlatforms = {};
       }
     }
     
+    // ВАЖНО: Если socialPlatforms не объект, создаем новый
+    if (typeof socialPlatforms !== 'object' || !socialPlatforms) {
+      socialPlatforms = {};
+    }
+    
     const platforms = Object.keys(socialPlatforms);
+    log.info(`[${operationId}] Найдено платформ: ${platforms.length}`);
     
     if (platforms.length === 0) {
-      log(`[Force Update Status] Контент ${contentId} не имеет социальных платформ`, 'api');
-      return res.status(400).json({
+      return res.json({
         success: false,
-        error: 'Контент не имеет социальных платформ'
+        message: 'Нет выбранных социальных платформ для контента',
+        content: content,
+        needsUpdate: false
       });
     }
     
-    // Получаем список выбранных платформ (те, у которых selected === true)
-    const selectedPlatforms = platforms.filter(platform => {
-      return socialPlatforms[platform]?.selected === true;
-    });
+    // 3. Проверяем статусы всех платформ
+    let allPublished = true;
+    let publishedCount = 0;
+    let pendingCount = 0;
+    let failedCount = 0;
+    let platformsStatus = [];
     
-    if (selectedPlatforms.length === 0) {
-      log(`[Force Update Status] Контент ${contentId} не имеет выбранных платформ`, 'api');
-      return res.status(400).json({
-        success: false,
-        error: 'Контент не имеет выбранных платформ'
-      });
+    for (const platform of platforms) {
+      const platformData = socialPlatforms[platform] || {};
+      // Проверяем, что платформа выбрана для публикации
+      if (platformData.selected) {
+        const status = platformData.status || 'pending';
+        platformsStatus.push({ platform, status });
+        
+        if (status === 'published') {
+          publishedCount++;
+        } else if (status === 'failed') {
+          failedCount++;
+          allPublished = false;
+        } else {
+          pendingCount++;
+          allPublished = false;
+        }
+      }
     }
     
-    // Проверяем статусы всех выбранных платформ
-    const platformStatuses = selectedPlatforms.map(platform => ({
-      platform,
-      status: socialPlatforms[platform]?.status || 'unknown'
-    }));
+    log.info(`[${operationId}] Статус публикаций: published=${publishedCount}, pending=${pendingCount}, failed=${failedCount}`);
     
-    log(`[Force Update Status] Статусы платформ: ${JSON.stringify(platformStatuses)}`, 'api');
-    
-    // Проверяем, все ли выбранные платформы имеют статус "published"
-    const allPublished = selectedPlatforms.every(platform => {
-      return socialPlatforms[platform]?.status === 'published';
-    });
-    
-    if (allPublished) {
-      log(`[Force Update Status] Все выбранные платформы имеют статус "published", обновляем общий статус`, 'api');
+    // 4. Если все платформы опубликованы, обновляем статус контента
+    if (allPublished && publishedCount > 0) {
+      log.info(`[${operationId}] Все платформы опубликованы, обновляем статус контента на published`);
       
-      // Обновляем статус контента на "published"
-      await axios.patch(
-        `${directusUrl}/items/campaign_content/${contentId}`,
-        { 
-          status: 'published',
-          published_at: new Date().toISOString()
-        },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      // Обновляем статус контента
+      await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+        status: 'published',
+        published_at: new Date().toISOString()
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
-      log(`[Force Update Status] Статус контента ${contentId} успешно обновлен на "published"`, 'api');
-      
-      return res.status(200).json({
+      return res.json({
         success: true,
         message: 'Статус контента успешно обновлен на "published"',
-        contentId,
-        allPublished: true
+        status: 'published',
+        platformsStatus
+      });
+    } else if (failedCount > 0 && pendingCount === 0) {
+      // Если есть ошибки и нет ожидающих публикаций, устанавливаем статус "failed"
+      log.info(`[${operationId}] Имеются ошибки публикации, обновляем статус контента на "failed"`);
+      
+      // Обновляем статус контента
+      await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+        status: 'failed'
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      return res.json({
+        success: true,
+        message: 'Статус контента успешно обновлен на "failed"',
+        status: 'failed',
+        platformsStatus
       });
     } else {
-      // Если не все платформы опубликованы, возвращаем информацию о статусах
-      log(`[Force Update Status] Не все выбранные платформы опубликованы`, 'api');
+      // Если есть ожидающие публикации, оставляем статус без изменений
+      log.info(`[${operationId}] Есть ожидающие публикации, статус контента остается без изменений`);
       
-      return res.status(200).json({
+      return res.json({
         success: true,
-        message: 'Не все выбранные платформы опубликованы, статус контента не изменен',
-        contentId,
-        allPublished: false,
-        platformStatuses
+        message: 'Статус контента остается без изменений, т.к. есть ожидающие публикации',
+        status: content.status,
+        platformsStatus
       });
     }
+    
   } catch (error: any) {
-    log(`[Force Update Status] Ошибка при обновлении статуса: ${error.message}`, 'api');
+    log.error(`[${operationId}] Ошибка при обновлении статуса: ${error.message}`);
+    
+    if (error.response?.data) {
+      log.error(`[${operationId}] Детали ошибки API: ${JSON.stringify(error.response.data)}`);
+    }
     
     return res.status(500).json({
       success: false,
-      error: `Ошибка при обновлении статуса: ${error.message}`
+      error: `Ошибка при обновлении статуса контента: ${error.message}`
     });
   }
 });
 
-export { router as forceUpdateStatusRouter };
+/**
+ * Получает текущий статус публикаций для контента
+ */
+forceUpdateStatusRouter.get('/publish/content-status/:contentId', async (req, res) => {
+  const contentId = req.params.contentId;
+  const operationId = `status_check_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  
+  log.info(`[${operationId}] Проверка статуса публикаций для контента ${contentId}`);
+  
+  try {
+    // Получаем API URL системы
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    // Получаем токен из заголовка Authorization или из переменных окружения
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    let token = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else {
+      // Если токен не указан в заголовке, пробуем получить из активных сессий
+      const sessions = directusAuthManager.getAllActiveSessions();
+      
+      if (sessions.length > 0) {
+        // Берем самый свежий токен из активных сессий
+        token = sessions[0].token;
+        log.info(`[${operationId}] Используем токен из активных сессий`);
+      } else if (!token) {
+        log.error(`[${operationId}] Не найден токен авторизации`);
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Не найден токен авторизации' 
+        });
+      }
+    }
+    
+    // Получаем данные контента
+    const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!contentResponse.data?.data) {
+      throw new Error(`Контент с ID ${contentId} не найден`);
+    }
+    
+    const content = contentResponse.data.data;
+    log.info(`[${operationId}] Контент получен: ${content.id}, статус: ${content.status || 'draft'}`);
+    
+    // Обрабатываем текущее значение social_platforms
+    let socialPlatforms = content.social_platforms || {};
+    
+    // Если socialPlatforms - строка, парсим JSON
+    if (typeof socialPlatforms === 'string') {
+      try {
+        socialPlatforms = JSON.parse(socialPlatforms);
+      } catch (e) {
+        log.error(`[${operationId}] Ошибка парсинга social_platforms: ${e}`);
+        socialPlatforms = {};
+      }
+    }
+    
+    // ВАЖНО: Если socialPlatforms не объект, создаем новый
+    if (typeof socialPlatforms !== 'object' || !socialPlatforms) {
+      socialPlatforms = {};
+    }
+    
+    const platforms = Object.keys(socialPlatforms);
+    const platformsStatus = [];
+    
+    for (const platform of platforms) {
+      const platformData = socialPlatforms[platform] || {};
+      if (platformData.selected) {
+        platformsStatus.push({
+          platform,
+          status: platformData.status || 'pending',
+          postUrl: platformData.postUrl || null,
+          publishedAt: platformData.publishedAt || null,
+          error: platformData.error || null
+        });
+      }
+    }
+    
+    return res.json({
+      success: true,
+      contentStatus: content.status || 'draft',
+      platforms: platformsStatus,
+      content: {
+        id: content.id,
+        title: content.title,
+        status: content.status,
+        content: content.content,
+        imageUrl: content.image_url,
+        createdAt: content.date_created
+      }
+    });
+    
+  } catch (error: any) {
+    log.error(`[${operationId}] Ошибка при получении статуса: ${error.message}`);
+    
+    if (error.response?.data) {
+      log.error(`[${operationId}] Детали ошибки API: ${JSON.stringify(error.response.data)}`);
+    }
+    
+    return res.status(500).json({
+      success: false,
+      error: `Ошибка при получении статуса контента: ${error.message}`
+    });
+  }
+});

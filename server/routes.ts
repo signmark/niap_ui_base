@@ -55,6 +55,7 @@ import facebookWebhookUnifiedRoutes from './api/facebook-webhook-unified';
 import socialPlatformStatusWebhookRoutes from './api/social-platform-status-webhook';
 import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
+import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
 
 /**
