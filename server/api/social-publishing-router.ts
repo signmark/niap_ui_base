@@ -539,6 +539,28 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       } else {
         log(`[Social Publishing] Платформа ${platform} не найдена в настройках контента ${contentId}`);
       }
+
+      // Дополнительно вызываем маршрут обновления статуса после публикации
+      try {
+        const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+        log(`[Social Publishing] Автоматический вызов обновления статуса после публикации в ${platform}`);
+        
+        await axios.post(
+          `${appBaseUrl}/api/publish/update-status`,
+          { contentId },
+          {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        log(`[Social Publishing] Успешный вызов обновления статуса после публикации в ${platform}`);
+      } catch (updateStatusError: any) {
+        log(`[Social Publishing] Ошибка при вызове обновления статуса: ${updateStatusError.message}`);
+        // Продолжаем даже при ошибке обновления статуса
+      }
     } catch (statusError: any) {
       log(`[Social Publishing] Ошибка при обновлении статуса платформы: ${statusError.message}`);
       // Продолжаем даже при ошибке обновления статуса
@@ -635,6 +657,31 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     
     log(`[Social Publishing] Ответ от n8n вебхука: ${JSON.stringify(response.data)}`);
     
+    // Автоматически вызываем обновление статуса после публикации
+    try {
+      const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+      
+      log(`[Social Publishing] Автоматический вызов обновления статуса после асинхронной публикации в ${platform}`);
+      
+      await axios.post(
+        `${appBaseUrl}/api/publish/update-status`,
+        { contentId },
+        {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      log(`[Social Publishing] Успешный вызов обновления статуса после асинхронной публикации в ${platform}`);
+    } catch (updateStatusError: any) {
+      log(`[Social Publishing] Ошибка при вызове обновления статуса после асинхронной публикации: ${updateStatusError.message}`);
+      // Продолжаем даже при ошибке обновления статуса
+    }
+    
     return {
       success: true,
       message: `Контент успешно отправлен на публикацию в ${platform}`,
@@ -687,6 +734,30 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
     
     // Публикуем карусель через Instagram Carousel API
     const result = await instagramCarouselHandler.publishCarousel(contentId, allImages, caption || '', token, businessAccountId);
+    
+    // Автоматически вызываем обновление статуса после публикации карусели
+    try {
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+      
+      log(`[Social Publishing] Автоматический вызов обновления статуса после публикации карусели в Instagram`);
+      
+      await axios.post(
+        `${appBaseUrl}/api/publish/update-status`,
+        { contentId },
+        {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      log(`[Social Publishing] Успешный вызов обновления статуса после публикации карусели в Instagram`);
+    } catch (updateStatusError: any) {
+      log(`[Social Publishing] Ошибка при вызове обновления статуса после публикации карусели: ${updateStatusError.message}`);
+      // Продолжаем даже при ошибке обновления статуса
+    }
     
     return res.status(200).json({
       success: true,
