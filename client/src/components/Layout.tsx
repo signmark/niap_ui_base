@@ -88,10 +88,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { path: "/campaigns", label: "Кампании", icon: FileText },
     { path: "/keywords", label: "Ключевые слова", icon: Search },
-    { path: "/content", label: "Контент", icon: PenTool },
-    { path: "/posts", label: "Публикации", icon: Calendar },
-    { path: "/publish/scheduled", label: "Запланированные", icon: Clock },
     { path: "/trends", label: "Тренды", icon: TrendingUp },
+    { path: "/content", label: "Контент", icon: PenTool },
+    { path: "/publish/scheduled", label: "Запланированные", icon: Clock },
+    { path: "/posts", label: "Публикации", icon: Calendar },
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
 
