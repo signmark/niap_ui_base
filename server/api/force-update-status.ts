@@ -95,17 +95,25 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
     
     // 3. Проверяем статусы всех платформ
     let allPublished = true;
+    let allSelected = true; // Все выбранные платформы должны быть опубликованы
     let publishedCount = 0;
     let pendingCount = 0;
     let failedCount = 0;
+    let selectedCount = 0;
     let platformsStatus = [];
     
     for (const platform of platforms) {
       const platformData = socialPlatforms[platform] || {};
       // Проверяем, что платформа выбрана для публикации
       if (platformData.selected) {
+        selectedCount++;
         const status = platformData.status || 'pending';
-        platformsStatus.push({ platform, status });
+        platformsStatus.push({ 
+          platform, 
+          status,
+          postUrl: platformData.postUrl || null,
+          error: platformData.error || null
+        });
         
         if (status === 'published') {
           publishedCount++;
@@ -119,11 +127,19 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
       }
     }
     
+    // Если нет выбранных платформ, не считаем все опубликованными
+    if (selectedCount === 0) {
+      allPublished = false;
+    }
+    
+    // Проверяем, что все выбранные платформы опубликованы
+    allSelected = (selectedCount > 0) && (publishedCount === selectedCount);
+    
     log.info(`[${operationId}] Статус публикаций: published=${publishedCount}, pending=${pendingCount}, failed=${failedCount}`);
     
-    // 4. Если все платформы опубликованы, обновляем статус контента
-    if (allPublished && publishedCount > 0) {
-      log.info(`[${operationId}] Все платформы опубликованы, обновляем статус контента на published`);
+    // 4. Если все выбранные платформы опубликованы, обновляем статус контента
+    if (allSelected && publishedCount > 0) {
+      log.info(`[${operationId}] Все выбранные платформы опубликованы (${publishedCount}/${selectedCount}), обновляем статус контента на published`);
       
       // Обновляем статус контента
       await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
@@ -135,7 +151,7 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
       
       return res.json({
         success: true,
-        message: 'Статус контента успешно обновлен на "published"',
+        message: `Статус контента успешно обновлен на "published". Все выбранные платформы (${publishedCount}/${selectedCount}) опубликованы.`,
         status: 'published',
         platformsStatus
       });
@@ -152,7 +168,7 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
       
       return res.json({
         success: true,
-        message: 'Статус контента успешно обновлен на "failed"',
+        message: `Статус контента успешно обновлен на "failed". Ошибок публикации: ${failedCount}/${selectedCount}`,
         status: 'failed',
         platformsStatus
       });
@@ -162,7 +178,7 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
       
       return res.json({
         success: true,
-        message: 'Статус контента остается без изменений, т.к. есть ожидающие публикации',
+        message: `Статус контента остается без изменений. Опубликовано: ${publishedCount}/${selectedCount}, в очереди: ${pendingCount}, ошибок: ${failedCount}`,
         status: content.status,
         platformsStatus
       });
