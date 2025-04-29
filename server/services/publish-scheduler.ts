@@ -291,7 +291,8 @@ export class PublishScheduler {
         };
         
         // Запрос с фильтром ТОЛЬКО по статусу "scheduled"
-        const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        // Получаем запланированные публикации со статусом 'scheduled'
+        const scheduledResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
           headers,
           params: {
             filter: JSON.stringify({
@@ -304,6 +305,36 @@ export class PublishScheduler {
             })
           }
         });
+
+        // Получаем также публикации со статусом 'draft', которые имеют платформы в статусе 'pending'
+        // Это контент, для которого уже нажали 'Опубликовать сейчас', но еще не опубликовали
+        const pendingResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
+          headers,
+          params: {
+            filter: JSON.stringify({
+              status: {
+                _eq: 'draft'
+              }
+            })
+          }
+        });
+        
+        // Объединяем результаты
+        let allItems = [];
+        
+        if (scheduledResponse?.data?.data) {
+          log(`Получено ${scheduledResponse.data.data.length} запланированных публикаций со статусом 'scheduled'`, 'scheduler');
+          allItems = allItems.concat(scheduledResponse.data.data);
+        }
+        
+        if (pendingResponse?.data?.data) {
+          log(`Получено ${pendingResponse.data.data.length} публикаций со статусом 'draft'`, 'scheduler');
+          allItems = allItems.concat(pendingResponse.data.data);
+        }
+        
+        // Используем объединенный список
+        const response = { data: { data: allItems } };
+        
         
         if (response?.data?.data) {
           const items = response.data.data;
@@ -372,6 +403,14 @@ export class PublishScheduler {
             continue;
           }
           
+          // Проверяем, если статус "pending" - это значит что кнопка "Опубликовать сразу" уже была нажата
+          // и контент должен быть опубликован немедленно
+          if (platformData?.status === 'pending') {
+            logMessages.push(`${platform}: статус pending - ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
+            anyPlatformReady = true;
+            continue;
+          }
+          
           // Проверяем индивидуальную дату для платформы
           if (platformData?.scheduledAt) {
             const platformScheduledTime = new Date(platformData.scheduledAt);
@@ -434,10 +473,47 @@ export class PublishScheduler {
           if (response?.data?.data) {
             const freshData = response.data.data;
             
-            // Проверяем основной статус контента - должен быть СТРОГО "scheduled"
-            if (freshData.status !== 'scheduled') {
-              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет статус ${freshData.status} вместо scheduled, пропускаем`, 'scheduler');
+            // Проверяем основной статус контента - должен быть "scheduled" или "draft"
+            if (freshData.status !== 'scheduled' && freshData.status !== 'draft') {
+              log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет статус ${freshData.status} вместо scheduled или draft, пропускаем`, 'scheduler');
               continue;
+            }
+            
+            // Если статус "draft", проверяем наличие платформ со статусом "pending"
+            if (freshData.status === 'draft') {
+              // Проверяем, есть ли платформы со статусом "pending"
+              const platformsData = freshData.social_platforms;
+              let hasPendingPlatforms = false;
+              
+              if (platformsData && typeof platformsData === 'object') {
+                // Преобразуем из строки в объект, если это строка
+                let platforms = platformsData;
+                if (typeof platforms === 'string') {
+                  try {
+                    platforms = JSON.parse(platforms);
+                  } catch (e) {
+                    log(`Ошибка при парсинге social_platforms: ${e}`, 'scheduler');
+                    platforms = {};
+                  }
+                }
+                
+                // Проверяем все платформы на статус "pending"
+                for (const [platform, data] of Object.entries(platforms)) {
+                  if (data.status === 'pending') {
+                    hasPendingPlatforms = true;
+                    log(`Обнаружена платформа ${platform} со статусом pending в контенте ID ${content.id}`, 'scheduler');
+                    break;
+                  }
+                }
+              }
+              
+              // Если нет платформ со статусом "pending", пропускаем контент
+              if (!hasPendingPlatforms) {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет статус draft, но нет платформ со статусом pending, пропускаем`, 'scheduler');
+                continue;
+              } else {
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" имеет статус draft и платформы со статусом pending - ПРОДОЛЖАЕМ ПУБЛИКАЦИЮ`, 'scheduler');
+              }
             }
             
             // Проверяем наличие publishedAt поля - НО НЕ БЛОКИРУЕМ, если есть неопубликованные платформы
