@@ -4,16 +4,51 @@
  */
 
 /**
+ * Режим отладки для всех модулей
+ */
+export const DEBUG_LEVELS = {
+  // Общий режим отладки для всех модулей
+  GLOBAL: false,
+  // Отладка планировщика
+  SCHEDULER: false,
+  // Отладка публикаций
+  PUBLISHING: true,
+  // Отладка социальных платформ
+  SOCIAL: true
+};
+
+/**
+ * Проверяет, нужно ли выводить отладочные сообщения для конкретного источника
+ * @param source Источник сообщения
+ * @returns true, если нужно выводить отладочные сообщения
+ */
+function shouldDebug(source: string): boolean {
+  if (DEBUG_LEVELS.GLOBAL) return true;
+  
+  if (source === 'scheduler' && DEBUG_LEVELS.SCHEDULER) return true;
+  if (source.includes('publish') && DEBUG_LEVELS.PUBLISHING) return true;
+  if (['facebook', 'telegram', 'vk', 'instagram'].some(p => source.includes(p)) && DEBUG_LEVELS.SOCIAL) return true;
+  
+  return false;
+}
+
+/**
  * Выводит сообщение в консоль с указанием источника
  * @param message Сообщение для вывода
  * @param source Источник сообщения (по умолчанию "express")
+ * @param level Уровень логирования (info, debug, error)
  */
-export function logMessage(message: string, source = "express") {
+export function logMessage(message: string, source = "express", level = "info") {
+  // Проверка на отладочные сообщения
+  if (level === "debug" && !shouldDebug(source)) {
+    return; // Не выводим отладочные сообщения, если отладка выключена
+  }
+  
   const time = new Date().toLocaleTimeString();
   console.log(`${time} [${source}] ${message}`);
   
   // Добавляем детальное логирование для отладки
-  const isDebug = source.endsWith('-debug');
+  const isDebug = source.endsWith('-debug') || level === "debug";
   if (isDebug) {
     try {
       const fs = require('fs');
@@ -28,7 +63,7 @@ export function logMessage(message: string, source = "express") {
         timestamp: new Date().toISOString(),
         source,
         message,
-        level: 'debug'
+        level
       };
       
       fs.appendFileSync(
