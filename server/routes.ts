@@ -2952,6 +2952,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Запускаем планировщик публикаций
   publishScheduler.start();
   
+  // Запускаем сервис проверки статусов публикаций
+  publicationStatusChecker.start();
+  
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);
   
