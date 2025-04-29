@@ -121,7 +121,8 @@ class PublicationStatusChecker {
    */
   private async checkPublicationStatuses() {
     try {
-      log('Начало проверки статусов публикаций', 'status-checker');
+      // Снижаем уровень детализации логов
+      log('Проверка статусов публикаций', 'status-checker');
       
       // Получаем токен администратора для запросов
       const adminToken = await this.getAdminToken();
@@ -154,7 +155,6 @@ class PublicationStatusChecker {
       }
       
       const contentItems = response.data.data;
-      log(`Получено ${contentItems.length} элементов контента для проверки статусов`, 'status-checker');
       
       // Счетчики для логирования
       let processedItems = 0;
@@ -175,7 +175,6 @@ class PublicationStatusChecker {
           try {
             platformsData = JSON.parse(platformsData);
           } catch (error) {
-            log(`Невозможно разобрать данные платформ для контента ${item.id}`, 'status-checker');
             skippedItems++;
             continue;
           }
@@ -216,9 +215,6 @@ class PublicationStatusChecker {
         const allFinalized = pendingPlatforms.length === 0 && 
                             selectedPlatforms.length > 0;
         
-        // Детальное логирование для отладки
-        log(`Контент ${item.id} "${item.title || 'без названия'}": статус=${item.status}, выбрано=${selectedPlatforms.length}, опубликовано=${publishedPlatforms.length}, с ошибками=${failedPlatforms.length}, в ожидании=${pendingPlatforms.length}`, 'status-checker');
-        
         // Определяем необходимость обновления статуса
         let shouldUpdateStatus = false;
         let newStatus = item.status;
@@ -227,13 +223,11 @@ class PublicationStatusChecker {
           // Если все платформы опубликованы, ставим статус 'published'
           shouldUpdateStatus = true;
           newStatus = 'published';
-          log(`Контент ${item.id}: все платформы опубликованы, обновляем статус на published`, 'status-checker');
         } else if (allFinalized && publishedPlatforms.length > 0) {
           // Если все платформы завершили публикацию (успешно или с ошибкой) и есть хотя бы одна успешная,
           // также ставим статус 'published'
           shouldUpdateStatus = true;
           newStatus = 'published';
-          log(`Контент ${item.id}: все платформы завершили публикацию, из них ${publishedPlatforms.length} успешно, ${failedPlatforms.length} с ошибками, обновляем статус на published`, 'status-checker');
         }
         
         // Обновляем статус, если необходимо
@@ -247,28 +241,21 @@ class PublicationStatusChecker {
             );
             
             if (updated) {
-              log(`Успешно обновлен статус контента ${item.id} с ${item.status} на ${newStatus}`, 'status-checker');
+              log(`Обновлен статус контента ID ${item.id} на ${newStatus}`, 'status-checker');
               updatedItems++;
-            } else {
-              log(`Не удалось обновить статус контента ${item.id}`, 'status-checker');
             }
           } catch (updateError: any) {
-            log(`Ошибка при обновлении статуса контента ${item.id}: ${updateError.message}`, 'status-checker');
-          }
-        } else {
-          // Если статус не требует обновления или он уже корректный
-          if (item.status === 'published' && (allPublished || (allFinalized && publishedPlatforms.length > 0))) {
-            log(`Контент ${item.id} уже имеет корректный статус ${item.status}`, 'status-checker');
-          } else if (shouldUpdateStatus && newStatus === item.status) {
-            log(`Контент ${item.id} уже имеет необходимый статус ${newStatus}`, 'status-checker');
+            log(`Ошибка при обновлении контента ${item.id}`, 'status-checker');
           }
         }
         
         processedItems++;
       }
       
-      // Итоговая статистика проверки
-      log(`Проверка завершена. Обработано: ${processedItems}, обновлено: ${updatedItems}, пропущено: ${skippedItems}`, 'status-checker');
+      // Только если были обновления, выводим статистику
+      if (updatedItems > 0) {
+        log(`Обновлено ${updatedItems} контент(ов)`, 'status-checker');
+      }
     } catch (error: any) {
       log(`Ошибка при проверке статусов публикаций: ${error.message}`, 'status-checker');
     }
