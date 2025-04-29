@@ -390,7 +390,10 @@ export class PublishScheduler {
       const contentToPublish = scheduledContent.filter(content => {
         // Если нет платформ для публикации, то пропускаем
         if (!content.socialPlatforms || Object.keys(content.socialPlatforms).length === 0) {
-          log(`Контент ID ${content.id} "${content.title}" не имеет настроек социальных платформ, пропускаем`, 'scheduler');
+          // Выводим только если включен режим подробного логирования
+          if (this.verboseLogging) {
+            log(`Контент ID ${content.id} "${content.title}" не имеет настроек социальных платформ, пропускаем`, 'scheduler');
+          }
           return false;
         }
         
