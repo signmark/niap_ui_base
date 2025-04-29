@@ -9,6 +9,10 @@ import { CampaignContent, SocialPlatform, SocialPublication } from '@shared/sche
 
 class FacebookService {
   private apiVersion = 'v19.0';
+  
+  // Кэш токенов страниц для уменьшения количества запросов к API
+  private pageTokenCache: Map<string, {token: string, timestamp: number}> = new Map();
+  private tokenCacheExpirationMs = 30 * 60 * 1000; // 30 минут
 
   /**
    * Получает токен страницы на основе токена пользователя
@@ -21,14 +25,26 @@ class FacebookService {
     const operationId = `fb_token_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
     try {
-      log.info(`[${operationId}] [Facebook] Получение токена страницы для ${pageId}`);
-      
       // Проверяем, имеет ли userAccessToken префикс "Key "
       let accessToken = userAccessToken;
       if (accessToken.startsWith('Key ')) {
         log.info(`[${operationId}] [Facebook] Удаление префикса 'Key ' из токена пользователя`);
         accessToken = accessToken.substring(4);
       }
+      
+      // Создаем ключ для кэша из усеченного токена и pageId
+      const cacheKey = `${accessToken.substring(0, 20)}_${pageId}`;
+      
+      // Проверяем кэш
+      const now = Date.now();
+      const cachedData = this.pageTokenCache.get(cacheKey);
+      
+      if (cachedData && (now - cachedData.timestamp) < this.tokenCacheExpirationMs) {
+        log.info(`[${operationId}] [Facebook] Используем кэшированный токен для страницы ${pageId}`);
+        return cachedData.token;
+      }
+      
+      log.info(`[${operationId}] [Facebook] Получение нового токена страницы для ${pageId}`);
       
       // Проверка на пустой токен
       if (!accessToken || accessToken.trim() === '') {
@@ -97,6 +113,10 @@ class FacebookService {
       if (!foundPage) {
         log.warn(`[${operationId}] [Facebook] Страница ${pageId} не найдена в списке доступных страниц, используем токен пользователя`);
       }
+      
+      // Сохраняем токен в кэше
+      this.pageTokenCache.set(cacheKey, { token: pageAccessToken, timestamp: now });
+      log.info(`[${operationId}] [Facebook] Токен страницы сохранен в кэше`);
       
       return pageAccessToken;
     } catch (error: any) {
