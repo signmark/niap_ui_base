@@ -135,10 +135,13 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     try {
       log(`[Social Publishing] Обновляем статусы платформ для контента ${contentId} с токеном администратора`);
       
-      // Обновляем контент, чтобы сохранить выбранные платформы
+      // Обновляем контент, чтобы сохранить выбранные платформы и сразу переводим в статус 'scheduled'
       const updatedContent = await storage.updateCampaignContent(
         contentId,
-        { socialPlatforms: platformsData },
+        { 
+          status: 'scheduled', // Устанавливаем статус 'scheduled' сразу при запуске публикации "Опубликовать сейчас"
+          socialPlatforms: platformsData 
+        },
         adminToken
       );
     
@@ -205,9 +208,14 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       // Проверяем, есть ли успешные публикации и неудачные публикации
       const hasSuccessfulPublications = publishResults.some(result => result.success);
       const hasFailedPublications = publishResults.some(result => !result.success);
-      const allPlatformsPublished = hasSuccessfulPublications && !hasFailedPublications && publishResults.length === Object.keys(platforms).filter(p => platforms[p]).length;
+      // Исправленная логика: определяем количество выбранных платформ правильно
+      const selectedPlatformsCount = Array.isArray(platforms) 
+        ? platforms.length 
+        : Object.entries(platforms).filter(([_, selected]) => selected === true).length;
       
-      log(`[Social Publishing] Статус публикаций: успешных=${hasSuccessfulPublications}, неудачных=${hasFailedPublications}, все платформы опубликованы=${allPlatformsPublished}`);
+      const allPlatformsPublished = hasSuccessfulPublications && !hasFailedPublications && publishResults.length === selectedPlatformsCount;
+      
+      log(`[Social Publishing] Статус публикаций: успешных=${hasSuccessfulPublications}, неудачных=${hasFailedPublications}, все платформы опубликованы=${allPlatformsPublished} (выбрано: ${selectedPlatformsCount}, результатов: ${publishResults.length})`);
       
       if (hasSuccessfulPublications) {
         // Автоматически обновляем общий статус контента на "published" ТОЛЬКО если ВСЕ платформы успешны
