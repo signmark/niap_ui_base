@@ -98,6 +98,6 @@ export interface CampaignContent {
   metadata?: Record<string, any> | null;
   scheduledAt?: string | Date | null;
   publishedAt?: string | Date | null;
-  socialPlatforms?: Record<SocialPlatform, PlatformPublishInfo>;
+  socialPlatforms?: Record<SocialPlatform, PlatformPublishInfo> | null;
   userId?: string;
 }

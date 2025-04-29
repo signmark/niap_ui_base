@@ -143,7 +143,7 @@ export default function ScheduledPublicationDetails({
           ...content,
           status: 'draft' as const,
           scheduledAt: null,
-          socialPlatforms: {} // Очищаем платформы
+          socialPlatforms: null // Очищаем платформы
         };
         
         // Обновляем статусы платформ
@@ -216,13 +216,19 @@ export default function ScheduledPublicationDetails({
     });
   };
   
-  // Форматируем дату публикации для отображения
+  // Форматируем дату публикации для отображения с учетом часового пояса
   const formatScheduledDate = (date: string | Date | null | undefined) => {
     if (!date) return "Не запланировано";
     
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return format(dateObj, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      
+      // Преобразуем UTC дату к локальному часовому поясу пользователя
+      // без прибавления смещения, которое JavaScript делает автоматически
+      // для дат в ISO формате
+      const utcDate = new Date(dateObj.toUTCString());
+      
+      return format(utcDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
     } catch (error) {
       console.error("Ошибка форматирования даты:", error);
       return "Некорректная дата";

@@ -57,7 +57,7 @@ export default function ScheduledPublications() {
           status: 'draft',
           scheduled_at: null, // Важно: используем snake_case для имени поля, т.к. API ожидает такой формат
           // Обновляем статус для всех платформ
-          social_platforms: {} // Пустой объект вместо null, чтобы сохранить структуру
+          social_platforms: null // Очищаем платформы публикации
         }
       });
     },
@@ -298,13 +298,19 @@ export default function ScheduledPublications() {
     setIsPreviewOpen(true);
   };
   
-  // Функция форматирования даты публикации
+  // Функция форматирования даты публикации с учетом часового пояса
   const formatScheduledDate = (date: string | Date | null | undefined) => {
     if (!date) return "Не запланировано";
     
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return format(dateObj, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      
+      // Преобразуем UTC дату к локальному часовому поясу пользователя
+      // без прибавления смещения, которое JavaScript делает автоматически
+      // для дат в ISO формате
+      const utcDate = new Date(dateObj.toUTCString());
+      
+      return format(utcDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
     } catch (error) {
       console.error("Ошибка форматирования даты:", error);
       return "Некорректная дата";
