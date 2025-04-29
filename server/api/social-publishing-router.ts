@@ -622,11 +622,28 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
       socialPlatformsType: content.socialPlatforms ? typeof content.socialPlatforms : 'undefined'
     })}`);
     
-    // Автоматически обновляем статус на "published", так как этот эндпоинт вызывается
-    // сразу после публикации во все выбранные платформы
+    // Проверяем, действительно ли все выбранные платформы опубликованы
+    const socialPlatforms = content.socialPlatforms || {};
+    
+    // Получаем список выбранных платформ
+    const selectedPlatforms = Object.entries(socialPlatforms)
+      .filter(([_, platformData]) => platformData?.selected)
+      .map(([platform, _]) => platform);
+    
+    // Получаем список опубликованных платформ
+    const publishedPlatforms = Object.entries(socialPlatforms)
+      .filter(([_, platformData]) => platformData?.selected && platformData?.status === 'published')
+      .map(([platform, _]) => platform);
+    
+    // Проверяем, что все выбранные платформы опубликованы
+    const allSelected = selectedPlatforms.length > 0 && selectedPlatforms.length === publishedPlatforms.length;
+    
+    log(`Проверка статуса: выбрано ${selectedPlatforms.length}, опубликовано ${publishedPlatforms.length}, allSelected=${allSelected}`); 
+    
+    // Обновляем статус на "published" ТОЛЬКО если все выбранные платформы опубликованы
     const updatedContent = await storage.updateCampaignContent(
       contentId,
-      { status: 'published', publishedAt: new Date() },
+      { status: allSelected ? 'published' : content.status, publishedAt: new Date() },
       adminToken
     );
     

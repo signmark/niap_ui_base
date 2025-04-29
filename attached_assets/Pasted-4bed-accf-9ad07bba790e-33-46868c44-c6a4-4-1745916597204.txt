@@ -1,0 +1,52 @@
+4bed-accf-9ad07bba790e
+ Загружено ключевых слов: 33
+ Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Запрос на публикацию с выбранными платформами: {instagram: true, telegram: true, vk: true, facebook: true}
+4 hasFullscreenPage: value is undefined or not passed
+ 🚀 Подготовленные данные для публикации через новый API:
+ ID контента: 1871456d-7846-4836-91d6-ceac389b41a9
+ Выбранные платформы: {instagram: true, telegram: true, vk: true, facebook: true}
+ Загружено контента: 100
+ Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загружено ключевых слов: 33
+ Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загружено контента: 100
+4 hasFullscreenPage: value is undefined or not passed
+ ✅ Результат публикации через новый API: {success: true, message: 'Контент отправлен на публикацию в выбранные платформы', results: Array(4)}
+ Результат публикации: {success: true, message: 'Контент отправлен на публикацию в выбранные платформы', results: Array(4)}
+ Вызов API для обновления статуса публикации...
+ 
+            
+            
+           POST https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/publish/auto-update-status 404 (Not Found)
+onSuccess @ src/pages/content/index.tsx:457
+execute @ @fs/home/runner/work….js?v=88f2ec2f:1233
+await in execute
+mutate @ @fs/home/runner/work….js?v=88f2ec2f:2630
+(anonymous) @ @fs/home/runner/work….js?v=88f2ec2f:3295
+onClick @ src/pages/content/index.tsx:3066
+callCallback2 @ chunk-276SZO74.js:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js:3699
+invokeGuardedCallback @ chunk-276SZO74.js:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js:3736
+executeDispatch @ chunk-276SZO74.js:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js:7034
+processDispatchQueue @ chunk-276SZO74.js:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js:7051
+(anonymous) @ chunk-276SZO74.js:7174
+batchedUpdates$1 @ chunk-276SZO74.js:18913
+batchedUpdates @ chunk-276SZO74.js:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js:5478
+dispatchEvent @ chunk-276SZO74.js:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js:5449Understand this error
+ Результат обновления статуса: {success: false, error: 'Контент не найден'}
+ Не все платформы опубликованы, статус не обновлен undefined
+ Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+4 hasFullscreenPage: value is undefined or not passed
+ Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загружено ключевых слов: 33
+ Загружено контента: 100
+3 hasFullscreenPage: value is undefined or not passed
+9 hasFullscreenPage: value is undefined or not passed
+ Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
