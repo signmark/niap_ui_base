@@ -24,6 +24,21 @@ export class PublishScheduler {
   
   // Флаг для вывода информационных сообщений ("...content не имеет настроек...")
   private verboseLogging = false;
+  
+  // Кэш токенов, чтобы не выполнять повторные авторизации
+  private adminTokenCache: string | null = null;
+  private adminTokenTimestamp: number = 0;
+  private tokenExpirationMs = 30 * 60 * 1000; // 30 минут для токена
+  
+  // Кэш для настроек кампаний
+  private campaignSettingsCache = new Map<string, any>();
+  private campaignCacheTimestamp = new Map<string, number>();
+  private campaignCacheExpirationMs = 15 * 60 * 1000; // 15 минут для кэша кампаний
+  
+  // Кэш страниц Facebook и токенов
+  private facebookPagesCache: any = null;
+  private facebookPagesCacheTimestamp: number = 0;
+  private facebookCacheExpirationMs = 30 * 60 * 1000; // 30 минут для кэша Facebook
 
   /**
    * Запускает планировщик публикаций
@@ -90,6 +105,14 @@ export class PublishScheduler {
    */
   public async getSystemToken(): Promise<string | null> {
     try {
+      // Сначала проверяем кэш внутри планировщика
+      const now = Date.now();
+      if (this.adminTokenCache && (now - this.adminTokenTimestamp < this.tokenExpirationMs)) {
+        // У нас есть кэшированный токен, который не истек
+        log('Используем кэшированный токен администратора из планировщика', 'scheduler');
+        return this.adminTokenCache;
+      }
+      
       // Загружаем менеджер авторизации
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
       const directusCrud = await import('./directus-crud').then(m => m.directusCrud);
@@ -114,7 +137,11 @@ export class PublishScheduler {
             const token = response.data.data.access_token;
             log('Авторизация администратора успешна через прямой API запрос', 'scheduler');
             
-            // Сохраняем токен в кэше
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = token;
+            this.adminTokenTimestamp = now;
+            
+            // Сохраняем токен в кэше API менеджера
             directusApiManager.cacheAuthToken(adminUserId, token, 3600); // 1 час
             
             // Пробуем сохранить в DirectusAuthManager
@@ -141,6 +168,11 @@ export class PublishScheduler {
           
           if (authInfo && authInfo.token) {
             log('Авторизация администратора успешна через directusAuthManager', 'scheduler');
+            
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = authInfo.token;
+            this.adminTokenTimestamp = now;
+            
             return authInfo.token;
           }
           
@@ -149,6 +181,11 @@ export class PublishScheduler {
           
           if (authResult?.access_token) {
             log('Авторизация администратора успешна через directusCrud', 'scheduler');
+            
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = authResult.access_token;
+            this.adminTokenTimestamp = now;
+            
             return authResult.access_token;
           }
         } catch (error: any) {
@@ -173,6 +210,11 @@ export class PublishScheduler {
           
           if (testResponse?.data?.data) {
             log(`Токен активной сессии пользователя ${firstSession.userId} валиден`, 'scheduler');
+            
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = firstSession.token;
+            this.adminTokenTimestamp = now;
+            
             return firstSession.token;
           }
         } catch (error: any) {
@@ -194,6 +236,11 @@ export class PublishScheduler {
           
           if (testResponse?.data?.data) {
             log('Статический токен администратора валиден', 'scheduler');
+            
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = adminToken;
+            this.adminTokenTimestamp = now;
+            
             return adminToken;
           }
         } catch (error: any) {
@@ -201,10 +248,10 @@ export class PublishScheduler {
         }
       }
       
-      // 4. Пробуем получить токен из кэша
+      // 4. Пробуем получить токен из кэша DirectusApiManager
       const cachedToken = directusApiManager.getCachedToken(adminUserId);
       if (cachedToken) {
-        log(`Найден кэшированный токен для администратора ${adminUserId}`, 'scheduler');
+        log(`Найден кэшированный токен для администратора ${adminUserId} в API менеджере`, 'scheduler');
         
         // Проверяем валидность токена
         try {
@@ -215,6 +262,11 @@ export class PublishScheduler {
           
           if (testResponse?.data?.data) {
             log('Кэшированный токен администратора валиден', 'scheduler');
+            
+            // Сохраняем токен в кэше планировщика
+            this.adminTokenCache = cachedToken.token;
+            this.adminTokenTimestamp = now;
+            
             return cachedToken.token;
           }
         } catch (error: any) {
@@ -237,6 +289,11 @@ export class PublishScheduler {
             
             if (testResponse?.data?.data) {
               log('Токен из хранилища валиден', 'scheduler');
+              
+              // Сохраняем токен в кэше планировщика
+              this.adminTokenCache = tokenInfo.token;
+              this.adminTokenTimestamp = now;
+              
               return tokenInfo.token;
             }
           } catch (error: any) {
@@ -244,7 +301,7 @@ export class PublishScheduler {
           }
         }
       } catch (error: any) {
-        log(`Ошибка при получении токена из хранилища: ${error.message}`, 'scheduler');
+        log(`Ошибка при получении данных из хранилища: ${error.message}`, 'scheduler');
       }
       
       log('Не удалось получить действительный токен для планировщика', 'scheduler');
