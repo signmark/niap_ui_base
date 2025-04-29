@@ -314,6 +314,138 @@ export class PublishScheduler {
   }
 
   /**
+   * Проверяет статусы всех платформ для контента в статусе 'scheduled' и
+   * обновляет основной статус на 'published', если все выбранные платформы опубликованы
+   */
+  async checkAndUpdateContentStatuses() {
+    try {
+      log('Запуск проверки статусов контента для обновления общего статуса', 'scheduler');
+      
+      // Получаем системный токен для доступа к API
+      const authToken = await this.getSystemToken();
+      if (!authToken) {
+        log('Не удалось получить токен для проверки статусов контента', 'scheduler');
+        return;
+      }
+      
+      // Получаем все контенты со статусом "scheduled"
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        headers,
+        params: {
+          filter: JSON.stringify({
+            status: {
+              _eq: 'scheduled'
+            }
+          }),
+          limit: 50 // Ограничиваем количество проверяемых записей для производительности
+        }
+      });
+
+      if (!response?.data?.data || !Array.isArray(response.data.data)) {
+        log('Не удалось получить данные контента со статусом scheduled', 'scheduler');
+        return;
+      }
+
+      // Обрабатываем полученные записи
+      const contentItems = response.data.data;
+      log(`Получено ${contentItems.length} элементов контента со статусом 'scheduled' для проверки статусов платформ`, 'scheduler');
+
+      let updatedCount = 0;
+
+      // Проверяем каждый элемент контента
+      for (const item of contentItems) {
+        try {
+          if (!item.social_platforms) {
+            continue;
+          }
+
+          // Преобразуем social_platforms в объект, если это строка
+          let platforms = item.social_platforms;
+          if (typeof platforms === 'string') {
+            try {
+              platforms = JSON.parse(platforms);
+            } catch (e) {
+              log(`Ошибка при парсинге social_platforms для контента ${item.id}: ${e.message}`, 'scheduler');
+              continue;
+            }
+          }
+          
+          // Получаем списки платформ по их статусам
+          const selectedPlatforms = [];
+          const publishedPlatforms = [];
+          const pendingPlatforms = [];
+          const failedPlatforms = [];
+
+          // Проходим по всем платформам и проверяем их статусы
+          for (const [platform, data] of Object.entries(platforms)) {
+            // Проверяем только выбранные платформы
+            if (data.selected === true) {
+              selectedPlatforms.push(platform);
+              
+              if (data.status === 'published') {
+                publishedPlatforms.push(platform);
+              } else if (data.status === 'pending') {
+                pendingPlatforms.push(platform);
+              } else if (data.status === 'failed') {
+                failedPlatforms.push(platform);
+              }
+            }
+          }
+
+          // Если нет выбранных платформ, пропускаем
+          if (selectedPlatforms.length === 0) {
+            continue;
+          }
+
+          // Выводим детальную информацию о статусах платформ для этого контента
+          log(`Контент ${item.id}: "${item.title || 'Без названия'}" - статусы платформ:`, 'scheduler');
+          log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'scheduler');
+          log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'scheduler');
+          log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
+          log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'scheduler');
+
+          // Проверяем условия для обновления статуса
+          const allSelectedPublishedOrFailed = selectedPlatforms.length === (publishedPlatforms.length + failedPlatforms.length);
+          const atLeastOnePublished = publishedPlatforms.length > 0;
+          
+          // Обновляем статус только если все выбранные платформы достигли финального статуса (published или failed)
+          // И при этом хотя бы одна платформа была успешно опубликована
+          if (allSelectedPublishedOrFailed && atLeastOnePublished) {
+            log(`Контент ${item.id}: опубликовано ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, ожидает публикации: ${pendingPlatforms.length}`, 'scheduler');
+            log(`Обновление основного статуса контента ${item.id} на "published" после публикации во всех платформах или в отсутствии запланированных платформ`, 'scheduler');
+            
+            try {
+              // Обновляем статус на "published"
+              await storage.updateCampaignContent(item.id, { status: 'published', publishedAt: new Date() }, authToken);
+              updatedCount++;
+            } catch (updateError) {
+              log(`Ошибка при обновлении статуса контента ${item.id}: ${updateError.message}`, 'scheduler');
+            }
+          }
+        } catch (itemError) {
+          log(`Ошибка при обработке контента ${item.id}: ${itemError.message}`, 'scheduler');
+          continue;
+        }
+      }
+
+      // Выводим информацию о результатах
+      if (updatedCount > 0) {
+        log(`Обновлено ${updatedCount} элементов контента до статуса 'published'`, 'scheduler');
+      } else {
+        log('Не найдено контента, требующего обновления статуса', 'scheduler');
+      }
+    } catch (error) {
+      log(`Ошибка при проверке статусов контента: ${error.message}`, 'scheduler');
+    }
+  }
+
+  /**
    * Проверяет и публикует запланированный контент 
    * Ищет ТОЛЬКО контент со статусом 'scheduled' и публикует его
    */
@@ -326,6 +458,12 @@ export class PublishScheduler {
         log('ПРЕДУПРЕЖДЕНИЕ: Публикации отключены глобальным флагом disablePublishing=true', 'scheduler');
         log('Контент будет обнаружен, но не будет опубликован', 'scheduler');
       }
+      
+      // Добавляем проверку и обновление статусов контента со всеми опубликованными платформами
+      // Функция выполняется в фоновом режиме, чтобы не блокировать публикацию нового контента
+      this.checkAndUpdateContentStatuses().catch(error => {
+        log(`Ошибка при проверке статусов контента: ${error.message}`, 'scheduler');
+      });
       
       // Проверяем запросы на извлечение токена
       checkTokenExtractionRequest();
