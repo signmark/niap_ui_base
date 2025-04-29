@@ -306,14 +306,20 @@ export default function PublicationCalendar({
     }
   };
 
-  // Форматирование даты публикации
+  // Форматирование даты публикации с учетом часового пояса
   const formatScheduledTime = (date: string | Date | null | undefined, showFullDate: boolean = false) => {
     if (!date) return "--:--";
     
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
-      return format(dateObj, showFullDate ? 'dd MMMM yyyy, HH:mm' : 'HH:mm', { locale: ru });
+      
+      // Преобразуем UTC дату к локальному часовому поясу пользователя
+      // без прибавления смещения, которое JavaScript делает автоматически
+      // для дат в ISO формате
+      const utcDate = new Date(dateObj.toUTCString());
+      
+      return format(utcDate, showFullDate ? 'dd MMMM yyyy, HH:mm' : 'HH:mm', { locale: ru });
     } catch (error) {
       return "--:--";
     }
@@ -490,7 +496,7 @@ export default function PublicationCalendar({
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     <span>
                       {selectedPost.scheduledAt 
-                        ? format(new Date(selectedPost.scheduledAt), 'dd MMMM yyyy, HH:mm', { locale: ru })
+                        ? formatScheduledTime(selectedPost.scheduledAt, true)
                         : 'Не запланировано'}
                     </span>
                   </div>
