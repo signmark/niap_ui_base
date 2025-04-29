@@ -240,15 +240,25 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             
             log(`[Social Publishing] Проверка статусов платформ для контента ${contentId}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length}, в ожидании: ${pendingPlatforms.join(', ')}`);           
             
-            // ИСПРАВЛЕНО: Считаем контент опубликованным, если все платформы кроме facebook опубликованы
-            // Также учитываем случай, когда все платформы опубликованы
-            const nonFacebookPlatforms = allPlatforms.filter(p => p !== 'facebook');
-            const nonFacebookPublished = nonFacebookPlatforms.length > 0 && 
-              nonFacebookPlatforms.every(p => socialPlatforms[p]?.status === 'published');
+            // Считаем контент опубликованным ТОЛЬКО ЕСЛИ ВСЕ платформы опубликованы
             
-            const allPlatformsPublished = publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length;
-            const shouldMarkAsPublished = allPlatformsPublished || 
-                                         (nonFacebookPublished && pendingPlatforms.length === 1 && pendingPlatforms[0] === 'facebook');
+            // Проверяем, что все выбранные платформы опубликованы
+            const selectedPlatforms = Object.entries(socialPlatforms)
+                .filter(([_, data]) => data.selected === true)
+                .map(([platform]) => platform);
+                
+            const publishedSelectedPlatforms = Object.entries(socialPlatforms)
+                .filter(([_, data]) => data.selected === true && data.status === 'published')
+                .map(([platform]) => platform);
+                
+            log(`[Social Publishing] Статусы выбранных платформ: опубликовано ${publishedSelectedPlatforms.length}/${selectedPlatforms.length}`);
+            
+            // Считаем контент опубликованным, только если все выбранные платформы опубликованы
+            const allSelectedPlatformsPublished = selectedPlatforms.length > 0 && 
+                                             publishedSelectedPlatforms.length === selectedPlatforms.length;
+                                             
+            // Без исключений! Только если все выбранные платформы опубликованы
+            const shouldMarkAsPublished = allSelectedPlatformsPublished;
                                          
             if (shouldMarkAsPublished) {
               log(`[Social Publishing] Автоматическое обновление статуса для контента ${contentId} на published - ВСЕ платформы опубликованы`);
@@ -450,9 +460,9 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     
     log(`[Social Publishing] Ответ от n8n вебхука: ${JSON.stringify(response.data)}`);
     
-    // Обновляем статус контента на "published" после успешной публикации
+    // Обновляем статус платформы после успешной публикации
     try {
-      log(`[Social Publishing] Обновление статуса контента ${contentId} на "published" после публикации в ${platform}`);
+      log(`[Social Publishing] Обновление статуса платформы ${platform} для контента ${contentId} на "published"`);
       
       // Получаем токен администратора
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
@@ -463,15 +473,74 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
         adminToken = sessions[0].token;
       }
       
-      await storage.updateCampaignContent(
-        contentId,
-        { status: 'published', publishedAt: new Date() },
-        adminToken
-      );
+      // Получаем текущий контент
+      const content = await storage.getCampaignContentById(contentId);
       
-      log(`[Social Publishing] Статус контента ${contentId} успешно обновлен на "published"`);
+      if (!content || !content.socialPlatforms) {
+        log(`[Social Publishing] Не удалось получить контент ${contentId} или нет настроек платформ`); 
+        return;
+      }
+      
+      // Обновляем статус конкретной платформы
+      const updatedPlatforms = { ...content.socialPlatforms };
+      
+      // Проверяем, есть ли данная платформа в настройках
+      if (updatedPlatforms[platform]) {
+        log(`[Social Publishing] Обновление статуса платформы ${platform} на published`);
+        
+        // Обновляем статус платформы на published
+        updatedPlatforms[platform] = {
+          ...updatedPlatforms[platform],
+          status: 'published',
+          publishedAt: new Date()
+        };
+        
+        // Сохраняем обновленные настройки платформ
+        await storage.updateCampaignContent(
+          contentId,
+          { socialPlatforms: updatedPlatforms },
+          adminToken
+        );
+        
+        log(`[Social Publishing] Статус платформы ${platform} успешно обновлен на "published"`);
+        
+        // Проверяем, все ли выбранные платформы опубликованы
+        const selectedPlatforms = Object.entries(updatedPlatforms)
+            .filter(([_, data]) => data.selected === true)
+            .map(([platform]) => platform);
+            
+        const publishedSelectedPlatforms = Object.entries(updatedPlatforms)
+            .filter(([_, data]) => data.selected === true && data.status === 'published')
+            .map(([platform]) => platform);
+            
+        log(`[Social Publishing] Статусы выбранных платформ: опубликовано ${publishedSelectedPlatforms.length}/${selectedPlatforms.length}`);
+        
+        // Обновляем общий статус, если все выбранные платформы опубликованы
+        if (selectedPlatforms.length > 0 && publishedSelectedPlatforms.length === selectedPlatforms.length) {
+          log(`[Social Publishing] Все выбранные платформы опубликованы, обновляем общий статус на published`);
+          
+          await storage.updateCampaignContent(
+            contentId,
+            { status: 'published', publishedAt: new Date() },
+            adminToken
+          );
+          
+          log(`[Social Publishing] Общий статус контента обновлен на "published"`);
+        } else if (content.status === 'draft') {
+          // Если контент в статусе draft, обновляем его до scheduled
+          log(`[Social Publishing] Контент в статусе draft, обновляем до scheduled для отслеживания прогресса`);
+          
+          await storage.updateCampaignContent(
+            contentId,
+            { status: 'scheduled' },
+            adminToken
+          );
+        }
+      } else {
+        log(`[Social Publishing] Платформа ${platform} не найдена в настройках контента ${contentId}`);
+      }
     } catch (statusError: any) {
-      log(`[Social Publishing] Ошибка при обновлении статуса контента: ${statusError.message}`);
+      log(`[Social Publishing] Ошибка при обновлении статуса платформы: ${statusError.message}`);
       // Продолжаем даже при ошибке обновления статуса
     }
     
