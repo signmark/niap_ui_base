@@ -807,8 +807,21 @@ export class PublishScheduler {
       // Получаем данные кампании для настроек социальных сетей
       let campaign: Campaign | undefined;
       
-      // Пробуем с системным токеном через прямой запрос
-      if (systemToken) {
+      // Проверяем кэш настроек кампании
+      const now = Date.now();
+      if (this.campaignSettingsCache.has(content.campaignId) && 
+          this.campaignCacheTimestamp.has(content.campaignId) &&
+          (now - (this.campaignCacheTimestamp.get(content.campaignId) || 0) < this.campaignCacheExpirationMs)) {
+        
+        // Используем кэшированные настройки кампании
+        log(`Используем кэшированные настройки кампании ${content.campaignId}`, 'scheduler');
+        campaign = this.campaignSettingsCache.get(content.campaignId);
+        
+        // Для отладки
+        log(`Кэшированные настройки кампании: ${campaign?.name}, настройки соцсетей: ${JSON.stringify(campaign?.socialMediaSettings || {})}`, 'scheduler');
+      }
+      // Если нет в кэше - получаем с сервера
+      else if (systemToken) {
         try {
           const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
           log(`Прямой запрос для получения кампании: ${content.campaignId}`, 'scheduler');
@@ -857,6 +870,11 @@ export class PublishScheduler {
                 link: null
               } as Campaign;
               
+              // Сохраняем настройки кампании в кэше
+              this.campaignSettingsCache.set(content.campaignId, campaign);
+              this.campaignCacheTimestamp.set(content.campaignId, now);
+              log(`Настройки кампании ${campaign.name} сохранены в кэше`, 'scheduler');
+              
               // Добавляем логирование настроек Telegram для диагностики
               if (campaign.socialMediaSettings && 
                   typeof campaign.socialMediaSettings === 'object') {
@@ -895,7 +913,7 @@ export class PublishScheduler {
       // Проверяем, в какие платформы нужно публиковать
       const socialPlatforms = content.socialPlatforms || {};
       // Получаем текущее время
-      const now = new Date();
+      const currentDate = new Date();
       
       // Подробное логирование для диагностики
       log(`Проверка платформ для публикации контента ${content.id} "${content.title || ''}":`, 'scheduler');
@@ -912,10 +930,10 @@ export class PublishScheduler {
           // Если у платформы есть своё scheduledAt, используем его для проверки
           if (platformData.scheduledAt) {
             const platformScheduledTime = new Date(platformData.scheduledAt);
-            const diffMs = platformScheduledTime.getTime() - now.getTime();
+            const diffMs = platformScheduledTime.getTime() - currentDate.getTime();
             const diffMinutes = Math.floor(diffMs / 1000 / 60);
             
-            if (platformScheduledTime > now) {
+            if (platformScheduledTime > currentDate) {
               log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., ПРОПУСКАЕМ`, 'scheduler');
               return false;
             } else {
@@ -928,7 +946,7 @@ export class PublishScheduler {
             
             // Используем общее поле scheduledAt только если нет индивидуального времени
             if (content.scheduledAt) {
-              return content.scheduledAt <= now;
+              return content.scheduledAt <= currentDate;
             }
             
             // Если нет ни индивидуального, ни общего времени - включаем для публикации по умолчанию
