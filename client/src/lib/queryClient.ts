@@ -87,6 +87,14 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+/**
+ * Конфигурация React Query для кеширования данных между страницами
+ * - staleTime: Infinity - данные никогда не считаются устаревшими 
+ * - cacheTime: 1000 * 60 * 30 - кеш живет 30 минут
+ * - structuralSharing: true - автоматически сравнивает структуру данных
+ * - refetchOnMount: false - не запрашивать данные при монтировании компонента
+ * - refetchOnWindowFocus: false - не запрашивать данные при фокусе окна
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -94,7 +102,10 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
+      gcTime: 1000 * 60 * 30, // 30 минут
       retry: false,
+      refetchOnMount: false,
+      structuralSharing: true,
     },
     mutations: {
       retry: false,

@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -32,36 +33,66 @@ import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 
+// Создаем обертки для компонентов с Layout
+const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
+  <Layout>
+    <Component />
+  </Layout>
+);
+
+// Мемоизированные компоненты с Layout
+const LayoutCampaigns = React.memo(() => <WithLayout Component={Campaigns} />);
+const LayoutCampaignDetails = React.memo(() => <WithLayout Component={CampaignDetails} />);
+const LayoutKeywords = React.memo(() => <WithLayout Component={Keywords} />);
+const LayoutContent = React.memo(() => <WithLayout Component={Content} />);
+const LayoutPosts = React.memo(() => <WithLayout Component={Posts} />);
+const LayoutTrends = React.memo(() => <WithLayout Component={Trends} />);
+const LayoutAnalytics = React.memo(() => <WithLayout Component={Analytics} />);
+const LayoutTasks = React.memo(() => <WithLayout Component={Tasks} />);
+const LayoutScheduledPublications = React.memo(() => <WithLayout Component={ScheduledPublications} />);
+const LayoutCalendarView = React.memo(() => <WithLayout Component={CalendarView} />);
+const LayoutTestPublish = React.memo(() => <WithLayout Component={TestPublish} />);
+const LayoutImageGenerationTest = React.memo(() => <WithLayout Component={ImageGenerationTest} />);
+const LayoutTransparentDialogTest = React.memo(() => <WithLayout Component={TransparentDialogTest} />);
+const LayoutFalAiTest = React.memo(() => <WithLayout Component={FalAiTest} />);
+const LayoutApiKeyPriorityTest = React.memo(() => <WithLayout Component={ApiKeyPriorityTest} />);
+const LayoutApiKeysTest = React.memo(() => <WithLayout Component={ApiKeysTest} />);
+const LayoutUniversalImageGenTest = React.memo(() => <WithLayout Component={UniversalImageGenTest} />);
+const LayoutTestImgur = React.memo(() => <WithLayout Component={TestImgur} />);
+const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsTestPage} />);
+const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
+const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
+
 function Router() {
   return (
     <Switch>
       <Route path="/auth/login" component={Login} />
       <Route path="/login" component={Login} />
-      <Route path="/campaigns" component={() => <Layout><Campaigns /></Layout>} />
-      <Route path="/campaigns/:id" component={() => <Layout><CampaignDetails /></Layout>} />
-      <Route path="/keywords" component={() => <Layout><Keywords /></Layout>} />
-      <Route path="/content" component={() => <Layout><Content /></Layout>} />
-      <Route path="/posts" component={() => <Layout><Posts /></Layout>} />
-      <Route path="/trends" component={() => <Layout><Trends /></Layout>} />
-      <Route path="/analytics" component={() => <Layout><Analytics /></Layout>} />
-      <Route path="/tasks" component={() => <Layout><Tasks /></Layout>} />
-      <Route path="/publish/scheduled" component={() => <Layout><ScheduledPublications /></Layout>} />
-      <Route path="/publish/calendar" component={() => <Layout><CalendarView /></Layout>} />
-      <Route path="/publish/test" component={() => <Layout><TestPublish /></Layout>} />
-      <Route path="/test/image-generation" component={() => <Layout><ImageGenerationTest /></Layout>} />
-      <Route path="/test/transparent-dialog" component={() => <Layout><TransparentDialogTest /></Layout>} />
+      <Route path="/campaigns" component={LayoutCampaigns} />
+      <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
+      <Route path="/keywords" component={LayoutKeywords} />
+      <Route path="/content" component={LayoutContent} />
+      <Route path="/posts" component={LayoutPosts} />
+      <Route path="/trends" component={LayoutTrends} />
+      <Route path="/analytics" component={LayoutAnalytics} />
+      <Route path="/tasks" component={LayoutTasks} />
+      <Route path="/publish/scheduled" component={LayoutScheduledPublications} />
+      <Route path="/publish/calendar" component={LayoutCalendarView} />
+      <Route path="/publish/test" component={LayoutTestPublish} />
+      <Route path="/test/image-generation" component={LayoutImageGenerationTest} />
+      <Route path="/test/transparent-dialog" component={LayoutTransparentDialogTest} />
       <Route path="/test/auth-bypass" component={AuthBypass} />
-      <Route path="/test/fal-ai-test" component={() => <Layout><FalAiTest /></Layout>} />
-      <Route path="/test/api-key-priority" component={() => <Layout><ApiKeyPriorityTest /></Layout>} />
-      <Route path="/test/api-keys" component={() => <Layout><ApiKeysTest /></Layout>} />
-      <Route path="/test/universal-image-gen" component={() => <Layout><UniversalImageGenTest /></Layout>} />
-      <Route path="/test/imgur" component={() => <Layout><TestImgur /></Layout>} />
-      <Route path="/test/html-tags" component={() => <Layout><HtmlTagsTestPage /></Layout>} />
+      <Route path="/test/fal-ai-test" component={LayoutFalAiTest} />
+      <Route path="/test/api-key-priority" component={LayoutApiKeyPriorityTest} />
+      <Route path="/test/api-keys" component={LayoutApiKeysTest} />
+      <Route path="/test/universal-image-gen" component={LayoutUniversalImageGenTest} />
+      <Route path="/test/imgur" component={LayoutTestImgur} />
+      <Route path="/test/html-tags" component={LayoutHtmlTagsTestPage} />
       <Route path="/test/telegram" component={TelegramTestPage} />
-      <Route path="/test/ai-image" component={() => <Layout><AiImageTester /></Layout>} />
-      <Route path="/test" component={() => <Layout><TestPage /></Layout>} />
+      <Route path="/test/ai-image" component={LayoutAiImageTester} />
+      <Route path="/test" component={LayoutTestPage} />
       {/* Добавляем корневой роут */}
-      <Route path="/" component={() => <Layout><Campaigns /></Layout>} />
+      <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}
       <Route component={NotFound} />
     </Switch>
