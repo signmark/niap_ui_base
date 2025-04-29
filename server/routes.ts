@@ -8000,10 +8000,25 @@ https://t.me/channelname/ - description`;
         }
         
         // Обновляем статусы в базе данных
+        
+        // Проверяем, все ли выбранные платформы опубликованы
+        const selectedPlatforms = Object.entries(updatedSocialPlatforms)
+          .filter(([_, platformData]) => platformData.selected)
+          .map(([platform, _]) => platform);
+        
+        const publishedPlatforms = Object.entries(updatedSocialPlatforms)
+          .filter(([_, platformData]) => platformData.selected && platformData.status === 'published')
+          .map(([platform, _]) => platform);
+        
+        // Проверяем, что все выбранные платформы опубликованы
+        const allSelected = selectedPlatforms.length > 0 && selectedPlatforms.length === publishedPlatforms.length;
+        
+        console.log(`Проверка статуса: выбрано ${selectedPlatforms.length}, опубликовано ${publishedPlatforms.length}, allSelected=${allSelected}`);
+        
         await directusApi.patch(`/items/campaign_content/${contentId}`, {
           social_platforms: updatedSocialPlatforms,
-          // Если хотя бы одна платформа опубликована успешно, меняем статус на published
-          status: publishResults.some(r => r.status === 'published') ? 'published' : content.status
+          // Если ВСЕ выбранные платформы опубликованы успешно, меняем статус на published
+          status: allSelected ? 'published' : content.status
         }, {
           headers: {
             Authorization: `Bearer ${token}`
