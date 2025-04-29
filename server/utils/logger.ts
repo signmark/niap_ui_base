@@ -23,10 +23,29 @@ export const DEBUG_LEVELS = {
  * Список сообщений, которые не нужно выводить в логи
  */
 const FILTERED_MESSAGES = [
-  "Request failed with status code 401",  // Ошибки авторизации
+  // Ошибки авторизации
+  "Request failed with status code 401",
   "Unauthorized",
   "Ошибка авторизации",
-  "Не удалось получить токен"
+  "Не удалось получить токен",
+  "token expired",
+  "token is expired",
+  "jwt expired",
+  
+  // Ошибки сетевых запросов
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "ENOTFOUND",
+  "socket hang up",
+  "network error",
+  "Network Error",
+  
+  // Частые ошибки социальных сетей
+  "API rate limit exceeded",
+  "Too many requests",
+  "(#4) Application request limit reached", // Facebook API ошибка
+  "(#32) Page request limit reached", // Facebook API ошибка
+  "Flood control exceeded" // VK API ошибка
 ];
 
 /**
@@ -122,9 +141,50 @@ export function error(message: string, error?: any, source = "express") {
   }
 
   // Дополнительная проверка ошибки axios
-  if (error && typeof error === 'object' && error.response && error.response.status === 401) {
-    // Пропускаем ошибки 401 Unauthorized
-    return;
+  if (error && typeof error === 'object') {
+    // Проверка на axios ошибки
+    if (error.response) {
+      // Пропускаем ошибки 401 Unauthorized и лимиты API
+      if (error.response.status === 401) {
+        return;
+      }
+      
+      // Проверяем ошибки лимитов API (429 - Too Many Requests)
+      if (error.response.status === 429) {
+        return;
+      }
+      
+      // Проверяем сообщения об ошибках в data
+      if (error.response.data && typeof error.response.data === 'object') {
+        // Проверяем ошибки авторизации в сообщении
+        if (error.response.data.error && typeof error.response.data.error === 'string') {
+          if (FILTERED_MESSAGES.some(msg => error.response.data.error.includes(msg))) {
+            return;
+          }
+        }
+        
+        // Проверяем сообщения об ошибках в формате Facebook API
+        if (error.response.data.error && typeof error.response.data.error === 'object' && error.response.data.error.message) {
+          if (FILTERED_MESSAGES.some(msg => error.response.data.error.message.includes(msg))) {
+            return;
+          }
+        }
+      }
+    }
+    
+    // Проверяем наличие сообщения в ошибке
+    if (error.message && typeof error.message === 'string') {
+      if (FILTERED_MESSAGES.some(msg => error.message.includes(msg))) {
+        return;
+      }
+    }
+    
+    // Проверяем наличие кода ошибки
+    if (error.code && typeof error.code === 'string') {
+      if (FILTERED_MESSAGES.some(msg => error.code.includes(msg))) {
+        return;
+      }
+    }
   }
 
   const time = new Date().toLocaleTimeString();
