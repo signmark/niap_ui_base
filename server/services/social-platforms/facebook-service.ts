@@ -399,6 +399,7 @@ class FacebookService {
   async publishToFacebook(content: CampaignContent, settings: any): Promise<SocialPublication> {
     // Создаем уникальный ID операции для отслеживания в логах
     const operationId = `fb_pub_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const startTime = Date.now();
     
     try {
       log.info(`[${operationId}] [Facebook] Начало публикации контента ${content.id} в Facebook`);
@@ -406,7 +407,8 @@ class FacebookService {
         hasToken: !!settings.token, 
         hasPageId: !!settings.pageId,
         tokenPrefix: settings.token ? settings.token.substring(0, 10) + '...' : 'нет',
-        pageIdMask: settings.pageId ? `${settings.pageId.substring(0, 5)}...` : 'нет'
+        pageIdMask: settings.pageId ? `${settings.pageId.substring(0, 5)}...` : 'нет',
+        cacheSize: this.pageTokenCache.size
       })}`);
       
       const { token, pageId } = settings;
@@ -466,7 +468,11 @@ class FacebookService {
         ));
       }
       
+      const endTime = Date.now();
+      const executionTime = endTime - startTime;
+      
       log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${permalink}`);
+      log.info(`[${operationId}] [Facebook] Время выполнения публикации: ${executionTime}ms, размер кэша токенов: ${this.pageTokenCache.size}`);
       
       // Возвращаем результат публикации
       return {
@@ -477,7 +483,11 @@ class FacebookService {
         postId: id
       };
     } catch (error: any) {
+      const endTime = Date.now();
+      const executionTime = endTime - startTime;
+      
       log.error(`[${operationId}] [Facebook] Ошибка публикации: ${error.message}`);
+      log.error(`[${operationId}] [Facebook] Время до ошибки: ${executionTime}ms, размер кэша токенов: ${this.pageTokenCache.size}`);
       
       // Проверяем, есть ли вложенные ошибки от API
       if (error.response?.data) {
