@@ -831,16 +831,41 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
     const publishedPlatforms = Object.entries(socialPlatforms)
       .filter(([_, platformData]) => platformData?.selected && platformData?.status === 'published')
       .map(([platform, _]) => platform);
+      
+    // Получаем список платформ с ошибками
+    const failedPlatforms = Object.entries(socialPlatforms)
+      .filter(([_, platformData]) => platformData?.selected && (platformData?.status === 'failed' || platformData?.error))
+      .map(([platform, _]) => platform);
     
-    // Проверяем, что все выбранные платформы опубликованы
-    const allSelected = selectedPlatforms.length > 0 && selectedPlatforms.length === publishedPlatforms.length;
+    // Получаем список платформ в ожидании
+    const pendingPlatforms = Object.entries(socialPlatforms)
+      .filter(([_, platformData]) => platformData?.selected && platformData?.status !== 'published' && platformData?.status !== 'failed' && !platformData?.error)
+      .map(([platform, _]) => platform);
     
-    log(`Проверка статуса: выбрано ${selectedPlatforms.length}, опубликовано ${publishedPlatforms.length}, allSelected=${allSelected}`); 
+    // Проверяем, что все выбранные платформы либо опубликованы, либо завершились с ошибкой
+    // Если все платформы достигли финального статуса (нет pending), нужно обновить общий статус
+    const allFinalized = pendingPlatforms.length === 0 && selectedPlatforms.length > 0;
+    const allPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === publishedPlatforms.length;
     
-    // Обновляем статус на "published" ТОЛЬКО если все выбранные платформы опубликованы
+    log(`Проверка статуса: выбрано ${selectedPlatforms.length}, опубликовано ${publishedPlatforms.length}, с ошибками ${failedPlatforms.length}, в ожидании ${pendingPlatforms.length}, allFinalized=${allFinalized}, allPublished=${allPublished}`);
+    
+    // Обновляем статус на "published" если все выбранные платформы опубликованы,
+    // ИЛИ если статус всех платформ финализирован (опубликованы или с ошибками) и есть хотя бы одна успешная публикация
+    let newStatus = content.status; // по умолчанию оставляем текущий статус
+    
+    if (allPublished) {
+      // Если все платформы опубликованы, ставим статус published
+      newStatus = 'published';
+      log(`[Social Publishing] Все платформы опубликованы, устанавливаем статус published`);
+    } else if (allFinalized && publishedPlatforms.length > 0) {
+      // Если все платформы завершили публикацию (либо успешно, либо с ошибкой) и есть хотя бы одна успешная, также ставим published
+      newStatus = 'published';
+      log(`[Social Publishing] Все платформы завершили публикацию, из них ${publishedPlatforms.length} успешно, ${failedPlatforms.length} с ошибками. Устанавливаем статус published`);
+    }
+    
     const updatedContent = await storage.updateCampaignContent(
       contentId,
-      { status: allSelected ? 'published' : content.status, publishedAt: new Date() },
+      { status: newStatus, publishedAt: new Date() },
       adminToken
     );
     
@@ -986,38 +1011,58 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
       return {
         name,
         status: platform && platform.status ? platform.status : 'pending',
-        published: platform && platform.status === 'published'
+        published: platform && platform.status === 'published',
+        failed: platform && (platform.status === 'failed' || platform.error),
+        pending: platform && platform.status !== 'published' && platform.status !== 'failed' && !platform.error
       };
     });
     
     // Записываем информацию о статусах публикации
     const publishedPlatforms = platformStatuses.filter(p => p.published);
-    const pendingPlatforms = platformStatuses.filter(p => !p.published);
+    const failedPlatforms = platformStatuses.filter(p => p.failed);
+    const pendingPlatforms = platformStatuses.filter(p => p.pending);
     
     log(`[Social Publishing] Платформы с статусом published: ${publishedPlatforms.map(p => p.name).join(', ') || 'нет'}`);
-    log(`[Social Publishing] Платформы с другими статусами: ${pendingPlatforms.map(p => p.name).join(', ') || 'нет'}`);
+    log(`[Social Publishing] Платформы с статусом failed: ${failedPlatforms.map(p => p.name).join(', ') || 'нет'}`);
+    log(`[Social Publishing] Платформы с статусом pending: ${pendingPlatforms.map(p => p.name).join(', ') || 'нет'}`);
     
     // Проверяем, все ли выбранные платформы опубликованы
-    const allPublished = pendingPlatforms.length === 0;
+    const allPublished = publishedPlatforms.length === platformStatuses.length;
+    // Проверяем, что все платформы достигли финального статуса (опубликованы или с ошибкой)
+    const allFinalized = pendingPlatforms.length === 0;
+    
+    // Определяем, нужно ли обновить статус контента
+    let shouldUpdateStatus = false;
+    let newStatus = content.status; // по умолчанию оставляем текущий статус
     
     if (allPublished) {
+      // Если все платформы опубликованы, ставим статус published
+      shouldUpdateStatus = true;
+      newStatus = 'published';
       log(`[Social Publishing] Все выбранные платформы опубликованы для контента ${contentId}, обновляем общий статус`);
-      
+    } else if (allFinalized && publishedPlatforms.length > 0) {
+      // Если все платформы завершили публикацию (либо успешно, либо с ошибкой) и есть хотя бы одна успешная, также ставим published
+      shouldUpdateStatus = true;
+      newStatus = 'published';
+      log(`[Social Publishing] Все платформы завершили публикацию, из них ${publishedPlatforms.length} успешно, ${failedPlatforms.length} с ошибками. Обновляем статус на published`);
+    }
+    
+    if (shouldUpdateStatus) {
       // Обновляем общий статус контента на "published"
       const updatedContent = await storage.updateCampaignContent(
         contentId,
-        { status: 'published', publishedAt: new Date() },
+        { status: newStatus, publishedAt: new Date() },
         adminToken
       );
       
       if (updatedContent) {
-        log(`[Social Publishing] Успешно обновлен общий статус контента ${contentId} на "published"`);
+        log(`[Social Publishing] Успешно обновлен общий статус контента ${contentId} на "${newStatus}"`);
         return res.status(200).json({
           success: true,
-          message: 'Общий статус публикации обновлен на "published"',
+          message: `Общий статус публикации обновлен на "${newStatus}"`,
           result: {
             contentId,
-            status: 'published',
+            status: newStatus,
             platformStatuses
           }
         });
@@ -1029,10 +1074,10 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
         });
       }
     } else {
-      log(`[Social Publishing] Не все платформы опубликованы для контента ${contentId}, статус не обновлен`);
+      log(`[Social Publishing] Не все платформы завершили публикацию для контента ${contentId}, статус не обновлен`);
       return res.status(200).json({
         success: false,
-        message: 'Не все выбранные платформы опубликованы, общий статус не обновлен',
+        message: 'Не все выбранные платформы завершили публикацию, общий статус не обновлен',
         result: {
           contentId,
           status: content.status,
