@@ -155,9 +155,12 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     };
     
     // Если все платформы опубликованы, обновляем общий статус
-    const allPublished = Object.values(updatedSocialPlatforms).every(
-      (p: any) => p.status === 'published'
-    );
+    const allPlatforms = Object.keys(updatedSocialPlatforms);
+    const publishedPlatforms = Object.entries(updatedSocialPlatforms)
+      .filter(([_, data]) => data.status === 'published')
+      .map(([platform]) => platform);
+    
+    const allPublished = publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length;
     
     const hasFailures = Object.values(updatedSocialPlatforms).some(
       (p: any) => p.status === 'failed' || p.status === 'error'
@@ -167,11 +170,27 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
       (p: any) => p.status === 'pending'
     );
     
-    // Обновляем общий статус только если все платформы в одинаковом состоянии
+    // Детальное логирование для анализа проблемы с Facebook
+    log.info(`[ОтЛАДКА] Статусы платформ: Всего=${allPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Ошибки=${hasFailures}, Ожидают=${hasPending}`);
+    
+    // Обновляем общий статус только если ВСЕ платформы опубликованы
     if (allPublished) {
+      log.info(`ВСЕ платформы опубликованы (${publishedPlatforms.length}/${allPlatforms.length}), присваиваем статус published`);
       updates['status'] = 'published';
+      updates['published_at'] = new Date().toISOString();
     } else if (hasFailures && !hasPending) {
+      log.info(`Есть ошибки и нет ожидающих платформ, присваиваем статус failed`);
       updates['status'] = 'failed';
+    } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < allPlatforms.length) {
+      // Часть платформ опубликована, но не все - устанавливаем статус scheduled
+      log.info(`Опубликовано только ${publishedPlatforms.length}/${allPlatforms.length} платформ, статус не меняем или устанавливаем scheduled`);
+      // Получаем текущий статус контента
+      const currentStatus = content?.status || '';
+      // Если статус draft, меняем на scheduled
+      if (currentStatus === 'draft') {
+        updates['status'] = 'scheduled';
+      }
+      // Иначе оставляем текущий статус
     }
 
     log.info(`[${requestId}] Платформы после обновления: ${getPlatformNames(updatedSocialPlatforms).join(', ')}`);

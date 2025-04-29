@@ -499,10 +499,19 @@ export class PublishScheduler {
                 
                 // Проверяем все платформы на статус "pending"
                 for (const [platform, data] of Object.entries(platforms)) {
+                  // Детальный лог для всех платформ
+                  log(`Платформа ${platform} имеет статус: ${data.status} в контенте ID ${content.id}`, 'scheduler');
+                  
+                  // Особое внимание к Facebook
+                  if (platform === 'facebook') {
+                    log(`ОтЛАДКА FACEBOOK: Статус = ${data.status}, Полные данные: ${JSON.stringify(data)}`, 'scheduler');
+                  }
+                  
                   if (data.status === 'pending') {
                     hasPendingPlatforms = true;
                     log(`Обнаружена платформа ${platform} со статусом pending в контенте ID ${content.id}`, 'scheduler');
-                    break;
+                    // Не прерываем цикл, чтобы искать все платформы
+                    // break;
                   }
                 }
               }
@@ -579,7 +588,19 @@ export class PublishScheduler {
                   { headers: { 'Authorization': `Bearer ${authToken}` } }
                 );
                 continue;
-              } else if (publishedPlatforms.length > 0) {
+              } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < allPlatforms.length) {
+                // Устанавливаем статус "publishing" (частично опубликован), если часть платформ опубликованы
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${allPlatforms.length} соцсетях, устанавливаем статус scheduled`, 'scheduler');
+                
+                // Изменяем статус на scheduled, если он draft, чтобы показать что процесс публикации начался
+                if (freshData.status === 'draft') {
+                  await axios.patch(
+                    `${directusUrl}/items/campaign_content/${content.id}`,
+                    { status: 'scheduled' },
+                    { headers: { 'Authorization': `Bearer ${authToken}` } }
+                  );
+                }
+                // Не прерываем, чтобы контент был добавлен в список для публикации
                 // Если опубликованы НЕ ВСЕ платформы - продолжаем публикацию остальных
                 log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${allPlatforms.length} соцсетях, продолжаем публикацию`, 'scheduler');
               }
@@ -673,7 +694,8 @@ export class PublishScheduler {
           // Обновляем основной статус на published, если он ещё не установлен
           if (content.status !== 'published') {
             await storage.updateCampaignContent(content.id, {
-              status: 'published'
+              status: 'published',
+              published_at: new Date() // Добавляем поле published_at при обновлении статуса
             });
             log(`Обновлен глобальный статус контента ${content.id} на "published"`, 'scheduler');
           }

@@ -1,0 +1,656 @@
+AuthGuard.tsx:30 AuthGuard: Checking auth state Object
+AuthGuard.tsx:40 AuthGuard: Authentication confirmed with token in store
+auth.ts:56 Attempting to refresh token
+auth.ts:59 Trying our API endpoint for token refresh
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ImageGenerationDialog.tsx:133 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ImageGenerationDialog.tsx:190 Создание нового контента - промт сброшен
+ImageGenerationDialog.tsx:234 Выбрана вкладка прямого промта (по умолчанию)
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Layout.tsx:39 Авторизован с токеном, длина: 321
+api.ts:113 API Request: GET /api/api/fal-ai-models?nocache=1745917645406 undefined
+hook.js:608 Error with API endpoint refresh, falling back to Directus: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+auth.ts:127 Token refresh successful, new token length: 321
+store.ts:35 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:36 Token will expire in 900 seconds, scheduling refresh in 720 seconds
+Layout.tsx:39 Авторизован с токеном, длина: 321
+AuthGuard.tsx:30 AuthGuard: Checking auth state Object
+AuthGuard.tsx:40 AuthGuard: Authentication confirmed with token in store
+CampaignSelector.tsx:69 Campaigns loaded: 9
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "Правильное питание"
+campaignStore.ts:66 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=Правильное питание
+api/campaigns:1 
+            
+            
+           Failed to load resource: the server responded with a status of 401 (Unauthorized)
+index.tsx:323 Загружено ключевых слов: 33
+index.tsx:295 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+hook.js:608 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`. Error Component Stack
+    at Badge (badge.tsx:32:18)
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:52:11
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:33:11
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:52:11
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:33:11
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at chunk-U6KKKUZU.js?v=88f2ec2f:1982:13
+    at @radix-ui_react-tooltip.js?v=88f2ec2f:188:13
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at Provider (chunk-U6KKKUZU.js?v=88f2ec2f:1917:15)
+    at Popper (chunk-U6KKKUZU.js?v=88f2ec2f:1974:11)
+    at Tooltip (@radix-ui_react-tooltip.js?v=88f2ec2f:106:5)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=88f2ec2f:62:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ScheduledPostInfo (ScheduledPostInfo.tsx:130:37)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at @radix-ui_react-accordion.js?v=88f2ec2f:119:11
+    at Presence (chunk-6JNF2OYQ.js?v=88f2ec2f:24:11)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:112:13
+    at @radix-ui_react-accordion.js?v=88f2ec2f:443:13
+    at _c7 (accordion.tsx:142:6)
+    at div (<anonymous>)
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:53:7
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:361:13
+    at _c3 (accordion.tsx:39:6)
+    at div (<anonymous>)
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:52:11
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:33:11
+    at chunk-VBIYPK3A.js?v=88f2ec2f:98:15
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:265:13
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:232:12
+    at Provider (chunk-VBIYPK3A.js?v=88f2ec2f:28:15)
+    at CollectionProvider (chunk-VBIYPK3A.js?v=88f2ec2f:89:13)
+    at @radix-ui_react-accordion.js?v=88f2ec2f:191:13
+    at _c (accordion.tsx:12:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c9 (card.tsx:62:6)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:111:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:13:26)
+    at component (<anonymous>)
+    at Route (wouter.js?v=88f2ec2f:323:16)
+    at Switch (wouter.js?v=88f2ec2f:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=88f2ec2f:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:323 Загружено ключевых слов: 33
+index.tsx:295 Загружено контента: 100
+index.tsx:196 Setting content with processed keywords: Array(3)
+index.tsx:204 Comparing keywords for selection: Array(3)
+index.tsx:213 Keyword "вайб" (19f4317a-90e7-4852-b374-1ba5c88398d4) match: false
+index.tsx:213 Keyword "вайб кодинг" (1dd4d869-35d2-426b-a5dc-fb439056d847) match: false
+index.tsx:213 Keyword "автопостинг в инстаграм" (34d0ce9d-db9c-4e7d-b3d3-076991c0b3e2) match: false
+index.tsx:213 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:213 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:213 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:213 Keyword "автопостинг" (51636cb9-a23b-46bd-be84-aa556bb20148) match: false
+index.tsx:213 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:213 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:213 Keyword "автоматизация" (572c90ed-9bb7-4ae2-9769-1db450c5e875) match: true
+index.tsx:213 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:213 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:213 Keyword "на чиле" (6f8c50c4-e115-4997-986b-8e70dfe22b26) match: false
+index.tsx:213 Keyword "сделать автопостинг" (72408153-a018-4fc9-84c6-81491cce5f2d) match: false
+index.tsx:213 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:213 Keyword "автопостинг в тг" (808fd792-4038-4615-ac8e-f7d0f00139d6) match: false
+index.tsx:213 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:213 Keyword "автопостинг вк группы" (8748a143-e4b6-4a97-8ad9-c31cc0cceb11) match: false
+index.tsx:213 Keyword "автопостинг бесплатно" (877e67f1-0ba3-4ce0-8d7d-6c23329c36e4) match: false
+index.tsx:213 Keyword "автопостинг авито" (9c8b85b6-3659-40fc-8055-8b5fe1a3eb79) match: false
+index.tsx:213 Keyword "комплексная автоматизация" (9cbcff87-9eef-4497-9540-bb0e7df2c2d8) match: false
+index.tsx:213 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:213 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:213 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:213 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:213 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:213 Keyword "бот для автопостинга" (cf5e2877-57ac-434d-9eac-8992355da7bc) match: false
+index.tsx:213 Keyword "чилю на чиле" (d1a0b1db-14bb-419d-872e-7d7a16020c7c) match: false
+index.tsx:213 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:213 Keyword "программа для автопостинга" (e70321e6-30e5-488f-84a5-093b5608ea82) match: false
+index.tsx:213 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:213 Keyword "автопостинг в социальные сети" (edf56592-ae88-4d93-9dcc-f2c64ad59353) match: false
+index.tsx:213 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:222 Selected keyword IDs updated: Array(1)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+ImageGenerationDialog.tsx:133 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ImageGenerationDialog.tsx:192 Редактирование без промта - подготовлен контент для генерации нового промта
+ImageGenerationDialog.tsx:213 Установлен контент для текущего поста: Узнайте, как автоматизация может помочь вашему бизнесу стать более эффективным. От автопостинга до а...
+ImageGenerationDialog.tsx:230 Выбрана вкладка для генерации на основе текста
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-FE2RSU4Q.js?v=88f2ec2f:328:29)
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:232:13
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:155:58
+    at Presence (chunk-6JNF2OYQ.js?v=88f2ec2f:24:11)
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:146:64
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:52:11
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:33:11
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at chunk-BLQHLTLW.js?v=88f2ec2f:260:22
+    at Presence (chunk-6JNF2OYQ.js?v=88f2ec2f:24:11)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at DialogPortal (chunk-FE2RSU4Q.js?v=88f2ec2f:109:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at Dialog (chunk-FE2RSU4Q.js?v=88f2ec2f:50:5)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:111:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:13:26)
+    at component (<anonymous>)
+    at Route (wouter.js?v=88f2ec2f:323:16)
+    at Switch (wouter.js?v=88f2ec2f:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=88f2ec2f:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:196 Setting content with processed keywords: Array(3)
+index.tsx:204 Comparing keywords for selection: Array(3)
+index.tsx:213 Keyword "вайб" (19f4317a-90e7-4852-b374-1ba5c88398d4) match: false
+index.tsx:213 Keyword "вайб кодинг" (1dd4d869-35d2-426b-a5dc-fb439056d847) match: false
+index.tsx:213 Keyword "автопостинг в инстаграм" (34d0ce9d-db9c-4e7d-b3d3-076991c0b3e2) match: false
+index.tsx:213 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:213 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:213 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:213 Keyword "автопостинг" (51636cb9-a23b-46bd-be84-aa556bb20148) match: false
+index.tsx:213 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:213 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:213 Keyword "автоматизация" (572c90ed-9bb7-4ae2-9769-1db450c5e875) match: true
+index.tsx:213 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:213 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:213 Keyword "на чиле" (6f8c50c4-e115-4997-986b-8e70dfe22b26) match: false
+index.tsx:213 Keyword "сделать автопостинг" (72408153-a018-4fc9-84c6-81491cce5f2d) match: false
+index.tsx:213 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:213 Keyword "автопостинг в тг" (808fd792-4038-4615-ac8e-f7d0f00139d6) match: false
+index.tsx:213 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:213 Keyword "автопостинг вк группы" (8748a143-e4b6-4a97-8ad9-c31cc0cceb11) match: false
+index.tsx:213 Keyword "автопостинг бесплатно" (877e67f1-0ba3-4ce0-8d7d-6c23329c36e4) match: false
+index.tsx:213 Keyword "автопостинг авито" (9c8b85b6-3659-40fc-8055-8b5fe1a3eb79) match: false
+index.tsx:213 Keyword "комплексная автоматизация" (9cbcff87-9eef-4497-9540-bb0e7df2c2d8) match: false
+index.tsx:213 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:213 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:213 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:213 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:213 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:213 Keyword "бот для автопостинга" (cf5e2877-57ac-434d-9eac-8992355da7bc) match: false
+index.tsx:213 Keyword "чилю на чиле" (d1a0b1db-14bb-419d-872e-7d7a16020c7c) match: false
+index.tsx:213 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:213 Keyword "программа для автопостинга" (e70321e6-30e5-488f-84a5-093b5608ea82) match: false
+index.tsx:213 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:213 Keyword "автопостинг в социальные сети" (edf56592-ae88-4d93-9dcc-f2c64ad59353) match: false
+index.tsx:213 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:222 Selected keyword IDs updated: Array(1)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:196 Setting content with processed keywords: Array(3)
+index.tsx:204 Comparing keywords for selection: Array(3)
+index.tsx:213 Keyword "вайб" (19f4317a-90e7-4852-b374-1ba5c88398d4) match: false
+index.tsx:213 Keyword "вайб кодинг" (1dd4d869-35d2-426b-a5dc-fb439056d847) match: false
+index.tsx:213 Keyword "автопостинг в инстаграм" (34d0ce9d-db9c-4e7d-b3d3-076991c0b3e2) match: false
+index.tsx:213 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:213 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:213 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:213 Keyword "автопостинг" (51636cb9-a23b-46bd-be84-aa556bb20148) match: false
+index.tsx:213 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:213 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:213 Keyword "автоматизация" (572c90ed-9bb7-4ae2-9769-1db450c5e875) match: true
+index.tsx:213 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:213 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:213 Keyword "на чиле" (6f8c50c4-e115-4997-986b-8e70dfe22b26) match: false
+index.tsx:213 Keyword "сделать автопостинг" (72408153-a018-4fc9-84c6-81491cce5f2d) match: false
+index.tsx:213 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:213 Keyword "автопостинг в тг" (808fd792-4038-4615-ac8e-f7d0f00139d6) match: false
+index.tsx:213 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:213 Keyword "автопостинг вк группы" (8748a143-e4b6-4a97-8ad9-c31cc0cceb11) match: false
+index.tsx:213 Keyword "автопостинг бесплатно" (877e67f1-0ba3-4ce0-8d7d-6c23329c36e4) match: false
+index.tsx:213 Keyword "автопостинг авито" (9c8b85b6-3659-40fc-8055-8b5fe1a3eb79) match: false
+index.tsx:213 Keyword "комплексная автоматизация" (9cbcff87-9eef-4497-9540-bb0e7df2c2d8) match: false
+index.tsx:213 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:213 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:213 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:213 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:213 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:213 Keyword "бот для автопостинга" (cf5e2877-57ac-434d-9eac-8992355da7bc) match: false
+index.tsx:213 Keyword "чилю на чиле" (d1a0b1db-14bb-419d-872e-7d7a16020c7c) match: false
+index.tsx:213 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:213 Keyword "программа для автопостинга" (e70321e6-30e5-488f-84a5-093b5608ea82) match: false
+index.tsx:213 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:213 Keyword "автопостинг в социальные сети" (edf56592-ae88-4d93-9dcc-f2c64ad59353) match: false
+index.tsx:213 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:222 Selected keyword IDs updated: Array(1)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+ImageGenerationDialog.tsx:278 Генерация промта на основе текста через DeepSeek (оптимизированный метод)
+ImageGenerationDialog.tsx:284 Очищенный текст перед отправкой: Узнайте, как автоматизация может помочь вашему бизнесу стать более эффективным. От автопостинга до анализа данных - все в одном месте.#автоматизация #бизнес #эффективность
+ImageGenerationDialog.tsx:31 Автоматическое извлечение ключевых слов отключено
+api.ts:113 API Request: POST /api/generate-image-prompt Object
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:295 Загружено контента: 100
+ImageGenerationDialog.tsx:314 Промт успешно сгенерирован: A high-tech business automation concept with glowing digital interfaces, data streams, and robotic process automation elements, showcasing efficiency and modern technology in a sleek corporate environment, ultra-detailed 4k illustration with futuristic blue and white color scheme, professional lighting, masterpiece quality.
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+ImageGenerationDialog.tsx:554 Используем ранее сгенерированный промт: A high-tech business automation concept with glowing digital interfaces, data streams, and robotic p...
+ImageGenerationDialog.tsx:558 Сначала сохраняем текстовый промт в БД, а потом генерируем изображение
+ImageGenerationDialog.tsx:674 Отправка запроса на генерацию изображения: {"prompt":"A high-tech business automation concept with glowing digital interfaces, data streams, an...
+ImageGenerationDialog.tsx:687 🔍 Модель: schnell, используем универсальный интерфейс FAL.AI с userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ImageGenerationDialog.tsx:445 Сохраняем промт для контента с ID: 2a40a2f8-f2e0-4b55-9d96-777501d04217 ДО генерации
+ImageGenerationDialog.tsx:449 Отправляем запрос PATCH к /campaign-content/2a40a2f8-f2e0-4b55-9d96-777501d04217
+ImageGenerationDialog.tsx:450 Данные запроса: Object
+api.ts:113 API Request: POST /api/generate-image Object
+api.ts:113 API Request: PATCH /api/campaign-content/2a40a2f8-f2e0-4b55-9d96-777501d04217 Object
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ImageGenerationDialog.tsx:457 Ответ от сервера: Object
+ImageGenerationDialog.tsx:464 ✅ Промт успешно сохранен в базе данных
+index.tsx:323 Загружено ключевых слов: 33
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:295 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+ImageGenerationDialog.tsx:699 API ответ для модели schnell: {"success":true,"data":["https://v3.fal.media/files/kangaroo/fGLTyw-5aUcXK-6xQxalr.png","https://v3.fal.media/files/monkey/JgaaSkNEQ3CVy8XdhQsIZ.png","https://v3.fal.media/files/kangaroo/T08_SlV6zmFOG
+ImageGenerationDialog.tsx:714 Ответ от API генерации изображений: {"success":true,"data":["https://v3.fal.media/files/kangaroo/fGLTyw-5aUcXK-6xQxalr.png","https://v3....
+ImageGenerationDialog.tsx:716 Структура ответа: {
+  "success": true,
+  "data": [
+    "https://v3.fal.media/files/kangaroo/fGLTyw-5aUcXK-6xQxalr.png",
+    "https://v3.fal.media/files/monkey/JgaaSkNEQ3CVy8XdhQsIZ.png",
+    "https://v3.fal.media/files
+ImageGenerationDialog.tsx:722 Структура данных изображений: [
+  "https://v3.fal.media/files/kangaroo/fGLTyw-5aUcXK-6xQxalr.png",
+  "https://v3.fal.media/files/monkey/JgaaSkNEQ3CVy8XdhQsIZ.png",
+  "https://v3.fal.media/files/kangaroo/T08_SlV6zmFOG66hR1azU.png"
+]
+ImageGenerationDialog.tsx:725 Запрошено 3 изображений от модели schnell
+ImageGenerationDialog.tsx:745 Обнаружен массив в корне ответа API
+ImageGenerationDialog.tsx:798 Извлеченные URL изображений: Array(3)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+ImageGenerationDialog.tsx:862 Выбрано изображение с индексом 2: https://v3.fal.media/files/kangaroo/T08_SlV6zmFOG6...
+ImageGenerationDialog.tsx:890 Возвращаем изображение с промтом: A high-tech business automation concept with glowi...
+index.tsx:2146 Изображение успешно сгенерировано: https://v3.fal.media/files/kangaroo/T08_SlV6zmFOG66hR1azU.png
+index.tsx:2147 Промт использованный для генерации: A high-tech business automation concept with glowing digital interfaces, data streams, and robotic p...
+index.tsx:196 Setting content with processed keywords: Array(3)
+index.tsx:204 Comparing keywords for selection: Array(3)
+index.tsx:213 Keyword "вайб" (19f4317a-90e7-4852-b374-1ba5c88398d4) match: false
+index.tsx:213 Keyword "вайб кодинг" (1dd4d869-35d2-426b-a5dc-fb439056d847) match: false
+index.tsx:213 Keyword "автопостинг в инстаграм" (34d0ce9d-db9c-4e7d-b3d3-076991c0b3e2) match: false
+index.tsx:213 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:213 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:213 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:213 Keyword "автопостинг" (51636cb9-a23b-46bd-be84-aa556bb20148) match: false
+index.tsx:213 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:213 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:213 Keyword "автоматизация" (572c90ed-9bb7-4ae2-9769-1db450c5e875) match: true
+index.tsx:213 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:213 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:213 Keyword "на чиле" (6f8c50c4-e115-4997-986b-8e70dfe22b26) match: false
+index.tsx:213 Keyword "сделать автопостинг" (72408153-a018-4fc9-84c6-81491cce5f2d) match: false
+index.tsx:213 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:213 Keyword "автопостинг в тг" (808fd792-4038-4615-ac8e-f7d0f00139d6) match: false
+index.tsx:213 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:213 Keyword "автопостинг вк группы" (8748a143-e4b6-4a97-8ad9-c31cc0cceb11) match: false
+index.tsx:213 Keyword "автопостинг бесплатно" (877e67f1-0ba3-4ce0-8d7d-6c23329c36e4) match: false
+index.tsx:213 Keyword "автопостинг авито" (9c8b85b6-3659-40fc-8055-8b5fe1a3eb79) match: false
+index.tsx:213 Keyword "комплексная автоматизация" (9cbcff87-9eef-4497-9540-bb0e7df2c2d8) match: false
+index.tsx:213 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:213 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:213 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:213 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:213 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:213 Keyword "бот для автопостинга" (cf5e2877-57ac-434d-9eac-8992355da7bc) match: false
+index.tsx:213 Keyword "чилю на чиле" (d1a0b1db-14bb-419d-872e-7d7a16020c7c) match: false
+index.tsx:213 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:213 Keyword "программа для автопостинга" (e70321e6-30e5-488f-84a5-093b5608ea82) match: false
+index.tsx:213 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:213 Keyword "автопостинг в социальные сети" (edf56592-ae88-4d93-9dcc-f2c64ad59353) match: false
+index.tsx:213 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:222 Selected keyword IDs updated: Array(1)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+ImageGenerationDialog.tsx:133 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ImageGenerationDialog.tsx:177 Использован сохраненный промт из БД: A high-tech business automation concept with glowing digital interfaces, data streams, and robotic p...
+ImageGenerationDialog.tsx:213 Установлен контент для текущего поста: Узнайте, как автоматизация может помочь вашему бизнесу стать более эффективным. От автопостинга до а...
+ImageGenerationDialog.tsx:223 Выбрана вкладка прямого промта, так как есть сохраненный промт
+ImageGenerationDialog.tsx:226 Используем готовый промт из текущего поста: contentId=2a40a2f8-f2e0-4b55-9d96-777501d04217
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:295 Загружено контента: 100
+index.tsx:703 Current content before update: Object
+index.tsx:704 Selected keyword IDs: Array(1)
+index.tsx:715 Adding keyword from campaign: "автоматизация"
+index.tsx:740 Adding custom keyword: "бизнес"
+index.tsx:740 Adding custom keyword: "эффективность"
+index.tsx:745 FINAL Selected keywords from React state + extras: Array(3)
+index.tsx:761 Update data being sent: Object
+index.tsx:762 Keywords type: Array
+index.tsx:380 Updating content with keywords: Array(3)
+queryClient.ts:27 📤 API Запрос: PATCH /api/publish/update-content/2a40a2f8-f2e0-4b55-9d96-777501d04217
+queryClient.ts:28 🔐 Статус авторизации: Object
+queryClient.ts:42 📤 Заголовки запроса: Object
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:395 Content update success response: Object
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:295 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+ImageGenerationDialog.tsx:133 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ImageGenerationDialog.tsx:190 Создание нового контента - промт сброшен
+ImageGenerationDialog.tsx:234 Выбрана вкладка прямого промта (по умолчанию)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-FE2RSU4Q.js?v=88f2ec2f:328:29)
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:232:13
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:155:58
+    at Presence (chunk-6JNF2OYQ.js?v=88f2ec2f:24:11)
+    at chunk-FE2RSU4Q.js?v=88f2ec2f:146:64
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:52:11
+    at chunk-QJJ7OGIJ.js?v=88f2ec2f:33:11
+    at chunk-7ZRT33Z6.js?v=88f2ec2f:41:13
+    at chunk-BLQHLTLW.js?v=88f2ec2f:260:22
+    at Presence (chunk-6JNF2OYQ.js?v=88f2ec2f:24:11)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at DialogPortal (chunk-FE2RSU4Q.js?v=88f2ec2f:109:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-QUKTJ62H.js?v=88f2ec2f:38:15)
+    at Dialog (chunk-FE2RSU4Q.js?v=88f2ec2f:50:5)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:111:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:13:26)
+    at component (<anonymous>)
+    at Route (wouter.js?v=88f2ec2f:323:16)
+    at Switch (wouter.js?v=88f2ec2f:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=88f2ec2f:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+auth.ts:39 Refresh timeout triggered, refreshing token
+auth.ts:56 Attempting to refresh token
+auth.ts:59 Trying our API endpoint for token refresh
+hook.js:608 Error with API endpoint refresh, falling back to Directus: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+auth.ts:127 Token refresh successful, new token length: 321
+store.ts:35 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:36 Token will expire in 900 seconds, scheduling refresh in 720 seconds
+Layout.tsx:39 Авторизован с токеном, длина: 321
+AuthGuard.tsx:30 AuthGuard: Checking auth state Object
+AuthGuard.tsx:40 AuthGuard: Authentication confirmed with token in store
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:196 Setting content with processed keywords: Array(3)
+index.tsx:204 Comparing keywords for selection: Array(3)
+index.tsx:213 Keyword "вайб" (19f4317a-90e7-4852-b374-1ba5c88398d4) match: false
+index.tsx:213 Keyword "вайб кодинг" (1dd4d869-35d2-426b-a5dc-fb439056d847) match: false
+index.tsx:213 Keyword "автопостинг в инстаграм" (34d0ce9d-db9c-4e7d-b3d3-076991c0b3e2) match: false
+index.tsx:213 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:213 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:213 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:213 Keyword "автопостинг" (51636cb9-a23b-46bd-be84-aa556bb20148) match: false
+index.tsx:213 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:213 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:213 Keyword "автоматизация" (572c90ed-9bb7-4ae2-9769-1db450c5e875) match: true
+index.tsx:213 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:213 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:213 Keyword "на чиле" (6f8c50c4-e115-4997-986b-8e70dfe22b26) match: false
+index.tsx:213 Keyword "сделать автопостинг" (72408153-a018-4fc9-84c6-81491cce5f2d) match: false
+index.tsx:213 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:213 Keyword "автопостинг в тг" (808fd792-4038-4615-ac8e-f7d0f00139d6) match: false
+index.tsx:213 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:213 Keyword "автопостинг вк группы" (8748a143-e4b6-4a97-8ad9-c31cc0cceb11) match: false
+index.tsx:213 Keyword "автопостинг бесплатно" (877e67f1-0ba3-4ce0-8d7d-6c23329c36e4) match: false
+index.tsx:213 Keyword "автопостинг авито" (9c8b85b6-3659-40fc-8055-8b5fe1a3eb79) match: false
+index.tsx:213 Keyword "комплексная автоматизация" (9cbcff87-9eef-4497-9540-bb0e7df2c2d8) match: false
+index.tsx:213 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:213 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:213 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:213 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:213 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:213 Keyword "бот для автопостинга" (cf5e2877-57ac-434d-9eac-8992355da7bc) match: false
+index.tsx:213 Keyword "чилю на чиле" (d1a0b1db-14bb-419d-872e-7d7a16020c7c) match: false
+index.tsx:213 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:213 Keyword "программа для автопостинга" (e70321e6-30e5-488f-84a5-093b5608ea82) match: false
+index.tsx:213 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:213 Keyword "автопостинг в социальные сети" (edf56592-ae88-4d93-9dcc-f2c64ad59353) match: false
+index.tsx:213 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:222 Selected keyword IDs updated: Array(1)
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+ImageGenerationDialog.tsx:133 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ImageGenerationDialog.tsx:177 Использован сохраненный промт из БД: A high-tech business automation concept with glowing digital interfaces, data streams, and robotic p...
+ImageGenerationDialog.tsx:213 Установлен контент для текущего поста: Узнайте, как автоматизация может помочь вашему бизнесу стать более эффективным. От автопостинга до а...
+ImageGenerationDialog.tsx:223 Выбрана вкладка прямого промта, так как есть сохраненный промт
+ImageGenerationDialog.tsx:226 Используем готовый промт из текущего поста: contentId=2a40a2f8-f2e0-4b55-9d96-777501d04217
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:2076 Запрос на публикацию с выбранными платформами: Object
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:526 🚀 Подготовленные данные для публикации через новый API:
+index.tsx:527 ID контента: 2a40a2f8-f2e0-4b55-9d96-777501d04217
+index.tsx:528 Выбранные платформы: Object
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:295 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:552 ✅ Результат публикации через новый API: {success: true, message: 'Контент отправлен на публикацию в выбранные платформы', results: Array(4)}
+index.tsx:557 Результат публикации: {success: true, message: 'Контент отправлен на публикацию в выбранные платформы', results: Array(4)}
+index.tsx:561 Вызов API для обновления статуса публикации...
+index.tsx:563 
+            
+            
+           POST https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/publish/auto-update-status 404 (Not Found)
+onSuccess @ index.tsx:563
+execute @ @tanstack_react-query.js?v=88f2ec2f:1233
+index.tsx:575 Результат обновления статуса: {success: false, error: 'Контент не найден'}
+index.tsx:580 Не все платформы опубликованы, статус не обновлен undefined
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:295 Загружено контента: 100
+index.tsx:295 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:282 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:295 Загружено контента: 100
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:323 Загружено ключевых слов: 33
