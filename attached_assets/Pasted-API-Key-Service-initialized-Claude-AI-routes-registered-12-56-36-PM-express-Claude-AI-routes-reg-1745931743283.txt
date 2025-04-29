@@ -1,0 +1,684 @@
+API Key Service initialized
+Claude AI routes registered
+12:56:36 PM [express] Claude AI routes registered successfully
+Registering DeepSeek routes...
+12:56:36 PM [express] Registering DeepSeek routes...
+DeepSeek routes registered
+12:56:36 PM [express] DeepSeek routes registered successfully
+Registering Qwen routes...
+12:56:36 PM [express] Registering Qwen routes...
+Qwen routes registered
+12:56:36 PM [express] Qwen routes registered successfully
+Registering Gemini routes...
+12:56:36 PM [express] Registering Gemini routes...
+API Key Service initialized
+12:56:36 PM [gemini] Gemini routes registered successfully
+Gemini routes registered
+12:56:36 PM [express] Gemini routes registered successfully
+12:56:36 PM [express] Registering routes...
+Starting route registration...
+API Key Service initialized
+[express] FAL.AI Universal Image Generation routes registered
+[express] FAL.AI redirect routes registered
+Starting route registration...
+Creating HTTP server...
+HTTP server created successfully
+Registering validation routes...
+12:56:36 PM [api-validation] API валидационные маршруты зарегистрированы
+Registering direct webhook routes for social platforms...
+Social publishing router registered successfully
+Registering publishing routes...
+[publishing-routes] Регистрация маршрутов управления публикациями...
+API routes registered successfully
+Registering analytics routes...
+Analytics routes registered successfully
+Регистрация тестового маршрута для Instagram
+Тестовый маршрут для Instagram зарегистрирован
+12:56:36 PM [express] Тестовый маршрут для Instagram карусели зарегистрирован
+Test Instagram routes registered
+Social platform webhook routes registered successfully
+12:56:36 PM [token-routes] Регистрация маршрутов для работы с админским токеном...
+12:56:36 PM [token-routes] Маршруты для работы с админским токеном зарегистрированы
+12:56:36 PM [scheduler] Запуск планировщика публикаций
+12:56:36 PM [scheduler] Проверка запланированных публикаций
+Route registration completed
+12:56:36 PM [express] Registering XMLRiver API routes...
+12:56:36 PM [express] XMLRiver API routes registered successfully
+12:56:36 PM [express] Registering FAL.AI Universal Image Generation routes...
+[express] FAL.AI Universal Image Generation routes registered
+12:56:36 PM [express] FAL.AI Universal Image Generation routes registered successfully
+12:56:36 PM [express] Registering Imgur Uploader routes...
+Imgur routes registered
+12:56:36 PM [express] Imgur Uploader routes registered successfully
+12:56:36 PM [express] Registering DeepSeek Models route...
+12:56:36 PM [express] DeepSeek Models route registered successfully
+12:56:36 PM [express] Registering Beget S3 routes...
+12:56:36 PM [beget-s3-routes] Registering Beget S3 storage routes...
+12:56:36 PM [beget-s3-routes] Beget S3 basic storage routes registered
+12:56:36 PM [beget-s3-routes] Beget S3 video routes registered
+12:56:36 PM [beget-s3-routes] All Beget S3 routes registered successfully
+12:56:36 PM [express] Beget S3 routes registered successfully
+Route registration completed
+12:56:36 PM [express] Routes registered successfully
+12:56:36 PM [express] Setting up Vite in development mode...
+12:56:36 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+12:56:36 PM [express] Vite setup completed
+=== STARTING SERVER ON PORT 5000 ===
+12:56:36 PM [express] Attempting to start server on port 5000...
+=== SERVER SUCCESSFULLY STARTED ON PORT 5000 ===
+12:56:36 PM [express] Server successfully started on port 5000
+=== SERVER URL: http://0.0.0.0:5000 ===
+12:56:36 PM [express] Начало инициализации тяжелых сервисов после успешного запуска сервера...
+12:56:37 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+12:56:37 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+12:56:37 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+12:56:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+12:56:37 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+12:56:38 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+12:56:38 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+12:56:38 PM [directus-crud] Выполнение операции read для коллекции users/me
+12:56:38 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+12:56:38 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+12:56:38 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+12:56:38 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+12:56:38 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+12:56:38 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+12:56:38 PM [scheduler] Получено 77 запланированных публикаций через API
+12:56:38 PM [scheduler] Найдено 77 запланированных публикаций
+12:56:38 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+12:56:38 PM [scheduler]   - vk: нет данных о времени публикации
+12:56:38 PM [scheduler]   - telegram: нет данных о времени публикации
+12:56:38 PM [scheduler] Нет контента, готового к публикации по времени
+12:56:46 PM [express] Запуск планировщика аналитики...
+12:56:46 PM [express] [analytics-scheduler] Запуск планировщика аналитики на 4/30/2025, 8:00:00 AM. Времени до запуска: 1143 минут
+12:56:46 PM [express] Планировщик аналитики успешно запущен
+12:56:46 PM [express] Все тяжелые сервисы успешно инициализированы
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+12:56:59 PM [express] GET /api/auth/me 200 in 4ms
+12:57:02 PM [express] GET /api/auth/me 200 in 4ms
+12:57:36 PM [scheduler] Проверка запланированных публикаций
+12:57:36 PM [scheduler] Используем кэшированный токен администратора из планировщика
+12:57:36 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+12:57:37 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+12:57:37 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+12:57:37 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+12:57:37 PM [scheduler] Получено 77 запланированных публикаций через API
+12:57:37 PM [scheduler] Найдено 77 запланированных публикаций
+12:57:37 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+12:57:37 PM [scheduler]   - vk: нет данных о времени публикации
+12:57:37 PM [scheduler]   - telegram: нет данных о времени публикации
+12:57:37 PM [scheduler] Нет контента, готового к публикации по времени
+12:57:37 PM [express] POST /api/auth/refresh 200 in 3ms
+12:57:37 PM [express] GET /api/auth/me 200 in 4ms
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+12:57:37 PM [express] GET /api/api/fal-ai-models 200 in 5ms
+User authenticated: df0a82dc-5922-4917-beef-3d2013112cc4 (i.zelenin@nplanner.ru)
+Fetching campaigns for user: df0a82dc-5922-4917-beef-3d2013112cc4
+Sending request to Directus with filter user_id = df0a82dc-5922-4917-beef-3d2013112cc4
+Filtering server-side for userId: df0a82dc-5922-4917-beef-3d2013112cc4
+Found 3 campaigns for user df0a82dc-5922-4917-beef-3d2013112cc4 (filtered from 3 total)
+All campaign user_ids in response: df0a82dc-5922-4917-beef-3d2013112cc4, df0a82dc-5922-4917-beef-3d2013112cc4, df0a82dc-5922-4917-beef-3d2013112cc4
+User ID from request: df0a82dc-5922-4917-beef-3d2013112cc4
+Types - userId: string first db userId: string
+12:57:38 PM [express] GET /api/campaigns 304 in 282ms :: {"data":[{"id":"7aba8a40-d4d8-48b8-a992-f1b5…
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:57:38 PM [express] GET /api/keywords 304 in 396ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+No authorization header provided
+12:57:38 PM [express] GET /api/campaigns 401 in 1ms :: {"error":"Не авторизован: Отсутствует заголово…
+Found 0 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+12:57:38 PM [express] GET /api/campaign-content 304 in 533ms :: {"data":[]}
+User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+Fetching campaigns for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Sending request to Directus with filter user_id = 53921f16-f51d-4591-80b9-8caa4fde4d13
+Filtering server-side for userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Found 9 campaigns for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (filtered from 9 total)
+All campaign user_ids in response: 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13
+User ID from request: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Types - userId: string first db userId: string
+12:57:47 PM [express] GET /api/campaigns 200 in 530ms :: {"data":[{"id":"45daab2a-4c6f-4578-8665-3a04…
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+No authorization header provided
+12:57:48 PM [express] GET /api/campaigns 401 in 1ms :: {"error":"Не авторизован: Отсутствует заголово…
+12:57:48 PM [express] GET /api/api/fal-ai-models 200 in 3ms
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:57:48 PM [express] GET /api/keywords 304 in 140ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:57:49 PM [express] GET /api/campaign-content 200 in 1053ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+12:57:56 PM [api] Перенаправление запроса с устаревшего маршрута /api/campaign-content/046d37c8-f4fc-4b1f-b1eb-28a0fea36787 на /api/publish/update-content/046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Запрос контента по ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Используем переданный токен авторизации для запроса контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+Получен запрос на генерацию изображения. contentId: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, savePrompt: false
+Генерация изображения для пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Получаем API ключ FAL.AI из настроек пользователя с ID: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] Запрашивается ключ для сервиса: fal_ai, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[fal_ai] Получаем ключ для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13, сервис в БД: fal_ai
+Успешно получен контент с использованием переданного токена
+✅ Контент найден в Directus: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Используем переданный токен авторизации для обновления контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Обновляем промт контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: "Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate."
+Отправляем обновление в Directus для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: {"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate."}
+[fal_ai] Получено 10 ключей для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+[fal_ai] Найден ключ с точным совпадением service_name=fal_ai
+[fal_ai] Найден ключ FAL.AI (длина: 69, содержит двоеточие: true)
+12:57:57 PM [api-keys] Successfully fetched fal_ai API key from Directus for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+Используется FAL.AI API ключ из настроек пользователя (единственный источник)
+Автоматически добавляем префикс "Key " к ключу FAL.AI для запроса генерации
+Используем модель Schnell через универсальный интерфейс
+Генерация изображения с промптом: "Juicy chicken cutlets with mel..."
+Используем универсальный сервис для модели schnell
+Отправляем запрос к FAL.AI через универсальный интерфейс: {"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","negativePrompt":"","width":1024,"height":1024,"numImages":3,"model":"schnell","us
+[DEBUG] Запрашивается ключ для сервиса: fal_ai, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+12:57:57 PM [api-keys] Using cached fal_ai API key for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+[fal-ai-universal] Классическая модель (schnell), используем прямой клиент
+[fal-ai-direct] Генерация изображений с использованием модели schnell
+[fal-ai-direct] Отправка запроса к https://api.fal.ai/v1/fal-ai/flux/schnell
+[fal-ai-direct] Данные запроса: {"input":{"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","negative_prompt":"","image_size":{"width":1024,"height":1024},"num_inference_steps":4,"num_images":3}}
+12:57:57 PM [express] PATCH /api/campaign-content/046d37c8-f4fc-4b1f-b1eb-28a0fea36787 200 in 699ms :…
+[fal-ai-direct] Ошибка при генерации изображений: getaddrinfo ENOTFOUND api.fal.ai
+[fal-ai-universal] Ошибка при использовании прямого клиента для модели schnell: getaddrinfo ENOTFOUND api.fal.ai
+[fal-ai-universal] Пробуем официальный клиент для модели schnell
+[fal-ai-official] Генерация изображений с использованием модели schnell
+[fal-ai-official] Ключ обработан для инициализации SDK
+[fal-ai-official] Клиент успешно инициализирован
+[fal-ai-official] Клиент успешно инициализирован
+[fal-ai-official] Параметры запроса для schnell: prompt="Juicy chicken cutlets with mel...", negative_prompt="...", num_images=3
+[fal-ai-official] Запрос к модели fal-ai/flux/schnell с параметрами: {"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","negative_prompt":"","image_size":{"width":1024,"height":1024},"num_inference_steps":4,"num_images":3}
+[fal-ai-official] Ожидаем ответ...
+[fal-ai-official] Статус: IN_QUEUE
+[fal-ai-official] Полное содержимое update: {"status":"IN_QUEUE","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{},"queue_position":1}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: IN_PROGRESS
+[fal-ai-official] Полное содержимое update: {"status":"IN_PROGRESS","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{}}
+[fal-ai-official] Статус: COMPLETED
+[fal-ai-official] Полное содержимое update: {"status":"COMPLETED","request_id":"1a84939a-ecbf-4063-bfe0-fd6d51037201","response_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201","status_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/status","cancel_url":"https://queue.fal.run/fal-ai/flux/requests/1a84939a-ecbf-4063-bfe0-fd6d51037201/cancel","logs":null,"metrics":{"inference_time":3.4001569747924805}}
+[fal-ai-official] Получен ответ: {"data":{"images":[{"url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","width":1024,"height":1024,"content_type":"image/jpeg"},{"url":"https://v3.fal.media/files/rabbit/z4vc3p6qrlRQSEgC7YyxM.png","width":1024,"height":1024,"content_type":"image/jpeg"},{"url":"https://v3.fal.media/fil...
+[fal-ai-official] Извлечение URL изображений из ответа API:
+{
+  "data": {
+    "images": [
+      {
+        "url": "https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png",
+        "width": 1024,
+        "height": 1024,
+        "content_type": "image/jpeg"
+      },
+      {
+        "url": "https://v3.fal.media/files/rabbit/z4vc3p6qrlRQSEgC7YyxM.png",
+        "width": 1024,
+        "height": 1024,
+        "content_type": "image/jpeg"
+      },
+      {
+        "url": "https://v3.fal.media/files/zebra/7wvJMZRwJ8kfK-zzaDaiC.png",
+        "width": 1024,
+        "height": 1024,
+        "content_type": "image/jpeg"
+      }
+    ],
+    "timings": {
+      "inference": 1.474340520100668
+    },
+    "seed": 3534148518,
+    "has_nsfw_concepts": [
+      false,
+      false,
+      false
+    ],
+    "prompt": "Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate."
+  },
+  "requestId": "1a84939a-ecbf-4063-bfe0-fd6d51037201"
+}
+[fal-ai-official] Обнаружен формат ответа Juggernaut-Flux API с 3 изображениями
+[fal-ai-official] Найден URL изображения в data.images[].url: https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png
+[fal-ai-official] Найден URL изображения в data.images[].url: https://v3.fal.media/files/rabbit/z4vc3p6qrlRQSEgC7YyxM.png
+[fal-ai-official] Найден URL изображения в data.images[].url: https://v3.fal.media/files/zebra/7wvJMZRwJ8kfK-zzaDaiC.png
+[fal-ai-official] Извлечено 3 URL изображений из Juggernaut-Flux API
+[fal-ai-official] Найдено 3 URL изображений: [
+  'https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png',
+  'https://v3.fal.media/files/rabbit/z4vc3p6qrlRQSEgC7YyxM.png',
+  'https://v3.fal.media/files/zebra/7wvJMZRwJ8kfK-zzaDaiC.png'
+]
+Получено 3 изображений через универсальный интерфейс
+12:58:01 PM [express] POST /api/generate-image 200 in 4658ms :: {"success":true,"data":["https://v3.f…
+12:58:36 PM [scheduler] Проверка запланированных публикаций
+12:58:36 PM [scheduler] Используем кэшированный токен администратора из планировщика
+12:58:36 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+12:58:37 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+12:58:37 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+12:58:37 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+12:58:37 PM [scheduler] Получено 77 запланированных публикаций через API
+12:58:37 PM [scheduler] Найдено 77 запланированных публикаций
+12:58:37 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+12:58:37 PM [scheduler]   - vk: нет данных о времени публикации
+12:58:37 PM [scheduler]   - telegram: нет данных о времени публикации
+12:58:37 PM [scheduler] Нет контента, готового к публикации по времени
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:59:19 PM [express] GET /api/keywords 304 in 538ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:59:21 PM [express] GET /api/campaign-content 304 in 857ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+[Image proxy] Requested URL: https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png
+Proxying image/media: https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png
+Sending request to https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png with headers: {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
+  'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Cache-Control': 'no-cache',
+  Pragma: 'no-cache',
+  Referer: 'https://nplanner.ru/'
+}
+Successfully proxied media https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png with content type image/png
+12:59:25 PM [express] GET /api/proxy-image 200 in 697ms
+Directus API Error: {
+  status: 401,
+  data: { errors: [ [Object] ] },
+  config: { url: '/users/me', method: 'get', params: undefined }
+}
+Directus API error details: {
+  status: 401,
+  data: { errors: [ [Object] ] },
+  config: { url: '/users/me', method: 'get', params: undefined }
+}
+12:59:26 PM [directus] Ошибка авторизации при запросе к Directus API
+12:59:26 PM [api] Ошибка получения информации о пользователе: AxiosError: Request failed with status code 401
+Запрос контента по ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Используем переданный токен авторизации для запроса контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Успешно получен контент с использованием переданного токена
+✅ Контент найден в Directus: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Используем переданный токен авторизации для обновления контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Обновляем дополнительные изображения контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: []
+Обновляем ключевые слова контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: [ 'котлеты', 'рецепты', 'здоровое питание' ]
+Отправляем обновление в Directus для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: {"content":"<p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт поможет вам разнообразить меню ваших клиентов, предлагая им не только вкусные, но и полезные блюда.</p>","content_type":"text-image","title":"Куриные рубленные котлетки с сыром","image_url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","video_url":null,"additional_images":[],"keywords":["котлеты","рецепты","здоровое питание"]}
+12:59:26 PM [express] PATCH /api/publish/update-content/046d37c8-f4fc-4b1f-b1eb-28a0fea36787 200 in 4…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:59:27 PM [express] GET /api/campaign-content 200 in 790ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:59:30 PM [express] GET /api/keywords 304 in 135ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+12:59:36 PM [scheduler] Проверка запланированных публикаций
+12:59:36 PM [scheduler] Используем кэшированный токен администратора из планировщика
+12:59:36 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+12:59:37 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+12:59:37 PM [express] [Social Publishing] Получен запрос на публикацию с телом: {"contentId":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","platforms":{"instagram":true,"telegram":true,"vk":true,"facebook":true}}
+12:59:37 PM [express] [Social Publishing] Запрос на публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 сразу в несколько платформ: {"instagram":true,"telegram":true,"vk":true,"facebook":true}
+12:59:37 PM [express] [Social Publishing] Проверка формата объекта platforms: {"instagram":true,"telegram":true,"vk":true,"facebook":true}
+12:59:37 PM [express] [Social Publishing] Обнаружен объектный формат для platforms
+12:59:37 PM [express] [Social Publishing] Ожидаемые ключи платформ: telegram, vk, instagram, facebook
+12:59:37 PM [express] [Social Publishing] Полученные ключи платформ: instagram, telegram, vk, facebook
+12:59:37 PM [express] [Social Publishing] Выбранные платформы: instagram, telegram, vk, facebook
+12:59:37 PM [directus-auth] Found 1 active sessions
+12:59:37 PM [express] [Social Publishing] Используется токен администратора из активной сессии
+12:59:37 PM [express] [Social Publishing] Обновляем статусы платформ для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 с токеном администратора
+Используем переданный токен авторизации для обновления контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Отправляем обновление в Directus для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: {"status":"scheduled","social_platforms":{"instagram":{"selected":true,"status":"pending"},"telegram":{"selected":true,"status":"pending"},"vk":{"selected":true,"status":"pending"},"facebook":{"selected":true,"status":"pending"}}}
+12:59:37 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+12:59:37 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+12:59:37 PM [scheduler] Получено 77 запланированных публикаций через API
+12:59:37 PM [scheduler] Найдено 77 запланированных публикаций
+12:59:37 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+12:59:37 PM [scheduler]   - vk: нет данных о времени публикации
+12:59:37 PM [scheduler]   - telegram: нет данных о времени публикации
+12:59:37 PM [scheduler] Нет контента, готового к публикации по времени
+12:59:37 PM [express] [Social Publishing] Успешно сохранены выбранные платформы для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+12:59:37 PM [express] [Social Publishing] Запускаем публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в instagram
+12:59:37 PM [express] [Social Publishing] Асинхронная публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в instagram через n8n вебхук
+12:59:37 PM [express] [Social Publishing] Сформирован URL для n8n webhook: https://n8n.nplanner.ru/webhook/publish-instagram
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:59:40 PM [express] GET /api/keywords 304 in 137ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:59:40 PM [express] GET /api/campaign-content 200 in 786ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+12:59:50 PM [express] [Social Publishing] Отправлены данные в n8n вебхук: contentId=046d37c8-f4fc-4b1f-b1eb-28a0fea36787, platform=instagram
+12:59:50 PM [express] [Social Publishing] Данные извлекаются из Directus по contentId
+12:59:50 PM [express] [Social Publishing] Ответ от n8n вебхука: {"id":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","campaign_id":"46868c44-c6a4-4bed-accf-9ad07bba790e","user_id":"53921f16-f51d-4591-80b9-8caa4fde4d13","content":"<p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт поможет вам разнообразить меню ваших клиентов, предлагая им не только вкусные, но и полезные блюда.</p>","content_type":"text-image","image_url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","video_url":null,"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","keywords":"[\"котлеты\",\"рецепты\",\"здоровое питание\"]","created_at":"2025-04-29T11:46:09.696Z","scheduled_at":null,"published_at":"2025-04-29T15:59:50.388Z","status":"scheduled","social_platforms":{"vk":{"status":"pending","selected":true},"facebook":{"status":"pending","selected":true},"telegram":{"status":"pending","selected":true},"instagram":{"postId":"18056662669965183","status":"published","postUrl":"https://www.instagram.com/p/DJCAc_8IjYm/","platform":"instagram","publishedAt":"2025-04-29T12:59:50.361Z"}},"title":"Куриные рубленные котлетки с сыром","additional_images":[],"additional_media":null}
+12:59:50 PM [express] [Social Publishing] Запускаем публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в telegram
+12:59:50 PM [express] [Social Publishing] Асинхронная публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в telegram через n8n вебхук
+12:59:50 PM [express] [Social Publishing] Сформирован URL для n8n webhook: https://n8n.nplanner.ru/webhook/publish-telegram
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 33,
+  firstKeyword: {
+    id: '19f4317a-90e7-4852-b374-1ba5c88398d4',
+    keyword: 'вайб',
+    trend_score: 62837,
+    mentions_count: 100,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-04-01T08:11:09.831Z',
+    date_created: '2025-03-31T13:53:44.984Z'
+  }
+}
+12:59:51 PM [express] GET /api/keywords 304 in 394ms :: {"data":[{"id":"19f4317a-90e7-4852-b374-1ba5c…
+12:59:52 PM [express] [Social Publishing] Отправлены данные в n8n вебхук: contentId=046d37c8-f4fc-4b1f-b1eb-28a0fea36787, platform=telegram
+12:59:52 PM [express] [Social Publishing] Данные извлекаются из Directus по contentId
+12:59:52 PM [express] [Social Publishing] Ответ от n8n вебхука: {"id":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","campaign_id":"46868c44-c6a4-4bed-accf-9ad07bba790e","user_id":"53921f16-f51d-4591-80b9-8caa4fde4d13","content":"<p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт поможет вам разнообразить меню ваших клиентов, предлагая им не только вкусные, но и полезные блюда.</p>","content_type":"text-image","image_url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","video_url":null,"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","keywords":"[\"котлеты\",\"рецепты\",\"здоровое питание\"]","created_at":"2025-04-29T11:46:09.696Z","scheduled_at":null,"published_at":"2025-04-29T15:59:52.522Z","status":"scheduled","social_platforms":{"vk":{"postId":766,"status":"published","postUrl":"https://vk.com/wall-228626989_766","platform":"vk","publishedAt":"2025-04-29T12:59:50.553Z"},"facebook":{"status":"pending","selected":true},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"status":"pending","selected":true}},"title":"Куриные рубленные котлетки с сыром","additional_images":[],"additional_media":null}
+12:59:52 PM [express] [Social Publishing] Запускаем публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в vk
+12:59:52 PM [express] [Social Publishing] Асинхронная публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в vk через n8n вебхук
+12:59:52 PM [express] [Social Publishing] Сформирован URL для n8n webhook: https://n8n.nplanner.ru/webhook/publish-vk
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:59:53 PM [express] GET /api/campaign-content 200 in 786ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+12:59:56 PM [express] [Social Publishing] Отправлены данные в n8n вебхук: contentId=046d37c8-f4fc-4b1f-b1eb-28a0fea36787, platform=vk
+12:59:56 PM [express] [Social Publishing] Данные извлекаются из Directus по contentId
+12:59:56 PM [express] [Social Publishing] Ответ от n8n вебхука: {"id":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","campaign_id":"46868c44-c6a4-4bed-accf-9ad07bba790e","user_id":"53921f16-f51d-4591-80b9-8caa4fde4d13","content":"<p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт поможет вам разнообразить меню ваших клиентов, предлагая им не только вкусные, но и полезные блюда.</p>","content_type":"text-image","image_url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","video_url":null,"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","keywords":"[\"котлеты\",\"рецепты\",\"здоровое питание\"]","created_at":"2025-04-29T11:46:09.696Z","scheduled_at":null,"published_at":"2025-04-29T15:59:56.794Z","status":"scheduled","social_platforms":{"vk":{"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","publishedAt":"2025-04-29T12:59:56.775Z"},"facebook":{"status":"pending","selected":true},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"status":"pending","selected":true}},"title":"Куриные рубленные котлетки с сыром","additional_images":[],"additional_media":null}
+12:59:56 PM [express] [Social Publishing] Запускаем публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в facebook
+12:59:56 PM [express] [Social Publishing] Использование прямого API для Facebook вместо n8n вебхука
+12:59:56 PM [express] [Social Publishing] Отправка запроса на Facebook webhook: http://localhost:5001/api/facebook-webhook-direct
+12:59:56 PM [express] [Social Publishing] Ошибка при публикации в facebook: connect ECONNREFUSED 127.0.0.1:5001
+12:59:56 PM [express] [Social Publishing] Статус публикаций: успешных=true, неудачных=true, все платформы опубликованы=false (выбрано: 4, результатов: 4)
+Запрос контента по ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Пробуем получить владельца контента другими способами
+Пробуем получить контент без токена авторизации
+Directus API Error: {
+  errors: [
+    {
+      message: `You don't have permission to access collection "campaign_content" or it does not exist. Queried in root.`,
+      extensions: [Object]
+    }
+  ]
+}
+Не удалось получить контент без авторизации: Request failed with status code 403
+Контент с ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 не найден ни одним из способов
+12:59:57 PM [express] [Social Publishing] Не удалось получить данные контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 для проверки статусов платформ
+12:59:57 PM [express] POST /api/publish/now 200 in 19578ms :: {"success":true,"message":"Контент отпр…
+12:59:57 PM [express] [Social Publishing] Запрос на автоматическое обновление статуса публикации для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Запрос контента по ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Используем переданный токен авторизации для запроса контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Directus API Error: {
+  errors: [ { message: 'Invalid user credentials.', extensions: [Object] } ]
+}
+Не удалось получить контент с переданным токеном: Request failed with status code 401
+Используем переданный токен авторизации для запроса контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Directus API Error: {
+  errors: [ { message: 'Invalid user credentials.', extensions: [Object] } ]
+}
+Не удалось получить контент с переданным токеном: Request failed with status code 401
+Пробуем получить владельца контента другими способами
+Пробуем получить контент без токена авторизации
+Directus API Error: {
+  errors: [
+    {
+      message: `You don't have permission to access collection "campaign_content" or it does not exist. Queried in root.`,
+      extensions: [Object]
+    }
+  ]
+}
+Не удалось получить контент без авторизации: Request failed with status code 403
+Контент с ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 не найден ни одним из способов
+12:59:57 PM [express] POST /api/publish/auto-update-status 404 in 399ms :: {"success":false,"error":"…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+12:59:58 PM [express] GET /api/campaign-content 200 in 791ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:00:27 PM [express] GET /api/campaign-content 304 in 1054ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+1:00:36 PM [scheduler] Проверка запланированных публикаций
+1:00:36 PM [scheduler] Используем кэшированный токен администратора из планировщика
+1:00:36 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+1:00:37 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+1:00:37 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+1:00:37 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+1:00:37 PM [scheduler] Получено 77 запланированных публикаций через API
+1:00:37 PM [scheduler] Найдено 77 запланированных публикаций
+1:00:37 PM [scheduler] НАЙДЕНЫ ПЛАТФОРМЫ В СТАТУСЕ PENDING - обрабатываем немедленно
+1:00:37 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+1:00:37 PM [scheduler]   - vk: нет данных о времени публикации
+1:00:37 PM [scheduler]   - telegram: нет данных о времени публикации
+1:00:37 PM [scheduler] Найдено 1 публикаций, готовых к публикации
+1:00:37 PM [scheduler] Обнаружена неопубликованная платформа facebook в контенте ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, несмотря на published_at
+1:00:37 PM [scheduler] Обнаружена неопубликованная платформа instagram в контенте ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, несмотря на published_at
+1:00:37 PM [scheduler] ПРОВЕРКА В БД: Контент ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром" имеет published_at = 2025-04-29T15:59:56, но найдены неопубликованные платформы - ПРОДОЛЖАЕМ
+1:00:37 PM [scheduler] ПРОВЕРКА В БД: Контент ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром" опубликован только в 2/4 соцсетях, устанавливаем статус scheduled
+1:00:37 PM [scheduler] ПРОВЕРКА В БД: Контент ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром" опубликован только в 2/4 соцсетях, продолжаем публикацию
+1:00:37 PM [scheduler] Готово к публикации 1 элементов контента
+1:00:37 PM [scheduler] Публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром"...
+1:00:37 PM [scheduler] Проверка статуса платформ: опубликовано 2 из 4
+1:00:37 PM [scheduler] ИНФО: Контент 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 опубликован только в НЕКОТОРЫХ (2/4) соцсетях, продолжаем публикацию остальных
+1:00:37 PM [scheduler] Публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787: "Куриные рубленные котлетки с сыром"
+1:00:37 PM [scheduler] Настройки времени публикации для платформ: vk: не задано (статус: published), facebook: не задано (статус: pending), telegram: не задано (статус: published), instagram: не задано (статус: pending)
+1:00:37 PM [scheduler] Используем кэшированный токен администратора из планировщика
+1:00:37 PM [scheduler] Прямой запрос для получения кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+1:00:37 PM [scheduler] Кампания найдена в списке: Правильное питание
+1:00:37 PM [scheduler] Настройки кампании: {"id":"46868c44-c6a4-4bed-accf-9ad07bba790e","hasSettings":true,"settingsType":"object","settingsKeys":["telegram","vk","instagram","facebook","youtube"],"telegramSettings":"имеются","instagramSettings":"имеются","vkSettings":"имеются","facebookSettings":"имеются","rawSettings":{"telegram":{"token":"7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU","chatId":"-1002302366310"},"vk":{"token":"vk1.a.0jlmORGkgmds1qIB5btPIIuT1FZ8C_bkGpCcowI9Ml214neQFgVMiYEnePWq48txdx3D7oTtKbEvgnEifytkkyjv1FvooFsI0y_YYPX8Cw__525Tnqt_H7C9hEEdmsqHXExr4Q3DK7CL0quCvnhrhN368Ter9yFLe6buYgpnamBXwUx4yZnRJPdBVfnPmObtZRrXw7NaZJboCqAK8sXLEA","groupId":"club228626989"},"instagram":{"token":"EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R","accessToken":null,"businessAccountId":"17841422577074562"},"facebook":{"token":"EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R","pageId":"2120362494678794"},"youtube":{"apiKey":"AIzaSyAu3J57U9Xy4xN9xMaYJlHs6VPy30bHU00","channelId":"UCh-jDILbZG-CbS-hWJuiXjA"}}}
+1:00:37 PM [scheduler] Настройки кампании Правильное питание сохранены в кэше
+1:00:37 PM [scheduler] Настройки Telegram для кампании: token=задан, chatId=-1002302366310
+1:00:37 PM [scheduler] Проверка платформ для публикации контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром":
+1:00:37 PM [scheduler]   - vk: статус "published", пропускаем
+1:00:37 PM [scheduler]   - facebook: нет точного времени, используем общее время (если есть)
+1:00:37 PM [scheduler]   - facebook: нет времени публикации вообще, считаем готовым
+1:00:37 PM [scheduler]   - telegram: статус "published", пропускаем
+1:00:37 PM [scheduler]   - instagram: нет точного времени, используем общее время (если есть)
+1:00:37 PM [scheduler]   - instagram: нет времени публикации вообще, считаем готовым
+1:00:37 PM [scheduler] Итого платформ для публикации: 2 (facebook, instagram)
+1:00:37 PM [scheduler] Вызов прямого API публикации Facebook для запланированного контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+1:00:37 PM [express] [Facebook Direct] Начало прямой публикации контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в Facebook
+1:00:37 PM [directus-auth] Found 1 active sessions
+1:00:37 PM [express] [Facebook Direct] Используется токен администратора из активной сессии
+1:00:38 PM [express] [Facebook Direct] Получен контент для публикации: {"id":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","title":"Куриные рубленные котлетки с сыром","contentType":"text-image","hasImage":true}
+1:00:38 PM [express] [Facebook Direct] Получены данные кампании: "Правильное питание"
+1:00:38 PM [express] [Facebook Direct] Используются настройки из кампании: токен EAA520SFRt... и страница 2120362494678794
+1:00:38 PM [express] [Facebook Direct] Текст для публикации обработан (удалены HTML-теги)
+1:00:38 PM [express] [Facebook Direct] Исходный текст: <p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рец...
+1:00:38 PM [express] [Facebook Direct] Обработанный текст: Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт...
+1:00:38 PM [express] [Facebook Direct] Тип публикации: пост с изображением
+1:00:38 PM [express] [Facebook Direct] Проверка прав токена Facebook
+1:00:38 PM [express] [Facebook Direct] Права токена Facebook: {"data":[{"permission":"pages_show_list","status":"granted"},{"permission":"ads_management","status":"granted"},{"permission":"business_management","status":"granted"},{"permission":"pages_messaging","status":"granted"},{"permission":"instagram_basic","status":"granted"},{"permission":"instagram_manage_insights","status":"granted"},{"permission":"instagram_content_publish","status":"granted"},{"permission":"pages_read_engagement","status":"granted"},{"permission":"pages_manage_metadata","status":"granted"},{"permission":"pages_manage_posts","status":"granted"},{"permission":"public_profile","status":"granted"}]}
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+1:00:38 PM [express] [Facebook Direct] Доступные страницы: {"data":[{"access_token":"EAA520SFRtvcBOyrZBdAMwo3srqMk5DPR9ZAEDdDDEJ6Q85gB1J3v23YKuCShdZAGcZCkxXwMoSjmftCJHJ9ucGuoO0RYohisIWwiEW31DIjCYkHNHToIlZCNFFi80VBh6DERaGUZBCVS36ZCDlCfdiWQmQ2ZCuMkHQzUO8NCr8kiGoac6TBEZCGuVZApTBgjNv","category":"Магазин подарков","category_list":[{"id":"191647907538150","name":"Магазин подарков"}],"name":"Подарочные сертификаты","id":"2120362494678794","tasks":["ADVERTISE","ANALYZE","CREATE_CONTENT","MESSAGING","MODERATE","MANAGE"]},{"access_token":"EAA520SFRtvcBOzifY0oPVCMSSaEYrZBCbwZAfNx3oBB0EjdvUF2pZB0vsM1YleHMsywDNHGXwpjF8h7vG7rGLmreCjGz3uQE6IDbMNZCCti67njdAhZCv37ZC2swMG7kNIy0WbgW8sWK3s77u05QHlkxa1g966eIYEPgY0BBZBNzWxCyjztHR2b4mcadhwj","category":"Программное обеспечение","category_list":[{"id":"2211","name":"Программное обеспечение"}],"name":"Сметоматика","id":"1195760570469812","tasks":["ADVERTISE","ANALYZE","CREATE_CONTENT","MESSAGING","MODERATE","MANAGE"]}],"paging":{"cursors":{"before":"QVFIUi1VN295cVR1QkQ0WVFpTG9EUWwzc3lPSzFHTE5YaS1tOXlWd050dU9PQjhBT0Vub3JaSEVfZAHNaR2ZAWZAU1GcGRycjhSNG0wck5ZAdHpJNGEyaEw2ejdn","after":"QVFIUjI1NkdzTzBnTVFZAcXo1S0NCOVk0djdjTkZAMakV6YTZAWQlJDYXBMYkdET1NFTzEyekstQk1Qc1NLejBaUmlCZAkIxS2RCV3I3enB5cFdOazRiaGY2dDl3"}}}
+1:00:38 PM [express] [Facebook Direct] Найден токен для страницы 2120362494678794
+1:00:38 PM [express] [Facebook Direct] Используется токен страницы вместо пользовательского токена
+1:00:38 PM [express] [Facebook Direct] Публикация с изображением: https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png
+1:00:38 PM [express] [Facebook Direct] Отправка запроса на публикацию с изображением: https://graph.facebook.com/v19.0/2120362494678794/photos
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:00:39 PM [express] GET /api/campaign-content 304 in 420ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+1:00:43 PM [express] [Facebook Direct] Ответ от API Facebook (публикация с изображением): {"id":"989812569972704","post_id":"2120362494678794_989812619972699"}
+1:00:43 PM [express] [Facebook Direct] Пост успешно создан, ID: 989812569972704
+1:00:43 PM [express] [Facebook Direct] Пост успешно создан, ID: 989812569972704
+1:00:43 PM [express] [Facebook Direct] Ссылка на опубликованный пост (postUrl): https://facebook.com/989812569972704
+1:00:43 PM [express] [Facebook Direct] Токен валиден, продолжаем обновление статуса
+1:00:43 PM [express] [Facebook Direct] Контент ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+1:00:43 PM [express] [Facebook Direct] Текущие social_platforms до обновления: {"vk":{"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","publishedAt":"2025-04-29T12:59:56.775Z"},"facebook":{"status":"pending","selected":true},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"status":"pending","selected":true}}
+1:00:43 PM [express] [Facebook Direct] Проверка на наличие других платформ: vk, facebook, telegram, instagram
+1:00:43 PM [express] [Facebook Direct] Обновленные social_platforms: {"vk":{"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","publishedAt":"2025-04-29T12:59:56.775Z"},"facebook":{"status":"published","selected":true,"publishedAt":"2025-04-29T13:00:43.988Z","postUrl":"https://facebook.com/989812569972704"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"status":"pending","selected":true}}
+1:00:43 PM [express] [Facebook Direct] После обновления есть следующие платформы: vk, facebook, telegram, instagram
+1:00:43 PM [express] [Facebook Direct] Подтверждение сохранения VK данных: {"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","publishedAt":"2025-04-29T12:59:56.775Z"}
+1:00:43 PM [express] [Facebook Direct] Подтверждение сохранения Telegram данных: {"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"}
+1:00:43 PM [express] [Facebook Direct] Подтверждение сохранения Instagram данных: {"status":"pending","selected":true}
+1:00:44 PM [express] [Facebook Direct] Статус публикации обновлен в Directus: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+1:00:44 PM [express] POST /api/facebook-webhook-direct 200 in 6144ms :: {"success":true,"message":"П…
+1:00:44 PM [scheduler] Успешная публикация через API для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 на платформе facebook
+1:00:44 PM [scheduler] Результат публикации от API: {"success":true,"message":"Пост успешно опубликован в Facebook","postId":"989812569972704","postUrl":"https://facebook.com/989812569972704"}
+1:00:44 PM [scheduler] API вернул полную структуру ответа: {"success":true,"message":"Пост успешно опубликован в Facebook","postId":"989812569972704","postUrl":"https://facebook.com/989812569972704"}
+1:00:44 PM [scheduler] Найден URL в пути postUrl: https://facebook.com/989812569972704
+1:00:44 PM [scheduler] Найден ID в пути postId: 989812569972704
+1:00:44 PM [scheduler] Сформирован результат публикации с postUrl: https://facebook.com/989812569972704
+1:00:44 PM [scheduler] Детали результата публикации для facebook: {"platform":"facebook","status":"published","publishedAt":"2025-04-29T13:00:44.144Z","postUrl":"https://facebook.com/989812569972704","postId":"989812569972704","error":null}
+1:00:44 PM [scheduler] Вызов updatePublicationStatus для platform=facebook
+1:00:44 PM [social-publishing] Вызов специального обработчика для Facebook
+1:00:44 PM [express] [fb_update_1745931644144_811] Обновление статуса публикации для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в Facebook
+1:00:44 PM [directus-auth] Found 1 active sessions
+1:00:44 PM [express] [fb_update_1745931644144_811] Используем токен из активных сессий
+1:00:44 PM [express] [fb_update_1745931644144_811] Получение данных контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+1:00:44 PM [express] [fb_update_1745931644144_811] Контент получен: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787, от user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+1:00:44 PM [express] [fb_update_1745931644144_811] Текущие платформы до обновления: vk, facebook, telegram, instagram
+1:00:44 PM [express] [fb_update_1745931644144_811] Обновлена информация для Facebook: {"status":"published","postUrl":"https://facebook.com/989812569972704","selected":true,"publishedAt":"2025-04-29T13:00:44.144Z","postId":"989812569972704","error":null}
+1:00:44 PM [express] [fb_update_1745931644144_811] Платформы после обновления: vk, facebook, telegram, instagram
+1:00:44 PM [express] [fb_update_1745931644144_811] Итоговые данные platform -> status:
+1:00:44 PM [express] [fb_update_1745931644144_811]   - vk: published (имеет URL)
+1:00:44 PM [express] [fb_update_1745931644144_811]   - facebook: published (имеет URL)
+1:00:44 PM [express] [fb_update_1745931644144_811]   - telegram: published (имеет URL)
+1:00:44 PM [express] [fb_update_1745931644144_811]   - instagram: pending (без URL)
+1:00:44 PM [express] [fb_update_1745931644144_811] Отправка обновленных данных в Directus
+1:00:44 PM [express] [fb_update_1745931644144_811] Статус публикации в Facebook успешно обновлен
+1:00:44 PM [scheduler] Статус публикации успешно обновлен для facebook
+1:00:44 PM [scheduler] Вызов API публикации через n8n для запланированного контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 на платформе instagram
+1:00:44 PM [express] [Social Publishing] Запрос на публикацию контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в instagram
+1:00:44 PM [express] [Social Publishing] Instagram публикации перенаправляются через n8n
+1:00:44 PM [express] [Social Publishing] Публикация контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 в instagram через n8n вебхук
+1:00:44 PM [express] [Social Publishing] Сформирован URL для n8n webhook: https://n8n.nplanner.ru/webhook/publish-instagram
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+1:00:49 PM [express] GET /api/auth/me 200 in 10ms
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:00:50 PM [express] GET /api/campaign-content 200 in 1043ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+1:01:00 PM [express] [Social Publishing] Отправлены данные в n8n вебхук: contentId=046d37c8-f4fc-4b1f-b1eb-28a0fea36787, platform=instagram
+1:01:00 PM [express] [Social Publishing] Данные извлекаются из Directus по contentId
+1:01:00 PM [express] [Social Publishing] Ответ от n8n вебхука: {"id":"046d37c8-f4fc-4b1f-b1eb-28a0fea36787","campaign_id":"46868c44-c6a4-4bed-accf-9ad07bba790e","user_id":"53921f16-f51d-4591-80b9-8caa4fde4d13","content":"<p>Попробуйте наши куриные рубленные котлетки с сыром — идеальное сочетание вкуса и пользы. Этот рецепт поможет вам разнообразить меню ваших клиентов, предлагая им не только вкусные, но и полезные блюда.</p>","content_type":"text-image","image_url":"https://v3.fal.media/files/koala/HWPsI45m-U5HGa7GNGDhj.png","video_url":null,"prompt":"Juicy chicken cutlets with melted cheese on top, served with a side of fresh vegetables on a white plate.","keywords":"[\"котлеты\",\"рецепты\",\"здоровое питание\"]","created_at":"2025-04-29T11:46:09.696Z","scheduled_at":null,"published_at":"2025-04-29T16:01:00.297Z","status":"scheduled","social_platforms":{"vk":{"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","publishedAt":"2025-04-29T12:59:56.775Z"},"facebook":{"error":null,"postId":"989812569972704","status":"published","postUrl":"https://facebook.com/989812569972704","selected":true,"publishedAt":"2025-04-29T13:00:44.144Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"postId":"18063318314023072","status":"published","postUrl":"https://www.instagram.com/p/DJCAlAMo7KD/","platform":"instagram","publishedAt":"2025-04-29T13:01:00.278Z"}},"title":"Куриные рубленные котлетки с сыром","additional_images":[],"additional_media":null}
+1:01:00 PM [express] [Social Publishing] Обновление статуса платформы instagram для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 на "published"
+1:01:00 PM [directus-auth] Found 1 active sessions
+Запрос контента по ID: 046d37c8-f4fc-4b1f-b1eb-28a0fea36787
+Пробуем получить владельца контента другими способами
+Пробуем получить контент без токена авторизации
+Directus API Error: {
+  errors: [
+    {
+      message: `You don't have permission to access collection "campaign_content" or it does not exist. Queried in root.`,
+      extensions: [Object]
+    }
+  ]
+}
+Не удалось получить контент без авторизации: Request failed with status code 403
+Контент с ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 не найден ни одним из способов
+1:01:00 PM [express] [Social Publishing] Не удалось получить контент 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 или нет настроек платформ
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:01:03 PM [express] GET /api/campaign-content 200 in 806ms :: {"data":[{"id":"fe3ea742-7b27-45e7-aa…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:01:15 PM [express] GET /api/campaign-content 304 in 1058ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+1:01:24 PM [express] POST /api/auth/refresh 200 in 3ms
+1:01:24 PM [express] GET /api/auth/me 200 in 4ms
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+Fetching campaigns for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Sending request to Directus with filter user_id = 53921f16-f51d-4591-80b9-8caa4fde4d13
+Filtering server-side for userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Found 9 campaigns for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (filtered from 9 total)
+All campaign user_ids in response: 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13
+User ID from request: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Types - userId: string first db userId: string
+1:01:25 PM [express] GET /api/campaigns 304 in 592ms :: {"data":[{"id":"45daab2a-4c6f-4578-8665-3a04…
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:01:26 PM [express] GET /api/campaign-content 304 in 1097ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+1:01:36 PM [directus-auth] Checking for expiring sessions
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+1:01:36 PM [scheduler] Проверка запланированных публикаций
+1:01:36 PM [scheduler] Используем кэшированный токен администратора из планировщика
+1:01:36 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+1:01:37 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+1:01:37 PM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+1:01:37 PM [scheduler] Получено 77 публикаций со статусом 'draft'
+1:01:37 PM [scheduler] Получено 77 запланированных публикаций через API
+1:01:37 PM [scheduler] Найдено 77 запланированных публикаций
+1:01:37 PM [scheduler] Проверка времени публикации для контента ID 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 "Куриные рубленные котлетки с сыром":
+1:01:37 PM [scheduler]   - vk: уже опубликован
+1:01:37 PM [scheduler]   - facebook: уже опубликован
+1:01:37 PM [scheduler]   - telegram: уже опубликован
+1:01:37 PM [scheduler]   - instagram: уже опубликован
+1:01:37 PM [scheduler] Проверка времени публикации для контента ID d79562d5-e276-4fd8-a398-de42c1f49f13 "ПП":
+1:01:37 PM [scheduler]   - vk: нет данных о времени публикации
+1:01:37 PM [scheduler]   - telegram: нет данных о времени публикации
+1:01:37 PM [scheduler] Нет контента, готового к публикации по времени
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:01:37 PM [express] GET /api/campaign-content 304 in 1084ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:01:49 PM [express] GET /api/campaign-content 304 in 1049ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:02:01 PM [express] GET /api/campaign-content 304 in 1056ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 3 ["кабачки","ПП","здоровое питание"]
+1:02:13 PM [express] GET /api/campaign-content 304 in 1343ms :: {"data":[{"id":"fe3ea742-7b27-45e7-a…
