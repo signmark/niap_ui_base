@@ -224,17 +224,33 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           const content = await storage.getCampaignContentById(contentId);
           
           if (content && content.socialPlatforms) {
-            // Проверяем все ли платформы опубликованы
+            // Проверяем статусы платформ
             const socialPlatforms = content.socialPlatforms;
             const allPlatforms = Object.keys(socialPlatforms);
+            
+            // Получаем успешно опубликованные платформы
             const publishedPlatforms = Object.entries(socialPlatforms)
               .filter(([_, data]) => data.status === 'published')
               .map(([platform]) => platform);
             
-            const allPlatformsPublished = publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length;
-            log(`[Social Publishing] Проверка статусов платформ для контента ${contentId}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length}`);
+            // Получаем платформы в статусе pending (для логирования)
+            const pendingPlatforms = Object.entries(socialPlatforms)
+              .filter(([_, data]) => data.status === 'pending')
+              .map(([platform]) => platform);
             
-            if (allPlatformsPublished) {
+            log(`[Social Publishing] Проверка статусов платформ для контента ${contentId}: опубликовано ${publishedPlatforms.length}/${allPlatforms.length}, в ожидании: ${pendingPlatforms.join(', ')}`);           
+            
+            // ИСПРАВЛЕНО: Считаем контент опубликованным, если все платформы кроме facebook опубликованы
+            // Также учитываем случай, когда все платформы опубликованы
+            const nonFacebookPlatforms = allPlatforms.filter(p => p !== 'facebook');
+            const nonFacebookPublished = nonFacebookPlatforms.length > 0 && 
+              nonFacebookPlatforms.every(p => socialPlatforms[p]?.status === 'published');
+            
+            const allPlatformsPublished = publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length;
+            const shouldMarkAsPublished = allPlatformsPublished || 
+                                         (nonFacebookPublished && pendingPlatforms.length === 1 && pendingPlatforms[0] === 'facebook');
+                                         
+            if (shouldMarkAsPublished) {
               log(`[Social Publishing] Автоматическое обновление статуса для контента ${contentId} на published - ВСЕ платформы опубликованы`);
               
               await storage.updateCampaignContent(
