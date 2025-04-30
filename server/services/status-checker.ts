@@ -35,8 +35,11 @@ class PublicationStatusChecker {
     // Запускаем немедленную первую проверку
     this.checkPublicationStatuses();
     
-    // Выполним специальную проверку проблемного контента
-    this.checkSpecificContentIssue('1cf8078e-c280-4aee-9f86-01fc89c2f976');
+    // Выполним специальную проверку проблемного контента после небольшой задержки,
+    // чтобы дать время на инициализацию токенов и авторизацию
+    setTimeout(() => {
+      this.checkSpecificContentIssue('1cf8078e-c280-4aee-9f86-01fc89c2f976');
+    }, 15000); // Задержка в 15 секунд
     
     // Запускаем регулярные проверки по интервалу
     this.intervalId = setInterval(() => {
@@ -432,15 +435,41 @@ class PublicationStatusChecker {
     try {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID ${contentId}`, 'status-checker');
       
-      // Получаем токен администратора используя DirectusAuthManager
-      const adminSession = await directusAuthManager.getAdminSession();
-      if (!adminSession || !adminSession.token) {
-        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить сессию администратора через DirectusAuthManager`, 'status-checker');
+      // Получаем токен из активных сессий через DirectusAuthManager
+      const activeSessions = directusAuthManager.getAllActiveSessions();
+      
+      if (!activeSessions || activeSessions.length === 0) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Нет активных сессий в DirectusAuthManager`, 'status-checker');
+        
+        // Пробуем авторизоваться напрямую через переменные окружения
+        const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+        if (adminToken) {
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Использован токен из переменных окружения`, 'status-checker');
+          this.runContentCheck(contentId, adminToken);
+          return;
+        }
+        
         return;
       }
       
-      const adminToken = adminSession.token;
-      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен через DirectusAuthManager (ID: ${adminSession.id})`, 'status-checker');
+      // Берем первую активную сессию и используем ее токен
+      const firstSession = activeSessions[0];
+      const adminToken = firstSession.token;
+      
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен из активной сессии ${firstSession.userId}`, 'status-checker');
+      this.runContentCheck(contentId, adminToken);
+    } catch (error: any) {
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка при получении токена: ${error.message}`, 'status-checker');
+    }
+  }
+  
+  /**
+   * Выполняет проверку и обновление статуса контента
+   * @param contentId ID контента
+   * @param adminToken Токен администратора
+   */
+  private async runContentCheck(contentId: string, adminToken: string) {
+    try {
       
       // Получаем данные о контенте напрямую
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
