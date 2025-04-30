@@ -75,6 +75,7 @@ class PublicationStatusChecker {
     // Проверяем режим вывода логов
     const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
     
+    // Проверяем кэш
     if (this.adminTokenCache && (Date.now() - this.adminTokenTimestamp) < this.tokenExpirationMs) {
       if (isVerboseMode) {
         log('Использование кэшированного токена администратора', 'status-checker');
@@ -82,18 +83,41 @@ class PublicationStatusChecker {
       return this.adminTokenCache;
     }
     
-    // Сначала пробуем получить токен из переменных окружения
-    const envToken = process.env.DIRECTUS_ADMIN_TOKEN;
-    if (envToken) {
+    // Пробуем получить токен из активных сессий DirectusAuthManager
+    const activeSessions = directusAuthManager.getAllActiveSessions();
+    if (activeSessions && activeSessions.length > 0) {
+      const firstSession = activeSessions[0];
       if (isVerboseMode) {
-        log('Использование токена администратора из переменных окружения', 'status-checker');
+        log(`Использование токена из активной сессии пользователя ${firstSession.userId}`, 'status-checker');
       }
-      this.adminTokenCache = envToken;
+      
+      // Кэшируем токен
+      this.adminTokenCache = firstSession.token;
       this.adminTokenTimestamp = Date.now();
-      return envToken;
+      return firstSession.token;
     }
     
-    // Если в переменных нет токена, пытаемся получить его через авторизацию
+    // Если нет активных сессий, запрашиваем сессию администратора
+    try {
+      const adminSession = await directusAuthManager.getAdminSession();
+      if (adminSession && adminSession.token) {
+        if (isVerboseMode) {
+          log(`Использование токена из сессии администратора ${adminSession.id}`, 'status-checker');
+        }
+        
+        // Кэшируем токен
+        this.adminTokenCache = adminSession.token;
+        this.adminTokenTimestamp = Date.now();
+        return adminSession.token;
+      }
+    } catch (error: any) {
+      if (isVerboseMode) {
+        log(`Ошибка при получении сессии администратора: ${error.message}`, 'status-checker');
+      }
+    }
+    
+    // Если не удалось получить токен через DirectusAuthManager, 
+    // пытаемся выполнить авторизацию напрямую
     try {
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
@@ -119,6 +143,17 @@ class PublicationStatusChecker {
         const token = authResponse.data.data.access_token;
         if (isVerboseMode) {
           log('Получен новый токен администратора', 'status-checker');
+        }
+        
+        // Сохраняем сессию в DirectusAuthManager
+        directusAuthManager.addAdminSession({
+          id: authResponse.data.data.user.id,
+          token: token,
+          email: authResponse.data.data.user.email
+        });
+        
+        if (isVerboseMode) {
+          log(`Сессия администратора добавлена в DirectusAuthManager (${authResponse.data.data.user.id})`, 'status-checker');
         }
         
         // Кэшируем токен
@@ -435,28 +470,15 @@ class PublicationStatusChecker {
     try {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID ${contentId}`, 'status-checker');
       
-      // Получаем токен из активных сессий через DirectusAuthManager
-      const activeSessions = directusAuthManager.getAllActiveSessions();
+      // Используем одинаковую логику получения токена как в getAdminToken
+      const adminToken = await this.getAdminToken();
       
-      if (!activeSessions || activeSessions.length === 0) {
-        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Нет активных сессий в DirectusAuthManager`, 'status-checker');
-        
-        // Пробуем авторизоваться напрямую через переменные окружения
-        const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
-        if (adminToken) {
-          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Использован токен из переменных окружения`, 'status-checker');
-          this.runContentCheck(contentId, adminToken);
-          return;
-        }
-        
+      if (!adminToken) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить токен администратора`, 'status-checker');
         return;
       }
       
-      // Берем первую активную сессию и используем ее токен
-      const firstSession = activeSessions[0];
-      const adminToken = firstSession.token;
-      
-      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен из активной сессии ${firstSession.userId}`, 'status-checker');
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен администратора`, 'status-checker');
       this.runContentCheck(contentId, adminToken);
     } catch (error: any) {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка при получении токена: ${error.message}`, 'status-checker');
@@ -515,9 +537,9 @@ class PublicationStatusChecker {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Анализ данных платформ: ${JSON.stringify(platformsData)}`, 'status-checker');
       
       // Получаем списки платформ по статусам
-      const selectedPlatforms = Object.entries(platformsData)
-        .filter(([_, platformData]: [string, any]) => platformData?.selected)
-        .map(([platform]) => platform);
+      // В некоторых контентах признак выбранности может отсутствовать, 
+      // считаем выбранными платформы с любым статусом (published, failed и т.д.)
+      const selectedPlatforms = Object.keys(platformsData);
         
       const publishedPlatforms = Object.entries(platformsData)
         .filter(([_, platformData]: [string, any]) => platformData?.selected && platformData?.status === 'published')
