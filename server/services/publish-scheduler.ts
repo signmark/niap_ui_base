@@ -411,22 +411,20 @@ export class PublishScheduler {
           log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'scheduler');
 
           // Проверяем условия для обновления статуса
-          // Старый критерий - все выбранные платформы в статусе published или failed, и хотя бы одна published
-          const allSelectedPublishedOrFailed = selectedPlatforms.length === (publishedPlatforms.length + failedPlatforms.length);
-          const atLeastOnePublished = publishedPlatforms.length > 0;
-          
-          // Новый критерий - все выбранные платформы имеют статус published (без учета failed)
+          // Обновляем статус ТОЛЬКО если ВСЕ выбранные платформы имеют статус published
+          // Статус error игнорируем и не меняем основной статус контента
           const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
           
-          // Обновляем статус если все выбранные платформы опубликованы (все имеют статус published)
+          // Если есть ошибки в публикации, логируем их
+          if (failedPlatforms.length > 0) {
+            log(`Контент ${item.id}: обнаружены платформы с ошибками (${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')})`, 'scheduler');
+            log(`Статус контента ${item.id} НЕ будет изменен из-за наличия ошибок публикации`, 'scheduler');
+          }
+          
+          // Обновляем статус ТОЛЬКО если все выбранные платформы опубликованы (все имеют статус published)
           if (allSelectedPublished) {
             log(`Контент ${item.id}: все платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length})`, 'scheduler');
             log(`Обновление основного статуса контента ${item.id} на "published", так как все выбранные платформы опубликованы`, 'scheduler');
-          }
-          // Или обновляем по старому критерию - все платформы в финальном статусе и хотя бы одна опубликована
-          else if (allSelectedPublishedOrFailed && atLeastOnePublished) {
-            log(`Контент ${item.id}: опубликовано ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, с ошибками: ${failedPlatforms.length}`, 'scheduler');
-            log(`Обновление основного статуса контента ${item.id} на "published" после публикации во всех платформах или неудачи публикации`, 'scheduler');
             
             try {
               // Обновляем статус на "published"
@@ -609,19 +607,23 @@ export class PublishScheduler {
         let anyPlatformPending = false;
         let logMessages = [];
         
-        // Сначала проверяем, есть ли платформы в статусе pending - это наивысший приоритет
+        // Сначала проверяем, есть ли платформы в статусе pending или scheduled - это наивысший приоритет
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
           // Если платформа выбрана и статус pending - публикуем НЕМЕДЛЕННО
           if (platformData?.selected === true && platformData?.status === 'pending') {
             logMessages.push(`${platform}: статус pending - ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
             anyPlatformPending = true;
-            // Не прерываем цикл, чтобы увидеть все платформы в pending
+          }
+          // Если платформа выбрана и статус scheduled - также готова к публикации
+          if (platformData?.selected === true && platformData?.status === 'scheduled') {
+            logMessages.push(`${platform}: статус scheduled - ГОТОВ К ЗАПЛАНИРОВАННОЙ ПУБЛИКАЦИИ`);
+            anyPlatformPending = true;
           }
         }
         
-        // Если есть хотя бы одна платформа в pending, возвращаем true без проверки времени
+        // Если есть хотя бы одна платформа в pending или scheduled, возвращаем true без проверки времени
         if (anyPlatformPending) {
-            log(`НАЙДЕНЫ ПЛАТФОРМЫ В СТАТУСЕ PENDING - обрабатываем немедленно`, 'scheduler');
+            log(`НАЙДЕНЫ ПЛАТФОРМЫ В СТАТУСЕ PENDING ИЛИ SCHEDULED - обрабатываем немедленно`, 'scheduler');
             return true;
         }
         
