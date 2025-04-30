@@ -234,6 +234,15 @@ class PublicationStatusChecker {
           })
           .map(([platform]) => platform);
         
+        // Логируем текущее состояние платформ для отладки
+        if (isVerboseMode) {
+          log(`Контент ${item.id}: "${item.title}" - статусы платформ:`, 'status-checker');
+          log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'status-checker');
+          log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'status-checker');
+          log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'status-checker');
+          log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'status-checker');
+        }
+        
         // Проверка условий для обновления статуса
         const allPublished = selectedPlatforms.length > 0 && 
                             selectedPlatforms.length === publishedPlatforms.length;
@@ -262,7 +271,7 @@ class PublicationStatusChecker {
             // Обновляем статус через storage для более высокой надежности
             const updated = await storage.updateCampaignContent(
               item.id,
-              { status: newStatus, publishedAt: new Date() },
+              { status: newStatus },
               adminToken
             );
             
@@ -278,12 +287,118 @@ class PublicationStatusChecker {
         processedItems++;
       }
       
+      // После обновления статусов "draft" и "scheduled", проверяем опубликованный контент,
+      // чтобы выявить случаи, когда контент помечен как опубликованный, но не все платформы опубликованы
+      await this.checkPublishedContentWithPendingPlatforms(adminToken);
+      
       // Только если были обновления, выводим статистику
       if (updatedItems > 0) {
         log(`Обновлено ${updatedItems} контент(ов)`, 'status-checker');
       }
     } catch (error: any) {
       log(`Ошибка при проверке статусов публикаций: ${error.message}`, 'status-checker');
+    }
+  }
+  
+  /**
+   * Проверяет контент в статусе 'published' на наличие платформ в ожидании публикации
+   * Если такие есть, возвращает статус контента в 'scheduled'
+   */
+  private async checkPublishedContentWithPendingPlatforms(adminToken: string) {
+    try {
+      // Проверяем режим вывода логов
+      const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
+      
+      if (isVerboseMode) {
+        log('Поиск контента со статусом \'published\', у которого есть платформы в статусе \'pending\'', 'status-checker');
+      }
+      
+      // Получаем контент со статусом 'published'
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      const response = await axios.get(
+        `${directusUrl}/items/campaign_content?filter[status][_eq]=published&limit=100`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response?.data?.data || !Array.isArray(response.data.data)) {
+        if (isVerboseMode) {
+          log('API вернул некорректный формат данных для published контента', 'status-checker');
+        }
+        return;
+      }
+      
+      const publishedContent = response.data.data;
+      
+      let revertedItems = 0;
+      
+      // Проверяем каждый опубликованный контент
+      for (const item of publishedContent) {
+        // Проверяем наличие поля social_platforms
+        if (!item.social_platforms) {
+          continue;
+        }
+        
+        // Преобразование данных социальных платформ, если они хранятся в виде строки
+        let platformsData = item.social_platforms;
+        if (typeof platformsData === 'string') {
+          try {
+            platformsData = JSON.parse(platformsData);
+          } catch (error) {
+            continue;
+          }
+        }
+        
+        // Если данные платформ не являются объектом, пропускаем
+        if (!platformsData || typeof platformsData !== 'object') {
+          continue;
+        }
+        
+        // Проверяем, есть ли платформы в статусе pending или scheduled
+        const pendingPlatforms = Object.entries(platformsData)
+          .filter(([_, platformData]: [string, any]) => {
+            return platformData?.selected && 
+                  ['pending', 'scheduled'].includes(platformData?.status);
+          })
+          .map(([platform]) => platform);
+          
+        // Если есть ожидающие платформы, а контент в статусе published, исправляем статус
+        if (pendingPlatforms.length > 0) {
+          // Логируем детальную информацию
+          if (isVerboseMode) {
+            log(`Найден контент ${item.id}: "${item.title}" в статусе 'published', но с платформами в ожидании: ${pendingPlatforms.join(', ')}`, 'status-checker');
+          }
+          
+          try {
+            // Возвращаем статус в scheduled
+            const updated = await storage.updateCampaignContent(
+              item.id,
+              { status: 'scheduled' },
+              adminToken
+            );
+            
+            if (updated) {
+              log(`Возвращен статус контента ID ${item.id} из published в scheduled - найдены платформы в ожидании`, 'status-checker');
+              revertedItems++;
+            }
+          } catch (updateError: any) {
+            log(`Ошибка при обновлении статуса контента ${item.id}: ${updateError}`, 'status-checker');
+          }
+        }
+      }
+      
+      if (revertedItems > 0) {
+        log(`Возвращено в статус 'scheduled': ${revertedItems} контент(ов)`, 'status-checker');
+      } else if (isVerboseMode) {
+        log('Не найдено контента, требующего обновления статуса', 'status-checker');
+      }
+    } catch (error: any) {
+      log(`Ошибка при проверке опубликованного контента: ${error.message}`, 'status-checker');
     }
   }
 }
