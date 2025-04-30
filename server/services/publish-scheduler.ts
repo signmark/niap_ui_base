@@ -411,14 +411,22 @@ export class PublishScheduler {
           log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'scheduler');
 
           // Проверяем условия для обновления статуса
+          // Старый критерий - все выбранные платформы в статусе published или failed, и хотя бы одна published
           const allSelectedPublishedOrFailed = selectedPlatforms.length === (publishedPlatforms.length + failedPlatforms.length);
           const atLeastOnePublished = publishedPlatforms.length > 0;
           
-          // Обновляем статус только если все выбранные платформы достигли финального статуса (published или failed)
-          // И при этом хотя бы одна платформа была успешно опубликована
-          if (allSelectedPublishedOrFailed && atLeastOnePublished) {
-            log(`Контент ${item.id}: опубликовано ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, ожидает публикации: ${pendingPlatforms.length}`, 'scheduler');
-            log(`Обновление основного статуса контента ${item.id} на "published" после публикации во всех платформах или в отсутствии запланированных платформ`, 'scheduler');
+          // Новый критерий - все выбранные платформы имеют статус published (без учета failed)
+          const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+          
+          // Обновляем статус если все выбранные платформы опубликованы (все имеют статус published)
+          if (allSelectedPublished) {
+            log(`Контент ${item.id}: все платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length})`, 'scheduler');
+            log(`Обновление основного статуса контента ${item.id} на "published", так как все выбранные платформы опубликованы`, 'scheduler');
+          }
+          // Или обновляем по старому критерию - все платформы в финальном статусе и хотя бы одна опубликована
+          else if (allSelectedPublishedOrFailed && atLeastOnePublished) {
+            log(`Контент ${item.id}: опубликовано ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, с ошибками: ${failedPlatforms.length}`, 'scheduler');
+            log(`Обновление основного статуса контента ${item.id} на "published" после публикации во всех платформах или неудачи публикации`, 'scheduler');
             
             try {
               // Обновляем статус на "published"
