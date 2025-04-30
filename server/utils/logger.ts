@@ -16,7 +16,7 @@ export const DEBUG_LEVELS = {
   // Отладка социальных платформ
   SOCIAL: true,
   // Отладка сервиса проверки статусов
-  STATUS_CHECKER: false
+  STATUS_CHECKER: true
 };
 
 /**

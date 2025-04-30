@@ -34,6 +34,9 @@ class PublicationStatusChecker {
     // Запускаем немедленную первую проверку
     this.checkPublicationStatuses();
     
+    // Выполним специальную проверку проблемного контента
+    this.checkSpecificContentIssue('1cf8078e-c280-4aee-9f86-01fc89c2f976');
+    
     // Запускаем регулярные проверки по интервалу
     this.intervalId = setInterval(() => {
       this.checkPublicationStatuses();
@@ -417,6 +420,139 @@ class PublicationStatusChecker {
       }
     } catch (error: any) {
       log(`Ошибка при проверке опубликованного контента: ${error.message}`, 'status-checker');
+    }
+  }
+  
+  /**
+   * Специальная функция для проверки и исправления проблемного контента
+   * @param contentId ID проблемного контента
+   */
+  private async checkSpecificContentIssue(contentId: string) {
+    try {
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID ${contentId}`, 'status-checker');
+      
+      // Получаем токен администратора для запросов
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить токен администратора`, 'status-checker');
+        return;
+      }
+      
+      // Получаем данные о контенте напрямую
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      const response = await axios.get(
+        `${directusUrl}/items/campaign_content/${contentId}`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response?.data?.data) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: API вернул некорректный формат данных`, 'status-checker');
+        return;
+      }
+      
+      const item = response.data.data;
+      
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Получены данные контента "${item.title}" (статус: ${item.status})`, 'status-checker');
+      
+      // Проверяем наличие поля social_platforms
+      if (!item.social_platforms) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Отсутствует поле social_platforms`, 'status-checker');
+        return;
+      }
+      
+      // Преобразование данных платформ, если они в строке
+      let platformsData = item.social_platforms;
+      if (typeof platformsData === 'string') {
+        try {
+          platformsData = JSON.parse(platformsData);
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Разобраны данные платформ из строки JSON`, 'status-checker');
+        } catch (error) {
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка разбора JSON данных платформ`, 'status-checker');
+          return;
+        }
+      }
+      
+      // Анализируем данные платформ
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Анализ данных платформ: ${JSON.stringify(platformsData)}`, 'status-checker');
+      
+      // Получаем списки платформ по статусам
+      const selectedPlatforms = Object.entries(platformsData)
+        .filter(([_, platformData]: [string, any]) => platformData?.selected)
+        .map(([platform]) => platform);
+        
+      const publishedPlatforms = Object.entries(platformsData)
+        .filter(([_, platformData]: [string, any]) => platformData?.selected && platformData?.status === 'published')
+        .map(([platform]) => platform);
+        
+      const pendingPlatforms = Object.entries(platformsData)
+        .filter(([_, platformData]: [string, any]) => {
+          return platformData?.selected && 
+                 platformData?.status !== 'published' && 
+                 platformData?.status !== 'failed' && 
+                 !platformData?.error;
+        })
+        .map(([platform]) => platform);
+      
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'status-checker');
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'status-checker');
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'status-checker');
+      
+      // Проверка условий и принудительное обновление при необходимости
+      const allPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === publishedPlatforms.length;
+      const allFinalized = pendingPlatforms.length === 0 && selectedPlatforms.length > 0;
+      
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: allPublished = ${allPublished}`, 'status-checker');
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: allFinalized = ${allFinalized}`, 'status-checker');
+      
+      if ((allPublished || (allFinalized && publishedPlatforms.length > 0)) && item.status !== 'published') {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительное обновление статуса на 'published'`, 'status-checker');
+        
+        // Принудительно обновляем статус
+        try {
+          // Попробуем обновить через storage
+          const updated = await storage.updateCampaignContent(contentId, { status: 'published' }, adminToken);
+          
+          if (updated) {
+            log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно обновлен статус через storage`, 'status-checker');
+          } else {
+            log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось обновить через storage, попытка через API`, 'status-checker');
+            
+            // Если не удалось через storage, пробуем напрямую через API
+            const updateResponse = await axios.patch(
+              `${directusUrl}/items/campaign_content/${contentId}`,
+              { status: 'published' },
+              {
+                headers: {
+                  'Authorization': `Bearer ${adminToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (updateResponse.status >= 200 && updateResponse.status < 300) {
+              log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно обновлен статус через API`, 'status-checker');
+            } else {
+              log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось обновить статус через API: ${updateResponse.status}`, 'status-checker');
+            }
+          }
+        } catch (updateError: any) {
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка при обновлении статуса: ${updateError.message}`, 'status-checker');
+        }
+      } else {
+        if (item.status === 'published') {
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Контент уже имеет статус 'published', обновление не требуется`, 'status-checker');
+        } else {
+          log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Условия для обновления статуса не выполнены`, 'status-checker');
+        }
+      }
+    } catch (error: any) {
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка при проверке контента: ${error.message}`, 'status-checker');
     }
   }
 }
