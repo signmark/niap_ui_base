@@ -12,7 +12,7 @@ import { SocialPlatform } from '@shared/schema';
 class PublicationStatusChecker {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
-  private checkIntervalMs = 5 * 60 * 1000; // проверка каждые 5 минут
+  private checkIntervalMs = 1 * 60 * 1000; // проверка каждую 1 минуту вместо 5
   
   // Кэш токенов администратора для использования в API запросах
   private adminTokenCache: string | null = null;
@@ -28,7 +28,8 @@ class PublicationStatusChecker {
       return;
     }
     
-    log('Запуск сервиса проверки статусов публикаций', 'status-checker');
+    const minutesInterval = this.checkIntervalMs / (60 * 1000);
+    log(`Запуск сервиса проверки статусов публикаций (интервал: ${minutesInterval} минут)`, 'status-checker');
     
     // Запускаем немедленную первую проверку
     this.checkPublicationStatuses();
@@ -39,6 +40,9 @@ class PublicationStatusChecker {
     }, this.checkIntervalMs);
     
     this.isRunning = true;
+    
+    // Выводим лог с информацией о следующей проверке
+    log(`Следующая проверка статусов через ${minutesInterval} минуту`, 'status-checker');
   }
   
   /**
@@ -234,13 +238,21 @@ class PublicationStatusChecker {
           })
           .map(([platform]) => platform);
         
-        // Логируем текущее состояние платформ для отладки
-        if (isVerboseMode) {
-          log(`Контент ${item.id}: "${item.title}" - статусы платформ:`, 'status-checker');
-          log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'status-checker');
-          log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'status-checker');
-          log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'status-checker');
-          log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'status-checker');
+        // Всегда логируем состояние платформ, особенно для проблемных контентов
+        log(`Контент ${item.id}: "${item.title}" - статусы платформ:`, 'status-checker');
+        log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'status-checker');
+        log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'status-checker');
+        log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'status-checker');
+        log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'status-checker');
+        
+        // Специально проверяем контент, с которым возникают проблемы
+        if (item.id === '1cf8078e-c280-4aee-9f86-01fc89c2f976') {
+          log(`ДЕТАЛЬНАЯ ПРОВЕРКА проблемного контента ${item.id}:`, 'status-checker');
+          log(`  - Текущий статус: ${item.status}`, 'status-checker');
+          log(`  - Сырые данные платформ: ${JSON.stringify(platformsData)}`, 'status-checker');
+          log(`  - selectedPlatforms.length = ${selectedPlatforms.length}`, 'status-checker');
+          log(`  - publishedPlatforms.length = ${publishedPlatforms.length}`, 'status-checker');
+          log(`  - pendingPlatforms.length = ${pendingPlatforms.length}`, 'status-checker');
         }
         
         // Проверка условий для обновления статуса
@@ -253,6 +265,12 @@ class PublicationStatusChecker {
         // Определяем необходимость обновления статуса
         let shouldUpdateStatus = false;
         let newStatus = item.status;
+        
+        // Дополнительная отладка после вычисления условий
+        if (item.id === '1cf8078e-c280-4aee-9f86-01fc89c2f976') {
+          log(`  - allPublished = ${allPublished}`, 'status-checker');
+          log(`  - allFinalized = ${allFinalized}`, 'status-checker');
+        }
         
         if (allPublished) {
           // Если все платформы опубликованы, ставим статус 'published'
