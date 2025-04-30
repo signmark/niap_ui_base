@@ -8,6 +8,7 @@ import axios from 'axios';
 import { log, DEBUG_LEVELS } from '../utils/logger';
 import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
+import { directusAuthManager } from '../services/directus-auth-manager';
 
 class PublicationStatusChecker {
   private intervalId: NodeJS.Timeout | null = null;
@@ -431,12 +432,15 @@ class PublicationStatusChecker {
     try {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID ${contentId}`, 'status-checker');
       
-      // Получаем токен администратора для запросов
-      const adminToken = await this.getAdminToken();
-      if (!adminToken) {
-        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить токен администратора`, 'status-checker');
+      // Получаем токен администратора используя DirectusAuthManager
+      const adminSession = await directusAuthManager.getAdminSession();
+      if (!adminSession || !adminSession.token) {
+        log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить сессию администратора через DirectusAuthManager`, 'status-checker');
         return;
       }
+      
+      const adminToken = adminSession.token;
+      log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен через DirectusAuthManager (ID: ${adminSession.id})`, 'status-checker');
       
       // Получаем данные о контенте напрямую
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
