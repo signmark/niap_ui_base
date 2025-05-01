@@ -854,22 +854,26 @@ export class PublishScheduler {
             if (freshData.social_platforms && typeof freshData.social_platforms === 'object') {
               const socialPlatforms = freshData.social_platforms;
               
-              // ИСПРАВЛЕНИЕ: Проверяем ВСЕ ли выбранные платформы имеют статус published
-              // Сортируем платформы по статусам и selected
+              // ИСПРАВЛЕНИЕ: Проверяем ВСЕ ли платформы в JSON имеют статус published
+              // Сортируем платформы по статусам
               const selectedPlatforms = [];
               const publishedPlatforms = [];
               const pendingPlatforms = [];
+              let hasPendingStatusAnyPlatform = false;
               
-              // Проходим по всем платформам и фильтруем только выбранные
+              // ВАЖНО: Все платформы в JSON должны обрабатываться независимо от флага selected
+              
+              // Проходим по всем платформам и собираем статистику
               for (const [platform, data] of Object.entries(socialPlatforms)) {
-                if (data && data.selected === true) {
-                  selectedPlatforms.push(platform);
-                  
-                  if (data.status === 'published') {
-                    publishedPlatforms.push(platform);
-                  } else if (data.status === 'pending' || data.status === 'scheduled') {
-                    pendingPlatforms.push(platform);
-                  }
+                // Все платформы заносим в общий список
+                selectedPlatforms.push(platform);
+                
+                if (data.status === 'published') {
+                  publishedPlatforms.push(platform);
+                } else if (data.status === 'pending' || data.status === 'scheduled') {
+                  pendingPlatforms.push(platform);
+                  hasPendingStatusAnyPlatform = true;
+                  log(`Обнаружена платформа ${platform} в статусе '${data.status}', блокируем обновление до published`, 'scheduler');
                 }
               }
               
@@ -885,7 +889,7 @@ export class PublishScheduler {
               
               // ИСПРАВЛЕНИЕ: Обновляем статус только когда ВСЕ выбранные платформы опубликованы
               if (allSelectedPublished && selectedPlatforms.length > 0) {
-                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован ВО ВСЕХ (${publishedPlatforms.length}/${allPlatforms.length}) соцсетях, обновляем статус`, 'scheduler');
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован ВО ВСЕХ (${publishedPlatforms.length}/${selectedPlatforms.length}) соцсетях, обновляем статус`, 'scheduler');
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
@@ -898,9 +902,9 @@ export class PublishScheduler {
                   { headers: { 'Authorization': `Bearer ${authToken}` } }
                 );
                 continue;
-              } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < allPlatforms.length) {
+              } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < selectedPlatforms.length) {
                 // Устанавливаем статус "publishing" (частично опубликован), если часть платформ опубликованы
-                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${allPlatforms.length} соцсетях, устанавливаем статус scheduled`, 'scheduler');
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${selectedPlatforms.length} соцсетях, устанавливаем статус scheduled`, 'scheduler');
                 
                 // Изменяем статус на scheduled, если он draft, чтобы показать что процесс публикации начался
                 if (freshData.status === 'draft') {
@@ -912,7 +916,7 @@ export class PublishScheduler {
                 }
                 // Не прерываем, чтобы контент был добавлен в список для публикации
                 // Если опубликованы НЕ ВСЕ платформы - продолжаем публикацию остальных
-                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${allPlatforms.length} соцсетях, продолжаем публикацию`, 'scheduler');
+                log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован только в ${publishedPlatforms.length}/${selectedPlatforms.length} соцсетях, продолжаем публикацию`, 'scheduler');
               }
             }
             

@@ -240,24 +240,30 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     const pendingPlatforms = [];
     const errorPlatforms = [];
     
-    // Детальный анализ платформ
+    // Детальный анализ всех платформ
+    let hasPendingStatusAnyPlatform = false; // Флаг для проверки pending в любой платформе
+    
+    // ВАЖНО: Все платформы в JSON должны обрабатываться независимо от флага selected
+    // Все платформы, указанные в JSON - значит их надо обрабатывать
+    
+    // Проходим по всем платформам и собираем статистику
     for (const [platform, data] of Object.entries(updatedSocialPlatforms)) {
-      // Проверяем, что платформа выбрана для публикации
-      if (data.selected === true) {
-        selectedPlatforms.push(platform);
-        
-        if (data.status === 'published') {
-          publishedPlatforms.push(platform);
-        } else if (data.status === 'pending' || data.status === 'scheduled') {
-          pendingPlatforms.push(platform);
-        } else if (data.status === 'failed' || data.status === 'error') {
-          errorPlatforms.push(platform);
-        }
+      // Все платформы заносим в общий список
+      selectedPlatforms.push(platform);
+      
+      if (data.status === 'published') {
+        publishedPlatforms.push(platform);
+      } else if (data.status === 'pending' || data.status === 'scheduled') {
+        pendingPlatforms.push(platform);
+        hasPendingStatusAnyPlatform = true;
+        log.info(`[ОтЛАДКА] Обнаружена платформа ${platform} в статусе '${data.status}', блокируем обновление до published`);
+      } else if (data.status === 'failed' || data.status === 'error') {
+        errorPlatforms.push(platform);
       }
     }
     
-    // Проверяем, что ВСЕ выбранные платформы опубликованы
-    // ВАЖНО: Проверять только платформы с selected: true
+    // Проверяем, что ВСЕ платформы в JSON опубликованы
+    // ВАЖНО: Проверять все платформы, а не только с selected: true
     const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
     const hasErrors = errorPlatforms.length > 0;
     const hasPending = pendingPlatforms.length > 0;
@@ -268,8 +274,10 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     log.info(`[ОтЛАДКА] Список опубликованных платформ: ${publishedPlatforms.join(', ')}`);
     log.info(`[ОтЛАДКА] allSelectedPublished = ${allSelectedPublished}`);
     
-    // Обновляем общий статус только если ВСЕ выбранные платформы опубликованы
-    if (allSelectedPublished && selectedPlatforms.length > 0) {
+    // Обновляем общий статус только если:
+    // 1) ВСЕ платформы в JSON опубликованы - независимо от флага selected
+    // 2) И нет платформ в статусе pending или scheduled
+    if (allSelectedPublished && selectedPlatforms.length > 0 && !hasPendingStatusAnyPlatform) {
       log.info(`ВСЕ выбранные платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length}), присваиваем статус published`);
       updates['status'] = 'published';
       updates['published_at'] = new Date().toISOString();
