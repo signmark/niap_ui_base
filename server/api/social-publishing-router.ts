@@ -177,7 +177,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           if (platform === 'facebook') {
             log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
             // Отправляем запрос на прямой эндпоинт Facebook
-            const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+            const appBaseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
             const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
             
             log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
@@ -360,7 +360,7 @@ router.post('/publish', authMiddleware, async (req, res) => {
         // Формируем прямой запрос к facebook-webhook-direct
         try {
           // Получаем базовый URL приложения для формирования полного пути
-          const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+          const appBaseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
           const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
           
           log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
@@ -416,7 +416,8 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     const webhookMap: Record<string, string> = {
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
-      'instagram': 'publish-instagram'
+      'instagram': 'publish-instagram',
+      'facebook': 'publish-facebook'
     };
     
     const webhookName = webhookMap[platform];
@@ -599,7 +600,7 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       // Вызываем напрямую Facebook webhook-direct
       try {
         // Получаем базовый URL приложения для формирования полного пути
-        const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+        const appBaseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
         const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
         
         log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
