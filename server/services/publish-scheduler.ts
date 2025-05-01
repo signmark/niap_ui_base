@@ -428,6 +428,12 @@ export class PublishScheduler {
           let totalPlatformsWithData = 0;
           let platformsWithoutSelected = 0;
           
+          // Дополнительные счетчики для специальной проверки TG+IG
+          let hasTelegram = false;
+          let hasInstagram = false;
+          let telegramPublished = false;
+          let instagramPublished = false;
+          
           for (const platform of allPlatforms) {
             const data = platforms[platform] || {};
             const status = data.status;
@@ -440,6 +446,15 @@ export class PublishScheduler {
             
             if (data.selected === undefined) {
               platformsWithoutSelected++;
+            }
+            
+            // Отслеживаем наличие и статусы Telegram и Instagram
+            if (platform === 'telegram') {
+              hasTelegram = true;
+              telegramPublished = (status === 'published');
+            } else if (platform === 'instagram') {
+              hasInstagram = true;
+              instagramPublished = (status === 'published');
             }
             
             log(`DEBUG: Платформа ${platform}, статус: ${status}, selected: ${isSelected ? 'ДА/НЕ УСТАНОВЛЕНО' : 'НЕТ'}`, 'scheduler');
@@ -489,11 +504,24 @@ export class PublishScheduler {
           const hasPending = pendingPlatforms.length > 0 || scheduledPlatforms.length > 0;
           const onlyErrorsRemain = hasErrors && !hasPending;
           
+          // Дополнительная проверка для случая с TG+IG
+          const isTelegramInstagramCombo = hasTelegram && hasInstagram && allPlatforms.length === 2 && 
+                                      telegramPublished && instagramPublished && item.status === 'scheduled';
+          
+          if (isTelegramInstagramCombo) {
+            log(`ОБНАРУЖЕНА ПРОБЛЕМНАЯ КОМБИНАЦИЯ TG+IG: ${item.id}`, 'scheduler');
+            log(`Обе платформы опубликованы, но статус 'scheduled': telegram(${telegramPublished}), instagram(${instagramPublished})`, 'scheduler');
+          }
+          
           // Обновляем статус
-          if (allPublished) {
+          if (allPublished || isTelegramInstagramCombo) {
             // ТАК КАК ВСЕ платформы были опубликованы, устанавливаем статус "published"
             if (item.status !== 'published') {
-              log(`Обновление статуса контента ${item.id} на 'published' (ВСЕ платформы опубликованы)`, 'scheduler');
+              if (isTelegramInstagramCombo) {
+                log(`Обновление статуса контента ${item.id} на 'published' (СПЕЦИАЛЬНЫЙ СЛУЧАЙ TG+IG)`, 'scheduler');
+              } else {
+                log(`Обновление статуса контента ${item.id} на 'published' (ВСЕ платформы опубликованы)`, 'scheduler');
+              }
               
               try {
                 // Добавляем дату публикации, если она еще не установлена
