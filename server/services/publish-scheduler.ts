@@ -390,9 +390,9 @@ export class PublishScheduler {
               
               if (data.status === 'published') {
                 publishedPlatforms.push(platform);
-              } else if (data.status === 'pending') {
+              } else if (data.status === 'pending' || data.status === 'scheduled') {
                 pendingPlatforms.push(platform);
-              } else if (data.status === 'failed') {
+              } else if (data.status === 'failed' || data.status === 'error') {
                 failedPlatforms.push(platform);
               }
             }
@@ -554,8 +554,33 @@ export class PublishScheduler {
         }
         
         if (pendingResponse?.data?.data) {
-          log(`Получено ${pendingResponse.data.data.length} публикаций со статусом 'draft'`, 'scheduler');
-          allItems = allItems.concat(pendingResponse.data.data);
+          // Фильтруем контент с платформами в статусе pending
+          const pendingItems = pendingResponse.data.data.filter((item: any) => {
+            // Проверяем, есть ли вообще настройки платформ
+            if (!item.social_platforms) return false;
+            
+            // Преобразуем в объект, если это строка
+            let platforms = item.social_platforms;
+            if (typeof platforms === 'string') {
+              try {
+                platforms = JSON.parse(platforms);
+              } catch (e) {
+                return false;
+              }
+            }
+            
+            // Проверяем наличие платформ в статусе pending или scheduled
+            for (const [platform, data] of Object.entries(platforms)) {
+              if ((data?.status === 'pending' || data?.status === 'scheduled') && data?.selected === true) {
+                return true; // Есть хотя бы одна платформа в пендинге - добавляем
+              }
+            }
+            
+            return false;
+          });
+          
+          log(`Получено ${pendingResponse.data.data.length} публикаций со статусом 'draft', из них ${pendingItems.length} с платформами в статусе 'pending'`, 'scheduler');
+          allItems = allItems.concat(pendingItems);
         }
         
         // Используем объединенный список
@@ -1086,12 +1111,20 @@ export class PublishScheduler {
       log(`Проверка платформ для публикации контента ${content.id} "${content.title || ''}":`, 'scheduler');
       
       // Отфильтруем только те платформы, время публикации которых уже наступило
+      // или они находятся в статусе pending
       const platformsToPublish = Object.entries(socialPlatforms)
         .filter(([platform, platformData]) => {
           // Если платформа уже опубликована, пропускаем
           if (platformData.status === 'published') {
             log(`  - ${platform}: статус "published", пропускаем`, 'scheduler');
             return false;
+          }
+          
+          // ИСПРАВЛЕНИЕ: Для платформ в статусе 'pending', всегда включаем 
+          // их в список для публикации независимо от времени
+          if (platformData.status === 'pending') {
+            log(`  - ${platform}: статус "pending", ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`, 'scheduler');
+            return true;
           }
           
           // Если у платформы есть своё scheduledAt, используем его для проверки
