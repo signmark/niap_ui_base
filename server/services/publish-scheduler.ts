@@ -377,43 +377,41 @@ export class PublishScheduler {
           }
           
           // Получаем списки платформ по их статусам
-          const selectedPlatforms = [];
+          const allPlatforms = []; // Все платформы в JSON
           const publishedPlatforms = [];
           const pendingPlatforms = [];
           const failedPlatforms = [];
 
           // Проходим по всем платформам и проверяем их статусы
           for (const [platform, data] of Object.entries(platforms)) {
-            // Проверяем только выбранные платформы
-            if (data.selected === true) {
-              selectedPlatforms.push(platform);
-              
-              if (data.status === 'published') {
-                publishedPlatforms.push(platform);
-              } else if (data.status === 'pending' || data.status === 'scheduled') {
-                pendingPlatforms.push(platform);
-              } else if (data.status === 'failed' || data.status === 'error') {
-                failedPlatforms.push(platform);
-              }
+            // ВАЖНО: Проверяем ВСЕ платформы в JSON, независимо от флага selected
+            allPlatforms.push(platform);
+            
+            if (data.status === 'published') {
+              publishedPlatforms.push(platform);
+            } else if (data.status === 'pending' || data.status === 'scheduled') {
+              pendingPlatforms.push(platform);
+            } else if (data.status === 'failed' || data.status === 'error') {
+              failedPlatforms.push(platform);
             }
           }
 
-          // Если нет выбранных платформ, пропускаем
-          if (selectedPlatforms.length === 0) {
+          // Если нет платформ вообще, пропускаем
+          if (allPlatforms.length === 0) {
             continue;
           }
 
           // Выводим детальную информацию о статусах платформ для этого контента
           log(`Контент ${item.id}: "${item.title || 'Без названия'}" - статусы платформ:`, 'scheduler');
-          log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'scheduler');
+          log(`  - Всего платформ: ${allPlatforms.length} платформ: ${allPlatforms.join(', ')}`, 'scheduler');
           log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'scheduler');
           log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
           log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'scheduler');
 
           // Проверяем условия для обновления статуса
-          // Обновляем статус ТОЛЬКО если ВСЕ выбранные платформы имеют статус published
+          // Обновляем статус ТОЛЬКО если ВСЕ платформы имеют статус published
           // Статус error игнорируем и не меняем основной статус контента
-          const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+          const allPlatformsPublished = allPlatforms.length === publishedPlatforms.length && allPlatforms.length > 0;
           
           // Проверяем наличие ошибок и платформ в ожидании
           const hasErrors = failedPlatforms.length > 0;
@@ -422,8 +420,8 @@ export class PublishScheduler {
           // Для наглядности добавим проверку, что все платформы завершили публикацию (либо опубликованы, либо ошибка)
           const allFinalized = (publishedPlatforms.length + failedPlatforms.length) === selectedPlatforms.length;
           
-          log(`  - allPublished = ${allSelectedPublished}`, 'scheduler');
-          log(`  - allFinalized = ${allFinalized}`, 'scheduler');
+          log(`  - allPublished = ${allPlatformsPublished}`, 'scheduler');
+          log(`  - allFinalized = ${(publishedPlatforms.length + failedPlatforms.length) === allPlatforms.length}`, 'scheduler');
           
           // Если есть ошибки в публикации, логируем их и запрещаем обновление статуса
           if (hasErrors) {

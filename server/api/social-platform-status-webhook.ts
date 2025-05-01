@@ -276,8 +276,8 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     // Обновляем общий статус только если:
     // 1) ВСЕ платформы в JSON опубликованы - независимо от флага selected
     // 2) И нет платформ в статусе pending или scheduled
-    if (allSelectedPublished && selectedPlatforms.length > 0 && !hasPendingStatusAnyPlatform) {
-      log.info(`ВСЕ выбранные платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length}), присваиваем статус published`);
+    if (allPlatformsPublished && platformsArray.length > 0 && !hasPendingStatusAnyPlatform) {
+      log.info(`ВСЕ платформы опубликованы (${publishedPlatforms.length}/${platformsArray.length}), присваиваем статус published`);
       updates['status'] = 'published';
       updates['published_at'] = new Date().toISOString();
       
@@ -291,9 +291,9 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     } else if (hasErrors && !hasPending) {
       log.info(`Есть ошибки и нет ожидающих платформ, присваиваем статус failed`);
       updates['status'] = 'failed';
-    } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < selectedPlatforms.length) {
+    } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < platformsArray.length) {
       // Часть платформ опубликована, но не все - устанавливаем статус scheduled
-      log.info(`Опубликовано только ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, статус не меняем или устанавливаем scheduled`);
+      log.info(`Опубликовано только ${publishedPlatforms.length}/${platformsArray.length} платформ, статус не меняем или устанавливаем scheduled`);
       // Получаем текущий статус контента
       const currentStatus = contentData?.status || '';
       // Если статус draft, меняем на scheduled
