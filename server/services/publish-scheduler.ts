@@ -418,7 +418,7 @@ export class PublishScheduler {
           const hasPending = pendingPlatforms.length > 0;
           
           // Для наглядности добавим проверку, что все платформы завершили публикацию (либо опубликованы, либо ошибка)
-          const allFinalized = (publishedPlatforms.length + failedPlatforms.length) === selectedPlatforms.length;
+          const allFinalized = (publishedPlatforms.length + failedPlatforms.length) === allPlatforms.length;
           
           log(`  - allPublished = ${allPlatformsPublished}`, 'scheduler');
           log(`  - allFinalized = ${(publishedPlatforms.length + failedPlatforms.length) === allPlatforms.length}`, 'scheduler');
@@ -437,10 +437,10 @@ export class PublishScheduler {
             continue; // Пропускаем обновление статуса для этого контента
           }
           
-          // Обновляем статус ТОЛЬКО если все выбранные платформы опубликованы (все имеют статус published)
-          if (allSelectedPublished) {
-            log(`Контент ${item.id}: все платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length})`, 'scheduler');
-            log(`Обновление основного статуса контента ${item.id} на "published", так как все выбранные платформы опубликованы`, 'scheduler');
+          // Обновляем статус ТОЛЬКО если ВСЕ платформы в JSON опубликованы
+          if (allPlatformsPublished) {
+            log(`Контент ${item.id}: все платформы опубликованы (${publishedPlatforms.length}/${allPlatforms.length})`, 'scheduler');
+            log(`Обновление основного статуса контента ${item.id} на "published", так как все платформы опубликованы`, 'scheduler');
             
             try {
               // Обновляем статус на "published"
@@ -582,11 +582,10 @@ export class PublishScheduler {
               // Детальное логирование каждой платформы
               log(`Платформа ${platform}, статус: ${data?.status}, выбрана: ${data?.selected}`, 'scheduler');
               
-              // Проверяем все возможные статусы ожидания
-              if ((data?.status === 'pending' || 
+              // Проверяем все возможные статусы ожидания - ВСЕ платформы, независимо от флага selected
+              if (data?.status === 'pending' || 
                   data?.status === 'scheduled' || 
-                  data?.status === undefined) && // Учитываем неустановленный статус
-                  data?.selected === true) {
+                  data?.status === undefined) { // Учитываем неустановленный статус
                 log(`Найдена платформа ${platform} в статусе ${data?.status}, добавляем контент в список обработки`, 'scheduler');
                 return true; // Есть хотя бы одна платформа в пендинге - добавляем
               }

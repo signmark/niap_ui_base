@@ -1,0 +1,93 @@
+Вот как должна работать система публикации постов в социальные сети на основе вашего описания:
+
+### Алгоритм работы планировщика:
+
+1. **Интервал проверки**:
+   - Планировщик запускается каждые 10-30 секунд (можно настроить точное значение)
+
+2. **Поиск постов для публикации**:
+   - На каждом запуске система ищет посты со статусом `scheduled`
+   - Для каждого найденного поста проверяет поле `social_platforms`
+
+3. **Обработка платформ**:
+   Для каждой социальной платформы в `social_platforms`:
+   - Если статус `pending`:
+     - Публикуем пост НЕМЕДЛЕННО
+     - Обновляем статус платформы на `published` (или `error` в случае ошибки)
+     - Заполняем `publishedAt` текущим временем
+     - Сохраняем `postId` и `postUrl` (если доступны)
+   
+   - Если статус `scheduled`:
+     - Проверяем время в `scheduledAt`/`scheduled_at`
+     - Если текущее время ≥ времени в `scheduledAt`:
+       - Публикуем пост
+       - Обновляем статус на `published`
+       - Заполняем `publishedAt` текущим временем
+       - Сохраняем `postId` и `postUrl`
+
+4. **Обновление статуса поста**:
+   - После обработки всех платформ проверяем:
+     - Если ВСЕ платформы имеют статус `published`:
+       - Меняем общий статус поста на `published`
+     - Если хотя бы одна платформа в `error`:
+       - Можно установить статус поста в `partially_published` или оставить `scheduled` для повторных попыток
+
+5. **Обработка ошибок**:
+   - При ошибке публикации на платформе:
+     - Устанавливаем статус `error`
+     - Сохраняем описание ошибки в поле `error`
+     - Можно реализовать механизм повторных попыток с экспоненциальной задержкой
+
+### Дополнительные рекомендации:
+
+1. Для эффективной работы:
+   - Добавьте индекс в базе данных для поля статуса поста
+   - Ограничьте количество постов, обрабатываемых за один запуск
+
+2. Для отладки:
+   - Логируйте каждый шаг процесса публикации
+   - Сохраняйте историю изменений статусов
+
+3. Для масштабирования:
+   - Можно добавить очередь задач для публикации
+   - Реализовать приоритетную обработку "просроченных" постов
+
+Пример псевдокода:
+```javascript
+async function checkScheduledPosts() {
+  const posts = await Post.find({ status: 'scheduled' });
+  
+  for (const post of posts) {
+    let allPublished = true;
+    
+    for (const [platform, data] of Object.entries(post.social_platforms)) {
+      if (data.status === 'pending' || 
+          (data.status === 'scheduled' && new Date(data.scheduledAt) <= new Date())) {
+        
+        try {
+          const result = await publishToPlatform(platform, post);
+          data.status = 'published';
+          data.publishedAt = new Date();
+          data.postUrl = result.url;
+          // другие поля...
+        } catch (error) {
+          data.status = 'error';
+          data.error = error.message;
+          allPublished = false;
+        }
+      } else if (data.status !== 'published') {
+        allPublished = false;
+      }
+    }
+    
+    if (allPublished) {
+      post.status = 'published';
+    }
+    
+    await post.save();
+  }
+}
+
+// Запускаем каждые 20 секунд
+setInterval(checkScheduledPosts, 20000);
+```
