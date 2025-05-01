@@ -629,9 +629,9 @@ export class PublishScheduler {
         }
         
         if (pendingResponse?.data?.data) {
-          // Предварительная фильтрация - отсеиваем сразу контент без платформ
-          const filteredItems = pendingResponse.data.data.filter((item: any) => {
-            // Проверяем, есть ли вообще настройки платформ и не пустой ли объект
+          // Быстрая однопроходная фильтрация - сразу ищем контент с пендингами
+          const pendingItems = pendingResponse.data.data.filter((item: any) => {
+            // Проверяем наличие платформ
             if (!item.social_platforms) return false;
             
             // Преобразуем в объект, если это строка
@@ -644,26 +644,16 @@ export class PublishScheduler {
               }
             }
             
-            // Проверяем, что это не пустой объект
-            return Object.keys(platforms).length > 0;
-          });
-          
-          // Теперь детальная фильтрация только на контенте с платформами
-          const pendingItems = filteredItems.filter((item: any) => {
-            let platforms = item.social_platforms;
-            if (typeof platforms === 'string') {
-              try {
-                platforms = JSON.parse(platforms);
-              } catch (e) {
-                return false;
-              }
-            }
+            // Проверяем, что это не пустой объект и есть платформы в пендинге
+            if (Object.keys(platforms).length === 0) return false;
             
             // Быстрая проверка наличия платформ в статусе pending/scheduled
             for (const [platform, data] of Object.entries(platforms)) {
               if (data?.status === 'pending' || data?.status === 'scheduled' || data?.status === undefined) {
-                // Логируем только найденные платформы
-                log(`Найдена платформа ${platform} в статусе ${data?.status || 'undefined'} для контента ID: ${item.id}`, 'scheduler');
+                // Найдена платформа в пендинге - логируем только в режиме детальных логов
+                if (this.verboseLogging) {
+                  log(`Найдена платформа ${platform} в статусе ${data?.status || 'undefined'} для контента ID: ${item.id}`, 'scheduler');
+                }
                 return true;
               }
             }
@@ -742,23 +732,23 @@ export class PublishScheduler {
         let anyPlatformPending = false;
         let logMessages = [];
         
-        // Сначала проверяем, есть ли платформы в статусе pending или scheduled - это наивысший приоритет
+        // Быстрая проверка на пендинги - результаты сохраняем для логирования
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
-          // Если платформа выбрана и статус pending - публикуем НЕМЕДЛЕННО
-          if (platformData?.selected === true && platformData?.status === 'pending') {
-            logMessages.push(`${platform}: статус pending - ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
-            anyPlatformPending = true;
-          }
-          // Если платформа выбрана и статус scheduled - также готова к публикации
-          if (platformData?.selected === true && platformData?.status === 'scheduled') {
-            logMessages.push(`${platform}: статус scheduled - ГОТОВ К ЗАПЛАНИРОВАННОЙ ПУБЛИКАЦИИ`);
+          // Если платформа выбрана и статус pending/scheduled - публикуем немедленно
+          if (platformData?.selected === true && 
+              (platformData?.status === 'pending' || platformData?.status === 'scheduled')) {
+            // Сохраняем информацию для отладки
+            if (this.verboseLogging) {
+              logMessages.push(`${platform}: статус ${platformData?.status} - ГОТОВ К ПУБЛИКАЦИИ`);
+            }
             anyPlatformPending = true;
           }
         }
         
-        // Если есть хотя бы одна платформа в pending или scheduled, возвращаем true без проверки времени
+        // Если есть хотя бы одна платформа в pending или scheduled, сразу возвращаем true
         if (anyPlatformPending) {
-            log(`НАЙДЕНЫ ПЛАТФОРМЫ В СТАТУСЕ PENDING ИЛИ SCHEDULED - обрабатываем немедленно`, 'scheduler');
+            // Минимальное логирование - только ID контента
+            log(`Контент ID ${content.id} имеет платформы в статусе pending/scheduled - обрабатываем`, 'scheduler');
             return true;
         }
         
@@ -789,16 +779,21 @@ export class PublishScheduler {
           }
         }
         
-        // Логируем результаты проверки времени для всего контента
-        log(`Проверка времени публикации для контента ID ${content.id} "${content.title}":`, 'scheduler');
-        logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
-        
-        // Если общее поле scheduledAt указано, логируем его значение, но НЕ используем для принятия решения
-        if (content.scheduledAt) {
-          const scheduledTime = new Date(content.scheduledAt);
-          const timeUntilPublish = scheduledTime.getTime() - now.getTime();
-          
-          log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ`, 'scheduler');
+        // Логируем результаты проверки времени только если есть готовые к публикации платформы
+        if (anyPlatformReady) {
+          // Детальное логирование, только когда есть готовые платформы или включен режим подробных логов
+          log(`Проверка времени публикации для контента ID ${content.id} "${content.title}": ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`, 'scheduler');
+          // Подробная информация только в вербозном режиме
+          if (this.verboseLogging) {
+            logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
+            
+            // Если общее поле scheduledAt указано, логируем его тоже
+            if (content.scheduledAt) {
+              const scheduledTime = new Date(content.scheduledAt);
+              const timeUntilPublish = scheduledTime.getTime() - now.getTime();
+              log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ`, 'scheduler');
+            }
+          }
         }
         
         // Возвращаем true, если хотя бы одна платформа готова к публикации по времени
@@ -859,18 +854,23 @@ export class PublishScheduler {
                 
                 // Проверяем все платформы на статус "pending"
                 for (const [platform, data] of Object.entries(platforms)) {
-                  // Детальный лог для всех платформ
-                  log(`Платформа ${platform} имеет статус: ${data.status} в контенте ID ${content.id}`, 'scheduler');
-                  
-                  // Особое внимание к Facebook
-                  if (platform === 'facebook') {
-                    log(`ОТЛАДКА FACEBOOK: Статус = ${data.status}, Выбран = ${data.selected ? 'ДА' : 'НЕТ'}, Полные данные: ${JSON.stringify(data)}`, 'scheduler');
+                  // Детальный лог для всех платформ только в вербозном режиме
+                  if (this.verboseLogging) {
+                    log(`Платформа ${platform} имеет статус: ${data.status} в контенте ID ${content.id}`, 'scheduler');
+                    
+                    // Особое внимание к Facebook только в вербозном режиме
+                    if (platform === 'facebook') {
+                      log(`ОТЛАДКА FACEBOOK: Статус = ${data.status}, Выбран = ${data.selected ? 'ДА' : 'НЕТ'}, Полные данные: ${JSON.stringify(data)}`, 'scheduler');
+                    }
                   }
                   
                   // Проверяем статус 'pending' ДЛЯ ВЫБРАННЫХ платформ
                   if (data.status === 'pending' && data.selected === true) {
                     hasPendingPlatforms = true;
-                    log(`Обнаружена платформа ${platform} со статусом pending в контенте ID ${content.id}`, 'scheduler');
+                    // Логируем только в вербозном режиме
+                    if (this.verboseLogging) {
+                      log(`Обнаружена платформа ${platform} со статусом pending в контенте ID ${content.id}`, 'scheduler');
+                    }
                     // Не прерываем цикл, чтобы искать все платформы
                     // break;
                   }
@@ -910,7 +910,10 @@ export class PublishScheduler {
                   // Если есть платформа со статусом scheduled или pending, продолжаем публикацию
                   if (data.status === 'scheduled' || data.status === 'pending') {
                     pendingPlatformsExist = true;
-                    log(`Обнаружена неопубликованная платформа ${platform} в контенте ID ${content.id}, несмотря на published_at`, 'scheduler');
+                    // Логируем только в вербозном режиме
+                    if (this.verboseLogging) {
+                      log(`Обнаружена неопубликованная платформа ${platform} в контенте ID ${content.id}, несмотря на published_at`, 'scheduler');
+                    }
                   }
                 }
               }
@@ -947,19 +950,21 @@ export class PublishScheduler {
                 } else if (data.status === 'pending' || data.status === 'scheduled') {
                   pendingPlatforms.push(platform);
                   hasPendingStatusAnyPlatform = true;
-                  log(`Обнаружена платформа ${platform} в статусе '${data.status}', блокируем обновление до published`, 'scheduler');
+                  // Логируем только в вербозном режиме
+                  if (this.verboseLogging) {
+                    log(`Обнаружена платформа ${platform} в статусе '${data.status}', блокируем обновление до published`, 'scheduler');
+                  }
                 }
               }
               
               // Проверяем, что ВСЕ выбранные платформы опубликованы
               const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
               
-              // Добавляем улучшенное логирование
-              log(`Проверка статусов платформ для контента ${content.id}:`, 'scheduler');
-              log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'scheduler');
-              log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'scheduler');
-              log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
-              log(`  - Все выбранные опубликованы: ${allSelectedPublished}`, 'scheduler');
+              // Добавляем улучшенное логирование только если есть изменения
+              // Сокращенный вариант логирования
+              if (this.verboseLogging || allSelectedPublished || hasPendingStatusAnyPlatform) {
+                log(`Контент ${content.id}: платформ ${selectedPlatforms.length}, опубликовано ${publishedPlatforms.length}, в ожидании ${pendingPlatforms.length}`, 'scheduler');
+              }
               
               // ИСПРАВЛЕНИЕ: Обновляем статус только когда:
               // 1) ВСЕ платформы в JSON опубликованы (независимо от флага selected)
