@@ -108,7 +108,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
               <div className="mb-6 px-4 sidebar-title text-center">
-                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[150px] mx-auto" />
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1" />
               </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (
@@ -150,7 +150,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
               <div className="mb-6 px-4 sidebar-title text-center">
-                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[150px] mx-auto" />
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1" />
               </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (
