@@ -854,14 +854,37 @@ export class PublishScheduler {
             if (freshData.social_platforms && typeof freshData.social_platforms === 'object') {
               const socialPlatforms = freshData.social_platforms;
               
-              // ИСПРАВЛЕНИЕ: Проверяем ВСЕ ли платформы имеют статус published
-              const allPlatforms = Object.keys(socialPlatforms);
-              const publishedPlatforms = Object.entries(socialPlatforms)
-                .filter(([_, data]: [string, any]) => data && data.status === 'published')
-                .map(([platform]) => platform);
+              // ИСПРАВЛЕНИЕ: Проверяем ВСЕ ли выбранные платформы имеют статус published
+              // Сортируем платформы по статусам и selected
+              const selectedPlatforms = [];
+              const publishedPlatforms = [];
+              const pendingPlatforms = [];
               
-              // ИСПРАВЛЕНИЕ: Обновляем статус только когда ВСЕ платформы опубликованы
-              if (publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length) {
+              // Проходим по всем платформам и фильтруем только выбранные
+              for (const [platform, data] of Object.entries(socialPlatforms)) {
+                if (data && data.selected === true) {
+                  selectedPlatforms.push(platform);
+                  
+                  if (data.status === 'published') {
+                    publishedPlatforms.push(platform);
+                  } else if (data.status === 'pending' || data.status === 'scheduled') {
+                    pendingPlatforms.push(platform);
+                  }
+                }
+              }
+              
+              // Проверяем, что ВСЕ выбранные платформы опубликованы
+              const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+              
+              // Добавляем улучшенное логирование
+              log(`Проверка статусов платформ для контента ${content.id}:`, 'scheduler');
+              log(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`, 'scheduler');
+              log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'scheduler');
+              log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
+              log(`  - Все выбранные опубликованы: ${allSelectedPublished}`, 'scheduler');
+              
+              // ИСПРАВЛЕНИЕ: Обновляем статус только когда ВСЕ выбранные платформы опубликованы
+              if (allSelectedPublished && selectedPlatforms.length > 0) {
                 log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован ВО ВСЕХ (${publishedPlatforms.length}/${allPlatforms.length}) соцсетях, обновляем статус`, 'scheduler');
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');

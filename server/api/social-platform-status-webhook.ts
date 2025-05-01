@@ -233,36 +233,62 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     
     // Если все платформы опубликованы, обновляем общий статус
     const allPlatforms = Object.keys(updatedSocialPlatforms);
-    const publishedPlatforms = Object.entries(updatedSocialPlatforms)
-      .filter(([_, data]) => data.status === 'published')
-      .map(([platform]) => platform);
     
-    const allPublished = publishedPlatforms.length > 0 && publishedPlatforms.length === allPlatforms.length;
+    // Фильтруем только выбранные платформы (selected === true)
+    const selectedPlatforms = [];
+    const publishedPlatforms = [];
+    const pendingPlatforms = [];
+    const errorPlatforms = [];
     
-    const hasFailures = Object.values(updatedSocialPlatforms).some(
-      (p: any) => p.status === 'failed' || p.status === 'error'
-    );
+    // Детальный анализ платформ
+    for (const [platform, data] of Object.entries(updatedSocialPlatforms)) {
+      // Проверяем, что платформа выбрана для публикации
+      if (data.selected === true) {
+        selectedPlatforms.push(platform);
+        
+        if (data.status === 'published') {
+          publishedPlatforms.push(platform);
+        } else if (data.status === 'pending' || data.status === 'scheduled') {
+          pendingPlatforms.push(platform);
+        } else if (data.status === 'failed' || data.status === 'error') {
+          errorPlatforms.push(platform);
+        }
+      }
+    }
     
-    const hasPending = Object.values(updatedSocialPlatforms).some(
-      (p: any) => p.status === 'pending'
-    );
+    // Проверяем, что ВСЕ выбранные платформы опубликованы
+    // ВАЖНО: Проверять только платформы с selected: true
+    const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+    const hasErrors = errorPlatforms.length > 0;
+    const hasPending = pendingPlatforms.length > 0;
     
     // Детальное логирование для анализа проблемы с Facebook
-    log.info(`[ОтЛАДКА] Статусы платформ: Всего=${allPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Ошибки=${hasFailures}, Ожидают=${hasPending}`);
+    log.info(`[ОтЛАДКА] Статусы платформ: Выбрано=${selectedPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Ошибки=${errorPlatforms.length}, Ожидают=${pendingPlatforms.length}`);
+    log.info(`[ОтЛАДКА] Список выбранных платформ: ${selectedPlatforms.join(', ')}`);
+    log.info(`[ОтЛАДКА] Список опубликованных платформ: ${publishedPlatforms.join(', ')}`);
+    log.info(`[ОтЛАДКА] allSelectedPublished = ${allSelectedPublished}`);
     
-    // Обновляем общий статус только если ВСЕ платформы опубликованы
-    if (allPublished) {
-      log.info(`ВСЕ платформы опубликованы (${publishedPlatforms.length}/${allPlatforms.length}), присваиваем статус published`);
+    // Обновляем общий статус только если ВСЕ выбранные платформы опубликованы
+    if (allSelectedPublished && selectedPlatforms.length > 0) {
+      log.info(`ВСЕ выбранные платформы опубликованы (${publishedPlatforms.length}/${selectedPlatforms.length}), присваиваем статус published`);
       updates['status'] = 'published';
       updates['published_at'] = new Date().toISOString();
-    } else if (hasFailures && !hasPending) {
+      
+      // Дополнительно повторно подтверждаем сброс всех статусов ошибок в платформах
+      for (const key of Object.keys(updatedSocialPlatforms)) {
+        if (updatedSocialPlatforms[key].selected === true) {
+          updatedSocialPlatforms[key].error = null;
+        }
+      }
+      
+    } else if (hasErrors && !hasPending) {
       log.info(`Есть ошибки и нет ожидающих платформ, присваиваем статус failed`);
       updates['status'] = 'failed';
-    } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < allPlatforms.length) {
+    } else if (publishedPlatforms.length > 0 && publishedPlatforms.length < selectedPlatforms.length) {
       // Часть платформ опубликована, но не все - устанавливаем статус scheduled
-      log.info(`Опубликовано только ${publishedPlatforms.length}/${allPlatforms.length} платформ, статус не меняем или устанавливаем scheduled`);
+      log.info(`Опубликовано только ${publishedPlatforms.length}/${selectedPlatforms.length} платформ, статус не меняем или устанавливаем scheduled`);
       // Получаем текущий статус контента
-      const currentStatus = content?.status || '';
+      const currentStatus = contentData?.status || '';
       // Если статус draft, меняем на scheduled
       if (currentStatus === 'draft') {
         updates['status'] = 'scheduled';
