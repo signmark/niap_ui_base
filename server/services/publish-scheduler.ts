@@ -415,10 +415,28 @@ export class PublishScheduler {
           // Статус error игнорируем и не меняем основной статус контента
           const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
           
-          // Если есть ошибки в публикации, логируем их
-          if (failedPlatforms.length > 0) {
+          // Проверяем наличие ошибок и платформ в ожидании
+          const hasErrors = failedPlatforms.length > 0;
+          const hasPending = pendingPlatforms.length > 0;
+          
+          // Для наглядности добавим проверку, что все платформы завершили публикацию (либо опубликованы, либо ошибка)
+          const allFinalized = (publishedPlatforms.length + failedPlatforms.length) === selectedPlatforms.length;
+          
+          log(`  - allPublished = ${allSelectedPublished}`, 'scheduler');
+          log(`  - allFinalized = ${allFinalized}`, 'scheduler');
+          
+          // Если есть ошибки в публикации, логируем их и запрещаем обновление статуса
+          if (hasErrors) {
             log(`Контент ${item.id}: обнаружены платформы с ошибками (${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')})`, 'scheduler');
             log(`Статус контента ${item.id} НЕ будет изменен из-за наличия ошибок публикации`, 'scheduler');
+            continue; // Пропускаем обновление статуса для этого контента
+          }
+          
+          // Если есть платформы в ожидании, пропускаем обновление статуса
+          if (hasPending) {
+            log(`Контент ${item.id}: есть платформы в ожидании публикации (${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')})`, 'scheduler');
+            log(`Статус контента ${item.id} НЕ будет изменен, так как публикация не завершена`, 'scheduler');
+            continue; // Пропускаем обновление статуса для этого контента
           }
           
           // Обновляем статус ТОЛЬКО если все выбранные платформы опубликованы (все имеют статус published)
