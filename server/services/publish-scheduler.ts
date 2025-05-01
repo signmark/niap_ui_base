@@ -801,7 +801,95 @@ export class PublishScheduler {
       });
       
       if (contentToPublish.length === 0) {
-        log('Нет контента, готового к публикации по времени', 'scheduler');
+        log('Нет контента, готового к публикации по времени, проверяем статусы существующего запланированного контента', 'scheduler');
+        
+        // Дополнительная проверка всех запланированных публикаций
+        // на наличие полностью опубликованных платформ
+        let updatedStatusCount = 0;
+        
+        for (const content of scheduledContent) {
+          // Проверяем только контент со статусом scheduled
+          if (content.status !== 'scheduled') {
+            continue;
+          }
+          
+          // Получаем актуальные данные контента из БД
+          try {
+            const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const freshDataResponse = await axios.get(
+              `${baseDirectusUrl}/items/campaign_content/${content.id}`,
+              { headers: { 'Authorization': `Bearer ${authToken}` } }
+            );
+            
+            if (!freshDataResponse.data || !freshDataResponse.data.data) {
+              continue;
+            }
+
+            const freshData = freshDataResponse.data.data;
+            
+            // Если нет данных о платформах, пропускаем
+            if (!freshData.social_platforms) {
+              continue;
+            }
+            
+            let socialPlatforms = freshData.social_platforms;
+            
+            // Если social_platforms - строка, парсим в объект
+            if (typeof socialPlatforms === 'string') {
+              try {
+                socialPlatforms = JSON.parse(socialPlatforms);
+              } catch (e) {
+                log(`Ошибка при парсинге social_platforms для контента ${content.id}: ${e}`, 'scheduler');
+                continue;
+              }
+            }
+            
+            // Проверяем все платформы на статус published
+            const allPlatforms = Object.keys(socialPlatforms);
+            const publishedPlatforms = [];
+            const pendingPlatforms = [];
+            const scheduledPlatforms = [];
+            let hasPendingStatusAnyPlatform = false;
+            
+            for (const [platform, data] of Object.entries(socialPlatforms)) {
+              if (data.status === 'published') {
+                publishedPlatforms.push(platform);
+              } else if (data.status === 'pending') {
+                pendingPlatforms.push(platform);
+                hasPendingStatusAnyPlatform = true;
+              } else if (data.status === 'scheduled') {
+                scheduledPlatforms.push(platform);
+                hasPendingStatusAnyPlatform = true;
+              }
+            }
+            
+            // Проверяем, что все платформы опубликованы (независимо от флага selected)
+            const allPlatformsPublished = allPlatforms.length === publishedPlatforms.length && allPlatforms.length > 0;
+            
+            // Если все платформы опубликованы и нет платформ в ожидании - обновляем статус на published
+            if (allPlatformsPublished && !hasPendingStatusAnyPlatform) {
+              log(`ОБНОВЛЕНИЕ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет ВСЕ (${publishedPlatforms.length}/${allPlatforms.length}) платформы в статусе published - обновляем статус контента на published`, 'scheduler');
+              
+              await axios.patch(
+                `${baseDirectusUrl}/items/campaign_content/${content.id}`,
+                { 
+                  status: 'published',
+                  published_at: new Date().toISOString()
+                },
+                { headers: { 'Authorization': `Bearer ${authToken}` } }
+              );
+              
+              updatedStatusCount++;
+            }
+          } catch (error) {
+            log(`Ошибка при проверке статуса контента ${content.id}: ${error.message}`, 'scheduler');
+          }
+        }
+        
+        if (updatedStatusCount > 0) {
+          log(`Обновлено статусов контента: ${updatedStatusCount}`, 'scheduler');
+        }
+        
         return;
       }
       
@@ -975,7 +1063,7 @@ export class PublishScheduler {
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
                 await axios.patch(
-                  `${directusUrl}/items/campaign_content/${content.id}`,
+                  `${baseDirectusUrl}/items/campaign_content/${content.id}`,
                   { 
                     status: 'published',
                     published_at: new Date().toISOString()
@@ -989,8 +1077,9 @@ export class PublishScheduler {
                 
                 // Изменяем статус на scheduled, если он draft, чтобы показать что процесс публикации начался
                 if (freshData.status === 'draft') {
+                  const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
                   await axios.patch(
-                    `${directusUrl}/items/campaign_content/${content.id}`,
+                    `${baseDirectusUrl}/items/campaign_content/${content.id}`,
                     { status: 'scheduled' },
                     { headers: { 'Authorization': `Bearer ${authToken}` } }
                   );
