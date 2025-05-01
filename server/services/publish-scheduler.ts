@@ -798,13 +798,25 @@ export class PublishScheduler {
           if (allPublishedItems.length > 0) {
             log(`Найдено ${allPublishedItems.length} контентов со всеми опубликованными платформами, но статус все еще scheduled`, 'scheduler');
                 
-            // Добавляем в общий список и обрабатываем сразу в checkAndUpdateContentStatuses
-            allItems = allItems.concat(allPublishedItems);
+            // Обрабатываем обнаруженные контенты напрямую, только обновляя статус - без повторной публикации
+            for (const item of allPublishedItems) {
+              try {
+                log(`Обновление статуса контента ${item.id} с 'запланирован' на 'опубликован'`, 'scheduler');
                 
-            // Дополнительно вызываем проверку и обновление статусов
-            this.checkAndUpdateContentStatuses().catch(error => {
-              log(`Ошибка при проверке статусов публикаций: ${error.message}`, 'scheduler');
-            });
+                // запрос на обновление статуса
+                await axios.patch(`${directusUrl}/items/campaign_content/${item.id}`, {
+                  status: 'published',
+                  published_at: new Date().toISOString()
+                }, { headers });
+                
+                log(`Успешно обновлен статус контента ${item.id} на 'published'`, 'scheduler');
+              } catch (error) {
+                log(`Ошибка при обновлении статуса контента ${item.id}: ${error instanceof Error ? error.message : 'Unknown error'}`, 'scheduler');
+              }
+            }
+            
+            // Не добавляем в общий список, чтобы избежать двойной публикации
+            // allItems = allItems.concat(allPublishedItems);
           }
         }
         
