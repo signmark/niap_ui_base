@@ -321,7 +321,7 @@ export class PublishScheduler {
    */
   async checkAndUpdateContentStatuses() {
     try {
-      log('Запуск проверки статусов контента для обновления общего статуса', 'scheduler');
+      log('Запуск проверки статусов контента', 'scheduler');
       
       // Получаем системный токен для доступа к API
       const authToken = await this.getSystemToken();
@@ -330,39 +330,42 @@ export class PublishScheduler {
         return;
       }
       
-      // Получаем все контенты со статусом "scheduled"
+      // Получаем все контенты со статусом "scheduled" или "draft"
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
       const headers = {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
       };
 
+      // В соответствии с новыми требованиями проверяем и draft тоже
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            status: {
-              _eq: 'scheduled'
-            }
+            _or: [
+              { status: { _eq: 'scheduled' } },
+              { status: { _eq: 'draft' } }
+            ]
           }),
           limit: 50 // Ограничиваем количество проверяемых записей для производительности
         }
       });
 
       if (!response?.data?.data || !Array.isArray(response.data.data)) {
-        log('Не удалось получить данные контента со статусом scheduled', 'scheduler');
+        log('Не удалось получить данные контента', 'scheduler');
         return;
       }
 
       // Обрабатываем полученные записи
       const contentItems = response.data.data;
-      log(`Получено ${contentItems.length} элементов контента со статусом 'scheduled' для проверки статусов платформ`, 'scheduler');
+      log(`Получено ${contentItems.length} элементов контента для проверки статусов платформ`, 'scheduler');
 
       let updatedCount = 0;
 
       // Проверяем каждый элемент контента
       for (const item of contentItems) {
         try {
+          // Пропускаем контент без настроек платформ
           if (!item.social_platforms) {
             continue;
           }
@@ -373,99 +376,139 @@ export class PublishScheduler {
             try {
               platforms = JSON.parse(platforms);
             } catch (e) {
-              log(`Ошибка при парсинге social_platforms для контента ${item.id}: ${e.message}`, 'scheduler');
+              log(`Ошибка при парсинге social_platforms для контента ${item.id}: ${e}`, 'scheduler');
               continue;
             }
           }
           
-          // Получаем списки платформ по их статусам
-          const allPlatforms = []; // Все платформы в JSON
-          const publishedPlatforms = [];
-          const pendingPlatforms = [];
-          const failedPlatforms = [];
-
-          // Проходим по всем платформам и проверяем их статусы
-          for (const [platform, data] of Object.entries(platforms)) {
-            // ВАЖНО: Проверяем ВСЕ платформы в JSON, независимо от флага selected
-            allPlatforms.push(platform);
-            
-            if (data.status === 'published') {
-              publishedPlatforms.push(platform);
-            } else if (data.status === 'pending' || data.status === 'scheduled') {
-              pendingPlatforms.push(platform);
-            } else if (data.status === 'failed' || data.status === 'error') {
-              failedPlatforms.push(platform);
-            }
-          }
-
-          // Если нет платформ вообще, пропускаем
-          if (allPlatforms.length === 0) {
+          // Если нет платформ или объект пуст, пропускаем
+          if (!platforms || Object.keys(platforms).length === 0) {
             continue;
           }
+          
+          // Классифицируем платформы по статусам
+          const allPlatforms = Object.keys(platforms);
+          const publishedPlatforms = [];
+          const pendingPlatforms = [];
+          const scheduledPlatforms = [];
+          const errorPlatforms = [];
 
-          // Выводим детальную информацию о статусах платформ для этого контента
-          log(`Контент ${item.id}: "${item.title || 'Без названия'}" - статусы платформ:`, 'scheduler');
-          log(`  - Всего платформ: ${allPlatforms.length} платформ: ${allPlatforms.join(', ')}`, 'scheduler');
-          log(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`, 'scheduler');
-          log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
-          log(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`, 'scheduler');
-
-          // Проверяем условия для обновления статуса
-          // Обновляем статус ТОЛЬКО если ВСЕ платформы имеют статус published
-          // Статус error игнорируем и не меняем основной статус контента
-          const allPlatformsPublished = allPlatforms.length === publishedPlatforms.length && allPlatforms.length > 0;
-          
-          // Проверяем наличие ошибок и платформ в ожидании
-          const hasErrors = failedPlatforms.length > 0;
-          const hasPending = pendingPlatforms.length > 0;
-          
-          // Для наглядности добавим проверку, что все платформы завершили публикацию (либо опубликованы, либо ошибка)
-          const allFinalized = (publishedPlatforms.length + failedPlatforms.length) === allPlatforms.length;
-          
-          log(`  - allPublished = ${allPlatformsPublished}`, 'scheduler');
-          log(`  - allFinalized = ${(publishedPlatforms.length + failedPlatforms.length) === allPlatforms.length}`, 'scheduler');
-          
-          // Если есть ошибки в публикации, логируем их и запрещаем обновление статуса
-          if (hasErrors) {
-            log(`Контент ${item.id}: обнаружены платформы с ошибками (${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')})`, 'scheduler');
-            log(`Статус контента ${item.id} НЕ будет изменен из-за наличия ошибок публикации`, 'scheduler');
-            continue; // Пропускаем обновление статуса для этого контента
-          }
-          
-          // Если есть платформы в ожидании, пропускаем обновление статуса
-          if (hasPending) {
-            log(`Контент ${item.id}: есть платформы в ожидании публикации (${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')})`, 'scheduler');
-            log(`Статус контента ${item.id} НЕ будет изменен, так как публикация не завершена`, 'scheduler');
-            continue; // Пропускаем обновление статуса для этого контента
-          }
-          
-          // Обновляем статус ТОЛЬКО если ВСЕ платформы в JSON опубликованы
-          if (allPlatformsPublished) {
-            log(`Контент ${item.id}: все платформы опубликованы (${publishedPlatforms.length}/${allPlatforms.length})`, 'scheduler');
-            log(`Обновление основного статуса контента ${item.id} на "published", так как все платформы опубликованы`, 'scheduler');
+          // Проходим по всем платформам и распределяем по статусам
+          for (const platform of allPlatforms) {
+            const data = platforms[platform] || {};
+            const status = data.status;
             
-            try {
-              // Обновляем статус на "published"
-              await storage.updateCampaignContent(item.id, { status: 'published', publishedAt: new Date() }, authToken);
-              updatedCount++;
-            } catch (updateError) {
-              log(`Ошибка при обновлении статуса контента ${item.id}: ${updateError.message}`, 'scheduler');
+            switch(status) {
+              case 'published':
+                publishedPlatforms.push(platform);
+                break;
+              case 'pending':
+                pendingPlatforms.push(platform);
+                break;
+              case 'scheduled':
+                scheduledPlatforms.push(platform);
+                break;
+              case 'error':
+              case 'failed':
+                errorPlatforms.push(platform);
+                break;
+              default:
+                // Неизвестный статус считаем как pending
+                pendingPlatforms.push(platform);
+                break;
             }
           }
-        } catch (itemError) {
-          log(`Ошибка при обработке контента ${item.id}: ${itemError.message}`, 'scheduler');
-          continue;
+
+          // Логируем результаты анализа
+          log(`Контент ${item.id} (${item.title || 'Без названия'}) - статус: ${item.status}`, 'scheduler');
+          log(`  - Всего платформ: ${allPlatforms.length}`, 'scheduler');
+          log(`  - Опубликовано: ${publishedPlatforms.length}`, 'scheduler');
+          log(`  - В ожидании: ${pendingPlatforms.length}`, 'scheduler');
+          log(`  - Запланировано: ${scheduledPlatforms.length}`, 'scheduler');
+          log(`  - С ошибками: ${errorPlatforms.length}`, 'scheduler');
+
+          // Выполняем проверку по правилам из документа
+          // 1. Если ВСЕ платформы в JSON имеют статус 'published'
+          const allPublished = allPlatforms.length > 0 && allPlatforms.length === publishedPlatforms.length;
+          
+          // 2. Если есть ошибки и нет ожидающих платформ
+          const hasErrors = errorPlatforms.length > 0;
+          const hasPending = pendingPlatforms.length > 0 || scheduledPlatforms.length > 0;
+          const onlyErrorsRemain = hasErrors && !hasPending;
+          
+          // Обновляем статус
+          if (allPublished) {
+            // ТАК КАК ВСЕ платформы были опубликованы, устанавливаем статус "published"
+            if (item.status !== 'published') {
+              log(`Обновление статуса контента ${item.id} на 'published' (ВСЕ платформы опубликованы)`, 'scheduler');
+              
+              try {
+                // Добавляем дату публикации, если она еще не установлена
+                const updateData: any = { status: 'published' };
+                if (!item.published_at) {
+                  updateData.published_at = new Date().toISOString();
+                }
+                
+                await axios.patch(
+                  `${directusUrl}/items/campaign_content/${item.id}`,
+                  updateData,
+                  { headers }
+                );
+                updatedCount++;
+              } catch (error) {
+                log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
+              }
+            } else {
+              log(`Контент ${item.id} уже имеет статус 'published'`, 'scheduler');
+            }
+          }
+          // Если есть только ошибки и нет пендингов, можем установить статус 'failed'
+          else if (onlyErrorsRemain && item.status === 'scheduled') {
+            log(`Обновление статуса контента ${item.id} на 'failed' (содержит только платформы с ошибками)`, 'scheduler');
+            
+            try {
+              await axios.patch(
+                `${directusUrl}/items/campaign_content/${item.id}`,
+                { status: 'failed' },
+                { headers }
+              );
+              updatedCount++;
+            } catch (error) {
+              log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
+            }
+          }
+          // Если есть ожидающие платформы, пропускаем - публикация еще не завершена
+          else if (hasPending) {
+            log(`Контент ${item.id} имеет платформы в ожидании - статус не обновляется`, 'scheduler');
+          }
+          // Смешанный случай: есть опубликованные и ошибки, но нет пендингов
+          else if (publishedPlatforms.length > 0 && errorPlatforms.length > 0 && !hasPending) {
+            log(`Контент ${item.id} частично опубликован, имеет и успешные публикации, и ошибки`, 'scheduler');
+            if (item.status === 'scheduled') {
+              try {
+                // Устанавливаем статус 'partially_published'
+                await axios.patch(
+                  `${directusUrl}/items/campaign_content/${item.id}`,
+                  { status: 'partially_published' },
+                  { headers }
+                );
+                updatedCount++;
+                log(`Обновлен статус контента ${item.id} на 'partially_published'`, 'scheduler');
+              } catch (error) {
+                log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
+              }
+            }
+          }
+        } catch (error) {
+          log(`Ошибка при обработке контента ${item.id}: ${error}`, 'scheduler');
         }
       }
 
-      // Выводим информацию о результатах
-      if (updatedCount > 0) {
-        log(`Обновлено ${updatedCount} элементов контента до статуса 'published'`, 'scheduler');
-      } else {
-        log('Не найдено контента, требующего обновления статуса', 'scheduler');
-      }
+      // Выводим результаты
+      log(`Завершена проверка статусов. Обновлено статусов: ${updatedCount}`, 'scheduler');
+      
     } catch (error) {
-      log(`Ошибка при проверке статусов контента: ${error.message}`, 'scheduler');
+      log(`Ошибка при проверке статусов контента: ${error}`, 'scheduler');
     }
   }
 
