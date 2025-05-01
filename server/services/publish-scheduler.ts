@@ -15,7 +15,7 @@ import { checkTokenExtractionRequest } from './token-extractor';
 export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
-  private checkIntervalMs = 60000; // проверяем каждую минуту
+  private checkIntervalMs = 20000; // проверяем каждые 20 секунд (изменено согласно новым требованиям)
   // Для обратной совместимости со старым кодом (временное решение)
   private processedContentIds = new Set<string>();
   // Глобальный флаг для полного отключения публикаций (критическая мера безопасности)
@@ -314,8 +314,10 @@ export class PublishScheduler {
   }
 
   /**
-   * Проверяет статусы всех платформ для контента в статусе 'scheduled' и
-   * обновляет основной статус на 'published', если все выбранные платформы опубликованы
+   * Проверяет статусы всех платформ для контента и обновляет статус по алгоритму:
+   * 1. Если ВСЕ платформы в JSON имеют статус 'published', обновляет статус на 'published'
+   * 2. Если есть хотя бы одна платформа с ошибкой и нет ожидающих платформ, устанавливает статус 'failed'
+   * Обновлено в соответствии с новыми требованиями по проверке ВСЕХ платформ
    */
   async checkAndUpdateContentStatuses() {
     try {
@@ -469,7 +471,8 @@ export class PublishScheduler {
 
   /**
    * Проверяет и публикует запланированный контент 
-   * Ищет ТОЛЬКО контент со статусом 'scheduled' и публикует его
+   * Ищет контент со статусом 'scheduled' и немедленно публикует платформы в статусе 'pending'
+   * Имплементирует новый алгоритм согласно инструкции
    */
   async checkScheduledContent() {
     try {
@@ -976,6 +979,7 @@ export class PublishScheduler {
    * @param authToken Токен авторизации для API запросов
    */
   async publishContent(content: CampaignContent, authToken?: string) {
+    // Упрощенный алгоритм публикации в соответствии с новыми требованиями
     // Добавляем подробное логирование при публикации
     log(`[Публикация] Начало публикации контента ID: ${content.id}`, 'scheduler');
     

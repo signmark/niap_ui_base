@@ -9,6 +9,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { CampaignSelector } from "@/components/CampaignSelector";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { SmmLogo } from "./SmmLogo";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
