@@ -887,8 +887,10 @@ export class PublishScheduler {
               log(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`, 'scheduler');
               log(`  - Все выбранные опубликованы: ${allSelectedPublished}`, 'scheduler');
               
-              // ИСПРАВЛЕНИЕ: Обновляем статус только когда ВСЕ выбранные платформы опубликованы
-              if (allSelectedPublished && selectedPlatforms.length > 0) {
+              // ИСПРАВЛЕНИЕ: Обновляем статус только когда:
+              // 1) ВСЕ платформы в JSON опубликованы (независимо от флага selected)
+              // 2) И нет ни одной платформы в статусе pending или scheduled
+              if (allSelectedPublished && selectedPlatforms.length > 0 && !hasPendingStatusAnyPlatform) {
                 log(`ПРОВЕРКА В БД: Контент ID ${content.id} "${content.title}" опубликован ВО ВСЕХ (${publishedPlatforms.length}/${selectedPlatforms.length}) соцсетях, обновляем статус`, 'scheduler');
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');

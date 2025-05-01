@@ -232,16 +232,15 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     };
     
     // Если все платформы опубликованы, обновляем общий статус
-    const allPlatforms = Object.keys(updatedSocialPlatforms);
     
-    // Фильтруем только выбранные платформы (selected === true)
-    const selectedPlatforms = [];
+    // Разделяем все платформы и их статусы
+    const platformsArray = []; // Все платформы в JSON
     const publishedPlatforms = [];
     const pendingPlatforms = [];
     const errorPlatforms = [];
     
-    // Детальный анализ всех платформ
-    let hasPendingStatusAnyPlatform = false; // Флаг для проверки pending в любой платформе
+    // Флаг для проверки pending статуса в любой платформе
+    let hasPendingStatusAnyPlatform = false;
     
     // ВАЖНО: Все платформы в JSON должны обрабатываться независимо от флага selected
     // Все платформы, указанные в JSON - значит их надо обрабатывать
@@ -249,7 +248,7 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     // Проходим по всем платформам и собираем статистику
     for (const [platform, data] of Object.entries(updatedSocialPlatforms)) {
       // Все платформы заносим в общий список
-      selectedPlatforms.push(platform);
+      platformsArray.push(platform);
       
       if (data.status === 'published') {
         publishedPlatforms.push(platform);
@@ -264,15 +263,15 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
     
     // Проверяем, что ВСЕ платформы в JSON опубликованы
     // ВАЖНО: Проверять все платформы, а не только с selected: true
-    const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+    const allPlatformsPublished = platformsArray.length === publishedPlatforms.length && platformsArray.length > 0;
     const hasErrors = errorPlatforms.length > 0;
     const hasPending = pendingPlatforms.length > 0;
     
     // Детальное логирование для анализа проблемы с Facebook
-    log.info(`[ОтЛАДКА] Статусы платформ: Выбрано=${selectedPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Ошибки=${errorPlatforms.length}, Ожидают=${pendingPlatforms.length}`);
-    log.info(`[ОтЛАДКА] Список выбранных платформ: ${selectedPlatforms.join(', ')}`);
+    log.info(`[ОтЛАДКА] Статусы платформ: Всего=${platformsArray.length}, Опубликовано=${publishedPlatforms.length}, Ошибки=${errorPlatforms.length}, Ожидают=${pendingPlatforms.length}`);
+    log.info(`[ОтЛАДКА] Список всех платформ: ${platformsArray.join(', ')}`);
     log.info(`[ОтЛАДКА] Список опубликованных платформ: ${publishedPlatforms.join(', ')}`);
-    log.info(`[ОтЛАДКА] allSelectedPublished = ${allSelectedPublished}`);
+    log.info(`[ОтЛАДКА] allPlatformsPublished = ${allPlatformsPublished}`);
     
     // Обновляем общий статус только если:
     // 1) ВСЕ платформы в JSON опубликованы - независимо от флага selected
