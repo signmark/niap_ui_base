@@ -629,9 +629,9 @@ export class PublishScheduler {
         }
         
         if (pendingResponse?.data?.data) {
-          // Фильтруем контент с платформами в статусе pending
-          const pendingItems = pendingResponse.data.data.filter((item: any) => {
-            // Проверяем, есть ли вообще настройки платформ
+          // Предварительная фильтрация - отсеиваем сразу контент без платформ
+          const filteredItems = pendingResponse.data.data.filter((item: any) => {
+            // Проверяем, есть ли вообще настройки платформ и не пустой ли объект
             if (!item.social_platforms) return false;
             
             // Преобразуем в объект, если это строка
@@ -644,27 +644,27 @@ export class PublishScheduler {
               }
             }
             
-            // Проверяем наличие платформ в статусе pending или scheduled
-            // Добавим подробное логирование для отладки
-            log(`Проверяем наличие платформ в статусе pending для контента ID: ${item.id}`, 'scheduler');
-            
-            try {
-              // Дополнительный лог всего объекта платформ для отладки
-              log(`Содержимое social_platforms: ${JSON.stringify(platforms)}`, 'scheduler');
-            } catch (e) {
-              log(`Ошибка при логировании platforms: ${e}`, 'scheduler');
+            // Проверяем, что это не пустой объект
+            return Object.keys(platforms).length > 0;
+          });
+          
+          // Теперь детальная фильтрация только на контенте с платформами
+          const pendingItems = filteredItems.filter((item: any) => {
+            let platforms = item.social_platforms;
+            if (typeof platforms === 'string') {
+              try {
+                platforms = JSON.parse(platforms);
+              } catch (e) {
+                return false;
+              }
             }
             
+            // Быстрая проверка наличия платформ в статусе pending/scheduled
             for (const [platform, data] of Object.entries(platforms)) {
-              // Детальное логирование каждой платформы
-              log(`Платформа ${platform}, статус: ${data?.status}, выбрана: ${data?.selected}`, 'scheduler');
-              
-              // Проверяем все возможные статусы ожидания - ВСЕ платформы, независимо от флага selected
-              if (data?.status === 'pending' || 
-                  data?.status === 'scheduled' || 
-                  data?.status === undefined) { // Учитываем неустановленный статус
-                log(`Найдена платформа ${platform} в статусе ${data?.status}, добавляем контент в список обработки`, 'scheduler');
-                return true; // Есть хотя бы одна платформа в пендинге - добавляем
+              if (data?.status === 'pending' || data?.status === 'scheduled' || data?.status === undefined) {
+                // Логируем только найденные платформы
+                log(`Найдена платформа ${platform} в статусе ${data?.status || 'undefined'} для контента ID: ${item.id}`, 'scheduler');
+                return true;
               }
             }
             
