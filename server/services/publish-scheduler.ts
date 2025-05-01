@@ -364,15 +364,15 @@ export class PublishScheduler {
         'Content-Type': 'application/json'
       };
 
-      // В соответствии с новыми требованиями проверяем и draft тоже
+      // Получаем ВЕСЬ контент с платформами независимо от его статуса
+      // Это позволит обнаружить любые проблемные комбинации платформ
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            _or: [
-              { status: { _eq: 'scheduled' } },
-              { status: { _eq: 'draft' } }
-            ]
+            social_platforms: {
+              _nnull: true
+            }
           }),
           limit: 50 // Ограничиваем количество проверяемых записей для производительности
         }
