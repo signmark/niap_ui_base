@@ -107,7 +107,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         >
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
-              <h2 className="mb-6 px-4 text-lg font-semibold sidebar-title">SMM Manager</h2>
+              <div className="mb-6 px-4 sidebar-title text-center">
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[150px] mx-auto" />
+              </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (
                   <Button
@@ -147,7 +149,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="hidden lg:block w-64">
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
-              <h2 className="mb-6 px-4 text-lg font-semibold sidebar-title">SMM Manager</h2>
+              <div className="mb-6 px-4 sidebar-title text-center">
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[150px] mx-auto" />
+              </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (
                   <Button
