@@ -49,7 +49,21 @@ async function getContentData(contentId: string, token: string): Promise<any> {
  */
 async function updateContentStatus(contentId: string, updates: any, token: string): Promise<boolean> {
   try {
-    await axios.patch(
+    // Добавляем подробное логирование обновления контента
+    log.info(`Обновление статуса контента ${contentId}. Данные для обновления: ${JSON.stringify(updates)}`);
+    
+    // Получаем текущие данные контента для проверки всех платформ
+    const contentData = await getContentData(contentId, token);
+    if (!contentData) {
+      log.error(`Не удалось получить текущие данные контента ${contentId} перед обновлением`);
+      return false;
+    }
+    
+    // Проверяем статусы всех платформ и решаем, нужно ли обновить общий статус
+    const currentSocialPlatforms = contentData.social_platforms || {};
+    
+    // Выполняем обновление статуса платформы
+    const response = await axios.patch(
       `${DIRECTUS_URL}/items/campaign_content/${contentId}`,
       updates,
       {
@@ -58,6 +72,69 @@ async function updateContentStatus(contentId: string, updates: any, token: strin
         }
       }
     );
+    
+    // После обновления проверяем, нужно ли обновить общий статус контента
+    // Это дополнительная проверка для надежности
+    // Получаем обновленные данные
+    const updatedContentData = await getContentData(contentId, token);
+    if (updatedContentData && updatedContentData.social_platforms) {
+      const updatedPlatforms = updatedContentData.social_platforms;
+      
+      // Получаем списки платформ по их статусам
+      const selectedPlatforms = [];
+      const publishedPlatforms = [];
+      const pendingPlatforms = [];
+      const failedPlatforms = [];
+      
+      // Проходим по всем платформам и проверяем их статусы
+      for (const [platform, data] of Object.entries(updatedPlatforms)) {
+        // Проверяем только выбранные платформы
+        if (data.selected === true) {
+          selectedPlatforms.push(platform);
+          
+          if (data.status === 'published') {
+            publishedPlatforms.push(platform);
+          } else if (data.status === 'pending' || data.status === 'scheduled') {
+            pendingPlatforms.push(platform);
+          } else if (data.status === 'failed' || data.status === 'error') {
+            failedPlatforms.push(platform);
+          }
+        }
+      }
+      
+      // Проверяем условия для обновления статуса
+      const allSelectedPublished = selectedPlatforms.length === publishedPlatforms.length && selectedPlatforms.length > 0;
+      const hasErrors = failedPlatforms.length > 0;
+      const hasPending = pendingPlatforms.length > 0;
+      
+      log.info(`Анализ статусов платформ для контента ${contentId}:`);
+      log.info(`  - Выбрано: ${selectedPlatforms.length} платформ: ${selectedPlatforms.join(', ')}`);
+      log.info(`  - Опубликовано: ${publishedPlatforms.length} платформ: ${publishedPlatforms.join(', ')}`);
+      log.info(`  - В ожидании: ${pendingPlatforms.length} платформ: ${pendingPlatforms.join(', ')}`);
+      log.info(`  - С ошибками: ${failedPlatforms.length} платформ: ${failedPlatforms.join(', ')}`);
+      
+      // Обновляем статус на "published" ТОЛЬКО если ВСЕ выбранные платформы опубликованы
+      if (allSelectedPublished && !hasErrors && !hasPending && updatedContentData.status !== 'published') {
+        log.info(`Все выбранные платформы опубликованы, обновляем общий статус контента на 'published'`);
+        
+        // Обновляем общий статус контента
+        try {
+          await axios.patch(
+            `${DIRECTUS_URL}/items/campaign_content/${contentId}`,
+            { status: 'published', publishedAt: new Date() },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          log.info(`Статус контента ${contentId} успешно обновлен на 'published'`);
+        } catch (updateError) {
+          log.error(`Ошибка при обновлении общего статуса контента ${contentId}: ${updateError.message}`);
+        }
+      }
+    }
+    
     return true;
   } catch (error) {
     log.error(`Ошибка при обновлении статуса контента ${contentId}: ${error.message}`);

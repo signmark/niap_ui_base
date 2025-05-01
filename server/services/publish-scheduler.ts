@@ -570,8 +570,26 @@ export class PublishScheduler {
             }
             
             // Проверяем наличие платформ в статусе pending или scheduled
+            // Добавим подробное логирование для отладки
+            log(`Проверяем наличие платформ в статусе pending для контента ID: ${item.id}`, 'scheduler');
+            
+            try {
+              // Дополнительный лог всего объекта платформ для отладки
+              log(`Содержимое social_platforms: ${JSON.stringify(platforms)}`, 'scheduler');
+            } catch (e) {
+              log(`Ошибка при логировании platforms: ${e}`, 'scheduler');
+            }
+            
             for (const [platform, data] of Object.entries(platforms)) {
-              if ((data?.status === 'pending' || data?.status === 'scheduled') && data?.selected === true) {
+              // Детальное логирование каждой платформы
+              log(`Платформа ${platform}, статус: ${data?.status}, выбрана: ${data?.selected}`, 'scheduler');
+              
+              // Проверяем все возможные статусы ожидания
+              if ((data?.status === 'pending' || 
+                  data?.status === 'scheduled' || 
+                  data?.status === undefined) && // Учитываем неустановленный статус
+                  data?.selected === true) {
+                log(`Найдена платформа ${platform} в статусе ${data?.status}, добавляем контент в список обработки`, 'scheduler');
                 return true; // Есть хотя бы одна платформа в пендинге - добавляем
               }
             }
@@ -932,6 +950,15 @@ export class PublishScheduler {
    * @param authToken Токен авторизации для API запросов
    */
   async publishContent(content: CampaignContent, authToken?: string) {
+    // Добавляем подробное логирование при публикации
+    log(`[Публикация] Начало публикации контента ID: ${content.id}`, 'scheduler');
+    
+    // Логируем детали платформ
+    try {
+      log(`[Публикация] Содержимое social_platforms: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
+    } catch (e) {
+      log(`[Публикация] Ошибка при логировании platforms: ${e}`, 'scheduler');
+    }
     try {
       if (!content.id || !content.campaignId) {
         log(`Контент с ID ${content.id} не содержит необходимой информации`, 'scheduler');
