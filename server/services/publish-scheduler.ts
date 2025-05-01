@@ -674,6 +674,25 @@ export class PublishScheduler {
           }
         });
         
+        // Специальный запрос для фикса проблемы с TG+IG
+        // Ищем контент со статусом 'scheduled', но у которого есть платформы
+        // Дополнительный запрос для контента с published платформами
+        log('Дополнительный запрос по контенту со статусом scheduled и платформами', 'scheduler');
+        const allPlatformsResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
+          headers,
+          params: {
+            filter: JSON.stringify({
+              status: {
+                _eq: 'scheduled'
+              },
+              social_platforms: {
+                _nnull: true
+              }
+            }),
+            limit: 100 // Получаем больше записей для лучшего охвата
+          }
+        });
+
         // Объединяем результаты
         let allItems = [];
         
@@ -717,6 +736,76 @@ export class PublishScheduler {
           
           log(`Получено ${pendingResponse.data.data.length} публикаций со статусом 'draft', из них ${pendingItems.length} с платформами в статусе 'pending'`, 'scheduler');
           allItems = allItems.concat(pendingItems);
+        }
+
+        // Добавляем контент со всеми платформами
+        if (allPlatformsResponse?.data?.data) {
+          // Фильтруем только те, у которых все платформы опубликованы
+          const allPublishedItems = allPlatformsResponse.data.data.filter((item: any) => {
+            // Проверяем наличие платформ
+            if (!item.social_platforms) return false;
+            
+            // Преобразуем в объект, если это строка
+            let platforms = item.social_platforms;
+            if (typeof platforms === 'string') {
+              try {
+                platforms = JSON.parse(platforms);
+              } catch (e) {
+                return false;
+              }
+            }
+            
+            // Проверяем, что это не пустой объект
+            if (Object.keys(platforms).length === 0) return false;
+                
+            // Проверяем, что все платформы уже опубликованы
+            const allPlatforms = Object.keys(platforms);
+            const publishedPlatforms = [];
+                
+            let hasTelegram = false;
+            let hasInstagram = false;
+            let telegramPublished = false;
+            let instagramPublished = false;
+                
+            // Проверяем каждую платформу
+            for (const platform of allPlatforms) {
+              const data = platforms[platform] || {};
+              const status = data.status;
+                
+              // Проверка комбинации TG+IG
+              if (platform === 'telegram') {
+                hasTelegram = true;
+                telegramPublished = (status === 'published');
+              } else if (platform === 'instagram') {
+                hasInstagram = true;
+                instagramPublished = (status === 'published');
+              }
+                
+              // Собираем все опубликованные платформы
+              if (status === 'published') {
+                publishedPlatforms.push(platform);
+              }
+            }
+                
+            // Проверяем условия
+            const allPublished = allPlatforms.length > 0 && allPlatforms.length === publishedPlatforms.length;
+            const isTgIgCombo = hasTelegram && hasInstagram && allPlatforms.length === 2 && 
+                           telegramPublished && instagramPublished;
+                
+            return allPublished || isTgIgCombo;
+          });
+
+          if (allPublishedItems.length > 0) {
+            log(`Найдено ${allPublishedItems.length} контентов со всеми опубликованными платформами, но статус все еще scheduled`, 'scheduler');
+                
+            // Добавляем в общий список и обрабатываем сразу в checkAndUpdateContentStatuses
+            allItems = allItems.concat(allPublishedItems);
+                
+            // Дополнительно вызываем проверку и обновление статусов
+            this.checkAndUpdateContentStatuses().catch(error => {
+              log(`Ошибка при проверке статусов публикаций: ${error.message}`, 'scheduler');
+            });
+          }
         }
         
         // Используем объединенный список
