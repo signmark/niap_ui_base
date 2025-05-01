@@ -102,6 +102,7 @@ export class PublishScheduler {
    * 3. Статический токен из переменных окружения
    * 4. Сохраненный токен из хранилища
    * 
+   * Добавлена проверка действительности токена из кэша перед использованием
    * @returns Токен для авторизации запросов к API
    */
   public async getSystemToken(): Promise<string | null> {
@@ -109,9 +110,35 @@ export class PublishScheduler {
       // Сначала проверяем кэш внутри планировщика
       const now = Date.now();
       if (this.adminTokenCache && (now - this.adminTokenTimestamp < this.tokenExpirationMs)) {
-        // У нас есть кэшированный токен, который не истек
+        // У нас есть кэшированный токен, который не истек по времени
         log('Используем кэшированный токен администратора из планировщика', 'scheduler');
-        return this.adminTokenCache;
+        
+        // Проверяем валидность токена, даже если он не истек по времени
+        try {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const testResponse = await axios.get(`${directusUrl}/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${this.adminTokenCache}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (testResponse?.data?.data) {
+            log('Кэшированный токен проверен и валиден', 'scheduler');
+            return this.adminTokenCache;
+          }
+          
+          log('Кэшированный токен недействителен, получаем новый', 'scheduler');
+          // Токен недействителен, очищаем кэш
+          this.adminTokenCache = null;
+        } catch (error: any) {
+          log(`Ошибка при проверке кэшированного токена: ${error.message}`, 'scheduler');
+          if (error.response?.status === 401) {
+            log('Токен истек, получаем новый', 'scheduler');
+            // Токен истек, очищаем кэш
+            this.adminTokenCache = null;
+          }
+        }
       }
       
       // Загружаем менеджер авторизации
@@ -527,6 +554,10 @@ export class PublishScheduler {
         log('Контент будет обнаружен, но не будет опубликован', 'scheduler');
       }
       
+      // Сбрасываем кэшированный токен для принудительного обновления
+      log('Принудительное обновление токена администратора', 'scheduler');
+      this.adminTokenCache = null; // Очищаем кэш токена, чтобы получить новый
+
       // Добавляем проверку и обновление статусов контента со всеми опубликованными платформами
       // Функция выполняется в фоновом режиме, чтобы не блокировать публикацию нового контента
       this.checkAndUpdateContentStatuses().catch(error => {
