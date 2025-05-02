@@ -34,8 +34,8 @@ export class FalAiDirectClient {
       numImagesParam : 
       parseInt(String(numImagesParam)) || 3;
     
-    // Ограничиваем диапазон от 1 до 6
-    return Math.max(1, Math.min(6, numImages));
+    // Ограничиваем диапазон от 1 до 4 (максимальное значение снижено до 4 из-за ограничений моделей)
+    return Math.max(1, Math.min(4, numImages));
   }
 
   /**
@@ -166,8 +166,10 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Используем единый метод для нормализации количества изображений (от 1 до 6)
-      const numImages = this.normalizeNumImages(options.num_images);
+      // Для Schnell модели ограничиваем максимальное количество изображений до 4
+      const maxImagesForSchnell = 4;
+      const numImages = Math.min(this.normalizeNumImages(options.num_images), maxImagesForSchnell);
+      console.log(`[fal-ai-direct] Модель Schnell: ограничено количество изображений до ${maxImagesForSchnell}, запрошено: ${this.normalizeNumImages(options.num_images)}`);
 
       // Дополнительное логирование для отладки
       console.log(`[fal-ai-direct] Подготовка запроса к Schnell с размерами: ${width}x${height}, изображений: ${numImages}`);
