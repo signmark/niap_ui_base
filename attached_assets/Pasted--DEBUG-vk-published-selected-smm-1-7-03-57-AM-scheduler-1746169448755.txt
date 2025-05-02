@@ -1,0 +1,33 @@
+ DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+smm-1  | 7:03:57 AM [scheduler] Контент 15e69f0b-a953-4b9c-9af5-6f2ef2ff3951 (Гормональный баланс) - статус: published
+smm-1  | 7:03:57 AM [scheduler]   - Всего платформ: 3
+smm-1  | 7:03:57 AM [scheduler]   - Опубликовано: 3
+smm-1  | 7:03:57 AM [scheduler]   - В ожидании: 0
+smm-1  | 7:03:57 AM [scheduler]   - Запланировано: 0
+smm-1  | 7:03:57 AM [scheduler]   - С ошибками: 0
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+smm-1  | 7:03:57 AM [scheduler] DEBUG: Опубликованные: vk, telegram, instagram
+smm-1  | 7:03:57 AM [scheduler] Контент 15e69f0b-a953-4b9c-9af5-6f2ef2ff3951 уже имеет статус 'published'
+smm-1  | 7:03:57 AM [scheduler] Завершена проверка статусов. Обновлено статусов: 0
+smm-1  | 7:03:57 AM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+smm-1  | 7:03:57 AM [scheduler] Дополнительный запрос по контенту со статусом scheduled и платформами
+smm-1  | 7:03:57 AM [scheduler] Получено 0 запланированных публикаций со статусом 'scheduled'
+smm-1  | 7:03:57 AM [scheduler] Получено 71 публикаций со статусом 'draft', из них 0 с платформами в статусе 'pending'
+smm-1  | 7:03:57 AM [scheduler] Получено 0 запланированных публикаций через API
+smm-1  | 7:03:57 AM [scheduler] Запланированные публикации не найдены
+smm-1  | 7:03:57 AM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+smm-1  | 7:03:57 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 7:03:57 AM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+smm-1  | 7:03:57 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 7:03:57 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 7:03:57 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 7:03:57 AM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 7:03:57 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+smm-1  | 7:03:57 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 7:03:57 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 7:03:57 AM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 7:03:57 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
