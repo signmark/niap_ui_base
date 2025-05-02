@@ -1972,8 +1972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
-  // Закомментировано, так как этот маршрут дублирует основной маршрут в routes-fal-ai-images.ts
-  /* Маршрут был перемещен в routes-fal-ai-images.ts
+  // Этот маршрут используется клиентскими компонентами для генерации изображений
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
