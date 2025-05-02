@@ -76,7 +76,9 @@ router.get('/api/fal-ai-models', async (req, res) => {
 router.post('/api/fal-ai-images', async (req, res) => {
   try {
     // Валидация запроса
-    const { prompt, negativePrompt, width, height, numImages, model } = req.body;
+    const { prompt, negativePrompt, width, height, numImages, model, stylePreset } = req.body;
+    
+    console.log(`[api] Приняты параметры размера: ${width}x${height}, стиль: ${stylePreset || 'не указан'}`);
     
     if (!prompt) {
       return res.status(400).json({
@@ -108,11 +110,12 @@ router.post('/api/fal-ai-images', async (req, res) => {
     const generateOptions: FalAiGenerateOptions = {
       prompt,
       negativePrompt,
-      width: width || 1024,
-      height: height || 1024,
-      numImages: numImages || 1,
+      width: parseInt(width) || 1024,
+      height: parseInt(height) || 1024,
+      numImages: parseInt(numImages) || 1,
       model: model || 'schnell', // Используем Schnell по умолчанию
-      token
+      token,
+      stylePreset // Добавляем передачу параметра стиля
     };
 
     // Выбираем правильный сервис в зависимости от модели
@@ -146,11 +149,14 @@ router.post('/api/fal-ai-images', async (req, res) => {
       const juggernautOptions = {
         prompt,
         negativePrompt,
-        width: width || 1024,
-        height: height || 1024,
-        numImages: numImages || 1,
-        model: model
+        width: parseInt(width) || 1024,
+        height: parseInt(height) || 1024,
+        numImages: parseInt(numImages) || 1,
+        model: model,
+        stylePreset // Добавляем параметр стиля для Juggernaut моделей
       };
+      
+      console.log(`[api] Отправляем запрос к Juggernaut с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
       
       console.log(`[api] Используем специализированный сервис для модели Juggernaut: ${model}`);
       imageUrls = await falAiJuggernautService.generateImages(juggernautOptions);
@@ -160,11 +166,14 @@ router.post('/api/fal-ai-images', async (req, res) => {
       imageUrls = await falAiUniversalService.generateWithSchnell({
         prompt,
         negativePrompt,
-        width: width || 1024,
-        height: height || 1024,
-        numImages: numImages || 1,
-        token
+        width: parseInt(width) || 1024,
+        height: parseInt(height) || 1024,
+        numImages: parseInt(numImages) || 1,
+        token,
+        stylePreset // Передаём параметр стиля для модели Schnell
       });
+      
+      console.log(`[api] Отправляем запрос к Schnell с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
     } else {
       // Для других стандартных моделей используем универсальный сервис
       console.log(`[api] Используем универсальный сервис для модели: ${model}`);

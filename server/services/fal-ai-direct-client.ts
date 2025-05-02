@@ -37,33 +37,68 @@ export class FalAiDirectClient {
     if (options.model === 'fast-sdxl') {
       // Специальный URL для быстрого SDXL
       apiUrl = 'https://hub.fal.ai/v1/fast-sdxl/image';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к fast-sdxl с размерами: ${width}x${height}`);
+      
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: options.num_images || 1
+        width: width,
+        height: height,
+        num_images: numImages
       };
+      
+      // Добавляем параметр стиля, если он есть
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для fast-sdxl`);
+        (requestData as any).style_preset = options.style_preset;
+      }
     } else if (options.model === 'sdxl') {
       // Стандартный SDXL
       apiUrl = 'https://hub.fal.ai/v1/stable-diffusion/sdxl-lightning';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к SDXL с размерами: ${width}x${height}`);
+      
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: options.num_images || 1
+        width: width,
+        height: height,
+        num_images: numImages
       };
+      
+      // Добавляем параметр стиля, если он есть
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для SDXL`);
+        (requestData as any).style_preset = options.style_preset;
+      }
     } else if (options.model === 'schnell') {
       // Специальный URL для Schnell (в соответствии с официальной документацией)
       apiUrl = 'https://api.fal.ai/v1/fal-ai/flux/schnell';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+
+      console.log(`[fal-ai-direct] Подготовка запроса к Schnell с размерами: ${width}x${height}`);
+      
       requestData = {
         input: {
           prompt: options.prompt,
           negative_prompt: options.negative_prompt || '',
           image_size: {
-            width: options.width || 1024,
-            height: options.height || 1024
+            width: width,
+            height: height
           },
           num_inference_steps: 4, // Рекомендуемое значение из документации
           num_images: options.num_images || 1,
