@@ -43,9 +43,27 @@ export const STYLE_DESCRIPTIONS: { [key: string]: string } = {
   'watercolor': 'Стилизация под акварельную живопись',
 };
 
+// Интерфейс для карты стилей модели
+export interface ModelStyleMap {
+  photographic: string;
+  cinematic: string;
+  anime: string;
+  base: string;
+  [key: string]: string; // Дополнительные стили, которые могут быть добавлены в будущем
+}
+
+// Интерфейс для карты стилей всех моделей
+export interface ModelStyles {
+  schnell: ModelStyleMap;
+  flux: ModelStyleMap;
+  juggernaut: ModelStyleMap;
+  sdxl: ModelStyleMap;
+  [key: string]: ModelStyleMap; // Дополнительные модели, которые могут быть добавлены в будущем
+}
+
 // Объект соответствия специальных стилей для разных моделей
 // Некоторые модели могут иметь собственные названия для схожих стилей
-export const MODEL_SPECIFIC_STYLES = {
+export const MODEL_SPECIFIC_STYLES: ModelStyles = {
   'schnell': {
     'photographic': 'photographic',
     'cinematic': 'cinematic',

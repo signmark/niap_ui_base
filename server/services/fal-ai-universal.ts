@@ -65,6 +65,54 @@ class FalAiUniversalService {
    * @param model Название модели
    * @returns Нормализованный стиль для конкретной модели
    */
+  /**
+   * Определяет стиль из промпта
+   * Промпт может содержать стиль в начале, например: "Anime style. Человек бежит с собакой"
+   * @param prompt Промпт для генерации
+   * @returns Объект с извлеченным стилем и очищенным промптом
+   */
+  private extractStyleFromPrompt(prompt: string): { style: string | undefined; cleanedPrompt: string } {
+    // Доступные стили и их вариации для поиска в промпте
+    const stylePatterns = {
+      'photographic': [/photographic style/i, /photo[ -]?realistic/i, /photo style/i],
+      'cinematic': [/cinematic style/i, /cinematic/i, /movie style/i, /film style/i],
+      'anime': [/anime style/i, /anime/i, /manga style/i, /manga/i],
+      'base': [/base style/i, /basic style/i, /default style/i],
+      'isometric': [/isometric style/i, /isometric/i],
+      'digital-art': [/digital[ -]?art/i, /digital style/i],
+      'comic-book': [/comic[ -]?book/i, /comic style/i],
+      'fantasy-art': [/fantasy[ -]?art/i, /fantasy style/i],
+      'line-art': [/line[ -]?art/i, /line drawing/i, /contour style/i],
+      'lowpoly': [/low[ -]?poly/i, /lowpoly/i, /low polygon/i],
+      'pixel-art': [/pixel[ -]?art/i, /8[ -]?bit/i, /16[ -]?bit/i],
+      'texture': [/texture style/i, /textured/i],
+      'oil-painting': [/oil[ -]?painting/i, /oil paint/i],
+      'watercolor': [/watercolor/i, /water[ -]?color/i],
+    };
+    
+    let detectedStyle: string | undefined = undefined;
+    let cleanedPrompt = prompt;
+    
+    // Ищем все стили в промпте
+    for (const [style, patterns] of Object.entries(stylePatterns)) {
+      for (const pattern of patterns) {
+        const match = prompt.match(pattern);
+        if (match) {
+          detectedStyle = style;
+          // Удаляем упоминание стиля из промпта
+          cleanedPrompt = prompt.replace(pattern, '').trim();
+          // Удаляем начальные символы пунктуации
+          cleanedPrompt = cleanedPrompt.replace(/^[,\.\s:;]+/, '').trim();
+          break;
+        }
+      }
+      
+      if (detectedStyle) break; // Если стиль найден, прекращаем поиск
+    }
+    
+    return { style: detectedStyle, cleanedPrompt };
+  }
+
   private normalizeStyleForModel(stylePreset: string | undefined, model: string): string | undefined {
     if (!stylePreset) return undefined;
     
@@ -79,16 +127,20 @@ class FalAiUniversalService {
     // Проверяем, есть ли специальные соответствия для этой модели
     if (baseModelName.includes('schnell')) {
       // Для Schnell используем карту соответствия schnell
-      return MODEL_SPECIFIC_STYLES['schnell'][stylePreset] || stylePreset;
+      const styleMap = MODEL_SPECIFIC_STYLES['schnell'] as Record<string, string>;
+      return styleMap[stylePreset] || stylePreset;
     } else if (baseModelName.includes('juggernaut')) {
       // Для Juggernaut используем карту соответствия juggernaut
-      return MODEL_SPECIFIC_STYLES['juggernaut'][stylePreset] || stylePreset;
+      const styleMap = MODEL_SPECIFIC_STYLES['juggernaut'] as Record<string, string>;
+      return styleMap[stylePreset] || stylePreset;
     } else if (baseModelName.includes('flux')) {
       // Для Flux используем карту соответствия flux
-      return MODEL_SPECIFIC_STYLES['flux'][stylePreset] || stylePreset;
+      const styleMap = MODEL_SPECIFIC_STYLES['flux'] as Record<string, string>;
+      return styleMap[stylePreset] || stylePreset;
     } else if (baseModelName.includes('sdxl')) {
       // Для SDXL используем карту соответствия sdxl
-      return MODEL_SPECIFIC_STYLES['sdxl'][stylePreset] || stylePreset;
+      const styleMap = MODEL_SPECIFIC_STYLES['sdxl'] as Record<string, string>;
+      return styleMap[stylePreset] || stylePreset;
     }
     
     // Если нет специальных соответствий, возвращаем стиль как есть
@@ -137,7 +189,13 @@ class FalAiUniversalService {
       const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
       const numImages = typeof options.numImages === 'number' ? options.numImages : parseInt(options.numImages as any) || 1;
       
-      console.log(`[fal-ai-universal] Отправляем запрос к Schnell API с размерами: ${width}x${height}, стиль: ${stylePreset || 'не указан'}`);
+      // Нормализуем стиль для модели Schnell
+      const normalizedStyle = this.normalizeStyleForModel(stylePreset, 'schnell');
+      if (normalizedStyle && normalizedStyle !== stylePreset) {
+        console.log(`[fal-ai-universal] Стиль для Schnell нормализован из ${stylePreset} в ${normalizedStyle}`);
+      }
+      
+      console.log(`[fal-ai-universal] Отправляем запрос к Schnell API с размерами: ${width}x${height}, стиль: ${normalizedStyle || 'не указан'}`);
       
       // Обновляем запрос в соответствии с официальной документацией FAL.AI
       return await falAiDirectClient.generateImages({
@@ -148,7 +206,7 @@ class FalAiUniversalService {
         width: width,
         height: height,
         num_images: numImages,
-        style_preset: stylePreset || '' // Добавляем передачу параметра стиля
+        style_preset: normalizedStyle || '' // Добавляем передачу нормализованного параметра стиля
       });
     } catch (error: any) {
       console.error(`[fal-ai-universal] Ошибка при использовании Schnell API: ${error.message}`);
@@ -238,6 +296,17 @@ class FalAiUniversalService {
       throw new Error('Отсутствует токен или userId для получения API ключа');
     }
     
+    // Проверяем наличие стиля в промпте (например, "Anime style. Человек бежит")
+    const { style: promptStyle, cleanedPrompt } = this.extractStyleFromPrompt(options.prompt);
+    
+    // Если стиль был найден в промпте, используем его и изменяем промпт
+    if (promptStyle) {
+      console.log(`[fal-ai-universal] Обнаружен стиль в промпте: ${promptStyle}`);
+      options.stylePreset = promptStyle;
+      options.prompt = cleanedPrompt;
+      console.log(`[fal-ai-universal] Промпт очищен: '${cleanedPrompt}'`);
+    }
+    
     // Определяем модель
     const model = this.normalizeModelName(options.model);
     
@@ -325,7 +394,13 @@ class FalAiUniversalService {
         const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
         const numImages = typeof options.numImages === 'number' ? options.numImages : parseInt(options.numImages as any) || 1;
         
-        console.log(`[fal-ai-universal] Отправляем запрос к модели ${model} с размерами: ${width}x${height}, стиль: ${options.stylePreset || 'не указан'}`);
+        // Нормализуем стиль для данной модели
+        const normalizedStyle = this.normalizeStyleForModel(options.stylePreset, model);
+        if (normalizedStyle && normalizedStyle !== options.stylePreset) {
+          console.log(`[fal-ai-universal] Стиль нормализован из ${options.stylePreset} в ${normalizedStyle} для модели ${model}`);
+        }
+        
+        console.log(`[fal-ai-universal] Отправляем запрос к модели ${model} с размерами: ${width}x${height}, стиль: ${normalizedStyle || 'не указан'}`);
         
         return await falAiDirectClient.generateImages({
           model: model,
@@ -335,7 +410,7 @@ class FalAiUniversalService {
           width: width,
           height: height,
           num_images: numImages,
-          style_preset: options.stylePreset // Передаем параметр стиля
+          style_preset: normalizedStyle // Передаем нормализованный параметр стиля
         });
       } catch (directError: any) {
         console.error(`[fal-ai-universal] Ошибка при использовании прямого клиента для модели ${model}: ${directError.message}`);
