@@ -24,16 +24,18 @@ export class FalAiDirectClient {
    * @returns Нормализованное значение от 1 до 6
    */
   private normalizeNumImages(numImagesParam: number | string | undefined): number {
-    // Если параметр не указан, возвращаем 1 по умолчанию
-    if (numImagesParam === undefined) return 1;
-    
-    // Если это число, ограничиваем от 1 до 6
-    if (typeof numImagesParam === 'number') {
-      return Math.min(Math.max(1, numImagesParam), 6);
+    // Если параметр не указан, возвращаем значение по умолчанию - 3
+    if (numImagesParam === undefined || numImagesParam === null) {
+      return 3;
     }
     
-    // Если это строка, преобразуем в число и ограничиваем от 1 до 6
-    return Math.min(Math.max(1, parseInt(String(numImagesParam)) || 1), 6);
+    // Преобразуем в число, если это строка
+    let numImages = typeof numImagesParam === 'number' ? 
+      numImagesParam : 
+      parseInt(String(numImagesParam)) || 3;
+    
+    // Ограничиваем диапазон от 1 до 6
+    return Math.max(1, Math.min(6, numImages));
   }
 
   /**
