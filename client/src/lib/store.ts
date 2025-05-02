@@ -44,6 +44,14 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('refresh_token');
+        
+        // Сбрасываем выбранную кампанию при выходе пользователя из системы
+        const clearCampaign = useCampaignStore.getState().clearSelectedCampaign;
+        if (clearCampaign) {
+          console.log('Сброс выбранной кампании при смене пользователя');
+          clearCampaign();
+        }
+        
         set({ 
           token: null, 
           userId: null, 
