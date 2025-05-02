@@ -190,8 +190,19 @@ export class FalAiOfficialClient {
 
     // Специфические параметры для разных моделей
     if (options.model === 'schnell' || options.model === 'fal-ai/schnell' || options.model === 'fal-ai/flux/schnell') {
+      // Для Schnell стиль добавляется прямо в промпт, а не как отдельный параметр
+      let updatedPrompt = options.prompt;
+      
+      // Добавляем стиль в промпт, если он указан
+      if (stylePreset && !updatedPrompt.toLowerCase().includes(stylePreset.toLowerCase())) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} в промпт для модели schnell`);
+        
+        // Добавляем стиль в конец промпта
+        updatedPrompt = `${updatedPrompt}, ${stylePreset} style`;
+      }
+      
       const schnellParams = {
-        prompt: options.prompt,
+        prompt: updatedPrompt,
         negative_prompt: options.negative_prompt || options.negativePrompt || '',
         image_size: {
           width: options.width || 1024,
@@ -200,12 +211,6 @@ export class FalAiOfficialClient {
         num_inference_steps: 4, // Значение по умолчанию из документации
         num_images: numImages
       };
-      
-      // Добавляем стиль, если он указан
-      if (stylePreset) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели schnell`);
-        (schnellParams as any).style = stylePreset;
-      }
       
       return schnellParams;
     } else if (options.model === 'fast-sdxl' || options.model === 'fal-ai/fast-sdxl') {
@@ -224,28 +229,54 @@ export class FalAiOfficialClient {
       
       return sdxlParams;
     } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
-      return {
+      const sdxlLightningParams = {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
         num_images: numImages
       };
+      
+      // Добавляем стиль, если он указан
+      if (stylePreset) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели sdxl-lightning`);
+        (sdxlLightningParams as any).style_preset = stylePreset;
+      }
+      
+      return sdxlLightningParams;
     } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
-      return {
+      const fooocusParams = {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
         num_images: numImages
       };
+      
+      // Добавляем стиль, если он указан
+      // Fooocus использует style_preset
+      if (stylePreset) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели fooocus (параметр 'style_preset')`);
+        (fooocusParams as any).style_preset = stylePreset;
+      }
+      
+      return fooocusParams;
     } 
     // Обработка моделей rundiffusion-fal
     else if (options.model.includes('rundiffusion-fal/juggernaut-flux')) {
-      return {
+      const juggernautParams = {
         ...baseParams,
         image_width: options.width || 1024,
         image_height: options.height || 1024,
         num_images: numImages
       };
+      
+      // Добавляем стиль, если он указан
+      // Juggernaut использует style_preset
+      if (stylePreset) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели juggernaut (параметр 'style_preset')`);
+        (juggernautParams as any).style_preset = stylePreset;
+      }
+      
+      return juggernautParams;
     }
     // Обработка моделей flux/
     else if (options.model.includes('flux/') || options.model.includes('fal-ai/flux')) {
