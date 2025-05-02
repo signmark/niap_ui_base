@@ -14,10 +14,12 @@ export interface GenerateImageOptions {
   num_images?: number;       // Используем snake_case для соответствия API FAL.AI
   model: string;
   token?: string;            // Опционально токен для авторизации
+  style_preset?: string;     // Стиль изображения (например, anime, photographic, cinematic)
   
   // Поддержка camelCase для совместимости с универсальным сервисом
   negativePrompt?: string;   // Алиас для negative_prompt
   numImages?: number;        // Алиас для num_images
+  stylePreset?: string;      // Алиас для style_preset
 }
 
 export class FalAiOfficialClient {
@@ -182,12 +184,13 @@ export class FalAiOfficialClient {
 
     // Используем значения из snake_case или camelCase параметров
     const numImages = options.num_images || options.numImages || 1;
+    const stylePreset = options.style_preset || options.stylePreset;
     
-    console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${options.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}`);
+    console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${options.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}${stylePreset ? `, style_preset=${stylePreset}` : ''}`);
 
     // Специфические параметры для разных моделей
     if (options.model === 'schnell' || options.model === 'fal-ai/schnell' || options.model === 'fal-ai/flux/schnell') {
-      return {
+      const schnellParams = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || options.negativePrompt || '',
         image_size: {
@@ -197,13 +200,29 @@ export class FalAiOfficialClient {
         num_inference_steps: 4, // Значение по умолчанию из документации
         num_images: numImages
       };
+      
+      // Добавляем стиль, если он указан
+      if (stylePreset) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели schnell`);
+        (schnellParams as any).style = stylePreset;
+      }
+      
+      return schnellParams;
     } else if (options.model === 'fast-sdxl' || options.model === 'fal-ai/fast-sdxl') {
-      return {
+      const sdxlParams = {
         ...baseParams,
         width: options.width || 1024,
         height: options.height || 1024,
         num_images: numImages
       };
+      
+      // Добавляем стиль, если он указан
+      if (stylePreset) {
+        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели fast-sdxl`);
+        (sdxlParams as any).style_preset = stylePreset;
+      }
+      
+      return sdxlParams;
     } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
       return {
         ...baseParams,
