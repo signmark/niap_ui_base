@@ -19,6 +19,24 @@ export interface DirectGenerateOptions {
 
 export class FalAiDirectClient {
   /**
+   * Нормализует количество изображений в параметре num_images, ограничивая его от 1 до 6
+   * @param numImagesParam Параметр количества изображений в любом формате
+   * @returns Нормализованное значение от 1 до 6
+   */
+  private normalizeNumImages(numImagesParam: number | string | undefined): number {
+    // Если параметр не указан, возвращаем 1 по умолчанию
+    if (numImagesParam === undefined) return 1;
+    
+    // Если это число, ограничиваем от 1 до 6
+    if (typeof numImagesParam === 'number') {
+      return Math.min(Math.max(1, numImagesParam), 6);
+    }
+    
+    // Если это строка, преобразуем в число и ограничиваем от 1 до 6
+    return Math.min(Math.max(1, parseInt(String(numImagesParam)) || 1), 6);
+  }
+
+  /**
    * Очищает промпт от JSON-структуры, если она присутствует
    * @param prompt Исходный промпт
    * @returns Очищенный промпт
@@ -94,7 +112,7 @@ export class FalAiDirectClient {
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
-      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      const numImages = this.normalizeNumImages(options.num_images);
       
       console.log(`[fal-ai-direct] Подготовка запроса к fast-sdxl с размерами: ${width}x${height}`);
       
@@ -119,13 +137,8 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Важно: правильно обрабатываем количество изображений
-      let numImages = 1;
-      if (typeof options.num_images === 'number') {
-        numImages = options.num_images;
-      } else if (options.num_images) {
-        numImages = parseInt(String(options.num_images)) || 1;
-      }
+      // Используем единый метод для нормализации количества изображений (от 1 до 6)
+      const numImages = this.normalizeNumImages(options.num_images);
       
       console.log(`[fal-ai-direct] Подготовка запроса к SDXL с размерами: ${width}x${height}, изображений: ${numImages}`);
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
@@ -151,13 +164,8 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Важно: правильно обрабатываем количество изображений
-      let numImages = 1;
-      if (typeof options.num_images === 'number') {
-        numImages = options.num_images;
-      } else if (options.num_images) {
-        numImages = parseInt(String(options.num_images)) || 1;
-      }
+      // Используем единый метод для нормализации количества изображений (от 1 до 6)
+      const numImages = this.normalizeNumImages(options.num_images);
 
       // Дополнительное логирование для отладки
       console.log(`[fal-ai-direct] Подготовка запроса к Schnell с размерами: ${width}x${height}, изображений: ${numImages}`);
@@ -196,13 +204,8 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Важно: правильно обрабатываем количество изображений
-      let numImages = 1;
-      if (typeof options.num_images === 'number') {
-        numImages = options.num_images;
-      } else if (options.num_images) {
-        numImages = parseInt(String(options.num_images)) || 1;
-      }
+      // Используем единый метод для нормализации количества изображений (от 1 до 6)
+      const numImages = this.normalizeNumImages(options.num_images);
       
       console.log(`[fal-ai-direct] Подготовка запроса к Fooocus с размерами: ${width}x${height}, изображений: ${numImages}`);
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
