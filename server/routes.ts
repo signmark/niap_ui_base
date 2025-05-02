@@ -1972,7 +1972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
-  app.post('/api/generate-image', authenticateUser, async (req, res) => {
+  app.post('/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
       
@@ -3331,7 +3331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
-  app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
+  app.post("/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
       
