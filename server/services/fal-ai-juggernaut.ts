@@ -49,38 +49,54 @@ export class FalAiJuggernautService {
    * @param imageSize Размер изображения в строковом формате (например, "portrait_4_3", "landscape_16_9")
    * @returns Объект с числовыми значениями ширины и высоты
    */
+  /**
+   * Приводит размер изображения к кратному 64, что требуется для большинства моделей Стабл Диффузии
+   * @param size размер для приведения к кратному 64
+   * @returns скорректированный размер, кратный 64
+   */
+  private makeMultipleOf64(size: number): number {
+    // Округляем до ближайшего кратного 64
+    return Math.round(size / 64) * 64;
+  }
+
+  /**
+   * Преобразует строковый формат размера изображения в числовые значения ширины и высоты
+   * @param imageSize Размер изображения в строковом формате (например, "portrait_4_3", "landscape_16_9")
+   * @returns Объект с числовыми значениями ширины и высоты
+   */
   private parseImageSize(imageSize: string | undefined): { width: number, height: number } {
-    // Значения по умолчанию
+    // Значения по умолчанию - квадрат 1024x1024 (уже кратен 64)
     const defaultSize = { width: 1024, height: 1024 };
     
     if (!imageSize) return defaultSize;
     
     // Предопределённые размеры в формате API
+    // Все размеры кратны 64 для максимальной совместимости с моделями Stable Diffusion
     const predefinedSizes: Record<string, { width: number, height: number }> = {
       // Портретные (вертикальные) форматы
       'portrait_1_1': { width: 1024, height: 1024 },      // Квадрат
-      'portrait_2_3': { width: 1024, height: 1536 },      // Классический фотоформат
-      'portrait_3_4': { width: 768, height: 1024 },       // Телефонные обложки
-      'portrait_4_5': { width: 1080, height: 1350 },      // Instagram-посты
-      'portrait_9_16': { width: 1080, height: 1920 },     // Вертикальные обои, Stories
+      'portrait_2_3': { width: 768, height: 1152 },      // Классический фотоформат (2:3 и кратно 64)
+      'portrait_3_4': { width: 768, height: 1024 },       // Телефонные обложки (3:4 и кратно 64)
+      'portrait_4_5': { width: 832, height: 1024 },      // Instagram-посты (4:5 и кратно 64, близко к 832:1040)
+      'portrait_9_16': { width: 576, height: 1024 },     // Вертикальные обои, Stories (9:16 и кратно 64)
       
       // Альбомные (горизонтальные) форматы
-      'landscape_4_3': { width: 1024, height: 768 },      // Стандартные мониторы
-      'landscape_3_2': { width: 1800, height: 1200 },     // Фотопечать
-      'landscape_16_9': { width: 1920, height: 1080 },    // Full HD, обои
-      'landscape_16_10': { width: 1920, height: 1200 },   // Ноутбуки
-      'landscape_21_9': { width: 2560, height: 1080 },    // Ультраширокий
+      'landscape_4_3': { width: 1024, height: 768 },      // Стандартные мониторы (4:3 и кратно 64)
+      'landscape_3_2': { width: 1152, height: 768 },     // Фотопечать (3:2 и кратно 64)
+      'landscape_16_9': { width: 1152, height: 640 },    // Full HD, обои (16:9 и кратно 64, близко к 1152:648)
+      'landscape_16_10': { width: 1152, height: 704 },   // Ноутбуки (16:10 и кратно 64, близко к 1152:720)
+      'landscape_21_9': { width: 1344, height: 576 },    // Ультраширокий (21:9 и кратно 64)
       
       // Универсальные и специальные форматы
       'square_1_1': { width: 1024, height: 1024 },       // Аватарки, арт
       'square': { width: 1024, height: 1024 },            // Совместимость со старыми запросами
       'square_hd': { width: 1536, height: 1536 },         // Квадратный HD
-      'ultrawide_21_9': { width: 3440, height: 1440 },    // Кинематографичный стиль
-      'mobile_9_18': { width: 1080, height: 2160 },       // Обои смартфонов
-      'cinematic_235_1': { width: 2048, height: 872 },    // Киноформат
+      'ultrawide_21_9': { width: 1344, height: 576 },    // Кинематографичный стиль (21:9 и кратно 64)
+      'mobile_9_18': { width: 512, height: 1024 },       // Обои смартфонов (9:18 и кратно 64)
+      'cinematic_235_1': { width: 1152, height: 480 },    // Киноформат (2.35:1 и кратно 64, близко к 1152:490)
       
       // Совместимость с ранее использовавшимися форматами
-      'portrait_16_9': { width: 576, height: 1024 },
+      'portrait_16_9': { width: 576, height: 1024 },  // Для совместимости с предыдущими версиями
     };
     
     // Удаляем префикс из промпта (если формат указан в начале промпта)
@@ -95,9 +111,22 @@ export class FalAiJuggernautService {
     // Пробуем формат "1024x768"
     const dimensionsMatch = imageSize.match(/^(\d+)x(\d+)$/i);
     if (dimensionsMatch) {
-      const width = parseInt(dimensionsMatch[1]);
-      const height = parseInt(dimensionsMatch[2]);
+      let width = parseInt(dimensionsMatch[1]);
+      let height = parseInt(dimensionsMatch[2]);
+      
       if (!isNaN(width) && !isNaN(height)) {
+        // Приводим размеры к кратным 64, что требуется для Stable Diffusion
+        const originalWidth = width;
+        const originalHeight = height;
+        
+        width = this.makeMultipleOf64(width);
+        height = this.makeMultipleOf64(height);
+        
+        // Если размеры были изменены, логируем это
+        if (originalWidth !== width || originalHeight !== height) {
+          console.log(`[fal-ai-juggernaut] Размеры изменены с ${originalWidth}x${originalHeight} на ${width}x${height} (кратно 64)`);
+        }
+        
         console.log(`[fal-ai-juggernaut] Используем размер в формате WxH: ${width}x${height}`);
         return { width, height };
       }

@@ -73,6 +73,8 @@ class FalAiUniversalService {
    * @returns Объект с извлеченным стилем и очищенным промптом
    */
   private extractStyleFromPrompt(prompt: string): { style: string | undefined; cleanedPrompt: string } {
+    if (!prompt) return { style: undefined, cleanedPrompt: prompt };
+    
     // Доступные стили и их вариации для поиска в промпте
     const stylePatterns = {
       'photographic': [/photographic style/i, /photo[ -]?realistic/i, /photo style/i],
@@ -112,6 +114,141 @@ class FalAiUniversalService {
     }
     
     return { style: detectedStyle, cleanedPrompt };
+  }
+  
+  /**
+   * Добавляет формат изображения в промпт
+   * Требуется для моделей, которые лучше понимают размер через промпт, например: "portrait_9_16, киберпанк город"
+   * @param prompt Исходный промпт
+   * @param formattedSize Формат размера для добавления в промпт (например, 'portrait_9_16', 'landscape_16_9')
+   * @returns Обновленный промпт с добавленным форматом размера
+   */
+  private addImageSizeToPrompt(prompt: string, formattedSize: string): string {
+    if (!prompt || !formattedSize) return prompt;
+    
+    // Проверяем, содержит ли промпт уже какой-либо формат размера
+    const sizePatterns = [
+      /portrait_\d+_\d+/i,              // portrait_9_16
+      /landscape_\d+_\d+/i,             // landscape_16_9
+      /square_\d+_\d+/i,                // square_1_1
+      /ultrawide_\d+_\d+/i,             // ultrawide_21_9
+      /mobile_\d+_\d+/i,                // mobile_9_18
+      /cinematic_\d+_\d+/i,             // cinematic_235_1
+      /\d+:\d+/i,                      // 16:9, 9:16, 1:1
+      /\d+\s*[xX]\s*\d+/i,             // 1024x768, 576 x 1024
+      /vertical(?:\s+wallpaper)?/i,    // vertical wallpaper
+      /tall\s+image/i,                 // tall image
+      /horizontal(?:\s+wallpaper)?/i,  // horizontal wallpaper
+      /wide\s+image/i,                 // wide image
+      /panorama/i                      // panoramic view
+    ];
+    
+    // Если промпт уже содержит указание формата, не изменяем его
+    for (const pattern of sizePatterns) {
+      if (pattern.test(prompt)) {
+        console.log(`[fal-ai-universal] Промпт уже содержит указание формата, не добавляем формат ${formattedSize}`);
+        return prompt;
+      }
+    }
+    
+    // Добавляем формат в начало промпта (это более надёжно работает с моделями)
+    const updatedPrompt = `${formattedSize}, ${prompt}`;
+    console.log(`[fal-ai-universal] Добавлен формат ${formattedSize} в промпт: ${updatedPrompt}`);
+    
+    return updatedPrompt;
+  }
+  
+  /**
+   * Добавляет стиль в промпт, если он ещё не указан
+   * @param prompt Исходный промпт
+   * @param style Стиль для добавления в промпт (например, 'anime', 'photorealistic')
+   * @returns Обновленный промпт с добавленным стилем
+   */
+  private addStyleToPrompt(prompt: string, style: string): string {
+    if (!prompt || !style) return prompt;
+    
+    // Проверяем, содержит ли промпт уже указание стиля
+    const stylePatterns = {
+      'photographic': [/photographic style/i, /photo[ -]?realistic/i, /photo style/i],
+      'cinematic': [/cinematic style/i, /cinematic/i, /movie style/i, /film style/i],
+      'anime': [/anime style/i, /anime/i, /manga style/i, /manga/i],
+      'base': [/base style/i, /basic style/i, /default style/i],
+      'isometric': [/isometric style/i, /isometric/i],
+      'digital-art': [/digital[ -]?art/i, /digital style/i],
+      'comic-book': [/comic[ -]?book/i, /comic style/i],
+      'fantasy-art': [/fantasy[ -]?art/i, /fantasy style/i],
+      'line-art': [/line[ -]?art/i, /line drawing/i, /contour style/i],
+      'lowpoly': [/low[ -]?poly/i, /lowpoly/i, /low polygon/i],
+      'pixel-art': [/pixel[ -]?art/i, /8[ -]?bit/i, /16[ -]?bit/i],
+      'texture': [/texture style/i, /textured/i],
+      'oil-painting': [/oil[ -]?painting/i, /oil paint/i],
+      'watercolor': [/watercolor/i, /water[ -]?color/i],
+    };
+    
+    // Проверяем, содержит ли промпт уже указание какого-либо стиля
+    for (const [styleName, patterns] of Object.entries(stylePatterns)) {
+      for (const pattern of patterns) {
+        if (pattern.test(prompt)) {
+          console.log(`[fal-ai-universal] Промпт уже содержит стиль ${styleName}, не добавляем стиль ${style}`);
+          return prompt;
+        }
+      }
+    }
+    
+    // Форматируем стиль для добавления в промпт
+    let styledPrompt: string;
+    
+    // Если стиль - одно из ключевых слов, добавляем слово "style"
+    if (['photographic', 'cinematic', 'anime', 'base', 'isometric', 'digital-art', 'comic-book',
+         'fantasy-art', 'line-art', 'lowpoly', 'pixel-art', 'texture', 'oil-painting', 'watercolor'].includes(style)) {
+      styledPrompt = `${style} style, ${prompt}`;
+    } else {
+      // Иначе просто добавляем стиль как есть
+      styledPrompt = `${style}, ${prompt}`;
+    }
+    
+    console.log(`[fal-ai-universal] Добавлен стиль ${style} в промпт: ${styledPrompt}`);
+    return styledPrompt;
+  }
+  
+  /**
+   * Преобразует числовые размеры (width/height) в строковый формат для промпта
+   * @param width Ширина изображения
+   * @param height Высота изображения
+   * @returns Строковый формат размера для промпта (например, 'portrait_9_16', 'landscape_16_9')
+   */
+  private getFormattedSizeForPrompt(width: number, height: number): string {
+    if (!width || !height) return '';
+    
+    // Определяем ориентацию изображения
+    let orientation: string;
+    
+    if (width > height) {
+      orientation = 'landscape';
+    } else if (width < height) {
+      orientation = 'portrait';
+    } else {
+      return 'square_1_1'; // Квадрат
+    }
+    
+    // Ищем известные соотношения сторон
+    const ratio = width / height;
+    
+    if (orientation === 'landscape') {
+      if (Math.abs(ratio - (16/9)) < 0.1) return 'landscape_16_9';
+      if (Math.abs(ratio - (3/2)) < 0.1) return 'landscape_3_2';
+      if (Math.abs(ratio - (4/3)) < 0.1) return 'landscape_4_3';
+      if (Math.abs(ratio - (21/9)) < 0.1) return 'landscape_21_9';
+      if (Math.abs(ratio - (16/10)) < 0.1) return 'landscape_16_10';
+    } else {
+      if (Math.abs(ratio - (9/16)) < 0.1) return 'portrait_9_16';
+      if (Math.abs(ratio - (2/3)) < 0.1) return 'portrait_2_3';
+      if (Math.abs(ratio - (3/4)) < 0.1) return 'portrait_3_4';
+      if (Math.abs(ratio - (4/5)) < 0.1) return 'portrait_4_5';
+    }
+    
+    // Если не нашли подходящее стандартное соотношение, возвращаем текущее в формате WxH
+    return `${width}x${height}`;
   }
 
   private normalizeStyleForModel(stylePreset: string | undefined, model: string): string | undefined {
@@ -278,6 +415,23 @@ class FalAiUniversalService {
    * @param options Параметры генерации
    * @returns Массив URL сгенерированных изображений или видео
    */
+  /**
+   * Всегда добавляем информацию о размере в промпт, чтобы подстраховать все модели
+   * Это помогает как моделям, которые опираются на параметры API, так и моделям, которые анализируют промпт
+   */
+  private shouldAddSizeToPrompt(): boolean {
+    // Всегда добавляем размер в промпт для всех моделей
+    return true;
+  }
+  
+  /**
+   * Всегда добавляем стиль в промпт, если он указан
+   * Это помогает всем моделям лучше понимать желаемый стиль изображения
+   */
+  private shouldAddStyleToPrompt(): boolean {
+    return true;
+  }
+  
   async generateImages(options: FalAiGenerateOptions): Promise<string[]> {
     // Получаем API ключ
     let apiKey: string | null = null;
@@ -297,27 +451,122 @@ class FalAiUniversalService {
       throw new Error('Отсутствует токен или userId для получения API ключа');
     }
     
-    // Проверяем наличие стиля в промпте (например, "Anime style. Человек бежит")
-    const { style: promptStyle, cleanedPrompt } = this.extractStyleFromPrompt(options.prompt);
+    // Определяем модель для дальнейших проверок
+    const model = this.normalizeModelName(options.model);
     
-    // Проверяем стиль в промпте и применяем его, если пользователь не выбрал стиль в интерфейсе
-    if (promptStyle) {
-      console.log(`[fal-ai-universal] Обнаружен стиль в промпте: ${promptStyle}`);
-      // Применяем стиль из промпта ТОЛЬКО если пользователь не выбрал стиль в интерфейсе
-      if (!options.stylePreset) {
-        console.log(`[fal-ai-universal] Применяем стиль из промпта: ${promptStyle} (стиль в интерфейсе не выбран)`);
-        options.stylePreset = promptStyle;
-      } else {
-        console.log(`[fal-ai-universal] Сохраняем выбранный пользователем стиль: ${options.stylePreset} (игнорируем стиль из промпта: ${promptStyle})`);
+    // Копируем исходный промпт
+    let workingPrompt = options.prompt;
+    
+    // Параметры размера
+    const hasWidthHeight = options.width && options.height;
+    const hasImageSize = options.imageSize;
+    
+    // Шаг1: Делаем размеры кратными 64 для всех параметров width/height
+    if (hasWidthHeight) {
+      const width = Number(options.width);
+      const height = Number(options.height);
+      
+      // Гарантируем, что ширина и высота кратны 64 для стабильной генерации
+      if (width % 64 !== 0 || height % 64 !== 0) {
+        const adjustedWidth = Math.round(width / 64) * 64;
+        const adjustedHeight = Math.round(height / 64) * 64;
+        
+        if (adjustedWidth !== width || adjustedHeight !== height) {
+          console.log(`[fal-ai-universal] Корректируем размеры с ${width}x${height} на ${adjustedWidth}x${adjustedHeight} (кратно 64)`);
+          options.width = adjustedWidth;
+          options.height = adjustedHeight;
+        }
       }
-      options.prompt = cleanedPrompt;
-      console.log(`[fal-ai-universal] Промпт очищен: '${cleanedPrompt}'`);
-    } else if (options.stylePreset) {
-      console.log(`[fal-ai-universal] Использование стиля из интерфейса: ${options.stylePreset}`);
     }
     
-    // Определяем модель
-    const model = this.normalizeModelName(options.model);
+    // Шаг2: Преобразуем stringImageSize в числовые параметры, если нужно
+    if (hasImageSize && !hasWidthHeight) {
+      // Если imageSize в формате "1024x768", преобразуем его в width/height
+      const dimensionsMatch = options.imageSize.match(/^(\d+)x(\d+)$/i);
+      if (dimensionsMatch) {
+        const extractedWidth = parseInt(dimensionsMatch[1]);
+        const extractedHeight = parseInt(dimensionsMatch[2]);
+        
+        if (!isNaN(extractedWidth) && !isNaN(extractedHeight)) {
+          // Корректируем до кратных 64
+          const adjustedWidth = Math.round(extractedWidth / 64) * 64;
+          const adjustedHeight = Math.round(extractedHeight / 64) * 64;
+          
+          console.log(`[fal-ai-universal] Преобразуем imageSize ${options.imageSize} в числовые параметры: ${adjustedWidth}x${adjustedHeight}`);
+          options.width = adjustedWidth;
+          options.height = adjustedHeight;
+        }
+      }
+      // Если imageSize в формате "portrait_9_16", преобразуем его в width/height
+      else {
+        // Размеры для известных форматов - все кратны 64
+        const formatDimensions: Record<string, [number, number]> = {
+          'portrait_9_16': [576, 1024],    // 9:16
+          'portrait_2_3': [768, 1152],     // 2:3
+          'portrait_3_4': [768, 1024],     // 3:4
+          'portrait_4_5': [832, 1024],     // 4:5 (832:1040)
+          'landscape_16_9': [1152, 640],   // 16:9 (1152:648)
+          'landscape_3_2': [1152, 768],    // 3:2
+          'landscape_4_3': [1024, 768],    // 4:3
+          'landscape_21_9': [1344, 576],   // 21:9
+          'landscape_16_10': [1152, 704],  // 16:10 (1152:720)
+          'square_1_1': [1024, 1024],      // 1:1
+          'square': [1024, 1024]           // Алиас для square_1_1
+        };
+        
+        // Проверяем, есть ли предварительно заданные размеры для этого формата
+        const dimensions = formatDimensions[options.imageSize];
+        if (dimensions) {
+          const [width, height] = dimensions;
+          console.log(`[fal-ai-universal] Преобразуем формат ${options.imageSize} в числовые параметры: ${width}x${height}`);
+          options.width = width;
+          options.height = height;
+        }
+      }
+    }
+    
+    // Шаг3: Добавляем стиль в промпт, если он указан в параметрах
+    if (options.stylePreset && this.shouldAddStyleToPrompt()) {
+      console.log(`[fal-ai-universal] Добавляем стиль ${options.stylePreset} в промпт`);
+      workingPrompt = this.addStyleToPrompt(workingPrompt, options.stylePreset);
+    }
+    
+    // Шаг4: Добавляем размер в промпт (всегда!)
+    if (this.shouldAddSizeToPrompt()) {
+      // Если есть числовые параметры width/height
+      if (options.width && options.height) {
+        const width = Number(options.width);
+        const height = Number(options.height);
+        const formattedSize = this.getFormattedSizeForPrompt(width, height);
+        
+        if (formattedSize) {
+          console.log(`[fal-ai-universal] Добавляем формат ${formattedSize} (на основе ${width}x${height}) в промпт`);
+          workingPrompt = this.addImageSizeToPrompt(workingPrompt, formattedSize);
+        }
+      }
+      // Если есть строковый параметр imageSize и нет числовых width/height
+      else if (options.imageSize && typeof options.imageSize === 'string') {
+        console.log(`[fal-ai-universal] Добавляем формат ${options.imageSize} в промпт`);
+        workingPrompt = this.addImageSizeToPrompt(workingPrompt, options.imageSize);
+      }
+      // Если нет никаких параметров размера, используем стандартный размер
+      else {
+        // Для всех моделей добавляем стандартный размер
+        console.log('[fal-ai-universal] Добавляем стандартный размер square_1_1 в промпт');
+        workingPrompt = this.addImageSizeToPrompt(workingPrompt, 'square_1_1');
+        // Также добавляем стандартные размеры для API
+        options.width = 1024;
+        options.height = 1024;
+      }
+    }
+    
+    // Записываем обновленный промпт обратно в опции
+    options.prompt = workingPrompt;
+    console.log(`[fal-ai-universal] Окончательный промпт: '${workingPrompt}'`);
+    if (options.width && options.height) {
+      console.log(`[fal-ai-universal] Числовые параметры размера: ${options.width}x${options.height}`);
+    }
+    // Нормализуем модель еще раз (на случай, если мы изменили её в процессе)
     
     // Сначала проверяем, является ли модель Flux или другой моделью с путём (vendor/model)
     if (model.includes('/')) {
