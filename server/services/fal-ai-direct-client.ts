@@ -200,7 +200,7 @@ export class FalAiDirectClient {
       }
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
-      apiUrl = 'https://hub.fal.ai/v1/fooocus/generate';
+      apiUrl = 'https://api.fal.ai/v1/fooocus/generate'; // Используем api.fal.ai вместо hub.fal.ai
       
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
