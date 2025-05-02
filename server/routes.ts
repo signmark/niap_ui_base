@@ -3332,7 +3332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
-  app.post("/generate-image-prompt", authenticateUser, async (req, res) => {
+  app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
       
