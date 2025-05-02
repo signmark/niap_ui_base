@@ -19,6 +19,31 @@ export interface DirectGenerateOptions {
 
 export class FalAiDirectClient {
   /**
+   * Очищает промпт от JSON-структуры, если она присутствует
+   * @param prompt Исходный промпт
+   * @returns Очищенный промпт
+   */
+  private cleanPromptFromJsonStructure(prompt: string): string {
+    if (!prompt) return prompt;
+    
+    // Если промпт выглядит как JSON-строка, попытаемся извлечь чистый текст
+    if (prompt.includes('"prompt":') || prompt.includes('"prompt": ')) {
+      try {
+        // Попытка извлечь чистый текст из JSON-строки
+        const match = prompt.match(/"prompt":\s*"([^"]+)"/i);
+        if (match && match[1]) {
+          console.log(`[fal-ai-direct] Обнаружена и исправлена JSON-структура в промпте`);
+          return match[1];
+        }
+      } catch (e) {
+        // В случае ошибки оставляем промпт как есть
+        console.warn(`[fal-ai-direct] Не удалось обработать JSON-структуру в промпте`);
+      }
+    }
+    
+    return prompt;
+  }
+  /**
    * Генерирует изображения с использованием прямого API FAL.AI 
    * @param options Параметры генерации
    * @returns Массив URL сгенерированных изображений
@@ -92,9 +117,26 @@ export class FalAiDirectClient {
 
       console.log(`[fal-ai-direct] Подготовка запроса к Schnell с размерами: ${width}x${height}`);
       
+      // Проверяем, не содержит ли промпт уже JSON-структуру
+      let cleanPrompt = options.prompt;
+      // Если промпт выглядит как JSON-строка, попытаемся извлечь чистый текст
+      if (cleanPrompt.includes('"prompt":') || cleanPrompt.includes('"prompt": ')) {
+        try {
+          // Попытка извлечь чистый текст из JSON-строки
+          const match = cleanPrompt.match(/"prompt":\s*"([^"]+)"/i);
+          if (match && match[1]) {
+            console.log(`[fal-ai-direct] Обнаружена и исправлена JSON-структура в промпте`);
+            cleanPrompt = match[1];
+          }
+        } catch (e) {
+          // В случае ошибки оставляем промпт как есть
+          console.warn(`[fal-ai-direct] Не удалось обработать JSON-структуру в промпте`);
+        }
+      }
+
       requestData = {
         input: {
-          prompt: options.prompt,
+          prompt: cleanPrompt,
           negative_prompt: options.negative_prompt || '',
           image_size: {
             width: width,
@@ -150,9 +192,26 @@ export class FalAiDirectClient {
       
       console.log(`[fal-ai-direct] Подготовка запроса к Flux (${modelName}) с размерами: ${width}x${height}`);
       
+      // Проверяем, не содержит ли промпт уже JSON-структуру
+      let cleanPrompt = options.prompt;
+      // Если промпт выглядит как JSON-строка, попытаемся извлечь чистый текст
+      if (cleanPrompt.includes('"prompt":') || cleanPrompt.includes('"prompt": ')) {
+        try {
+          // Попытка извлечь чистый текст из JSON-строки
+          const match = cleanPrompt.match(/"prompt":\s*"([^"]+)"/i);
+          if (match && match[1]) {
+            console.log(`[fal-ai-direct] Обнаружена и исправлена JSON-структура в промпте`);
+            cleanPrompt = match[1];
+          }
+        } catch (e) {
+          // В случае ошибки оставляем промпт как есть
+          console.warn(`[fal-ai-direct] Не удалось обработать JSON-структуру в промпте`);
+        }
+      }
+
       requestData = {
         model_name: modelName,
-        prompt: options.prompt,
+        prompt: cleanPrompt,
         negative_prompt: options.negative_prompt || '',
         image_width: width,
         image_height: height,
@@ -175,9 +234,26 @@ export class FalAiDirectClient {
       
       console.log(`[fal-ai-direct] Подготовка запроса к модели ${options.model} с размерами: ${width}x${height}`);
       
+      // Проверяем, не содержит ли промпт уже JSON-структуру
+      let cleanPrompt = options.prompt;
+      // Если промпт выглядит как JSON-строка, попытаемся извлечь чистый текст
+      if (cleanPrompt.includes('"prompt":') || cleanPrompt.includes('"prompt": ')) {
+        try {
+          // Попытка извлечь чистый текст из JSON-строки
+          const match = cleanPrompt.match(/"prompt":\s*"([^"]+)"/i);
+          if (match && match[1]) {
+            console.log(`[fal-ai-direct] Обнаружена и исправлена JSON-структура в промпте`);
+            cleanPrompt = match[1];
+          }
+        } catch (e) {
+          // В случае ошибки оставляем промпт как есть
+          console.warn(`[fal-ai-direct] Не удалось обработать JSON-структуру в промпте`);
+        }
+      }
+
       requestData = {
         model_name: options.model,
-        prompt: options.prompt,
+        prompt: cleanPrompt,
         negative_prompt: options.negative_prompt || '',
         width: width,
         height: height,
