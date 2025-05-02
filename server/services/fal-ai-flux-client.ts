@@ -44,7 +44,7 @@ export class FalAiFluxClient {
     console.log(`[fal-ai-flux] Генерация изображений с использованием модели ${options.model}`);
 
     // Новый формат URL для API FAL.AI
-    // Базовый URL для моделей FAL.AI: https://api.fal.ai/
+    // Базовый URL для моделей FAL.AI: https://hub.fal.ai/
     
     let apiUrl = '';
     let modelId = '';
@@ -56,12 +56,12 @@ export class FalAiFluxClient {
     } else if (options.model.startsWith('flux/')) {
       // Для новых моделей Flux используем единый endpoint
       const modelName = options.model.replace('flux/', '');
-      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      apiUrl = 'https://hub.fal.ai/v1/images/generate'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
       modelId = modelName;
       console.log(`[fal-ai-flux] Используем endpoint для Flux с моделью ${modelId}`);
     } else {
       // Для других моделей используем стандартный endpoint
-      apiUrl = 'https://api.fal.ai/v1/images/generate';
+      apiUrl = 'https://hub.fal.ai/v1/images/generate'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
       modelId = options.model;
     }
     
