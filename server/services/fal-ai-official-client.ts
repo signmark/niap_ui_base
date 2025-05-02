@@ -177,33 +177,30 @@ export class FalAiOfficialClient {
    */
   private prepareInputParams(options: GenerateImageOptions): any {
     // Определяем базовые параметры, с поддержкой как snake_case, так и camelCase форматов
-    const baseParams = {
-      prompt: options.prompt,
-      negative_prompt: options.negative_prompt || options.negativePrompt || '',
-    };
-
     // Используем значения из snake_case или camelCase параметров
     const numImages = options.num_images || options.numImages || 1;
     const stylePreset = options.style_preset || options.stylePreset;
     
-    console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${options.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}${stylePreset ? `, style_preset=${stylePreset}` : ''}`);
+    // Добавляем стиль в промпт для всех моделей
+    let updatedPrompt = options.prompt;
+    if (stylePreset && !updatedPrompt.toLowerCase().includes(stylePreset.toLowerCase())) {
+      console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} в промпт для модели ${options.model}`);
+      // Добавляем стиль в конец промпта
+      updatedPrompt = `${updatedPrompt}, ${stylePreset} style`;
+    }
+
+    const baseParams = {
+      prompt: updatedPrompt,
+      negative_prompt: options.negative_prompt || options.negativePrompt || '',
+    };
+    
+    console.log(`[fal-ai-official] Параметры запроса для ${options.model}: prompt="${baseParams.prompt?.substring(0, 30)}...", negative_prompt="${baseParams.negative_prompt?.substring(0, 30)}...", num_images=${numImages}${stylePreset ? `, style_preset=${stylePreset}` : ''}`);
 
     // Специфические параметры для разных моделей
     if (options.model === 'schnell' || options.model === 'fal-ai/schnell' || options.model === 'fal-ai/flux/schnell') {
-      // Для Schnell стиль добавляется прямо в промпт, а не как отдельный параметр
-      let updatedPrompt = options.prompt;
-      
-      // Добавляем стиль в промпт, если он указан
-      if (stylePreset && !updatedPrompt.toLowerCase().includes(stylePreset.toLowerCase())) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} в промпт для модели schnell`);
-        
-        // Добавляем стиль в конец промпта
-        updatedPrompt = `${updatedPrompt}, ${stylePreset} style`;
-      }
-      
       const schnellParams = {
-        prompt: updatedPrompt,
-        negative_prompt: options.negative_prompt || options.negativePrompt || '',
+        prompt: baseParams.prompt,
+        negative_prompt: baseParams.negative_prompt,
         image_size: {
           width: options.width || 1024,
           height: options.height || 1024
@@ -221,12 +218,6 @@ export class FalAiOfficialClient {
         num_images: numImages
       };
       
-      // Добавляем стиль, если он указан
-      if (stylePreset) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели fast-sdxl`);
-        (sdxlParams as any).style_preset = stylePreset;
-      }
-      
       return sdxlParams;
     } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
       const sdxlLightningParams = {
@@ -235,12 +226,6 @@ export class FalAiOfficialClient {
         height: options.height || 1024,
         num_images: numImages
       };
-      
-      // Добавляем стиль, если он указан
-      if (stylePreset) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели sdxl-lightning`);
-        (sdxlLightningParams as any).style_preset = stylePreset;
-      }
       
       return sdxlLightningParams;
     } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
