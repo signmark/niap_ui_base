@@ -251,7 +251,8 @@ Return only the translated text, no explanations or comments.`;
           num_images: numImages, // ВАЖНО! Используем num_images вместо numImages
           scheduler: "K_EULER",
           num_inference_steps: 25,
-          guidance_scale: 7.0
+          guidance_scale: 7.0,
+          style_preset: stylePreset // Добавляем параметр стиля
         };
         console.log('Параметры для модели Schnell:', JSON.stringify(requestData));
       } else if (model === 'stable-diffusion-v35-medium') {
@@ -265,7 +266,8 @@ Return only the translated text, no explanations or comments.`;
           num_images: numImages,
           scheduler: "K_EULER", // Планировщик для Flux
           num_inference_steps: 25,
-          guidance_scale: 7.0
+          guidance_scale: 7.0,
+          style_preset: stylePreset // Добавляем параметр стиля
         };
       } else if (model === 'sdxl' || model === 'stable-diffusion-xl') {
         // Endpoint и параметры для SDXL
@@ -275,7 +277,8 @@ Return only the translated text, no explanations or comments.`;
           negative_prompt: negativePrompt,
           width: width,
           height: height,
-          num_images: numImages
+          num_images: numImages,
+          style_preset: stylePreset // Добавляем параметр стиля
         };
       } else if (model === 'fast-sdxl') {
         // Endpoint и параметры для Fast-SDXL
@@ -288,7 +291,8 @@ Return only the translated text, no explanations or comments.`;
           num_images: numImages,
           scheduler: "K_EULER", // Планировщик для Fast-SDXL
           num_inference_steps: 25,
-          guidance_scale: 7.0
+          guidance_scale: 7.0,
+          style_preset: stylePreset // Добавляем параметр стиля
         };
       } else {
         // Если указана другая модель, используем общий формат
