@@ -514,23 +514,33 @@ export function ImageGenerationDialog({
           await savePromptToDb(prompt);
         }
         
+        // Если выбран стиль, добавляем его в промт в начало (как показано в playground FAL.AI)
+        let enhancedPrompt = prompt;
+        if (stylePreset) {
+          // Находим читаемое название стиля для пользователя
+          const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
+          // Добавляем стиль в начало промта
+          enhancedPrompt = `${styleName} style. ${prompt}`;
+          console.log(`Добавлен стиль ${styleName} в промт: "${enhancedPrompt}"`);
+        }
+        
         // Переводим промт на английский для улучшения качества генерации
-        const translatedPrompt = await translateToEnglish(prompt);
+        const translatedPrompt = await translateToEnglish(enhancedPrompt);
         const translatedNegativePrompt = negativePrompt ? await translateToEnglish(negativePrompt) : negativePrompt;
         
         console.log(`ОТПРАВЛЯЕМ английский промт через модель ${modelType}:`, translatedPrompt);
         
         requestData = {
-          prompt: translatedPrompt, // <-- Отправляем переведенный промт на английском
+          prompt: translatedPrompt, // <-- Отправляем переведенный промт на английском со стилем
           negativePrompt: translatedNegativePrompt,
-          originalPrompt: prompt, // Сохраняем оригинальный промт для отладки
+          originalPrompt: enhancedPrompt, // Сохраняем оригинальный промт со стилем для отладки
           width,
           height,
           campaignId,
           contentId, // Добавляем contentId для привязки к конкретному контенту (может быть null для вкладки тестирования)
           modelName: modelType,
           numImages: numImages, // Используем выбранное пользователем значение
-          stylePreset,
+          stylePreset, // Передаем выбранный стиль как параметр (дополнительно к тексту в промте)
           savePrompt: activeTab === "prompt" ? false : false // Отключаем флаг сохранения на сервере для тестирования моделей
         };
         
@@ -554,14 +564,24 @@ export function ImageGenerationDialog({
         if (generatedPrompt) {
           console.log("Используем ранее сгенерированный промт:", generatedPrompt.substring(0, 100) + "...");
           
+          // Добавляем стиль в начало промта, если он выбран
+          let enhancedPrompt = generatedPrompt;
+          if (stylePreset) {
+            // Находим читаемое название стиля для пользователя
+            const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
+            // Добавляем стиль в начало промта
+            enhancedPrompt = `${styleName} style. ${generatedPrompt}`;
+            console.log(`Добавлен стиль ${styleName} в текстовый промт: "${enhancedPrompt}"`);
+          }
+          
           // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-          if (savePrompt && contentId && generatedPrompt) {
+          if (savePrompt && contentId && enhancedPrompt) {
             console.log('Сначала сохраняем текстовый промт в БД, а потом генерируем изображение');
-            await savePromptToDb(generatedPrompt);
+            await savePromptToDb(enhancedPrompt);
           }
           
           requestData = {
-            prompt: generatedPrompt,
+            prompt: enhancedPrompt,
             originalContent: content,
             campaignId,
             contentId,
@@ -627,13 +647,23 @@ export function ImageGenerationDialog({
               // Переводим контент на английский для улучшения качества генерации
               const translatedContent = await translateToEnglish(content);
               
+              // Добавляем стиль в начало промта, если он выбран
+              let enhancedContent = translatedContent;
+              if (stylePreset) {
+                // Находим читаемое название стиля для пользователя
+                const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
+                // Добавляем стиль в начало промта
+                enhancedContent = `${styleName} style. ${translatedContent}`;
+                console.log(`Добавлен стиль ${styleName} в резервный промт: "${enhancedContent}"`);
+              }
+              
               // Устанавливаем переведенный текст как промт для отображения в интерфейсе
-              setGeneratedPrompt(translatedContent);
+              setGeneratedPrompt(enhancedContent);
               
               // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
-              if (savePrompt && contentId && translatedContent) {
+              if (savePrompt && contentId && enhancedContent) {
                 console.log('Сначала сохраняем резервный переведенный промт в БД, а потом генерируем изображение');
-                await savePromptToDb(translatedContent);
+                await savePromptToDb(enhancedContent);
               }
               
               requestData = {
@@ -644,7 +674,7 @@ export function ImageGenerationDialog({
                 stylePreset,
                 numImages, // Добавляем параметр количества изображений
                 savePrompt: false, // Отключаем флаг сохранения на сервере, так как мы уже сохранили
-                prompt: translatedContent // Используем переведенный текст как промт
+                prompt: enhancedContent // Используем улучшенный текст с добавленным стилем как промт
               };
             }
           } catch (error: unknown) {
@@ -655,8 +685,18 @@ export function ImageGenerationDialog({
             // Переводим контент на английский для улучшения качества генерации
             const translatedContent = await translateToEnglish(content);
             
+            // Добавляем стиль в начало промта, если он выбран (кроме модели DeepSeek, где стиль не используется)
+            let finalPrompt = translatedContent;
+            if (stylePreset && modelType !== 'deepseek') {
+              // Находим читаемое название стиля для пользователя
+              const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
+              // Добавляем стиль в начало промта
+              finalPrompt = `${styleName} style. ${translatedContent}`;
+              console.log(`Добавлен стиль ${styleName} в резервный промт: "${finalPrompt}"`);
+            }
+            
             // Устанавливаем переведенный текст как промт для отображения в интерфейсе
-            setGeneratedPrompt(translatedContent);
+            setGeneratedPrompt(finalPrompt);
             
             requestData = {
               originalContent: content, // Сохраняем оригинальный контент для отладки
