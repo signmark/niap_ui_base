@@ -114,36 +114,78 @@ export class FalAiDirectClient {
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
       apiUrl = 'https://hub.fal.ai/v1/fooocus/generate';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к Fooocus с размерами: ${width}x${height}`);
+      
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: options.num_images || 1
+        width: width,
+        height: height,
+        num_images: numImages
       };
+      
+      // Добавляем параметр стиля, если он есть
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Fooocus`);
+        (requestData as any).style_preset = options.style_preset;
+      }
     } else if (options.model.startsWith('flux/')) {
       // Выделяем имя модели из пространства имен flux
       const modelName = options.model.replace('flux/', '');
       apiUrl = 'https://hub.fal.ai/v1/images/generate';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к Flux (${modelName}) с размерами: ${width}x${height}`);
+      
       requestData = {
         model_name: modelName,
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        image_width: options.width || 1024,
-        image_height: options.height || 1024,
-        num_images: options.num_images || 1
+        image_width: width,
+        image_height: height,
+        num_images: numImages
       };
+      
+      // Добавляем параметр стиля, если он есть
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Flux (${modelName})`);
+        (requestData as any).style_preset = options.style_preset;
+      }
     } else {
       // Для других моделей используем общий endpoint
       apiUrl = 'https://hub.fal.ai/v1/images/generate';
+      
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к модели ${options.model} с размерами: ${width}x${height}`);
+      
       requestData = {
         model_name: options.model,
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: options.num_images || 1
+        width: width,
+        height: height,
+        num_images: numImages
       };
+      
+      // Добавляем параметр стиля, если он есть
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для модели ${options.model}`);
+        (requestData as any).style_preset = options.style_preset;
+      }
     }
     
     // Формируем заголовки запроса

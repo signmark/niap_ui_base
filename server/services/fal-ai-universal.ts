@@ -95,7 +95,12 @@ class FalAiUniversalService {
         console.log('[fal-ai-universal] Добавлен префикс Key для Schnell API');
       }
       
-      console.log('[fal-ai-universal] Отправляем запрос к Schnell API напрямую (endpoint: /v1/schnell)');
+      // Убеждаемся, что размеры являются числами
+      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+      const numImages = typeof options.numImages === 'number' ? options.numImages : parseInt(options.numImages as any) || 1;
+      
+      console.log(`[fal-ai-universal] Отправляем запрос к Schnell API с размерами: ${width}x${height}, стиль: ${stylePreset || 'не указан'}`);
       
       // Обновляем запрос в соответствии с официальной документацией FAL.AI
       return await falAiDirectClient.generateImages({
@@ -103,9 +108,9 @@ class FalAiUniversalService {
         apiKey: directApiKey,
         prompt: options.prompt,
         negative_prompt: options.negativePrompt,
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: options.numImages || 1,
+        width: width,
+        height: height,
+        num_images: numImages,
         style_preset: stylePreset || '' // Добавляем передачу параметра стиля
       });
     } catch (error: any) {
@@ -278,14 +283,22 @@ class FalAiUniversalService {
           console.log('[fal-ai-universal] Добавлен префикс Key для прямого API');
         }
         
+        // Убеждаемся, что размеры являются числами
+        const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+        const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+        const numImages = typeof options.numImages === 'number' ? options.numImages : parseInt(options.numImages as any) || 1;
+        
+        console.log(`[fal-ai-universal] Отправляем запрос к модели ${model} с размерами: ${width}x${height}, стиль: ${options.stylePreset || 'не указан'}`);
+        
         return await falAiDirectClient.generateImages({
           model: model,
           apiKey: directApiKey,
           prompt: options.prompt,
           negative_prompt: options.negativePrompt,
-          width: options.width,
-          height: options.height,
-          num_images: options.numImages
+          width: width,
+          height: height,
+          num_images: numImages,
+          style_preset: options.stylePreset // Передаем параметр стиля
         });
       } catch (directError: any) {
         console.error(`[fal-ai-universal] Ошибка при использовании прямого клиента для модели ${model}: ${directError.message}`);
@@ -300,15 +313,30 @@ class FalAiUniversalService {
             cleanKey = cleanKey.substring(4).trim();
           }
           
-          return await falAiOfficialClient.generateImages({
+          // Убеждаемся, что размеры являются числами
+          const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
+          const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
+          const numImages = typeof options.numImages === 'number' ? options.numImages : parseInt(options.numImages as any) || 1;
+          
+          console.log(`[fal-ai-universal] Отправляем запрос к официальному клиенту для модели ${model} с размерами: ${width}x${height}, стиль: ${options.stylePreset || 'не указан'}`);
+          
+          // Создаем объект параметров
+          const params: any = {
             model: model,
             token: cleanKey,
             prompt: options.prompt,
-            negative_prompt: options.negativePrompt, // Pass this to official client which will map it internally
-            width: options.width,
-            height: options.height,
-            num_images: options.numImages // Pass this to official client which will map it internally
-          });
+            negative_prompt: options.negativePrompt, // Передается клиенту, который отобразит его внутренне
+            width: width,
+            height: height,
+            num_images: numImages // Передается клиенту, который отобразит его внутренне
+          };
+          
+          // Добавляем параметр стиля, если он указан
+          if (options.stylePreset) {
+            params.style_preset = options.stylePreset;
+          }
+          
+          return await falAiOfficialClient.generateImages(params);
         } catch (officialError: any) {
           console.error(`[fal-ai-universal] Ошибка при использовании официального клиента: ${officialError.message}`);
           // Если обе попытки не удались, выбрасываем оригинальную ошибку от прямого клиента
