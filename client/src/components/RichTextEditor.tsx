@@ -33,7 +33,10 @@ import {
   Heading2,
   Heading3,
   Palette,
-  Wand2
+  Wand2,
+  Quote, // Иконка для цитаты
+  Code, // Иконка для кода
+  FileCode // Иконка для блока кода
 } from 'lucide-react'
 
 interface RichTextEditorProps {
@@ -311,6 +314,21 @@ export default function RichTextEditor({
                 </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>Нумерованный список</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="blockquote" 
+                  size="sm"
+                  aria-label="Цитата" 
+                  onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                  data-state={editor.isActive('blockquote') ? 'on' : 'off'}
+                >
+                  <Quote className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Цитата</TooltipContent>
             </Tooltip>
           </ToggleGroup>
 
