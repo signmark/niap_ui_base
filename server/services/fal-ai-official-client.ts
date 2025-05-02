@@ -144,7 +144,6 @@ export class FalAiOfficialClient {
     const modelMap: Record<string, string> = {
       'schnell': 'fal-ai/flux/schnell',
       'fast-sdxl': 'fal-ai/fast-sdxl',
-      'sdxl': 'fal-ai/stable-diffusion/sdxl-lightning',
       'fooocus': 'fal-ai/fooocus',
       'flux/juggernaut-xl-lightning': 'rundiffusion-fal/juggernaut-flux/lightning',
       'flux/juggernaut-xl-lora': 'rundiffusion-fal/juggernaut-flux-lora',
@@ -219,15 +218,7 @@ export class FalAiOfficialClient {
       };
       
       return sdxlParams;
-    } else if (options.model === 'sdxl' || options.model === 'fal-ai/stable-diffusion/sdxl-lightning') {
-      const sdxlLightningParams = {
-        ...baseParams,
-        width: options.width || 1024,
-        height: options.height || 1024,
-        num_images: numImages
-      };
-      
-      return sdxlLightningParams;
+    
     } else if (options.model === 'fooocus' || options.model === 'fal-ai/fooocus') {
       const fooocusParams = {
         ...baseParams,

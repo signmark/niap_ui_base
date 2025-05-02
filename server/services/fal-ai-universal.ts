@@ -13,7 +13,6 @@ import { MODEL_SPECIFIC_STYLES } from '../../shared/fal-ai-styles';
 // Типы поддерживаемых моделей
 export type FalAiModelName = 
   | 'fast-sdxl' 
-  | 'sdxl' 
   | 'schnell' 
   | 'fooocus' 
   | 'flux/juggernaut-xl-lora' 

@@ -28,7 +28,6 @@ const AiImageTester: React.FC = () => {
     { id: 'schnell', name: 'Schnell', description: 'Быстрая базовая модель FAL.AI (рекомендуется)' },
     { id: 'fal-ai/fast-sdxl', name: 'Fast SDXL', description: 'Быстрая генерация с высоким качеством' },
     { id: 'fal-ai/lcm-sdxl', name: 'LCM-SDXL', description: 'Сверхбыстрая генерация (ниже качество)' },
-    { id: 'stable-diffusion-xl', name: 'Stable Diffusion XL', description: 'Классическая универсальная модель' },
     { id: 'rundiffusion-fal/juggernaut-flux-lora', name: 'Juggernaut Flux Lora', description: 'Высочайшее качество изображений' },
     { id: 'rundiffusion-fal/juggernaut-flux/lightning', name: 'Juggernaut Flux Lightning', description: 'Баланс скорости и качества' },
     { id: 'fal-ai/flux-lora', name: 'Flux Lora', description: 'Альтернативная Flux модель' },

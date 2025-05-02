@@ -86,11 +86,6 @@ const DEFAULT_MODELS = [
     description: 'Fooocus - мощная модель с продвинутой композицией'
   },
   {
-    id: 'sdxl',
-    name: 'Stable Diffusion XL',
-    description: 'Полная версия Stable Diffusion XL'
-  },
-  {
     id: 'fast-sdxl',
     name: 'Fast SDXL',
     description: 'Быстрая версия Stable Diffusion XL'
