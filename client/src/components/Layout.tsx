@@ -10,6 +10,7 @@ import { CampaignSelector } from "@/components/CampaignSelector";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { SmmLogo } from "./SmmLogo";
+import useCampaignOwnershipCheck from "@/hooks/useCampaignOwnershipCheck";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
@@ -17,6 +18,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
+  
+  // Используем хук проверки принадлежности кампании текущему пользователю
+  useCampaignOwnershipCheck();
 
   useEffect(() => {
     // Проверяем, находимся ли мы на странице входа
@@ -47,6 +51,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [token, location, navigate, setAuth]);
 
   const handleLogout = async () => {
+    // Получаем функцию очистки выбранной кампании
+    const clearSelectedCampaign = useCampaignStore.getState().clearSelectedCampaign;
+    
     try {
       console.log('Attempting to logout...');
       const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {
@@ -65,6 +72,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Очищаем выбранную кампанию при выходе из системы
+      console.log('Очищаем выбранную кампанию при выходе');
+      clearSelectedCampaign();
+      
       // Очищаем все данные авторизации из localStorage
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
