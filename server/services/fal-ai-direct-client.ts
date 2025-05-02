@@ -109,7 +109,7 @@ export class FalAiDirectClient {
     // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
     if (options.model === 'fast-sdxl') {
       // Специальный URL для быстрого SDXL
-      apiUrl = 'https://hub.fal.ai/v1/fast-sdxl/image';
+      apiUrl = 'https://api.fal.ai/v1/fast-sdxl/image'; // Используем api.fal.ai вместо hub.fal.ai
       
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
@@ -133,7 +133,7 @@ export class FalAiDirectClient {
       }
     } else if (options.model === 'sdxl') {
       // Стандартный SDXL
-      apiUrl = 'https://hub.fal.ai/v1/stable-diffusion/sdxl-lightning';
+      apiUrl = 'https://api.fal.ai/v1/stable-diffusion/sdxl-lightning'; // Используем api.fal.ai вместо hub.fal.ai
       
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
@@ -160,7 +160,7 @@ export class FalAiDirectClient {
       }
     } else if (options.model === 'schnell') {
       // Специальный URL для Schnell (в соответствии с официальной документацией)
-      apiUrl = 'https://hub.fal.ai/v1/fal-ai/flux/schnell'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
+      apiUrl = 'https://api.fal.ai/v1/fal-ai/flux/schnell'; // Используем api.fal.ai вместо hub.fal.ai
       
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
