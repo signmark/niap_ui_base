@@ -24,6 +24,26 @@ export class FalAiJuggernautService {
   private baseUrl: string = 'https://hub.fal.ai/v1'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
   
   /**
+   * Нормализует количество изображений в параметре numImages, ограничивая его от 1 до 6
+   * @param numImagesParam Параметр количества изображений в любом формате
+   * @returns Нормализованное значение от 1 до 6
+   */
+  private normalizeNumImages(numImagesParam: number | string | undefined): number {
+    // Если параметр не указан, возвращаем значение по умолчанию - 3
+    if (numImagesParam === undefined || numImagesParam === null) {
+      return 3;
+    }
+    
+    // Преобразуем в число, если это строка
+    let numImages = typeof numImagesParam === 'number' ? 
+      numImagesParam : 
+      parseInt(String(numImagesParam)) || 3;
+    
+    // Ограничиваем диапазон от 1 до 6
+    return Math.max(1, Math.min(6, numImages));
+  }
+  
+  /**
    * Инициализирует сервис с указанным API ключом
    * @param apiKey API ключ FAL.AI
    */
@@ -143,13 +163,15 @@ export class FalAiJuggernautService {
       // Используем новый API endpoint для Juggernaut моделей
       apiEndpoint = `${this.baseUrl}/images/generations`;
       
+      // Нормализуем количество изображений с помощью единого метода
+      const numImages = this.normalizeNumImages(options.numImages);
       requestBody = {
         model_name: options.model,
         prompt: options.prompt,
         negative_prompt: options.negativePrompt || "",
         image_width: options.width || 1024,
         image_height: options.height || 1024,
-        num_images: options.numImages || 1,
+        num_images: numImages, // Используем нормализованное значение
         guidance_scale: options.guidanceScale || 7.5,
         steps: options.steps || 30
       };

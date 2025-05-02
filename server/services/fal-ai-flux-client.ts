@@ -17,6 +17,25 @@ export interface FluxGenerateOptions {
 
 export class FalAiFluxClient {
   /**
+   * Нормализует количество изображений в параметре num_images, ограничивая его от 1 до 6
+   * @param numImagesParam Параметр количества изображений в любом формате
+   * @returns Нормализованное значение от 1 до 6
+   */
+  private normalizeNumImages(numImagesParam: number | string | undefined): number {
+    // Если параметр не указан, возвращаем значение по умолчанию - 3
+    if (numImagesParam === undefined || numImagesParam === null) {
+      return 3;
+    }
+    
+    // Преобразуем в число, если это строка
+    let numImages = typeof numImagesParam === 'number' ? 
+      numImagesParam : 
+      parseInt(String(numImagesParam)) || 3;
+    
+    // Ограничиваем диапазон от 1 до 6
+    return Math.max(1, Math.min(6, numImages));
+  }
+  /**
    * Генерирует изображения с использованием моделей из пространства имен Flux
    * @param options Параметры генерации
    * @returns Массив URL сгенерированных изображений
@@ -51,33 +70,39 @@ export class FalAiFluxClient {
     
     if (options.model === 'schnell') {
       // Для schnell используем формат согласно документации
+      // Нормализуем количество изображений с помощью единого метода
+      const numImages = this.normalizeNumImages(options.num_images);
       requestData = {
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
         width: options.width || 1024,
         height: options.height || 1024,
-        num_outputs: options.num_images || 1
+        num_outputs: numImages // Используем нормализованное значение
       };
     } else if (options.model.startsWith('flux/')) {
       // Для моделей Flux используем поле model_name
+      // Нормализуем количество изображений с помощью единого метода
+      const numImages = this.normalizeNumImages(options.num_images);
       requestData = {
         model_name: modelId,
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
         image_width: options.width || 1024,
         image_height: options.height || 1024,
-        num_images: options.num_images || 1,
+        num_images: numImages, // Используем нормализованное значение
         seed: Math.floor(Math.random() * 1000000) // Случайный seed для разнообразия результатов
       };
     } else {
       // Для стандартных моделей
+      // Нормализуем количество изображений с помощью единого метода
+      const numImages = this.normalizeNumImages(options.num_images);
       requestData = {
         model_name: modelId,
         prompt: options.prompt,
         negative_prompt: options.negative_prompt || '',
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.num_images || 1
+        num_images: numImages // Используем нормализованное значение
       };
     }
     

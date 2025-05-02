@@ -232,13 +232,8 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Важно: правильно обрабатываем количество изображений
-      let numImages = 1;
-      if (typeof options.num_images === 'number') {
-        numImages = options.num_images;
-      } else if (options.num_images) {
-        numImages = parseInt(String(options.num_images)) || 1;
-      }
+      // Используем единый метод для нормализации количества изображений (от 1 до 6)
+      const numImages = this.normalizeNumImages(options.num_images);
       
       console.log(`[fal-ai-direct] Подготовка запроса к Flux (${modelName}) с размерами: ${width}x${height}, изображений: ${numImages}`);
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
@@ -268,13 +263,8 @@ export class FalAiDirectClient {
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
       const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      // Важно: правильно обрабатываем количество изображений
-      let numImages = 1;
-      if (typeof options.num_images === 'number') {
-        numImages = options.num_images;
-      } else if (options.num_images) {
-        numImages = parseInt(String(options.num_images)) || 1;
-      }
+      // Используем единый метод для нормализации количества изображений (от 1 до 6)
+      const numImages = this.normalizeNumImages(options.num_images);
       
       // Очищаем промпт от возможной JSON-структуры
       const cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
