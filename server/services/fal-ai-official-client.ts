@@ -236,13 +236,6 @@ export class FalAiOfficialClient {
         num_images: numImages
       };
       
-      // Добавляем стиль, если он указан
-      // Fooocus использует style_preset
-      if (stylePreset) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели fooocus (параметр 'style_preset')`);
-        (fooocusParams as any).style_preset = stylePreset;
-      }
-      
       return fooocusParams;
     } 
     // Обработка моделей rundiffusion-fal
@@ -253,13 +246,6 @@ export class FalAiOfficialClient {
         image_height: options.height || 1024,
         num_images: numImages
       };
-      
-      // Добавляем стиль, если он указан
-      // Juggernaut использует style_preset
-      if (stylePreset) {
-        console.log(`[fal-ai-official] Добавляем стиль ${stylePreset} для модели juggernaut (параметр 'style_preset')`);
-        (juggernautParams as any).style_preset = stylePreset;
-      }
       
       return juggernautParams;
     }
