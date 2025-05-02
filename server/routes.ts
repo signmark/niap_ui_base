@@ -1972,6 +1972,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
+  // Закомментировано, так как этот маршрут дублирует основной маршрут в routes-fal-ai-images.ts
+  /* Маршрут был перемещен в routes-fal-ai-images.ts
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
@@ -2392,7 +2394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Старый метод генерации изображений (для обратной совместимости)
+  /* Старый метод генерации изображений (для обратной совместимости) */
   app.post('/api/old-generate-image', async (req, res) => {
     try {
       const { 
@@ -4117,7 +4119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeout: 15000, // Увеличиваем timeout для сложных сайтов
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng',
           'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
         },
         maxRedirects: 5 // Разрешаем редиректы для корректной обработки сайтов
