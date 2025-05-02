@@ -186,7 +186,7 @@ export class FalAiDirectClient {
           },
           num_inference_steps: 4, // Рекомендуемое значение из документации
           num_images: numImages,
-          style: options.negative_prompt?.includes('anime') ? 'anime' : (options.negative_prompt?.includes('photographic') ? 'photographic' : (options.negative_prompt?.includes('cinematic') ? 'cinematic' : null))
+          style: 'base' // Используем стиль base по умолчанию, который будет заменен ниже
         }
       };
 

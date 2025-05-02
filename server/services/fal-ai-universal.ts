@@ -299,10 +299,11 @@ class FalAiUniversalService {
     // Проверяем наличие стиля в промпте (например, "Anime style. Человек бежит")
     const { style: promptStyle, cleanedPrompt } = this.extractStyleFromPrompt(options.prompt);
     
-    // Если стиль был найден в промпте, используем его и изменяем промпт
+    // Если стиль был найден в промпте, логируем его, но НЕ заменяем опцию stylePreset
     if (promptStyle) {
       console.log(`[fal-ai-universal] Обнаружен стиль в промпте: ${promptStyle}`);
-      options.stylePreset = promptStyle;
+      // НЕ перезаписываем стиль, выбранный пользователем
+      // options.stylePreset = promptStyle;
       options.prompt = cleanedPrompt;
       console.log(`[fal-ai-universal] Промпт очищен: '${cleanedPrompt}'`);
     }
