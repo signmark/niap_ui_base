@@ -32,7 +32,7 @@ export class FalAiFluxClient {
     
     if (options.model === 'schnell') {
       // Для schnell используем специальный endpoint
-      apiUrl = 'https://api.fal.ai/v1/schnell/generate';
+      apiUrl = 'https://hub.fal.ai/v1/schnell/generate'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
       modelId = 'schnell';
     } else if (options.model.startsWith('flux/')) {
       // Для новых моделей Flux используем единый endpoint
@@ -141,7 +141,7 @@ export class FalAiFluxClient {
     const maxAttempts = 60; // Максимальное количество попыток (2 минуты при 2-секундном интервале)
     
     // URL для получения статуса запроса в новом формате API FAL.AI
-    const requestUrl = `https://api.fal.ai/v1/jobs/${requestId}`;
+    const requestUrl = `https://hub.fal.ai/v1/jobs/${requestId}`; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
     console.log(`[fal-ai-flux] URL для проверки статуса: ${requestUrl}`);
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {

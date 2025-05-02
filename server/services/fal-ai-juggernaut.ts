@@ -21,7 +21,7 @@ interface JuggernautGenerateOptions {
 
 export class FalAiJuggernautService {
   private apiKey: string | null = null;
-  private baseUrl: string = 'https://api.fal.ai/v1';
+  private baseUrl: string = 'https://hub.fal.ai/v1'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
   
   /**
    * Инициализирует сервис с указанным API ключом

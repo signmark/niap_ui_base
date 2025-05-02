@@ -145,7 +145,7 @@ export class FalAiDirectClient {
       }
     } else if (options.model === 'schnell') {
       // Специальный URL для Schnell (в соответствии с официальной документацией)
-      apiUrl = 'https://api.fal.ai/v1/fal-ai/flux/schnell';
+      apiUrl = 'https://hub.fal.ai/v1/fal-ai/flux/schnell'; // Используем hub.fal.ai вместо api.fal.ai для решения проблем с DNS
       
       // Убеждаемся, что размеры являются числами
       const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
