@@ -483,8 +483,11 @@ export function ImageGenerationDialog({
   });
 
   // Мутация для генерации изображения
-  const { mutate: generateImage, isPending } = useMutation({
+  const { mutate: generateImage, isPending: isLoading } = useMutation({
     mutationFn: async () => {
+      // Очищаем предыдущие изображения перед началом новой генерации
+      setGeneratedImages([]);
+      setSelectedImageIndex(-1);
       let requestData: {
         prompt?: string;
         negativePrompt?: string;
@@ -1182,13 +1185,13 @@ export function ImageGenerationDialog({
       <Button 
         onClick={() => generateImage()} 
         disabled={
-          isPending || 
+          isLoading || 
           (activeTab === "prompt" && !prompt) || 
           (activeTab === "text" && (!generatedPrompt || !content))
         }
         className="w-full"
       >
-        {isPending ? (
+        {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Генерация...
