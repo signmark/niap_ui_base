@@ -14,6 +14,7 @@ export interface DirectGenerateOptions {
   num_images?: number;
   model: string;
   apiKey: string;
+  style_preset?: string; // Добавляем параметр стиля
 }
 
 export class FalAiDirectClient {
@@ -65,9 +66,16 @@ export class FalAiDirectClient {
             height: options.height || 1024
           },
           num_inference_steps: 4, // Рекомендуемое значение из документации
-          num_images: options.num_images || 1
+          num_images: options.num_images || 1,
+          style: options.negative_prompt?.includes('anime') ? 'anime' : (options.negative_prompt?.includes('photographic') ? 'photographic' : (options.negative_prompt?.includes('cinematic') ? 'cinematic' : null))
         }
       };
+
+      // Если у нас есть параметр style_preset в опциях - добавляем его в параметр style
+      if (options.style_preset) {
+        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Schnell API`);
+        requestData.input.style = options.style_preset;
+      }
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
       apiUrl = 'https://hub.fal.ai/v1/fooocus/generate';

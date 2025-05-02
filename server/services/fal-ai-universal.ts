@@ -36,6 +36,7 @@ export interface FalAiGenerateOptions {
   campaignId?: string;           // ID кампании (для аналитики)
   fps?: number;                  // Кадров в секунду (только для видео)
   duration?: number;             // Длительность в секундах (только для видео)
+  stylePreset?: string;          // Предустановленный стиль генерации (например, anime, photographic, cinematic, base)
 }
 
 // Основной класс сервиса
@@ -63,6 +64,8 @@ class FalAiUniversalService {
    * @returns Массив URL сгенерированных изображений
    */
   async generateWithSchnell(options: Omit<FalAiGenerateOptions, 'model'>): Promise<string[]> {
+    // Извлекаем параметр стиля из опций
+    const stylePreset = (options as any).stylePreset;
     console.log(`[fal-ai-universal] Генерация изображений с использованием модели Schnell (специальный метод)`);
     
     // Получаем API ключ
@@ -102,7 +105,8 @@ class FalAiUniversalService {
         negative_prompt: options.negativePrompt,
         width: options.width || 1024,
         height: options.height || 1024,
-        num_images: options.numImages || 1
+        num_images: options.numImages || 1,
+        style_preset: stylePreset || '' // Добавляем передачу параметра стиля
       });
     } catch (error: any) {
       console.error(`[fal-ai-universal] Ошибка при использовании Schnell API: ${error.message}`);
