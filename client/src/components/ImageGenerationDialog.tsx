@@ -296,7 +296,7 @@ export function ImageGenerationDialog({
         
         // Генерируем промт через DeepSeek напрямую из русского текста
         // DeepSeek сам переведет и преобразует текст в промт для изображения
-        const response = await api.post("/generate-image-prompt", {
+        const response = await api.post("/api/generate-image-prompt", {
           content: cleanedText, // Отправляем оригинальный русский текст
           keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
         });
@@ -611,7 +611,7 @@ export function ImageGenerationDialog({
             
             // Генерируем промт через DeepSeek напрямую из русского текста
             // DeepSeek сам переведет и преобразует текст в промт для изображения
-            const response = await api.post("/generate-image-prompt", {
+            const response = await api.post("/api/generate-image-prompt", {
               content: cleanedText, // Отправляем оригинальный русский текст
               keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
             });
