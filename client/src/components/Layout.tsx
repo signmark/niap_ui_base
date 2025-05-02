@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
+import { useCampaignStore } from "@/lib/campaignStore";
 import { DIRECTUS_URL } from "@/lib/directus";
 import { Dialog } from "@/components/ui/dialog";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -18,6 +19,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
+  const clearSelectedCampaign = useCampaignStore((state) => state.clearSelectedCampaign);
   
   // Используем хук проверки принадлежности кампании текущему пользователю
   useCampaignOwnershipCheck();
@@ -51,9 +53,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [token, location, navigate, setAuth]);
 
   const handleLogout = async () => {
-    // Получаем функцию очистки выбранной кампании
-    const clearSelectedCampaign = useCampaignStore.getState().clearSelectedCampaign;
-    
     try {
       console.log('Attempting to logout...');
       const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {

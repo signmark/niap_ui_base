@@ -1,0 +1,84 @@
+      [Symbol(verified)]: true,
+      [Symbol(pendingSession)]: null,
+      [Symbol(async_id_symbol)]: -1,
+      [Symbol(kHandle)]: [TLSWrap],
+      [Symbol(lastWriteQueueSize)]: 0,
+      [Symbol(timeout)]: Timeout {
+        _idleTimeout: 5000,
+        _idlePrev: [TimersList],
+        _idleNext: [Timeout],
+        _idleStart: 368094,
+        _onTimeout: [Function: bound ],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(refed)]: false,
+        [Symbol(kHasPrimitive)]: false,
+        [Symbol(asyncId)]: 49949,
+        [Symbol(triggerId)]: 49947
+      },
+      [Symbol(kBuffer)]: null,
+      [Symbol(kBufferCb)]: null,
+      [Symbol(kBufferGen)]: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kSetNoDelay)]: false,
+      [Symbol(kSetKeepAlive)]: true,
+      [Symbol(kSetKeepAliveInitialDelay)]: 1,
+      [Symbol(kBytesRead)]: 0,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(connect-options)]: [Object]
+    },
+    _header: 'GET /v/t51.2885-15/491442761_1108470067781274_7569200044065639562_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fktm3-1.fna.fbcdn.net&_nc_cat=106&_nc_oc=Q6cZ2QHXScLjMtAFX2B3v8cjmjOgONXS8ZJpoKg6dsKIgGh0a4Xc15quw11oMCDZiiGgqZs&_nc_ohc=P4aQ6mUiqGkQ7kNvwFMvciy&_nc_gid=rEZvLSjRL4to3yetPbgQvw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfHe8VhkWIdfNwLHhf6YYFQ9mv_rObXdifZOFJ_K_oqMbA&oe=68142B77&_nc_sid=10d13b&_nocache=1746191120318 HTTP/1.1\r\n' +
+      'Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8\r\n' +
+      'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n' +
+      'Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7\r\n' +
+      'Cache-Control: no-cache\r\n' +
+      'Pragma: no-cache\r\n' +
+      'Referer: https://www.instagram.com/\r\n' +
+      'Origin: https://www.instagram.com\r\n' +
+      'sec-ch-ua: "Chromium";v="120", "Google Chrome";v="120"\r\n' +
+      'sec-ch-ua-mobile: ?0\r\n' +
+      'sec-ch-ua-platform: "Windows"\r\n' +
+      'sec-fetch-dest: image\r\n' +
+      'sec-fetch-mode: no-cors\r\n' +
+      'sec-fetch-site: same-site\r\n' +
+      'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+      'Host: instagram.fktm3-1.fna.fbcdn.net\r\n' +
+      'Connection: keep-alive\r\n' +
+      '\r\n',
+    _keepAliveTimeout: 0,
+    _onPendingData: [Function: nop],
+    agent: Agent {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      defaultPort: 443,
+      protocol: 'https:',
+      options: [Object: null prototype],
+      requests: [Object: null prototype] {},
+      sockets: [Object: null prototype],
+      freeSockets: [Object: null prototype],
+      keepAliveMsecs: 1000,
+      keepAlive: true,
+      maxSockets: Infinity,
+      maxFreeSockets: 256,
+      scheduling: 'lifo',
+      maxTotalSockets: Infinity,
+      totalSocketCount: 10,
+      maxCachedSessions: 100,
+      _sessionCache: [Object],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false
+    },
+    socketPath: undefined,
+    method: 'GET',
+    maxHeaderSize: undefined,
+    insecureHTTPParser: undefined,
+    joinDuplicateHeaders: undefined,
+    path: '/v/t51.2885-15/491442761_1108470067781274_7569200044065639562_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fktm3-1.fna.fbcdn.net&_nc_cat=106&_nc_oc=Q6cZ2QHXScLjMtAFX2B3v8cjmjOgONXS8ZJpoKg6dsKIgGh0a4Xc15quw11oMCDZiiGgqZs&_nc_ohc=P4aQ6mUiqGkQ7kNvwFMvciy&_nc_gid=rEZvLSjRL4to3yetPbgQvw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfHe8VhkWIdfNwLHhf6YYFQ9mv_rObXdifZOFJ_K_oqMbA&oe=68142B77&_nc_sid=10d13b&_nocache=1746191120318',
+    _ended: true,
+    res: IncomingMessage {
+      _events: [Object],
+      _readableState: [ReadableState],
+      _maxListeners: undefined,

@@ -1,0 +1,52 @@
+        'Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7\r\n' +
+        'Cache-Control: no-cache\r\n' +
+        'Pragma: no-cache\r\n' +
+        'Referer: https://www.instagram.com/\r\n' +
+        'Origin: https://www.instagram.com\r\n' +
+        'sec-ch-ua: "Chromium";v="120", "Google Chrome";v="120"\r\n' +
+        'sec-ch-ua-mobile: ?0\r\n' +
+        'sec-ch-ua-platform: "Windows"\r\n' +
+        'sec-fetch-dest: image\r\n' +
+        'sec-fetch-mode: no-cors\r\n' +
+        'sec-fetch-site: same-site\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: instagram.fktm3-1.fna.fbcdn.net\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'GET',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: undefined,
+      joinDuplicateHeaders: undefined,
+      path: '/v/t51.2885-15/491442761_1108470067781274_7569200044065639562_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fktm3-1.fna.fbcdn.net&_nc_cat=106&_nc_oc=Q6cZ2QHXScLjMtAFX2B3v8cjmjOgONXS8ZJpoKg6dsKIgGh0a4Xc15quw11oMCDZiiGgqZs&_nc_ohc=P4aQ6mUiqGkQ7kNvwFMvciy&_nc_gid=rEZvLSjRL4to3yetPbgQvw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfHe8VhkWIdfNwLHhf6YYFQ9mv_rObXdifZOFJ_K_oqMbA&oe=68142B77&_nc_sid=10d13b&_nocache=1746191121453',
+      _ended: true,
+      res: [IncomingMessage],
+      aborted: false,
+      timeoutCb: null,
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: true,
+      host: 'instagram.fktm3-1.fna.fbcdn.net',
+      protocol: 'https:',
+      _redirectable: [Writable],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(kNeedDrain)]: false,
+      [Symbol(corked)]: 0,
+      [Symbol(kOutHeaders)]: [Object: null prototype],
+      [Symbol(errored)]: null,
+      [Symbol(kHighWaterMark)]: 16384,
+      [Symbol(kRejectNonStandardBodyWrites)]: false,
+      [Symbol(kUniqueHeaders)]: null
+    },
+    data: <Buffer 55 52 4c 20 73 69 67 6e 61 74 75 72 65 20 65 78 70 69 72 65 64>
+  },
+  status: 403
+}
+1:05:21 PM [express] GET /api/proxy-image 404 in 282ms
+Directus API Error: {
