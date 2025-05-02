@@ -480,7 +480,7 @@ class FalAiUniversalService {
     }
     
     // Шаг2: Преобразуем stringImageSize в числовые параметры, если нужно
-    if (hasImageSize && !hasWidthHeight) {
+    if (hasImageSize && !hasWidthHeight && typeof options.imageSize === 'string') {
       // Если imageSize в формате "1024x768", преобразуем его в width/height
       const dimensionsMatch = options.imageSize.match(/^(\d+)x(\d+)$/i);
       if (dimensionsMatch) {
@@ -515,12 +515,17 @@ class FalAiUniversalService {
         };
         
         // Проверяем, есть ли предварительно заданные размеры для этого формата
-        const dimensions = formatDimensions[options.imageSize];
-        if (dimensions) {
+        if (formatDimensions[options.imageSize]) {
+          const dimensions = formatDimensions[options.imageSize];
           const [width, height] = dimensions;
           console.log(`[fal-ai-universal] Преобразуем формат ${options.imageSize} в числовые параметры: ${width}x${height}`);
           options.width = width;
           options.height = height;
+        } else {
+          // Если неизвестный формат, используем стандартный размер
+          console.log(`[fal-ai-universal] Неизвестный формат ${options.imageSize}, используем стандартный размер`);
+          options.width = 1024;
+          options.height = 1024;
         }
       }
     }
@@ -539,15 +544,37 @@ class FalAiUniversalService {
         const height = Number(options.height);
         const formattedSize = this.getFormattedSizeForPrompt(width, height);
         
-        if (formattedSize) {
-          console.log(`[fal-ai-universal] Добавляем формат ${formattedSize} (на основе ${width}x${height}) в промпт`);
-          workingPrompt = this.addImageSizeToPrompt(workingPrompt, formattedSize);
-        }
+        console.log(`[fal-ai-universal] Добавляем формат ${formattedSize} (на основе ${width}x${height}) в промпт`);
+        workingPrompt = this.addImageSizeToPrompt(workingPrompt, formattedSize);
       }
       // Если есть строковый параметр imageSize и нет числовых width/height
       else if (options.imageSize && typeof options.imageSize === 'string') {
         console.log(`[fal-ai-universal] Добавляем формат ${options.imageSize} в промпт`);
         workingPrompt = this.addImageSizeToPrompt(workingPrompt, options.imageSize);
+        
+        // Переводим строковый формат в числовые параметры, если возможно
+        const formatDimensions: Record<string, [number, number]> = {
+          'portrait_9_16': [576, 1024],    // 9:16
+          'portrait_2_3': [768, 1152],     // 2:3
+          'portrait_3_4': [768, 1024],     // 3:4
+          'portrait_4_5': [832, 1024],     // 4:5 (832:1040)
+          'landscape_16_9': [1152, 640],   // 16:9 (1152:648)
+          'landscape_3_2': [1152, 768],    // 3:2
+          'landscape_4_3': [1024, 768],    // 4:3
+          'landscape_21_9': [1344, 576],   // 21:9
+          'landscape_16_10': [1152, 704],  // 16:10 (1152:720)
+          'square_1_1': [1024, 1024],      // 1:1
+          'square': [1024, 1024]           // Алиас для square_1_1
+        };
+        
+        // Проверяем, есть ли размеры для этого формата
+        const dimensions = formatDimensions[options.imageSize];
+        if (dimensions) {
+          const [width, height] = dimensions;
+          console.log(`[fal-ai-universal] Преобразуем формат ${options.imageSize} в числовые параметры: ${width}x${height}`);
+          options.width = width;
+          options.height = height;
+        }
       }
       // Если нет никаких параметров размера, используем стандартный размер
       else {

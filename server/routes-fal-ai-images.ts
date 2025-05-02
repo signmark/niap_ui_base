@@ -109,7 +109,7 @@ router.post('/api/fal-ai-images', async (req, res) => {
     }
 
     // Создаем параметры для генерации
-    const generateOptions: FalAiGenerateOptions = {
+    const generateOptions: any = {
       prompt,
       negativePrompt,
       width: parseInt(width) || 1024,
@@ -148,7 +148,7 @@ router.post('/api/fal-ai-images', async (req, res) => {
       falAiJuggernautService.initialize(token);
       
       // Создаем параметры специально для Juggernaut моделей
-      const juggernautOptions = {
+      const juggernautOptions: any = {
         prompt,
         negativePrompt,
         numImages: parseInt(numImages) || 1,
@@ -172,7 +172,7 @@ router.post('/api/fal-ai-images', async (req, res) => {
       console.log(`[api] Используем специальный endpoint для модели Schnell`);
       
       // Создаем объект параметров для Schnell
-      const schnellOptions = {
+      const schnellOptions: any = {
         prompt,
         negativePrompt,
         numImages: parseInt(numImages) || 1,
