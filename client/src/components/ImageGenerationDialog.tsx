@@ -147,7 +147,7 @@ export function ImageGenerationDialog({
     // Устанавливаем schnell как модель по умолчанию
     setModelType("schnell");
     setStylePreset("photographic");
-    setNumImages(5); // Увеличиваем количество изображений до 5 по умолчанию
+    setNumImages(3); // Используем 3 изображения по умолчанию
     setSavePrompt(true);
     
     // Обработка промта по приоритетам:
