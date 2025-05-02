@@ -958,9 +958,11 @@ export function ImageGenerationDialog({
               <SelectValue placeholder="Выберите размер" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1024x1024">1024x1024 (квадрат)</SelectItem>
-              <SelectItem value="1024x768">1024x768 (альбомная)</SelectItem>
-              <SelectItem value="768x1024">768x1024 (портретная)</SelectItem>
+              {ASPECT_RATIOS.map((ratio) => (
+                <SelectItem key={`${ratio.width}x${ratio.height}`} value={`${ratio.width}x${ratio.height}`}>
+                  {`${ratio.width}x${ratio.height}`} ({ratio.name})
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

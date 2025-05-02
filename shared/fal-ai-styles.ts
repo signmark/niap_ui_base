@@ -26,7 +26,7 @@ export const EXTENDED_STYLES = [
 ];
 
 // Объект с описаниями стилей для отображения в интерфейсе
-export const STYLE_DESCRIPTIONS = {
+export const STYLE_DESCRIPTIONS: { [key: string]: string } = {
   'photographic': 'Фотореалистичный стиль с высокой детализацией',
   'cinematic': 'Кинематографический стиль как в фильмах',
   'anime': 'Стиль японской анимации и манги',
