@@ -9,6 +9,7 @@ import { Loader2, Search, RefreshCw } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import type { Campaign } from "@shared/schema";
 import { useCampaignStore } from "@/lib/campaignStore"; // Используем общее хранилище
+import { useAuthStore } from "@/lib/store"; // Импортируем хранилище авторизации
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WebsiteKeywordAnalyzer } from "@/components/WebsiteKeywordAnalyzer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,13 +32,47 @@ export default function Keywords() {
 
   // Получаем ID выбранной кампании из глобального хранилища
   const campaignId = selectedCampaignId || "";
+  const userId = useAuthStore(state => state.userId);
+  const clearSelectedCampaign = useCampaignStore(state => state.clearSelectedCampaign);
 
-  // Используем useEffect для обработки изменений глобальной кампании
+  // Проверяем принадлежность кампании текущему пользователю
   useEffect(() => {
-    if (selectedCampaignId && selectedCampaignName) {
-      console.log("Используем глобально выбранную кампанию:", selectedCampaignName);
-    }
-  }, [selectedCampaignId, selectedCampaignName]);
+    const checkCampaignOwnership = async () => {
+      if (selectedCampaignId && userId) {
+        console.log("Проверка принадлежности кампании пользователю:", {campaignId: selectedCampaignId, userId});
+        
+        try {
+          const response = await directusApi.get('/items/user_campaigns', {
+            params: {
+              filter: {
+                id: { _eq: selectedCampaignId },
+                user_id: { _eq: userId }
+              }
+            }
+          });
+          
+          const campaignExists = response.data?.data && response.data.data.length > 0;
+          
+          if (!campaignExists) {
+            console.log("Кампания не принадлежит текущему пользователю, сбрасываем выбор");
+            toast({
+              title: "Доступ ограничен",
+              description: "Выбранная кампания недоступна или принадлежит другому пользователю",
+              variant: "destructive"
+            });
+            clearSelectedCampaign();
+          } else {
+            console.log("Используем глобально выбранную кампанию:", selectedCampaignName);
+          }
+        } catch (error) {
+          console.error("Ошибка при проверке кампании:", error);
+          clearSelectedCampaign();
+        }
+      }
+    };
+    
+    checkCampaignOwnership();
+  }, [selectedCampaignId, userId, selectedCampaignName, clearSelectedCampaign]);
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["campaign_keywords", campaignId],
