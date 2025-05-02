@@ -116,11 +116,19 @@ export class FalAiDirectClient {
       apiUrl = 'https://hub.fal.ai/v1/stable-diffusion/sdxl-lightning';
       
       // Убеждаемся, что размеры являются числами
-      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
-      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
-      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
       
-      console.log(`[fal-ai-direct] Подготовка запроса к SDXL с размерами: ${width}x${height}`);
+      // Важно: правильно обрабатываем количество изображений
+      let numImages = 1;
+      if (typeof options.num_images === 'number') {
+        numImages = options.num_images;
+      } else if (options.num_images) {
+        numImages = parseInt(String(options.num_images)) || 1;
+      }
+      
+      console.log(`[fal-ai-direct] Подготовка запроса к SDXL с размерами: ${width}x${height}, изображений: ${numImages}`);
+      console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
       
       requestData = {
         prompt: options.prompt,
@@ -140,11 +148,20 @@ export class FalAiDirectClient {
       apiUrl = 'https://api.fal.ai/v1/fal-ai/flux/schnell';
       
       // Убеждаемся, что размеры являются числами
-      const width = typeof options.width === 'number' ? options.width : parseInt(options.width as any) || 1024;
-      const height = typeof options.height === 'number' ? options.height : parseInt(options.height as any) || 1024;
-      const numImages = typeof options.num_images === 'number' ? options.num_images : parseInt(options.num_images as any) || 1;
+      const width = typeof options.width === 'number' ? options.width : parseInt(String(options.width)) || 1024;
+      const height = typeof options.height === 'number' ? options.height : parseInt(String(options.height)) || 1024;
+      
+      // Важно: правильно обрабатываем количество изображений
+      let numImages = 1;
+      if (typeof options.num_images === 'number') {
+        numImages = options.num_images;
+      } else if (options.num_images) {
+        numImages = parseInt(String(options.num_images)) || 1;
+      }
 
+      // Дополнительное логирование для отладки
       console.log(`[fal-ai-direct] Подготовка запроса к Schnell с размерами: ${width}x${height}, изображений: ${numImages}`);
+      console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
       
       // Очищаем промпт от возможной JSON-структуры
       const cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
