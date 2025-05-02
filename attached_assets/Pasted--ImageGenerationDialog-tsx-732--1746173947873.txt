@@ -1,0 +1,66 @@
+✅ Промт успешно сохранен в базе данных
+ImageGenerationDialog.tsx:732 
+            
+            
+           POST https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/generate-image 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=7973a024:1637
+xhr @ axios.js?v=7973a024:1517
+dispatchRequest @ axios.js?v=7973a024:1992
+Promise.then
+_request @ axios.js?v=7973a024:2195
+request @ axios.js?v=7973a024:2104
+httpMethod @ axios.js?v=7973a024:2242
+wrap @ axios.js?v=7973a024:8
+mutationFn @ ImageGenerationDialog.tsx:732
+await in mutationFn
+fn @ @tanstack_react-query.js?v=7973a024:1189
+run @ @tanstack_react-query.js?v=7973a024:494
+start @ @tanstack_react-query.js?v=7973a024:536
+execute @ @tanstack_react-query.js?v=7973a024:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=7973a024:2630
+(anonymous) @ @tanstack_react-query.js?v=7973a024:3295
+onClick @ ImageGenerationDialog.tsx:1183
+callCallback2 @ chunk-RPCDYKBN.js?v=7973a024:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=7973a024:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=7973a024:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=7973a024:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=7973a024:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=7973a024:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=7973a024:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=7973a024:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=7973a024:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=7973a024:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=7973a024:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=7973a024:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=7973a024:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=7973a024:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=7973a024:5449Understand this error
+ImageGenerationDialog.tsx:744 Ошибка при запросе к API для модели schnell: Request failed with status code 500
+overrideMethod @ hook.js:608
+mutationFn @ ImageGenerationDialog.tsx:744
+await in mutationFn
+fn @ @tanstack_react-query.js?v=7973a024:1189
+run @ @tanstack_react-query.js?v=7973a024:494
+start @ @tanstack_react-query.js?v=7973a024:536
+execute @ @tanstack_react-query.js?v=7973a024:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=7973a024:2630
+(anonymous) @ @tanstack_react-query.js?v=7973a024:3295
+onClick @ ImageGenerationDialog.tsx:1183
+callCallback2 @ chunk-RPCDYKBN.js?v=7973a024:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=7973a024:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=7973a024:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=7973a024:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=7973a024:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=7973a024:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=7973a024:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=7973a024:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=7973a024:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=7973a024:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=7973a024:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=7973a024:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=7973a024:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=7973a024:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=7973a024:5449Understand this error
+ImageGenerationDialog.tsx:867 Ошибка при генерации изображения: AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
