@@ -29,6 +29,7 @@ export interface FalAiGenerateOptions {
   negativePrompt?: string;       // Негативный промт
   width?: number;                // Ширина изображения/видео
   height?: number;               // Высота изображения/видео
+  imageSize?: string;            // Строковый формат размера изображения (portrait_3_4, landscape_16_9 и т.д.)
   numImages?: number;            // Количество изображений (для видео обычно 1)
   model?: string | FalAiModelName; // Модель для генерации
   token?: string;                // Токен авторизации
@@ -152,7 +153,7 @@ class FalAiUniversalService {
    * @param options Параметры генерации (без указания модели, так как это всегда Schnell)
    * @returns Массив URL сгенерированных изображений
    */
-  async generateWithSchnell(options: Omit<FalAiGenerateOptions, 'model'>): Promise<string[]> {
+  async generateWithSchnell(options: Omit<FalAiGenerateOptions, 'model'> & { imageSize?: string }): Promise<string[]> {
     // Извлекаем параметр стиля из опций
     const stylePreset = (options as any).stylePreset;
     console.log(`[fal-ai-universal] Генерация изображений с использованием модели Schnell (специальный метод)`);

@@ -76,9 +76,11 @@ router.get('/api/fal-ai-models', async (req, res) => {
 router.post('/api/fal-ai-images', async (req, res) => {
   try {
     // Валидация запроса
-    const { prompt, negativePrompt, width, height, numImages, model, stylePreset } = req.body;
+    const { prompt, negativePrompt, width, height, numImages, model, stylePreset, imageSize } = req.body;
     
-    console.log(`[api] Приняты параметры размера: ${width}x${height}, стиль: ${stylePreset || 'не указан'}`);
+    console.log(`[api] Приняты параметры: ${
+      imageSize ? `формат: ${imageSize}` : `размер: ${width}x${height}`
+    }, стиль: ${stylePreset || 'не указан'}`);
     
     if (!prompt) {
       return res.status(400).json({
@@ -149,31 +151,47 @@ router.post('/api/fal-ai-images', async (req, res) => {
       const juggernautOptions = {
         prompt,
         negativePrompt,
-        width: parseInt(width) || 1024,
-        height: parseInt(height) || 1024,
         numImages: parseInt(numImages) || 1,
         model: model,
-        stylePreset // Добавляем параметр стиля для Juggernaut моделей
+        stylePreset, // Добавляем параметр стиля для Juggernaut моделей
       };
       
-      console.log(`[api] Отправляем запрос к Juggernaut с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
+      // Добавляем либо строковый формат, либо числовые значения ширины/высоты
+      if (imageSize) {
+        console.log(`[api] Отправляем запрос к Juggernaut с форматом ${imageSize} и стилем ${stylePreset || 'не указан'}`);
+        juggernautOptions.imageSize = imageSize;
+      } else {
+        console.log(`[api] Отправляем запрос к Juggernaut с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
+        juggernautOptions.width = parseInt(width) || 1024;
+        juggernautOptions.height = parseInt(height) || 1024;
+      }
       
       console.log(`[api] Используем специализированный сервис для модели Juggernaut: ${model}`);
       imageUrls = await falAiJuggernautService.generateImages(juggernautOptions);
     } else if (isSchnellModel) {
       console.log(`[api] Используем специальный endpoint для модели Schnell`);
-      // Для Schnell используем прямой endpoint через falAiUniversalService, но указываем специфический путь
-      imageUrls = await falAiUniversalService.generateWithSchnell({
+      
+      // Создаем объект параметров для Schnell
+      const schnellOptions = {
         prompt,
         negativePrompt,
-        width: parseInt(width) || 1024,
-        height: parseInt(height) || 1024,
         numImages: parseInt(numImages) || 1,
         token,
         stylePreset // Передаём параметр стиля для модели Schnell
-      });
+      };
       
-      console.log(`[api] Отправляем запрос к Schnell с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
+      // Добавляем либо строковый формат, либо числовые значения ширины/высоты
+      if (imageSize) {
+        console.log(`[api] Отправляем запрос к Schnell с форматом ${imageSize} и стилем ${stylePreset || 'не указан'}`);
+        schnellOptions.imageSize = imageSize;
+      } else {
+        console.log(`[api] Отправляем запрос к Schnell с размером ${parseInt(width) || 1024}x${parseInt(height) || 1024} и стилем ${stylePreset || 'не указан'}`);
+        schnellOptions.width = parseInt(width) || 1024;
+        schnellOptions.height = parseInt(height) || 1024;
+      }
+      
+      // Для Schnell используем прямой endpoint через falAiUniversalService, но указываем специфический путь
+      imageUrls = await falAiUniversalService.generateWithSchnell(schnellOptions);
     } else {
       // Для других стандартных моделей используем универсальный сервис
       console.log(`[api] Используем универсальный сервис для модели: ${model}`);
