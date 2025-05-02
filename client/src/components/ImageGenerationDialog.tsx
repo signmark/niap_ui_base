@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Image, RefreshCw, Sparkles, Pencil } from "lucide-react";
 import { api } from "@/lib/api";
+import { SUPPORTED_STYLES, STYLE_DESCRIPTIONS, ASPECT_RATIOS } from "../../../shared/fal-ai-styles";
 
 /**
  * ОТКЛЮЧЕНО: Извлечение ключевых слов больше не используется
@@ -1009,10 +1010,11 @@ export function ImageGenerationDialog({
                 <SelectValue placeholder="Выберите стиль" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="photographic">Фотореалистичный</SelectItem>
-                <SelectItem value="cinematic">Кинематографический</SelectItem>
-                <SelectItem value="anime">Аниме</SelectItem>
-                <SelectItem value="base">Базовый</SelectItem>
+                {SUPPORTED_STYLES.map((style) => (
+                  <SelectItem key={style} value={style}>
+                    {STYLE_DESCRIPTIONS[style] || style}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
