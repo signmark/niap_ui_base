@@ -176,7 +176,13 @@ export class FalAiDirectClient {
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
       
       // Очищаем промпт от возможной JSON-структуры
-      const cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      let cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      
+      // Добавляем стиль в промпт, если он указан
+      if (options.style_preset && !cleanPrompt.toLowerCase().includes(options.style_preset.toLowerCase())) {
+        console.log(`[fal-ai-direct] Добавляем стиль ${options.style_preset} в промпт для модели schnell`);
+        cleanPrompt = `${cleanPrompt}, ${options.style_preset} style`;
+      }
 
       requestData = {
         input: {
@@ -187,19 +193,9 @@ export class FalAiDirectClient {
             height: height
           },
           num_inference_steps: 4, // Рекомендуемое значение из документации
-          num_images: numImages,
-          style: 'base' // Используем стиль base по умолчанию, который будет заменен ниже
+          num_images: numImages
         }
       };
-
-      // Если у нас есть параметр style_preset в опциях - добавляем его в параметр style
-      if (options.style_preset) {
-        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Schnell API`);
-        requestData.input.style = options.style_preset;
-      } else {
-        // Устанавливаем стиль по умолчанию base, если не указано иное
-        requestData.input.style = 'base';
-      }
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus
       apiUrl = 'https://api.fal.ai/v1/fooocus/generate'; // Используем api.fal.ai вместо hub.fal.ai
@@ -214,19 +210,22 @@ export class FalAiDirectClient {
       console.log(`[fal-ai-direct] Подготовка запроса к Fooocus с размерами: ${width}x${height}, изображений: ${numImages}`);
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
       
+      // Очищаем промпт от возможной JSON-структуры
+      let cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      
+      // Добавляем стиль в промпт, если он указан
+      if (options.style_preset && !cleanPrompt.toLowerCase().includes(options.style_preset.toLowerCase())) {
+        console.log(`[fal-ai-direct] Добавляем стиль ${options.style_preset} в промпт для модели fooocus`);
+        cleanPrompt = `${cleanPrompt}, ${options.style_preset} style`;
+      }
+      
       requestData = {
-        prompt: options.prompt,
+        prompt: cleanPrompt,
         negative_prompt: options.negative_prompt || '',
         width: width,
         height: height,
         num_images: numImages
       };
-      
-      // Добавляем параметр стиля, если он есть
-      if (options.style_preset) {
-        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Fooocus`);
-        (requestData as any).style_preset = options.style_preset;
-      }
     } else if (options.model.startsWith('flux/')) {
       // Выделяем имя модели из пространства имен flux
       const modelName = options.model.replace('flux/', '');
@@ -243,7 +242,13 @@ export class FalAiDirectClient {
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
       
       // Очищаем промпт от возможной JSON-структуры
-      const cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      let cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      
+      // Добавляем стиль в промпт, если он указан
+      if (options.style_preset && !cleanPrompt.toLowerCase().includes(options.style_preset.toLowerCase())) {
+        console.log(`[fal-ai-direct] Добавляем стиль ${options.style_preset} в промпт для модели flux/${modelName}`);
+        cleanPrompt = `${cleanPrompt}, ${options.style_preset} style`;
+      }
 
       requestData = {
         model_name: modelName,
@@ -253,12 +258,6 @@ export class FalAiDirectClient {
         image_height: height,
         num_images: numImages
       };
-      
-      // Добавляем параметр стиля, если он есть
-      if (options.style_preset) {
-        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Flux (${modelName})`);
-        (requestData as any).style_preset = options.style_preset;
-      }
     } else {
       // Для других моделей используем общий endpoint
       apiUrl = 'https://hub.fal.ai/v1/images/generate';
@@ -271,11 +270,16 @@ export class FalAiDirectClient {
       const numImages = this.normalizeNumImages(options.num_images);
       
       // Очищаем промпт от возможной JSON-структуры
-      const cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+      let cleanPrompt = this.cleanPromptFromJsonStructure(options.prompt);
+
+      // Добавляем стиль в промпт, если он указан
+      if (options.style_preset && !cleanPrompt.toLowerCase().includes(options.style_preset.toLowerCase())) {
+        console.log(`[fal-ai-direct] Добавляем стиль ${options.style_preset} в промпт для модели ${options.model}`);
+        cleanPrompt = `${cleanPrompt}, ${options.style_preset} style`;
+      }
 
       console.log(`[fal-ai-direct] Подготовка запроса к модели ${options.model} с размерами: ${width}x${height}, изображений: ${numImages}`);
       console.log(`[fal-ai-direct] Тип параметра num_images: ${typeof options.num_images}, значение: ${options.num_images}`);
-
 
       requestData = {
         model_name: options.model,
@@ -285,12 +289,6 @@ export class FalAiDirectClient {
         height: height,
         num_images: numImages
       };
-      
-      // Добавляем параметр стиля, если он есть
-      if (options.style_preset) {
-        console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для модели ${options.model}`);
-        (requestData as any).style_preset = options.style_preset;
-      }
     }
     
     // Формируем заголовки запроса
