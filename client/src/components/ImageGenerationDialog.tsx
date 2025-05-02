@@ -990,11 +990,6 @@ export function ImageGenerationDialog({
         <div className="space-y-1">
           <Label className="text-xs flex justify-between items-center">
             <span>Размер изображения</span>
-            <span className="text-xs text-muted-foreground">
-              {imageSize === '1024x1024' ? '(квадрат)' : 
-               imageSize === '1024x768' ? '(альбомная)' : 
-               imageSize === '768x1024' ? '(портретная)' : ''}
-            </span>
           </Label>
           <Select value={imageSize} onValueChange={(value) => setImageSize(value)}>
             <SelectTrigger className="h-8">
@@ -1003,7 +998,7 @@ export function ImageGenerationDialog({
             <SelectContent>
               {ASPECT_RATIOS.map((ratio) => (
                 <SelectItem key={`${ratio.width}x${ratio.height}`} value={`${ratio.width}x${ratio.height}`}>
-                  {`${ratio.width}x${ratio.height}`} ({ratio.name})
+                  {`${ratio.width}x${ratio.height}`} {ratio.name}
                 </SelectItem>
               ))}
             </SelectContent>
