@@ -110,6 +110,9 @@ export class FalAiDirectClient {
       if (options.style_preset) {
         console.log(`[fal-ai-direct] Используем стиль ${options.style_preset} для Schnell API`);
         requestData.input.style = options.style_preset;
+      } else {
+        // Устанавливаем стиль по умолчанию base, если не указано иное
+        requestData.input.style = 'base';
       }
     } else if (options.model === 'fooocus') {
       // Поддержка модели Fooocus

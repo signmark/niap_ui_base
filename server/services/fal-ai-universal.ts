@@ -8,6 +8,7 @@ import axios from 'axios';
 import { apiKeyService } from './api-keys';
 import { falAiDirectClient } from './fal-ai-direct-client';
 import { falAiOfficialClient } from './fal-ai-official-client';
+import { MODEL_SPECIFIC_STYLES } from '../../shared/fal-ai-styles';
 
 // Типы поддерживаемых моделей
 export type FalAiModelName = 
@@ -56,6 +57,42 @@ class FalAiUniversalService {
     
     // Возвращаем название модели как есть без специальных преобразований
     return modelName;
+  }
+  
+  /**
+   * Нормализует стиль для конкретной модели с использованием карты соответствия
+   * @param stylePreset Исходный стиль
+   * @param model Название модели
+   * @returns Нормализованный стиль для конкретной модели
+   */
+  private normalizeStyleForModel(stylePreset: string | undefined, model: string): string | undefined {
+    if (!stylePreset) return undefined;
+    
+    // Определяем базовое название модели без пути
+    let baseModelName = model;
+    if (model.includes('/')) {
+      // Получаем только последний компонент пути
+      const parts = model.split('/');
+      baseModelName = parts[parts.length - 1];
+    }
+    
+    // Проверяем, есть ли специальные соответствия для этой модели
+    if (baseModelName.includes('schnell')) {
+      // Для Schnell используем карту соответствия schnell
+      return MODEL_SPECIFIC_STYLES['schnell'][stylePreset] || stylePreset;
+    } else if (baseModelName.includes('juggernaut')) {
+      // Для Juggernaut используем карту соответствия juggernaut
+      return MODEL_SPECIFIC_STYLES['juggernaut'][stylePreset] || stylePreset;
+    } else if (baseModelName.includes('flux')) {
+      // Для Flux используем карту соответствия flux
+      return MODEL_SPECIFIC_STYLES['flux'][stylePreset] || stylePreset;
+    } else if (baseModelName.includes('sdxl')) {
+      // Для SDXL используем карту соответствия sdxl
+      return MODEL_SPECIFIC_STYLES['sdxl'][stylePreset] || stylePreset;
+    }
+    
+    // Если нет специальных соответствий, возвращаем стиль как есть
+    return stylePreset;
   }
   
   /**
