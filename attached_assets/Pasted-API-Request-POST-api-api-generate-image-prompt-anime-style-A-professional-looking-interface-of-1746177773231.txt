@@ -1,0 +1,211 @@
+API Request: POST /api/api/generate-image {prompt: 'anime style. A professional looking interface of a…h graphs and data points, featuring the NAP logo.', negativePrompt: '', originalPrompt: 'anime style. A professional looking interface of a…h graphs and data points, featuring the NAP logo.', width: 1024, height: 1024, …}
+ImageGenerationDialog.tsx:740 API ответ для модели schnell: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <style data-vite-theme=\"\" data-inject-first=\"\">:root {\n      --background: 345 94% 98%;\n--foreground: 344 100% 3%;\n--muted: 344 86% 90%;\n--m
+ImageGenerationDialog.tsx:755 Ответ от API генерации изображений: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <style data-vite-theme=\"\" data-inject-first=\"...
+ImageGenerationDialog.tsx:757 Структура ответа: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <style data-vite-theme=\"\" data-inject-first=\"\">:root {\n      --background: 345 94% 98%;\n--foreground: 344 100% 3%;\n--muted: 344 86% 90%;\n--m
+ImageGenerationDialog.tsx:858 Неожиданный формат ответа от API: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style data-vite-theme="" data-inject-first="">:root {
+      --background: 345 94% 98%;
+--foreground: 344 100% 3%;
+--muted: 344 86% 90%;
+--muted-foreground: 344 100% 3%;
+--popover: 345 94% 98%;
+--popover-foreground: 344 100% 3%;
+--card: 345 94% 98%;
+--card-foreground: 344 100% 3%;
+--border: 344 86% 90%;
+--input: 344 86% 90%;
+--primary: 345 0% 39%;
+--primary-foreground: 344 0% 98%;
+--secondary: 344 100% 95%;
+--secondary-foreground: 344 100% 3%;
+--accent: 344 100% 95%;
+--accent-foreground: 344 100% 3%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 345 0% 39%;
+--radius: 0.5rem;
+  }
+  .dark {
+      --background: 343 24% 9%;
+--foreground: 344 86% 90%;
+--muted: 338 50% 20%;
+--muted-foreground: 344 86% 90%;
+--popover: 343 24% 9%;
+--popover-foreground: 344 86% 90%;
+--card: 343 24% 9%;
+--card-foreground: 344 86% 90%;
+--border: 338 50% 20%;
+--input: 338 50% 20%;
+--primary: 336 0% 62%;
+--primary-foreground: 342 0% 99%;
+--secondary: 338 50% 20%;
+--secondary-foreground: 344 86% 90%;
+--accent: 338 50% 20%;
+--accent-foreground: 344 86% 90%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 336 0% 62%;
+--radius: 0.5rem;
+  }</style>
+
+    <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+    <script type="module">
+import RefreshRuntime from "/@react-refresh"
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$ = () => {}
+window.$RefreshSig$ = () => (type) => type
+window.__vite_plugin_react_preamble_installed__ = true
+</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SMM Manager</title>
+    <script type="module">"use strict";(()=>{var t={HIGHLIGHT_COLOR:"#8B5CF6",HIGHLIGHT_BG:"#8B5CF610",Z_INDEX:{BASE:1e4,OVERLAY:10001,TOOLTIP:10002,CONTENT:10003},HOVERED_ATTR:"data-replit-hovered",SELECTED_ATTR:"data-replit-selected",TOOLTIP_OFFSET:25,MAX_TOOLTIP_WIDTH:200,ALLOWED_DOMAIN:".replit.dev"},s=`
+  .replit-beacon-tooltip {
+    position: fixed;
+    z-index: ${t.Z_INDEX.TOOLTIP};
+    pointer-events: none;
+    background-color: ${t.HIGHLIGHT_COLOR};
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    white-space: nowrap;
+    display: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: opacity 0.2s ease-in-out;
+    margin: 0;
+  }
+
+  /* Base positioning for highlighted elements */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}] {
+    position: relative !important;
+    z-index: ${t.Z_INDEX.BASE} !important;
+  }
+
+  /* Common overlay styles */
+  [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}]::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: ${t.Z_INDEX.OVERLAY};
+    transition: none !important;
+    box-sizing: border-box;
+  }
+
+  /* Hover state */
+  [${t.HOVERED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+    border: 2px dashed ${t.HIGHLIGHT_COLOR};
+  }
+
+  /* Selected state - we can add dotted border, removed due to visual bugs and inconsistencies across different element types */
+  [${t.SELECTED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+  }
+
+  /* Preserve child element positioning */
+  [${t.HOVERED_ATTR}] > *,
+  [${t.SELECTED_ATTR}] > * {
+    position: relative;
+    z-index: ${t.Z_INDEX.CONTENT};
+  }
+
+  /* Special handling for images */
+  img[${t.HOVERED_ATTR}],
+  img[${t.SELECTED_ATTR}] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Prevent nested highlights */
+  [${t.HOVERED_ATTR}] [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.HOVERED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.HOVERED_ATTR}]::before {
+    display: none;
+  }
+
+  /* Fix for absolutely positioned elements */
+  [${t.HOVERED_ATTR}] [class*="absolute"],
+  [${t.SELECTED_ATTR}] [class*="absolute"] {
+    z-index: ${t.Z_INDEX.CONTENT} !important;
+  }
+
+  /* Fix for flex and grid layouts */
+  [${t.HOVERED_ATTR}].flex,
+  [${t.SELECTED_ATTR}].flex,
+  [${t.HOVERED_ATTR}].grid,
+  [${t.SELECTED_ATTR}].grid {
+    display: flex !important;
+  }
+
+  /* Prevent transition jumps */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}],
+  [${t.HOVERED_ATTR}] *,
+  [${t.SELECTED_ATTR}] * {
+    transition: none !important;
+    animation: none !im
+overrideMethod @ hook.js:608
+onSuccess @ ImageGenerationDialog.tsx:858
+execute @ @tanstack_react-query.js?v=7973a024:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=7973a024:2630
+(anonymous) @ @tanstack_react-query.js?v=7973a024:3295
+onClick @ ImageGenerationDialog.tsx:1183
+callCallback2 @ chunk-RPCDYKBN.js?v=7973a024:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=7973a024:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=7973a024:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=7973a024:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=7973a024:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=7973a024:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=7973a024:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=7973a024:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=7973a024:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=7973a024:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=7973a024:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=7973a024:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=7973a024:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=7973a024:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=7973a024:5449Understand this error
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+ImageGenerationDialog.tsx:458 Ответ от сервера: {status: 200, statusText: 'OK', data: {…}}
+ImageGenerationDialog.tsx:465 ✅ Промт успешно сохранен в базе данных
+index.tsx:310 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
