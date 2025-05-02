@@ -330,6 +330,36 @@ export default function RichTextEditor({
               </TooltipTrigger>
               <TooltipContent>Цитата</TooltipContent>
             </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="code" 
+                  size="sm"
+                  aria-label="Форматированный код" 
+                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  data-state={editor.isActive('code') ? 'on' : 'off'}
+                >
+                  <Code className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Форматированный код</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="codeBlock" 
+                  size="sm"
+                  aria-label="Блок кода" 
+                  onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                  data-state={editor.isActive('codeBlock') ? 'on' : 'off'}
+                >
+                  <FileCode className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Блок кода</TooltipContent>
+            </Tooltip>
           </ToggleGroup>
 
           <div className="mx-1 h-full w-px bg-border" />
