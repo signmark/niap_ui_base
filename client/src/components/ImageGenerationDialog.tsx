@@ -570,7 +570,7 @@ export function ImageGenerationDialog({
             // Находим читаемое название стиля для пользователя
             const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
             // Добавляем стиль в начало промта
-            enhancedPrompt = `${styleName} style. ${generatedPrompt}`;
+            enhancedPrompt = `${styleName} style ${generatedPrompt}`;
             console.log(`Добавлен стиль ${styleName} в текстовый промт: "${enhancedPrompt}"`);
           }
           
@@ -653,7 +653,7 @@ export function ImageGenerationDialog({
                 // Находим читаемое название стиля для пользователя
                 const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
                 // Добавляем стиль в начало промта
-                enhancedContent = `${styleName} style. ${translatedContent}`;
+                enhancedContent = `${styleName} style ${translatedContent}`;
                 console.log(`Добавлен стиль ${styleName} в резервный промт: "${enhancedContent}"`);
               }
               
@@ -691,7 +691,7 @@ export function ImageGenerationDialog({
               // Находим читаемое название стиля для пользователя
               const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
               // Добавляем стиль в начало промта
-              finalPrompt = `${styleName} style. ${translatedContent}`;
+              finalPrompt = `${styleName} style ${translatedContent}`;
               console.log(`Добавлен стиль ${styleName} в резервный промт: "${finalPrompt}"`);
             }
             
