@@ -574,30 +574,16 @@ export function SettingsDialog() {
 
           {/* Claude section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Claude API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "outline" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ Claude Anthropic используется для анализа текста и тенденций.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">Claude API</h3>
+              <Badge 
+                variant={
+                  apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "outline" : "destructive"
+                } 
+                className="ml-2"
+              >
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="claude-key">API ключ Claude</Label>
@@ -644,25 +630,11 @@ export function SettingsDialog() {
 
           {/* Perplexity section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Perplexity API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ Perplexity используется для рекомендаций и генерации текста.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">Perplexity API</h3>
+              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "success" : "destructive"} className="ml-2">
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="perplexity-key">API ключ Perplexity</Label>
@@ -709,25 +681,11 @@ export function SettingsDialog() {
 
           {/* Apify section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Apify API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ Apify используется для сбора данных и парсинга.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">Apify API</h3>
+              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "success" : "destructive"} className="ml-2">
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="apify-key">API ключ Apify</Label>
@@ -774,30 +732,16 @@ export function SettingsDialog() {
 
           {/* XMLRiver section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">XMLRiver API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "success" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ XMLRiver используется для аналитики и сбора данных.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">XMLRiver API</h3>
+              <Badge 
+                variant={
+                  apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "success" : "destructive"
+                } 
+                className="ml-2"
+              >
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="xmlriver-user-id">ID пользователя XMLRiver</Label>
@@ -853,30 +797,16 @@ export function SettingsDialog() {
 
           {/* Gemini section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Gemini API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "outline" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ Google Gemini используется для генерации текста и аналитики.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">Gemini API</h3>
+              <Badge 
+                variant={
+                  apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "outline" : "destructive"
+                } 
+                className="ml-2"
+              >
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="gemini-key">API ключ Gemini</Label>
@@ -923,30 +853,16 @@ export function SettingsDialog() {
 
           {/* Qwen section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Qwen API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "outline" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ Qwen используется для генерации текста и многоязычной поддержки.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">Qwen API</h3>
+              <Badge 
+                variant={
+                  apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "outline" : "destructive"
+                } 
+                className="ml-2"
+              >
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="qwen-key">API ключ Qwen</Label>
