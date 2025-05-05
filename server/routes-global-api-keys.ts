@@ -188,7 +188,7 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
       const result = await globalApiKeysService.addGlobalApiKey({
         service: service as ApiServiceName,
         api_key: apiKey,
-        active: true
+        is_active: true
       });
 
       log(`Успешно добавлен глобальный API ключ для сервиса ${service}`, 'api');
@@ -207,7 +207,7 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
   app.put('/api/global-api-keys/:id', requireAdmin, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { service, apiKey, active } = req.body;
+      const { service, apiKey, active, is_active } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'Требуется указать ID ключа' });
@@ -217,7 +217,9 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
       const updateData: any = {};
       if (service) updateData.service_name = service; // Исправлено поле service на service_name
       if (apiKey) updateData.api_key = apiKey;
-      if (active !== undefined) updateData.is_active = active; // Исправлено поле active на is_active
+      // Принимаем оба варианта параметра (active и is_active) для обратной совместимости
+      if (is_active !== undefined) updateData.is_active = is_active;
+      else if (active !== undefined) updateData.is_active = active;
 
       console.log(`Запрос на обновление ключа ${id}:`, updateData);
 
