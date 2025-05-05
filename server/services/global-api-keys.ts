@@ -325,21 +325,46 @@ export class GlobalApiKeysService {
         return [];
       }
       
-      // Запрашиваем все глобальные API ключи
-      const response = await this.directusApi.get('/items/global_api_keys', {
-        params: {
+      // Проверяем методом DirectusCrud вместо прямого запроса через API
+      try {
+        const keys = await directusCrud.list('global_api_keys', {
+          authToken: systemToken,
           fields: ['id', 'service_name', 'api_key', 'is_active', 'priority', 'created_at', 'updated_at'],
           sort: ['-priority', 'service_name']
-        },
-        headers: {
-          Authorization: `Bearer ${systemToken}`
-        }
-      });
-      
-      const apiKeys = response.data?.data || [];
-      log(`Получено ${apiKeys.length} глобальных API ключей`, 'global-api-keys');
-      
-      return apiKeys;
+        });
+        
+        console.log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, keys);
+        log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, 'global-api-keys');
+        
+        // Мапим в правильный формат для результата
+        return keys.map(key => ({
+          id: key.id,
+          service_name: key.service_name,
+          api_key: key.api_key,
+          is_active: key.is_active === true || key.is_active === 1,
+          priority: key.priority || 0,
+          created_at: key.created_at,
+          updated_at: key.updated_at
+        }));
+      } catch (directusCrudError) {
+        console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
+        
+        // Если DirectusCrud не сработал, пробуем прямой запрос
+        const response = await this.directusApi.get('/items/global_api_keys', {
+          params: {
+            fields: ['id', 'service_name', 'api_key', 'is_active', 'priority', 'created_at', 'updated_at'],
+            sort: ['-priority', 'service_name']
+          },
+          headers: {
+            Authorization: `Bearer ${systemToken}`
+          }
+        });
+        
+        const apiKeys = response.data?.data || [];
+        log(`Получено ${apiKeys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
+        
+        return apiKeys;
+      }
     } catch (error) {
       console.error('Error fetching global API keys:', error);
       return [];
