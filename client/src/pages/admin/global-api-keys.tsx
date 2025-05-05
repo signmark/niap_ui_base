@@ -242,11 +242,35 @@ interface ApiKey {
 }
 
 export default function GlobalApiKeysPage() {
-  const { token, isAdmin } = useAuthStore();
+  const { token, isAdmin, checkIsAdmin } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [adminChecked, setAdminChecked] = useState(false);
   const [keys, setKeys] = useState<GlobalApiKey[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Принудительная проверка статуса администратора при загрузке страницы
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      try {
+        console.log('Проверка статуса администратора перед загрузкой страницы API ключей');
+        const isAdminResult = await checkIsAdmin();
+        console.log('Результат проверки админа:', isAdminResult);
+        setAdminChecked(true);
+        if (!isAdminResult) {
+          setError('Доступ запрещен. У вас недостаточно прав для управления глобальными API ключами.');
+        } else {
+          loadKeys();
+        }
+      } catch (err) {
+        console.error('Ошибка при проверке прав администратора:', err);
+        setError('Ошибка при проверке прав доступа');
+        setAdminChecked(true);
+      }
+    };
+    
+    verifyAdmin();
+  }, [token, checkIsAdmin]);
   
   // Состояние для новых ключей
   const [newService, setNewService] = useState<string>('');
@@ -260,10 +284,19 @@ export default function GlobalApiKeysPage() {
     setError(null);
     
     try {
+      // Проверка на наличие токена
+      if (!token) {
+        console.error('Нет доступного токена авторизации для загрузки ключей');
+        setError('Ошибка авторизации: токен не найден. Пожалуйста, перезайдите в систему.');
+        return;
+      }
+      
+      console.log('Отправка запроса на получение глобальных API ключей с токеном', token.substring(0, 10) + '...');
       const response = await axios.get('/api/global-api-keys', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log('Получен ответ от сервера:', response.data);
       if (response.data.success) {
         setKeys(response.data.data || []);
       } else {
@@ -294,6 +327,15 @@ export default function GlobalApiKeysPage() {
         variant: 'destructive',
         title: 'Ошибка',
         description: 'Необходимо указать сервис и API ключ'
+      });
+      return;
+    }
+    
+    if (!token) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка авторизации',
+        description: 'Отсутствует токен авторизации. Пожалуйста, перезайдите в систему.'
       });
       return;
     }
@@ -528,7 +570,7 @@ export default function GlobalApiKeysPage() {
                 Импортировать мои ключи
               </Button>
             </DialogTrigger>
-            <ImportKeysDialog token={token} onImportComplete={loadKeys} />
+            {token && <ImportKeysDialog token={token} onImportComplete={loadKeys} />}
           </Dialog>
         </CardHeader>
         <CardContent>
