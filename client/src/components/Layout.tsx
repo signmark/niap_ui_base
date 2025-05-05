@@ -14,13 +14,18 @@ import { SmmLogo } from "./SmmLogo";
 import useCampaignOwnershipCheck from "@/hooks/useCampaignOwnershipCheck";
 
 // Проверка наличия администраторских прав у пользователя по email
+// Только в случае, если не работает основная проверка через is_smm_admin
 const ADMIN_EMAILS = ["lbrspb@gmail.com", "lbr.spb@gmail.com"]; 
+
+// ID администратора
+const ADMIN_USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [forceAdminStatus, setForceAdminStatus] = useState(false);
+  const [isSmmAdmin, setIsSmmAdmin] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const token = useAuthStore((state) => state.token);
   const userId = useAuthStore((state) => state.userId);
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -31,10 +36,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Используем хук проверки принадлежности кампании текущему пользователю
   useCampaignOwnershipCheck();
 
-  // Здесь мы проверяем администраторские права на основе email
+  // Здесь мы получаем информацию о пользователе и проверяем админ. права по is_smm_admin
   useEffect(() => {
-    // Проверяем email из localStorage или делаем запрос
-    const checkEmailAndSetAdminStatus = async () => {
+    const fetchUserData = async () => {
       try {
         if (!token) return;
         
@@ -54,17 +58,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         console.log('Получены данные пользователя:', data);
         
-        // Проверяем, есть ли email в списке администраторов
-        if (data.user && data.user.email && ADMIN_EMAILS.includes(data.user.email)) {
-          console.log('Пользователь является администратором по email:', data.user.email);
-          setForceAdminStatus(true);
+        if (data.user && data.user.email) {
+          setUserEmail(data.user.email);
+          
+          // Основная проверка - через поле is_smm_admin
+          const adminStatus = data.user.is_smm_admin === true || 
+                           data.user.is_smm_admin === 1 || 
+                           data.user.is_smm_admin === '1' || 
+                           data.user.is_smm_admin === 'true';
+          
+          console.log('Проверка администратора: is_smm_admin =', data.user.is_smm_admin, 'итог:', adminStatus);
+          setIsSmmAdmin(adminStatus);
+          
+          // Дополнительная проверка - через email
+          const isAdminByEmail = ADMIN_EMAILS.includes(data.user.email);
+          if (isAdminByEmail) {
+            console.log('Пользователь является администратором по email:', data.user.email);
+          }
         }
       } catch (error) {
-        console.error('Ошибка при проверке email для администратора:', error);
+        console.error('Ошибка при проверке администратора:', error);
       }
     };
     
-    checkEmailAndSetAdminStatus();
+    fetchUserData();
   }, [token]);
 
   useEffect(() => {
@@ -95,25 +112,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [token, location, navigate, setAuth]);
   
-  // Проверяем статус администратора при входе в систему
+  // Вызываем проверку статуса администратора из store для совместимости
   useEffect(() => {
     if (token) {
-      // Проверяем права администратора
-      console.log('Layout компонент: Запускаем проверку статуса администратора');
-      console.log('Layout компонент: Текущий статус isAdmin =', isAdmin);
-      checkIsAdmin().then(result => {
-        console.log('Layout компонент: Результат проверки isAdmin =', result);
-        console.log('Layout компонент: Текущее состояние isAdmin в store =', isAdmin);
-      }).catch(error => {
-        console.error('Layout компонент: Ошибка при проверке статуса администратора:', error);
+      checkIsAdmin().catch(error => {
+        console.error('Ошибка при проверке статуса администратора:', error);
       });
     }
   }, [token]);
-
-  // Отображаем статус администратора в консоли
-  useEffect(() => {
-    console.log('Layout компонент: Изменение статуса isAdmin =', isAdmin);
-  }, [isAdmin]);
 
   const handleLogout = async () => {
     try {
@@ -160,9 +166,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   if (!token) return null;
 
-  // Определяем итоговый администраторский статус
-  // здесь мы разрешаем нашим ADMIN_EMAILS быть админами даже если исходная проверка не сработала
-  const userIsAdmin = isAdmin || forceAdminStatus || (userId && ADMIN_EMAILS.includes('lbrspb@gmail.com'));
+  // Итоговый администраторский статус
+  // Основная проверка - поле is_smm_admin, дополнительные - userId и email
+  const userIsAdmin = isSmmAdmin || userId === ADMIN_USER_ID || (userEmail && ADMIN_EMAILS.includes(userEmail));
 
   const navItems = [
     { path: "/campaigns", label: "Кампании", icon: FileText },
@@ -174,7 +180,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
 
-  console.log('Layout рендер: isAdmin =', isAdmin, 'forceAdminStatus =', forceAdminStatus, 'userIsAdmin =', userIsAdmin); 
+  console.log('Layout рендер: isAdmin =', isAdmin, 'isSmmAdmin =', isSmmAdmin, 'userIsAdmin =', userIsAdmin, 'userId =', userId, 'userEmail =', userEmail); 
 
   return (
     <ThemeProvider>
