@@ -23,6 +23,7 @@ import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
 import UniversalImageGenTest from "@/pages/test/universal-image-gen";
 import TimeDisplayTest from "@/pages/test/time-display-test";
+import GlobalApiKeysPage from "@/pages/admin/global-api-keys";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
