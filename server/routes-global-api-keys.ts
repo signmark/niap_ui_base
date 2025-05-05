@@ -23,27 +23,47 @@ async function isAdmin(req: Request): Promise<boolean> {
     
     const token = authHeader.split(' ')[1];
     
-    // Запрашиваем данные пользователя из Directus
-    const userInfo = await directusCrud.getUserInfo(token);
-    
-    // Список ID администраторов SMM Manager
-    // Нажмите кнопку "Role..." в интерфейсе directus на странице пользователя, чтобы назначить роль
-    const adminIds = process.env.SMM_ADMIN_USER_IDS?.split(',') || [];
-    
-    // Добавляем админа по умолчанию (можно удалить, если вы настроили переменную)
-    if (process.env.DIRECTUS_ADMIN_USER_ID) {
-      adminIds.push(process.env.DIRECTUS_ADMIN_USER_ID);
+    // Получаем информацию о пользователе напрямую через API Directus
+    try {
+      const response = await directusApiManager.instance.get('/users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      const userInfo = response.data?.data;
+      
+      if (!userInfo) {
+        console.log('Не удалось получить информацию о пользователе');
+        return false;
+      }
+      
+      // Проверяем, включено ли поле is_smm_admin 
+      const isSmmAdmin = userInfo.is_smm_admin === true;
+      
+      // Список ID администраторов SMM Manager из переменной окружения
+      const adminIds = process.env.SMM_ADMIN_USER_IDS?.split(',') || [];
+      if (process.env.DIRECTUS_ADMIN_USER_ID) {
+        adminIds.push(process.env.DIRECTUS_ADMIN_USER_ID);
+      }
+      
+      // Критерии проверки администратора:
+      // 1. Флаг is_smm_admin включен
+      // 2. Пользователь имеет ID из списка администраторов
+      // 3. Пользователь имеет права администратора в Directus
+      // 4. Email пользователя совпадает с DIRECTUS_ADMIN_EMAIL
+      const isAdminResult = 
+        isSmmAdmin || 
+        (userInfo.id && adminIds.includes(userInfo.id)) ||
+        (userInfo.role?.admin_access === true) || 
+        (userInfo.email === process.env.DIRECTUS_ADMIN_EMAIL);
+      
+      console.log(`Проверка прав администратора для ${userInfo.email}: ${isAdminResult ? 'ЕСТЬ ПРАВА' : 'НЕТ ПРАВ'}`);
+      return isAdminResult;
+    } catch (apiError) {
+      console.error('Error fetching user info from Directus:', apiError);
+      return false;
     }
-    
-    // Критерии проверки администратора:
-    // 1. Пользователь имеет ID из списка администраторов
-    // 2. Пользователь имеет права администратора в Directus
-    // 3. Email пользователя совпадает с DIRECTUS_ADMIN_EMAIL
-    return userInfo && (
-      (userInfo.id && adminIds.includes(userInfo.id)) ||
-      (userInfo.role?.admin_access === true) || 
-      (userInfo.email === process.env.DIRECTUS_ADMIN_EMAIL)
-    );
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;
