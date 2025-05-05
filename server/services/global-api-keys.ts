@@ -325,19 +325,22 @@ export class GlobalApiKeysService {
         return [];
       }
       
-      // Проверяем методом DirectusCrud вместо прямого запроса через API
+      // Пробуем получить ключи напрямую через API вместо DirectusCrud
       try {
-        const keys = await directusCrud.list('global_api_keys', {
-          authToken: systemToken,
-          fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
-          sort: ['service_name']
+        // Используем прямой API запрос вместо DirectusCrud
+        const response = await directusApiManager.instance.get('/items/global_api_keys', {
+          params: {
+            sort: ['service_name'],
+            fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at']
+          },
+          headers: systemToken ? { Authorization: `Bearer ${systemToken}` } : undefined
         });
         
-        console.log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, keys);
-        log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, 'global-api-keys');
+        const keys = response.data?.data || [];
+        log(`Получено ${keys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
         
         // Мапим в правильный формат для результата
-        const formattedKeys = keys.map(key => ({
+        const formattedKeys = keys.map((key: any) => ({
           id: typeof key === 'object' && key !== null && 'id' in key ? String(key.id) : '',
           service_name: typeof key === 'object' && key !== null && 'service_name' in key ? key.service_name as string : '',
           api_key: typeof key === 'object' && key !== null && 'api_key' in key ? key.api_key as string : '',
@@ -351,56 +354,29 @@ export class GlobalApiKeysService {
         this.lastCacheUpdate = Date.now();
         
         return formattedKeys;
-      } catch (directusCrudError) {
-        console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
+      } catch (directError: any) {
+        console.error('Error during direct API call to fetch global API keys:', directError);
         
-        // Если DirectusCrud не сработал, пробуем прямой запрос
-        let apiKeys: GlobalApiKey[] = [];
-        
-        try {
-          const response = await this.directusApi.get('/items/global_api_keys', {
-            params: {
-              fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
-              sort: ['service_name']
-            },
-            headers: {
-              Authorization: `Bearer ${systemToken}`
-            }
-          });
+        // Если получаем ошибку доступа, возвращаем заглушку с основными API ключами
+        if (directError.response && (directError.response.status === 403 || directError.response.status === 401)) {
+          // Возвращаем фиксированный набор с только service_name для базовых сервисов
+          const stubKeys: GlobalApiKey[] = Object.values(ApiServiceName).map(name => ({
+            id: `stub-${name}`,
+            service_name: name,
+            api_key: '', // Пустой ключ
+            is_active: false, // Неактивный
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
           
-          apiKeys = response.data?.data || [];
-          log(`Получено ${apiKeys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
-          
-          // Сохраняем в кэш
-          this.keysCache = apiKeys;
+          console.log(`Возвращаем заглушку с ${stubKeys.length} глобальными API ключами`);
+          this.keysCache = stubKeys;
           this.lastCacheUpdate = Date.now();
-          
-        } catch (error) {
-          const apiError = error as any;
-          console.error('Error during direct API call to fetch global API keys:', apiError);
-          
-          // Если получаем ошибку доступа, возвращаем заглушку с основными API ключами
-          if (apiError.response && (apiError.response.status === 403 || apiError.response.status === 401)) {
-            // Возвращаем фиксированный набор с только service_name для базовых сервисов
-            const stubKeys: GlobalApiKey[] = Object.values(ApiServiceName).map(name => ({
-              id: `stub-${name}`,
-              service_name: name,
-              api_key: '', // Пустой ключ
-              is_active: false, // Неактивный
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }));
-            
-            console.log(`Возвращаем заглушку с ${stubKeys.length} глобальными API ключами`);
-            this.keysCache = stubKeys;
-            this.lastCacheUpdate = Date.now();
-            return stubKeys;
-          }
-          
-          throw apiError; // Передаем ошибку дальше, если это не 403 или 401
+          return stubKeys;
         }
         
-        return apiKeys;
+        // Если ошибка не 403/401, возвращаем пустой массив
+        return [];
       }
     } catch (error) {
       console.error('Error fetching global API keys:', error);
