@@ -37,7 +37,7 @@ export interface GlobalApiKey {
 export interface GlobalApiKeyInput {
   service: ApiServiceName;
   api_key: string;
-  active: boolean;
+  is_active: boolean;
 }
 
 /**
@@ -410,7 +410,7 @@ export class GlobalApiKeysService {
       const response = await this.directusApi.post('/items/global_api_keys', {
         service_name: keyData.service,
         api_key: formattedKey,
-        is_active: keyData.active
+        is_active: keyData.is_active
       }, {
         headers: {
           Authorization: `Bearer ${systemToken}`
