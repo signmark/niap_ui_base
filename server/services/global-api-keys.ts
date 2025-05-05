@@ -452,31 +452,35 @@ export class GlobalApiKeysService {
         return null;
       }
       
-      // Обновляем ключ
+      // Обновляем ключ и получаем обновленные данные сразу
       const response = await this.directusApi.patch(`/items/global_api_keys/${id}`, {
         ...updateData,
         updated_at: new Date().toISOString()
       }, {
         headers: {
           Authorization: `Bearer ${systemToken}`
+        },
+        params: {
+          fields: '*'  // Запрашиваем все поля сразу
         }
       });
       
-      // Получаем обновленный ключ
-      const getResponse = await this.directusApi.get(`/items/global_api_keys/${id}`, {
-        headers: {
-          Authorization: `Bearer ${systemToken}`
-        }
-      });
+      // Получаем обновленный ключ из ответа на PATCH
+      const updatedKey = response.data?.data;
       
-      const updatedKey = getResponse.data?.data;
       if (updatedKey) {
         log(`Обновлен глобальный API ключ ${id}`, 'global-api-keys');
         
-        // Обновляем кэш
-        this.refreshCache().catch(err => {
-          console.error('Failed to refresh global API keys cache after updating a key:', err);
-        });
+        // Обновляем только конкретный ключ в кэше, а не весь кэш
+        if (this.keysCache) {
+          // Находим индекс ключа в кэше
+          const keyIndex = this.keysCache.findIndex(k => k.id === id);
+          if (keyIndex !== -1) {
+            // Обновляем конкретный ключ в кэше
+            this.keysCache[keyIndex] = updatedKey;
+            this.lastCacheUpdate = Date.now();
+          }
+        }
         
         return updatedKey;
       }
@@ -519,16 +523,17 @@ export class GlobalApiKeysService {
       
       log(`Удален глобальный API ключ ${id}`, 'global-api-keys');
       
-      // Если у нас есть информация о ключе, удаляем его из кэша
+      // Удаляем ключ из списка ключей в кэше
+      if (this.keysCache) {
+        this.keysCache = this.keysCache.filter(k => k.id !== id);
+        this.lastCacheUpdate = Date.now();
+      }
+      
+      // Если у нас есть информация о ключе, удаляем его из кэша по сервису
       if (keyInfo && keyInfo.service_name) {
         if (this.keyCache[keyInfo.service_name]) {
           delete this.keyCache[keyInfo.service_name];
         }
-      } else {
-        // Если нет информации о ключе, просто обновляем весь кэш
-        this.refreshCache().catch(err => {
-          console.error('Failed to refresh global API keys cache after deleting a key:', err);
-        });
       }
       
       return true;

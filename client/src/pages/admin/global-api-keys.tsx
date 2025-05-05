@@ -396,13 +396,15 @@ export default function GlobalApiKeysPage() {
       });
       
       if (response.data.success) {
+        // Обновляем ключ локально, не перезагружая весь список
+        setKeys(currentKeys => currentKeys.map(k => 
+          k.id === key.id ? { ...k, is_active: !k.is_active } : k
+        ));
+        
         toast({
           title: 'Успешно',
           description: `Статус ключа для ${key.service_name} изменен`
         });
-        
-        // Обновляем список ключей
-        await loadKeys();
       } else {
         toast({
           variant: 'destructive',
