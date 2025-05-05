@@ -34,12 +34,19 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
     log(`Проверка прав администратора с токеном: ${token.substring(0, 10)}...`, 'admin');
     
     // Получаем данные пользователя из Directus
-    const currentUser = await directusCrud.read('users/me', null, { authToken: token });
+    try {
+      const response = await directusApiManager.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const currentUser = response.data.data;
 
-    if (!currentUser) {
-      log('Не удалось получить данные пользователя', 'admin');
-      return false;
-    }
+      if (!currentUser) {
+        log('Не удалось получить данные пользователя', 'admin');
+        return false;
+      }
 
     // Выводим все данные пользователя для отладки
     console.log('User data for admin check:', {

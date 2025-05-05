@@ -34,31 +34,85 @@ export function AuthGuard({ children }: Props) {
       userId
     });
 
+    const validateToken = async (accessToken: string): Promise<boolean> => {
+      try {
+        // Проверяем действительность токена через API
+        const response = await fetch('/api/auth/check', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (!response.ok) {
+          console.warn('AuthGuard: Token validation failed, response status:', response.status);
+          return false;
+        }
+
+        const data = await response.json();
+        console.log('AuthGuard: Token validation result:', data);
+        
+        return data && data.valid === true;
+      } catch (error) {
+        console.error('AuthGuard: Error validating token:', error);
+        return false;
+      }
+    };
+
     const checkSession = async () => {
-      // Если есть токен в store и userId, считаем что авторизация в порядке
+      // Если есть токен в store и userId, проверяем его действительность
       if (token && userId) {
-        console.log('AuthGuard: Authentication confirmed with token in store');
-        setIsSessionChecked(true);
-        return;
+        console.log('AuthGuard: Validating token from store');
+        const isValid = await validateToken(token);
+        
+        if (isValid) {
+          console.log('AuthGuard: Token validation successful');
+          setIsSessionChecked(true);
+          return;
+        } else {
+          console.log('AuthGuard: Token from store is invalid, attempting to restore from localStorage');
+          // Токен недействителен, пробуем взять из localStorage
+        }
       }
       
-      // Если есть сохраненный токен, но он не в store, добавляем его
+      // Если есть сохраненный токен, проверяем его
       if (storedToken && storedUserId) {
-        console.log('AuthGuard: Restoring token from localStorage');
-        setAuth(storedToken, storedUserId);
-        setIsSessionChecked(true);
-        return;
+        console.log('AuthGuard: Validating token from localStorage');
+        const isValid = await validateToken(storedToken);
+        
+        if (isValid) {
+          console.log('AuthGuard: Stored token is valid, restoring session');
+          setAuth(storedToken, storedUserId);
+          setIsSessionChecked(true);
+          return;
+        } else {
+          console.log('AuthGuard: Stored token is invalid, attempting to refresh');
+          // Сохраненный токен недействителен, пробуем обновить
+        }
       }
       
-      // Если нет сохраненного токена, но есть refresh токен, пробуем обновить сессию
-      if (!storedToken && storedRefreshToken) {
+      // Пробуем обновить токен
+      if (storedRefreshToken) {
         try {
           console.log('AuthGuard: Attempting to refresh token with refresh_token');
           setIsRefreshing(true);
           await refreshAccessToken();
-          setIsRefreshing(false);
-          setIsSessionChecked(true);
-          return;
+          
+          // После обновления проверяем, что новый токен появился в localStorage
+          const refreshedToken = localStorage.getItem('auth_token');
+          const refreshedUserId = localStorage.getItem('user_id');
+          
+          if (refreshedToken && refreshedUserId) {
+            console.log('AuthGuard: Token successfully refreshed');
+            setAuth(refreshedToken, refreshedUserId);
+            setIsRefreshing(false);
+            setIsSessionChecked(true);
+            return;
+          } else {
+            throw new Error('Failed to obtain new token after refresh');
+          }
         } catch (error) {
           console.error('AuthGuard: Token refresh failed:', error);
           setIsRefreshing(false);
@@ -67,6 +121,7 @@ export function AuthGuard({ children }: Props) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user_id');
+          localStorage.removeItem('is_admin'); // Важно очистить и статус админа
           clearAuth();
           
           // Если обновление не удалось, перенаправляем на страницу входа
@@ -78,8 +133,9 @@ export function AuthGuard({ children }: Props) {
         }
       }
       
-      // Если нет ни токена, ни storedToken, перенаправляем на логин
-      if (!token && !storedToken && !isLoginPage) {
+      // Если нет ни токена, ни возможности обновить, перенаправляем на логин
+      console.log('AuthGuard: No valid authentication found');
+      if (!isLoginPage) {
         console.log('AuthGuard: No token found, redirecting to login');
         navigate('/auth/login');
       }
