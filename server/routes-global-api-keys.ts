@@ -109,6 +109,14 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
   // Получение списка всех глобальных ключей (только для администраторов)
   app.get('/api/global-api-keys', requireAdmin, async (req: Request, res: Response) => {
     try {
+      console.log('IS-ADMIN ROUTE CALLED');
+      // Устанавливаем явно заголовки для предотвращения перехвата Vite
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+
       // Получаем токен из заголовка запроса
       const token = req.headers.authorization?.startsWith('Bearer ') 
         ? req.headers.authorization.substring(7) 
@@ -121,13 +129,14 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
       // Получаем список глобальных API ключей
       const keys = await globalApiKeysService.getGlobalApiKeys();
       log('Успешно получен список глобальных API ключей', 'api');
-      res.status(200).json({ success: true, data: keys });
+      return res.status(200).json({ success: true, data: keys, timestamp: Date.now() });
     } catch (error) {
       console.error('Ошибка при получении глобальных API ключей:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Ошибка при получении глобальных API ключей',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: Date.now()
       });
     }
   });

@@ -42,8 +42,13 @@ app.get('/api/status-check', (req, res) => {
 import { isUserAdmin } from './routes-global-api-keys';
 import { registerAuthRoutes } from './api/auth-routes';
 
-// Регистрируем все маршруты аутентификации раньше Vite
+// Регистрируем все маршруты аутентификации и API ключей раньше Vite
 registerAuthRoutes(app);
+
+// Импортируем и регистрируем маршруты для глобальных API ключей
+import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
+registerGlobalApiKeysRoutes(app);
+log('Global API keys routes registered early to avoid Vite middleware interception');
 
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
