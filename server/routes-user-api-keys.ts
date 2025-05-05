@@ -18,16 +18,33 @@ export function registerUserApiKeysRoutes(app: Application) {
   app.get('/api/user-api-keys', async (req: Request, res: Response) => {
     try {
       // Проверяем, что пользователь авторизован
-      if (!req.user?.id) {
+      console.log('User API Keys request received, req.user:', req.user ? 'exists' : 'undefined');
+      
+      // Получаем токен авторизации из заголовка
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
           success: false,
-          message: 'Требуется авторизация'
+          message: 'Требуется токен авторизации'
+        });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      // Декодируем JWT токен для получения ID пользователя
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+      
+      const userId = payload.sub || payload.id;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Неверный формат токена авторизации'
         });
       }
 
       // Получаем список ключей из Directus
-      const userId = req.user.id;
-      const token = req.headers.authorization?.split(' ')[1];
       
       log(`Запрос личных API ключей для пользователя ${userId}`, 'api-keys-routes');
       

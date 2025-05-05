@@ -50,6 +50,10 @@ import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
 registerGlobalApiKeysRoutes(app);
 log('Global API keys routes registered early to avoid Vite middleware interception');
 
+// Регистрируем маршруты для пользовательских API ключей раньше Vite
+registerUserApiKeysRoutes(app);
+log('User API keys routes registered early to avoid Vite middleware interception');
+
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
   try {
@@ -249,10 +253,8 @@ app.use((req, res, next) => {
     registerBegetS3Routes(app);
     log("Beget S3 routes registered successfully");
     
-    // Регистрируем маршруты для работы с личными API ключами пользователя
-    log("Registering user API keys routes...");
-    registerUserApiKeysRoutes(app);
-    log("User API keys routes registered successfully");
+    // Маршруты для работы с личными API ключами пользователя уже зарегистрированы в начале файла
+    log("User API keys routes already registered early");
     
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");
