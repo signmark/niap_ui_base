@@ -215,9 +215,11 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
 
       // Обновляем глобальный API ключ
       const updateData: any = {};
-      if (service) updateData.service = service;
+      if (service) updateData.service_name = service; // Исправлено поле service на service_name
       if (apiKey) updateData.api_key = apiKey;
-      if (active !== undefined) updateData.active = active;
+      if (active !== undefined) updateData.is_active = active; // Исправлено поле active на is_active
+
+      console.log(`Запрос на обновление ключа ${id}:`, updateData);
 
       const result = await globalApiKeysService.updateGlobalApiKey(id, updateData);
 

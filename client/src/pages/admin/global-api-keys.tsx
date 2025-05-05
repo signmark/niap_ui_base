@@ -275,7 +275,6 @@ export default function GlobalApiKeysPage() {
   // Состояние для новых ключей
   const [newService, setNewService] = useState<string>('');
   const [newApiKey, setNewApiKey] = useState<string>('');
-  const [newPriority, setNewPriority] = useState<number>(0);
   const [isAddingKey, setIsAddingKey] = useState(false);
 
   // Загрузка списка глобальных ключей
@@ -391,8 +390,11 @@ export default function GlobalApiKeysPage() {
     try {
       setUpdatingKeyId(key.id);
       
+      console.log(`Отправляем запрос на обновление статуса ключа ${key.id}, текущий статус: ${key.is_active}`);
+      
+      // Исправлено имя поля active на is_active, чтобы соответствовало серверной модели
       const response = await axios.put(`/api/global-api-keys/${key.id}`, {
-        active: !key.is_active
+        is_active: !key.is_active
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -510,7 +512,7 @@ export default function GlobalApiKeysPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="service">Сервис</Label>
                 <Select value={newService} onValueChange={setNewService}>
@@ -527,24 +529,13 @@ export default function GlobalApiKeysPage() {
                 </Select>
               </div>
               
-              <div className="md:col-span-2">
+              <div>
                 <Label htmlFor="apiKey">API Ключ</Label>
                 <Input
                   id="apiKey"
                   value={newApiKey}
                   onChange={(e) => setNewApiKey(e.target.value)}
                   placeholder="Введите API ключ"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="priority">Приоритет</Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  value={newPriority.toString()}
-                  onChange={(e) => setNewPriority(Number(e.target.value))}
-                  placeholder="0"
                 />
               </div>
             </div>
@@ -608,7 +599,6 @@ export default function GlobalApiKeysPage() {
                   <tr className="bg-gray-100">
                     <th className="p-2 text-left border">Сервис</th>
                     <th className="p-2 text-left border">API Ключ</th>
-                    <th className="p-2 text-center border">Приоритет</th>
                     <th className="p-2 text-center border">Активен</th>
                     <th className="p-2 text-center border">Действия</th>
                   </tr>
@@ -627,7 +617,6 @@ export default function GlobalApiKeysPage() {
                           ({key.api_key.length} символов)
                         </span>
                       </td>
-                      <td className="p-2 border text-center">{key.priority || 0}</td>
                       <td className="p-2 border text-center">
                         <div className="flex justify-center items-center">
                           {updatingKeyId === key.id ? (
