@@ -1,6 +1,7 @@
 import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 import { directusCrud } from './directus-crud';
+import { globalApiKeysService } from './global-api-keys';
 
 // Получаем инстанс Axios для Directus API
 const directusApi = directusApiManager.instance;
@@ -71,7 +72,18 @@ export class ApiKeyService {
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
     console.log(`[DEBUG] Запрашивается ключ для сервиса: ${serviceName}, пользователя: ${userId}`);
     
-    // ВАЖНОЕ ПРАВИЛО: Все API ключи должны браться ТОЛЬКО из Directus (через user_api_keys)
+    // НОВАЯ ЛОГИКА: Сначала пробуем получить глобальный API ключ
+    const globalKey = await globalApiKeysService.getGlobalApiKey(serviceName);
+    if (globalKey) {
+      console.log(`[${serviceName}] Используется глобальный API ключ`);
+      log(`Using global ${serviceName} API key`, 'api-keys');
+      return globalKey;
+    }
+    
+    // Если глобальный ключ не найден, пробуем получить пользовательский ключ
+    console.log(`[${serviceName}] Глобальный ключ не найден, пробуем пользовательский ключ`);
+    
+    // ВАЖНОЕ ПРАВИЛО: Все пользовательские API ключи должны браться ТОЛЬКО из Directus (через user_api_keys)
     // Если нет userId, не можем получить ключ из Directus
     if (!userId) {
       log(`Cannot fetch ${serviceName} API key: missing userId. API keys must come only from Directus user settings.`, 'api-keys');
