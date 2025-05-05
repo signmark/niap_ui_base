@@ -21,7 +21,6 @@ interface GlobalApiKey {
   id: string;
   service_name: string;
   api_key: string;
-  priority?: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -111,8 +110,7 @@ function ImportKeysDialog({ token, onImportComplete }: ImportKeysDialogProps) {
       const importPromises = keysToImport.map(key => {
         return axios.post('/api/global-api-keys', {
           service: key.service_name,
-          apiKey: key.api_key,
-          priority: 0 // По умолчанию приоритет 0
+          apiKey: key.api_key
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -344,8 +342,7 @@ export default function GlobalApiKeysPage() {
     try {
       const response = await axios.post('/api/global-api-keys', {
         service: newService,
-        apiKey: newApiKey,
-        priority: newPriority
+        apiKey: newApiKey
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -359,7 +356,6 @@ export default function GlobalApiKeysPage() {
         // Сбрасываем форму
         setNewService('');
         setNewApiKey('');
-        setNewPriority(0);
         
         // Перезагружаем список ключей
         loadKeys();
