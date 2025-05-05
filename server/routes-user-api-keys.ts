@@ -14,18 +14,33 @@ import { directusApiManager } from './directus';
 function extractUserIdFromToken(token: string): string | null {
   try {
     if (!token || !token.includes('.')) {
+      console.log('Получен неверный формат токена: токен не содержит точек', token.substring(0, 15) + '...');
       return null;
     }
 
     const parts = token.split('.');
     if (parts.length < 2 || !parts[1]) {
+      console.log('Получен неверный формат токена: нет второй части токена', parts);
       return null;
     }
 
     const base64Url = parts[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
-    return payload.sub || payload.id || null;
+    
+    try {
+      const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+      console.log('Полезная нагрузка токена:', payload);
+      
+      const userId = payload.sub || payload.id || null;
+      if (!userId) {
+        console.log('В полезной нагрузке токена нет полей sub или id');
+      }
+      
+      return userId;
+    } catch (parseError) {
+      console.error('Ошибка при парсинге JSON из base64:', parseError);
+      return null;
+    }
   } catch (e) {
     console.error('Ошибка декодирования JWT токена:', e);
     return null;
@@ -109,6 +124,11 @@ export function registerUserApiKeysRoutes(app: Application) {
    * DELETE /api/user-api-keys/:id
    */
   app.delete('/api/user-api-keys/:id', async (req: Request, res: Response) => {
+    console.log('Запрос на удаление API ключа пользователя:', { 
+      url: req.url,
+      params: req.params,
+      authHeader: req.headers.authorization ? req.headers.authorization.substring(0, 15) + '...' : 'отсутствует' 
+    });
     try {
       // Проверяем, что пользователь авторизован
       console.log('Delete User API Key request received, req.user:', req.user ? 'exists' : 'undefined');

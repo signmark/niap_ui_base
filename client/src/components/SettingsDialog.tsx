@@ -83,17 +83,15 @@ export function SettingsDialog() {
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
-        const response = await directusApi.get('/items/user_api_keys', {
-          params: {
-            filter: {
-              user_id: {
-                _eq: userId
-              }
-            },
-            fields: ['id', 'service_name', 'api_key']
-          }
-        });
-        return response.data?.data || [];
+        console.log('Fetching user API keys using the API route');
+        const response = await api.get('/api/user-api-keys');
+        if (response.data?.success) {
+          console.log(`Successfully fetched ${response.data?.data?.length || 0} API keys`);
+          return response.data?.data || [];
+        } else {
+          console.error('Error in API response:', response.data);
+          return [];
+        }
       } catch (error) {
         console.error('Error fetching API keys:', error);
         throw error;
