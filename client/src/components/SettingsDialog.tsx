@@ -490,8 +490,8 @@ export function SettingsDialog() {
           <div className="space-y-2 mb-6 border-b pb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-medium">API Ключ FAL.AI</h3>
-              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                {apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              <Badge variant={falAiKey.trim() ? "success" : "destructive"} className="ml-2">
+                {falAiKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "Настроен" : "Требуется настройка"}
               </Badge>
             </div>
             <div className="grid gap-2">
@@ -546,8 +546,8 @@ export function SettingsDialog() {
           <div className="space-y-2 mb-6 border-b pb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-medium">API Ключ DeepSeek</h3>
-              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                {apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              <Badge variant={deepseekKey.trim() ? "success" : "destructive"} className="ml-2">
+                {deepseekKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "Настроен" : "Требуется настройка"}
               </Badge>
             </div>
             <div className="grid gap-2">
@@ -603,12 +603,10 @@ export function SettingsDialog() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-medium">API Ключ Claude AI</h3>
               <Badge 
-                variant={
-                  apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "outline" : "destructive"
-                } 
+                variant={claudeKey.trim() ? "outline" : "destructive"}
                 className="ml-2"
               >
-                {apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+                {claudeKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
               </Badge>
             </div>
             <div className="grid gap-2">
@@ -662,20 +660,14 @@ export function SettingsDialog() {
           </div>
 
           {/* Perplexity section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Perplexity API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <a href={getApiKeyUrl('perplexity')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="h-5 w-5" />
-              </a>
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Perplexity</h3>
+              <Badge variant={perplexityKey.trim() ? "success" : "destructive"} className="ml-2">
+                {perplexityKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="perplexity-key">API ключ Perplexity</Label>
               <div className="flex space-x-2">
                 <Input
                   id="perplexity-key"
@@ -685,6 +677,9 @@ export function SettingsDialog() {
                   className="flex-1"
                   onChange={(e) => setPerplexityKey(e.target.value)}
                 />
+                <a href={getApiKeyUrl('perplexity')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
                 <Button
                   variant="outline"
                   type="button"
@@ -692,7 +687,7 @@ export function SettingsDialog() {
                   onClick={testPerplexityKey}
                   disabled={!perplexityKey.trim() || perplexityTesting.status === 'testing' || isPending}
                   className={cn(
-                    "w-20",
+                    "flex-none w-24",
                     perplexityTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
                     perplexityTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                   )}
@@ -700,12 +695,11 @@ export function SettingsDialog() {
                   {perplexityTesting.status === 'testing' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : perplexityTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
                   ) : perplexityTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4" />
-                  ) : (
-                    "Проверить"
-                  )}
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
                 </Button>
               </div>
               {perplexityTesting.status === 'error' && (
@@ -715,23 +709,22 @@ export function SettingsDialog() {
                 <p className="text-xs text-green-600">{perplexityTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для поиска источников и генерации контента через Perplexity</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для функции "Искать источники" на странице Источники</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('perplexity')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">настройках аккаунта Perplexity</a></li>
+            </ul>
           </div>
 
           {/* Apify section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Apify API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <a href={getApiKeyUrl('apify')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="h-5 w-5" />
-              </a>
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Apify</h3>
+              <Badge variant={apifyKey.trim() ? "success" : "destructive"} className="ml-2">
+                {apifyKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="apify-key">API ключ Apify</Label>
               <div className="flex space-x-2">
                 <Input
                   id="apify-key"
@@ -741,6 +734,9 @@ export function SettingsDialog() {
                   className="flex-1"
                   onChange={(e) => setApifyKey(e.target.value)}
                 />
+                <a href={getApiKeyUrl('apify')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
                 <Button
                   variant="outline"
                   type="button"
@@ -748,7 +744,7 @@ export function SettingsDialog() {
                   onClick={testApifyKey}
                   disabled={!apifyKey.trim() || apifyTesting.status === 'testing' || isPending}
                   className={cn(
-                    "w-20",
+                    "flex-none w-24",
                     apifyTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
                     apifyTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                   )}
@@ -756,12 +752,11 @@ export function SettingsDialog() {
                   {apifyTesting.status === 'testing' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : apifyTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
                   ) : apifyTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4" />
-                  ) : (
-                    "Проверить"
-                  )}
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
                 </Button>
               </div>
               {apifyTesting.status === 'error' && (
@@ -771,35 +766,37 @@ export function SettingsDialog() {
                 <p className="text-xs text-green-600">{apifyTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для сбора данных с внешних ресурсов</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для функции поиска и анализа данных</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('apify')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Apify Console</a></li>
+            </ul>
           </div>
 
           {/* XMLRiver section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">XMLRiver API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "success" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <a href={getApiKeyUrl('xmlriver')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="h-5 w-5" />
-              </a>
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ XMLRiver</h3>
+              <Badge variant={xmlRiverApiKey.trim() && xmlRiverUserId.trim() ? "success" : "destructive"} className="ml-2">
+                {(xmlRiverApiKey.trim() && xmlRiverUserId.trim()) || apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="xmlriver-user-id">ID пользователя XMLRiver</Label>
-              <Input
-                id="xmlriver-user-id"
-                type="text"
-                placeholder="16797"
-                value={xmlRiverUserId}
-                onChange={(e) => setXmlRiverUserId(e.target.value)}
-              />
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 grid gap-2">
+                  <Label htmlFor="xmlriver-user-id">ID пользователя XMLRiver</Label>
+                  <Input
+                    id="xmlriver-user-id"
+                    type="text"
+                    placeholder="16797"
+                    value={xmlRiverUserId}
+                    onChange={(e) => setXmlRiverUserId(e.target.value)}
+                  />
+                </div>
+                <a href={getApiKeyUrl('xmlriver')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md mt-8">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+              </div>
 
               <Label htmlFor="xmlriver-key">API ключ XMLRiver</Label>
               <div className="flex space-x-2">
@@ -818,7 +815,7 @@ export function SettingsDialog() {
                   onClick={testXmlRiverKey}
                   disabled={!xmlRiverApiKey.trim() || !xmlRiverUserId.trim() || xmlRiverTesting.status === 'testing' || isPending}
                   className={cn(
-                    "w-20",
+                    "flex-none w-24",
                     xmlRiverTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
                     xmlRiverTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                   )}
@@ -826,12 +823,11 @@ export function SettingsDialog() {
                   {xmlRiverTesting.status === 'testing' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : xmlRiverTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
                   ) : xmlRiverTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4" />
-                  ) : (
-                    "Проверить"
-                  )}
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
                 </Button>
               </div>
               {xmlRiverTesting.status === 'error' && (
@@ -841,28 +837,22 @@ export function SettingsDialog() {
                 <p className="text-xs text-green-600">{xmlRiverTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для поиска и управления товарами на маркетплейсах</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для работы с товарами и ценами</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('xmlriver')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">XMLRiver</a></li>
+            </ul>
           </div>
 
           {/* Gemini section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Gemini API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "outline" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <a href={getApiKeyUrl('gemini')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="h-5 w-5" />
-              </a>
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Gemini</h3>
+              <Badge variant={geminiKey.trim() ? "outline" : "destructive"} className="ml-2">
+                {geminiKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="gemini-key">API ключ Gemini</Label>
               <div className="flex space-x-2">
                 <Input
                   id="gemini-key"
@@ -872,6 +862,9 @@ export function SettingsDialog() {
                   className="flex-1"
                   onChange={(e) => setGeminiKey(e.target.value)}
                 />
+                <a href={getApiKeyUrl('gemini')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
                 <Button
                   variant="outline"
                   type="button"
@@ -879,7 +872,7 @@ export function SettingsDialog() {
                   onClick={testGeminiKey}
                   disabled={!geminiKey.trim() || geminiTesting.status === 'testing' || isPending}
                   className={cn(
-                    "w-20",
+                    "flex-none w-24",
                     geminiTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
                     geminiTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                   )}
@@ -887,12 +880,11 @@ export function SettingsDialog() {
                   {geminiTesting.status === 'testing' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : geminiTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
                   ) : geminiTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4" />
-                  ) : (
-                    "Проверить"
-                  )}
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
                 </Button>
               </div>
               {geminiTesting.status === 'error' && (
@@ -902,28 +894,22 @@ export function SettingsDialog() {
                 <p className="text-xs text-green-600">{geminiTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для анализа изображений и генерации контента</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для работы с мультимодальными запросами</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('gemini')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a></li>
+            </ul>
           </div>
 
           {/* Qwen section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">Qwen API</h3>
-                <Badge 
-                  variant={
-                    apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "outline" : "destructive"
-                  } 
-                  className="ml-2"
-                >
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <a href={getApiKeyUrl('qwen')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="h-5 w-5" />
-              </a>
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Qwen</h3>
+              <Badge variant={qwenKey.trim() ? "outline" : "destructive"} className="ml-2">
+                {qwenKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="qwen-key">API ключ Qwen</Label>
               <div className="flex space-x-2">
                 <Input
                   id="qwen-key"
@@ -933,6 +919,9 @@ export function SettingsDialog() {
                   className="flex-1"
                   onChange={(e) => setQwenKey(e.target.value)}
                 />
+                <a href={getApiKeyUrl('qwen')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
                 <Button
                   variant="outline"
                   type="button"
@@ -940,7 +929,7 @@ export function SettingsDialog() {
                   onClick={testQwenKey}
                   disabled={!qwenKey.trim() || qwenTesting.status === 'testing' || isPending}
                   className={cn(
-                    "w-20",
+                    "flex-none w-24",
                     qwenTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
                     qwenTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
                   )}
@@ -948,12 +937,11 @@ export function SettingsDialog() {
                   {qwenTesting.status === 'testing' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : qwenTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
                   ) : qwenTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4" />
-                  ) : (
-                    "Проверить"
-                  )}
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
                 </Button>
               </div>
               {qwenTesting.status === 'error' && (
@@ -963,6 +951,11 @@ export function SettingsDialog() {
                 <p className="text-xs text-green-600">{qwenTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для генерации текста на китайском языке</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для перевода и создания контента на китайском</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('qwen')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Alibaba Cloud</a></li>
+            </ul>
           </div>
 
           {/* Existing API Keys section */}
