@@ -383,9 +383,14 @@ export default function GlobalApiKeysPage() {
     }
   };
 
+  // Состояние для хранения статуса обновления ключей
+  const [updatingKeyId, setUpdatingKeyId] = useState<string | null>(null);
+
   // Обновление статуса активности ключа
   const toggleKeyActive = async (key: GlobalApiKey) => {
     try {
+      setUpdatingKeyId(key.id);
+      
       const response = await axios.put(`/api/global-api-keys/${key.id}`, {
         active: !key.is_active
       }, {
@@ -399,7 +404,7 @@ export default function GlobalApiKeysPage() {
         });
         
         // Обновляем список ключей
-        loadKeys();
+        await loadKeys();
       } else {
         toast({
           variant: 'destructive',
@@ -414,6 +419,8 @@ export default function GlobalApiKeysPage() {
         title: 'Ошибка',
         description: err.response?.data?.message || err.message || 'Ошибка при обновлении статуса ключа'
       });
+    } finally {
+      setUpdatingKeyId(null);
     }
   };
 
@@ -616,11 +623,16 @@ export default function GlobalApiKeysPage() {
                       </td>
                       <td className="p-2 border text-center">{key.priority || 0}</td>
                       <td className="p-2 border text-center">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={key.is_active}
-                            onCheckedChange={() => toggleKeyActive(key)}
-                          />
+                        <div className="flex justify-center items-center">
+                          {updatingKeyId === key.id ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Switch
+                              checked={key.is_active}
+                              onCheckedChange={() => toggleKeyActive(key)}
+                              disabled={updatingKeyId !== null}
+                            />
+                          )}
                         </div>
                       </td>
                       <td className="p-2 border text-center">
