@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Check, X, AlertCircle, Import, FileUp } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import axios from 'axios';
+// Правильный импорт типов сервисов API
 import { ApiServiceName } from '@/lib/api-service-types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,25 +46,28 @@ function ImportKeysDialog({ token, onImportComplete }: ImportKeysDialogProps) {
     setError(null);
     
     try {
-      const response = await axios.get('/api/directus/users/me/api-keys', {
+      // Запрашиваем личные API ключи пользователя из API
+      const response = await axios.get('/api/user-api-keys', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      if (response.data.success) {
-        setUserKeys(response.data.data || []);
+      // Проверяем результат запроса
+      if (response.data && response.data.data) {
+        const apiKeys = response.data.data;
+        setUserKeys(apiKeys);
         
         // Инициализация состояния выбранных ключей
         const initialSelectedState: Record<string, boolean> = {};
-        (response.data.data || []).forEach((key: ApiKey) => {
+        apiKeys.forEach((key: ApiKey) => {
           initialSelectedState[key.id] = false;
         });
         setSelectedKeys(initialSelectedState);
       } else {
-        setError(response.data.message || 'Ошибка при загрузке личных API ключей');
+        setError('Не удалось получить список личных API ключей');
         toast({
           variant: 'destructive',
           title: 'Ошибка загрузки',
-          description: response.data.message || 'Ошибка при загрузке личных API ключей'
+          description: 'Не удалось получить список личных API ключей'
         });
       }
     } catch (err: any) {
