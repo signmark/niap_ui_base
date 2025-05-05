@@ -424,41 +424,47 @@ export default function GlobalApiKeysPage() {
     }
   };
 
-  // Удаление глобального ключа (деактивация)
+  // Состояние для хранения статуса удаления ключа
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
+
+  // Удаление глобального ключа
   const deleteKey = async (key: GlobalApiKey) => {
-    if (!confirm(`Вы уверены, что хотите деактивировать глобальный API ключ для сервиса ${key.service_name}?`)) {
+    if (!confirm(`Вы уверены, что хотите удалить глобальный API ключ для сервиса ${key.service_name}?`)) {
       return;
     }
     
     try {
-      const response = await axios.put(`/api/global-api-keys/${key.id}`, {
-        active: false
-      }, {
+      setDeletingKeyId(key.id);
+      
+      // Используем DELETE запрос вместо PUT для полного удаления ключа
+      const response = await axios.delete(`/api/global-api-keys/${key.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data.success) {
         toast({
           title: 'Успешно',
-          description: `Глобальный API ключ для сервиса ${key.service_name} деактивирован`
+          description: `Глобальный API ключ для сервиса ${key.service_name} удален`
         });
         
         // Обновляем список ключей
-        loadKeys();
+        await loadKeys();
       } else {
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: response.data.message || 'Ошибка при деактивации API ключа'
+          description: response.data.message || 'Ошибка при удалении API ключа'
         });
       }
     } catch (err: any) {
-      console.error('Ошибка при деактивации API ключа:', err);
+      console.error('Ошибка при удалении API ключа:', err);
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: err.response?.data?.message || err.message || 'Ошибка при деактивации API ключа'
+        description: err.response?.data?.message || err.message || 'Ошибка при удалении API ключа'
       });
+    } finally {
+      setDeletingKeyId(null);
     }
   };
 
@@ -636,14 +642,20 @@ export default function GlobalApiKeysPage() {
                         </div>
                       </td>
                       <td className="p-2 border text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteKey(key)}
-                          disabled={!key.is_active}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        {deletingKeyId === key.id ? (
+                          <div className="flex justify-center items-center">
+                            <Loader2 className="h-5 w-5 animate-spin text-red-500" />
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteKey(key)}
+                            disabled={!key.is_active || deletingKeyId !== null || updatingKeyId !== null}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
