@@ -96,11 +96,25 @@ export function SettingsDialog() {
     }
   });
 
-  // Функция для удаления API ключа
-  const deleteApiKey = (keyId: string) => {
-    if (confirm("Вы уверены, что хотите удалить этот API ключ? Это действие нельзя отменить.")) {
-      deleteMutation.mutate(keyId);
+  // Состояние для управления диалогом подтверждения удаления
+  const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
+  
+  // Функция для запроса подтверждения удаления API ключа
+  const confirmDeleteApiKey = (keyId: string) => {
+    setKeyToDelete(keyId);
+  };
+  
+  // Функция для подтверждения удаления API ключа
+  const deleteApiKey = () => {
+    if (keyToDelete) {
+      deleteMutation.mutate(keyToDelete);
+      setKeyToDelete(null); // Закрываем диалог после подтверждения
     }
+  };
+  
+  // Функция для отмены удаления
+  const cancelDeleteApiKey = () => {
+    setKeyToDelete(null);
   };
 
   const { data: apiKeys, isLoading, refetch } = useQuery({
@@ -864,10 +878,10 @@ export function SettingsDialog() {
                           variant="ghost" 
                           size="sm"
                           className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                          onClick={() => deleteApiKey(key.id)}
+                          onClick={() => confirmDeleteApiKey(key.id)}
                           disabled={deleteMutation.isPending}
                         >
-                          {deleteMutation.isPending ? (
+                          {deleteMutation.isPending && keyToDelete === key.id ? (
                             <>
                               <Loader2 className="h-4 w-4 animate-spin mr-1" />
                               Удаление...
