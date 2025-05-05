@@ -236,7 +236,7 @@ export class GlobalApiKeysService {
         });
         
         log(`Created new global ${serviceName} API key`, 'global-api-keys');
-        return result && typeof result === 'object' && 'id' in result ? result.id : null;
+        return result && typeof result === 'object' && 'id' in result ? (result.id as string) : null;
       }
     } catch (error) {
       console.error(`Error saving global ${serviceName} API key:`, error);
@@ -554,7 +554,8 @@ export class GlobalApiKeysService {
             }
           });
           console.log(`Ключ с ID ${id} успешно удален через прямой API запрос`);
-        } catch (directApiError) {
+        } catch (error) {
+          const directApiError = error as any;
           console.error(`Ошибка при прямом удалении через API:`, directApiError);
           // Проверим, была ли ошибка из-за отсутствия ключа (404)
           if (directApiError.response?.status === 404) {

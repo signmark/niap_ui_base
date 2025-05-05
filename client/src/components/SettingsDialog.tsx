@@ -139,6 +139,7 @@ export function SettingsDialog() {
   // Delete API key mutation
   const deleteMutation = useMutation({
     mutationFn: async (keyId: string) => {
+      console.log(`Удаление ключа с ID: ${keyId}`);
       await api.delete(`/api/user-api-keys/${keyId}`);
     },
     onSuccess: () => {
