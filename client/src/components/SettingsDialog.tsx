@@ -469,28 +469,14 @@ export function SettingsDialog() {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="grid gap-4 py-4">
           {/* FAL.AI section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">FAL.AI API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ FAL.AI используется для быстрой генерации изображений.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">FAL.AI API</h3>
+              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "success" : "destructive"} className="ml-2">
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="falai-key">API ключ FAL.AI</Label>
@@ -537,25 +523,11 @@ export function SettingsDialog() {
 
           {/* DeepSeek section */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium">DeepSeek API</h3>
-                <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "success" : "destructive"} className="ml-2">
-                  {apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "Настроен" : "Требуется настройка"}
-                </Badge>
-              </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="p-1 cursor-help">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">Ключ DeepSeek используется для перевода и генерации текста.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center">
+              <h3 className="text-lg font-medium">DeepSeek API</h3>
+              <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "success" : "destructive"} className="ml-2">
+                {apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="deepseek-key">API ключ DeepSeek</Label>
