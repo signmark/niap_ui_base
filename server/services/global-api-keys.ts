@@ -507,27 +507,64 @@ export class GlobalApiKeysService {
    */
   async deleteGlobalApiKey(id: string): Promise<boolean> {
     try {
+      console.log(`Запрос на удаление глобального API ключа с ID ${id}`);
+      
       // Получаем системный токен
       const systemToken = await this.getSystemToken();
       
       if (!systemToken) {
+        console.error('Не удалось получить системный токен для удаления глобального API ключа');
         log('Не удалось получить системный токен для удаления глобального API ключа', 'global-api-keys');
         return false;
       }
       
-      // Получаем информацию о ключе для обновления кэша
-      const keyInfo = await this.directusApi.get(`/items/global_api_keys/${id}`, {
-        headers: {
-          Authorization: `Bearer ${systemToken}`
-        }
-      }).then(response => response.data?.data).catch(() => null);
+      console.log(`Системный токен получен: ${systemToken.substring(0, 10)}...`);
       
-      // Удаляем ключ
-      await this.directusApi.delete(`/items/global_api_keys/${id}`, {
-        headers: {
-          Authorization: `Bearer ${systemToken}`
+      // Получаем информацию о ключе для обновления кэша
+      let keyInfo = null;
+      try {
+        const keyResponse = await this.directusApi.get(`/items/global_api_keys/${id}`, {
+          headers: {
+            Authorization: `Bearer ${systemToken}`
+          }
+        });
+        keyInfo = keyResponse.data?.data;
+        console.log(`Информация о ключе получена:`, keyInfo);
+      } catch (keyError) {
+        console.error(`Ошибка при получении информации о ключе ${id}:`, keyError);
+      }
+      
+      try {
+        // Используем directusCrud для удаления вместо прямого API-запроса
+        await directusCrud.delete('global_api_keys', id, {
+          authToken: systemToken
+        });
+        console.log(`Ключ с ID ${id} успешно удален через directusCrud`);
+      } catch (directusCrudError) {
+        console.error(`Ошибка при удалении через directusCrud:`, directusCrudError);
+        
+        // Запасной вариант: прямой API запрос с явным указанием заголовков
+        try {
+          console.log(`Пробуем удалить ключ с ID ${id} через прямой API запрос`);
+          await this.directusApi.delete(`/items/global_api_keys/${id}`, {
+            headers: {
+              Authorization: `Bearer ${systemToken}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          console.log(`Ключ с ID ${id} успешно удален через прямой API запрос`);
+        } catch (directApiError) {
+          console.error(`Ошибка при прямом удалении через API:`, directApiError);
+          // Проверим, была ли ошибка из-за отсутствия ключа (404)
+          if (directApiError.response?.status === 404) {
+            console.log(`Ключ с ID ${id} не найден (404), считаем удаление успешным`);
+            // Считаем удаление успешным, если ключ не найден
+            return true;
+          }
+          throw directApiError;
         }
-      });
+      }
       
       log(`Удален глобальный API ключ ${id}`, 'global-api-keys');
       
