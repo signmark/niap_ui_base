@@ -45,6 +45,8 @@ export interface GlobalApiKeyInput {
  */
 export class GlobalApiKeysService {
   private keyCache: GlobalApiKeyCache = {};
+  private keysCache: GlobalApiKey[] = [];
+  private lastCacheUpdate = Date.now();
   private readonly cacheDuration = 60 * 60 * 1000; // 1 час
   private directusApi = directusApiManager.instance;
   
@@ -234,7 +236,7 @@ export class GlobalApiKeysService {
         });
         
         log(`Created new global ${serviceName} API key`, 'global-api-keys');
-        return result.id;
+        return result && typeof result === 'object' && 'id' in result ? result.id : null;
       }
     } catch (error) {
       console.error(`Error saving global ${serviceName} API key:`, error);
@@ -335,7 +337,7 @@ export class GlobalApiKeysService {
         log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, 'global-api-keys');
         
         // Мапим в правильный формат для результата
-        return keys.map(key => ({
+        const formattedKeys = keys.map(key => ({
           id: typeof key === 'object' && key !== null && 'id' in key ? String(key.id) : '',
           service_name: typeof key === 'object' && key !== null && 'service_name' in key ? key.service_name as string : '',
           api_key: typeof key === 'object' && key !== null && 'api_key' in key ? key.api_key as string : '',
@@ -343,6 +345,12 @@ export class GlobalApiKeysService {
           created_at: typeof key === 'object' && key !== null && 'created_at' in key ? key.created_at as string : new Date().toISOString(),
           updated_at: typeof key === 'object' && key !== null && 'updated_at' in key ? key.updated_at as string : new Date().toISOString()
         }));
+        
+        // Сохраняем результат в кэше
+        this.keysCache = formattedKeys;
+        this.lastCacheUpdate = Date.now();
+        
+        return formattedKeys;
       } catch (directusCrudError) {
         console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
         
