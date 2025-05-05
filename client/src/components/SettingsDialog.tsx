@@ -74,6 +74,35 @@ export function SettingsDialog() {
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
 
+  // Мутация для удаления API ключа
+  const deleteMutation = useMutation({
+    mutationFn: async (keyId: string) => {
+      await api.delete(`/api/user-api-keys/${keyId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "API ключ удален",
+      });
+      refetch(); // Обновляем список ключей после удаления
+    },
+    onError: (error: Error) => {
+      console.error('Error deleting API key:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: `Не удалось удалить API ключ: ${error.message}`,
+      });
+    }
+  });
+
+  // Функция для удаления API ключа
+  const deleteApiKey = (keyId: string) => {
+    if (confirm("Вы уверены, что хотите удалить этот API ключ? Это действие нельзя отменить.")) {
+      deleteMutation.mutate(keyId);
+    }
+  };
+
   const { data: apiKeys, isLoading, refetch } = useQuery({
     queryKey: ["user_api_keys"],
     queryFn: async () => {
@@ -836,8 +865,16 @@ export function SettingsDialog() {
                           size="sm"
                           className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                           onClick={() => deleteApiKey(key.id)}
+                          disabled={deleteMutation.isPending}
                         >
-                          Удалить
+                          {deleteMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              Удаление...
+                            </>
+                          ) : (
+                            "Удалить"
+                          )}
                         </Button>
                       </td>
                     </tr>
