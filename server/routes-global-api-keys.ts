@@ -188,7 +188,6 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
       const result = await globalApiKeysService.addGlobalApiKey({
         service: service as ApiServiceName,
         api_key: apiKey,
-        priority: priority || 0,
         active: true
       });
 
@@ -208,7 +207,7 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
   app.put('/api/global-api-keys/:id', requireAdmin, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { service, apiKey, priority, active } = req.body;
+      const { service, apiKey, active } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'Требуется указать ID ключа' });
@@ -218,7 +217,6 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
       const updateData: any = {};
       if (service) updateData.service = service;
       if (apiKey) updateData.api_key = apiKey;
-      if (priority !== undefined) updateData.priority = priority;
       if (active !== undefined) updateData.active = active;
 
       const result = await globalApiKeysService.updateGlobalApiKey(id, updateData);
