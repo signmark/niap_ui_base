@@ -804,6 +804,52 @@ export function SettingsDialog() {
         
         <Separator className="my-4" />
         
+        {/* Раздел с существующими API ключами */}
+        {apiKeys && apiKeys.length > 0 && (
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center">
+              <Label className="text-lg font-semibold">Ваши сохраненные API ключи</Label>
+            </div>
+            
+            <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 dark:bg-gray-800">
+                  <tr>
+                    <th className="text-left p-2 font-medium">Сервис</th>
+                    <th className="text-left p-2 font-medium">Ключ</th>
+                    <th className="text-left p-2 font-medium">Действия</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {apiKeys.map((key: ApiKey) => (
+                    <tr key={key.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="p-2">{getServiceDisplayName(key.service_name)}</td>
+                      <td className="p-2">
+                        <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 rounded px-2 py-1">
+                          {key.api_key.substring(0, 4)}...
+                          {key.api_key.substring(key.api_key.length - 4)}
+                        </span>
+                      </td>
+                      <td className="p-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          onClick={() => deleteApiKey(key.id)}
+                        >
+                          Удалить
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        
+        <Separator className="my-4" />
+        
         <div className="space-y-4">
           <div className="flex items-center">
             <Label className="text-lg font-semibold">XMLRiver (Yandex.Wordstat)</Label>
