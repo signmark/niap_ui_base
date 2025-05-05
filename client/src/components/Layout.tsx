@@ -58,9 +58,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (token) {
       // Проверяем права администратора
-      checkIsAdmin();
+      console.log('Layout компонент: Запускаем проверку статуса администратора');
+      checkIsAdmin().then(result => {
+        console.log('Layout компонент: Результат проверки isAdmin =', result);
+        console.log('Layout компонент: Текущее состояние isAdmin в store =', isAdmin);
+      }).catch(error => {
+        console.error('Layout компонент: Ошибка при проверке статуса администратора:', error);
+      });
     }
-  }, [token, checkIsAdmin]);
+  }, [token, checkIsAdmin, isAdmin]);
 
   const handleLogout = async () => {
     try {
