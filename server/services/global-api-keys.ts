@@ -355,18 +355,42 @@ export class GlobalApiKeysService {
         console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
         
         // Если DirectusCrud не сработал, пробуем прямой запрос
-        const response = await this.directusApi.get('/items/global_api_keys', {
-          params: {
-            fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
-            sort: ['service_name']
-          },
-          headers: {
-            Authorization: `Bearer ${systemToken}`
+        try {
+          const response = await this.directusApi.get('/items/global_api_keys', {
+            params: {
+              fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
+              sort: ['service_name']
+            },
+            headers: {
+              Authorization: `Bearer ${systemToken}`
+            }
+          });
+          
+          const apiKeys = response.data?.data || [];
+          log(`Получено ${apiKeys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
+        } catch (apiError) {
+          console.error('Error during direct API call to fetch global API keys:', apiError);
+          
+          // Если получаем ошибку доступа, возвращаем заглушку с основными API ключами
+          if (apiError.response && (apiError.response.status === 403 || apiError.response.status === 401)) {
+            // Возвращаем фиксированный набор с только service_name для базовых сервисов
+            const stubKeys: GlobalApiKey[] = Object.values(ApiServiceName).map(name => ({
+              id: `stub-${name}`,
+              service_name: name,
+              api_key: '', // Пустой ключ
+              is_active: false, // Неактивный
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }));
+            
+            console.log(`Возвращаем заглушку с ${stubKeys.length} глобальными API ключами`);
+            this.keysCache = stubKeys;
+            this.lastCacheUpdate = Date.now();
+            return stubKeys;
           }
-        });
-        
-        const apiKeys = response.data?.data || [];
-        log(`Получено ${apiKeys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
+          
+          throw apiError; // Передаем ошибку дальше, если это не 403 или 401
+        }
         
         return apiKeys;
       }
