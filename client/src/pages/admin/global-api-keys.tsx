@@ -6,14 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2, Check, X, AlertCircle, Import, FileImport } from 'lucide-react';
+import { Loader2, Plus, Trash2, Check, X, AlertCircle, Import, FileUp } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import axios from 'axios';
 import { ApiServiceName } from '@/lib/api-service-types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { api } from '@/lib/api';
+// Для ясности, мы не используем здесь импорт api из @/lib/api, так как нам нужны прямые вызовы axios
 import { getServiceDisplayName } from '@/lib/utils';
 
 interface GlobalApiKey {
@@ -24,6 +24,217 @@ interface GlobalApiKey {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+interface ImportKeysDialogProps {
+  token: string;
+  onImportComplete: () => void;
+}
+
+function ImportKeysDialog({ token, onImportComplete }: ImportKeysDialogProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userKeys, setUserKeys] = useState<ApiKey[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<Record<string, boolean>>({});
+  const [isImporting, setIsImporting] = useState(false);
+  const { toast } = useToast();
+
+  // Получение списка ключей пользователя
+  const loadUserKeys = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get('/api/directus/users/me/api-keys', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success) {
+        setUserKeys(response.data.data || []);
+        
+        // Инициализация состояния выбранных ключей
+        const initialSelectedState: Record<string, boolean> = {};
+        (response.data.data || []).forEach((key: ApiKey) => {
+          initialSelectedState[key.id] = false;
+        });
+        setSelectedKeys(initialSelectedState);
+      } else {
+        setError(response.data.message || 'Ошибка при загрузке личных API ключей');
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка загрузки',
+          description: response.data.message || 'Ошибка при загрузке личных API ключей'
+        });
+      }
+    } catch (err: any) {
+      console.error('Ошибка при загрузке личных API ключей:', err);
+      setError(err.message || 'Ошибка при загрузке личных API ключей');
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка загрузки',
+        description: err.message || 'Ошибка при загрузке личных API ключей'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Обработка изменения состояния чекбокса
+  const handleCheckboxChange = (keyId: string, isChecked: boolean) => {
+    setSelectedKeys(prev => ({
+      ...prev,
+      [keyId]: isChecked
+    }));
+  };
+
+  // Импорт выбранных ключей
+  const handleImport = async () => {
+    const keysToImport = userKeys.filter(key => selectedKeys[key.id]);
+    
+    if (keysToImport.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Необходимо выбрать хотя бы один ключ для импорта'
+      });
+      return;
+    }
+    
+    setIsImporting(true);
+    
+    try {
+      // Отправляем запросы на добавление каждого ключа
+      const importPromises = keysToImport.map(key => {
+        return axios.post('/api/global-api-keys', {
+          service: key.service_name,
+          apiKey: key.api_key,
+          priority: 0 // По умолчанию приоритет 0
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      });
+      
+      const results = await Promise.allSettled(importPromises);
+      
+      // Проверяем результаты импорта
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      
+      if (successful > 0) {
+        toast({
+          title: 'Успешно',
+          description: `Импортировано ${successful} ключей${failed > 0 ? `, не удалось импортировать ${failed} ключей` : ''}`
+        });
+        
+        // Вызываем колбэк для обновления списка ключей
+        onImportComplete();
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка',
+          description: 'Не удалось импортировать ключи'
+        });
+      }
+    } catch (err: any) {
+      console.error('Ошибка при импорте ключей:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: err.message || 'Ошибка при импорте ключей'
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Загружаем ключи пользователя при открытии диалога
+  useEffect(() => {
+    loadUserKeys();
+  }, []);
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Импорт личных API ключей</DialogTitle>
+        <DialogDescription>
+          Выберите личные API ключи, которые вы хотите добавить в систему глобальных ключей
+        </DialogDescription>
+      </DialogHeader>
+      
+      <div className="py-4">
+        {loading ? (
+          <div className="flex justify-center items-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <span>Загрузка ключей...</span>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 text-red-800 p-4 rounded-md">
+            <p className="font-medium">Ошибка загрузки ключей</p>
+            <p>{error}</p>
+          </div>
+        ) : userKeys.length === 0 ? (
+          <div className="bg-gray-50 p-4 rounded-md text-center">
+            <p>У вас нет личных API ключей</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-[300px] pr-4">
+            <div className="space-y-4">
+              {userKeys.map((key) => (
+                <div key={key.id} className="flex items-start space-x-2">
+                  <Checkbox
+                    id={`key-${key.id}`}
+                    checked={!!selectedKeys[key.id]}
+                    onCheckedChange={(checked) => handleCheckboxChange(key.id, !!checked)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor={`key-${key.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {getServiceDisplayName(key.service_name)}
+                    </label>
+                    <p className="text-sm text-gray-500 font-mono">
+                      {key.api_key.length > 20
+                        ? `${key.api_key.slice(0, 10)}...${key.api_key.slice(-10)}`
+                        : key.api_key}
+                      <span className="ml-2 text-xs">({key.api_key.length} символов)</span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+      
+      <DialogFooter className="flex justify-between sm:justify-between">
+        <DialogClose asChild>
+          <Button type="button" variant="outline">
+            Отмена
+          </Button>
+        </DialogClose>
+        <Button 
+          onClick={handleImport} 
+          disabled={isImporting || loading || userKeys.length === 0 || Object.values(selectedKeys).every(v => !v)}
+        >
+          {isImporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Импорт...
+            </>
+          ) : (
+            <>Импортировать выбранные</>  
+          )}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+interface ApiKey {
+  id: string;
+  service_name: string;
+  api_key: string;
 }
 
 export default function GlobalApiKeysPage() {
@@ -299,11 +510,22 @@ export default function GlobalApiKeysPage() {
       </Card>
       
       <Card>
-        <CardHeader>
-          <CardTitle>Список глобальных API ключей</CardTitle>
-          <CardDescription>
-            Управление существующими глобальными API ключами
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <CardTitle>Список глобальных API ключей</CardTitle>
+            <CardDescription>
+              Управление существующими глобальными API ключами
+            </CardDescription>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-auto">
+                <FileUp className="h-4 w-4 mr-2" />
+                Импортировать мои ключи
+              </Button>
+            </DialogTrigger>
+            <ImportKeysDialog token={token} onImportComplete={loadKeys} />
+          </Dialog>
         </CardHeader>
         <CardContent>
           {loading ? (
