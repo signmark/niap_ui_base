@@ -6,6 +6,7 @@ import { Request, Response, Express } from 'express';
 import axios from 'axios';
 import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
+import { isUserAdmin } from '../routes-global-api-keys';
 
 /**
  * Регистрирует маршруты для авторизации
@@ -193,6 +194,17 @@ export function registerAuthRoutes(app: Express): void {
         error: 'Ошибка при авторизации',
         message: error.message
       });
+    }
+  });
+
+  // Маршрут для проверки статуса администратора
+  app.get('/api/auth/is-admin', async (req: Request, res: Response) => {
+    try {
+      const isAdmin = await isUserAdmin(req);
+      res.status(200).json({ success: true, isAdmin });
+    } catch (error) {
+      log(`Ошибка при проверке статуса администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
+      res.status(500).json({ success: false, error: 'Произошла ошибка при проверке статуса администратора' });
     }
   });
 

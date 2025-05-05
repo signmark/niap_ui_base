@@ -15,7 +15,7 @@ import { ApiServiceName } from './services/api-keys';
  * @param directusToken Токен авторизации Directus
  * @returns Признак администратора
  */
-async function isUserAdmin(req: Request, directusToken?: string): Promise<boolean> {
+export async function isUserAdmin(req: Request, directusToken?: string): Promise<boolean> {
   try {
     // Если токен не передан, пытаемся извлечь из заголовка запроса
     const token = directusToken || (req.headers.authorization?.startsWith('Bearer ') 
