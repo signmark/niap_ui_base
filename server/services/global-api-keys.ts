@@ -20,6 +20,29 @@ interface GlobalApiKeyCache {
 }
 
 /**
+ * Интерфейс глобального API ключа в Directus
+ */
+export interface GlobalApiKey {
+  id?: string;
+  service_name: string;
+  api_key: string;
+  priority?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Интерфейс для создания или обновления глобального API ключа
+ */
+export interface GlobalApiKeyInput {
+  service: ApiServiceName;
+  api_key: string;
+  priority?: number; 
+  active: boolean;
+}
+
+/**
  * Сервис для работы с глобальными API ключами
  */
 export class GlobalApiKeysService {
@@ -285,6 +308,212 @@ export class GlobalApiKeysService {
     
     if (cleanedCount > 0) {
       log(`Cleaned up ${cleanedCount} expired global API keys from cache`, 'global-api-keys');
+    }
+  }
+
+  /**
+   * Получает список всех глобальных API ключей
+   * @returns Список глобальных API ключей
+   */
+  async getGlobalApiKeys(): Promise<GlobalApiKey[]> {
+    try {
+      // Получаем системный токен
+      const systemToken = await this.getSystemToken();
+      
+      if (!systemToken) {
+        log('Не удалось получить системный токен для получения списка глобальных API ключей', 'global-api-keys');
+        return [];
+      }
+      
+      // Запрашиваем все глобальные API ключи
+      const response = await this.directusApi.get('/items/global_api_keys', {
+        params: {
+          fields: ['id', 'service_name', 'api_key', 'is_active', 'priority', 'created_at', 'updated_at'],
+          sort: ['-priority', 'service_name']
+        },
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      });
+      
+      const apiKeys = response.data?.data || [];
+      log(`Получено ${apiKeys.length} глобальных API ключей`, 'global-api-keys');
+      
+      return apiKeys;
+    } catch (error) {
+      console.error('Error fetching global API keys:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Добавляет новый глобальный API ключ
+   * @param keyData Данные ключа для добавления
+   * @returns Созданный ключ или null в случае ошибки
+   */
+  async addGlobalApiKey(keyData: GlobalApiKeyInput): Promise<GlobalApiKey | null> {
+    try {
+      // Получаем системный токен
+      const systemToken = await this.getSystemToken();
+      
+      if (!systemToken) {
+        log('Не удалось получить системный токен для добавления глобального API ключа', 'global-api-keys');
+        return null;
+      }
+      
+      // Форматирование ключа для специфических сервисов
+      let formattedKey = keyData.api_key;
+      
+      if (keyData.service === ApiServiceName.FAL_AI) {
+        // Если ключ начинается с "Key ", удаляем префикс для хранения
+        if (keyData.api_key.startsWith('Key ')) {
+          formattedKey = keyData.api_key.substring(4);
+        }
+      } else if (keyData.service === ApiServiceName.XMLRIVER) {
+        // Форматирование ключа XMLRiver в JSON формат
+        try {
+          JSON.parse(keyData.api_key); // Проверяем, что это уже JSON
+        } catch (e) {
+          // Если не JSON, преобразуем
+          if (keyData.api_key.includes(':')) {
+            const [user, key] = keyData.api_key.split(':');
+            formattedKey = JSON.stringify({ user: user.trim(), key: key.trim() });
+          } else {
+            formattedKey = JSON.stringify({ user: "16797", key: keyData.api_key.trim() });
+          }
+        }
+      }
+      
+      // Создаем новый глобальный ключ
+      const response = await this.directusApi.post('/items/global_api_keys', {
+        service_name: keyData.service,
+        api_key: formattedKey,
+        priority: keyData.priority || 0,
+        is_active: keyData.active
+      }, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      });
+      
+      const createdKey = response.data?.data;
+      if (createdKey) {
+        log(`Создан новый глобальный API ключ для сервиса ${keyData.service}`, 'global-api-keys');
+        
+        // Обновляем кэш
+        this.refreshCache().catch(err => {
+          console.error('Failed to refresh global API keys cache after adding a key:', err);
+        });
+        
+        return createdKey;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error adding global API key for service ${keyData.service}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Обновляет глобальный API ключ
+   * @param id ID ключа для обновления
+   * @param updateData Данные для обновления
+   * @returns Обновленный ключ или null в случае ошибки
+   */
+  async updateGlobalApiKey(id: string, updateData: Partial<GlobalApiKey>): Promise<GlobalApiKey | null> {
+    try {
+      // Получаем системный токен
+      const systemToken = await this.getSystemToken();
+      
+      if (!systemToken) {
+        log('Не удалось получить системный токен для обновления глобального API ключа', 'global-api-keys');
+        return null;
+      }
+      
+      // Обновляем ключ
+      const response = await this.directusApi.patch(`/items/global_api_keys/${id}`, {
+        ...updateData,
+        updated_at: new Date().toISOString()
+      }, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      });
+      
+      // Получаем обновленный ключ
+      const getResponse = await this.directusApi.get(`/items/global_api_keys/${id}`, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      });
+      
+      const updatedKey = getResponse.data?.data;
+      if (updatedKey) {
+        log(`Обновлен глобальный API ключ ${id}`, 'global-api-keys');
+        
+        // Обновляем кэш
+        this.refreshCache().catch(err => {
+          console.error('Failed to refresh global API keys cache after updating a key:', err);
+        });
+        
+        return updatedKey;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error updating global API key ${id}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Удаляет глобальный API ключ
+   * @param id ID ключа для удаления
+   * @returns true в случае успеха, false в случае ошибки
+   */
+  async deleteGlobalApiKey(id: string): Promise<boolean> {
+    try {
+      // Получаем системный токен
+      const systemToken = await this.getSystemToken();
+      
+      if (!systemToken) {
+        log('Не удалось получить системный токен для удаления глобального API ключа', 'global-api-keys');
+        return false;
+      }
+      
+      // Получаем информацию о ключе для обновления кэша
+      const keyInfo = await this.directusApi.get(`/items/global_api_keys/${id}`, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      }).then(response => response.data?.data).catch(() => null);
+      
+      // Удаляем ключ
+      await this.directusApi.delete(`/items/global_api_keys/${id}`, {
+        headers: {
+          Authorization: `Bearer ${systemToken}`
+        }
+      });
+      
+      log(`Удален глобальный API ключ ${id}`, 'global-api-keys');
+      
+      // Если у нас есть информация о ключе, удаляем его из кэша
+      if (keyInfo && keyInfo.service_name) {
+        if (this.keyCache[keyInfo.service_name]) {
+          delete this.keyCache[keyInfo.service_name];
+        }
+      } else {
+        // Если нет информации о ключе, просто обновляем весь кэш
+        this.refreshCache().catch(err => {
+          console.error('Failed to refresh global API keys cache after deleting a key:', err);
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error deleting global API key ${id}:`, error);
+      return false;
     }
   }
 }
