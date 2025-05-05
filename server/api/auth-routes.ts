@@ -4,7 +4,7 @@
 
 import { Request, Response, Express } from 'express';
 import { directusApiManager } from '../directus';
-import { getDirectusAuthToken } from '../services/directus-auth';
+import { directusAuthManager } from '../services/directus-auth-manager';
 import { log } from '../utils/logger';
 import { isUserAdmin } from '../routes-global-api-keys';
 
@@ -285,14 +285,16 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       // Получаем токен системы
-      const token = await getDirectusAuthToken();
+      const loginResult = await directusAuthManager.loginAdmin();
       
-      if (!token) {
+      if (!loginResult.success || !loginResult.token) {
         return res.status(500).json({ 
           success: false, 
           message: 'Не удалось получить системный токен' 
         });
       }
+      
+      const token = loginResult.token;
 
       res.status(200).json({ success: true, token });
     } catch (error) {

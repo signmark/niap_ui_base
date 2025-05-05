@@ -33,9 +33,63 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Добавляем API маршрут для проверки статуса явно, чтобы он работал до инициализации Vite
+// Добавляем API маршруты для проверки статуса и проверки админа явно, чтобы они работали до инициализации Vite
 app.get('/api/status-check', (req, res) => {
   return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
+});
+
+// Регистрируем прямые маршруты аутентификации до инициализации Vite
+import { isUserAdmin } from './routes-global-api-keys';
+import { registerAuthRoutes } from './api/auth-routes';
+
+// Регистрируем все маршруты аутентификации раньше Vite
+registerAuthRoutes(app);
+
+// Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
+app.get('/api/auth/is-admin', async (req, res) => {
+  try {
+    console.log('EARLY IS-ADMIN ROUTE CALLED');
+    // Указываем явно content-type как JSON
+    res.setHeader('Content-Type', 'application/json');
+    // Добавляем заголовки для предотвращения кэширования
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      log('Запрос на проверку админа без токена', 'auth');
+      return res.status(401).json({ 
+        success: false, 
+        isAdmin: false,
+        message: 'Требуется токен авторизации'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    log(`Проверка статуса админа с токеном: ${token.substring(0, 10)}...`, 'auth');
+    
+    const isAdmin = await isUserAdmin(req, token);
+    log(`Результат проверки администратора: ${isAdmin}`, 'auth');
+    
+    // Добавляем случайный параметр в ответ, чтобы предотвратить кэширование
+    return res.status(200).json({ 
+      success: true, 
+      isAdmin, 
+      timestamp: Date.now(),
+      source: 'early-route'
+    });
+  } catch (error) {
+    log(`Ошибка при проверке статуса администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Произошла ошибка при проверке статуса администратора', 
+      timestamp: Date.now(),
+      source: 'early-route' 
+    });
+  }
 });
 
 // Добавляем маршрут для проверки здоровья
