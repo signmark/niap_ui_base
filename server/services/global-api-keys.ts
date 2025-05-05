@@ -329,8 +329,8 @@ export class GlobalApiKeysService {
       try {
         const keys = await directusCrud.list('global_api_keys', {
           authToken: systemToken,
-          fields: ['id', 'service_name', 'api_key', 'is_active', 'priority', 'created_at', 'updated_at'],
-          sort: ['-priority', 'service_name']
+          fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
+          sort: ['service_name']
         });
         
         console.log(`Получено ${keys.length} глобальных API ключей через DirectusCrud`, keys);
@@ -338,13 +338,13 @@ export class GlobalApiKeysService {
         
         // Мапим в правильный формат для результата
         return keys.map(key => ({
-          id: key.id,
-          service_name: key.service_name,
-          api_key: key.api_key,
-          is_active: key.is_active === true || key.is_active === 1,
-          priority: key.priority || 0,
-          created_at: key.created_at,
-          updated_at: key.updated_at
+          id: typeof key === 'object' && key !== null && 'id' in key ? key.id : '',
+          service_name: typeof key === 'object' && key !== null && 'service_name' in key ? key.service_name as string : '',
+          api_key: typeof key === 'object' && key !== null && 'api_key' in key ? key.api_key as string : '',
+          is_active: typeof key === 'object' && key !== null && 'is_active' in key ? (key.is_active === true || key.is_active === 1) : false,
+          priority: 0,
+          created_at: typeof key === 'object' && key !== null && 'created_at' in key ? key.created_at as string : new Date().toISOString(),
+          updated_at: typeof key === 'object' && key !== null && 'updated_at' in key ? key.updated_at as string : new Date().toISOString()
         }));
       } catch (directusCrudError) {
         console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
@@ -352,8 +352,8 @@ export class GlobalApiKeysService {
         // Если DirectusCrud не сработал, пробуем прямой запрос
         const response = await this.directusApi.get('/items/global_api_keys', {
           params: {
-            fields: ['id', 'service_name', 'api_key', 'is_active', 'priority', 'created_at', 'updated_at'],
-            sort: ['-priority', 'service_name']
+            fields: ['id', 'service_name', 'api_key', 'is_active', 'created_at', 'updated_at'],
+            sort: ['service_name']
           },
           headers: {
             Authorization: `Bearer ${systemToken}`
