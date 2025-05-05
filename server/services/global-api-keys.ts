@@ -355,6 +355,8 @@ export class GlobalApiKeysService {
         console.error('Error using DirectusCrud to fetch global API keys:', directusCrudError);
         
         // Если DirectusCrud не сработал, пробуем прямой запрос
+        let apiKeys: GlobalApiKey[] = [];
+        
         try {
           const response = await this.directusApi.get('/items/global_api_keys', {
             params: {
@@ -366,9 +368,15 @@ export class GlobalApiKeysService {
             }
           });
           
-          const apiKeys = response.data?.data || [];
+          apiKeys = response.data?.data || [];
           log(`Получено ${apiKeys.length} глобальных API ключей прямым запросом`, 'global-api-keys');
-        } catch (apiError) {
+          
+          // Сохраняем в кэш
+          this.keysCache = apiKeys;
+          this.lastCacheUpdate = Date.now();
+          
+        } catch (error) {
+          const apiError = error as any;
           console.error('Error during direct API call to fetch global API keys:', apiError);
           
           // Если получаем ошибку доступа, возвращаем заглушку с основными API ключами
