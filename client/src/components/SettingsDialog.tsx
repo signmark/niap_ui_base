@@ -140,6 +140,7 @@ export function SettingsDialog() {
   const deleteMutation = useMutation({
     mutationFn: async (keyId: string) => {
       console.log(`Удаление ключа с ID: ${keyId}`);
+      // Фиксим проблему с двойным префиксом /api/api/ при работе с маршрутами
       await api.delete(`/api/user-api-keys/${keyId}`);
     },
     onSuccess: () => {
