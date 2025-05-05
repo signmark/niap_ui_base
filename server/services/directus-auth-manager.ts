@@ -297,6 +297,23 @@ export class DirectusAuthManager {
   }
   
   /**
+   * Интерфейс для авторизации администратора и получения токена
+   * @returns Результат авторизации
+   */
+  async loginAdmin(): Promise<{ success: boolean; token?: string }> {
+    try {
+      const session = await this.getAdminSession();
+      if (!session) {
+        return { success: false };
+      }
+      return { success: true, token: session.token };
+    } catch (error) {
+      log(`Error during admin login: ${(error as Error).message}`, this.logPrefix);
+      return { success: false };
+    }
+  }
+
+  /**
    * Получает сессию администратора для API запросов
    * @returns Информация о сессии администратора или null, если не удалось получить
    */

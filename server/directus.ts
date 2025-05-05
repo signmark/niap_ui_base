@@ -119,6 +119,36 @@ class DirectusApiManager {
   }
   
   /**
+   * Выполняет GET-запрос к Directus API
+   * @param url Путь запроса
+   * @param config Дополнительная конфигурация запроса
+   * @returns Результат запроса
+   */
+  async get(url: string, config?: AxiosRequestConfig): Promise<any> {
+    return this.request({
+      method: 'GET',
+      url,
+      ...config
+    });
+  }
+  
+  /**
+   * Выполняет POST-запрос к Directus API
+   * @param url Путь запроса
+   * @param data Данные для отправки
+   * @param config Дополнительная конфигурация запроса
+   * @returns Результат запроса
+   */
+  async post(url: string, data?: any, config?: AxiosRequestConfig): Promise<any> {
+    return this.request({
+      method: 'POST',
+      url,
+      data,
+      ...config
+    });
+  }
+  
+  /**
    * Получает токен из кэша для заданного пользователя
    * @param userId ID пользователя
    * @returns Объект с токеном и датой истечения, или null если токен не найден
