@@ -793,7 +793,7 @@ export function SettingsDialog() {
                     onChange={(e) => setXmlRiverUserId(e.target.value)}
                   />
                 </div>
-                <a href={getApiKeyUrl('xmlriver')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md mt-8">
+                <a href="https://xmlriver.com/queries/" target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md mt-8">
                   <InfoIcon className="h-5 w-5" />
                 </a>
               </div>
