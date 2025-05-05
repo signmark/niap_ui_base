@@ -119,6 +119,19 @@ api.interceptors.request.use(
   }
 );
 
+// Добавляем логирование ответов для отладки
+api.interceptors.response.use(
+  response => {
+    console.log(`API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    return response;
+  },
+  error => {
+    console.error(`API Error: ${error.response?.status || 'Network Error'} for ${error.config?.method?.toUpperCase()} ${error.config?.url}`, 
+      error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
 // Добавляем интерцептор для включения токена в заголовок Authorization
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('auth_token');

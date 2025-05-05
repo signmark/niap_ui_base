@@ -91,13 +91,24 @@ export const useAuthStore = create<AuthState>()(
           const token = get().getAuthToken();
           if (!token) {
             console.log('Невозможно проверить права администратора - пользователь не авторизован');
+            get().setIsAdmin(false); // Очищаем статус администратора при отсутствии токена
             return false;
           }
 
-          // Запрашиваем проверку администратора
-          const response = await api.get('/auth/is-admin');
+          console.log('Отправка API запроса на /auth/is-admin c токеном', token.substring(0, 10) + '...');
+          // Запрашиваем проверку администратора через явный fetch запрос
+          const response = await fetch('/api/auth/is-admin', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
           
-          if (response.data && response.data.success && response.data.isAdmin === true) {
+          const data = await response.json();
+          console.log('Ответ сервера на запрос проверки админа:', data);
+          
+          if (data && data.success && data.isAdmin === true) {
             console.log('Пользователь является администратором');
             // Сохраняем статус администратора
             get().setIsAdmin(true);

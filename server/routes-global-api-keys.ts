@@ -23,19 +23,26 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
       : null);
 
     if (!token) {
+      log('Нет токена для проверки прав администратора', 'admin');
       return false;
     }
 
+    log(`Проверка прав администратора с токеном: ${token.substring(0, 10)}...`, 'admin');
+    
     // Получаем данные пользователя из Directus
     const currentUser = await directusCrud.read('users/me', null, { authToken: token });
 
     if (!currentUser) {
+      log('Не удалось получить данные пользователя', 'admin');
       return false;
     }
 
     // Проверяем, является ли пользователь администратором
-    return currentUser.is_smm_admin === true;
+    const isAdmin = currentUser.is_smm_admin === true;
+    log(`Пользователь ${currentUser.email}: статус администратора = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}`, 'admin');
+    return isAdmin;
   } catch (error) {
+    log(`Ошибка при проверке прав администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'admin');
     console.error('Ошибка при проверке прав администратора:', error);
     return false;
   }

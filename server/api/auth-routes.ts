@@ -200,7 +200,22 @@ export function registerAuthRoutes(app: Express): void {
   // Маршрут для проверки статуса администратора
   app.get('/api/auth/is-admin', async (req: Request, res: Response) => {
     try {
-      const isAdmin = await isUserAdmin(req);
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        log('Запрос на проверку админа без токена', 'auth');
+        return res.status(401).json({ 
+          success: false, 
+          isAdmin: false,
+          message: 'Требуется токен авторизации'
+        });
+      }
+      
+      const token = authHeader.substring(7);
+      log(`Проверка статуса админа с токеном: ${token.substring(0, 10)}...`, 'auth');
+      
+      const isAdmin = await isUserAdmin(req, token);
+      log(`Результат проверки администратора: ${isAdmin}`, 'auth');
       res.status(200).json({ success: true, isAdmin });
     } catch (error) {
       log(`Ошибка при проверке статуса администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
