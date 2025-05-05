@@ -840,7 +840,7 @@ export function SettingsDialog() {
             <p className="text-sm mt-2">Ключ используется для поиска и управления товарами на маркетплейсах</p>
             <ul className="text-sm list-disc list-inside ml-2">
               <li>Необходим для работы с товарами и ценами</li>
-              <li>Ключ можно получить в <a href={getApiKeyUrl('xmlriver')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">XMLRiver</a></li>
+              <li>Ключ можно получить в <a href="https://xmlriver.com/queries/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">XMLRiver Queries</a></li>
             </ul>
           </div>
 
