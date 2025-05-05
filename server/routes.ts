@@ -214,15 +214,10 @@ function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deeps
     .slice(0, 15); // Ограничиваем до 15 самых популярных ключевых слов
 }
 
-import { insertBusinessQuestionnaireSchema } from "../shared/schema";
 import { 
-  insertContentSourceSchema, 
-  insertCampaignContentSchema,
-  insertCampaignTrendTopicSchema,
-  InsertCampaignContent,
-  insertCampaignKeywordSchema,
-  InsertCampaignKeyword,
-  CampaignKeyword
+  insertApiKeySchema,
+  ApiKey,
+  InsertApiKey
 } from "@shared/schema";
 import * as crypto from 'crypto';
 

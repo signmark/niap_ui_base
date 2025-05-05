@@ -1,281 +1,242 @@
 /**
  * Маршруты для управления глобальными API ключами
- * Эти маршруты доступны только администраторам
  */
 
-import { Express, Request, Response } from 'express';
-import { ApiServiceName } from './services/api-keys';
+import { Application, Request, Response } from 'express';
 import { globalApiKeysService } from './services/global-api-keys';
 import { log } from './utils/logger';
 import { directusCrud } from './services/directus-crud';
+import { directusApiManager } from './directus';
+import { ApiServiceName } from './services/api-keys';
 
 /**
- * Проверяет, является ли пользователь администратором
- * @param req Express запрос
- * @returns Промис булевого значения, тру если пользователь админ
+ * Проверяет, является ли пользователь администратором SMM
+ * @param req Объект запроса Express
+ * @param directusToken Токен авторизации Directus
+ * @returns Признак администратора
  */
-async function isAdmin(req: Request): Promise<boolean> {
+async function isUserAdmin(req: Request, directusToken?: string): Promise<boolean> {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Если токен не передан, пытаемся извлечь из заголовка запроса
+    const token = directusToken || (req.headers.authorization?.startsWith('Bearer ') 
+      ? req.headers.authorization.substring(7) 
+      : null);
+
+    if (!token) {
       return false;
     }
-    
-    const token = authHeader.split(' ')[1];
-    
-    // Получаем информацию о пользователе напрямую через API Directus
-    try {
-      const response = await directusApiManager.instance.get('/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      const userInfo = response.data?.data;
-      
-      if (!userInfo) {
-        console.log('Не удалось получить информацию о пользователе');
-        return false;
-      }
-      
-      // Проверяем, включено ли поле is_smm_admin 
-      const isSmmAdmin = userInfo.is_smm_admin === true;
-      
-      // Список ID администраторов SMM Manager из переменной окружения
-      const adminIds = process.env.SMM_ADMIN_USER_IDS?.split(',') || [];
-      if (process.env.DIRECTUS_ADMIN_USER_ID) {
-        adminIds.push(process.env.DIRECTUS_ADMIN_USER_ID);
-      }
-      
-      // Критерии проверки администратора:
-      // 1. Флаг is_smm_admin включен
-      // 2. Пользователь имеет ID из списка администраторов
-      // 3. Пользователь имеет права администратора в Directus
-      // 4. Email пользователя совпадает с DIRECTUS_ADMIN_EMAIL
-      const isAdminResult = 
-        isSmmAdmin || 
-        (userInfo.id && adminIds.includes(userInfo.id)) ||
-        (userInfo.role?.admin_access === true) || 
-        (userInfo.email === process.env.DIRECTUS_ADMIN_EMAIL);
-      
-      console.log(`Проверка прав администратора для ${userInfo.email}: ${isAdminResult ? 'ЕСТЬ ПРАВА' : 'НЕТ ПРАВ'}`);
-      return isAdminResult;
-    } catch (apiError) {
-      console.error('Error fetching user info from Directus:', apiError);
+
+    // Получаем данные пользователя из Directus
+    const currentUser = await directusCrud.read('users/me', null, { authToken: token });
+
+    if (!currentUser) {
       return false;
     }
+
+    // Проверяем, является ли пользователь администратором
+    return currentUser.is_smm_admin === true;
   } catch (error) {
-    console.error('Error checking admin status:', error);
+    console.error('Ошибка при проверке прав администратора:', error);
     return false;
   }
 }
 
 /**
- * Регистрирует маршруты для управления глобальными API ключами
- * @param app Express приложение
+ * Мидлвар для проверки прав администратора
  */
-export function registerGlobalApiKeysRoutes(app: Express) {
-  /**
-   * Получение списка глобальных API ключей
-   * Доступно только администраторам
-   */
-  app.get('/api/admin/global-api-keys', async (req: Request, res: Response) => {
+function requireAdmin(req: Request, res: Response, next: Function) {
+  isUserAdmin(req).then(isAdmin => {
+    if (isAdmin) {
+      next();
+    } else {
+      res.status(403).json({ success: false, message: 'Недостаточно прав для доступа к этому ресурсу' });
+    }
+  }).catch(error => {
+    console.error('Ошибка при проверке прав администратора:', error);
+    res.status(500).json({ success: false, message: 'Ошибка при проверке прав доступа' });
+  });
+}
+
+/**
+ * Регистрирует маршруты для управления глобальными API ключами
+ * @param app Сервер Express
+ */
+export function registerGlobalApiKeysRoutes(app: Application): void {
+  // Получение списка всех глобальных ключей (только для администраторов)
+  app.get('/api/global-api-keys', requireAdmin, async (req: Request, res: Response) => {
     try {
-      // Проверяем, что пользователь администратор
-      const adminStatus = await isAdmin(req);
-      if (!adminStatus) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Доступ запрещен. Требуются права администратора.' 
-        });
-      }
-      
-      // Получаем авторизационный токен для Directus
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.split(' ')[1];
-      
+      // Получаем токен из заголовка запроса
+      const token = req.headers.authorization?.startsWith('Bearer ') 
+        ? req.headers.authorization.substring(7) 
+        : null;
+
       if (!token) {
-        return res.status(401).json({ 
-          success: false, 
-          error: 'Не предоставлен токен авторизации.' 
-        });
+        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
       }
-      
-      // Запрашиваем список глобальных API ключей через DirectusCrud
-      const apiKeys = await directusCrud.list('global_api_keys', {
+
+      // Получаем список глобальных API ключей
+      const globalApiKeys = await directusCrud.list('global_api_keys', {
         authToken: token,
-        fields: ['id', 'service_name', 'is_active', 'description', 'updated_at'],
-        sort: ['-updated_at']
+        fields: ['id', 'service_name', 'api_key', 'is_active', 'description', 'created_at', 'updated_at']
       });
-      
-      // Для безопасности не возвращаем сами ключи
-      return res.json({ success: true, data: apiKeys });
-    } catch (error: any) {
-      log(`Error fetching global API keys: ${error.message}`, 'api-keys');
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Ошибка при запросе глобальных API ключей.' 
+
+      // Маскируем значения ключей для отображения в интерфейсе
+      const maskedKeys = globalApiKeys.map((key: any) => {
+        if (key.api_key) {
+          // Маскируем ключ для отображения
+          const keyLength = key.api_key.length;
+          if (keyLength > 10) {
+            // Оставляем первые 4 и последние 4 символа
+            key.displayed_key = `${key.api_key.substring(0, 4)}...${key.api_key.substring(keyLength - 4)}`;
+          } else {
+            // Если ключ короткий, маскируем полностью
+            key.displayed_key = '*'.repeat(keyLength);
+          }
+        } else {
+          key.displayed_key = '';
+        }
+
+        // Удаляем реальный ключ из ответа
+        const { api_key, ...safeKey } = key;
+        return safeKey;
       });
+
+      return res.json({ success: true, data: maskedKeys });
+    } catch (error) {  
+      console.error('Ошибка при получении глобальных API ключей:', error);
+      return res.status(500).json({ success: false, message: 'Ошибка при получении глобальных API ключей' });
     }
   });
-  
-  /**
-   * Сохранение глобального API ключа
-   * Доступно только администраторам
-   */
-  app.post('/api/admin/global-api-keys', async (req: Request, res: Response) => {
+
+  // Создание или обновление глобального API ключа (только для администраторов)
+  app.post('/api/global-api-keys', requireAdmin, async (req: Request, res: Response) => {
     try {
-      // Проверяем, что пользователь администратор
-      const adminStatus = await isAdmin(req);
-      if (!adminStatus) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Доступ запрещен. Требуются права администратора.' 
-        });
+      const { service_name, api_key, description } = req.body;
+
+      if (!service_name || !api_key) {
+        return res.status(400).json({ success: false, message: 'Укажите название сервиса и API ключ' });
       }
-      
-      const { serviceName, apiKey, description } = req.body;
-      
-      if (!serviceName || !apiKey) {
+
+      // Проверяем, что service_name является допустимым значением
+      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Необходимо указать serviceName и apiKey.' 
+          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
         });
       }
-      
-      // Получаем авторизационный токен для Directus
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.split(' ')[1];
-      
+
+      // Получаем токен из заголовка запроса
+      const token = req.headers.authorization?.startsWith('Bearer ') 
+        ? req.headers.authorization.substring(7) 
+        : null;
+
       if (!token) {
-        return res.status(401).json({ 
-          success: false, 
-          error: 'Не предоставлен токен авторизации.' 
-        });
+        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
       }
-      
+
       // Сохраняем глобальный API ключ
       const keyId = await globalApiKeysService.setGlobalApiKey(
-        serviceName as ApiServiceName,
-        apiKey,
+        service_name as unknown as ApiServiceName, 
+        api_key, 
         token
       );
-      
-      if (keyId) {
-        await globalApiKeysService.refreshCache();
-        return res.json({ 
-          success: true, 
-          data: { id: keyId } 
-        });
-      } else {
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Ошибка при сохранении глобального API ключа.' 
+
+      if (!keyId) {
+        return res.status(500).json({ success: false, message: 'Ошибка при сохранении глобального API ключа' });
+      }
+
+      // Если есть описание, сохраняем его отдельным запросом
+      if (description) {
+        await directusCrud.update('global_api_keys', keyId, {
+          description
+        }, {
+          authToken: token
         });
       }
-    } catch (error: any) {
-      log(`Error saving global API key: ${error.message}`, 'api-keys');
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Ошибка при сохранении глобального API ключа.' 
-      });
-    }
-  });
-  
-  /**
-   * Деактивация глобального API ключа
-   * Доступно только администраторам
-   */
-  app.post('/api/admin/global-api-keys/deactivate', async (req: Request, res: Response) => {
-    try {
-      // Проверяем, что пользователь администратор
-      const adminStatus = await isAdmin(req);
-      if (!adminStatus) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Доступ запрещен. Требуются права администратора.' 
-        });
-      }
-      
-      const { serviceName } = req.body;
-      
-      if (!serviceName) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Необходимо указать serviceName.' 
-        });
-      }
-      
-      // Получаем авторизационный токен для Directus
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.split(' ')[1];
-      
-      if (!token) {
-        return res.status(401).json({ 
-          success: false, 
-          error: 'Не предоставлен токен авторизации.' 
-        });
-      }
-      
-      // Деактивируем глобальный API ключ
-      const success = await globalApiKeysService.deactivateGlobalApiKey(
-        serviceName as ApiServiceName,
-        token
-      );
-      
-      if (success) {
-        await globalApiKeysService.refreshCache();
-        return res.json({ success: true });
-      } else {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Глобальный API ключ не найден или уже деактивирован.' 
-        });
-      }
-    } catch (error: any) {
-      log(`Error deactivating global API key: ${error.message}`, 'api-keys');
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Ошибка при деактивации глобального API ключа.' 
-      });
-    }
-  });
-  
-  /**
-   * Проверка доступности глобальных API ключей
-   * Этот маршрут доступен всем пользователям, но не раскрывает значения ключей
-   */
-  app.get('/api/global-api-keys/availability', async (req: Request, res: Response) => {
-    try {
+
       // Обновляем кэш глобальных API ключей
       await globalApiKeysService.refreshCache();
-      
-      // Создаем список доступных сервисов
-      const availability: Record<string, boolean> = {};
-      
-      // Проверяем каждый сервис
-      const services: ApiServiceName[] = [
-        'perplexity', 'social_searcher', 'apify', 'deepseek', 
-        'fal_ai', 'xmlriver', 'qwen', 'claude', 'gemini'
-      ];
-      
-      for (const service of services) {
-        const key = await globalApiKeysService.getGlobalApiKey(service);
-        availability[service] = !!key;
-      }
-      
-      return res.json({ 
-        success: true, 
-        data: { availability } 
-      });
-    } catch (error: any) {
-      log(`Error checking global API keys availability: ${error.message}`, 'api-keys');
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Ошибка при проверке доступности глобальных API ключей.' 
-      });
+
+      return res.json({ success: true, id: keyId, message: 'Глобальный API ключ успешно сохранен' });
+    } catch (error) {
+      console.error('Ошибка при сохранении глобального API ключа:', error);
+      return res.status(500).json({ success: false, message: 'Ошибка при сохранении глобального API ключа' });
     }
   });
-  
-  console.log('Global API key management routes registered');
+
+  // Деактивация глобального API ключа (только для администраторов)
+  app.delete('/api/global-api-keys/:service_name', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { service_name } = req.params;
+
+      if (!service_name) {
+        return res.status(400).json({ success: false, message: 'Укажите название сервиса' });
+      }
+
+      // Проверяем, что service_name является допустимым значением
+      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
+        });
+      }
+
+      // Получаем токен из заголовка запроса
+      const token = req.headers.authorization?.startsWith('Bearer ') 
+        ? req.headers.authorization.substring(7) 
+        : null;
+
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
+      }
+
+      // Деактивируем глобальный API ключ
+      const success = await globalApiKeysService.deactivateGlobalApiKey(
+        service_name as unknown as ApiServiceName, 
+        token
+      );
+
+      if (!success) {
+        return res.status(404).json({ success: false, message: 'Глобальный API ключ не найден или уже деактивирован' });
+      }
+
+      // Обновляем кэш глобальных API ключей
+      await globalApiKeysService.refreshCache();
+
+      return res.json({ success: true, message: 'Глобальный API ключ успешно деактивирован' });
+    } catch (error) {
+      console.error('Ошибка при деактивации глобального API ключа:', error);
+      return res.status(500).json({ success: false, message: 'Ошибка при деактивации глобального API ключа' });
+    }
+  });
+
+  // Публичный маршрут для проверки наличия глобального API ключа для указанного сервиса
+  app.get('/api/global-api-keys/check/:service_name', async (req: Request, res: Response) => {
+    try {
+      const { service_name } = req.params;
+
+      if (!service_name) {
+        return res.status(400).json({ success: false, message: 'Укажите название сервиса' });
+      }
+
+      // Проверяем, что service_name является допустимым значением
+      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
+        });
+      }
+
+      // Проверяем наличие глобального API ключа
+      const apiKey = await globalApiKeysService.getGlobalApiKey(service_name as unknown as ApiServiceName);
+      const hasApiKey = apiKey !== null;
+
+      return res.json({ success: true, has_api_key: hasApiKey });
+    } catch (error) {
+      console.error('Ошибка при проверке наличия глобального API ключа:', error);
+      return res.status(500).json({ success: false, message: 'Ошибка при проверке наличия глобального API ключа' });
+    }
+  });
+
+  log('Global API Keys routes registered successfully');
 }

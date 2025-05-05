@@ -7,33 +7,43 @@ import { globalApiKeysService } from './global-api-keys';
 const directusApi = directusApiManager.instance;
 
 // Типы API сервисов, используемых в приложении
-export type ApiServiceName = 'perplexity' | 'social_searcher' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'qwen' | 'claude' | 'gemini';
+export enum ApiServiceName {
+  PERPLEXITY = 'perplexity',
+  SOCIAL_SEARCHER = 'social_searcher',
+  APIFY = 'apify',
+  DEEPSEEK = 'deepseek',
+  FAL_AI = 'fal_ai',
+  XMLRIVER = 'xmlriver',
+  QWEN = 'qwen',
+  CLAUDE = 'claude',
+  GEMINI = 'gemini'
+}
 
 // Маппинг имен сервисов как они записаны в БД
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
-  'perplexity': 'perplexity',
-  'social_searcher': 'social_searcher',
-  'apify': 'apify',
-  'deepseek': 'deepseek',
-  'fal_ai': 'fal_ai',
-  'xmlriver': 'xmlriver',
-  'qwen': 'qwen',
-  'claude': 'claude',
-  'gemini': 'gemini'
+  [ApiServiceName.PERPLEXITY]: 'perplexity',
+  [ApiServiceName.SOCIAL_SEARCHER]: 'social_searcher',
+  [ApiServiceName.APIFY]: 'apify',
+  [ApiServiceName.DEEPSEEK]: 'deepseek',
+  [ApiServiceName.FAL_AI]: 'fal_ai',
+  [ApiServiceName.XMLRIVER]: 'xmlriver',
+  [ApiServiceName.QWEN]: 'qwen',
+  [ApiServiceName.CLAUDE]: 'claude',
+  [ApiServiceName.GEMINI]: 'gemini'
 };
 
 // Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
 // Этот маппинг соответствует порядку полей в интерфейсе "Настройки API ключей"
 const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
-  0: 'perplexity',       // Первое поле в UI - API Ключ Perplexity
-  1: 'social_searcher',  // Второе поле в UI - API Ключ Social Searcher
-  2: 'apify',            // Третье поле в UI - API Ключ Apify
-  3: 'deepseek',         // Четвертое поле в UI - API Ключ DeepSeek
-  4: 'fal_ai',           // Пятое поле в UI - API Ключ FAL.AI
-  5: 'xmlriver',         // Шестое поле в UI - API Ключ XMLRiver
-  6: 'qwen',             // Седьмое поле в UI - API Ключ Qwen
-  7: 'claude',           // Восьмое поле в UI - API Ключ Claude
-  8: 'gemini'            // Девятое поле в UI - API Ключ Gemini
+  0: ApiServiceName.PERPLEXITY,       // Первое поле в UI - API Ключ Perplexity
+  1: ApiServiceName.SOCIAL_SEARCHER,  // Второе поле в UI - API Ключ Social Searcher
+  2: ApiServiceName.APIFY,            // Третье поле в UI - API Ключ Apify
+  3: ApiServiceName.DEEPSEEK,         // Четвертое поле в UI - API Ключ DeepSeek
+  4: ApiServiceName.FAL_AI,           // Пятое поле в UI - API Ключ FAL.AI
+  5: ApiServiceName.XMLRIVER,         // Шестое поле в UI - API Ключ XMLRiver
+  6: ApiServiceName.QWEN,             // Седьмое поле в UI - API Ключ Qwen
+  7: ApiServiceName.CLAUDE,           // Восьмое поле в UI - API Ключ Claude
+  8: ApiServiceName.GEMINI            // Девятое поле в UI - API Ключ Gemini
 };
 
 // Интерфейс для хранения API ключей и метаданных
@@ -129,7 +139,7 @@ export class ApiKeyService {
         // Специальная обработка для FAL.AI, но мы НЕ модифицируем ключ здесь.
         // Ключ для FAL.AI хранится в БД без префикса "Key ".
         // Добавление префикса "Key " делается непосредственно при вызове API в сервисе falai.ts
-        if (serviceName === 'fal_ai') {
+        if (serviceName === ApiServiceName.FAL_AI) {
           console.log(`[${serviceName}] Найден ключ FAL.AI (длина: ${apiKey.length}, содержит двоеточие: ${apiKey.includes(':')})`);
           
           // Для отладки запоминаем формат ключа но НЕ модифицируем его
@@ -138,7 +148,7 @@ export class ApiKeyService {
           }
         }
         
-        if (serviceName === 'xmlriver') {
+        if (serviceName === ApiServiceName.XMLRIVER) {
           try {
             JSON.parse(apiKey);
             console.log(`[${serviceName}] Ключ уже в JSON формате`);
@@ -186,7 +196,7 @@ export class ApiKeyService {
             let apiKey = keyByPosition.api_key;
             
             // Обработка специальных форматов
-            if (serviceName === 'fal_ai' && !apiKey.startsWith('Key ') && apiKey.includes(':')) {
+            if (serviceName === ApiServiceName.FAL_AI && !apiKey.startsWith('Key ') && apiKey.includes(':')) {
               apiKey = `Key ${apiKey}`;
             }
             
@@ -259,7 +269,7 @@ export class ApiKeyService {
       }
       
       // Для FAL.AI - проверка и форматирование ключа при сохранении
-      if (serviceName === 'fal_ai') {
+      if (serviceName === ApiServiceName.FAL_AI) {
         // Если ключ начинается с "Key ", удаляем префикс для хранения в БД
         if (apiKey.startsWith('Key ')) {
           const originalKey = apiKey;
@@ -278,7 +288,7 @@ export class ApiKeyService {
       }
       
       // Для XMLRiver - хранение комбинации user ID и API ключа
-      if (serviceName === 'xmlriver') {
+      if (serviceName === ApiServiceName.XMLRIVER) {
         try {
           // Проверяем, не передан ли уже ключ в JSON формате
           const parsed = JSON.parse(apiKey);

@@ -154,12 +154,12 @@ export class GlobalApiKeysService {
       // Форматирование ключа для специфических сервисов
       let formattedKey = apiKey;
       
-      if (serviceName === 'fal_ai') {
+      if (serviceName === ApiServiceName.FAL_AI) {
         // Если ключ начинается с "Key ", удаляем префикс для хранения
         if (apiKey.startsWith('Key ')) {
           formattedKey = apiKey.substring(4);
         }
-      } else if (serviceName === 'xmlriver') {
+      } else if (serviceName === ApiServiceName.XMLRIVER) {
         // Форматирование ключа XMLRiver в JSON формат
         try {
           JSON.parse(apiKey); // Проверяем, что это уже JSON
