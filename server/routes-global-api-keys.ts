@@ -10,9 +10,7 @@ import { directusApiManager } from './directus';
 import { ApiServiceName } from './services/api-keys';
 import axios from 'axios';
 
-// Массив email адресов пользователей, которые должны иметь административные привилегии
-// Это может служить альтернативой для поля is_smm_admin в Directus
-const ADMIN_EMAILS = ['lbrspb@gmail.com', 'lbr.spb@gmail.com']; 
+// Проверка будет производиться только по полю is_smm_admin в Directus
 
 /**
  * Проверяет, является ли пользователь администратором SMM
@@ -60,33 +58,15 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
         roleAdmin: currentUser.role?.admin_access,
       });
 
-      // 1. Проверяем поле is_smm_admin
-      const isSmmAdmin = currentUser.is_smm_admin === true || 
-                        currentUser.is_smm_admin === 1 || 
-                        currentUser.is_smm_admin === '1' || 
-                        currentUser.is_smm_admin === 'true';
+      // Проверяем только поле is_smm_admin
+      const isAdmin = currentUser.is_smm_admin === true || 
+                     currentUser.is_smm_admin === 1 || 
+                     currentUser.is_smm_admin === '1' || 
+                     currentUser.is_smm_admin === 'true';
       
-      // 2. Проверяем роль администратора в Directus
-      const isDirectusAdmin = currentUser.role && (
-        currentUser.role.name === 'Admin' || 
-        currentUser.role.name === 'Administrator' || 
-        currentUser.role.admin_access === true || 
-        currentUser.role.admin_access === 1 ||
-        currentUser.role.admin_access === '1' ||
-        currentUser.role.admin_access === 'true'
-      );
-
-      // 3. Проверяем через массив электронных адресов администраторов
-      const isAdminByEmail = ADMIN_EMAILS.includes(currentUser.email);
-
-      // Итоговый результат - пользователь является администратором по любому из признаков
-      const isAdmin = isSmmAdmin || isDirectusAdmin || isAdminByEmail;
-
-      // Выводим логи для каждого метода проверки
+      // Выводим логи для проверки
       console.log('Admin check results:', { 
-        isSmmAdmin, 
-        isDirectusAdmin, 
-        isAdminByEmail,
+        isSmmAdmin: isAdmin,
         finalResult: isAdmin 
       });
 
