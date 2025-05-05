@@ -38,8 +38,25 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
     }
 
     // Проверяем, является ли пользователь администратором
-    const isAdmin = currentUser.is_smm_admin === true;
-    log(`Пользователь ${currentUser.email}: статус администратора = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}`, 'admin');
+    // Добавляем расширенную проверку с приведением к булевому типу
+    const isSmmAdmin = currentUser.is_smm_admin === true || currentUser.is_smm_admin === 1;
+    // Также проверяем роль администратора в Directus
+    const isDirectusAdmin = currentUser.role && (
+      currentUser.role.name === 'Admin' || 
+      currentUser.role.admin_access === true || 
+      currentUser.role.admin_access === 1
+    );
+
+    // Итоговый результат - пользователь является администратором SMM или администратором Directus
+    const isAdmin = isSmmAdmin || isDirectusAdmin;
+
+    log(`Пользователь ${currentUser.email}: итоговый статус админа = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}, значение admin_access = ${currentUser.role?.admin_access}`, 'admin');
+    
+    // Выводим дополнительную информацию для отладки
+    console.log(`Тип значения is_smm_admin:`, typeof currentUser.is_smm_admin);
+    console.log(`Значение is_smm_admin:`, currentUser.is_smm_admin);
+    console.log(`Итоговый статус админа:`, isAdmin);
+    
     return isAdmin;
   } catch (error) {
     log(`Ошибка при проверке прав администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'admin');
@@ -78,172 +95,117 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
         : null;
 
       if (!token) {
-        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
+        return res.status(401).json({ success: false, message: 'Требуется токен авторизации' });
       }
 
       // Получаем список глобальных API ключей
-      const globalApiKeys = await directusCrud.list('global_api_keys', {
-        authToken: token,
-        fields: ['id', 'service_name', 'api_key', 'is_active', 'description', 'created_at', 'updated_at']
-      });
-
-      // Маскируем значения ключей для отображения в интерфейсе
-      const maskedKeys = globalApiKeys.map((key: any) => {
-        if (key.api_key) {
-          // Маскируем ключ для отображения
-          const keyLength = key.api_key.length;
-          if (keyLength > 10) {
-            // Оставляем первые 4 и последние 4 символа
-            key.displayed_key = `${key.api_key.substring(0, 4)}...${key.api_key.substring(keyLength - 4)}`;
-          } else {
-            // Если ключ короткий, маскируем полностью
-            key.displayed_key = '*'.repeat(keyLength);
-          }
-        } else {
-          key.displayed_key = '';
-        }
-
-        // Удаляем реальный ключ из ответа
-        const { api_key, ...safeKey } = key;
-        return safeKey;
-      });
-
-      return res.json({ success: true, data: maskedKeys });
-    } catch (error) {  
+      const keys = await globalApiKeysService.getGlobalApiKeys();
+      log('Успешно получен список глобальных API ключей', 'api');
+      res.status(200).json({ success: true, data: keys });
+    } catch (error) {
       console.error('Ошибка при получении глобальных API ключей:', error);
-      return res.status(500).json({ success: false, message: 'Ошибка при получении глобальных API ключей' });
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка при получении глобальных API ключей',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
-  // Создание или обновление глобального API ключа (только для администраторов)
+  // Добавление глобального API ключа (только для администраторов)
   app.post('/api/global-api-keys', requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { service_name, api_key, description } = req.body;
+      const { service, apiKey, priority } = req.body;
 
-      if (!service_name || !api_key) {
-        return res.status(400).json({ success: false, message: 'Укажите название сервиса и API ключ' });
+      if (!service || !apiKey) {
+        return res.status(400).json({ success: false, message: 'Требуется указать сервис и API ключ' });
       }
 
-      // Проверяем, что service_name является допустимым значением
-      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
-        });
+      // Проверяем, что сервис указан корректно
+      if (!Object.values(ApiServiceName).includes(service as ApiServiceName)) {
+        return res.status(400).json({ success: false, message: 'Неверное название сервиса' });
       }
 
-      // Получаем токен из заголовка запроса
-      const token = req.headers.authorization?.startsWith('Bearer ') 
-        ? req.headers.authorization.substring(7) 
-        : null;
+      // Добавляем глобальный API ключ
+      const result = await globalApiKeysService.addGlobalApiKey({
+        service: service as ApiServiceName,
+        api_key: apiKey,
+        priority: priority || 0,
+        active: true
+      });
 
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
-      }
-
-      // Сохраняем глобальный API ключ
-      const keyId = await globalApiKeysService.setGlobalApiKey(
-        service_name as unknown as ApiServiceName, 
-        api_key, 
-        token
-      );
-
-      if (!keyId) {
-        return res.status(500).json({ success: false, message: 'Ошибка при сохранении глобального API ключа' });
-      }
-
-      // Если есть описание, сохраняем его отдельным запросом
-      if (description) {
-        await directusCrud.update('global_api_keys', keyId, {
-          description
-        }, {
-          authToken: token
-        });
-      }
-
-      // Обновляем кэш глобальных API ключей
-      await globalApiKeysService.refreshCache();
-
-      return res.json({ success: true, id: keyId, message: 'Глобальный API ключ успешно сохранен' });
+      log(`Успешно добавлен глобальный API ключ для сервиса ${service}`, 'api');
+      res.status(201).json({ success: true, data: result });
     } catch (error) {
-      console.error('Ошибка при сохранении глобального API ключа:', error);
-      return res.status(500).json({ success: false, message: 'Ошибка при сохранении глобального API ключа' });
+      console.error('Ошибка при добавлении глобального API ключа:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка при добавлении глобального API ключа',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
-  // Деактивация глобального API ключа (только для администраторов)
-  app.delete('/api/global-api-keys/:service_name', requireAdmin, async (req: Request, res: Response) => {
+  // Обновление глобального API ключа (только для администраторов)
+  app.put('/api/global-api-keys/:id', requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { service_name } = req.params;
+      const { id } = req.params;
+      const { service, apiKey, priority, active } = req.body;
 
-      if (!service_name) {
-        return res.status(400).json({ success: false, message: 'Укажите название сервиса' });
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Требуется указать ID ключа' });
       }
 
-      // Проверяем, что service_name является допустимым значением
-      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
-        });
+      // Обновляем глобальный API ключ
+      const updateData: any = {};
+      if (service) updateData.service = service;
+      if (apiKey) updateData.api_key = apiKey;
+      if (priority !== undefined) updateData.priority = priority;
+      if (active !== undefined) updateData.active = active;
+
+      const result = await globalApiKeysService.updateGlobalApiKey(id, updateData);
+
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Ключ не найден' });
       }
 
-      // Получаем токен из заголовка запроса
-      const token = req.headers.authorization?.startsWith('Bearer ') 
-        ? req.headers.authorization.substring(7) 
-        : null;
-
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Не указан токен авторизации' });
-      }
-
-      // Деактивируем глобальный API ключ
-      const success = await globalApiKeysService.deactivateGlobalApiKey(
-        service_name as unknown as ApiServiceName, 
-        token
-      );
-
-      if (!success) {
-        return res.status(404).json({ success: false, message: 'Глобальный API ключ не найден или уже деактивирован' });
-      }
-
-      // Обновляем кэш глобальных API ключей
-      await globalApiKeysService.refreshCache();
-
-      return res.json({ success: true, message: 'Глобальный API ключ успешно деактивирован' });
+      log(`Успешно обновлен глобальный API ключ ${id}`, 'api');
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
-      console.error('Ошибка при деактивации глобального API ключа:', error);
-      return res.status(500).json({ success: false, message: 'Ошибка при деактивации глобального API ключа' });
+      console.error('Ошибка при обновлении глобального API ключа:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка при обновлении глобального API ключа',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
-  // Публичный маршрут для проверки наличия глобального API ключа для указанного сервиса
-  app.get('/api/global-api-keys/check/:service_name', async (req: Request, res: Response) => {
+  // Удаление глобального API ключа (только для администраторов)
+  app.delete('/api/global-api-keys/:id', requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { service_name } = req.params;
+      const { id } = req.params;
 
-      if (!service_name) {
-        return res.status(400).json({ success: false, message: 'Укажите название сервиса' });
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Требуется указать ID ключа' });
       }
 
-      // Проверяем, что service_name является допустимым значением
-      if (!Object.values(ApiServiceName).includes(service_name as ApiServiceName)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Недопустимое название сервиса. Допустимые значения: ${Object.values(ApiServiceName).join(', ')}` 
-        });
+      // Удаляем глобальный API ключ
+      const result = await globalApiKeysService.deleteGlobalApiKey(id);
+
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Ключ не найден' });
       }
 
-      // Проверяем наличие глобального API ключа
-      const apiKey = await globalApiKeysService.getGlobalApiKey(service_name as unknown as ApiServiceName);
-      const hasApiKey = apiKey !== null;
-
-      return res.json({ success: true, has_api_key: hasApiKey });
+      log(`Успешно удален глобальный API ключ ${id}`, 'api');
+      res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Ошибка при проверке наличия глобального API ключа:', error);
-      return res.status(500).json({ success: false, message: 'Ошибка при проверке наличия глобального API ключа' });
+      console.error('Ошибка при удалении глобального API ключа:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ошибка при удалении глобального API ключа',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
-
-  log('Global API Keys routes registered successfully');
 }
