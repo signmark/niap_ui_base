@@ -209,14 +209,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
                 ))}
                 {userIsAdmin && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start sidebar-item"
-                    onClick={() => setIsSettingsOpen(true)}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Настройки
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start sidebar-item"
+                      onClick={() => setIsSettingsOpen(true)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Настройки
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/global-api-keys' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/global-api-keys')}
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      Глобальные API ключи
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -253,14 +263,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
                 ))}
                 {userIsAdmin && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start sidebar-item"
-                    onClick={() => setIsSettingsOpen(true)}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Настройки
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start sidebar-item"
+                      onClick={() => setIsSettingsOpen(true)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Настройки
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/global-api-keys' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/global-api-keys')}
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      Глобальные API ключи
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
