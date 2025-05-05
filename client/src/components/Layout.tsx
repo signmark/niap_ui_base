@@ -62,6 +62,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       checkIsAdmin().then(result => {
         console.log('Layout компонент: Результат проверки isAdmin =', result);
         console.log('Layout компонент: Текущее состояние isAdmin в store =', isAdmin);
+        
+        // Принудительная перерисовка компонента для обновления UI после изменения статуса
+        if (result !== isAdmin) {
+          console.log('Layout компонент: Обнаружено несоответствие значения isAdmin. Ожидается обновление UI.');
+        }
       }).catch(error => {
         console.error('Layout компонент: Ошибка при проверке статуса администратора:', error);
       });
