@@ -26,7 +26,6 @@ export interface GlobalApiKey {
   id?: string;
   service_name: string;
   api_key: string;
-  priority?: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -38,7 +37,6 @@ export interface GlobalApiKey {
 export interface GlobalApiKeyInput {
   service: ApiServiceName;
   api_key: string;
-  priority?: number; 
   active: boolean;
 }
 
@@ -338,11 +336,10 @@ export class GlobalApiKeysService {
         
         // Мапим в правильный формат для результата
         return keys.map(key => ({
-          id: typeof key === 'object' && key !== null && 'id' in key ? key.id : '',
+          id: typeof key === 'object' && key !== null && 'id' in key ? String(key.id) : '',
           service_name: typeof key === 'object' && key !== null && 'service_name' in key ? key.service_name as string : '',
           api_key: typeof key === 'object' && key !== null && 'api_key' in key ? key.api_key as string : '',
           is_active: typeof key === 'object' && key !== null && 'is_active' in key ? (key.is_active === true || key.is_active === 1) : false,
-          priority: 0,
           created_at: typeof key === 'object' && key !== null && 'created_at' in key ? key.created_at as string : new Date().toISOString(),
           updated_at: typeof key === 'object' && key !== null && 'updated_at' in key ? key.updated_at as string : new Date().toISOString()
         }));
@@ -413,7 +410,6 @@ export class GlobalApiKeysService {
       const response = await this.directusApi.post('/items/global_api_keys', {
         service_name: keyData.service,
         api_key: formattedKey,
-        priority: keyData.priority || 0,
         is_active: keyData.active
       }, {
         headers: {

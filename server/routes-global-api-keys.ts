@@ -173,7 +173,7 @@ export function registerGlobalApiKeysRoutes(app: Application): void {
   // Добавление глобального API ключа (только для администраторов)
   app.post('/api/global-api-keys', requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { service, apiKey, priority } = req.body;
+      const { service, apiKey } = req.body;
 
       if (!service || !apiKey) {
         return res.status(400).json({ success: false, message: 'Требуется указать сервис и API ключ' });
