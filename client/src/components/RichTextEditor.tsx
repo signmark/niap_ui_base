@@ -113,6 +113,21 @@ export default function RichTextEditor({
     }
   }
 
+  // Функция для добавления нового параграфа после блочных элементов
+  const ensureNewParagraphAfterBlock = () => {
+    if (editor.isActive('blockquote') || editor.isActive('codeBlock')) {
+      // Сначала деактивируем текущий блок
+      if (editor.isActive('blockquote')) {
+        editor.chain().focus().toggleBlockquote().run();
+      } else if (editor.isActive('codeBlock')) {
+        editor.chain().focus().toggleCodeBlock().run();
+      }
+      
+      // Добавляем новый параграф
+      editor.commands.createParagraphNear();
+    }
+  }
+
   const colors = [
     '#000000', '#D81B60', '#1E88E5', '#43A047', 
     '#6D4C41', '#546E7A', '#F4511E', '#FB8C00', 
@@ -322,7 +337,19 @@ export default function RichTextEditor({
                   value="blockquote" 
                   size="sm"
                   aria-label="Цитата" 
-                  onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                  onClick={() => {
+                    // Если активны другие блоки, сначала отключим их
+                    if (editor.isActive('codeBlock')) {
+                      editor.chain().focus().toggleCodeBlock().run();
+                    }
+                    // Затем включим цитату
+                    editor.chain().focus().toggleBlockquote().run();
+                    
+                    // Добавляем новый параграф после блока при необходимости
+                    if (!editor.isActive('blockquote')) {
+                      ensureNewParagraphAfterBlock();
+                    }
+                  }}
                   data-state={editor.isActive('blockquote') ? 'on' : 'off'}
                 >
                   <Quote className="h-4 w-4" />
@@ -337,7 +364,14 @@ export default function RichTextEditor({
                   value="code" 
                   size="sm"
                   aria-label="Форматированный код" 
-                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  onClick={() => {
+                    // Включаем/выключаем инлайн код
+                    editor.chain().focus().toggleCode().run();
+                    // Добавляем новый параграф после блока при необходимости
+                    if (!editor.isActive('code')) {
+                      ensureNewParagraphAfterBlock();
+                    }
+                  }}
                   data-state={editor.isActive('code') ? 'on' : 'off'}
                 >
                   <Code className="h-4 w-4" />
@@ -352,7 +386,19 @@ export default function RichTextEditor({
                   value="codeBlock" 
                   size="sm"
                   aria-label="Блок кода" 
-                  onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                  onClick={() => {
+                    // Если активна цитата, сначала отключим её
+                    if (editor.isActive('blockquote')) {
+                      editor.chain().focus().toggleBlockquote().run();
+                    }
+                    // Затем включим блок кода
+                    editor.chain().focus().toggleCodeBlock().run();
+                    
+                    // Добавляем новый параграф после блока при необходимости
+                    if (!editor.isActive('codeBlock')) {
+                      ensureNewParagraphAfterBlock();
+                    }
+                  }}
                   data-state={editor.isActive('codeBlock') ? 'on' : 'off'}
                 >
                   <FileCode className="h-4 w-4" />
