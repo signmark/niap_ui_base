@@ -7,10 +7,15 @@ interface AuthState {
   token: string | null;
   userId: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   setAuth: (token: string | null, userId: string | null) => void;
   clearAuth: () => void;
   getAuthToken: () => string | null;
+  setIsAdmin: (isAdmin: boolean) => void;
+  checkIsAdmin: () => Promise<boolean>;
 }
+
+import { api } from './api';
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -18,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       token: localStorage.getItem('auth_token') || null,
       userId: localStorage.getItem('user_id') || null,
       isAuthenticated: !!(localStorage.getItem('auth_token') && localStorage.getItem('user_id')),
+      isAdmin: localStorage.getItem('is_admin') === 'true',
       setAuth: (token, userId) => {
         // Сохраняем токен и userId в localStorage для прямого доступа
         if (token) {
@@ -66,6 +72,48 @@ export const useAuthStore = create<AuthState>()(
           console.log('Токен авторизации не найден');
         }
         return token;
+      },
+
+      setIsAdmin: (isAdmin) => {
+        // Сохраняем статус администратора
+        if (isAdmin) {
+          localStorage.setItem('is_admin', 'true');
+        } else {
+          localStorage.removeItem('is_admin');
+        }
+        set({ isAdmin });
+      },
+
+      checkIsAdmin: async () => {
+        console.log('Проверка статуса администратора');
+        try {
+          // Получаем текущий токен
+          const token = get().getAuthToken();
+          if (!token) {
+            console.log('Невозможно проверить права администратора - пользователь не авторизован');
+            return false;
+          }
+
+          // Запрашиваем проверку администратора
+          const response = await api.get('/auth/is-admin');
+          
+          if (response.data && response.data.success && response.data.isAdmin === true) {
+            console.log('Пользователь является администратором');
+            // Сохраняем статус администратора
+            get().setIsAdmin(true);
+            return true;
+          } else {
+            console.log('Пользователь не является администратором');
+            // Сохраняем статус не-администратора
+            get().setIsAdmin(false);
+            return false;
+          }
+        } catch (error) {
+          console.error('Ошибка при проверке статуса администратора:', error);
+          // При ошибке считаем пользователя не администратором
+          get().setIsAdmin(false);
+          return false;
+        }
       }
     }),
     {
@@ -74,7 +122,8 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({ 
         token: state.token,
         userId: state.userId,
-        isAuthenticated: state.isAuthenticated
+        isAuthenticated: state.isAuthenticated,
+        isAdmin: state.isAdmin
       }),
     }
   )
