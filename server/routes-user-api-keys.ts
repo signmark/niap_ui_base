@@ -33,7 +33,7 @@ export function registerUserApiKeysRoutes(app: Application) {
       
       try {
         // Делаем запрос к Directus API для получения ключей пользователя
-        const response = await directusApiManager.get('/items/user_api_keys', {
+        const response = await directusApiManager.instance.get('/items/user_api_keys', {
           params: {
             filter: {
               user_id: { _eq: userId }

@@ -9,6 +9,7 @@ import { registerQwenRoutes } from "./routes-qwen";
 import { registerGeminiRoutes } from "./routes-gemini";
 import { registerImgurRoutes } from "./routes-imgur";
 import { registerBegetS3Routes } from "./routes-beget-s3";
+import { registerUserApiKeysRoutes } from "./routes-user-api-keys";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
@@ -188,6 +189,11 @@ app.use((req, res, next) => {
     log("Registering Beget S3 routes...");
     registerBegetS3Routes(app);
     log("Beget S3 routes registered successfully");
+    
+    // Регистрируем маршруты для работы с личными API ключами пользователя
+    log("Registering user API keys routes...");
+    registerUserApiKeysRoutes(app);
+    log("User API keys routes registered successfully");
     
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");
