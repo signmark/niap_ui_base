@@ -58,6 +58,13 @@ export function registerUserApiKeysRoutes(app: Application) {
    */
   app.get('/api/user-api-keys', async (req: Request, res: Response) => {
     try {
+      // Устанавливаем четкие заголовки для предотвращения перехвата Vite
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      
       // Проверяем, что пользователь авторизован
       console.log('User API Keys request received, req.user:', req.user ? 'exists' : 'undefined');
       
@@ -71,6 +78,7 @@ export function registerUserApiKeysRoutes(app: Application) {
       }
       
       const token = authHeader.split(' ')[1];
+      console.log(`Token for API keys check: ${token.substring(0, 10)}...`);
       
       // Извлекаем ID пользователя из токена
       const userId = extractUserIdFromToken(token);
@@ -99,12 +107,15 @@ export function registerUserApiKeysRoutes(app: Application) {
 
         log(`Получено ${response.data?.data?.length || 0} API ключей для пользователя ${userId}`, 'api-keys-routes');
         
+        // Отвечаем с четкими заголовками
         return res.json({
           success: true,
           data: response.data?.data || []
         });
       } catch (error: any) {
         console.error(`Ошибка при получении API ключей пользователя:`, error);
+        
+        // Отвечаем с четкими заголовками
         return res.status(500).json({
           success: false,
           message: `Ошибка при получении API ключей: ${error.message || 'Неизвестная ошибка'}`
@@ -124,6 +135,13 @@ export function registerUserApiKeysRoutes(app: Application) {
    * DELETE /api/user-api-keys/:id
    */
   app.delete('/api/user-api-keys/:id', async (req: Request, res: Response) => {
+    // Устанавливаем четкие заголовки для предотвращения перехвата Vite
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    
     console.log('Запрос на удаление API ключа пользователя:', { 
       url: req.url,
       params: req.params,
@@ -218,6 +236,13 @@ export function registerUserApiKeysRoutes(app: Application) {
    */
   app.post('/api/user-api-keys', async (req: Request, res: Response) => {
     try {
+      // Устанавливаем четкие заголовки для предотвращения перехвата Vite
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      
       // Проверяем, что пользователь авторизован
       console.log('Save User API Keys request received, req.user:', req.user ? 'exists' : 'undefined');
       
