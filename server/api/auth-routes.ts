@@ -155,6 +155,9 @@ export function registerAuthRoutes(app: Express): void {
   // Маршрут для проверки статуса администратора
   app.get('/api/auth/is-admin', async (req: Request, res: Response) => {
     try {
+      console.log('IS-ADMIN ROUTE CALLED');
+      // Указываем явно content-type как JSON
+      res.setHeader('Content-Type', 'application/json');
       // Добавляем заголовки для предотвращения кэширования
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -177,11 +180,20 @@ export function registerAuthRoutes(app: Express): void {
       
       const isAdmin = await isUserAdmin(req, token);
       log(`Результат проверки администратора: ${isAdmin}`, 'auth');
+      
       // Добавляем случайный параметр в ответ, чтобы предотвратить кэширование
-      res.status(200).json({ success: true, isAdmin, timestamp: Date.now() });
+      return res.status(200).json({ 
+        success: true, 
+        isAdmin, 
+        timestamp: Date.now() 
+      });
     } catch (error) {
       log(`Ошибка при проверке статуса администратора: ${error instanceof Error ? error.message : 'Unknown error'}`, 'auth');
-      res.status(500).json({ success: false, error: 'Произошла ошибка при проверке статуса администратора', timestamp: Date.now() });
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Произошла ошибка при проверке статуса администратора', 
+        timestamp: Date.now() 
+      });
     }
   });
 
