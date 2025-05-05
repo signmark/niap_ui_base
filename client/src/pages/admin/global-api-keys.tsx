@@ -614,15 +614,21 @@ export default function GlobalApiKeysPage() {
                         </span>
                       </td>
                       <td className="p-2 border text-center">
-                        <div className="flex justify-center items-center">
+                        <div className="flex justify-center items-center gap-2">
                           {updatingKeyId === key.id ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
                           ) : (
-                            <Switch
-                              checked={key.is_active}
-                              onCheckedChange={() => toggleKeyActive(key)}
-                              disabled={updatingKeyId !== null}
-                            />
+                            <>
+                              <Switch
+                                checked={key.is_active}
+                                onCheckedChange={() => toggleKeyActive(key)}
+                                disabled={updatingKeyId !== null}
+                                className="my-1.5"
+                              />
+                              <span className={`text-sm font-medium ${key.is_active ? 'text-green-600' : 'text-gray-400'}`}>
+                                {key.is_active ? 'Активен' : 'Отключен'}
+                              </span>
+                            </>
                           )}
                         </div>
                       </td>
