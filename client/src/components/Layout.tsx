@@ -19,6 +19,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
+  const checkIsAdmin = useAuthStore((state) => state.checkIsAdmin);
   const clearSelectedCampaign = useCampaignStore((state) => state.clearSelectedCampaign);
   
   // Используем хук проверки принадлежности кампании текущему пользователю
@@ -51,6 +53,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       }
     }
   }, [token, location, navigate, setAuth]);
+  
+  // Проверяем статус администратора при входе в систему
+  useEffect(() => {
+    if (token) {
+      // Проверяем права администратора
+      checkIsAdmin();
+    }
+  }, [token, checkIsAdmin]);
 
   const handleLogout = async () => {
     try {
@@ -132,14 +142,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {label}
                   </Button>
                 ))}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start sidebar-item"
-                  onClick={() => setIsSettingsOpen(true)}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Настройки
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start sidebar-item"
+                    onClick={() => setIsSettingsOpen(true)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Настройки
+                  </Button>
+                )}
               </div>
             </div>
             <div className="mt-auto p-4">
@@ -174,14 +186,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {label}
                   </Button>
                 ))}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start sidebar-item"
-                  onClick={() => setIsSettingsOpen(true)}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Настройки
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start sidebar-item"
+                    onClick={() => setIsSettingsOpen(true)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Настройки
+                  </Button>
+                )}
               </div>
             </div>
             <div className="mt-auto p-4">
