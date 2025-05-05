@@ -9,6 +9,10 @@ import { directusCrud } from './services/directus-crud';
 import { directusApiManager } from './directus';
 import { ApiServiceName } from './services/api-keys';
 
+// Массив email адресов пользователей, которые должны иметь административные привилегии
+// Это может служить альтернативой для поля is_smm_admin в Directus
+const ADMIN_EMAILS = ['lbrspb@gmail.com', 'lbr.spb@gmail.com']; 
+
 /**
  * Проверяет, является ли пользователь администратором SMM
  * @param req Объект запроса Express
@@ -37,25 +41,46 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
       return false;
     }
 
-    // Проверяем, является ли пользователь администратором
-    // Добавляем расширенную проверку с приведением к булевому типу
-    const isSmmAdmin = currentUser.is_smm_admin === true || currentUser.is_smm_admin === 1;
-    // Также проверяем роль администратора в Directus
+    // Выводим все данные пользователя для отладки
+    console.log('User data for admin check:', {
+      email: currentUser.email,
+      is_smm_admin: currentUser.is_smm_admin,
+      role: currentUser.role?.name,
+      roleName: currentUser.role?.name,
+      roleAdmin: currentUser.role?.admin_access,
+    });
+
+    // 1. Проверяем поле is_smm_admin
+    const isSmmAdmin = currentUser.is_smm_admin === true || 
+                       currentUser.is_smm_admin === 1 || 
+                       currentUser.is_smm_admin === '1' || 
+                       currentUser.is_smm_admin === 'true';
+    
+    // 2. Проверяем роль администратора в Directus
     const isDirectusAdmin = currentUser.role && (
       currentUser.role.name === 'Admin' || 
+      currentUser.role.name === 'Administrator' || 
       currentUser.role.admin_access === true || 
-      currentUser.role.admin_access === 1
+      currentUser.role.admin_access === 1 ||
+      currentUser.role.admin_access === '1' ||
+      currentUser.role.admin_access === 'true'
     );
 
-    // Итоговый результат - пользователь является администратором SMM или администратором Directus
-    const isAdmin = isSmmAdmin || isDirectusAdmin;
+    // 3. Проверяем через массив электронных адресов администраторов
+    const isAdminByEmail = ADMIN_EMAILS.includes(currentUser.email);
 
-    log(`Пользователь ${currentUser.email}: итоговый статус админа = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}, значение admin_access = ${currentUser.role?.admin_access}`, 'admin');
-    
-    // Выводим дополнительную информацию для отладки
-    console.log(`Тип значения is_smm_admin:`, typeof currentUser.is_smm_admin);
-    console.log(`Значение is_smm_admin:`, currentUser.is_smm_admin);
-    console.log(`Итоговый статус админа:`, isAdmin);
+    // Итоговый результат - пользователь является администратором по любому из признаков
+    const isAdmin = isSmmAdmin || isDirectusAdmin || isAdminByEmail;
+
+    // Выводим логи для каждого метода проверки
+    console.log('Admin check results:', { 
+      isSmmAdmin, 
+      isDirectusAdmin, 
+      isAdminByEmail,
+      finalResult: isAdmin 
+    });
+
+    log(`Пользователь ${currentUser.email}: итоговый статус админа = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}, тип: ${typeof currentUser.is_smm_admin}. Роль = ${currentUser.role?.name}`, 'admin');
     
     return isAdmin;
   } catch (error) {
