@@ -55,23 +55,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [token, location, navigate, setAuth]);
   
   // Проверяем статус администратора при входе в систему
+  // Используем только token как зависимость, чтобы избежать циклических перерисовок
   useEffect(() => {
     if (token) {
       // Проверяем права администратора
       console.log('Layout компонент: Запускаем проверку статуса администратора');
+      console.log('Layout компонент: Текущий статус isAdmin =', isAdmin);
       checkIsAdmin().then(result => {
         console.log('Layout компонент: Результат проверки isAdmin =', result);
         console.log('Layout компонент: Текущее состояние isAdmin в store =', isAdmin);
-        
-        // Принудительная перерисовка компонента для обновления UI после изменения статуса
-        if (result !== isAdmin) {
-          console.log('Layout компонент: Обнаружено несоответствие значения isAdmin. Ожидается обновление UI.');
-        }
       }).catch(error => {
         console.error('Layout компонент: Ошибка при проверке статуса администратора:', error);
       });
     }
-  }, [token, checkIsAdmin, isAdmin]);
+  }, [token]);
+
+  // Дополнительный эффект для отображения статуса isAdmin в консоли
+  useEffect(() => {
+    console.log('Layout компонент: Изменение статуса isAdmin =', isAdmin);
+  }, [isAdmin]);
 
   const handleLogout = async () => {
     try {
@@ -100,6 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user_id');
+      localStorage.removeItem('is_admin'); // Очищаем статус админа при выходе
       
       // Очищаем состояние авторизации в store
       setAuth(null, null);
@@ -126,6 +129,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/posts", label: "Публикации", icon: Calendar },
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
+
+  console.log('Layout рендер: isAdmin =', isAdmin); // Добавлен лог для отладки
 
   return (
     <ThemeProvider>
@@ -244,6 +249,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Добавляем переключатель темы в правую часть топ-бара */}
             <div className="flex items-center">
               <ThemeSwitcher />
+              {/* Для отладки: отображаем статус админа */}
+              <span className="ml-2 text-xs opacity-50">Admin: {isAdmin ? 'Yes' : 'No'}</span>
             </div>
           </div>
           <main className="flex-1 p-4 lg:p-8">{children}</main>
