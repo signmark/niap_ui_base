@@ -223,13 +223,17 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
               <div>
                 <Label htmlFor="sources_textarea">Введите URL источников (по одному в строке)</Label>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Формат: один URL в строке, или <strong>название|URL</strong> для указания названия
+                  Формат: один URL в строке, или <strong>название|URL</strong> для указания названия.
+                  <br />Каждый источник должен быть на новой строке.
                 </p>
                 <Textarea
                   id="sources_textarea"
                   value={sourceText}
                   onChange={(e) => setSourceText(e.target.value)}
-                  placeholder="https://t.me/channel_name\nhttps://vk.com/group_name\nНазвание канала|https://t.me/another_channel"
+                  placeholder="https://t.me/channel1
+t.me/channel2
+vk.com/group_name
+Телеграм канал|https://t.me/mychannel"
                   className="min-h-[200px]"
                 />
               </div>
@@ -267,6 +271,12 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
                 <AlertDescription>
                   Загрузите текстовый файл (CSV или TXT) со списком URL источников. 
                   Каждый URL должен быть на новой строке. Формат каждой строки: URL или название|URL
+                  <br /><br />Пример содержимого файла:<br />
+                  <code>
+                    https://t.me/channel1<br />
+                    t.me/channel2<br />
+                    Телеграм канал|https://t.me/mychannel<br />
+                  </code>
                 </AlertDescription>
               </Alert>
               
