@@ -59,7 +59,9 @@ export function registerUserApiKeysRoutes(app: Application) {
   app.get('/api/user-api-keys', async (req: Request, res: Response) => {
     try {
       // Устанавливаем четкие заголовки для предотвращения перехвата Vite
-      res.setHeader('Content-Type', 'application/json');
+      res.type('application/json');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
@@ -136,7 +138,9 @@ export function registerUserApiKeysRoutes(app: Application) {
    */
   app.delete('/api/user-api-keys/:id', async (req: Request, res: Response) => {
     // Устанавливаем четкие заголовки для предотвращения перехвата Vite
-    res.setHeader('Content-Type', 'application/json');
+    res.type('application/json');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -237,7 +241,9 @@ export function registerUserApiKeysRoutes(app: Application) {
   app.post('/api/user-api-keys', async (req: Request, res: Response) => {
     try {
       // Устанавливаем четкие заголовки для предотвращения перехвата Vite
-      res.setHeader('Content-Type', 'application/json');
+      res.type('application/json');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
