@@ -1,16 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as logger from '../utils/logger';
 
-// Условный импорт SocksProxyAgent для обеспечения работы даже если библиотека не установлена
-let SocksProxyAgent: any = null;
-try {
-  // Динамический импорт
-  SocksProxyAgent = require('socks-proxy-agent').SocksProxyAgent;
-  logger.log('[gemini-proxy] SOCKS5 прокси модуль успешно импортирован', 'gemini');
-} catch (error) {
-  logger.error(`[gemini-proxy] Ошибка импорта SOCKS5 прокси модуля: ${(error as Error).message}. Прокси не будет использоваться.`, 'gemini');
-}
-
 
 interface GeminiProxyOptions {
   apiKey: string;
