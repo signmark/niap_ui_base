@@ -127,13 +127,35 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
         let name = '';
         let cleanUrl = url;
 
+        // Проверяем на правильный формат название|url
         if (url.includes('|')) {
           const parts = url.split('|');
-          name = parts[0].trim();
-          cleanUrl = parts[1].trim();
+          if (parts.length === 2) {
+            name = parts[0].trim();
+            cleanUrl = parts[1].trim();
+          } else {
+            // Если формат некорректный, используем весь URL
+            cleanUrl = url.trim();
+          }
         }
 
-        // Проверка, является ли строка URL
+        // Убираем некорректные префиксы 'https://' или 'http://' в начале имени
+        if (name.toLowerCase().startsWith('https://') || name.toLowerCase().startsWith('http://')) {
+          name = '';
+        }
+
+        // Базовая валидация URL - проверяем наличие хотя бы одной точки и отсутствие пробелов
+        if (!cleanUrl.includes('.') || cleanUrl.includes(' ')) {
+          results.push({
+            url: url.trim(),
+            name: name || url.trim(),
+            success: false,
+            message: 'Некорректный URL-адрес'
+          });
+          continue;
+        }
+        
+        // Проверка, является ли строка URL и добавляем протокол если нужно
         if (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https')) {
           cleanUrl = 'https://' + cleanUrl;
         }
@@ -345,7 +367,7 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
               <div key={index} className={`flex items-start gap-2 p-2 border-b last:border-0 ${result.success ? 'text-green-600' : 'text-red-600'}`}>
                 {result.success ? <Check className="h-4 w-4 mt-0.5" /> : <AlertCircle className="h-4 w-4 mt-0.5" />}
                 <div>
-                  <div className="text-sm font-medium">{result.name}</div>
+                  <div className="text-sm font-medium">{result.name || result.url.split('/')[result.url.split('/').length > 2 ? 2 : 0]}</div>
                   <div className="text-xs break-all">{result.url}</div>
                   {!result.success && result.message && (
                     <div className="text-xs text-muted-foreground mt-1">{result.message}</div>
