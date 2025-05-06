@@ -123,16 +123,16 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
         const url = source.trim();
         if (!url) continue;
 
-        // Попытка получить название из формата "название|url"
+        // Попытка получить название из формата "url|название"
         let name = '';
         let cleanUrl = url;
 
-        // Проверяем на правильный формат название|url
+        // Проверяем на правильный формат url|название
         if (url.includes('|')) {
           const parts = url.split('|');
           if (parts.length === 2) {
-            name = parts[0].trim();
-            cleanUrl = parts[1].trim();
+            cleanUrl = parts[0].trim();
+            name = parts[1].trim();
           } else {
             // Если формат некорректный, используем весь URL
             cleanUrl = url.trim();
