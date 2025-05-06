@@ -31,24 +31,36 @@ geminiTestRouter.get('/test', async (req, res) => {
 // Тест улучшения текста
 geminiTestRouter.post('/improve-text', async (req, res) => {
   try {
-    const { text, prompt } = req.body;
+    logger.log('[gemini-routes] Received improve-text request from user ' + (req.user?.id || 'undefined'));
+    
+    const { text } = req.body;
     
     if (!text) {
-      return res.status(400).json({ success: false, message: 'Текст отсутствует в запросе' });
+      logger.log('[gemini-routes] Missing text in improve-text request');
+      return res.status(400).json({ success: false, error: 'Текст отсутствует в запросе' });
     }
     
     logger.log('[gemini-test] Улучшение текста через Gemini API...');
     
-    const improvedText = await geminiService.improveText({
-      text,
-      prompt: prompt || 'Улучши этот текст, сделав его более интересным и профессиональным',
-      model: 'gemini-1.5-flash'
-    });
+    const defaultPrompt = `Сделай этот текст более интересным и профессиональным.
+
+Важно: 
+1. Ответ должен содержать ТОЛЬКО улучшенный текст, без объяснений и кодовых блоков.
+2. Не заключай ответ в кавычки, теги code или markdown-разметку.
+3. Ответ должен начинаться сразу с первой буквы улучшенного текста.
+
+Вот текст для улучшения:
+
+${text}`;
+    
+    // Запускаем запрос к Gemini API
+    const model = 'gemini-1.5-flash';
+    const result = await geminiService.generateText(defaultPrompt, model);
     
     logger.log('[gemini-test] Текст успешно улучшен');
-    return res.status(200).json({ success: true, originalText: text, improvedText });
+    return res.status(200).json({ success: true, originalText: text, improvedText: result });
   } catch (error) {
     logger.error('[gemini-test] Ошибка при улучшении текста:', error);
-    return res.status(500).json({ success: false, message: `Ошибка при улучшении текста: ${(error as Error).message}` });
+    return res.status(500).json({ success: false, error: `Ошибка при улучшении текста: ${(error as Error).message}` });
   }
 });

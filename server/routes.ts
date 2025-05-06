@@ -2938,6 +2938,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/analytics', analyticsRouter);
   console.log('Analytics routes registered successfully');
   
+  // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
+  app.use('/api/gemini', geminiTestRouter);
+  console.log('Gemini API test routes registered successfully');
+  
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
