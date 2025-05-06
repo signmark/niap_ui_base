@@ -1,0 +1,1767 @@
+smm-1  | 
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  | 
+smm-1  | Global API Keys Service initialized
+smm-1  | API Key Service initialized
+smm-1  | DeepSeek service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | Perplexity service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | 12:35:37 PM [fal-ai] FalAiClient создан
+smm-1  | 12:35:37 PM [gemini] [gemini-proxy] Инициализирован SOCKS5 прокси: socks5://vf8Fe7:***@131.108.17.21:9271
+smm-1  | 12:35:37 PM [imgur-uploader] ImgurUploaderService инициализирован
+smm-1  | 12:35:38 PM [beget-s3-storage] Beget S3 Storage service initialized
+smm-1  | 12:35:38 PM [directus-auth] DirectusAuthManager initialized
+smm-1  | 12:35:38 PM [directus-auth] Session refresh interval started (300000ms)
+smm-1  | 12:35:38 PM [directus-storage] DirectusStorageAdapter initialized
+smm-1  | 12:35:38 PM [beget-s3-api] Created temporary directory for S3 uploads: /tmp/beget-s3-uploads
+smm-1  | 12:35:38 PM [beget-s3-video-api] Created temporary directory for video uploads: /tmp/beget-s3-video-uploads
+smm-1  | 12:35:38 PM [express] Global API keys routes registered early to avoid Vite middleware interception
+smm-1  | 12:35:38 PM [api-keys-routes] Маршруты для работы с личными API ключами успешно зарегистрированы
+smm-1  | 12:35:38 PM [express] User API keys routes registered early to avoid Vite middleware interception
+smm-1  | === SERVER INITIALIZATION START ===
+smm-1  | 12:35:38 PM [express] Starting server initialization...
+smm-1  | Registering test API routes...
+smm-1  | 12:35:38 PM [express] Registering test API routes first...
+smm-1  | Test API routes registered
+smm-1  | 12:35:38 PM [express] Test API routes registered successfully
+smm-1  | Registering Claude AI routes...
+smm-1  | 12:35:38 PM [express] Registering Claude AI routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude AI routes registered
+smm-1  | 12:35:38 PM [express] Claude AI routes registered successfully
+smm-1  | Registering DeepSeek routes...
+smm-1  | 12:35:38 PM [express] Registering DeepSeek routes...
+smm-1  | DeepSeek routes registered
+smm-1  | 12:35:38 PM [express] DeepSeek routes registered successfully
+smm-1  | Registering Qwen routes...
+smm-1  | 12:35:38 PM [express] Registering Qwen routes...
+smm-1  | Qwen routes registered
+smm-1  | 12:35:38 PM [express] Qwen routes registered successfully
+smm-1  | Registering Gemini routes...
+smm-1  | 12:35:38 PM [express] Registering Gemini routes...
+smm-1  | API Key Service initialized
+smm-1  | 12:35:38 PM [gemini] Gemini routes registered successfully
+smm-1  | Gemini routes registered
+smm-1  | 12:35:38 PM [express] Gemini routes registered successfully
+smm-1  | 12:35:38 PM [express] Registering routes...
+smm-1  | Starting route registration...
+smm-1  | API Key Service initialized
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | [express] FAL.AI redirect routes registered
+smm-1  | Starting route registration...
+smm-1  | Creating HTTP server...
+smm-1  | HTTP server created successfully
+smm-1  | Registering validation routes...
+smm-1  | 12:35:38 PM [api-validation] API валидационные маршруты зарегистрированы
+smm-1  | Registering direct webhook routes for social platforms...
+smm-1  | Social publishing router registered successfully
+smm-1  | Registering publishing routes...
+smm-1  | [publishing-routes] Регистрация маршрутов управления публикациями...
+smm-1  | API routes registered successfully
+smm-1  | Registering analytics routes...
+smm-1  | Analytics routes registered successfully
+smm-1  | Gemini API test routes registered successfully
+smm-1  | Регистрация тестового маршрута для Instagram
+smm-1  | Тестовый маршрут для Instagram зарегистрирован
+smm-1  | 12:35:38 PM [express] Тестовый маршрут для Instagram карусели зарегистрирован
+smm-1  | Test Instagram routes registered
+smm-1  | Social platform webhook routes registered successfully
+smm-1  | 12:35:38 PM [token-routes] Регистрация маршрутов для работы с админским токеном...
+smm-1  | 12:35:38 PM [token-routes] Маршруты для работы с админским токеном зарегистрированы
+smm-1  | 12:35:38 PM [scheduler] Запуск планировщика публикаций
+smm-1  | 12:35:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:35:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:35:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:35:38 PM [status-checker] Запуск сервиса проверки статусов публикаций (интервал: 1 минут)
+smm-1  | 12:35:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:35:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:35:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:38 PM [status-checker] Следующая проверка статусов через 1 минуту
+smm-1  | Route registration completed
+smm-1  | 12:35:38 PM [express] Registering XMLRiver API routes...
+smm-1  | 12:35:38 PM [express] XMLRiver API routes registered successfully
+smm-1  | 12:35:38 PM [express] Registering FAL.AI Universal Image Generation routes...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | 12:35:38 PM [express] FAL.AI Universal Image Generation routes registered successfully
+smm-1  | 12:35:38 PM [express] Registering Imgur Uploader routes...
+smm-1  | Imgur routes registered
+smm-1  | 12:35:38 PM [express] Imgur Uploader routes registered successfully
+smm-1  | 12:35:38 PM [express] Registering DeepSeek Models route...
+smm-1  | 12:35:38 PM [express] DeepSeek Models route registered successfully
+smm-1  | 12:35:38 PM [express] Registering Beget S3 routes...
+smm-1  | 12:35:38 PM [beget-s3-routes] Registering Beget S3 storage routes...
+smm-1  | 12:35:38 PM [beget-s3-routes] Beget S3 basic storage routes registered
+smm-1  | 12:35:38 PM [beget-s3-routes] Beget S3 video routes registered
+smm-1  | 12:35:38 PM [beget-s3-routes] All Beget S3 routes registered successfully
+smm-1  | 12:35:38 PM [express] Beget S3 routes registered successfully
+smm-1  | 12:35:38 PM [express] User API keys routes already registered early
+smm-1  | Route registration completed
+smm-1  | 12:35:38 PM [express] Routes registered successfully
+smm-1  | 12:35:38 PM [express] Setting up Vite in development mode...
+smm-1  | 12:35:38 PM [imgur-uploader] Временная директория создана: /app/uploads/temp
+smm-1  | Директория для загрузки изображений создана: /app/uploads/images
+smm-1  | 12:35:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:35:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:35:38 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:35:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:35:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:38 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:38 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:38 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:35:38 PM [express] Vite setup completed
+smm-1  | === STARTING SERVER ON PORT 5000 ===
+smm-1  | 12:35:38 PM [express] Attempting to start server on port 5000...
+smm-1  | === SERVER SUCCESSFULLY STARTED ON PORT 5000 ===
+smm-1  | 12:35:38 PM [express] Server successfully started on port 5000
+smm-1  | === SERVER URL: http://0.0.0.0:5000 ===
+smm-1  | 12:35:38 PM [express] Начало инициализации тяжелых сервисов после успешного запуска сервера...
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/auth/login', method: 'post', params: undefined }
+smm-1  | }
+smm-1  | Ошибка при получении токена системного администратора: AxiosError: connect ECONNREFUSED 45.130.212.62:443
+smm-1  |     at AxiosError.from (file:///app/node_modules/axios/lib/core/AxiosError.js:92:14)
+smm-1  |     at RedirectableRequest.handleRequestError (file:///app/node_modules/axios/lib/adapters/http.js:620:25)
+smm-1  |     at RedirectableRequest.emit (node:events:517:28)
+smm-1  |     at eventHandlers.<computed> (/app/node_modules/follow-redirects/index.js:49:24)
+smm-1  |     at ClientRequest.emit (node:events:517:28)
+smm-1  |     at TLSSocket.socketErrorListener (node:_http_client:501:9)
+smm-1  |     at TLSSocket.emit (node:events:517:28)
+smm-1  |     at emitErrorNT (node:internal/streams/destroy:151:8)
+smm-1  |     at emitErrorCloseNT (node:internal/streams/destroy:116:3)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+smm-1  |     at Axios.request (file:///app/node_modules/axios/lib/core/Axios.js:45:41)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at GlobalApiKeysService.getSystemToken (/app/server/services/global-api-keys.ts:125:24)
+smm-1  |     at GlobalApiKeysService.refreshCache (/app/server/services/global-api-keys.ts:71:27) {
+smm-1  |   port: 443,
+smm-1  |   address: '45.130.212.62',
+smm-1  |   syscall: 'connect',
+smm-1  |   code: 'ECONNREFUSED',
+smm-1  |   errno: -111,
+smm-1  |   config: {
+smm-1  |     transitional: {
+smm-1  |       silentJSONParsing: true,
+smm-1  |       forcedJSONParsing: true,
+smm-1  |       clarifyTimeoutError: false
+smm-1  |     },
+smm-1  |     adapter: [ 'xhr', 'http', 'fetch' ],
+smm-1  |     transformRequest: [ [Function: transformRequest] ],
+smm-1  |     transformResponse: [ [Function: transformResponse] ],
+smm-1  |     timeout: 0,
+smm-1  |     xsrfCookieName: 'XSRF-TOKEN',
+smm-1  |     xsrfHeaderName: 'X-XSRF-TOKEN',
+smm-1  |     maxContentLength: -1,
+smm-1  |     maxBodyLength: -1,
+smm-1  |     env: { FormData: [Function [FormData]], Blob: [class Blob] },
+smm-1  |     validateStatus: [Function: validateStatus],
+smm-1  |     headers: Object [AxiosHeaders] {
+smm-1  |       Accept: 'application/json, text/plain, */*',
+smm-1  |       'Content-Type': 'application/json',
+smm-1  |       'User-Agent': 'axios/1.8.4',
+smm-1  |       'Content-Length': '50',
+smm-1  |       'Accept-Encoding': 'gzip, compress, deflate, br'
+smm-1  |     },
+smm-1  |     baseURL: 'https://directus.nplanner.ru',
+smm-1  |     method: 'post',
+smm-1  |     url: '/auth/login',
+smm-1  |     data: '{"email":"lbrspb@gmail.com","password":"QtpZ3dh7"}',
+smm-1  |     allowAbsoluteUrls: true
+smm-1  |   },
+smm-1  |   request: <ref *1> Writable {
+smm-1  |     _writableState: WritableState {
+smm-1  |       objectMode: false,
+smm-1  |       highWaterMark: 16384,
+smm-1  |       finalCalled: false,
+smm-1  |       needDrain: false,
+smm-1  |       ending: false,
+smm-1  |       ended: false,
+smm-1  |       finished: false,
+smm-1  |       destroyed: false,
+smm-1  |       decodeStrings: true,
+smm-1  |       defaultEncoding: 'utf8',
+smm-1  |       length: 0,
+smm-1  |       writing: false,
+smm-1  |       corked: 0,
+smm-1  |       sync: true,
+smm-1  |       bufferProcessing: false,
+smm-1  |       onwrite: [Function: bound onwrite],
+smm-1  |       writecb: null,
+smm-1  |       writelen: 0,
+smm-1  |       afterWriteTickInfo: null,
+smm-1  |       buffered: [],
+smm-1  |       bufferedIndex: 0,
+smm-1  |       allBuffers: true,
+smm-1  |       allNoop: true,
+smm-1  |       pendingcb: 0,
+smm-1  |       constructed: true,
+smm-1  |       prefinished: false,
+smm-1  |       errorEmitted: false,
+smm-1  |       emitClose: true,
+smm-1  |       autoDestroy: true,
+smm-1  |       errored: null,
+smm-1  |       closed: false,
+smm-1  |       closeEmitted: false,
+smm-1  |       [Symbol(kOnFinished)]: []
+smm-1  |     },
+smm-1  |     _events: [Object: null prototype] {
+smm-1  |       response: [Function: handleResponse],
+smm-1  |       error: [Function: handleRequestError],
+smm-1  |       socket: [Function: handleRequestSocket]
+smm-1  |     },
+smm-1  |     _eventsCount: 3,
+smm-1  |     _maxListeners: undefined,
+smm-1  |     _options: {
+smm-1  |       maxRedirects: 21,
+smm-1  |       maxBodyLength: Infinity,
+smm-1  |       protocol: 'https:',
+smm-1  |       path: '/auth/login',
+smm-1  |       method: 'POST',
+smm-1  |       headers: [Object: null prototype],
+smm-1  |       agents: [Object],
+smm-1  |       auth: undefined,
+smm-1  |       family: undefined,
+smm-1  |       beforeRedirect: [Function: dispatchBeforeRedirect],
+smm-1  |       beforeRedirects: [Object],
+smm-1  |       hostname: 'directus.nplanner.ru',
+smm-1  |       port: '',
+smm-1  |       agent: undefined,
+smm-1  |       nativeProtocols: [Object],
+smm-1  |       pathname: '/auth/login'
+smm-1  |     },
+smm-1  |     _ended: false,
+smm-1  |     _ending: true,
+smm-1  |     _redirectCount: 0,
+smm-1  |     _redirects: [],
+smm-1  |     _requestBodyLength: 50,
+smm-1  |     _requestBodyBuffers: [ [Object] ],
+smm-1  |     _onNativeResponse: [Function (anonymous)],
+smm-1  |     _currentRequest: ClientRequest {
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 7,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       outputData: [],
+smm-1  |       outputSize: 0,
+smm-1  |       writable: true,
+smm-1  |       destroyed: false,
+smm-1  |       _last: true,
+smm-1  |       chunkedEncoding: false,
+smm-1  |       shouldKeepAlive: false,
+smm-1  |       maxRequestsOnConnectionReached: false,
+smm-1  |       _defaultKeepAlive: true,
+smm-1  |       useChunkedEncodingByDefault: true,
+smm-1  |       sendDate: false,
+smm-1  |       _removedConnection: false,
+smm-1  |       _removedContLen: false,
+smm-1  |       _removedTE: false,
+smm-1  |       strictContentLength: false,
+smm-1  |       _contentLength: '50',
+smm-1  |       _hasBody: true,
+smm-1  |       _trailer: '',
+smm-1  |       finished: false,
+smm-1  |       _headerSent: true,
+smm-1  |       _closed: false,
+smm-1  |       socket: [TLSSocket],
+smm-1  |       _header: 'POST /auth/login HTTP/1.1\r\n' +
+smm-1  |         'Accept: application/json, text/plain, */*\r\n' +
+smm-1  |         'Content-Type: application/json\r\n' +
+smm-1  |         'User-Agent: axios/1.8.4\r\n' +
+smm-1  |         'Content-Length: 50\r\n' +
+smm-1  |         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+smm-1  |         'Host: directus.nplanner.ru\r\n' +
+smm-1  |         'Connection: close\r\n' +
+smm-1  |         '\r\n',
+smm-1  |       _keepAliveTimeout: 0,
+smm-1  |       _onPendingData: [Function: nop],
+smm-1  |       agent: [Agent],
+smm-1  |       socketPath: undefined,
+smm-1  |       method: 'POST',
+smm-1  |       maxHeaderSize: undefined,
+smm-1  |       insecureHTTPParser: undefined,
+smm-1  |       joinDuplicateHeaders: undefined,
+smm-1  |       path: '/auth/login',
+smm-1  |       _ended: false,
+smm-1  |       res: null,
+smm-1  |       aborted: false,
+smm-1  |       timeoutCb: null,
+smm-1  |       upgradeOrConnect: false,
+smm-1  |       parser: null,
+smm-1  |       maxHeadersCount: null,
+smm-1  |       reusedSocket: false,
+smm-1  |       host: 'directus.nplanner.ru',
+smm-1  |       protocol: 'https:',
+smm-1  |       _redirectable: [Circular *1],
+smm-1  |       [Symbol(kCapture)]: false,
+smm-1  |       [Symbol(kBytesWritten)]: 0,
+smm-1  |       [Symbol(kNeedDrain)]: false,
+smm-1  |       [Symbol(corked)]: 0,
+smm-1  |       [Symbol(kOutHeaders)]: [Object: null prototype],
+smm-1  |       [Symbol(errored)]: null,
+smm-1  |       [Symbol(kHighWaterMark)]: 16384,
+smm-1  |       [Symbol(kRejectNonStandardBodyWrites)]: false,
+smm-1  |       [Symbol(kUniqueHeaders)]: null
+smm-1  |     },
+smm-1  |     _currentUrl: 'https://directus.nplanner.ru/auth/login',
+smm-1  |     [Symbol(kCapture)]: false
+smm-1  |   },
+smm-1  |   cause: Error: connect ECONNREFUSED 45.130.212.62:443
+smm-1  |       at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+smm-1  |       at __node_internal_exceptionWithHostPort (node:internal/errors:671:12)
+smm-1  |       at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1555:16) {
+smm-1  |     errno: -111,
+smm-1  |     code: 'ECONNREFUSED',
+smm-1  |     syscall: 'connect',
+smm-1  |     address: '45.130.212.62',
+smm-1  |     port: 443
+smm-1  |   }
+smm-1  | }
+smm-1  | Не удалось получить системный токен для обновления кэша глобальных API ключей
+smm-1  | 12:35:40 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:40 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:40 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:35:40 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:40 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:40 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:40 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:40 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:35:40 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:35:40 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:35:40 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:35:40 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:35:40 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:35:40 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:35:48 PM [express] Запуск планировщика аналитики...
+smm-1  | 12:35:48 PM [express] [analytics-scheduler] Запуск планировщика аналитики на 5/7/2025, 8:00:00 AM. Времени до запуска: 1164 минут
+smm-1  | 12:35:48 PM [express] Планировщик аналитики успешно запущен
+smm-1  | 12:35:48 PM [express] Все тяжелые сервисы успешно инициализированы
+smm-1  | 12:35:53 PM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID 1cf8078e-c280-4aee-9f86-01fc89c2f976
+smm-1  | 12:35:53 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:53 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:35:53 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:35:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:35:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:35:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:35:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:35:58 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:35:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:58 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:35:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:35:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:35:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:35:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:35:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:35:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:35:58 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:35:58 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:35:58 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:35:58 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:35:58 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:35:58 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:36:16 PM [status-checker] Ошибка при авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:16 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:36:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:36:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:36:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:36:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:18 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:18 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:18 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:18 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:18 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:36:37 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:36:37 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:36:37 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:36:37 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:37 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:37 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:37 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:37 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:37 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:37 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:36:37 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:36:37 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:36:37 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:36:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:36:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:36:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:36:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:36:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:36:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:40 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:40 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:40 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:40 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:40 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:40 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:40 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:40 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:40 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:40 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:40 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:36:40 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:36:40 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:36:40 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:36:40 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:40 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:36:40 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:36:40 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:36:40 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:36:47 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:36:47 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:36:47 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:36:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:36:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:36:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:36:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:36:59 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:59 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:59 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:59 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:59 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:36:59 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:36:59 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:59 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:59 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:36:59 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:36:59 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:36:59 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:36:59 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:36:59 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:37:01 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:01 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:01 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:01 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:01 PM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить токен администратора
+smm-1  | 12:37:03 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:03 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:03 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:03 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:03 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:14 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:14 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:14 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:37:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:37:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:37:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:37:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:18 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:18 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:37:18 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:18 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:18 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:18 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:18 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:18 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:37 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:37 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:37 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:37:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:37:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:37:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:37:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:37:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:37:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:38 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:38 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:38 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:38 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:38 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:37:42 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:42 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:37:42 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:42 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:42 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:42 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:42 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:42 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:43 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:43 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:43 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:37:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:37:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:37:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:37:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:37:58 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:37:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:58 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:58 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:58 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:37:59 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:59 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:37:59 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:37:59 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:59 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:59 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:37:59 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:37:59 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:37:59 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:37:59 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:37:59 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:38:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:38:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:38:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:38:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:19 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:19 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:38:19 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:19 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:19 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:19 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:19 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:19 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:38:23 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:23 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:38:23 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:23 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:23 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:23 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:23 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:23 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:38:23 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:38:23 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:38:23 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:38:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:38:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:38:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:38:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:38:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:38:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:39 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:39 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:40 PM [status-checker] Ошибка при авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:40 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:38:41 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:41 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:38:41 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:41 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:41 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:38:41 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:41 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:41 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:41 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:38:41 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:41 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:38:41 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:41 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:41 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:41 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:41 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:38:41 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:38:41 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:38:41 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:38:43 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:38:43 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:38:43 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:38:54 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ETIMEDOUT 45.130.212.62:443
+smm-1  | 12:38:54 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ETIMEDOUT 45.130.212.62:443
+smm-1  | 12:38:54 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:56 PM [status-checker] Ошибка при авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:56 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:38:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:38:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:38:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:38:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:38:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:38:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:38:59 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:59 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:59 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:38:59 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:38:59 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:38:59 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:38:59 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:38:59 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:39:05 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:05 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:39:05 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:39:05 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:39:05 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:39:05 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:39:05 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:39:05 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:39:05 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:39:05 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:39:05 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:39:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:39:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:39:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:39:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:20 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:20 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:39:20 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:39:23 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:39:23 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:39:23 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:39:23 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:39:23 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:39:23 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:39:23 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:39:23 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:23 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:39:23 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:39:23 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:39:23 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:39:23 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:39:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:39:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:39:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:39:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:39:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:39:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:39:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:39:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:39:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:39:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:38 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:38 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:39:38 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:39:38 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:39:38 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:39:38 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:39:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:39:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:39:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:39:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:39:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:39:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:39:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:03 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:03 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:03 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:03 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:03 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:40:03 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:03 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:03 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:03 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:03 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:03 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:40:08 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:08 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:08 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:08 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:08 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:40:14 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:14 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:14 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:14 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:14 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:14 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:14 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:14 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:14 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:14 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:14 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:15 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:15 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:15 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:40:15 PM [status-checker] Ошибка при авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:15 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:15 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:15 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:15 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:40:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:40:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:40:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:40:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:20 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:20 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:20 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:20 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:20 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:20 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:20 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:20 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:22 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:22 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:22 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:32 PM [scheduler] Статический токен недействителен: connect ETIMEDOUT 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:32 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:32 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:40:38 PM [directus-auth] Checking for expiring sessions
+smm-1  | 12:40:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:40:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:40:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:40:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:40:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:40:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:38 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:38 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:38 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:40:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:39 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:39 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:39 PM [status-checker] Ошибка при авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:40:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:39 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:39 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:41 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:41 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:41 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:40:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:40:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:40:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:40:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:40:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:40:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:40:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:40:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:40:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:40:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:40:58 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:40:58 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:40:58 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:41:00 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:00 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:00 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:00 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:00 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:00 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:00 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:00 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:41:00 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:41:00 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:41:00 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:41:14 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:41:14 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:41:14 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:41:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:41:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:41:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:41:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:18 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:18 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:18 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:18 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:18 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:41:18 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:41:18 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:41:18 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:41:20 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:20 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:20 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:20 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:20 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:41:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:41:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:41:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:41:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:41:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:41:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:38 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:38 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:38 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:38 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:41:39 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:39 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:39 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:39 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:39 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:41:39 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:39 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:41:49 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:49 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:49 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:49 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:49 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:49 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:49 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:49 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:41:49 PM [scheduler] Статический токен недействителен: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:41:49 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:41:49 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:41:56 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:41:56 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:41:56 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:41:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:41:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:41:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:41:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:41:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:41:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:41:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:41:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:41:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:42:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:42:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:42:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:42:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:25 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:25 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:25 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:25 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:25 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:25 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:30 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:30 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:42:30 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:30 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:30 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:30 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:30 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:30 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:42:31 PM [scheduler] Ошибка при прямой авторизации администратора: connect ETIMEDOUT 45.130.212.62:443
+smm-1  | 12:42:31 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:31 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:31 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:31 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:31 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:31 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:31 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:31 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:31 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:31 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:33 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:33 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:33 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:42:38 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:42:38 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:42:38 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:42:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:38 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:42:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:38 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:42:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:38 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:38 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:42:38 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:42:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:38 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:38 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:42:39 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:39 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:39 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:42:39 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:42:39 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:42:39 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:39 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:42 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:42 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:42 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:43 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:43 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:43 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:42:47 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:42:47 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:42:47 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:42:58 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:42:58 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:42:58 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:42:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:58 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:42:58 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:58 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:42:58 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:42:58 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:58 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:58 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:42:58 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:42:58 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:43:01 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:01 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:01 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:01 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:01 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:01 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:43:02 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:02 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:02 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:02 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:02 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:03 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:03 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:03 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:43:18 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:43:18 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:43:18 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:43:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:18 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:18 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:18 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:18 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:19 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:19 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:43:19 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:19 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:19 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:19 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:19 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:23 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:23 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:23 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:23 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:23 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:23 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | npm error path /app
+smm-1  | npm error command failed
+smm-1  | npm error signal SIGTERM
+smm-1  | npm error command sh -c tsx server/index.ts
+smm-1  | npm error A complete log of this run can be found in: /root/.npm/_logs/2025-05-06T12_35_32_289Z-debug-0.log
+smm-1  | 
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  | 
+smm-1  | Global API Keys Service initialized
+smm-1  | API Key Service initialized
+smm-1  | DeepSeek service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | Perplexity service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | 12:43:37 PM [fal-ai] FalAiClient создан
+smm-1  | 12:43:37 PM [gemini] [gemini-proxy] Инициализирован SOCKS5 прокси: socks5://vf8Fe7:***@131.108.17.21:9271
+smm-1  | 12:43:37 PM [imgur-uploader] ImgurUploaderService инициализирован
+smm-1  | 12:43:37 PM [beget-s3-storage] Beget S3 Storage service initialized
+smm-1  | 12:43:37 PM [directus-auth] DirectusAuthManager initialized
+smm-1  | 12:43:37 PM [directus-auth] Session refresh interval started (300000ms)
+smm-1  | 12:43:37 PM [directus-storage] DirectusStorageAdapter initialized
+smm-1  | 12:43:37 PM [express] Global API keys routes registered early to avoid Vite middleware interception
+smm-1  | 12:43:37 PM [api-keys-routes] Маршруты для работы с личными API ключами успешно зарегистрированы
+smm-1  | 12:43:37 PM [express] User API keys routes registered early to avoid Vite middleware interception
+smm-1  | === SERVER INITIALIZATION START ===
+smm-1  | 12:43:37 PM [express] Starting server initialization...
+smm-1  | Registering test API routes...
+smm-1  | 12:43:37 PM [express] Registering test API routes first...
+smm-1  | Test API routes registered
+smm-1  | 12:43:37 PM [express] Test API routes registered successfully
+smm-1  | Registering Claude AI routes...
+smm-1  | 12:43:37 PM [express] Registering Claude AI routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude AI routes registered
+smm-1  | 12:43:37 PM [express] Claude AI routes registered successfully
+smm-1  | Registering DeepSeek routes...
+smm-1  | 12:43:37 PM [express] Registering DeepSeek routes...
+smm-1  | DeepSeek routes registered
+smm-1  | 12:43:37 PM [express] DeepSeek routes registered successfully
+smm-1  | Registering Qwen routes...
+smm-1  | 12:43:37 PM [express] Registering Qwen routes...
+smm-1  | Qwen routes registered
+smm-1  | 12:43:37 PM [express] Qwen routes registered successfully
+smm-1  | Registering Gemini routes...
+smm-1  | 12:43:37 PM [express] Registering Gemini routes...
+smm-1  | API Key Service initialized
+smm-1  | 12:43:37 PM [gemini] Gemini routes registered successfully
+smm-1  | Gemini routes registered
+smm-1  | 12:43:37 PM [express] Gemini routes registered successfully
+smm-1  | 12:43:37 PM [express] Registering routes...
+smm-1  | Starting route registration...
+smm-1  | API Key Service initialized
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | [express] FAL.AI redirect routes registered
+smm-1  | Starting route registration...
+smm-1  | Creating HTTP server...
+smm-1  | HTTP server created successfully
+smm-1  | Registering validation routes...
+smm-1  | 12:43:37 PM [api-validation] API валидационные маршруты зарегистрированы
+smm-1  | Registering direct webhook routes for social platforms...
+smm-1  | Social publishing router registered successfully
+smm-1  | Registering publishing routes...
+smm-1  | [publishing-routes] Регистрация маршрутов управления публикациями...
+smm-1  | API routes registered successfully
+smm-1  | Registering analytics routes...
+smm-1  | Analytics routes registered successfully
+smm-1  | Gemini API test routes registered successfully
+smm-1  | Регистрация тестового маршрута для Instagram
+smm-1  | Тестовый маршрут для Instagram зарегистрирован
+smm-1  | 12:43:37 PM [express] Тестовый маршрут для Instagram карусели зарегистрирован
+smm-1  | Test Instagram routes registered
+smm-1  | Social platform webhook routes registered successfully
+smm-1  | 12:43:37 PM [token-routes] Регистрация маршрутов для работы с админским токеном...
+smm-1  | 12:43:37 PM [token-routes] Маршруты для работы с админским токеном зарегистрированы
+smm-1  | 12:43:37 PM [scheduler] Запуск планировщика публикаций
+smm-1  | 12:43:37 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:43:37 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:43:37 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:43:37 PM [status-checker] Запуск сервиса проверки статусов публикаций (интервал: 1 минут)
+smm-1  | 12:43:37 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:43:37 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:37 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:43:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:37 PM [status-checker] Следующая проверка статусов через 1 минуту
+smm-1  | Route registration completed
+smm-1  | 12:43:37 PM [express] Registering XMLRiver API routes...
+smm-1  | 12:43:37 PM [express] XMLRiver API routes registered successfully
+smm-1  | 12:43:37 PM [express] Registering FAL.AI Universal Image Generation routes...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | 12:43:37 PM [express] FAL.AI Universal Image Generation routes registered successfully
+smm-1  | 12:43:37 PM [express] Registering Imgur Uploader routes...
+smm-1  | Imgur routes registered
+smm-1  | 12:43:37 PM [express] Imgur Uploader routes registered successfully
+smm-1  | 12:43:37 PM [express] Registering DeepSeek Models route...
+smm-1  | 12:43:37 PM [express] DeepSeek Models route registered successfully
+smm-1  | 12:43:37 PM [express] Registering Beget S3 routes...
+smm-1  | 12:43:37 PM [beget-s3-routes] Registering Beget S3 storage routes...
+smm-1  | 12:43:37 PM [beget-s3-routes] Beget S3 basic storage routes registered
+smm-1  | 12:43:37 PM [beget-s3-routes] Beget S3 video routes registered
+smm-1  | 12:43:37 PM [beget-s3-routes] All Beget S3 routes registered successfully
+smm-1  | 12:43:37 PM [express] Beget S3 routes registered successfully
+smm-1  | 12:43:37 PM [express] User API keys routes already registered early
+smm-1  | Route registration completed
+smm-1  | 12:43:37 PM [express] Routes registered successfully
+smm-1  | 12:43:37 PM [express] Setting up Vite in development mode...
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/auth/login', method: 'post', params: undefined }
+smm-1  | }
+smm-1  | Ошибка при получении токена системного администратора: AxiosError: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  |     at AxiosError.from (file:///app/node_modules/axios/lib/core/AxiosError.js:92:14)
+smm-1  |     at RedirectableRequest.handleRequestError (file:///app/node_modules/axios/lib/adapters/http.js:620:25)
+smm-1  |     at RedirectableRequest.emit (node:events:517:28)
+smm-1  |     at eventHandlers.<computed> (/app/node_modules/follow-redirects/index.js:49:24)
+smm-1  |     at ClientRequest.emit (node:events:517:28)
+smm-1  |     at TLSSocket.socketErrorListener (node:_http_client:501:9)
+smm-1  |     at TLSSocket.emit (node:events:517:28)
+smm-1  |     at emitErrorNT (node:internal/streams/destroy:151:8)
+smm-1  |     at emitErrorCloseNT (node:internal/streams/destroy:116:3)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+smm-1  |     at Axios.request (file:///app/node_modules/axios/lib/core/Axios.js:45:41)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at GlobalApiKeysService.getSystemToken (/app/server/services/global-api-keys.ts:125:24)
+smm-1  |     at GlobalApiKeysService.refreshCache (/app/server/services/global-api-keys.ts:71:27) {
+smm-1  |   hostname: 'directus.nplanner.ru',
+smm-1  |   syscall: 'getaddrinfo',
+smm-1  |   code: 'EAI_AGAIN',
+smm-1  |   errno: -3001,
+smm-1  |   config: {
+smm-1  |     transitional: {
+smm-1  |       silentJSONParsing: true,
+smm-1  |       forcedJSONParsing: true,
+smm-1  |       clarifyTimeoutError: false
+smm-1  |     },
+smm-1  |     adapter: [ 'xhr', 'http', 'fetch' ],
+smm-1  |     transformRequest: [ [Function: transformRequest] ],
+smm-1  |     transformResponse: [ [Function: transformResponse] ],
+smm-1  |     timeout: 0,
+smm-1  |     xsrfCookieName: 'XSRF-TOKEN',
+smm-1  |     xsrfHeaderName: 'X-XSRF-TOKEN',
+smm-1  |     maxContentLength: -1,
+smm-1  |     maxBodyLength: -1,
+smm-1  |     env: { FormData: [Function [FormData]], Blob: [class Blob] },
+smm-1  |     validateStatus: [Function: validateStatus],
+smm-1  |     headers: Object [AxiosHeaders] {
+smm-1  |       Accept: 'application/json, text/plain, */*',
+smm-1  |       'Content-Type': 'application/json',
+smm-1  |       'User-Agent': 'axios/1.8.4',
+smm-1  |       'Content-Length': '50',
+smm-1  |       'Accept-Encoding': 'gzip, compress, deflate, br'
+smm-1  |     },
+smm-1  |     baseURL: 'https://directus.nplanner.ru',
+smm-1  |     method: 'post',
+smm-1  |     url: '/auth/login',
+smm-1  |     data: '{"email":"lbrspb@gmail.com","password":"QtpZ3dh7"}',
+smm-1  |     allowAbsoluteUrls: true
+smm-1  |   },
+smm-1  |   request: <ref *1> Writable {
+smm-1  |     _writableState: WritableState {
+smm-1  |       objectMode: false,
+smm-1  |       highWaterMark: 16384,
+smm-1  |       finalCalled: false,
+smm-1  |       needDrain: false,
+smm-1  |       ending: false,
+smm-1  |       ended: false,
+smm-1  |       finished: false,
+smm-1  |       destroyed: false,
+smm-1  |       decodeStrings: true,
+smm-1  |       defaultEncoding: 'utf8',
+smm-1  |       length: 0,
+smm-1  |       writing: false,
+smm-1  |       corked: 0,
+smm-1  |       sync: true,
+smm-1  |       bufferProcessing: false,
+smm-1  |       onwrite: [Function: bound onwrite],
+smm-1  |       writecb: null,
+smm-1  |       writelen: 0,
+smm-1  |       afterWriteTickInfo: null,
+smm-1  |       buffered: [],
+smm-1  |       bufferedIndex: 0,
+smm-1  |       allBuffers: true,
+smm-1  |       allNoop: true,
+smm-1  |       pendingcb: 0,
+smm-1  |       constructed: true,
+smm-1  |       prefinished: false,
+smm-1  |       errorEmitted: false,
+smm-1  |       emitClose: true,
+smm-1  |       autoDestroy: true,
+smm-1  |       errored: null,
+smm-1  |       closed: false,
+smm-1  |       closeEmitted: false,
+smm-1  |       [Symbol(kOnFinished)]: []
+smm-1  |     },
+smm-1  |     _events: [Object: null prototype] {
+smm-1  |       response: [Function: handleResponse],
+smm-1  |       error: [Function: handleRequestError],
+smm-1  |       socket: [Function: handleRequestSocket]
+smm-1  |     },
+smm-1  |     _eventsCount: 3,
+smm-1  |     _maxListeners: undefined,
+smm-1  |     _options: {
+smm-1  |       maxRedirects: 21,
+smm-1  |       maxBodyLength: Infinity,
+smm-1  |       protocol: 'https:',
+smm-1  |       path: '/auth/login',
+smm-1  |       method: 'POST',
+smm-1  |       headers: [Object: null prototype],
+smm-1  |       agents: [Object],
+smm-1  |       auth: undefined,
+smm-1  |       family: undefined,
+smm-1  |       beforeRedirect: [Function: dispatchBeforeRedirect],
+smm-1  |       beforeRedirects: [Object],
+smm-1  |       hostname: 'directus.nplanner.ru',
+smm-1  |       port: '',
+smm-1  |       agent: undefined,
+smm-1  |       nativeProtocols: [Object],
+smm-1  |       pathname: '/auth/login'
+smm-1  |     },
+smm-1  |     _ended: false,
+smm-1  |     _ending: true,
+smm-1  |     _redirectCount: 0,
+smm-1  |     _redirects: [],
+smm-1  |     _requestBodyLength: 50,
+smm-1  |     _requestBodyBuffers: [ [Object] ],
+smm-1  |     _onNativeResponse: [Function (anonymous)],
+smm-1  |     _currentRequest: ClientRequest {
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 7,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       outputData: [],
+smm-1  |       outputSize: 0,
+smm-1  |       writable: true,
+smm-1  |       destroyed: false,
+smm-1  |       _last: true,
+smm-1  |       chunkedEncoding: false,
+smm-1  |       shouldKeepAlive: false,
+smm-1  |       maxRequestsOnConnectionReached: false,
+smm-1  |       _defaultKeepAlive: true,
+smm-1  |       useChunkedEncodingByDefault: true,
+smm-1  |       sendDate: false,
+smm-1  |       _removedConnection: false,
+smm-1  |       _removedContLen: false,
+smm-1  |       _removedTE: false,
+smm-1  |       strictContentLength: false,
+smm-1  |       _contentLength: '50',
+smm-1  |       _hasBody: true,
+smm-1  |       _trailer: '',
+smm-1  |       finished: false,
+smm-1  |       _headerSent: true,
+smm-1  |       _closed: false,
+smm-1  |       socket: [TLSSocket],
+smm-1  |       _header: 'POST /auth/login HTTP/1.1\r\n' +
+smm-1  |         'Accept: application/json, text/plain, */*\r\n' +
+smm-1  |         'Content-Type: application/json\r\n' +
+smm-1  |         'User-Agent: axios/1.8.4\r\n' +
+smm-1  |         'Content-Length: 50\r\n' +
+smm-1  |         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+smm-1  |         'Host: directus.nplanner.ru\r\n' +
+smm-1  |         'Connection: close\r\n' +
+smm-1  |         '\r\n',
+smm-1  |       _keepAliveTimeout: 0,
+smm-1  |       _onPendingData: [Function: nop],
+smm-1  |       agent: [Agent],
+smm-1  |       socketPath: undefined,
+smm-1  |       method: 'POST',
+smm-1  |       maxHeaderSize: undefined,
+smm-1  |       insecureHTTPParser: undefined,
+smm-1  |       joinDuplicateHeaders: undefined,
+smm-1  |       path: '/auth/login',
+smm-1  |       _ended: false,
+smm-1  |       res: null,
+smm-1  |       aborted: false,
+smm-1  |       timeoutCb: null,
+smm-1  |       upgradeOrConnect: false,
+smm-1  |       parser: null,
+smm-1  |       maxHeadersCount: null,
+smm-1  |       reusedSocket: false,
+smm-1  |       host: 'directus.nplanner.ru',
+smm-1  |       protocol: 'https:',
+smm-1  |       _redirectable: [Circular *1],
+smm-1  |       [Symbol(kCapture)]: false,
+smm-1  |       [Symbol(kBytesWritten)]: 0,
+smm-1  |       [Symbol(kNeedDrain)]: false,
+smm-1  |       [Symbol(corked)]: 0,
+smm-1  |       [Symbol(kOutHeaders)]: [Object: null prototype],
+smm-1  |       [Symbol(errored)]: null,
+smm-1  |       [Symbol(kHighWaterMark)]: 16384,
+smm-1  |       [Symbol(kRejectNonStandardBodyWrites)]: false,
+smm-1  |       [Symbol(kUniqueHeaders)]: null
+smm-1  |     },
+smm-1  |     _currentUrl: 'https://directus.nplanner.ru/auth/login',
+smm-1  |     [Symbol(kCapture)]: false
+smm-1  |   },
+smm-1  |   cause: Error: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  |       at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+smm-1  |       at __node_internal_ (node:internal/errors:715:10)
+smm-1  |       at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26) {
+smm-1  |     errno: -3001,
+smm-1  |     code: 'EAI_AGAIN',
+smm-1  |     syscall: 'getaddrinfo',
+smm-1  |     hostname: 'directus.nplanner.ru'
+smm-1  |   }
+smm-1  | }
+smm-1  | Не удалось получить системный токен для обновления кэша глобальных API ключей
+smm-1  | 12:43:37 PM [imgur-uploader] Временная директория создана: /app/uploads/temp
+smm-1  | Директория для загрузки изображений создана: /app/uploads/images
+smm-1  | 12:43:37 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:37 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:37 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:37 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:37 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:37 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:37 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:37 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:37 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:37 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:37 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:37 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:43:37 PM [express] Vite setup completed
+smm-1  | === STARTING SERVER ON PORT 5000 ===
+smm-1  | 12:43:37 PM [express] Attempting to start server on port 5000...
+smm-1  | === SERVER SUCCESSFULLY STARTED ON PORT 5000 ===
+smm-1  | 12:43:37 PM [express] Server successfully started on port 5000
+smm-1  | === SERVER URL: http://0.0.0.0:5000 ===
+smm-1  | 12:43:37 PM [express] Начало инициализации тяжелых сервисов после успешного запуска сервера...
+smm-1  | 12:43:38 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:38 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:38 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:38 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:38 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:38 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:38 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:38 PM [status-checker] Не удалось получить токен администратора для проверки статусов
+smm-1  | 12:43:39 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:39 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:39 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:39 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:39 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:39 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:39 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:39 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:43:47 PM [express] Запуск планировщика аналитики...
+smm-1  | 12:43:47 PM [express] [analytics-scheduler] Запуск планировщика аналитики на 5/7/2025, 8:00:00 AM. Времени до запуска: 1156 минут
+smm-1  | 12:43:47 PM [express] Планировщик аналитики успешно запущен
+smm-1  | 12:43:47 PM [express] Все тяжелые сервисы успешно инициализированы
+smm-1  | 12:43:52 PM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID 1cf8078e-c280-4aee-9f86-01fc89c2f976
+smm-1  | 12:43:52 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:52 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:43:52 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:52 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:52 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:52 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:52 PM [status-checker] Ошибка при авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:52 PM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Не удалось получить токен администратора
+smm-1  | 12:43:57 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:43:57 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:43:57 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:43:57 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:57 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:43:57 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:43:57 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:43:57 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:43:57 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:57 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:57 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:43:57 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:43:57 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:43:57 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:43:57 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:43:57 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:44:02 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:02 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:44:02 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:44:02 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:02 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:02 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:02 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:44:02 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:44:02 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:44:02 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:44:02 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
+smm-1  | 12:44:17 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:44:17 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:44:17 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:44:17 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:44:17 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:44:17 PM [scheduler] Ошибка при прямой авторизации администратора: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:44:17 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:44:17 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:44:17 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:17 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:17 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:17 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:44:17 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | 12:44:19 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:19 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:44:19 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:44:19 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:44:19 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:44:19 PM [scheduler] Не удалось получить токен для проверки статусов контента
+smm-1  | 12:44:37 PM [scheduler] Проверка запланированных публикаций
+smm-1  | 12:44:37 PM [scheduler] Принудительное обновление токена администратора
+smm-1  | 12:44:37 PM [scheduler] Запуск проверки статусов контента
+smm-1  | 12:44:37 PM [status-checker] Проверка статусов публикаций
+smm-1  | 12:44:37 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:44:37 PM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 12:44:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:44:37 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:44:37 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:44:37 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:37 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:44:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:44:37 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:37 PM [directus-auth] Error getting admin session: Ошибка авторизации: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:37 PM [status-checker] Попытка авторизации администратора с учетными данными из env
+smm-1  | 12:44:37 PM [scheduler] Ошибка при прямой авторизации администратора: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | 12:44:37 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 12:44:37 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+smm-1  | 12:44:37 PM [directus-crud] Ошибка при авторизации пользователя lbrspb@gmail.com: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:44:37 PM [directus-auth] Error during login for user lbrspb@gmail.com: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:44:37 PM [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: getaddrinfo EAI_AGAIN directus.nplanner.ru
+smm-1  | 12:44:37 PM [directus-auth] Found 0 active sessions
+smm-1  | 12:44:37 PM [scheduler] Проверка статического токена администратора из переменных окружения
+smm-1  | Directus API Error: {
+smm-1  |   status: undefined,
+smm-1  |   data: undefined,
+smm-1  |   config: { url: '/users/me', method: 'get', params: undefined }
+smm-1  | }
+smm-1  | 12:44:37 PM [scheduler] Статический токен недействителен: connect ECONNREFUSED 45.130.212.62:443
+smm-1  | Getting token info for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 12:44:37 PM [scheduler] Не удалось получить действительный токен для планировщика
+smm-1  | 12:44:37 PM [scheduler] Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны
