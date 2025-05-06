@@ -9,7 +9,8 @@ const PROXY_USERNAME = 'vf8Fe7';
 const PROXY_PASSWORD = 'yk5xt2';
 
 // Формируем URL прокси с учетными данными
-const PROXY_URL = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
+// Используем HTTP прокси вместо SOCKS5, так как могут быть ограничения
+const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 /**
  * Сервис для проксирования запросов к Gemini API через коммерческий прокси
