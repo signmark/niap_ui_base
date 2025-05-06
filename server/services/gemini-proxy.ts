@@ -3,14 +3,13 @@ import fetch from 'node-fetch';
 import * as logger from '../utils/logger';
 
 // Настройки коммерческого прокси
-const PROXY_HOST = '131.108.17.21';
-const PROXY_PORT = 9271;
-const PROXY_USERNAME = 'vf8Fe7';
-const PROXY_PASSWORD = 'yk5xt2';
+const PROXY_HOST = '45.200.176.107';
+const PROXY_PORT = 64673;
+const PROXY_USERNAME = 'ttNkVLRS';
+const PROXY_PASSWORD = '63cYXNdr';
 
 // Формируем URL прокси с учетными данными
-// Используем HTTP прокси вместо SOCKS5, так как могут быть ограничения
-const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
+const PROXY_URL = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 /**
  * Сервис для проксирования запросов к Gemini API через коммерческий прокси

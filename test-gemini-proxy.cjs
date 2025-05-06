@@ -18,14 +18,13 @@ if (!apiKey) {
 }
 
 // Настройки коммерческого прокси
-const PROXY_HOST = '131.108.17.21';
-const PROXY_PORT = 9271;
-const PROXY_USERNAME = 'vf8Fe7';
-const PROXY_PASSWORD = 'yk5xt2';
+const PROXY_HOST = '45.200.176.107';
+const PROXY_PORT = 64673;
+const PROXY_USERNAME = 'ttNkVLRS';
+const PROXY_PASSWORD = '63cYXNdr';
 
 // Формируем URL прокси с учетными данными
-// Используем HTTP прокси вместо SOCKS5, так как могут быть ограничения
-const proxyUrl = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
+const proxyUrl = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 // Создаем экземпляр прокси-агента
 const proxyAgent = new HttpsProxyAgent(proxyUrl);
@@ -40,25 +39,25 @@ async function testGeminiAPI() {
   
   // Конфигурация запроса
   const requestBody = {
-    contents: [
+    "contents": [
       {
-        parts: [
+        "parts": [
           {
-            text: prompt
+            "text": prompt
           }
         ]
       }
     ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 50
+    "generationConfig": {
+      "temperature": 0.7,
+      "maxOutputTokens": 50
     }
   };
   
   const requestData = JSON.stringify(requestBody);
   
   // Опции запроса
-  // Пробуем без прокси, чтобы проверить корректность скрипта
+  // Используем прокси для запроса
   const options = {
     hostname: 'generativelanguage.googleapis.com',
     path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -66,9 +65,8 @@ async function testGeminiAPI() {
     headers: {
       'Content-Type': 'application/json',
       'Content-Length': requestData.length
-    }
-    // временно убрали прокси для теста
-    // agent: proxyAgent
+    },
+    agent: proxyAgent
   };
   
   return new Promise((resolve, reject) => {
