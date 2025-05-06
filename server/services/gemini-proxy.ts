@@ -193,7 +193,15 @@ export class GeminiProxyService {
           response.candidates[0].content && 
           response.candidates[0].content.parts && 
           response.candidates[0].content.parts.length > 0) {
-        return response.candidates[0].content.parts[0].text || '';
+        // Получаем текст из ответа
+        let resultText = response.candidates[0].content.parts[0].text || '';
+        
+        // Очищаем текст от HTML-тегов и других артефактов
+        resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
+        resultText = resultText.replace(/<[^>]*>/g, '');
+        resultText = resultText.replace(/```[^`]*```/g, '');
+        
+        return resultText;
       }
       
       throw new Error('Неожиданный формат ответа от Gemini API');
@@ -244,7 +252,15 @@ export class GeminiProxyService {
           response.candidates[0].content && 
           response.candidates[0].content.parts && 
           response.candidates[0].content.parts.length > 0) {
-        return response.candidates[0].content.parts[0].text || '';
+        // Получаем текст из ответа
+        let resultText = response.candidates[0].content.parts[0].text || '';
+        
+        // Очищаем текст от HTML-тегов и других артефактов
+        resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
+        resultText = resultText.replace(/<[^>]*>/g, '');
+        resultText = resultText.replace(/```[^`]*```/g, '');
+        
+        return resultText;
       }
       
       throw new Error('Неожиданный формат ответа от Gemini API');
