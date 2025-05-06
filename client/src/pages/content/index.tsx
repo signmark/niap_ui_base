@@ -1437,6 +1437,12 @@ export default function ContentPage() {
                     images={newContent.additionalImages}
                     onChange={(images) => setNewContent({...newContent, additionalImages: images})}
                     label="Загрузите дополнительные изображения"
+                    onGenerateImage={(index) => {
+                      // Сохраняем индекс текущего изображения в локальном состоянии
+                      localStorage.setItem('currentAdditionalImageIndex', String(index));
+                      localStorage.setItem('additionalImageMode', 'create');
+                      setIsImageGenerationDialogOpen(true);
+                    }}
                   />
                 </div>
               </div>
