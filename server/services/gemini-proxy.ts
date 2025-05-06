@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as logger from '../utils/logger';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import fetch from 'node-fetch';
 
 
 interface GeminiProxyOptions {
