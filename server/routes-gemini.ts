@@ -56,7 +56,7 @@ export function registerGeminiRoutes(app: any) {
   }
 
   /**
-   * Маршрут для улучшения текста с помощью Gemini
+   * Маршрут для улучшения текста с помощью Gemini через SOCKS5 прокси
    */
   router.post('/api/gemini/improve-text', async (req: Request, res: Response) => {
     try {

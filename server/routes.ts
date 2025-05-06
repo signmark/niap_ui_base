@@ -5,6 +5,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { geminiTestRouter } from './routes/gemini-test-route';
 import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
@@ -46,6 +47,7 @@ import { registerTestInstagramCarouselRoute } from './api/test-instagram-carouse
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { publicationStatusChecker } from './services/status-checker';
+import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
@@ -2936,6 +2938,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Registering analytics routes...');
   app.use('/api/analytics', analyticsRouter);
   console.log('Analytics routes registered successfully');
+  
+  // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
+  app.use('/api/gemini', geminiTestRouter);
+  console.log('Gemini API test routes registered successfully');
   
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);

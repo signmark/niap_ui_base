@@ -1,5 +1,25 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as logger from '../utils/logger';
+import { geminiProxy } from './gemini-proxy';
+
+// Глобальное переопределение fetch для GoogleGenerativeAI
+// @ts-ignore - Переопределяем глобальный fetch для работы через прокси
+global.fetch = async (url: string, init?: RequestInit) => {
+  try {
+    // Определяем, идет ли запрос к Gemini API
+    if (url.includes('generativelanguage.googleapis.com')) {
+      logger.log(`[gemini-service] Проксирование запроса к Gemini API: ${url.substring(0, 100)}...`);
+      return await geminiProxy.fetch(url, init);
+    }
+    
+    // Для других запросов используем обычный fetch
+    const originalFetch = global.fetch;
+    return originalFetch(url, init);
+  } catch (error) {
+    logger.error(`[gemini-service] Ошибка в проксированном fetch: ${(error as Error).message}`);
+    throw error;
+  }
+};
 
 interface ImproveTextParams {
   text: string;
@@ -55,6 +75,52 @@ export class GeminiService {
    * @param params Параметры улучшения текста
    * @returns Улучшенный текст
    */
+  /**
+   * Генерирует текст с помощью Gemini
+   * @param prompt Запрос для генерации текста
+   * @param modelName Название модели
+   * @returns Сгенерированный текст
+   */
+  async generateText(prompt: string, modelName: string = 'gemini-1.5-flash'): Promise<string> {
+    try {
+      logger.log(`[gemini-service] Generating text with model: ${modelName}`);
+      
+      // Создаем генеративную модель
+      const genAI = new GoogleGenerativeAI(this.apiKey);
+      
+      // Параметры модели в зависимости от выбранной модели
+      let generationConfig = {
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 32
+      };
+      
+      // Создаем соответствующую модель
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig
+      });
+      
+      // Получаем ответ от модели
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      let generatedText = response.text();
+      
+      // Удаляем любую markdown-разметку и кодовые блоки, если они есть
+      generatedText = generatedText
+        .replace(/^```[a-z]*\n/gm, '') // Удаляем открывающие маркеры кодовых блоков
+        .replace(/```$/gm, '')         // Удаляем закрывающие маркеры кодовых блоков
+        .replace(/^\s*```\s*$/gm, '')  // Удаляем строки с маркерами кодовых блоков
+        .trim();                      // Удаляем лишние пробелы
+      
+      logger.log('[gemini-service] Successfully generated text');
+      return generatedText;
+    } catch (error) {
+      logger.error('[gemini-service] Error generating text:', error);
+      throw new Error(`Ошибка при генерации текста с Gemini: ${(error as Error).message}`);
+    }
+  }
+  
   async improveText(params: ImproveTextParams): Promise<string> {
     const { text, prompt, model = 'gemini-1.5-flash' } = params;
     
