@@ -17,8 +17,14 @@ if (!apiKey) {
   process.exit(1);
 }
 
-// URL прокси-сервера
-const proxyUrl = 'socks5://127.0.0.1:1080';
+// Настройки коммерческого прокси
+const PROXY_HOST = '131.108.17.21';
+const PROXY_PORT = 9271;
+const PROXY_USERNAME = 'vf8Fe7';
+const PROXY_PASSWORD = 'yk5xt2';
+
+// Формируем URL прокси с учетными данными
+const proxyUrl = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 // Создаем экземпляр прокси-агента
 const proxyAgent = new HttpsProxyAgent(proxyUrl);
@@ -97,9 +103,10 @@ async function testGeminiAPI() {
     req.on('error', (error) => {
       console.error('❌ Ошибка сети:', error.message);
       
-      if (error.message.includes('ECONNREFUSED') && error.message.includes('127.0.0.1:1080')) {
-        console.error('❌ Не удалось подключиться к локальному прокси-серверу.');
-        console.error('ℹ️ Убедитесь, что Xray/V2Ray запущен и прослушивает порт 1080.');
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
+        console.error('❌ Не удалось подключиться к коммерческому прокси-серверу.');
+        console.error(`ℹ️ Проверьте доступность прокси: ${PROXY_HOST}:${PROXY_PORT}`);
+        console.error('ℹ️ Убедитесь, что прокси сервер доступен и учетные данные верны.');
       }
       
       reject(error);
