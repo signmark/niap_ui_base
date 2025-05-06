@@ -374,6 +374,27 @@ export class GeminiProxyService {
         resultText = resultText.replace(/\n+\s*\*+.*\s*Почему.*$/s, '');
         resultText = resultText.replace(/\n+\s*\*+.*\s*Стандартизация.*$/s, '');
         
+        // Удаляем секцию с объяснением изменений
+        const explanationPatterns = [
+          /Основные изменения и почему они сделаны:([\s\S]*?)(?=\n\n|$)/gs,
+          /Почему я сделал эти изменения:([\s\S]*?)(?=\n\n|$)/gs,
+          /Анализ изменений:([\s\S]*?)(?=\n\n|$)/gs,
+          /Основные улучшения:([\s\S]*?)(?=\n\n|$)/gs,
+          /Что изменилось:([\s\S]*?)(?=\n\n|$)/gs
+        ];
+        
+        explanationPatterns.forEach(pattern => {
+          resultText = resultText.replace(pattern, '');
+        });
+        
+        // Ищем и удаляем весь блок с объяснением изменений в конце текста
+        const parts = resultText.split(/\n\n+(?=Основные|\*+Основные|Почему я|Что изменилось|Анализ изменений)/s);
+        if (parts.length > 1) {
+          // Берем только первую часть - сам текст без объяснений
+          resultText = parts[0];
+          logger.log(`[gemini-proxy] Найден и удален блок с объяснением изменений`, 'gemini');
+        }
+        
         // Логируем очищенный текст
         logger.log(`[gemini-proxy] Очищенный текст (генерация), длина: ${resultText.length}`, 'gemini');
         
