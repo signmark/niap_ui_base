@@ -1073,7 +1073,7 @@ export default function Trends() {
             variant="outline"
           >
             <FileText className="mr-2 h-4 w-4" />
-            Массовый импорт
+            Импорт источников
           </Button>
         </div>
       </div>

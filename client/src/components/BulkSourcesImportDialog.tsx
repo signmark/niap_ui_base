@@ -205,7 +205,7 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
   return (
     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Массовый импорт источников</DialogTitle>
+        <DialogTitle>Импорт источников</DialogTitle>
         <DialogDescription>
           Добавьте несколько источников одновременно для кампании
         </DialogDescription>
