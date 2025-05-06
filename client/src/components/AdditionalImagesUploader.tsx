@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Wand2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ImageUploader } from "@/components/ImageUploader";
 
@@ -7,12 +7,14 @@ interface AdditionalImagesUploaderProps {
   images: string[];
   onChange: (images: string[]) => void;
   label?: string;
+  onGenerateImage?: (index: number) => void;
 }
 
 export function AdditionalImagesUploader({ 
   images = [], 
   onChange, 
-  label = "Дополнительные изображения" 
+  label = "Дополнительные изображения",
+  onGenerateImage
 }: AdditionalImagesUploaderProps) {
   
   // Обработчик изменения URL изображения
@@ -69,6 +71,19 @@ export function AdditionalImagesUploader({
                     forcePreview={true}
                   />
                 </div>
+                {onGenerateImage && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    className="h-9 w-9 mt-1 ml-2 flex-none bg-blue-50 border-blue-200 hover:bg-blue-100"
+                    onClick={() => onGenerateImage(index)}
+                    aria-label="Сгенерировать изображение"
+                  >
+                    <span className="sr-only">Сгенерировать</span>
+                    <Wand2 className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button 
                   type="button" 
                   variant="outline" 
