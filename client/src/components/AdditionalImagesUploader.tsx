@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Wand2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ImageUploader } from "@/components/ImageUploader";
 
@@ -7,6 +7,7 @@ interface AdditionalImagesUploaderProps {
   images: string[];
   onChange: (images: string[]) => void;
   label?: string;
+  onGenerateImage?: (index: number) => void;
 }
 
 export function AdditionalImagesUploader({ 
