@@ -53,6 +53,7 @@ import { TrendContentGenerator } from "@/components/TrendContentGenerator";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
+import { BulkSourcesImportDialog } from "@/components/BulkSourcesImportDialog";
 
 // Определение интерфейсов для типизации
 import {
@@ -166,6 +167,7 @@ export default function Trends() {
   const [activeTab, setActiveTab] = useState('trends');
   const [isSocialNetworkDialogOpen, setIsSocialNetworkDialogOpen] = useState(false);
   const [isSourceSearchDialogOpen, setIsSourceSearchDialogOpen] = useState(false);
+  const [isBulkImportDialogOpen, setIsBulkImportDialogOpen] = useState(false);
   const [selectedTrendTopic, setSelectedTrendTopic] = useState<TrendTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1064,6 +1066,14 @@ export default function Trends() {
           >
             <Plus className="mr-2 h-4 w-4" />
             Добавить источник
+          </Button>
+          <Button
+            onClick={() => setIsBulkImportDialogOpen(true)}
+            disabled={!isValidCampaignSelected}
+            variant="outline"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Массовый импорт
           </Button>
         </div>
       </div>
