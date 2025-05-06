@@ -1,5 +1,25 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import * as logger from '../utils/logger';
+import { geminiProxy } from './gemini-proxy';
+
+// Глобальное переопределение fetch для GoogleGenerativeAI
+// @ts-ignore - Переопределяем глобальный fetch для работы через прокси
+global.fetch = async (url: string, init?: RequestInit) => {
+  try {
+    // Определяем, идет ли запрос к Gemini API
+    if (url.includes('generativelanguage.googleapis.com')) {
+      logger.log(`[gemini-service] Проксирование запроса к Gemini API: ${url.substring(0, 100)}...`);
+      return await geminiProxy.fetch(url, init);
+    }
+    
+    // Для других запросов используем обычный fetch
+    const originalFetch = global.fetch;
+    return originalFetch(url, init);
+  } catch (error) {
+    logger.error(`[gemini-service] Ошибка в проксированном fetch: ${(error as Error).message}`);
+    throw error;
+  }
+};
 
 interface ImproveTextParams {
   text: string;
