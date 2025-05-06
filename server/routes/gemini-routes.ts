@@ -82,11 +82,15 @@ ${text}`;
     
     logger.log('[gemini-routes] Текст успешно улучшен');
     
-    // Возвращаем результат
+    // Добавляем уникальный timestamp к запросу для предотвращения кеширования старой версии
+    const timestamp = new Date().getTime();
+    
+    // Возвращаем результат с добавлением timestamp для предотвращения кеширования
     return res.status(200).json({
       success: true,
       originalText: text,
-      improvedText: result
+      improvedText: result,
+      timestamp
     });
   } catch (error) {
     logger.error('[gemini-routes] Ошибка при улучшении текста:', error);
@@ -117,10 +121,14 @@ geminiRouter.post('/generate-text', async (req, res) => {
     
     const generatedText = await geminiService.generateText(prompt, model);
     
+    // Добавляем уникальный timestamp к запросу для предотвращения кеширования старой версии
+    const timestamp = new Date().getTime();
+    
     return res.status(200).json({
       success: true,
       generatedText,
-      model
+      model,
+      timestamp
     });
   } catch (error) {
     logger.error('[gemini-routes] Ошибка при генерации текста:', error);
