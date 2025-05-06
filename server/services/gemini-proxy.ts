@@ -199,9 +199,8 @@ export class GeminiProxyService {
         // Логируем исходный текст
         logger.log(`[gemini-proxy] Исходный текст перед очисткой, длина: ${resultText.length}`, 'gemini');
         
-        // Очищаем текст от HTML-тегов и других артефактов
+        // Очищаем текст от служебных элементов, сохраняя HTML-форматирование
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        resultText = resultText.replace(/<[^>]*>/g, '');
         
         // Удаляем маркеры кода, но сохраняем содержимое
         resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
@@ -274,9 +273,8 @@ export class GeminiProxyService {
         // Логируем исходный текст
         logger.log(`[gemini-proxy] Исходный текст перед очисткой (генерация), длина: ${resultText.length}`, 'gemini');
         
-        // Очищаем текст от HTML-тегов и других артефактов
+        // Очищаем текст от служебных элементов, сохраняя HTML-форматирование
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        resultText = resultText.replace(/<[^>]*>/g, '');
         
         // Удаляем маркеры кода, но сохраняем содержимое
         resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
