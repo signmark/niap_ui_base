@@ -205,6 +205,53 @@ export class GeminiProxyService {
         // Удаляем маркеры кода, но сохраняем содержимое
         resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```\s?/g, ''); // Удаляем оставшиеся маркеры кода
+
+        // Удаляем метаинформацию об изменениях и улучшениях
+        // Удаляем весь блок с начала текста, который содержит метаданные об изменениях
+        resultText = resultText.replace(/^\*+Изменения[\s\S]*?(?=\n\n)/, '');
+        resultText = resultText.replace(/^\*+Разделение[\s\S]*?(?=\n\n)/, '');
+        resultText = resultText.replace(/^\*+Добавлены[\s\S]*?(?=\n\n)/, '');
+
+        // Поиск и удаление всех шаблонных метаданных
+        const metadataPatterns = [
+          /\*+\s*Изменения.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Улучшения.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Добавлены.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Разделение.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Почему.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Лучшая.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Визуальная.*\*+[\s\S]*?(?=\n\n|$)/g
+        ];
+
+        // Применяем все шаблоны к тексту
+        metadataPatterns.forEach(pattern => {
+          resultText = resultText.replace(pattern, '');
+        });
+
+        // Проверяем наличие двойных звездочек в начале текста (частый паттерн у Gemini)
+        resultText = resultText.replace(/^\*+Изменения.*$/m, '');
+
+        // Удаляем все строки, начинающиеся со звездочек в начале текста
+        const lines = resultText.split('\n');
+        let firstContentLineIndex = 0;
+
+        // Ищем первую строку, которая не начинается со звездочек или пустая
+        for (let i = 0; i < Math.min(20, lines.length); i++) { // Проверяем только первые 20 строк
+            if (lines[i].trim() !== '' && !lines[i].trim().startsWith('*')) {
+                firstContentLineIndex = i;
+                break;
+            }
+        }
+
+        // Удаляем все строки перед первой содержательной строкой
+        resultText = lines.slice(firstContentLineIndex).join('\n');
+
+        // Удаляем пустые строки в начале
+        resultText = resultText.replace(/^\s*\n+/, '');
+
+        // Дополнительно удаляем всю метаинформацию в конце текста
+        resultText = resultText.replace(/\n+\s*\*+.*\s*Почему.*$/s, '');
+        resultText = resultText.replace(/\n+\s*\*+.*\s*Стандартизация.*$/s, '')
         
         // Логируем очищенный текст
         logger.log(`[gemini-proxy] Очищенный текст, длина: ${resultText.length}`, 'gemini');
@@ -279,6 +326,53 @@ export class GeminiProxyService {
         // Удаляем маркеры кода, но сохраняем содержимое
         resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```\s?/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Удаляем метаинформацию об изменениях и улучшениях
+        // Удаляем весь блок с начала текста, который содержит метаданные об изменениях
+        resultText = resultText.replace(/^\*+Изменения[\s\S]*?(?=\n\n)/, '');
+        resultText = resultText.replace(/^\*+Разделение[\s\S]*?(?=\n\n)/, '');
+        resultText = resultText.replace(/^\*+Добавлены[\s\S]*?(?=\n\n)/, '');
+
+        // Поиск и удаление всех шаблонных метаданных
+        const metadataPatterns = [
+          /\*+\s*Изменения.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Улучшения.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Добавлены.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Разделение.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Почему.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Лучшая.*\*+[\s\S]*?(?=\n\n|$)/g,
+          /\*+\s*Визуальная.*\*+[\s\S]*?(?=\n\n|$)/g
+        ];
+
+        // Применяем все шаблоны к тексту
+        metadataPatterns.forEach(pattern => {
+          resultText = resultText.replace(pattern, '');
+        });
+
+        // Проверяем наличие двойных звездочек в начале текста (частый паттерн у Gemini)
+        resultText = resultText.replace(/^\*+Изменения.*$/m, '');
+
+        // Удаляем все строки, начинающиеся со звездочек в начале текста
+        const lines = resultText.split('\n');
+        let firstContentLineIndex = 0;
+
+        // Ищем первую строку, которая не начинается со звездочек или пустая
+        for (let i = 0; i < Math.min(20, lines.length); i++) { // Проверяем только первые 20 строк
+            if (lines[i].trim() !== '' && !lines[i].trim().startsWith('*')) {
+                firstContentLineIndex = i;
+                break;
+            }
+        }
+
+        // Удаляем все строки перед первой содержательной строкой
+        resultText = lines.slice(firstContentLineIndex).join('\n');
+
+        // Удаляем пустые строки в начале
+        resultText = resultText.replace(/^\s*\n+/, '');
+
+        // Дополнительно удаляем всю метаинформацию в конце текста
+        resultText = resultText.replace(/\n+\s*\*+.*\s*Почему.*$/s, '');
+        resultText = resultText.replace(/\n+\s*\*+.*\s*Стандартизация.*$/s, '');
         
         // Логируем очищенный текст
         logger.log(`[gemini-proxy] Очищенный текст (генерация), длина: ${resultText.length}`, 'gemini');
