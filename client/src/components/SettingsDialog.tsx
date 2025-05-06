@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { Loader2, HelpCircle, CheckCircle2, XCircle, Info as InfoIcon } from "lucide-react";
+import { Loader2, HelpCircle, CheckCircle2, XCircle, Info as InfoIcon, ExternalLink } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,28 @@ function getServiceDisplayName(serviceName: string): string {
     'deepseek': 'DeepSeek',
     'fal_ai': 'FAL.AI',
     'xmlriver': 'XMLRiver',
-    'claude': 'Claude AI'
+    'claude': 'Claude AI',
+    'gemini': 'Gemini',
+    'qwen': 'Qwen'
   };
   
   return serviceNames[serviceName] || serviceName;
+}
+
+// Функция для получения URL сайта, где можно получить API ключ
+function getApiKeyUrl(serviceName: string): string {
+  const apiUrls: Record<string, string> = {
+    'perplexity': 'https://www.perplexity.ai/settings/api',
+    'apify': 'https://console.apify.com/account/integrations',
+    'deepseek': 'https://platform.deepseek.com/api-keys',
+    'fal_ai': 'https://www.fal.ai/dashboard/settings',
+    'xmlriver': 'https://xmlriver.com/keys/all',
+    'claude': 'https://console.anthropic.com/settings/keys',
+    'gemini': 'https://ai.google.dev/tutorials/setup',
+    'qwen': 'https://help.aliyun.com/zh/dashscope/developer-reference/api-details'
+  };
+  
+  return apiUrls[serviceName] || '';
 }
 
 interface ApiKey {
@@ -49,46 +67,47 @@ interface TestingState {
 }
 
 export function SettingsDialog() {
+  // API keys states
   const [perplexityKey, setPerplexityKey] = useState("");
   const [apifyKey, setApifyKey] = useState("");
   const [deepseekKey, setDeepseekKey] = useState("");
   const [falAiKey, setFalAiKey] = useState("");
-  const [claudeKey, setClaudeKey] = useState(""); // Добавлен ключ Claude
-  const [geminiKey, setGeminiKey] = useState(""); // Добавлен ключ Gemini
-  const [qwenKey, setQwenKey] = useState(""); // Добавлен ключ Qwen
-  // XMLRiver API credentials
-  const [xmlRiverUserId, setXmlRiverUserId] = useState("16797"); // Значение по умолчанию
+  const [claudeKey, setClaudeKey] = useState("");
+  const [geminiKey, setGeminiKey] = useState("");
+  const [qwenKey, setQwenKey] = useState("");
+  const [xmlRiverUserId, setXmlRiverUserId] = useState("16797");
   const [xmlRiverApiKey, setXmlRiverApiKey] = useState("");
   
-  // Состояния тестирования ключей
+  // Testing states
   const [perplexityTesting, setPerplexityTesting] = useState<TestingState>({ status: 'idle' });
   const [apifyTesting, setApifyTesting] = useState<TestingState>({ status: 'idle' });
   const [deepseekTesting, setDeepseekTesting] = useState<TestingState>({ status: 'idle' });
   const [falAiTesting, setFalAiTesting] = useState<TestingState>({ status: 'idle' });
-  const [claudeTesting, setClaudeTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Claude
-  const [geminiTesting, setGeminiTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Gemini
-  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' }); // Добавлено состояние тестирования Qwen
-  // Состояния для соцсетей убраны, т.к. токены перенесены в настройки кампаний
+  const [claudeTesting, setClaudeTesting] = useState<TestingState>({ status: 'idle' });
+  const [geminiTesting, setGeminiTesting] = useState<TestingState>({ status: 'idle' });
+  const [qwenTesting, setQwenTesting] = useState<TestingState>({ status: 'idle' });
   const [xmlRiverTesting, setXmlRiverTesting] = useState<TestingState>({ status: 'idle' });
   
+  // Component states
   const { toast } = useToast();
   const userId = useAuthStore((state) => state.userId);
+  const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
+  // Query to fetch API keys
   const { data: apiKeys, isLoading, refetch } = useQuery({
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
-        const response = await directusApi.get('/items/user_api_keys', {
-          params: {
-            filter: {
-              user_id: {
-                _eq: userId
-              }
-            },
-            fields: ['id', 'service_name', 'api_key']
-          }
-        });
-        return response.data?.data || [];
+        console.log('Fetching user API keys using the API route');
+        const response = await api.get('/user-api-keys');
+        if (response.data?.success) {
+          console.log(`Successfully fetched ${response.data?.data?.length || 0} API keys`);
+          return response.data?.data || [];
+        } else {
+          console.error('Error in API response:', response.data);
+          return [];
+        }
       } catch (error) {
         console.error('Error fetching API keys:', error);
         throw error;
@@ -97,7 +116,130 @@ export function SettingsDialog() {
     enabled: !!userId
   });
 
-  // Обобщенная функция для тестирования API ключей
+  // Load keys from API when component mounts
+  useEffect(() => {
+    if (apiKeys) {
+      // Process XMLRiver key separately since it contains two fields
+      const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
+      if (xmlRiverKeyData && xmlRiverKeyData.api_key) {
+        try {
+          const credentials = JSON.parse(xmlRiverKeyData.api_key) as XMLRiverCredentials;
+          setXmlRiverUserId(credentials.user || "16797");
+          setXmlRiverApiKey(credentials.key || "");
+        } catch (e) {
+          console.error('Error parsing XMLRiver credentials:', e);
+        }
+      }
+
+      // Set other keys
+      const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
+      const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
+      const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
+      const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
+      const claudeKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'claude');
+      const geminiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'gemini');
+      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
+      
+      setPerplexityKey(perplexityKeyData?.api_key || "");
+      setApifyKey(apifyKeyData?.api_key || "");
+      setDeepseekKey(deepseekKeyData?.api_key || "");
+      setFalAiKey(falAiKeyData?.api_key || "");
+      setClaudeKey(claudeKeyData?.api_key || "");
+      setGeminiKey(geminiKeyData?.api_key || "");
+      setQwenKey(qwenKeyData?.api_key || "");
+    }
+  }, [apiKeys]);
+
+  // Delete API key mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (keyId: string) => {
+      console.log(`Удаление ключа с ID: ${keyId}`);
+      // Фиксим проблему с двойным префиксом /api/api/ при работе с маршрутами
+      await api.delete(`/user-api-keys/${keyId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успешно",
+        description: "API ключ удален",
+      });
+      refetch();
+    },
+    onError: (error: Error) => {
+      console.error('Error deleting API key:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: `Не удалось удалить API ключ: ${error.message}`,
+      });
+    }
+  });
+
+  // Function to save API keys
+  const saveSettings = async (): Promise<boolean> => {
+    setIsPending(true);
+    try {
+      // Collect all keys in an array
+      const keysToSave = [
+        { service_name: 'perplexity', api_key: perplexityKey },
+        { service_name: 'apify', api_key: apifyKey },
+        { service_name: 'deepseek', api_key: deepseekKey },
+        { service_name: 'fal_ai', api_key: falAiKey },
+        { service_name: 'claude', api_key: claudeKey },
+        { service_name: 'gemini', api_key: geminiKey },
+        { service_name: 'qwen', api_key: qwenKey },
+        { 
+          service_name: 'xmlriver', 
+          api_key: JSON.stringify({ user: xmlRiverUserId, key: xmlRiverApiKey }) 
+        }
+      ];
+
+      // Filter to only include keys that are filled in
+      const filledKeys = keysToSave.filter(key => key.api_key.trim() !== '');
+      
+      // Send to server
+      const response = await api.post('/user-api-keys', {
+        keys: filledKeys
+      });
+
+      if (response.status === 200) {
+        toast({
+          title: "Успешно",
+          description: "API ключи сохранены"
+        });
+        refetch();
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Error saving API keys:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: `Не удалось сохранить API ключи: ${error.message}`
+      });
+      return false;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  // Functions for API key deletion dialog
+  const confirmDeleteApiKey = (keyId: string) => {
+    setKeyToDelete(keyId);
+  };
+  
+  const deleteApiKey = () => {
+    if (keyToDelete) {
+      deleteMutation.mutate(keyToDelete);
+      setKeyToDelete(null);
+    }
+  };
+  
+  const cancelDeleteApiKey = () => {
+    setKeyToDelete(null);
+  };
+  
+  // Generic function for testing API keys
   const testApiKey = async (
     keyType: 'perplexity' | 'apify' | 'deepseek' | 'fal_ai' | 'xmlriver' | 'claude' | 'gemini' | 'qwen',
     keyValue: string,
@@ -113,7 +255,6 @@ export function SettingsDialog() {
       return;
     }
 
-    // Дополнительная валидация если есть
     if (additionalValidation && !additionalValidation()) {
       return;
     }
@@ -121,14 +262,17 @@ export function SettingsDialog() {
     setTestingState({ status: 'testing' });
     
     try {
-      // Сначала сохраняем ключ
-      console.log('Сохраняем настройки API перед тестированием');
-      await saveSettings();
+      // First save the key
+      console.log('Saving API settings before testing');
+      const saveSuccess = await saveSettings();
+      if (!saveSuccess) {
+        setTestingState({ status: 'error', message: 'Не удалось сохранить ключ перед тестированием' });
+        return;
+      }
       
-      // Для FAL.AI есть специальный эндпоинт тестирования
+      // Special endpoint for FAL.AI testing
       if (keyType === 'fal_ai') {
         try {
-          // Используем новый тестовый эндпоинт
           const response = await api.get('/test-fal-ai');
           if (response.data.success) {
             setTestingState({ 
@@ -152,10 +296,10 @@ export function SettingsDialog() {
           }
           return;
         } catch (err: any) {
-          console.error('Ошибка при тестировании FAL.AI ключа:', err);
+          console.error('Error testing FAL.AI key:', err);
           
           let errorMessage = 'Ошибка при проверке API ключа';
-          if (err.response && err.response.data && err.response.data.error) {
+          if (err.response?.data?.error) {
             errorMessage = err.response.data.error;
           } else if (err.message) {
             errorMessage = err.message;
@@ -175,22 +319,19 @@ export function SettingsDialog() {
         }
       }
       
-      // Для Claude API используем специальный эндпоинт проверки
+      // Special endpoint for Claude API testing
       if (keyType === 'claude') {
         try {
-          console.log('Отправка ключа Claude на проверку, длина:', keyValue.length);
+          console.log('Sending Claude key for verification, length:', keyValue.length);
           
-          // Используем эндпоинт тестирования ключа Claude
-          // Исправляем URL - префикс /api/ уже добавляется в api клиенте
           const response = await api.post('/claude/test-api-key', {
             apiKey: keyValue
           });
           
-          console.log('Ответ от сервера при проверке ключа Claude:', response.data);
+          console.log('Server response for Claude key test:', response.data);
           
-          // Проверяем наличие success и значение isValid (важно!)
           if (response.data.success && response.data.isValid === true) {
-            console.log('API ключ Claude прошел проверку успешно');
+            console.log('Claude API key passed validation');
             setTestingState({ 
               status: 'success', 
               message: 'API ключ Claude работает' 
@@ -200,7 +341,7 @@ export function SettingsDialog() {
               description: "API ключ Claude работает корректно"
             });
           } else {
-            console.log('API ключ Claude не прошел проверку: isValid =', response.data.isValid);
+            console.log('Claude API key validation failed: isValid =', response.data.isValid);
             setTestingState({ 
               status: 'error', 
               message: response.data.error || 'Недействительный API ключ Claude'
@@ -213,10 +354,10 @@ export function SettingsDialog() {
           }
           return;
         } catch (err: any) {
-          console.error('Ошибка при тестировании Claude ключа:', err);
+          console.error('Error testing Claude key:', err);
           
           let errorMessage = 'Ошибка при проверке API ключа. Убедитесь, что ключ верный и имеет правильный формат.';
-          if (err.response && err.response.data && err.response.data.error) {
+          if (err.response?.data?.error) {
             errorMessage = 'Ошибка при проверке ключа. Сервер вернул: ' + err.response.data.error;
           } else if (err.message) {
             errorMessage = 'Ошибка при проверке ключа: ' + err.message;
@@ -236,16 +377,18 @@ export function SettingsDialog() {
         }
       }
       
-      // Для остальных ключей просто сообщаем об успешном сохранении
-      const serviceNames = {
+      // For other keys just report successful saving
+      const serviceNames: Record<string, string> = {
         perplexity: 'Perplexity',
         apify: 'Apify',
         deepseek: 'DeepSeek',
         xmlriver: 'XMLRiver',
-        fal_ai: 'FAL.AI'
+        fal_ai: 'FAL.AI',
+        gemini: 'Gemini',
+        qwen: 'Qwen'
       };
       
-      const serviceName = serviceNames[keyType as keyof typeof serviceNames] || keyType;
+      const serviceName = serviceNames[keyType] || keyType;
       
       toast({
         title: "Проверка API ключа",
@@ -266,7 +409,7 @@ export function SettingsDialog() {
     }
   };
 
-  // Вызовы обобщенной функции для каждого типа ключа
+  // Test functions for each API key type
   const testFalAiKey = () => testApiKey('fal_ai', falAiKey, setFalAiTesting);
   const testDeepseekKey = () => testApiKey('deepseek', deepseekKey, setDeepseekTesting);
   const testPerplexityKey = () => testApiKey('perplexity', perplexityKey, setPerplexityTesting);
@@ -274,140 +417,23 @@ export function SettingsDialog() {
   const testClaudeKey = () => testApiKey('claude', claudeKey, setClaudeTesting);
   const testGeminiKey = () => testApiKey('gemini', geminiKey, setGeminiTesting);
   const testQwenKey = () => testApiKey('qwen', qwenKey, setQwenTesting);
-  // Токены социальных сетей (Instagram и Facebook) были перемещены
-  // в настройки каждой кампании и убраны из глобальных настроек
+  const testXmlRiverKey = () => {
+    const validation = () => {
+      if (!xmlRiverUserId.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: "Необходимо указать ID пользователя XMLRiver"
+        });
+        return false;
+      }
+      return true;
+    };
+    
+    testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, validation);
+  };
   
-  const testXmlRiverKey = () => testApiKey('xmlriver', xmlRiverApiKey, setXmlRiverTesting, () => {
-    if (!xmlRiverUserId.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Необходимо указать User ID для XMLRiver"
-      });
-      return false;
-    }
-    return true;
-  });
-  
-  useEffect(() => {
-    if (apiKeys) {
-      const perplexityKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'perplexity');
-      const apifyKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'apify');
-      const deepseekKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'deepseek');
-      const falAiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'fal_ai');
-      const xmlRiverKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'xmlriver');
-      const claudeKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'claude');
-      const geminiKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'gemini');
-      const qwenKeyData = apiKeys.find((k: ApiKey) => k.service_name === 'qwen');
-      // Социальные сети перенесены в настройки кампаний
-
-      if (perplexityKeyData) {
-        setPerplexityKey(perplexityKeyData.api_key);
-      }
-      if (apifyKeyData) {
-        setApifyKey(apifyKeyData.api_key);
-      }
-      if (deepseekKeyData) {
-        setDeepseekKey(deepseekKeyData.api_key);
-      }
-      if (falAiKeyData) {
-        setFalAiKey(falAiKeyData.api_key);
-      }
-      if (claudeKeyData) {
-        setClaudeKey(claudeKeyData.api_key);
-      }
-      if (geminiKeyData) {
-        setGeminiKey(geminiKeyData.api_key);
-      }
-      if (qwenKeyData) {
-        setQwenKey(qwenKeyData.api_key);
-      }
-      
-      // Обработка XMLRiver ключа
-      if (xmlRiverKeyData) {
-        try {
-          // Пытаемся распарсить JSON с user и key
-          const credentials = JSON.parse(xmlRiverKeyData.api_key) as XMLRiverCredentials;
-          setXmlRiverUserId(credentials.user);
-          setXmlRiverApiKey(credentials.key);
-        } catch (e) {
-          // Если не получилось распарсить, значит ключ в старом формате
-          // Пробуем разделить на user_id:api_key
-          const apiKey = xmlRiverKeyData.api_key;
-          if (apiKey.includes(':')) {
-            const [user, key] = apiKey.split(':');
-            setXmlRiverUserId(user.trim());
-            setXmlRiverApiKey(key.trim());
-          } else {
-            // Если разделителя нет, считаем что это просто ключ
-            setXmlRiverApiKey(apiKey.trim());
-          }
-        }
-      }
-    }
-  }, [apiKeys]);
-
-  const { mutate: saveSettings, isPending } = useMutation({
-    mutationFn: async () => {
-      if (!userId) {
-        throw new Error("Пользователь не авторизован");
-      }
-
-      // Формируем ключ для XMLRiver, объединяя user_id и api_key в JSON
-      const xmlRiverCombinedKey = JSON.stringify({
-        user: xmlRiverUserId.trim(),
-        key: xmlRiverApiKey.trim()
-      });
-
-      const services = [
-        { name: 'perplexity', key: perplexityKey },
-        { name: 'apify', key: apifyKey },
-        { name: 'deepseek', key: deepseekKey },
-        { name: 'fal_ai', key: falAiKey },
-        { name: 'claude', key: claudeKey },
-        { name: 'gemini', key: geminiKey },
-        { name: 'qwen', key: qwenKey },
-        { name: 'xmlriver', key: xmlRiverCombinedKey }
-      ];
-      // Токены социальных сетей перенесены в настройки кампаний
-
-      for (const service of services) {
-        // Пропускаем пустые ключи, кроме XMLRiver, которому нужно сохранить user_id даже если ключ пуст
-        if (!service.key && service.name !== 'xmlriver') continue;
-        if (service.name === 'xmlriver' && !xmlRiverApiKey.trim()) continue;
-
-        const existingKey = apiKeys?.find((key: ApiKey) => key.service_name === service.name);
-
-        if (existingKey) {
-          await directusApi.patch(`/items/user_api_keys/${existingKey.id}`, {
-            api_key: service.key
-          });
-        } else {
-          await directusApi.post('/items/user_api_keys', {
-            user_id: userId,
-            service_name: service.name,
-            api_key: service.key
-          });
-        }
-      }
-      // Обновляем список ключей после сохранения
-      await refetch();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Успешно",
-        description: "Настройки сохранены"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: error.message || "Не удалось сохранить настройки"
-      });
-    }
-  });
-
+  // Loading state
   if (isLoading) {
     return (
       <DialogContent className="dialog-content">
@@ -417,502 +443,580 @@ export function SettingsDialog() {
       </DialogContent>
     );
   }
-
+  
+  // Main render
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dialog-content">
-      <DialogHeader>
-        <DialogTitle>Настройки API ключей</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <Label className="text-base font-medium">API Ключ Perplexity</Label>
-            <Badge variant={apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "success" : "destructive"}>
-              {apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={perplexityKey}
-              onChange={(e) => setPerplexityKey(e.target.value)}
-              placeholder="Введите API ключ Perplexity"
-              className={cn("flex-1", !perplexityKey && "border-amber-400 focus-visible:ring-amber-400")}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('https://perplexity.ai/settings', '_blank')}
-                    className="shrink-0 border-amber-400 text-amber-600"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Получить ключ на сайте Perplexity</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testPerplexityKey}
-              disabled={!perplexityKey.trim() || isPending}
-              className="shrink-0"
-            >
-              {perplexityTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : perplexityTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : perplexityTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium">
-              Ключ используется для поиска источников и генерации контента через Perplexity
-            </p>
-            <ul className="list-disc list-inside pl-2 text-xs">
-              <li>Необходим для функции "Искать источники" на странице Источники</li>
-              <li>Ключ можно получить в <a href="https://perplexity.ai/settings" target="_blank" className="text-blue-500 hover:underline">настройках аккаунта Perplexity</a></li>
-            </ul>
-          </div>
-          {perplexityTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{perplexityTesting.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label>API Ключ Apify</Label>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={apifyKey}
-              onChange={(e) => setApifyKey(e.target.value)}
-              placeholder="Введите API ключ"
-              className="flex-1"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testApifyKey}
-              disabled={!apifyKey.trim() || isPending}
-              className="shrink-0"
-            >
-              {apifyTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : apifyTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : apifyTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для парсинга социальных сетей
-          </p>
-          {apifyTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{apifyTesting.message}</p>
-          )}
-        </div>
+    <>
+      {/* Delete confirmation dialog */}
+      {keyToDelete && (
+        <Dialog open={!!keyToDelete} onOpenChange={(open) => !open && setKeyToDelete(null)}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Подтверждение удаления</DialogTitle>
+              <DialogDescription>
+                Вы уверены, что хотите удалить этот API ключ? Это действие нельзя отменить.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-between sm:justify-between mt-4">
+              <Button variant="outline" onClick={cancelDeleteApiKey}>
+                Отмена
+              </Button>
+              <Button variant="destructive" onClick={deleteApiKey} disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Удаление...
+                  </>
+                ) : (
+                  "Удалить"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* Main settings dialog content */}
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dialog-content">
+        <DialogHeader>
+          <DialogTitle>Настройки API ключей</DialogTitle>
+          <DialogDescription>
+            Управление API ключами для генерации текста и изображений
+          </DialogDescription>
+        </DialogHeader>
         
-        <div className="space-y-2">
-          <Label>API Ключ DeepSeek</Label>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={deepseekKey}
-              onChange={(e) => setDeepseekKey(e.target.value)}
-              placeholder="Введите API ключ"
-              className="flex-1"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testDeepseekKey}
-              disabled={!deepseekKey.trim() || isPending || deepseekTesting.status === 'testing'}
-              className="shrink-0"
-            >
-              {deepseekTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : deepseekTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : deepseekTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для анализа веб-сайтов и генерации контента
-          </p>
-          {deepseekTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{deepseekTesting.message}</p>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          <Label>API Ключ FAL.AI</Label>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={falAiKey}
-              onChange={(e) => setFalAiKey(e.target.value)}
-              placeholder="Введите API ключ"
-              className="flex-1"
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testFalAiKey}
-              disabled={!falAiKey.trim() || isPending || falAiTesting.status === 'testing'}
-              className="shrink-0"
-            >
-              {falAiTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : falAiTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : falAiTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Ключ используется для генерации изображений и медиа-контента
-          </p>
-          {falAiTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{falAiTesting.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <Label className="text-base font-medium">API Ключ Claude AI</Label>
-            <Badge 
-              variant={
-                claudeTesting.status === 'success' ? "success" : 
-                (apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "outline" : "destructive")
-              }
-            >
-              {claudeTesting.status === 'success' ? "Проверен и работает" : 
-               (apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={claudeKey}
-              onChange={(e) => setClaudeKey(e.target.value)}
-              placeholder="Введите API ключ Claude AI"
-              className={cn("flex-1", !claudeKey && "border-amber-400 focus-visible:ring-amber-400")}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('https://console.anthropic.com/settings/keys', '_blank')}
-                    className="shrink-0 border-amber-400 text-amber-600"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Получить ключ на сайте Anthropic</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testClaudeKey}
-              disabled={!claudeKey.trim() || isPending}
-              className="shrink-0"
-            >
-              {claudeTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : claudeTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : claudeTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium">
-              Ключ используется для улучшения текста и генерации контента через Claude AI
-            </p>
-            <ul className="list-disc list-inside pl-2 text-xs">
-              <li>Необходим для функции "Улучшить текст" при редактировании постов</li>
-              <li>Обеспечивает доступ к Claude для высококачественной генерации текста</li>
-              <li>Ключ можно получить в <a href="https://console.anthropic.com/settings/keys" target="_blank" className="text-blue-500 hover:underline">настройках консоли Anthropic</a></li>
-            </ul>
-          </div>
-          {claudeTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{claudeTesting.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <Label className="text-base font-medium">API Ключ Google Gemini</Label>
-            <Badge 
-              variant={
-                geminiTesting.status === 'success' ? "success" : 
-                (apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "outline" : "destructive")
-              }
-            >
-              {geminiTesting.status === 'success' ? "Проверен и работает" : 
-               (apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={geminiKey}
-              onChange={(e) => setGeminiKey(e.target.value)}
-              placeholder="Введите API ключ Google Gemini"
-              className={cn("flex-1", !geminiKey && "border-amber-400 focus-visible:ring-amber-400")}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('https://aistudio.google.com/app/apikey', '_blank')}
-                    className="shrink-0 border-amber-400 text-amber-600"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Получить ключ в Google AI Studio</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testGeminiKey}
-              disabled={!geminiKey.trim() || isPending}
-              className="shrink-0"
-            >
-              {geminiTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : geminiTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : geminiTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium">
-              Ключ используется для улучшения текста и генерации контента через Google Gemini
-            </p>
-            <ul className="list-disc list-inside pl-2 text-xs">
-              <li>Необходим для функции "Улучшить текст" с использованием модели Gemini</li>
-              <li>Обеспечивает доступ к моделям Gemini для генерации текста</li>
-              <li>Ключ можно получить в <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 hover:underline">Google AI Studio</a></li>
-            </ul>
-          </div>
-          {geminiTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{geminiTesting.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <Label className="text-base font-medium">API Ключ Alibaba Qwen</Label>
-            <Badge 
-              variant={
-                qwenTesting.status === 'success' ? "success" : 
-                (apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "outline" : "destructive")
-              }
-            >
-              {qwenTesting.status === 'success' ? "Проверен и работает" : 
-               (apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка")}
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="password"
-              value={qwenKey}
-              onChange={(e) => setQwenKey(e.target.value)}
-              placeholder="Введите API ключ Alibaba Qwen"
-              className={cn("flex-1", !qwenKey && "border-amber-400 focus-visible:ring-amber-400")}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('https://help.aliyun.com/document_detail/611472.html', '_blank')}
-                    className="shrink-0 border-amber-400 text-amber-600"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Получить ключ в Alibaba Cloud</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={testQwenKey}
-              disabled={!qwenKey.trim() || isPending}
-              className="shrink-0"
-            >
-              {qwenTesting.status === 'testing' ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              ) : qwenTesting.status === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-              ) : qwenTesting.status === 'error' ? (
-                <XCircle className="h-4 w-4 mr-1 text-red-500" />
-              ) : null}
-              Проверить
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium">
-              Ключ используется для улучшения текста и генерации контента через Alibaba Qwen
-            </p>
-            <ul className="list-disc list-inside pl-2 text-xs">
-              <li>Необходим для функции "Улучшить текст" с использованием моделей Qwen</li>
-              <li>Обеспечивает доступ к моделям Qwen для генерации многоязычного контента</li>
-              <li>Особенно эффективен для работы с китайским языком</li>
-            </ul>
-          </div>
-          {qwenTesting.status === 'error' && (
-            <p className="text-sm text-red-500">{qwenTesting.message}</p>
-          )}
-        </div>
-        
-        <Separator className="my-4" />
-        
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <Label className="text-lg font-semibold">XMLRiver (Yandex.Wordstat)</Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="ml-2">
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>XMLRiver используется для получения точных данных по ключевым словам из Яндекс.Вордстат. Требует user ID и API ключ.</p>
-                  <p className="mt-2">Получить можно на сайте: <a href="https://xmlriver.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">xmlriver.com</a></p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>User ID в XMLRiver</Label>
-              <Input
-                type="text"
-                value={xmlRiverUserId}
-                onChange={(e) => setXmlRiverUserId(e.target.value)}
-                placeholder="Введите ID пользователя XMLRiver"
-              />
-              <p className="text-sm text-muted-foreground">
-                ID вашего аккаунта в XMLRiver
-              </p>
+        <div className="grid gap-4 py-4">
+          {/* FAL.AI section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ FAL.AI</h3>
+              <Badge variant={falAiKey.trim() ? "success" : "destructive"} className="ml-2">
+                {falAiKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'fal_ai' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
             </div>
-            
-            <div className="space-y-2">
-              <Label>API Ключ XMLRiver</Label>
-              <div className="flex gap-2">
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
                 <Input
+                  id="falai-key"
                   type="password"
-                  value={xmlRiverApiKey}
-                  onChange={(e) => setXmlRiverApiKey(e.target.value)}
-                  placeholder="Введите API ключ XMLRiver"
+                  placeholder="fal.xxxxxxxxxx"
+                  value={falAiKey}
                   className="flex-1"
+                  onChange={(e) => setFalAiKey(e.target.value)}
                 />
-                <Button 
-                  variant="outline" 
+                <a href={getApiKeyUrl('fal_ai')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
                   size="sm"
-                  onClick={testXmlRiverKey}
-                  disabled={!xmlRiverApiKey.trim() || !xmlRiverUserId.trim() || isPending || xmlRiverTesting.status === 'testing'}
-                  className="shrink-0"
+                  onClick={testFalAiKey}
+                  disabled={!falAiKey.trim() || falAiTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    falAiTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    falAiTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
                 >
-                  {xmlRiverTesting.status === 'testing' ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  ) : xmlRiverTesting.status === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" />
-                  ) : xmlRiverTesting.status === 'error' ? (
-                    <XCircle className="h-4 w-4 mr-1 text-red-500" />
+                  {falAiTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : falAiTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : falAiTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
                   ) : null}
                   Проверить
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Ключ для доступа к API XMLRiver
-              </p>
-              {xmlRiverTesting.status === 'error' && (
-                <p className="text-sm text-red-500">{xmlRiverTesting.message}</p>
+              {falAiTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{falAiTesting.message}</p>
+              )}
+              {falAiTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{falAiTesting.message}</p>
               )}
             </div>
+            <p className="text-sm mt-2">Ключ используется для генерации изображений и медиа-контента</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Ключ можно получить в <a href={getApiKeyUrl('fal_ai')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">FAL.AI Dashboard</a></li>
+            </ul>
           </div>
-        </div>
 
-        <Separator className="my-4" />
-        
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <Label className="text-lg font-semibold">Настройки социальных сетей</Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="ml-2">
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>Настройки токенов социальных сетей были перенесены в настройки каждой кампании.</p>
-                  <p className="mt-2">Вы можете настроить публикацию в соцсети при создании или редактировании кампании.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* DeepSeek section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ DeepSeek</h3>
+              <Badge variant={deepseekKey.trim() ? "success" : "destructive"} className="ml-2">
+                {deepseekKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'deepseek' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="deepseek-key"
+                  type="password"
+                  placeholder="dsk.xxxxxxxxxx"
+                  value={deepseekKey}
+                  className="flex-1"
+                  onChange={(e) => setDeepseekKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('deepseek')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testDeepseekKey}
+                  disabled={!deepseekKey.trim() || deepseekTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    deepseekTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    deepseekTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {deepseekTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : deepseekTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : deepseekTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {deepseekTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{deepseekTesting.message}</p>
+              )}
+              {deepseekTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{deepseekTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для анализа веб-сайтов и генерации контента</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Ключ можно получить в <a href={getApiKeyUrl('deepseek')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">DeepSeek Platform</a></li>
+            </ul>
           </div>
-          
-          <div className="rounded-md bg-blue-50 dark:bg-blue-950 p-4">
-            <div className="flex">
-              <InfoIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Информация</h3>
-                <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                  <p>Токены доступа к социальным сетям (VK, Telegram, Facebook, Instagram) 
-                  теперь настраиваются индивидуально для каждой кампании.</p>
-                  <p className="mt-1">Это позволяет публиковать контент в разные аккаунты и группы 
-                  для разных кампаний.</p>
+
+          {/* Claude section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Claude AI</h3>
+              <Badge 
+                variant={claudeKey.trim() ? "outline" : "destructive"}
+                className="ml-2"
+              >
+                {claudeKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'claude' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="claude-key"
+                  type="password"
+                  placeholder="sk-ant-api03-xxxxxxxxxxxx"
+                  value={claudeKey}
+                  className="flex-1"
+                  onChange={(e) => setClaudeKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('claude')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testClaudeKey}
+                  disabled={!claudeKey.trim() || claudeTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    claudeTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    claudeTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {claudeTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : claudeTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : claudeTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {claudeTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{claudeTesting.message}</p>
+              )}
+              {claudeTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{claudeTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для улучшения текста и генерации контента через Claude AI</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для функции "Улучшить текст" при редактировании постов</li>
+              <li>Обеспечивает доступ к Claude для высококачественной генерации текста</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('claude')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">настройках консоли Anthropic</a></li>
+            </ul>
+          </div>
+
+          {/* Perplexity section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Perplexity</h3>
+              <Badge variant={perplexityKey.trim() ? "success" : "destructive"} className="ml-2">
+                {perplexityKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'perplexity' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="perplexity-key"
+                  type="password"
+                  placeholder="pplx-xxxxxxxxxx"
+                  value={perplexityKey}
+                  className="flex-1"
+                  onChange={(e) => setPerplexityKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('perplexity')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testPerplexityKey}
+                  disabled={!perplexityKey.trim() || perplexityTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    perplexityTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    perplexityTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {perplexityTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : perplexityTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : perplexityTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {perplexityTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{perplexityTesting.message}</p>
+              )}
+              {perplexityTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{perplexityTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для поиска источников и генерации контента через Perplexity</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для функции "Искать источники" на странице Источники</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('perplexity')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">настройках аккаунта Perplexity</a></li>
+            </ul>
+          </div>
+
+          {/* Apify section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Apify</h3>
+              <Badge variant={apifyKey.trim() ? "success" : "destructive"} className="ml-2">
+                {apifyKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'apify' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="apify-key"
+                  type="password"
+                  placeholder="apify_api_xxxxxxxxxx"
+                  value={apifyKey}
+                  className="flex-1"
+                  onChange={(e) => setApifyKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('apify')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testApifyKey}
+                  disabled={!apifyKey.trim() || apifyTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    apifyTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    apifyTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {apifyTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : apifyTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : apifyTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {apifyTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{apifyTesting.message}</p>
+              )}
+              {apifyTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{apifyTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для сбора данных с внешних ресурсов</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для функции поиска и анализа данных</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('apify')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Apify Console</a></li>
+            </ul>
+          </div>
+
+          {/* XMLRiver section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ XMLRiver</h3>
+              <Badge variant={xmlRiverApiKey.trim() && xmlRiverUserId.trim() ? "success" : "destructive"} className="ml-2">
+                {(xmlRiverApiKey.trim() && xmlRiverUserId.trim()) || apiKeys?.some((k: ApiKey) => k.service_name === 'xmlriver' && k.api_key) ? "Настроен" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 grid gap-2">
+                  <Label htmlFor="xmlriver-user-id">ID пользователя XMLRiver</Label>
+                  <Input
+                    id="xmlriver-user-id"
+                    type="text"
+                    placeholder="16797"
+                    value={xmlRiverUserId}
+                    onChange={(e) => setXmlRiverUserId(e.target.value)}
+                  />
                 </div>
+                <a href="https://xmlriver.com/queries/" target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md mt-8">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+              </div>
+
+              <Label htmlFor="xmlriver-key">API ключ XMLRiver</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="xmlriver-key"
+                  type="password"
+                  placeholder="Ключ XMLRiver"
+                  value={xmlRiverApiKey}
+                  className="flex-1"
+                  onChange={(e) => setXmlRiverApiKey(e.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testXmlRiverKey}
+                  disabled={!xmlRiverApiKey.trim() || !xmlRiverUserId.trim() || xmlRiverTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    xmlRiverTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    xmlRiverTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {xmlRiverTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : xmlRiverTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : xmlRiverTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {xmlRiverTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{xmlRiverTesting.message}</p>
+              )}
+              {xmlRiverTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{xmlRiverTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для поиска и управления товарами на маркетплейсах</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для работы с товарами и ценами</li>
+              <li>Ключ можно получить в <a href="https://xmlriver.com/queries/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">XMLRiver Queries</a></li>
+            </ul>
+          </div>
+
+          {/* Gemini section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Gemini</h3>
+              <Badge variant={geminiKey.trim() ? "outline" : "destructive"} className="ml-2">
+                {geminiKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'gemini' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="gemini-key"
+                  type="password"
+                  placeholder="AIzaSyxxxxxxxxxx"
+                  value={geminiKey}
+                  className="flex-1"
+                  onChange={(e) => setGeminiKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('gemini')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testGeminiKey}
+                  disabled={!geminiKey.trim() || geminiTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    geminiTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    geminiTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {geminiTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : geminiTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : geminiTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {geminiTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{geminiTesting.message}</p>
+              )}
+              {geminiTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{geminiTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для анализа изображений и генерации контента</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для работы с мультимодальными запросами</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('gemini')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a></li>
+            </ul>
+          </div>
+
+          {/* Qwen section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">API Ключ Qwen</h3>
+              <Badge variant={qwenKey.trim() ? "outline" : "destructive"} className="ml-2">
+                {qwenKey.trim() || apiKeys?.some((k: ApiKey) => k.service_name === 'qwen' && k.api_key) ? "Требует проверки" : "Требуется настройка"}
+              </Badge>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex space-x-2">
+                <Input
+                  id="qwen-key"
+                  type="password"
+                  placeholder="dashdxxxxxx"
+                  value={qwenKey}
+                  className="flex-1"
+                  onChange={(e) => setQwenKey(e.target.value)}
+                />
+                <a href={getApiKeyUrl('qwen')} target="_blank" rel="noopener noreferrer" className="flex-none p-2 text-amber-500 hover:text-amber-700 border rounded-md">
+                  <InfoIcon className="h-5 w-5" />
+                </a>
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={testQwenKey}
+                  disabled={!qwenKey.trim() || qwenTesting.status === 'testing' || isPending}
+                  className={cn(
+                    "flex-none w-24",
+                    qwenTesting.status === 'success' && "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800",
+                    qwenTesting.status === 'error' && "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  )}
+                >
+                  {qwenTesting.status === 'testing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : qwenTesting.status === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  ) : qwenTesting.status === 'error' ? (
+                    <XCircle className="h-4 w-4 mr-1" />
+                  ) : null}
+                  Проверить
+                </Button>
+              </div>
+              {qwenTesting.status === 'error' && (
+                <p className="text-xs text-red-600">{qwenTesting.message}</p>
+              )}
+              {qwenTesting.status === 'success' && (
+                <p className="text-xs text-green-600">{qwenTesting.message}</p>
+              )}
+            </div>
+            <p className="text-sm mt-2">Ключ используется для генерации текста на китайском языке</p>
+            <ul className="text-sm list-disc list-inside ml-2">
+              <li>Необходим для перевода и создания контента на китайском</li>
+              <li>Ключ можно получить в <a href={getApiKeyUrl('qwen')} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Alibaba Cloud</a></li>
+            </ul>
+          </div>
+
+          {/* Existing API Keys section */}
+          {apiKeys && apiKeys.length > 0 && (
+            <div className="space-y-2 mt-6">
+              <h3 className="text-lg font-medium">Сохраненные API ключи</h3>
+              <div className="rounded-md border">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Сервис
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Ключ
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Действия
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-popover divide-y divide-border">
+                    {apiKeys.map((key: ApiKey) => (
+                      <tr key={key.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {getServiceDisplayName(key.service_name)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className="bg-muted px-2 py-1 rounded-md font-mono text-xs">
+                            {key.service_name === 'xmlriver' ? 'Составной ключ' : 
+                              key.api_key.substring(0, 4) + '...' + key.api_key.substring(key.api_key.length - 4)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => confirmDeleteApiKey(key.id)}
+                            disabled={deleteMutation.isPending && keyToDelete === key.id}
+                            className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                          >
+                            {deleteMutation.isPending && keyToDelete === key.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : null}
+                            Удалить
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
+          )}
         </div>
-        
-        <Button
-          onClick={() => saveSettings()}
+
+        <Button 
+          type="button" 
+          onClick={saveSettings} 
+          className="mt-4 w-full" 
           disabled={isPending}
-          className="w-full mt-6"
         >
           {isPending ? (
             <>
@@ -923,7 +1027,7 @@ export function SettingsDialog() {
             "Сохранить"
           )}
         </Button>
-      </div>
-    </DialogContent>
+      </DialogContent>
+    </>
   );
 }

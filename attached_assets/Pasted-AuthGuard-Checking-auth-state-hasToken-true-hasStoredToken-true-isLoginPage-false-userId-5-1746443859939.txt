@@ -1,0 +1,115 @@
+AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: false, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+AuthGuard.tsx:67 AuthGuard: Validating token from store
+auth.ts:56 Attempting to refresh token
+auth.ts:59 Trying our API endpoint for token refresh
+AuthGuard.tsx:55 AuthGuard: Token validation result: {valid: true, user: {…}}
+AuthGuard.tsx:71 AuthGuard: Token validation successful
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+global-api-keys.tsx:256 Проверка статуса администратора перед загрузкой страницы API ключей
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+global-api-keys.tsx:294 Отправка запроса на получение глобальных API ключей с токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+Layout.tsx:106 Авторизован с токеном, длина: 321
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+auth.ts:74 API endpoint refresh successful
+store.ts:41 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+global-api-keys.tsx:256 Проверка статуса администратора перед загрузкой страницы API ключей
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+global-api-keys.tsx:294 Отправка запроса на получение глобальных API ключей с токеном eyJhbGciOi...
+Layout.tsx:106 Авторизован с токеном, длина: 321
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+AuthGuard.tsx:30 AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: false, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+AuthGuard.tsx:67 AuthGuard: Validating token from store
+global-api-keys.tsx:50 
+            
+            
+           GET https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/user-api-keys 401 (Unauthorized)
+dispatchXhrRequest @ axios.js?v=454d45f2:1637
+xhr @ axios.js?v=454d45f2:1517
+dispatchRequest @ axios.js?v=454d45f2:1992
+_request @ axios.js?v=454d45f2:2213
+request @ axios.js?v=454d45f2:2104
+Axios.<computed> @ axios.js?v=454d45f2:2232
+wrap @ axios.js?v=454d45f2:8
+loadUserKeys @ global-api-keys.tsx:50
+(anonymous) @ global-api-keys.tsx:156
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=454d45f2:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=454d45f2:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=454d45f2:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=454d45f2:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=454d45f2:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=454d45f2:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=454d45f2:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=454d45f2:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=454d45f2:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=454d45f2:19432
+commitRoot @ chunk-RPCDYKBN.js?v=454d45f2:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=454d45f2:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=454d45f2:18718
+workLoop @ chunk-RPCDYKBN.js?v=454d45f2:197
+flushWork @ chunk-RPCDYKBN.js?v=454d45f2:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=454d45f2:384Understand this error
+global-api-keys.tsx:74 Ошибка при загрузке личных API ключей: AxiosError {message: 'Request failed with status code 401', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+overrideMethod @ hook.js:608
+loadUserKeys @ global-api-keys.tsx:74
+await in loadUserKeys
+(anonymous) @ global-api-keys.tsx:156
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=454d45f2:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=454d45f2:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=454d45f2:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=454d45f2:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=454d45f2:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=454d45f2:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=454d45f2:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=454d45f2:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=454d45f2:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=454d45f2:19432
+commitRoot @ chunk-RPCDYKBN.js?v=454d45f2:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=454d45f2:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=454d45f2:18718
+workLoop @ chunk-RPCDYKBN.js?v=454d45f2:197
+flushWork @ chunk-RPCDYKBN.js?v=454d45f2:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=454d45f2:384Understand this error
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1746443842788}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+global-api-keys.tsx:258 Результат проверки админа: true
+global-api-keys.tsx:294 Отправка запроса на получение глобальных API ключей с токеном eyJhbGciOi...
+CampaignSelector.tsx:69 Campaigns loaded: 8
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "Правильное питание"
+campaignStore.ts:66 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=Правильное питание
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+Layout.tsx:59 Получены данные пользователя: {user: {…}}
+Layout.tsx:70 Проверка администратора: is_smm_admin = true итог: true
+Layout.tsx:76 Пользователь является администратором по email: lbrspb@gmail.com
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1746443843111}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+Layout.tsx:59 Получены данные пользователя: {user: {…}}
+Layout.tsx:70 Проверка администратора: is_smm_admin = true итог: true
+Layout.tsx:76 Пользователь является администратором по email: lbrspb@gmail.com
+AuthGuard.tsx:55 AuthGuard: Token validation result: {valid: true, user: {…}}
+AuthGuard.tsx:71 AuthGuard: Token validation successful
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1746443843445}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+global-api-keys.tsx:258 Результат проверки админа: true
+global-api-keys.tsx:294 Отправка запроса на получение глобальных API ключей с токеном eyJhbGciOi...
+global-api-keys.tsx:299 Получен ответ от сервера: {success: true, data: Array(0), timestamp: 1746443843582}
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1746443843762}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Правильное питание
+global-api-keys.tsx:299 Получен ответ от сервера: {success: true, data: Array(0), timestamp: 1746443844669}
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+global-api-keys.tsx:299 Получен ответ от сервера: {success: true, data: Array(0), timestamp: 1746443845758}
+global-api-keys.tsx:299 Получен ответ от сервера: {success: true, data: Array(0), timestamp: 1746443846844}
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
