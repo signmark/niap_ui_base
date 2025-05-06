@@ -1723,6 +1723,12 @@ export default function ContentPage() {
                       images={currentContent.additionalImages || []}
                       onChange={(images) => setCurrentContentSafe({...currentContent, additionalImages: images})}
                       label="Дополнительные изображения"
+                      onGenerateImage={(index) => {
+                        // Сохраняем индекс текущего изображения в локальном состоянии
+                        localStorage.setItem('currentAdditionalImageIndex', String(index));
+                        localStorage.setItem('additionalImageMode', 'edit');
+                        setIsImageGenerationDialogOpen(true);
+                      }}
                     />
                   </div>
                 </div>
@@ -2146,35 +2152,79 @@ export default function ContentPage() {
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
           // Корректно передаем контент в зависимости от режима (редактирование или создание)
           initialContent={currentContent ? currentContent.content : newContent.content}
-          // Передаем промт только если мы редактируем существующий контент, иначе пустая строка
-          initialPrompt={currentContent ? (currentContent.prompt || "") : ""}
+          // Передаем промт в зависимости от режима (редактирование, создание или доп.изображение)
+          initialPrompt={
+            currentContent ? (currentContent.prompt || "") :
+            newContent.prompt ? newContent.prompt : ""
+          }
           onImageGenerated={(imageUrl, promptText) => {
             console.log("Изображение успешно сгенерировано:", imageUrl);
             console.log("Промт использованный для генерации:", promptText?.substring(0, 100) + "...");
             
-            // Проверяем, находимся ли мы в режиме редактирования или создания
-            if (currentContent) {
-              // Обновляем URL изображения и промт в форме редактирования
-              const updatedContent = {
-                ...currentContent, 
-                imageUrl,
-                // Сохраняем промт только если он был передан
-                ...(promptText ? { prompt: promptText } : {})
-              };
-              setCurrentContentSafe(updatedContent);
+            // Проверяем режим дополнительного изображения
+            const additionalImageMode = localStorage.getItem('additionalImageMode');
+            const imageIndex = localStorage.getItem('currentAdditionalImageIndex');
+            
+            if (additionalImageMode) {
+              // Если это режим дополнительного изображения
+              const index = parseInt(imageIndex || '0', 10);
+              
+              if (additionalImageMode === 'create') {
+                // Для режима создания
+                const updatedImages = [...newContent.additionalImages];
+                updatedImages[index] = imageUrl;
+                setNewContent({
+                  ...newContent,
+                  additionalImages: updatedImages,
+                  // Сохраняем промт только если он был передан и если это первая генерация
+                  ...(promptText && !newContent.prompt ? { prompt: promptText } : {})
+                });
+              } else if (additionalImageMode === 'edit' && currentContent) {
+                // Для режима редактирования
+                const updatedImages = [...(currentContent.additionalImages || [])];
+                updatedImages[index] = imageUrl;
+                setCurrentContentSafe({
+                  ...currentContent,
+                  additionalImages: updatedImages,
+                  // Сохраняем промт только если он был передан и если это первая генерация
+                  ...(promptText && !currentContent.prompt ? { prompt: promptText } : {})
+                });
+              }
+              
+              // Очищаем localStorage после генерации
+              localStorage.removeItem('additionalImageMode');
+              localStorage.removeItem('currentAdditionalImageIndex');
             } else {
-              // Обновляем URL изображения и промт в форме создания контента
-              setNewContent({
-                ...newContent,
-                imageUrl,
-                // Сохраняем промт только если он был передан
-                ...(promptText ? { prompt: promptText } : {})
-              });
+              // Обычный режим для основного изображения
+              if (currentContent) {
+                // Обновляем URL изображения и промт в форме редактирования
+                const updatedContent = {
+                  ...currentContent, 
+                  imageUrl,
+                  // Сохраняем промт только если он был передан
+                  ...(promptText ? { prompt: promptText } : {})
+                };
+                setCurrentContentSafe(updatedContent);
+              } else {
+                // Обновляем URL изображения и промт в форме создания контента
+                setNewContent({
+                  ...newContent,
+                  imageUrl,
+                  // Сохраняем промт только если он был передан
+                  ...(promptText ? { prompt: promptText } : {})
+                });
+              }
             }
+            
             // Закрываем диалог после выбора изображения
             setIsImageGenerationDialogOpen(false);
           }}
-          onClose={() => setIsImageGenerationDialogOpen(false)}
+          onClose={() => {
+            // Очищаем localStorage при закрытии диалога
+            localStorage.removeItem('additionalImageMode');
+            localStorage.removeItem('currentAdditionalImageIndex');
+            setIsImageGenerationDialogOpen(false);
+          }}
         />
       </Dialog>
 
