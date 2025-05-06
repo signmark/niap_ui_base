@@ -196,11 +196,26 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
+        // Логируем исходный текст
+        logger.log(`[gemini-proxy] Исходный текст перед очисткой, длина: ${resultText.length}`, 'gemini');
+        
         // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
         resultText = resultText.replace(/<[^>]*>/g, '');
-        resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
-        resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Удаляем маркеры кода, но сохраняем содержимое
+        resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
+        resultText = resultText.replace(/```\s?/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Логируем очищенный текст
+        logger.log(`[gemini-proxy] Очищенный текст, длина: ${resultText.length}`, 'gemini');
+        
+        // Проверяем, что текст не пустой после очистки
+        if (resultText.trim().length === 0) {
+          logger.warn(`[gemini-proxy] После очистки текст стал пустым!`, 'gemini');
+          // Возвращаем исходный текст без очистки маркеров кода
+          return response.candidates[0].content.parts[0].text.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
+        }
         
         return resultText;
       }
@@ -256,11 +271,26 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
+        // Логируем исходный текст
+        logger.log(`[gemini-proxy] Исходный текст перед очисткой (генерация), длина: ${resultText.length}`, 'gemini');
+        
         // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
         resultText = resultText.replace(/<[^>]*>/g, '');
-        resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
-        resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Удаляем маркеры кода, но сохраняем содержимое
+        resultText = resultText.replace(/```html\s?/g, ''); // Удаляем маркеры начала HTML-кода
+        resultText = resultText.replace(/```\s?/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Логируем очищенный текст
+        logger.log(`[gemini-proxy] Очищенный текст (генерация), длина: ${resultText.length}`, 'gemini');
+        
+        // Проверяем, что текст не пустой после очистки
+        if (resultText.trim().length === 0) {
+          logger.warn(`[gemini-proxy] После очистки текст стал пустым! (генерация)`, 'gemini');
+          // Возвращаем исходный текст без очистки маркеров кода
+          return response.candidates[0].content.parts[0].text.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
+        }
         
         return resultText;
       }
