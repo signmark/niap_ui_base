@@ -5,6 +5,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { geminiTestRouter } from './routes/gemini-test-route';
 import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
