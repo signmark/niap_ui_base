@@ -31,36 +31,50 @@ geminiTestRouter.get('/test', async (req, res) => {
 // Тест улучшения текста
 geminiTestRouter.post('/improve-text', async (req, res) => {
   try {
-    logger.log('[gemini-routes] Received improve-text request from user ' + (req.user?.id || 'undefined'));
+    // Записываем в логи информацию о запросе
+    logger.log('[gemini-test] Получен запрос на улучшение текста');
+    logger.log('[gemini-test] Body: ' + JSON.stringify(req.body));
     
-    const { text } = req.body;
+    // Проверяем наличие текста в запросе
+    const { text, prompt: userPrompt } = req.body;
     
     if (!text) {
-      logger.log('[gemini-routes] Missing text in improve-text request');
-      return res.status(400).json({ success: false, error: 'Текст отсутствует в запросе' });
+      logger.log('[gemini-test] Отсутствует текст в запросе');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Текст отсутствует в запросе. Пожалуйста, укажите параметр "text".' 
+      });
     }
     
     logger.log('[gemini-test] Улучшение текста через Gemini API...');
+    logger.log(`[gemini-test] Оригинальный текст: ${text.substring(0, 50)}...`);
     
-    const defaultPrompt = `Сделай этот текст более интересным и профессиональным.
-
-Важно: 
-1. Ответ должен содержать ТОЛЬКО улучшенный текст, без объяснений и кодовых блоков.
-2. Не заключай ответ в кавычки, теги code или markdown-разметку.
-3. Ответ должен начинаться сразу с первой буквы улучшенного текста.
-
-Вот текст для улучшения:
-
-${text}`;
+    // Создаем промпт для улучшения текста
+    // Используем инструкции от пользователя или дефолтные
+    const defaultInstructions = 'Сделай этот текст более интересным и профессиональным';
+    const instructions = userPrompt || defaultInstructions;
     
-    // Запускаем запрос к Gemini API
-    const model = 'gemini-1.5-flash';
-    const result = await geminiService.generateText(defaultPrompt, model);
+    // Используем метод improveText из сервиса Gemini
+    const result = await geminiService.improveText({
+      text: text,
+      prompt: instructions,
+      model: 'gemini-1.5-flash'
+    });
     
     logger.log('[gemini-test] Текст успешно улучшен');
-    return res.status(200).json({ success: true, originalText: text, improvedText: result });
+    logger.log(`[gemini-test] Улучшенный текст: ${result.substring(0, 50)}...`);
+    
+    // Возвращаем успешный ответ
+    return res.status(200).json({ 
+      success: true, 
+      originalText: text, 
+      improvedText: result 
+    });
   } catch (error) {
     logger.error('[gemini-test] Ошибка при улучшении текста:', error);
-    return res.status(500).json({ success: false, error: `Ошибка при улучшении текста: ${(error as Error).message}` });
+    return res.status(500).json({ 
+      success: false, 
+      error: `Ошибка при улучшении текста: ${(error as Error).message}` 
+    });
   }
 });

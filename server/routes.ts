@@ -47,6 +47,7 @@ import { registerTestInstagramCarouselRoute } from './api/test-instagram-carouse
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { publicationStatusChecker } from './services/status-checker';
+import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
