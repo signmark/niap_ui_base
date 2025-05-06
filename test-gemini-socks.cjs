@@ -30,21 +30,17 @@ async function testGeminiAPI() {
   console.log('↻ Тестирование доступа к Gemini API через прокси...');
   console.log(`ℹ️ Используемый прокси: ${proxyUrl}`);
   
-  // Конфигурация запроса
+  // Конфигурация запроса - предельно простая версия
   const requestBody = {
-    contents: [
+    "contents": [
       {
-        parts: [
+        "parts": [
           {
-            text: prompt
+            "text": "Hello, how are you?"
           }
         ]
       }
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 50
-    }
+    ]
   };
   
   const requestData = JSON.stringify(requestBody);

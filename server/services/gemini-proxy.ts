@@ -1,23 +1,22 @@
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import fetch from 'node-fetch';
 import * as logger from '../utils/logger';
 
 // Настройки коммерческого прокси
-const PROXY_HOST = '45.200.176.107';
-const PROXY_PORT = 64673;
-const PROXY_USERNAME = 'ttNkVLRS';
-const PROXY_PASSWORD = '63cYXNdr';
+const PROXY_HOST = '131.108.17.21';
+const PROXY_PORT = 9271;
+const PROXY_USERNAME = 'vf8Fe7';
+const PROXY_PASSWORD = 'yk5xt2';
 
 // Формируем URL прокси с учетными данными
-// Пробуем использовать HTTP вместо SOCKS5
-const PROXY_URL = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
+const PROXY_URL = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 /**
  * Сервис для проксирования запросов к Gemini API через коммерческий прокси
  */
 export class GeminiProxyService {
   private proxyUrl: string;
-  private agent: HttpsProxyAgent<string>;
+  private agent: any; // Используем any для обхода проблем с типами
   
   /**
    * Конструктор сервиса прокси
@@ -25,10 +24,10 @@ export class GeminiProxyService {
    */
   constructor(proxyUrl: string = PROXY_URL) {
     this.proxyUrl = proxyUrl;
-    this.agent = new HttpsProxyAgent(proxyUrl);
+    this.agent = new SocksProxyAgent(proxyUrl);
     // Скрываем пароль из лога (для безопасности)
     const safeProxyUrl = this.proxyUrl.replace(/:[^:@]*@/, ':***@');
-    logger.log(`[gemini-proxy] Инициализирован с прокси: ${safeProxyUrl}`);
+    logger.log(`[gemini-proxy] Инициализирован с SOCKS5 прокси: ${safeProxyUrl}`);
   }
   
   /**
@@ -64,8 +63,10 @@ export class GeminiProxyService {
    */
   updateProxyUrl(proxyUrl: string): void {
     this.proxyUrl = proxyUrl;
-    this.agent = new HttpsProxyAgent(proxyUrl);
-    logger.log(`[gemini-proxy] Обновлен прокси на: ${proxyUrl}`);
+    this.agent = new SocksProxyAgent(proxyUrl);
+    // Скрываем пароль из лога (для безопасности)
+    const safeProxyUrl = proxyUrl.replace(/:[^:@]*@/, ':***@');
+    logger.log(`[gemini-proxy] Обновлен прокси на: ${safeProxyUrl}`);
   }
 }
 
