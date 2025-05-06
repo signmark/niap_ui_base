@@ -24,7 +24,8 @@ const PROXY_USERNAME = 'ttNkVLRS';
 const PROXY_PASSWORD = '63cYXNdr';
 
 // Формируем URL прокси с учетными данными
-const proxyUrl = `socks5://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
+// Пробуем использовать HTTP вместо SOCKS5
+const proxyUrl = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
 
 // Создаем экземпляр прокси-агента
 const proxyAgent = new HttpsProxyAgent(proxyUrl);
