@@ -99,11 +99,25 @@ directusApi.interceptors.response.use(
   }
 );
 
-// Create a general API instance
+// Определяем URL базового API на основе текущего хоста
+const getApiBaseUrl = () => {
+  // Получаем текущий хост (без порта)
+  const currentHost = window.location.hostname;
+  // Получаем текущий порт
+  const currentPort = window.location.port ? `:${window.location.port}` : '';
+  // Получаем текущий протокол
+  const protocol = window.location.protocol;
+  // Возвращаем полный URL
+  return `${protocol}//${currentHost}${currentPort}/api`;
+};
+
+// Create a general API instance with absolute URL
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
   }
 });
 
@@ -115,6 +129,19 @@ api.interceptors.request.use(
   },
   error => {
     console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Добавляем логирование ответов для отладки
+api.interceptors.response.use(
+  response => {
+    console.log(`API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    return response;
+  },
+  error => {
+    console.error(`API Error: ${error.response?.status || 'Network Error'} for ${error.config?.method?.toUpperCase()} ${error.config?.url}`, 
+      error.response?.data || error.message);
     return Promise.reject(error);
   }
 );

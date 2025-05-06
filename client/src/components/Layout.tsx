@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { DIRECTUS_URL } from "@/lib/directus";
@@ -13,11 +13,21 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { SmmLogo } from "./SmmLogo";
 import useCampaignOwnershipCheck from "@/hooks/useCampaignOwnershipCheck";
 
+// Проверка наличия администраторских прав у пользователя по email
+// Только в случае, если не работает основная проверка через is_smm_admin
+const ADMIN_EMAILS = ["lbrspb@gmail.com", "lbr.spb@gmail.com"]; 
+
+// ID администратора
+const ADMIN_USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSmmAdmin, setIsSmmAdmin] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.userId);
   const setAuth = useAuthStore((state) => state.setAuth);
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const checkIsAdmin = useAuthStore((state) => state.checkIsAdmin);
@@ -25,6 +35,54 @@ export function Layout({ children }: { children: React.ReactNode }) {
   
   // Используем хук проверки принадлежности кампании текущему пользователю
   useCampaignOwnershipCheck();
+
+  // Здесь мы получаем информацию о пользователе и проверяем админ. права по is_smm_admin
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        if (!token) return;
+        
+        // Получаем данные пользователя с сервера
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+          },
+        });
+        
+        if (!response.ok) {
+          console.error('Ошибка при получении данных пользователя:', response.status);
+          return;
+        }
+        
+        const data = await response.json();
+        console.log('Получены данные пользователя:', data);
+        
+        if (data.user && data.user.email) {
+          setUserEmail(data.user.email);
+          
+          // Основная проверка - через поле is_smm_admin
+          const adminStatus = data.user.is_smm_admin === true || 
+                           data.user.is_smm_admin === 1 || 
+                           data.user.is_smm_admin === '1' || 
+                           data.user.is_smm_admin === 'true';
+          
+          console.log('Проверка администратора: is_smm_admin =', data.user.is_smm_admin, 'итог:', adminStatus);
+          setIsSmmAdmin(adminStatus);
+          
+          // Дополнительная проверка - через email
+          const isAdminByEmail = ADMIN_EMAILS.includes(data.user.email);
+          if (isAdminByEmail) {
+            console.log('Пользователь является администратором по email:', data.user.email);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при проверке администратора:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, [token]);
 
   useEffect(() => {
     // Проверяем, находимся ли мы на странице входа
@@ -54,19 +112,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [token, location, navigate, setAuth]);
   
-  // Проверяем статус администратора при входе в систему
+  // Вызываем проверку статуса администратора из store для совместимости
   useEffect(() => {
     if (token) {
-      // Проверяем права администратора
-      console.log('Layout компонент: Запускаем проверку статуса администратора');
-      checkIsAdmin().then(result => {
-        console.log('Layout компонент: Результат проверки isAdmin =', result);
-        console.log('Layout компонент: Текущее состояние isAdmin в store =', isAdmin);
-      }).catch(error => {
-        console.error('Layout компонент: Ошибка при проверке статуса администратора:', error);
+      checkIsAdmin().catch(error => {
+        console.error('Ошибка при проверке статуса администратора:', error);
       });
     }
-  }, [token, checkIsAdmin, isAdmin]);
+  }, [token]);
 
   const handleLogout = async () => {
     try {
@@ -95,6 +148,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user_id');
+      localStorage.removeItem('is_admin'); // Очищаем статус админа при выходе
       
       // Очищаем состояние авторизации в store
       setAuth(null, null);
@@ -112,6 +166,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   if (!token) return null;
 
+  // Итоговый администраторский статус
+  // Основная проверка - поле is_smm_admin, дополнительные - userId и email
+  const userIsAdmin = isSmmAdmin || userId === ADMIN_USER_ID || (userEmail && ADMIN_EMAILS.includes(userEmail));
+
   const navItems = [
     { path: "/campaigns", label: "Кампании", icon: FileText },
     { path: "/keywords", label: "Ключевые слова", icon: Search },
@@ -121,6 +179,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/posts", label: "Публикации", icon: Calendar },
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
+
+  console.log('Layout рендер: isAdmin =', isAdmin, 'isSmmAdmin =', isSmmAdmin, 'userIsAdmin =', userIsAdmin, 'userId =', userId, 'userEmail =', userEmail); 
 
   return (
     <ThemeProvider>
@@ -148,15 +208,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {label}
                   </Button>
                 ))}
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start sidebar-item"
-                    onClick={() => setIsSettingsOpen(true)}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Настройки
-                  </Button>
+                {userIsAdmin && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start sidebar-item"
+                      onClick={() => setIsSettingsOpen(true)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Настройки
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/global-api-keys' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/global-api-keys')}
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      Глобальные API ключи
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -192,15 +262,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {label}
                   </Button>
                 ))}
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start sidebar-item"
-                    onClick={() => setIsSettingsOpen(true)}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Настройки
-                  </Button>
+                {userIsAdmin && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start sidebar-item"
+                      onClick={() => setIsSettingsOpen(true)}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Настройки
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/global-api-keys' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/global-api-keys')}
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      Глобальные API ключи
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -239,6 +319,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Добавляем переключатель темы в правую часть топ-бара */}
             <div className="flex items-center">
               <ThemeSwitcher />
+              {/* Для отладки: отображаем статус админа */}
+              <span className="ml-2 text-xs opacity-50">Admin: {userIsAdmin ? 'Yes' : 'No'}</span>
             </div>
           </div>
           <main className="flex-1 p-4 lg:p-8">{children}</main>

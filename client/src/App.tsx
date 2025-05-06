@@ -23,6 +23,7 @@ import ApiKeyPriorityTest from "@/pages/test/api-key-priority";
 import ApiKeysTest from "@/pages/test/api-keys";
 import UniversalImageGenTest from "@/pages/test/universal-image-gen";
 import TimeDisplayTest from "@/pages/test/time-display-test";
+import GlobalApiKeysPage from "@/pages/admin/global-api-keys";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
@@ -62,6 +63,7 @@ const LayoutTestImgur = React.memo(() => <WithLayout Component={TestImgur} />);
 const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsTestPage} />);
 const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
+const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
 
 function Router() {
   return (
@@ -91,6 +93,7 @@ function Router() {
       <Route path="/test/telegram" component={TelegramTestPage} />
       <Route path="/test/ai-image" component={LayoutAiImageTester} />
       <Route path="/test" component={LayoutTestPage} />
+      <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}
