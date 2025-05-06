@@ -223,7 +223,7 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
               <div>
                 <Label htmlFor="sources_textarea">Введите URL источников (по одному в строке)</Label>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Формат: один URL в строке, или <strong>название|URL</strong> для указания названия.
+                  Формат: один URL в строке, или <strong>URL|название</strong> для указания названия (название необязательно).
                   <br />Каждый источник должен быть на новой строке.
                 </p>
                 <Textarea
@@ -233,7 +233,7 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
                   placeholder="https://t.me/channel1
 t.me/channel2
 vk.com/group_name
-Телеграм канал|https://t.me/mychannel"
+https://t.me/mychannel|Телеграм канал"
                   className="min-h-[200px]"
                 />
               </div>
@@ -270,12 +270,12 @@ vk.com/group_name
                 <AlertTitle>Информация о формате файла</AlertTitle>
                 <AlertDescription>
                   Загрузите текстовый файл (CSV или TXT) со списком URL источников. 
-                  Каждый URL должен быть на новой строке. Формат каждой строки: URL или название|URL
+                  Каждый URL должен быть на новой строке. Формат каждой строки: URL или URL|название (название необязательно)
                   <br /><br />Пример содержимого файла:<br />
                   <code>
                     https://t.me/channel1<br />
                     t.me/channel2<br />
-                    Телеграм канал|https://t.me/mychannel<br />
+                    https://t.me/mychannel|Телеграм канал<br />
                   </code>
                 </AlertDescription>
               </Alert>
