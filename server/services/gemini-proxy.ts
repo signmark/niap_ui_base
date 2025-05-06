@@ -1,6 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SocksProxyAgent } from 'socks-proxy-agent';
 import * as logger from '../utils/logger';
+
+// Условный импорт SocksProxyAgent для обеспечения работы даже если библиотека не установлена
+let SocksProxyAgent: any = null;
+try {
+  // Динамический импорт
+  SocksProxyAgent = require('socks-proxy-agent').SocksProxyAgent;
+  logger.log('[gemini-proxy] SOCKS5 прокси модуль успешно импортирован', 'gemini');
+} catch (error) {
+  logger.error(`[gemini-proxy] Ошибка импорта SOCKS5 прокси модуля: ${(error as Error).message}. Прокси не будет использоваться.`, 'gemini');
+}
+
 
 interface GeminiProxyOptions {
   apiKey: string;
@@ -37,11 +47,17 @@ export class GeminiProxyService {
     
     // Создаем прокси-агент
     try {
-      this.agent = new SocksProxyAgent(this.proxyUrl);
-      
-      // Скрываем пароль из лога (для безопасности)
-      const safeProxyUrl = this.proxyUrl.replace(/:[^:@]*@/, ':***@');
-      logger.log(`[gemini-proxy] Инициализирован SOCKS5 прокси: ${safeProxyUrl}`, 'gemini');
+      // Проверяем, доступен ли SocksProxyAgent
+      if (SocksProxyAgent) {
+        this.agent = new SocksProxyAgent(this.proxyUrl);
+        
+        // Скрываем пароль из лога (для безопасности)
+        const safeProxyUrl = this.proxyUrl.replace(/:[^:@]*@/, ':***@');
+        logger.log(`[gemini-proxy] Инициализирован SOCKS5 прокси: ${safeProxyUrl}`, 'gemini');
+      } else {
+        logger.warn('[gemini-proxy] SOCKS5 прокси не используется, т.к. модуль socks-proxy-agent не установлен', 'gemini');
+        this.agent = null;
+      }
     } catch (error) {
       logger.error(`[gemini-proxy] Ошибка инициализации SOCKS5 прокси: ${(error as Error).message}`, 'gemini');
       this.agent = null;
