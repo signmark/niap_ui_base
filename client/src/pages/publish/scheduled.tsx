@@ -40,7 +40,6 @@ export default function ScheduledPublications() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
-  const [viewTab, setViewTab] = useState<string>('upcoming');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
   
@@ -214,55 +213,6 @@ export default function ScheduledPublications() {
     });
   }, [filteredContent, sortOrder]);
   
-  const pastContent = React.useMemo(() => {
-    if (!filteredContent) return [];
-    
-    // Фильтруем и получаем прошедшие публикации
-    const past = filteredContent.filter((content: CampaignContent) => {
-      // Исключаем контент, который находится в upcoming
-      const isUpcoming = upcomingContent.some(c => c.id === content.id);
-      if (isUpcoming) return false;
-      
-      // Проверяем наличие запланированных дат, и что они в прошлом
-      if (content.scheduledAt) {
-        const scheduledDate = new Date(content.scheduledAt);
-        return scheduledDate < new Date(); // Только если дата в прошлом
-      }
-      
-      // Проверяем социальные платформы
-      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
-        let hasPastScheduledDate = false;
-        
-        for (const platform in content.socialPlatforms) {
-          const platformData = content.socialPlatforms[platform as SocialPlatform];
-          if (platformData && platformData.scheduledAt) {
-            const platformScheduledDate = new Date(platformData.scheduledAt);
-            if (platformScheduledDate < new Date()) {
-              hasPastScheduledDate = true;
-              break; // Нашли хотя бы одну прошедшую дату, можно прекратить поиск
-            }
-          }
-        }
-        
-        if (hasPastScheduledDate) {
-          return true;
-        }
-      }
-      
-      return false;
-    });
-    
-    // Сортируем по дате (в зависимости от выбранного порядка сортировки)
-    return past.sort((a, b) => {
-      const dateA = a.scheduledAt ? new Date(a.scheduledAt) : (a.publishedAt ? new Date(a.publishedAt) : new Date(0));
-      const dateB = b.scheduledAt ? new Date(b.scheduledAt) : (b.publishedAt ? new Date(b.publishedAt) : new Date(0));
-      
-      // Сортировка от новых к старым или от старых к новым
-      return sortOrder === 'desc' 
-        ? dateB.getTime() - dateA.getTime() 
-        : dateA.getTime() - dateB.getTime();
-    });
-  }, [filteredContent, upcomingContent, sortOrder]);
   
   // Обработчики событий
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,7 +300,8 @@ export default function ScheduledPublications() {
     return counts;
   }, [filteredContent]);
   
-  const contentToDisplay = viewTab === 'upcoming' ? upcomingContent : pastContent;
+  // Всегда отображаем только предстоящие публикации
+  const contentToDisplay = upcomingContent;
   
   return (
     <div className="container py-8">
@@ -417,16 +368,10 @@ export default function ScheduledPublications() {
       
       <div className="flex justify-between items-center mb-4">
         <div className="flex-1">
-          <Tabs value={viewTab} onValueChange={setViewTab}>
-            <TabsList>
-              <TabsTrigger value="upcoming">
-                Предстоящие <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="past">
-                Прошедшие <Badge variant="outline" className="ml-2">{pastContent.length}</Badge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center">
+            <h3 className="text-lg font-semibold">Предстоящие публикации</h3>
+            <Badge variant="outline" className="ml-2">{upcomingContent.length}</Badge>
+          </div>
         </div>
         
         <Button
@@ -449,135 +394,46 @@ export default function ScheduledPublications() {
         </Button>
       </div>
 
-      {viewTab === 'upcoming' ? (
-        <div>
-          {scheduledLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2 mt-2" />
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </CardContent>
-                  <CardFooter>
-                    <Skeleton className="h-10 w-[120px]" />
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : upcomingContent.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-medium text-muted-foreground">Нет предстоящих публикаций</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Запланированные публикации будут отображаться здесь.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {upcomingContent.map((content: CampaignContent) => (
-                <ScheduledPublicationDetails 
-                  key={content.id}
-                  content={content}
-                  onCancelSuccess={handleCancelSuccess}
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div>
-          {scheduledLoading ? (
-            <div className="space-y-4">
-              {[1, 2].map(i => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2 mt-2" />
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : pastContent.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-medium text-muted-foreground">Нет прошедших публикаций</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                История публикаций будет отображаться здесь.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {pastContent.map((content: CampaignContent) => (
-                <Card key={content.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle>{content.title || 'Без названия'}</CardTitle>
-                        <CardDescription>{getCampaignName(content.campaignId)}</CardDescription>
-                      </div>
-                      {content.publishedAt && (
-                        <Badge variant="outline" className="bg-green-100">
-                          Опубликовано
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Calendar size={16} className="text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {formatScheduledDate(content.scheduledAt)}
-                      </span>
-                    </div>
-                    
-                    {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
-                      <div className="mt-3">
-                        <div className="flex flex-wrap gap-2">
-                          {content.keywords.slice(0, 3).map((keyword, idx) => (
-                            <Badge key={idx} variant="secondary">{keyword}</Badge>
-                          ))}
-                          {content.keywords.length > 3 && (
-                            <Badge variant="outline">+{content.keywords.length - 3}</Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between">
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewDetails(content)}
-                      >
-                        Подробнее
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        size="sm"
-                        onClick={() => moveToDraftMutation.mutate(content.id)}
-                      >
-                        В черновики
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div>
+        {scheduledLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-[120px]" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : upcomingContent.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-medium text-muted-foreground">Нет предстоящих публикаций</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Запланированные публикации будут отображаться здесь.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {upcomingContent.map((content: CampaignContent) => (
+              <ScheduledPublicationDetails 
+                key={content.id}
+                content={content}
+                onCancelSuccess={handleCancelSuccess}
+                onViewDetails={handleViewDetails}
+              />
+            ))}
+          </div>
+        )}
+      </div>
       
       {/* Диалог для просмотра деталей публикации */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
