@@ -100,7 +100,7 @@ export function SettingsDialog() {
     queryFn: async () => {
       try {
         console.log('Fetching user API keys using the API route');
-        const response = await api.get('/api/user-api-keys');
+        const response = await api.get('/user-api-keys');
         if (response.data?.success) {
           console.log(`Successfully fetched ${response.data?.data?.length || 0} API keys`);
           return response.data?.data || [];
@@ -155,7 +155,7 @@ export function SettingsDialog() {
     mutationFn: async (keyId: string) => {
       console.log(`Удаление ключа с ID: ${keyId}`);
       // Фиксим проблему с двойным префиксом /api/api/ при работе с маршрутами
-      await api.delete(`/api/user-api-keys/${keyId}`);
+      await api.delete(`/user-api-keys/${keyId}`);
     },
     onSuccess: () => {
       toast({
@@ -197,7 +197,7 @@ export function SettingsDialog() {
       const filledKeys = keysToSave.filter(key => key.api_key.trim() !== '');
       
       // Send to server
-      const response = await api.post('/api/user-api-keys', {
+      const response = await api.post('/user-api-keys', {
         keys: filledKeys
       });
 

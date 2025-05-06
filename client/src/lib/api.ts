@@ -99,11 +99,25 @@ directusApi.interceptors.response.use(
   }
 );
 
-// Create a general API instance
+// Определяем URL базового API на основе текущего хоста
+const getApiBaseUrl = () => {
+  // Получаем текущий хост (без порта)
+  const currentHost = window.location.hostname;
+  // Получаем текущий порт
+  const currentPort = window.location.port ? `:${window.location.port}` : '';
+  // Получаем текущий протокол
+  const protocol = window.location.protocol;
+  // Возвращаем полный URL
+  return `${protocol}//${currentHost}${currentPort}/api`;
+};
+
+// Create a general API instance with absolute URL
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
   }
 });
 
