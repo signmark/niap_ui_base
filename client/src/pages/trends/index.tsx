@@ -1589,6 +1589,15 @@ export default function Trends() {
         )}
       </Dialog>
 
+      <Dialog open={isBulkImportDialogOpen} onOpenChange={setIsBulkImportDialogOpen}>
+        {selectedCampaignId && (
+          <BulkSourcesImportDialog
+            campaignId={selectedCampaignId}
+            onClose={() => setIsBulkImportDialogOpen(false)}
+          />
+        )}
+      </Dialog>
+
       {/* Диалог поиска источников */}
       {selectedKeyword && (
         <SourcesSearchDialog
