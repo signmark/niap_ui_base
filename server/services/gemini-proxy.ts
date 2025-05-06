@@ -199,7 +199,8 @@ export class GeminiProxyService {
         // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
         resultText = resultText.replace(/<[^>]*>/g, '');
-        resultText = resultText.replace(/```[^`]*```/g, '');
+        resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
+        resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
         return resultText;
       }
@@ -258,7 +259,8 @@ export class GeminiProxyService {
         // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
         resultText = resultText.replace(/<[^>]*>/g, '');
-        resultText = resultText.replace(/```[^`]*```/g, '');
+        resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
+        resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
         return resultText;
       }
