@@ -319,8 +319,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Добавляем переключатель темы в правую часть топ-бара */}
             <div className="flex items-center">
               <ThemeSwitcher />
-              {/* Для отладки: отображаем статус админа */}
-              <span className="ml-2 text-xs opacity-50">Admin: {userIsAdmin ? 'Yes' : 'No'}</span>
             </div>
           </div>
           <main className="flex-1 p-4 lg:p-8">{children}</main>
