@@ -8,11 +8,14 @@ interface AuthState {
   userId: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSmmAdmin: boolean;
   setAuth: (token: string | null, userId: string | null) => void;
   clearAuth: () => void;
   getAuthToken: () => string | null;
   setIsAdmin: (isAdmin: boolean) => void;
+  setIsSmmAdmin: (isSmmAdmin: boolean) => void;
   checkIsAdmin: () => Promise<boolean>;
+  checkIsSmmAdmin: () => Promise<boolean>;
 }
 
 import { api } from './api';

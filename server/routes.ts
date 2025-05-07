@@ -61,6 +61,7 @@ import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
+import usersRouter from './routes/api-users.js';
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -87,6 +88,7 @@ declare global {
         email?: string;
         firstName?: string;
         lastName?: string;
+        is_smm_admin?: boolean;
       };
     }
   }
@@ -1296,7 +1298,8 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Регистрируем универсальный интерфейс для FAL.AI
+  // Регистрируем маршруты
+  app.use('/api/users', usersRouter);
   registerClaudeRoutes(app);
   registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
@@ -2938,6 +2941,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Registering analytics routes...');
   app.use('/api/analytics', analyticsRouter);
   console.log('Analytics routes registered successfully');
+  
+  console.log('Registering users routes...');
+  app.use('/api/users', usersRouter);
+  console.log('Users routes registered successfully');
   
   // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
   app.use('/api/gemini', geminiTestRouter);
