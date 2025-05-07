@@ -135,7 +135,6 @@ export function ImageGenerationDialog({
     // Полный сброс всех состояний
     setNegativePrompt("");
     setImageSize("1024x1024");
-    setContent("");
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
@@ -144,6 +143,8 @@ export function ImageGenerationDialog({
     setStylePreset("photographic");
     setNumImages(3); // Используем 3 изображения по умолчанию
     setSavePrompt(true);
+    
+    // Не сбрасываем контент, так как мы будем устанавливать его ниже
     
     // Обработка промта по приоритетам:
     // 1. Если это редактирование существующего контента (contentId) и есть промт, используем его

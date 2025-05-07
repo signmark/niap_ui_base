@@ -111,11 +111,17 @@ export function AdditionalMediaUploader({
   // Функция для открытия полноценного диалога генерации изображений
   const openGenerateImageDialog = (index: number) => {
     setGeneratingIndex(index);
-    // Убедимся, что prompt установлен из contentText, если доступен
+    
+    // Очищаем prompt для примера, так как мы отправляем contentText напрямую в диалог
+    setPrompt("");
+    
+    // Логируем информацию о наличии текста контента для отладки
     if (contentText) {
-      setPrompt(contentText);
-      console.log("Устанавливаем текст из контента как промпт:", contentText.substring(0, 50) + "...");
+      console.log("Передаем текст контента в диалог:", contentText.substring(0, 50) + "...");
+    } else {
+      console.log("Текст контента отсутствует при открытии диалога");
     }
+    
     setIsImageGenerationDialogOpen(true);
   };
   
@@ -280,8 +286,8 @@ export function AdditionalMediaUploader({
         <ImageGenerationDialog
           contentId={contentId}
           campaignId={campaignId}
-          initialContent={contentText || prompt}
-          initialPrompt={prompt}
+          initialContent={contentText || ""}
+          initialPrompt={prompt || contentText || ""}
           onImageGenerated={handleImageGenerated}
           onClose={() => setIsImageGenerationDialogOpen(false)}
         />
