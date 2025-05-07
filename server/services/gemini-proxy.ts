@@ -166,13 +166,21 @@ export class GeminiProxyService {
       // URL для запроса к Gemini API
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
       
+      // Модифицируем промпт, чтобы исключить вступительные фразы и сохранить форматирование
+      const modifiedPrompt = `${prompt}\n\nВАЖНО: 
+1. Верни ТОЛЬКО переработанный текст без вступительных фраз типа "Вот улучшенный вариант текста" или "Вот мой вариант". 
+2. Не добавляй никаких своих комментариев или объяснений в начале или в конце текста.
+3. Сохрани оригинальное форматирование (абзацы, строки, эмодзи, хэштеги).
+4. Не меняй структуру исходного текста и сохрани все эмодзи на своих местах.
+\n\n${text}`;
+      
       // Формируем запрос
       const requestData = {
         contents: [
           {
             parts: [
               {
-                text: `${prompt}\n\n${text}`
+                text: modifiedPrompt
               }
             ]
           }
@@ -226,13 +234,19 @@ export class GeminiProxyService {
       // URL для запроса к Gemini API
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
       
+      // Модифицируем промпт, чтобы исключить вступительные фразы и сохранить форматирование
+      const modifiedPrompt = `${prompt}\n\nВАЖНО: 
+1. Верни ТОЛЬКО сгенерированный текст без вступительных фраз.
+2. Не добавляй никаких своих комментариев, пояснений или заголовков.
+3. Сохрани нужное форматирование (абзацы, строки, эмодзи, хэштеги).`;
+      
       // Формируем запрос
       const requestData = {
         contents: [
           {
             parts: [
               {
-                text: prompt
+                text: modifiedPrompt
               }
             ]
           }
