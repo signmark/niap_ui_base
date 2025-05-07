@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { VideoUploader } from "./VideoUploader";
-import { Plus, Trash2, ImageIcon, Wand2, Loader2 } from "lucide-react";
-import { MediaUploader } from "./MediaUploader";
+import { Plus, Trash2, ImageIcon, Wand2, FileText } from "lucide-react";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ImageGenerationDialog } from "./ImageGenerationDialog";
 
 // Интерфейс для элемента медиа
 export interface MediaItem {
@@ -19,10 +18,13 @@ export interface MediaItem {
 interface AdditionalMediaUploaderProps {
   media?: MediaItem[];
   value?: MediaItem[];
-  onChange: (media: MediaItem[]) => void;
+  onChange: (media: MediaItem[] | string[]) => void;
   label?: string;
   title?: string;
   hideTitle?: boolean;
+  contentText?: string; // Текст контента для генерации изображений
+  contentId?: string; // ID контента для сохранения промпта
+  campaignId?: string; // ID кампании для контекста
 }
 
 export function AdditionalMediaUploader({ 
@@ -31,25 +33,36 @@ export function AdditionalMediaUploader({
   onChange, 
   label = "Медиа-файлы",
   title,
-  hideTitle = false
+  hideTitle = false,
+  contentText,
+  contentId,
+  campaignId
 }: AdditionalMediaUploaderProps) {
   const { toast } = useToast();
-  // Состояния для диалога генерации изображений
-  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  
+  // Состояния для диалогов генерации изображений
+  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
+  const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   
   // Используем либо value, либо media (для совместимости)
-  let mediaItems = value || media || [];
+  let mediaItems: MediaItem[] = [];
   
-  // Адаптер для поддержки как строковых массивов, так и объектов MediaItem
-  // Если передан массив строк, преобразуем его в массив MediaItem
-  if (mediaItems.length > 0 && typeof mediaItems[0] === 'string') {
-    mediaItems = (mediaItems as string[]).map(url => ({
-      url,
-      type: (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().includes('video')) ? 'video' : 'image'
-    }));
+  // Преобразование входных данных в нужный формат
+  if (value) {
+    if (value.length > 0 && typeof value[0] === 'string') {
+      // Если передан массив строк, преобразуем его в массив MediaItem
+      mediaItems = (value as unknown as string[]).map(url => ({
+        url,
+        type: (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().includes('video')) ? 'video' : 'image'
+      }));
+    } else {
+      // Если передан массив MediaItem, используем его
+      mediaItems = value as MediaItem[];
+    }
+  } else if (media) {
+    mediaItems = media;
   }
 
   // Проверка, был ли изначально передан массив строк
@@ -60,7 +73,7 @@ export function AdditionalMediaUploader({
     if (wasStringArray) {
       // Если исходные данные были массивом строк, возвращаем массив URL
       const stringUrls = updatedMedia.map(item => item.url);
-      onChange(stringUrls as any);
+      onChange(stringUrls);
     } else {
       // Иначе возвращаем как есть
       onChange(updatedMedia);
@@ -93,59 +106,38 @@ export function AdditionalMediaUploader({
     sendChanges([...mediaItems, { url: "", type }]);
   };
   
-  // Функция для открытия диалога генерации изображения
-  const openGenerateDialog = (index: number) => {
+  // Функция для открытия простого диалога ввода промпта
+  const openPromptDialog = (index: number) => {
     setGeneratingIndex(index);
     setPrompt("");
-    setIsGenerateDialogOpen(true);
+    setIsPromptDialogOpen(true);
   };
-
-  // Функция для генерации изображения
-  const generateImage = async () => {
-    if (!prompt || generatingIndex === null) return;
-
-    setIsGenerating(true);
-    try {
-      // Используем универсальный эндпоинт для генерации изображений
-      const response = await apiRequest("POST", "/api/generate-image", {
-        prompt,
-        style: "base" // Базовый стиль по умолчанию
-      });
-
-      if (!response.ok) {
-        throw new Error("Не удалось сгенерировать изображение");
-      }
-
-      const data = await response.json();
-      if (data.success && data.imageUrl) {
-        // Обновляем URL изображения в массиве
-        const updatedMedia = [...mediaItems];
-        updatedMedia[generatingIndex] = { 
-          ...updatedMedia[generatingIndex], 
-          url: data.imageUrl,
-          type: 'image'
-        };
-        sendChanges(updatedMedia);
-        
-        // Закрываем диалог
-        setIsGenerateDialogOpen(false);
-        toast({
-          title: "Изображение сгенерировано",
-          description: "Изображение успешно создано и добавлено в медиа",
-        });
-      } else {
-        throw new Error(data.message || "Не удалось получить URL изображения");
-      }
-    } catch (error) {
-      console.error("Ошибка генерации изображения:", error);
-      toast({
-        title: "Ошибка",
-        description: error instanceof Error ? error.message : "Не удалось сгенерировать изображение",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+  
+  // Функция для открытия полноценного диалога генерации изображений
+  const openGenerateImageDialog = (index: number) => {
+    setGeneratingIndex(index);
+    setIsImageGenerationDialogOpen(true);
+  };
+  
+  // Обработчик успешной генерации изображения из ImageGenerationDialog
+  const handleImageGenerated = (imageUrl: string) => {
+    if (generatingIndex === null) return;
+    
+    // Обновляем URL изображения в массиве
+    const updatedMedia = [...mediaItems];
+    updatedMedia[generatingIndex] = { 
+      ...updatedMedia[generatingIndex], 
+      url: imageUrl,
+      type: 'image'
+    };
+    sendChanges(updatedMedia);
+    
+    // Закрываем диалог
+    setIsImageGenerationDialogOpen(false);
+    toast({
+      title: "Изображение сгенерировано",
+      description: "Изображение успешно создано и добавлено в медиа",
+    });
   };
 
   return (
@@ -202,7 +194,7 @@ export function AdditionalMediaUploader({
                         type="button" 
                         variant="outline" 
                         size="icon"
-                        onClick={() => openGenerateDialog(index)}
+                        onClick={() => openPromptDialog(index)}
                         title="Сгенерировать изображение"
                       >
                         <Wand2 className="h-4 w-4" />
@@ -251,8 +243,11 @@ export function AdditionalMediaUploader({
                               alt="Preview" 
                               className="max-w-full h-auto max-h-60"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+                                const imgElement = e.target as HTMLImageElement;
+                                imgElement.style.display = 'none';
+                                if (imgElement.nextElementSibling) {
+                                  (imgElement.nextElementSibling as HTMLElement).style.display = 'flex';
+                                }
                               }}
                             />
                             <div 
@@ -278,8 +273,8 @@ export function AdditionalMediaUploader({
         )}
       </div>
 
-      {/* Диалог для генерации изображения */}
-      <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+      {/* Простой диалог для ввода промпта */}
+      <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Генерация изображения</DialogTitle>
@@ -300,21 +295,73 @@ export function AdditionalMediaUploader({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsGenerateDialogOpen(false)}
-              disabled={isGenerating}
+              onClick={() => setIsPromptDialogOpen(false)}
             >
               Отмена
             </Button>
             <Button
-              onClick={generateImage}
-              disabled={!prompt || isGenerating}
+              onClick={() => {
+                if (contentId && generatingIndex !== null) {
+                  setIsPromptDialogOpen(false);
+                  openGenerateImageDialog(generatingIndex);
+                } else {
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось открыть диалог генерации изображений",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={!prompt || !contentId}
             >
-              {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Сгенерировать
+              <Wand2 className="mr-2 h-4 w-4" />
+              Использовать редактор изображений
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Полноценный диалог генерации изображений */}
+      {isImageGenerationDialogOpen && contentId && (
+        <ImageGenerationDialog
+          contentId={contentId}
+          campaignId={campaignId}
+          initialContent={contentText || prompt}
+          onImageGenerated={handleImageGenerated}
+          onClose={() => setIsImageGenerationDialogOpen(false)}
+        />
+      )}
+      
+      {/* Кнопка для генерации изображений на основе текста контента */}
+      {(contentText && contentId) && (
+        <div className="mt-4 border-t pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
+            onClick={() => {
+              // Если есть хотя бы один элемент изображения, используем его
+              const imageIndex = mediaItems.findIndex(item => item.type === 'image');
+              if (imageIndex >= 0) {
+                openGenerateImageDialog(imageIndex);
+              } else if (mediaItems.length > 0) {
+                // Иначе используем первый элемент и меняем его тип на изображение
+                const updatedMedia = [...mediaItems];
+                updatedMedia[0] = { ...updatedMedia[0], type: 'image' };
+                sendChanges(updatedMedia);
+                openGenerateImageDialog(0);
+              } else {
+                // Если нет элементов, добавляем новый
+                handleAddMedia('image');
+                setTimeout(() => openGenerateImageDialog(0), 100);
+              }
+            }}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Создать изображение из текста контента
+          </Button>
+        </div>
+      )}
     </>
   );
 }
