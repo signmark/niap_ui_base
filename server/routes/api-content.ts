@@ -3,7 +3,7 @@
  */
 import express from 'express';
 import { directusAuthManager } from '../services/directus-auth-manager';
-import { directusCrud } from '../services/directus-crud';
+import { directusApi } from '../lib/directus';
 import { log } from '../utils/logger';
 
 const router = express.Router();
@@ -44,33 +44,36 @@ router.get('/content/:id', async (req, res) => {
       });
     }
     
-    // Получаем данные контента через DirectusCrud
+    // Получаем данные контента напрямую через DirectusApi
     try {
-      // Используем getById метод из DirectusCrud, который уже работает в других частях системы
-      const contentData = await directusCrud.getById('campaign_content', contentId, { authToken: token });
+      // Используем напрямую DirectusApi и endpoint, который точно работает
+      const response = await directusApi.get(`/items/campaign_content/${contentId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
-      // Если данные успешно получены, формируем ответ
-      if (contentData) {
-        log(`Данные контента успешно получены: ${contentId}`);
-        
-        // Возвращаем только необходимые поля для генерации изображений
-        return res.json({
-          success: true,
-          data: {
-            id: contentData.id,
-            title: contentData.title, 
-            content: contentData.content,
-            prompt: contentData.prompt,
-            imageUrl: contentData.image_url || contentData.imageUrl,
-            contentType: contentData.content_type || contentData.contentType
-          }
-        });
-      } else {
+      // Проверяем ответ
+      if (!response.data || !response.data.data) {
         return res.status(404).json({
           success: false,
           error: 'Контент не найден'
         });
       }
+      
+      const contentData: any = response.data.data;
+      log(`Данные контента успешно получены: ${contentId}`);
+      
+      // Возвращаем только необходимые поля для генерации изображений
+      return res.json({
+        success: true,
+        data: {
+          id: contentData.id,
+          title: contentData.title, 
+          content: contentData.content,
+          prompt: contentData.prompt,
+          imageUrl: contentData.image_url || contentData.imageUrl,
+          contentType: contentData.content_type || contentData.contentType
+        }
+      });
     } catch (apiError: any) {
       log(`Ошибка API при получении данных контента: ${apiError.message}`);
       if (apiError.response) {
