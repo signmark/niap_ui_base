@@ -1472,6 +1472,26 @@ export default function ContentPage() {
               </div>
             )}
             
+            {/* Медиа для сторис */}
+            {newContent.contentType === "stories" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Медиа для сторис</Label>
+                  <div className="rounded-md border p-4 bg-muted/20">
+                    <div className="mb-4 text-sm text-muted-foreground">
+                      <span className="font-semibold text-destructive">Важно:</span> Для публикации сторис необходимо загрузить хотя бы одно изображение или видео.
+                    </div>
+                    <AdditionalMediaUploader
+                      value={newContent.additionalImages || []}
+                      onChange={(media) => setNewContent({...newContent, additionalImages: media})}
+                      title="Медиа для сторис"
+                      hideTitle
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Список ключевых слов кампании */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -1762,7 +1782,28 @@ export default function ContentPage() {
                 </div>
               )}
               
-              {/* Скрыли универсальное поле additional_media */}
+              {/* Медиа для сторис */}
+              {currentContent.contentType === "stories" && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Медиа для сторис</Label>
+                    <div className="rounded-md border p-4 bg-muted/20">
+                      <div className="mb-4 text-sm text-muted-foreground">
+                        <span className="font-semibold text-destructive">Важно:</span> Для публикации сторис необходимо загрузить хотя бы одно изображение или видео.
+                      </div>
+                      <AdditionalMediaUploader
+                        value={currentContent.additionalImages || []}
+                        onChange={(media) => {
+                          const updatedContent = {...currentContent, additionalImages: media};
+                          setCurrentContentSafe(updatedContent);
+                        }}
+                        title="Медиа для сторис"
+                        hideTitle
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">

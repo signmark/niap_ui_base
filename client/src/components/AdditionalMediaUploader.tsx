@@ -17,62 +17,70 @@ export interface MediaItem {
 }
 
 interface AdditionalMediaUploaderProps {
-  media: MediaItem[];
+  media?: MediaItem[];
+  value?: MediaItem[];
   onChange: (media: MediaItem[]) => void;
   label?: string;
+  title?: string;
+  hideTitle?: boolean;
 }
 
 export function AdditionalMediaUploader({ 
-  media = [], 
+  media = [],
+  value,
   onChange, 
-  label = "Медиа-файлы" 
+  label = "Медиа-файлы",
+  title,
+  hideTitle = false
 }: AdditionalMediaUploaderProps) {
+  // Используем либо value, либо media (для совместимости)
+  const mediaItems = value || media || [];
 
   // Обработчик изменения URL медиа
   const handleMediaUrlChange = (index: number, url: string) => {
-    const updatedMedia = [...media];
+    const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], url };
     onChange(updatedMedia);
   };
 
   // Обработчик изменения типа медиа
   const handleMediaTypeChange = (index: number, type: 'image' | 'video') => {
-    const updatedMedia = [...media];
+    const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], type };
     onChange(updatedMedia);
   };
 
   // Обработчик изменения заголовка медиа
   const handleMediaTitleChange = (index: number, title: string) => {
-    const updatedMedia = [...media];
+    const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], title };
     onChange(updatedMedia);
   };
 
   // Обработчик изменения описания медиа
   const handleMediaDescriptionChange = (index: number, description: string) => {
-    const updatedMedia = [...media];
+    const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], description };
     onChange(updatedMedia);
   };
 
   // Обработчик удаления медиа
   const handleRemoveMedia = (index: number) => {
-    const updatedMedia = [...media];
+    const updatedMedia = [...mediaItems];
     updatedMedia.splice(index, 1);
     onChange(updatedMedia);
   };
 
   // Обработчик добавления нового медиа
   const handleAddMedia = (type: 'image' | 'video' = 'image') => {
-    onChange([...media, { url: "", type, title: "", description: "" }]);
+    onChange([...mediaItems, { url: "", type, title: "", description: "" }]);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
-        <Label>{label}</Label>
-        <div className="flex gap-2">
+        {!hideTitle && <Label>{title || label}</Label>}
+        <div className="flex gap-2 ml-auto">
           <Button 
             type="button" 
             variant="outline" 
@@ -94,9 +102,9 @@ export function AdditionalMediaUploader({
         </div>
       </div>
 
-      {media.length > 0 ? (
+      {mediaItems.length > 0 ? (
         <div className="space-y-6">
-          {media.map((mediaItem, index) => (
+          {mediaItems.map((mediaItem, index) => (
             <div key={index} className="border p-4 rounded-md bg-muted/20">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2">
