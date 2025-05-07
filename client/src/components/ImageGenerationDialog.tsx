@@ -1278,11 +1278,17 @@ export function ImageGenerationDialog({
       
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 overflow-visible">
           <h3 className="text-base font-semibold">Сгенерированные изображения</h3>
-          <div className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`} 
+          <div 
+            className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`} 
+            onClick={(e) => e.stopPropagation()}
             onWheel={(e) => {
               // Предотвращаем закрытие диалога при прокрутке
+              e.stopPropagation();
+            }}
+            onScroll={(e) => {
+              // Предотвращаем дефолтные события скролла
               e.stopPropagation();
             }}>
             {generatedImages.map((imageUrl, index) => (
