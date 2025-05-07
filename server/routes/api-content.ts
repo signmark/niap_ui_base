@@ -25,51 +25,69 @@ router.get('/content/:id', async (req, res) => {
     log(`Запрос данных контента по ID: ${contentId}`);
     
     // Используем токен из сессии или административный токен
-    // Пробуем извлечь токен из заголовка Authorization
     let token: string | null = null;
-    const authHeader = req.headers.authorization;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    } else {
-      // Пробуем получить админский токен
+    try {
+      // Получаем административный токен
       const adminSession = await directusAuthManager.getAdminSession();
-      if (adminSession?.token) {
+      if (adminSession) {
         token = adminSession.token;
+        log(`Получен административный токен для запроса данных контента`);
       }
+    } catch (authError) {
+      log(`Ошибка при получении административного токена: ${authError instanceof Error ? authError.message : String(authError)}`);
     }
     
     if (!token) {
       return res.status(401).json({
         success: false,
-        error: 'Не авторизован'
+        error: 'Не удалось получить токен авторизации'
       });
     }
     
-    // Получаем данные контента через Directus API
-    const contentData = await directusCrud.read('campaign_content', contentId, token);
-    
-    if (!contentData) {
-      return res.status(404).json({
-        success: false,
-        error: 'Контент не найден'
-      });
-    }
-    
-    log(`Данные контента успешно получены: ${contentId}`);
-    
-    // Возвращаем только необходимые поля для генерации изображений
-    return res.json({
-      success: true,
-      data: {
-        id: contentData.id,
-        title: contentData.title,
-        content: contentData.content,
-        prompt: contentData.prompt,
-        imageUrl: contentData.imageUrl,
-        contentType: contentData.contentType
+    // Получаем данные контента через DirectusApiManager напрямую
+    try {
+      const response = await directusApiManager.request({
+        url: `/items/campaign_content/${contentId}`,
+        method: 'get'
+      }, token);
+      
+      if (!response.data || !response.data.data) {
+        return res.status(404).json({
+          success: false,
+          error: 'Контент не найден'
+        });
       }
-    });
+      
+      const contentData = response.data.data;
+      
+      log(`Данные контента успешно получены: ${contentId}`);
+      
+      // Возвращаем только необходимые поля для генерации изображений
+      return res.json({
+        success: true,
+        data: {
+          id: contentData.id,
+          title: contentData.title,
+          content: contentData.content,
+          prompt: contentData.prompt,
+          imageUrl: contentData.image_url || contentData.imageUrl,
+          contentType: contentData.content_type || contentData.contentType
+        }
+      });
+    } catch (apiError: any) {
+      log(`Ошибка API при получении данных контента: ${apiError.message}`);
+      if (apiError.response) {
+        log(`Статус ошибки: ${apiError.response.status}`);
+        if (apiError.response.data) {
+          log(`Данные ошибки: ${JSON.stringify(apiError.response.data)}`);
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при получении данных контента через API'
+      });
+    }
   } catch (error) {
     log(`Ошибка при получении данных контента: ${error instanceof Error ? error.message : String(error)}`);
     return res.status(500).json({
