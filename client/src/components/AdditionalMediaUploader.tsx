@@ -78,7 +78,13 @@ export function AdditionalMediaUploader({
   useEffect(() => {
     if (fetchedContentData) {
       console.log("Получены данные контента:", fetchedContentData);
-      setContentData(fetchedContentData);
+      // Преобразуем данные в правильный формат ContentItem
+      const formattedData: ContentItem = {
+        id: fetchedContentData.id,
+        prompt: fetchedContentData.prompt || "",
+        content: fetchedContentData.content || ""
+      };
+      setContentData(formattedData);
     }
   }, [fetchedContentData]);
   
@@ -322,7 +328,7 @@ export function AdditionalMediaUploader({
         <ImageGenerationDialog
           contentId={contentId}
           campaignId={campaignId}
-          initialContent={contentData || contentText || ""}
+          initialContent={contentText || ""}
           initialPrompt=""
           // Явно передаем параметры contentText и promptText для исправления проблемы
           contentText={contentText || ""}
