@@ -24,31 +24,22 @@ router.get('/content/:id', async (req, res) => {
     
     log(`Запрос данных контента по ID: ${contentId}`);
     
-    // Используем токен из сессии или административный токен
-    let token: string | null = null;
+    // Пробуем получить свежий административный токен
     try {
-      // Получаем административный токен
+      // Обновляем токен авторизации администратора, чтобы гарантировать, что он не истёк
+      // Принудительно получаем новую сессию, игнорируя кэш
+      await directusAuthManager.refreshAdminAuth();
+      log(`Принудительно обновлен токен авторизации администратора`);
+      
       const adminSession = await directusAuthManager.getAdminSession();
-      if (adminSession) {
-        token = adminSession.token;
-        log(`Получен административный токен для запроса данных контента`);
+      if (!adminSession || !adminSession.token) {
+        throw new Error('Не удалось получить токен авторизации после обновления');
       }
-    } catch (authError) {
-      log(`Ошибка при получении административного токена: ${authError instanceof Error ? authError.message : String(authError)}`);
-    }
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Не удалось получить токен авторизации'
-      });
-    }
-    
-    // Получаем данные контента напрямую через DirectusApi
-    try {
-      // Используем напрямую DirectusApi и endpoint, который точно работает
+      
+      // Теперь используем свежий токен для запроса данных
+      log(`Используем свежий токен для запроса данных контента`);
       const response = await directusApi.get(`/items/campaign_content/${contentId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${adminSession.token}` }
       });
       
       // Проверяем ответ
@@ -74,18 +65,19 @@ router.get('/content/:id', async (req, res) => {
           contentType: contentData.content_type || contentData.contentType
         }
       });
-    } catch (apiError: any) {
-      log(`Ошибка API при получении данных контента: ${apiError.message}`);
-      if (apiError.response) {
-        log(`Статус ошибки: ${apiError.response.status}`);
-        if (apiError.response.data) {
-          log(`Данные ошибки: ${JSON.stringify(apiError.response.data)}`);
+    } catch (directusError: any) {
+      log(`Ошибка при работе с Directus API: ${directusError.message}`);
+      if (directusError.response) {
+        log(`Статус ошибки: ${directusError.response.status}`);
+        if (directusError.response.data) {
+          log(`Данные ошибки: ${JSON.stringify(directusError.response.data)}`);
         }
       }
       
       return res.status(500).json({
         success: false,
-        error: 'Ошибка при получении данных контента через API'
+        error: 'Ошибка при получении данных контента через API',
+        details: directusError.message
       });
     }
   } catch (error) {
