@@ -40,10 +40,10 @@ export function AdditionalMediaUploader({
 }: AdditionalMediaUploaderProps) {
   const { toast } = useToast();
   
-  // Состояния для диалогов генерации изображений
-  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
+  // Состояния для диалога генерации изображений
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
+  // Сохраняем переменную для совместимости с ImageGenerationDialog
   const [prompt, setPrompt] = useState("");
   
   // Используем либо value, либо media (для совместимости)
@@ -194,7 +194,7 @@ export function AdditionalMediaUploader({
                         type="button" 
                         variant="outline" 
                         size="icon"
-                        onClick={() => openPromptDialog(index)}
+                        onClick={() => openGenerateImageDialog(index)}
                         title="Сгенерировать изображение"
                       >
                         <Wand2 className="h-4 w-4" />
@@ -273,44 +273,7 @@ export function AdditionalMediaUploader({
         )}
       </div>
 
-      {/* Простой диалог для ввода промпта */}
-      <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Генерация изображения</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="prompt" className="mb-2 block">Опишите, что должно быть на изображении</Label>
-            <Input
-              id="prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Например: профессиональный интерфейс приложения для планирования питания"
-              className="mb-2"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Чем подробнее описание, тем лучше будет результат. Используйте детали, стили и цвета.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsPromptDialogOpen(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              onClick={() => {
-                setIsPromptDialogOpen(false);
-                openGenerateImageDialog(generatingIndex !== null ? generatingIndex : 0);
-              }}
-            >
-              <Wand2 className="mr-2 h-4 w-4" />
-              Использовать редактор изображений
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Простой диалог для ввода промпта удален по требованию пользователя */}
       
       {/* Полноценный диалог генерации изображений */}
       {isImageGenerationDialogOpen && (
