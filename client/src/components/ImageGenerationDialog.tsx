@@ -980,7 +980,10 @@ export function ImageGenerationDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => {
+      // Предотвращаем закрытие диалога при клике внутри скроллируемой области
+      e.preventDefault();
+    }}>
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
         <DialogDescription className="text-xs text-muted-foreground mt-1">
@@ -1239,7 +1242,11 @@ export function ImageGenerationDialog({
       {generatedImages.length > 0 && (
         <div className="mt-4 space-y-4">
           <h3 className="text-base font-semibold">Сгенерированные изображения</h3>
-          <div className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
+          <div className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`} 
+            onWheel={(e) => {
+              // Предотвращаем закрытие диалога при прокрутке
+              e.stopPropagation();
+            }}>
             {generatedImages.map((imageUrl, index) => (
               <div 
                 key={index}
