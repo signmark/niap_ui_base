@@ -326,7 +326,7 @@ export function ImageGenerationDialog({
           keywordsCount: keywords.length
         });
         
-        // ИСПРАВЛЕНИЕ: используем полный путь к API без двойного /api/
+        // ИСПРАВЛЕНИЕ: используем правильный путь к API
         const response = await api.post("/api/generate-image-prompt", {
           content: cleanedText, // Отправляем оригинальный русский текст
           keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
@@ -449,7 +449,7 @@ export function ImageGenerationDialog({
       }
       
       console.log('Переводим промт на английский для улучшения качества генерации');
-      const response = await api.post('/translate-to-english', { text: cleanedText });
+      const response = await api.post('/api/translate-to-english', { text: cleanedText });
       
       if (response.data?.success && response.data?.translatedText) {
         console.log('Промт переведен:', response.data.translatedText);
@@ -645,7 +645,9 @@ export function ImageGenerationDialog({
             
             // Генерируем промт через DeepSeek напрямую из русского текста
             // DeepSeek сам переведет и преобразует текст в промт для изображения
-            const response = await api.post("/generate-image-prompt", {
+            console.log("Отправляем запрос на генерацию промта с текстом:", cleanedText.substring(0, 100) + "...");
+            
+            const response = await api.post("/api/generate-image-prompt", {
               content: cleanedText, // Отправляем оригинальный русский текст
               keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
             });

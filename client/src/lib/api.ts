@@ -107,8 +107,8 @@ const getApiBaseUrl = () => {
   const currentPort = window.location.port ? `:${window.location.port}` : '';
   // Получаем текущий протокол
   const protocol = window.location.protocol;
-  // Возвращаем полный URL
-  return `${protocol}//${currentHost}${currentPort}/api`;
+  // Возвращаем полный URL - БЕЗ /api, чтобы избежать дублирования при формировании полных URL
+  return `${protocol}//${currentHost}${currentPort}`;
 };
 
 // Create a general API instance with absolute URL
