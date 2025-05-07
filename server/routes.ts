@@ -2944,6 +2944,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/gemini', geminiTestRouter);
   console.log('Gemini API test routes registered successfully');
   
+  // Регистрируем маршруты для работы с пользователями
+  console.log('Registering user management routes...');
+  app.use('/api/users', usersRouter);
+  console.log('User management routes registered successfully');
+  
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
