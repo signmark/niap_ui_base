@@ -477,11 +477,12 @@ export function ImageGenerationDialog({
       console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
       
       try {
-        // Добавляем детальное логирование запроса
-        console.log('Отправляем запрос PATCH к /campaign-content/' + contentId);
+        // Используем специальный API-маршрут для обновления контента вместо прямого вызова Directus
+        console.log('Отправляем запрос PATCH к /api/publish/update-content/' + contentId);
         console.log('Данные запроса:', { prompt: promptText });
         
-        const response = await api.patch(`/campaign-content/${contentId}`, {
+        // Используем специальный маршрут publish/update-content который обновит свойство prompt
+        const response = await api.patch(`/api/publish/update-content/${contentId}`, {
           prompt: promptText
         });
         
@@ -489,11 +490,11 @@ export function ImageGenerationDialog({
         console.log('Ответ от сервера:', {
           status: response.status,
           statusText: response.statusText,
-          data: response.data
+          data: typeof response.data === 'string' ? response.data.substring(0, 100) + '...' : response.data
         });
         
-        if (response.data && response.status === 200) {
-          console.log('✅ Промт успешно сохранен в базе данных');
+        if (response.status === 200) {
+          console.log('✅ Промт успешно сохранен в базе данных через API');
           return true;
         } else {
           console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
