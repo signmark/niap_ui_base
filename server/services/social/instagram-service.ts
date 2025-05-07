@@ -787,6 +787,13 @@ export class InstagramService extends BaseSocialService {
       };
     }
     
+    // Проверяем тип контента - если это сторис, используем специальный метод
+    if (content.contentType === 'stories') {
+      log(`[Instagram] Обнаружен контент типа 'stories', используем метод publishStory`, 'instagram');
+      return this.publishStory(content, settings.instagram);
+    }
+    
+    // Для всех остальных типов контента используем стандартный метод
     return this.publishToInstagram(content, settings.instagram);
   }
 }

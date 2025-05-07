@@ -609,7 +609,14 @@ export class VkService extends BaseSocialService {
         error: 'Отсутствуют настройки для ВКонтакте (токен или ID группы). Убедитесь, что настройки заданы в кампании.'
       };
     }
-
+    
+    // Проверяем тип контента - если это сторис, используем специальный метод
+    if (content.contentType === 'stories') {
+      log(`VkService.publishToPlatform: Обнаружен контент типа 'stories', используем метод publishStory`, 'social-publishing');
+      return this.publishStory(content, vkSettings);
+    }
+    
+    // Для всех остальных типов контента используем стандартный метод
     return this.publishToVk(content, vkSettings);
   }
 }
