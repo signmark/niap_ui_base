@@ -34,46 +34,72 @@ export function AdditionalMediaUploader({
   hideTitle = false
 }: AdditionalMediaUploaderProps) {
   // Используем либо value, либо media (для совместимости)
-  const mediaItems = value || media || [];
+  let mediaItems = value || media || [];
+  
+  // Адаптер для поддержки как строковых массивов, так и объектов MediaItem
+  // Если передан массив строк, преобразуем его в массив MediaItem
+  if (mediaItems.length > 0 && typeof mediaItems[0] === 'string') {
+    mediaItems = (mediaItems as string[]).map(url => ({
+      url,
+      type: (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().includes('video')) ? 'video' : 'image',
+      title: '',
+      description: ''
+    }));
+  }
 
+  // Проверка, был ли изначально передан массив строк
+  const wasStringArray = Array.isArray(value) && value.length > 0 && typeof value[0] === 'string';
+  
+  // Функция для отправки данных обратно с учетом исходного формата
+  const sendChanges = (updatedMedia: MediaItem[]) => {
+    if (wasStringArray) {
+      // Если исходные данные были массивом строк, возвращаем массив URL
+      const stringUrls = updatedMedia.map(item => item.url);
+      onChange(stringUrls as any);
+    } else {
+      // Иначе возвращаем как есть
+      onChange(updatedMedia);
+    }
+  };
+  
   // Обработчик изменения URL медиа
   const handleMediaUrlChange = (index: number, url: string) => {
     const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], url };
-    onChange(updatedMedia);
+    sendChanges(updatedMedia);
   };
 
   // Обработчик изменения типа медиа
   const handleMediaTypeChange = (index: number, type: 'image' | 'video') => {
     const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], type };
-    onChange(updatedMedia);
+    sendChanges(updatedMedia);
   };
 
   // Обработчик изменения заголовка медиа
   const handleMediaTitleChange = (index: number, title: string) => {
     const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], title };
-    onChange(updatedMedia);
+    sendChanges(updatedMedia);
   };
 
   // Обработчик изменения описания медиа
   const handleMediaDescriptionChange = (index: number, description: string) => {
     const updatedMedia = [...mediaItems];
     updatedMedia[index] = { ...updatedMedia[index], description };
-    onChange(updatedMedia);
+    sendChanges(updatedMedia);
   };
 
   // Обработчик удаления медиа
   const handleRemoveMedia = (index: number) => {
     const updatedMedia = [...mediaItems];
     updatedMedia.splice(index, 1);
-    onChange(updatedMedia);
+    sendChanges(updatedMedia);
   };
 
   // Обработчик добавления нового медиа
   const handleAddMedia = (type: 'image' | 'video' = 'image') => {
-    onChange([...mediaItems, { url: "", type, title: "", description: "" }]);
+    sendChanges([...mediaItems, { url: "", type, title: "", description: "" }]);
   };
 
   return (

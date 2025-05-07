@@ -1483,7 +1483,25 @@ export default function ContentPage() {
                     </div>
                     <AdditionalMediaUploader
                       value={newContent.additionalImages || []}
-                      onChange={(media) => setNewContent({...newContent, additionalImages: media})}
+                      onChange={(media) => {
+                        // Проверяем формат текущего additionalImages
+                        // Если это массив строк, то и новые данные преобразуем в массив строк
+                        const isStringArray = Array.isArray(newContent.additionalImages) && 
+                          newContent.additionalImages.length > 0 && 
+                          typeof newContent.additionalImages[0] === 'string';
+                        
+                        let updatedAdditionalImages;
+                        if (isStringArray && !Array.isArray(media)) {
+                          // Если был массив строк, но вернулся объект MediaItem[]
+                          const stringUrls = (media as any as MediaItem[]).map(item => item.url);
+                          updatedAdditionalImages = stringUrls;
+                        } else {
+                          // Используем как есть
+                          updatedAdditionalImages = media;
+                        }
+                        
+                        setNewContent({...newContent, additionalImages: updatedAdditionalImages});
+                      }}
                       title="Медиа для сторис"
                       hideTitle
                     />
@@ -1794,7 +1812,22 @@ export default function ContentPage() {
                       <AdditionalMediaUploader
                         value={currentContent.additionalImages || []}
                         onChange={(media) => {
-                          const updatedContent = {...currentContent, additionalImages: media};
+                          // Проверяем формат текущего additionalImages
+                          // Если это массив строк, то и новые данные преобразуем в массив строк
+                          const isStringArray = Array.isArray(currentContent.additionalImages) && 
+                            currentContent.additionalImages.length > 0 && 
+                            typeof currentContent.additionalImages[0] === 'string';
+                          
+                          let updatedContent;
+                          if (isStringArray && !Array.isArray(media)) {
+                            // Если был массив строк, но вернулся объект MediaItem[]
+                            const stringUrls = (media as any as MediaItem[]).map(item => item.url);
+                            updatedContent = {...currentContent, additionalImages: stringUrls};
+                          } else {
+                            // Используем как есть
+                            updatedContent = {...currentContent, additionalImages: media};
+                          }
+                          
                           setCurrentContentSafe(updatedContent);
                         }}
                         title="Медиа для сторис"
