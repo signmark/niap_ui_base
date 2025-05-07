@@ -4,6 +4,7 @@
 import express from 'express';
 import { directusAuthManager } from '../services/directus-auth-manager';
 import { directusCrud } from '../services/directus-crud';
+import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 
 const router = express.Router();
@@ -46,8 +47,10 @@ router.get('/content/:id', async (req, res) => {
     
     // Получаем данные контента через DirectusApiManager напрямую
     try {
+      // Коллекция кампаний имеет другой префикс в Directus, поскольку в пути используются два варианта:
+      // campaign_content и content_plan для совместимости
       const response = await directusApiManager.request({
-        url: `/items/campaign_content/${contentId}`,
+        url: `/items/content_plan/${contentId}`,
         method: 'get'
       }, token);
       
