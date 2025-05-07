@@ -296,36 +296,7 @@ export function AdditionalMediaUploader({
         />
       )}
       
-      {/* Кнопка для генерации изображений на основе текста контента */}
-      {(contentText && contentId) && (
-        <div className="mt-4 border-t pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
-            onClick={() => {
-              // Если есть хотя бы один элемент изображения, используем его
-              const imageIndex = mediaItems.findIndex(item => item.type === 'image');
-              if (imageIndex >= 0) {
-                openGenerateImageDialog(imageIndex);
-              } else if (mediaItems.length > 0) {
-                // Иначе используем первый элемент и меняем его тип на изображение
-                const updatedMedia = [...mediaItems];
-                updatedMedia[0] = { ...updatedMedia[0], type: 'image' };
-                sendChanges(updatedMedia);
-                openGenerateImageDialog(0);
-              } else {
-                // Если нет элементов, добавляем новый
-                handleAddMedia('image');
-                setTimeout(() => openGenerateImageDialog(0), 100);
-              }
-            }}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Создать изображение из текста контента
-          </Button>
-        </div>
-      )}
+      {/* Кнопка "Создать изображение из текста контента" удалена по требованию пользователя */}
     </>
   );
 }
