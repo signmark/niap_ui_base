@@ -52,6 +52,25 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       });
     }
     
+    // Получаем контент для проверки типа
+    const content = await storage.getCampaignContentById(contentId);
+    if (!content) {
+      log(`[Social Publishing] Ошибка: не найден контент с ID ${contentId}`);
+      return res.status(404).json({
+        success: false,
+        error: `Контент с ID ${contentId} не найден`
+      });
+    }
+    
+    // Если тип контента stories, возвращаем ошибку, так как сторис должны публиковаться напрямую
+    if (content.contentType === 'stories') {
+      log(`[Social Publishing] Ошибка: попытка опубликовать контент типа 'stories' через n8n`);
+      return res.status(400).json({
+        success: false,
+        error: 'Для публикации сторис используйте отдельный эндпоинт /api/publish/stories'
+      });
+    }
+    
     // Поддерживаем два формата: объект {platformName: boolean} и массив строк ["platform1", "platform2"]
     log(`[Social Publishing] Проверка формата объекта platforms: ${JSON.stringify(platforms)}`);
     const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook'];
@@ -339,7 +358,66 @@ router.post('/publish', authMiddleware, async (req, res) => {
     
     log(`[Social Publishing] Запрос на публикацию контента ${contentId} в ${platform}`);
     
-    // Маршрутизация запросов в зависимости от платформы
+    // Получаем контент для проверки его типа
+    const content = await storage.getCampaignContentById(contentId);
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: `Контент с ID ${contentId} не найден`
+      });
+    }
+    
+    // Если тип контента stories, используем прямую публикацию
+    if (content.contentType === 'stories') {
+      log(`[Social Publishing] Обнаружен контент типа 'stories', используем прямую публикацию`);
+      
+      try {
+        const campaignSettings = await storage.getCampaignById(content.campaignId);
+        if (!campaignSettings) {
+          return res.status(404).json({
+            success: false,
+            error: `Не найдены настройки кампании для ID ${content.campaignId}`
+          });
+        }
+        
+        // Получаем сервис в зависимости от платформы
+        let result;
+        switch (platform.toLowerCase()) {
+          case 'vk':
+            const { vkService } = require('../services/social/vk-service');
+            result = await vkService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+            break;
+            
+          case 'instagram':
+            const { instagramService } = require('../services/social/instagram-service');
+            result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+            break;
+            
+          default:
+            return res.status(400).json({
+              success: false,
+              error: `Платформа ${platform} не поддерживает сторис`
+            });
+        }
+        
+        // Обновляем статус в базе данных
+        await storage.updateContentPlatformStatus(contentId, platform, result);
+        
+        return res.status(200).json({
+          success: true,
+          message: `Сторис успешно опубликован в ${platform}`,
+          result
+        });
+      } catch (error: any) {
+        log(`[Social Publishing] Ошибка при публикации сторис в ${platform}: ${error.message}`);
+        return res.status(500).json({
+          success: false,
+          error: `Ошибка при публикации сторис: ${error.message}`
+        });
+      }
+    }
+    
+    // Для обычного контента - стандартная маршрутизация
     switch (platform.toLowerCase()) {
       case 'telegram':
         // Для Telegram используем n8n вебхук
@@ -1088,6 +1166,105 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
     }
   } catch (error: any) {
     log(`[Social Publishing] Ошибка при обновлении статуса публикации: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка сервера: ${error.message}`
+    });
+  }
+});
+
+/**
+ * @api {post} /api/publish/stories Публикация сторис в социальные сети
+ * @apiDescription Прямая публикация сторис без использования n8n webhook
+ * @apiVersion 1.0.0
+ * @apiName PublishStories
+ * @apiGroup SocialPublishing
+ * 
+ * @apiParam {String} contentId ID контента для публикации
+ * @apiParam {String} platform Платформа для публикации (vk, instagram)
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат публикации
+ */
+router.post('/publish/stories', authMiddleware, async (req, res) => {
+  try {
+    const { contentId, platform } = req.body;
+    
+    if (!contentId || !platform) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId и platform'
+      });
+    }
+    
+    log(`[Social Publishing] Запрос на публикацию сторис ${contentId} в ${platform}`);
+    
+    // Получаем контент
+    const content = await storage.getCampaignContentById(contentId);
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: `Контент с ID ${contentId} не найден`
+      });
+    }
+    
+    // Проверяем, что тип контента - stories
+    if (content.contentType !== 'stories') {
+      return res.status(400).json({
+        success: false,
+        error: 'Этот эндпоинт предназначен только для публикации сторис'
+      });
+    }
+    
+    // Проверяем поддерживаемые платформы
+    if (!['vk', 'instagram'].includes(platform.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        error: `Платформа ${platform} не поддерживает публикацию сторис через прямой API`
+      });
+    }
+    
+    try {
+      const campaignSettings = await storage.getCampaignById(content.campaignId);
+      if (!campaignSettings) {
+        return res.status(404).json({
+          success: false,
+          error: `Не найдены настройки кампании для ID ${content.campaignId}`
+        });
+      }
+      
+      // Публикуем сторис в зависимости от платформы
+      let result;
+      switch (platform.toLowerCase()) {
+        case 'vk':
+          const { vkService } = require('../services/social/vk-service');
+          result = await vkService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+          break;
+          
+        case 'instagram':
+          const { instagramService } = require('../services/social/instagram-service');
+          result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+          break;
+      }
+      
+      // Обновляем статус в базе данных
+      await storage.updateContentPlatformStatus(contentId, platform, result);
+      
+      return res.status(200).json({
+        success: true,
+        message: `Сторис успешно опубликован в ${platform}`,
+        result
+      });
+    } catch (error: any) {
+      log(`[Social Publishing] Ошибка при публикации сторис в ${platform}: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при публикации сторис: ${error.message}`
+      });
+    }
+  } catch (error: any) {
+    log(`[Social Publishing] Критическая ошибка при публикации сторис: ${error.message}`);
+    
     return res.status(500).json({
       success: false,
       error: `Внутренняя ошибка сервера: ${error.message}`
