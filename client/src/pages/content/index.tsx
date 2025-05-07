@@ -2228,6 +2228,9 @@ export default function ContentPage() {
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
           // Передаем весь объект контента, а не только текст
           initialContent={currentContent || newContent}
+          // ПРЯМО ПЕРЕДАЕМ ЗНАЧЕНИЯ ПОЛЕЙ content и prompt для отладки
+          contentText={currentContent ? currentContent.content : newContent.content}
+          promptText={currentContent ? (currentContent.prompt || "") : (newContent.prompt || "")}
           // Передаем промт в зависимости от режима (редактирование, создание или доп.изображение)
           initialPrompt={
             currentContent ? (currentContent.prompt || "") :
