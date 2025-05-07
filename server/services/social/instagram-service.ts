@@ -2,6 +2,7 @@ import axios from 'axios';
 import { log } from '../../utils/logger';
 import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+import FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -12,6 +13,178 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Сервис для публикации контента в Instagram
  */
 export class InstagramService extends BaseSocialService {
+  /**
+   * Публикует сторис в Instagram
+   * @param content Контент для публикации
+   * @param instagramSettings Настройки Instagram API
+   * @returns Результат публикации
+   */
+  async publishStory(
+    content: CampaignContent,
+    instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null }
+  ): Promise<SocialPublication> {
+    try {
+      // Проверяем наличие необходимых параметров
+      if (!instagramSettings.token && !instagramSettings.accessToken || !instagramSettings.businessAccountId) {
+        log(`Ошибка публикации сторис в Instagram: отсутствуют настройки. Token/accessToken: ${instagramSettings.token || instagramSettings.accessToken ? 'задан' : 'отсутствует'}, Business Account ID: ${instagramSettings.businessAccountId ? 'задан' : 'отсутствует'}`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Отсутствуют настройки Instagram API (токен или ID бизнес-аккаунта)'
+        };
+      }
+
+      // Используем token или accessToken
+      const token = instagramSettings.token || instagramSettings.accessToken;
+      const businessAccountId = instagramSettings.businessAccountId;
+
+      log(`[Instagram] Начинаем публикацию сторис в Instagram c бизнес-аккаунтом: ${businessAccountId}`, 'instagram');
+
+      // Проверяем, что у нас есть изображение или видео для сторис
+      if (!content.imageUrl && !content.videoUrl) {
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          error: 'Для публикации сторис необходимо изображение или видео',
+          publishedAt: null,
+        };
+      }
+
+      // Публикация сторис в Instagram через Graph API
+      // Базовый URL для Graph API
+      const baseUrl = 'https://graph.facebook.com/v17.0';
+
+      // Шаг 1: Создание контейнера для сторис
+      let mediaType: string;
+      let mediaUrl: string;
+      let caption: string = '';
+
+      // Если есть контент, форматируем его для Instagram
+      if (content.content) {
+        const formattedText = this.formatTextForInstagram(content.content);
+        if (formattedText.length > 0) {
+          caption = formattedText.slice(0, 2200); // Ограничение для подписи сторис
+        }
+      }
+
+      // Определяем тип медиа и URL
+      if (content.videoUrl) {
+        mediaType = 'VIDEO';
+        mediaUrl = content.videoUrl;
+        log(`[Instagram] Подготовка видео для сторис: ${mediaUrl}`, 'instagram');
+      } else {
+        mediaType = 'IMAGE';
+        mediaUrl = content.imageUrl as string;
+        log(`[Instagram] Подготовка изображения для сторис: ${mediaUrl}`, 'instagram');
+      }
+
+      // Создаем URL запроса для создания контейнера
+      const containerUrl = `${baseUrl}/${businessAccountId}/media`;
+
+      // Формируем параметры запроса для создания контейнера сторис
+      const storyParams: any = {
+        media_type: mediaType,
+        caption: caption,
+        access_token: token,
+        is_carousel_item: false
+      };
+
+      // Добавляем URL в зависимости от типа медиа
+      if (mediaType === 'VIDEO') {
+        storyParams.video_url = mediaUrl;
+      } else {
+        storyParams.image_url = mediaUrl;
+      }
+
+      // Добавляем параметр, указывающий, что это сторис
+      storyParams.is_story = true;
+
+      // Логируем параметры запроса для отладки
+      log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(storyParams)}`, 'instagram');
+
+      // Отправляем запрос на создание контейнера
+      const containerResponse = await axios.post(containerUrl, storyParams);
+
+      // Проверяем ответ
+      if (!containerResponse.data || !containerResponse.data.id) {
+        const errorMsg = containerResponse.data && containerResponse.data.error 
+          ? `${containerResponse.data.error.code}: ${containerResponse.data.error.message}`
+          : 'Ошибка при создании контейнера для сторис';
+
+        log(`[Instagram] ${errorMsg}`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          error: errorMsg,
+          publishedAt: null
+        };
+      }
+
+      // Получаем ID созданного контейнера
+      const containerId = containerResponse.data.id;
+      log(`[Instagram] Контейнер для сторис создан успешно: ${containerId}`, 'instagram');
+
+      // Шаг 2: Публикация сторис
+      const publishUrl = `${baseUrl}/${businessAccountId}/media_publish`;
+      const publishParams = {
+        creation_id: containerId,
+        access_token: token
+      };
+
+      // Даем Instagram время на обработку медиа (важно для видео)
+      if (mediaType === 'VIDEO') {
+        log(`[Instagram] Ожидание 5 секунд перед публикацией видео-сторис...`, 'instagram');
+        await sleep(5000);
+      } else {
+        await sleep(1000);
+      }
+
+      // Публикуем сторис
+      log(`[Instagram] Этап 2 - публикация сторис с containerId: ${containerId}`, 'instagram');
+      const publishResponse = await axios.post(publishUrl, publishParams);
+
+      // Проверяем результат публикации
+      if (publishResponse.data && publishResponse.data.id) {
+        const storyId = publishResponse.data.id;
+        const storyUrl = `https://www.instagram.com/stories/${storyId}/`;
+
+        log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'published',
+          postId: storyId,
+          postUrl: storyUrl,
+          publishedAt: new Date()
+        };
+      } else {
+        const errorMsg = publishResponse.data && publishResponse.data.error 
+          ? `${publishResponse.data.error.code}: ${publishResponse.data.error.message}`
+          : 'Неизвестная ошибка при публикации сторис';
+
+        log(`[Instagram] Ошибка при публикации сторис: ${errorMsg}`, 'instagram');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          error: errorMsg,
+          publishedAt: null
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = error.response && error.response.data && error.response.data.error 
+        ? `${error.response.data.error.code}: ${error.response.data.error.message}`
+        : error.message;
+
+      log(`[Instagram] Исключение при публикации сторис: ${errorMessage}`, 'instagram');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        error: errorMessage,
+        publishedAt: null
+      };
+    }
+  }
+
   /**
    * Форматирует текст для публикации в Instagram
    * @param content Исходный текст контента
