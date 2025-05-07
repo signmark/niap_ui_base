@@ -183,15 +183,42 @@ export function ImageGenerationDialog({
     setGeneratedPrompt(cleanedPrompt);
     console.log('📝 Установлен финальный промт:', cleanedPrompt ? (cleanedPrompt.substring(0, 50) + '...') : 'пустая строка');
     
-    // Обрабатываем initialContent, который может быть строкой или объектом
+    // Обрабатываем initialContent, который может быть строкой или объектом CampaignContent
     if (initialContent) {
       let contentText = '';
+      let promptText = '';
+
+      console.log('ДЕТАЛИ ПОЛУЧЕННОГО ОБЪЕКТА:', {
+        type: typeof initialContent,
+        isNull: initialContent === null,
+        keys: typeof initialContent === 'object' && initialContent !== null ? Object.keys(initialContent) : 'не объект'
+      });
       
-      // Если initialContent - объект, извлекаем текст из поля content
+      // Если initialContent - объект CampaignContent, извлекаем текст из полей content и prompt
       if (typeof initialContent === 'object' && initialContent !== null) {
-        const contentItem = initialContent as ContentItem;
-        contentText = contentItem.content || '';
+        // Подробный вывод полей для отладки
+        console.log('ПОЛЯ КОНТЕНТА:', {
+          content: initialContent.content ? 'ЕСТЬ' : 'НЕТ',
+          prompt: initialContent.prompt ? 'ЕСТЬ' : 'НЕТ', 
+          id: initialContent.id || 'НЕТ ID',
+          contentType: initialContent.contentType || 'НЕТ ТИПА'
+        });
+        
+        contentText = initialContent.content || '';
+        // Проверяем поле prompt в объекте контента
+        if (initialContent.prompt) {
+          promptText = initialContent.prompt;
+          console.log('Найден промт в объекте контента:', promptText.substring(0, 50) + '...');
+          
+          // Если в объект есть промт и параметр initialPrompt не определен, устанавливаем промт из объекта
+          if (!initialPrompt) {
+            setPrompt(simpleCleanHtml(promptText));
+            setGeneratedPrompt(simpleCleanHtml(promptText));
+            console.log('ВАЖНО: Установлен промт из объекта контента');
+          }
+        }
       } else if (typeof initialContent === 'string') {
+        // Если initialContent - просто строка, используем её как contentText
         contentText = initialContent;
       }
       
@@ -202,6 +229,7 @@ export function ImageGenerationDialog({
     } else {
       // Сбрасываем контент если его нет
       setContent("");
+      console.log('Контент отсутствует, поле сброшено');
     }
     
     // Всегда открываем вкладку прямого промта (как просил пользователь)

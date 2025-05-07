@@ -2226,8 +2226,8 @@ export default function ContentPage() {
         <ImageGenerationDialog 
           campaignId={selectedCampaignId}
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
-          // Корректно передаем контент в зависимости от режима (редактирование или создание)
-          initialContent={currentContent ? currentContent.content : newContent.content}
+          // Передаем весь объект контента, а не только текст
+          initialContent={currentContent || newContent}
           // Передаем промт в зависимости от режима (редактирование, создание или доп.изображение)
           initialPrompt={
             currentContent ? (currentContent.prompt || "") :

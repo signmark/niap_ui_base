@@ -93,6 +93,7 @@ export interface CampaignContent {
   additionalVideos?: string[] | null; // Для обратной совместимости
   additionalMedia?: MediaItem[] | null; // Новое универсальное поле для всех типов медиа
   imagePrompt?: string | null;
+  prompt?: string | null; // Добавляем поле для промта изображения
   status: ContentStatus;
   keywords?: string[];
   metadata?: Record<string, any> | null;
