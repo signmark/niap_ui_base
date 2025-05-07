@@ -204,9 +204,9 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
-        // Очищаем текст от HTML-тегов и других артефактов
+        // Очищаем текст только от служебных артефактов, сохраняя HTML-форматирование
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        resultText = resultText.replace(/<[^>]*>/g, '');
+        // НЕ удаляем HTML-теги для сохранения форматирования
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
@@ -270,9 +270,9 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
-        // Очищаем текст от HTML-тегов и других артефактов
+        // Очищаем текст только от служебных артефактов, сохраняя HTML-форматирование
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        resultText = resultText.replace(/<[^>]*>/g, '');
+        // НЕ удаляем HTML-теги для сохранения форматирования
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
