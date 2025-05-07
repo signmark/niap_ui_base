@@ -2,17 +2,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { VideoUploader } from "./VideoUploader";
 import { Plus, Trash2, ImageIcon, Wand2, FileText } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ImageGenerationDialog } from "./ImageGenerationDialog";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 // Интерфейс для элемента медиа
 export interface MediaItem {
   url: string;
   type: 'image' | 'video';
+}
+
+// Интерфейс для данных контента
+interface ContentItem {
+  id: string;
+  prompt?: string;
+  content?: string;
 }
 
 interface AdditionalMediaUploaderProps {
@@ -43,8 +52,35 @@ export function AdditionalMediaUploader({
   // Состояния для диалога генерации изображений
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
-  // Сохраняем переменную для совместимости с ImageGenerationDialog
+  // Состояние для хранения промпта
   const [prompt, setPrompt] = useState("");
+  // Состояние для хранения данных контента
+  const [contentData, setContentData] = useState<ContentItem | null>(null);
+  
+  // Запрашиваем данные контента, если у нас есть contentId
+  const { data: fetchedContentData, isLoading: isLoadingContent } = useQuery({
+    queryKey: ['content', contentId],
+    queryFn: async () => {
+      if (!contentId) return null;
+      try {
+        console.log(`Запрашиваем данные контента для ID: ${contentId}`);
+        const response = await api.get(`/api/content/${contentId}`);
+        return response.data?.data || null;
+      } catch (error) {
+        console.error("Ошибка при получении данных контента:", error);
+        return null;
+      }
+    },
+    enabled: !!contentId // Запрос активен только если у нас есть contentId
+  });
+  
+  // Обновляем contentData, когда данные будут загружены
+  useEffect(() => {
+    if (fetchedContentData) {
+      console.log("Получены данные контента:", fetchedContentData);
+      setContentData(fetchedContentData);
+    }
+  }, [fetchedContentData]);
   
   // Используем либо value, либо media (для совместимости)
   let mediaItems: MediaItem[] = [];
@@ -286,11 +322,11 @@ export function AdditionalMediaUploader({
         <ImageGenerationDialog
           contentId={contentId}
           campaignId={campaignId}
-          initialContent={contentText || ""}
+          initialContent={contentData || contentText || ""}
           initialPrompt=""
           // Явно передаем параметры contentText и promptText для исправления проблемы
           contentText={contentText || ""}
-          promptText=""
+          promptText={contentData?.prompt || ""}
           onImageGenerated={handleImageGenerated}
           onClose={() => setIsImageGenerationDialogOpen(false)}
         />
