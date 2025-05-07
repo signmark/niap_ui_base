@@ -77,7 +77,7 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
 
         // Проверяем токен, запрашивая данные пользователя
         try {
-            const userData = await directusCrud.getCurrentUser(token);
+            const userData = await directusCrud.getCurrentUser({ authToken: token });
             if (!userData || !userData.id) {
                 return res.status(401).json({
                     success: false,
@@ -137,7 +137,7 @@ export async function isSmmAdmin(req: Request, res: Response, next: NextFunction
         
         try {
             // Запрашиваем информацию о пользователе, чтобы проверить флаг is_smm_admin
-            const userData = await directusCrud.getCurrentUser(token);
+            const userData = await directusCrud.getCurrentUser({ authToken: token });
             
             if (!userData) {
                 return res.status(401).json({

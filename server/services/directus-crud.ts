@@ -362,6 +362,65 @@ export class DirectusCrud {
       throw new Error(`Ошибка обновления токена: ${error.response?.data?.errors?.[0]?.message || error.message}`);
     }
   }
+  
+  /**
+   * Получает список всех пользователей системы
+   * @param authToken Токен авторизации (должен быть токен администратора)
+   * @returns Массив пользователей системы
+   */
+  async getAllUsers(authToken: string): Promise<any[]> {
+    return this.executeOperation<any[]>('list', 'users', async () => {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      try {
+        log('Получение списка всех пользователей', this.logPrefix);
+        
+        const response = await axios.get(`${directusUrl}/users`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          params: {
+            limit: 100, // Получаем первые 100 пользователей
+            fields: ['id', 'email', 'first_name', 'last_name', 'status', 'role', 'last_access', 'is_smm_admin']
+          }
+        });
+        
+        if (!response.data || !response.data.data) {
+          throw new Error('Неверный формат ответа при получении списка пользователей');
+        }
+        
+        log(`Получено ${response.data.data.length} пользователей`, this.logPrefix);
+        
+        return response.data.data || [];
+      } catch (error: any) {
+        log(`Ошибка при получении списка пользователей: ${error.message}`, this.logPrefix);
+        
+        if (error.response) {
+          log(`Статус ошибки: ${error.response.status}`, this.logPrefix);
+          if (error.response.data && error.response.data.errors) {
+            log(`Детали ошибки: ${JSON.stringify(error.response.data.errors)}`, this.logPrefix);
+          }
+        }
+        
+        // Пробуем запрос через directusApiManager как запасной вариант
+        try {
+          const response = await directusApiManager.request({
+            url: '/users',
+            method: 'get',
+            params: {
+              limit: 100,
+              fields: ['id', 'email', 'first_name', 'last_name', 'status', 'role', 'last_access', 'is_smm_admin']
+            }
+          }, authToken);
+          
+          return response.data.data || [];
+        } catch (secondError) {
+          // Если и второй запрос не удался, выбрасываем оригинальную ошибку
+          throw error;
+        }
+      }
+    });
+  }
 }
 
 export const directusCrud = new DirectusCrud();
