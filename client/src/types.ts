@@ -68,7 +68,7 @@ export interface PlatformPublishInfo {
 }
 
 // Типы контента
-export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed';
+export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed' | 'stories';
 
 // Интерфейс для контента кампании
 // Тип для медиа-файла
