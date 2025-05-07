@@ -301,18 +301,9 @@ export function AdditionalMediaUploader({
             </Button>
             <Button
               onClick={() => {
-                if (contentId && generatingIndex !== null) {
-                  setIsPromptDialogOpen(false);
-                  openGenerateImageDialog(generatingIndex);
-                } else {
-                  toast({
-                    title: "Ошибка",
-                    description: "Не удалось открыть диалог генерации изображений",
-                    variant: "destructive",
-                  });
-                }
+                setIsPromptDialogOpen(false);
+                openGenerateImageDialog(generatingIndex !== null ? generatingIndex : 0);
               }}
-              disabled={!prompt || !contentId}
             >
               <Wand2 className="mr-2 h-4 w-4" />
               Использовать редактор изображений
@@ -322,11 +313,12 @@ export function AdditionalMediaUploader({
       </Dialog>
       
       {/* Полноценный диалог генерации изображений */}
-      {isImageGenerationDialogOpen && contentId && (
+      {isImageGenerationDialogOpen && (
         <ImageGenerationDialog
           contentId={contentId}
           campaignId={campaignId}
           initialContent={contentText || prompt}
+          initialPrompt={prompt}
           onImageGenerated={handleImageGenerated}
           onClose={() => setIsImageGenerationDialogOpen(false)}
         />
