@@ -106,16 +106,16 @@ export function AdditionalMediaUploader({
     sendChanges([...mediaItems, { url: "", type }]);
   };
   
-  // Функция для открытия простого диалога ввода промпта
-  const openPromptDialog = (index: number) => {
-    setGeneratingIndex(index);
-    setPrompt("");
-    setIsPromptDialogOpen(true);
-  };
+  // Простой диалог для ввода промпта был удален по требованию пользователя
   
   // Функция для открытия полноценного диалога генерации изображений
   const openGenerateImageDialog = (index: number) => {
     setGeneratingIndex(index);
+    // Убедимся, что prompt установлен из contentText, если доступен
+    if (contentText) {
+      setPrompt(contentText);
+      console.log("Устанавливаем текст из контента как промпт:", contentText.substring(0, 50) + "...");
+    }
     setIsImageGenerationDialogOpen(true);
   };
   
