@@ -1012,7 +1012,7 @@ export function ImageGenerationDialog({
 
   return (
     <DialogContent 
-      className="w-[90vw] sm:max-w-5xl max-h-[85vh] overflow-auto" 
+      className="sm:max-w-[600px] max-h-[90vh] overflow-auto" 
       onPointerDownOutside={(e) => {
         // Предотвращаем закрытие диалога при клике внутри скроллируемой области
         e.preventDefault();
