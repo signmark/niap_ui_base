@@ -41,6 +41,7 @@ import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import { analyticsRouter } from './routes/api-analytics';
+import { usersRouter } from './routes/api-users';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
