@@ -139,6 +139,31 @@ export function ImageGenerationDialog({
       hasPromptText: !!promptText,
     });
     
+    // Если есть ID контента, явно загружаем его данные для получения промпта
+    if (contentId && !promptText) {
+      console.log(`⚠️ Промпт не передан, но есть contentId: ${contentId}. Загружаем данные...`);
+      
+      api.get(`/api/content/${contentId}`)
+        .then(response => {
+          if (response.data?.success && response.data?.data) {
+            const contentData = response.data.data;
+            console.log('📄 Данные контента получены напрямую:', contentData);
+            
+            if (contentData.prompt) {
+              console.log('✅ Найден промпт в данных контента:', contentData.prompt);
+              // Устанавливаем промпт
+              setPrompt(contentData.prompt);
+              setGeneratedPrompt(contentData.prompt);
+            } else {
+              console.log('⚠️ В данных контента отсутствует промпт');
+            }
+          }
+        })
+        .catch(error => {
+          console.error('❌ Ошибка при загрузке данных контента:', error);
+        });
+    }
+    
     // Полный сброс всех состояний
     setNegativePrompt("");
     setImageSize("1024x1024");

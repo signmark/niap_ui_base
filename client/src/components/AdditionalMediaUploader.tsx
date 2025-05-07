@@ -157,14 +157,56 @@ export function AdditionalMediaUploader({
     // Очищаем prompt для примера, так как мы отправляем contentText напрямую в диалог
     setPrompt("");
     
-    // Логируем информацию о наличии текста контента для отладки
-    if (contentText) {
-      console.log("Передаем текст контента в диалог:", contentText.substring(0, 50) + "...");
+    // Проверяем загрузку данных контента
+    if (contentId && !isLoadingContent && !contentData) {
+      console.log("⚠️ Данные контента еще не загружены при ID:", contentId);
+      
+      // Делаем прямой запрос к API, чтобы гарантировать наличие данных
+      api.get(`/api/content/${contentId}`)
+        .then(response => {
+          const loadedData = response.data?.data || null;
+          if (loadedData) {
+            console.log("✅ Загружены данные контента:", loadedData);
+            
+            // Обновляем состояние
+            const formattedData: ContentItem = {
+              id: loadedData.id,
+              prompt: loadedData.prompt || "",
+              content: loadedData.content || ""
+            };
+            setContentData(formattedData);
+            
+            console.log("📝 Использую промпт из загруженных данных:", loadedData.prompt || "(пусто)");
+            
+            // Открываем диалог с небольшой задержкой
+            setTimeout(() => {
+              setIsImageGenerationDialogOpen(true);
+            }, 100);
+          } else {
+            console.log("❌ Не удалось загрузить данные контента");
+            setIsImageGenerationDialogOpen(true); // Открываем диалог в любом случае
+          }
+        })
+        .catch(error => {
+          console.error("❌ Ошибка при получении данных контента:", error);
+          setIsImageGenerationDialogOpen(true); // Открываем диалог в любом случае
+        });
     } else {
-      console.log("Текст контента отсутствует при открытии диалога");
+      // Логируем информацию о наличии текста контента для отладки
+      if (contentText) {
+        console.log("Передаем текст контента в диалог:", contentText.substring(0, 50) + "...");
+      } else {
+        console.log("Текст контента отсутствует при открытии диалога");
+      }
+      
+      if (contentData?.prompt) {
+        console.log("Передаем промпт в диалог:", contentData.prompt.substring(0, 50) + "...");
+      } else {
+        console.log("Промпт отсутствует при открытии диалога");
+      }
+      
+      setIsImageGenerationDialogOpen(true);
     }
-    
-    setIsImageGenerationDialogOpen(true);
   };
   
   // Обработчик успешной генерации изображения из ImageGenerationDialog
