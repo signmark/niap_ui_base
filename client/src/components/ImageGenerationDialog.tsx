@@ -1011,10 +1011,17 @@ export function ImageGenerationDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => {
-      // Предотвращаем закрытие диалога при клике внутри скроллируемой области
-      e.preventDefault();
-    }}>
+    <DialogContent 
+      className="w-[90vw] sm:max-w-5xl max-h-[85vh] overflow-auto" 
+      onPointerDownOutside={(e) => {
+        // Предотвращаем закрытие диалога при клике внутри скроллируемой области
+        e.preventDefault();
+      }}
+      // Отключаем все обработчики событий, которые могут мешать скроллу
+      onScroll={(e) => {
+        e.stopPropagation();
+      }}
+    >
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
         <DialogDescription className="text-xs text-muted-foreground mt-1">
