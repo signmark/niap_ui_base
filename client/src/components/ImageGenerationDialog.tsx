@@ -201,6 +201,12 @@ export function ImageGenerationDialog({
       console.log('⚠️ Источники промта не найдены, поле оставлено пустым');
     }
     
+    // Дополнительное логирование
+    console.log('📌 ПРОВЕРКА ВСЕХ ИСТОЧНИКОВ ПРОМТА:');
+    console.log('- promptText:', promptText || 'нет');
+    console.log('- contentObject?.prompt:', contentObject?.prompt || 'нет');
+    console.log('- initialPrompt:', initialPrompt || 'нет');
+    
     // Устанавливаем значение промта
     setPrompt(promptToUse); 
     setGeneratedPrompt(promptToUse);
