@@ -9,6 +9,21 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+// Тип для активности пользователя
+interface UserAction {
+  description: string;
+  timestamp: string;
+  collection: string;
+  action: string;
+}
+
+// Тип для последней активности пользователя
+interface LastActivity {
+  action: string;
+  collection: string;
+  timestamp: string;
+}
+
 // Тип для пользователя
 interface User {
   id: string;
@@ -18,6 +33,9 @@ interface User {
   lastAccess: string | null;
   isActive: boolean;
   isSmmAdmin: boolean;
+  activityCount: number;
+  lastActivity: LastActivity | null;
+  recentActions: UserAction[];
 }
 
 // Тип для ответа API
@@ -135,13 +153,14 @@ export default function UsersPage() {
                     <TableHead>Имя</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Статус</TableHead>
-                    <TableHead>Последний доступ</TableHead>
+                    <TableHead>Последняя активность</TableHead>
                     <TableHead>Роль</TableHead>
+                    <TableHead>Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.data.users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={user.isActive ? 'bg-green-50/20' : ''}>
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
@@ -151,13 +170,61 @@ export default function UsersPage() {
                           <Badge variant="outline">Неактивен</Badge>
                         )}
                       </TableCell>
-                      <TableCell>{formatLastAccess(user.lastAccess)}</TableCell>
+                      <TableCell>
+                        {user.lastActivity ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm">
+                              {user.lastActivity.action === 'create' && 'Создал запись'}
+                              {user.lastActivity.action === 'update' && 'Обновил запись'}
+                              {user.lastActivity.action === 'delete' && 'Удалил запись'}
+                              {user.lastActivity.action === 'login' && 'Вход в систему'}
+                              {!['create', 'update', 'delete', 'login'].includes(user.lastActivity.action) && user.lastActivity.action}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {user.lastActivity.collection && user.lastActivity.collection !== 'directus_users' ? 
+                                `в разделе "${user.lastActivity.collection}"` : ''}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatLastAccess(user.lastActivity.timestamp)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-sm">Последний вход:</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {formatLastAccess(user.lastAccess)}
+                            </span>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {user.isSmmAdmin ? (
                           <Badge variant="default">Администратор</Badge>
                         ) : (
                           <Badge variant="secondary">Пользователь</Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span className="font-medium">{user.activityCount || 0}</span> действий
+                          {user.recentActions && user.recentActions.length > 0 && (
+                            <div className="mt-1">
+                              <details className="text-xs cursor-pointer">
+                                <summary className="font-medium text-primary">Последние действия</summary>
+                                <ul className="pl-2 mt-1 space-y-1">
+                                  {user.recentActions.map((action, index) => (
+                                    <li key={index} className="list-disc list-inside">
+                                      <span>{action.description}</span>
+                                      <span className="block text-xs text-muted-foreground ml-4">
+                                        {formatLastAccess(action.timestamp)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </details>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -32,6 +32,31 @@ usersRouter.get('/active', isSmmAdmin, async (req: Request, res: Response) => {
       });
     }
     
+    // Получаем логи активности пользователей
+    const userActivities = await directusCrud.getUserActivity(token, undefined, 100);
+    
+    // Группируем активность по пользователям
+    const userActivityMap = new Map();
+    
+    if (userActivities && Array.isArray(userActivities)) {
+      userActivities.forEach(activity => {
+        if (activity.user && activity.user.id) {
+          const userId = activity.user.id;
+          if (!userActivityMap.has(userId)) {
+            userActivityMap.set(userId, []);
+          }
+          userActivityMap.get(userId).push({
+            action: activity.action,
+            collection: activity.collection,
+            timestamp: activity.timestamp,
+            ip: activity.ip,
+            user_agent: activity.user_agent,
+            item: activity.item
+          });
+        }
+      });
+    }
+    
     // Отмечаем активных пользователей (тех, кто был активен за последние 24 часа)
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -40,6 +65,51 @@ usersRouter.get('/active', isSmmAdmin, async (req: Request, res: Response) => {
       // Проверяем дату последнего доступа
       const lastAccess = user.last_access ? new Date(user.last_access) : null;
       const isActive = lastAccess && lastAccess > oneDayAgo;
+      
+      // Получаем активность пользователя
+      const userActivity = userActivityMap.get(user.id) || [];
+      
+      // Определяем последнее действие пользователя
+      let lastActivity = null;
+      let recentActions = [];
+      
+      if (userActivity.length > 0) {
+        // Сортируем активность по времени (от новых к старым)
+        userActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        
+        // Получаем последнее действие
+        lastActivity = userActivity[0];
+        
+        // Получаем последние 5 действий
+        recentActions = userActivity.slice(0, 5).map(act => {
+          // Формируем понятное описание действия
+          let actionDescription = '';
+          
+          switch (act.action) {
+            case 'create':
+              actionDescription = `Создал(а) запись в "${act.collection}"`;
+              break;
+            case 'update':
+              actionDescription = `Обновил(а) запись в "${act.collection}"`;
+              break;
+            case 'delete':
+              actionDescription = `Удалил(а) запись из "${act.collection}"`;
+              break;
+            case 'login':
+              actionDescription = 'Вход в систему';
+              break;
+            default:
+              actionDescription = `${act.action} в "${act.collection}"`;
+          }
+          
+          return {
+            description: actionDescription,
+            timestamp: act.timestamp,
+            collection: act.collection,
+            action: act.action
+          };
+        });
+      }
       
       return {
         id: user.id,
@@ -50,7 +120,14 @@ usersRouter.get('/active', isSmmAdmin, async (req: Request, res: Response) => {
         status: user.status,
         lastAccess: user.last_access,
         isActive,
-        isSmmAdmin: user.is_smm_admin || false
+        isSmmAdmin: user.is_smm_admin || false,
+        activityCount: userActivity.length,
+        lastActivity: lastActivity ? {
+          action: lastActivity.action,
+          collection: lastActivity.collection,
+          timestamp: lastActivity.timestamp
+        } : null,
+        recentActions
       };
     });
     

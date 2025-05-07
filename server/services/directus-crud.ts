@@ -421,6 +421,74 @@ export class DirectusCrud {
       }
     });
   }
+  
+  /**
+   * Получает логи активности пользователей
+   * @param authToken Токен авторизации администратора
+   * @param userId ID пользователя, если нужны логи только одного пользователя
+   * @param limit Количество записей (по умолчанию 50)
+   * @returns Массив логов активности
+   */
+  async getUserActivity(authToken: string, userId?: string, limit: number = 50): Promise<any[]> {
+    return this.executeOperation<any[]>('list', 'activity', async () => {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      try {
+        log('Получение логов активности пользователей', this.logPrefix);
+        
+        // Строим параметры запроса
+        const params: Record<string, any> = {
+          limit,
+          sort: ['-timestamp'], // Сортировка от новых к старым
+          fields: ['*', 'user.id', 'user.email', 'user.first_name', 'user.last_name']
+        };
+        
+        // Если указан ID пользователя, фильтруем только по его активности
+        if (userId) {
+          params.filter = {
+            user: {
+              id: {
+                _eq: userId
+              }
+            }
+          };
+        }
+        
+        const response = await axios.get(`${directusUrl}/activity`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          params
+        });
+        
+        if (!response.data || !response.data.data) {
+          throw new Error('Неверный формат ответа при получении логов активности');
+        }
+        
+        return response.data.data;
+      } catch (error: any) {
+        log(`Ошибка при получении логов активности: ${error.message}`, this.logPrefix);
+        
+        // Пробуем запрос через directusApiManager как запасной вариант
+        try {
+          const result = await directusApiManager.request({
+            url: '/activity',
+            method: 'get',
+            params: {
+              limit,
+              sort: ['-timestamp'],
+              fields: ['*', 'user.id', 'user.email', 'user.first_name', 'user.last_name']
+            }
+          }, authToken);
+          
+          return result.data.data || [];
+        } catch (secondError) {
+          // Если и второй запрос не удался, выбрасываем оригинальную ошибку
+          throw error;
+        }
+      }
+    });
+  }
 }
 
 export const directusCrud = new DirectusCrud();
