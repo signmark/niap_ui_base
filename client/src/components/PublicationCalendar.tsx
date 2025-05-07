@@ -256,6 +256,7 @@ export default function PublicationCalendar({
         case 'text-image': return 'bg-yellow-500'; // Желтый для картинки с текстом
         case 'video': 
         case 'video-text': return 'bg-red-500'; // Красный для видео
+        case 'stories': return 'bg-purple-500'; // Фиолетовый для сторис
         default: return 'bg-gray-500';
       }
     };
