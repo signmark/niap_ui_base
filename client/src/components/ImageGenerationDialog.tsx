@@ -179,6 +179,7 @@ export function ImageGenerationDialog({
     // 2. Если нет, то initialPrompt
     // 3. Если нет, то prompt из initialContent объекта
     // 4. Если нет ничего, то пустая строка
+    // ВНИМАНИЕ: Текст контента не должен использоваться в качестве промпта
     let promptToUse = "";
     let promptSource = "";
     
@@ -186,7 +187,7 @@ export function ImageGenerationDialog({
       promptToUse = promptText;
       promptSource = "promptText";
       console.log('✅ Используем явно переданный promptText:', promptToUse.substring(0, 30) + '...');
-    } else if (initialPrompt) {
+    } else if (initialPrompt && initialPrompt !== contentText) {
       promptToUse = initialPrompt;
       promptSource = "initialPrompt";
       console.log('✅ Используем initialPrompt:', promptToUse.substring(0, 30) + '...');
@@ -195,9 +196,10 @@ export function ImageGenerationDialog({
       promptSource = "contentObject.prompt";
       console.log('✅ Используем промт из объекта initialContent:', promptToUse.substring(0, 30) + '...');
     } else {
+      // Оставляем поле пустым, чтобы пользователь ввел свой промпт
       promptToUse = "";
       promptSource = "none";
-      console.log('⚠️ Промт не найден ни в одном из источников, поле будет пустым');
+      console.log('⚠️ Поле промпта оставлено пустым для ввода пользователем');
     }
     
     // Очищаем текст от HTML и устанавливаем его как промт

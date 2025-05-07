@@ -287,10 +287,10 @@ export function AdditionalMediaUploader({
           contentId={contentId}
           campaignId={campaignId}
           initialContent={contentText || ""}
-          initialPrompt={prompt || contentText || ""}
+          initialPrompt=""
           // Явно передаем параметры contentText и promptText для исправления проблемы
           contentText={contentText || ""}
-          promptText={prompt || ""}
+          promptText=""
           onImageGenerated={handleImageGenerated}
           onClose={() => setIsImageGenerationDialogOpen(false)}
         />
