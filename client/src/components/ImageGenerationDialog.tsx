@@ -765,7 +765,7 @@ export function ImageGenerationDialog({
       
       // Устанавливаем увеличенный таймаут для запроса
       try {
-        const response = await api.post("/generate-image", requestData, {
+        const response = await api.post("/api/generate-image", requestData, {
           timeout: 300000, // 5 минут таймаут
           headers: {
             // Дополнительно передаем userId в заголовке
