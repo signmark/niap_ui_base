@@ -226,6 +226,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <Key className="mr-2 h-4 w-4" />
                       Глобальные API ключи
                     </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/users' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/users')}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Пользователи
+                    </Button>
                   </>
                 )}
               </div>
@@ -279,6 +287,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     >
                       <Key className="mr-2 h-4 w-4" />
                       Глобальные API ключи
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start sidebar-item ${location === '/admin/users' ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/admin/users')}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Пользователи
                     </Button>
                   </>
                 )}

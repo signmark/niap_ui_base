@@ -24,6 +24,7 @@ import ApiKeysTest from "@/pages/test/api-keys";
 import UniversalImageGenTest from "@/pages/test/universal-image-gen";
 import TimeDisplayTest from "@/pages/test/time-display-test";
 import GlobalApiKeysPage from "@/pages/admin/global-api-keys";
+import UsersPage from "@/pages/admin/users";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
@@ -64,6 +65,7 @@ const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsT
 const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
 const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
+const LayoutUsersPage = React.memo(() => <WithLayout Component={UsersPage} />);
 
 function Router() {
   return (
@@ -94,6 +96,7 @@ function Router() {
       <Route path="/test/ai-image" component={LayoutAiImageTester} />
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
+      <Route path="/admin/users" component={LayoutUsersPage} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}
