@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Router, Request, Response } from 'express';
 import { isAuthenticated, isSmmAdmin } from '../middleware/auth';
 import { directusCrud } from '../services/directus-crud';
@@ -149,10 +150,79 @@ usersRouter.get('/active', isSmmAdmin, async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: `Ошибка сервера: ${error.message}`
+=======
+/**
+ * API для работы с пользователями
+ */
+import express from 'express';
+import { directusApiManager } from '../directus';
+import { isAuthenticated, isAdmin } from '../middleware/auth';
+import { DirectusAuthManager } from '../services/directus-auth-manager';
+
+const router = express.Router();
+const authManager = new DirectusAuthManager();
+
+/**
+ * Получение списка активных пользователей (только для администраторов)
+ */
+router.get('/active', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    // Получаем все активные сессии
+    const adminSession = await authManager.getOrRefreshAdminSession();
+    if (!adminSession || !adminSession.access_token) {
+      return res.status(500).json({
+        success: false,
+        message: 'Не удалось получить доступ администратора'
+      });
+    }
+
+    // Получаем список пользователей
+    const usersResponse = await directusApiManager.request({
+      url: '/users',
+      method: 'get',
+      params: {
+        fields: ['id', 'first_name', 'last_name', 'email', 'role', 'status', 'last_access'],
+        limit: 100
+      }
+    }, adminSession.access_token);
+
+    const users = usersResponse.data.data || [];
+
+    // Определяем активных пользователей (с доступом за последние 24 часа)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const activeUsers = users.filter((user: any) => 
+      user.last_access && new Date(user.last_access) > oneDayAgo
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        total: users.length,
+        active: activeUsers.length,
+        users: users.map((user: any) => ({
+          id: user.id,
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+          email: user.email,
+          status: user.status,
+          lastAccess: user.last_access,
+          isActive: user.last_access ? new Date(user.last_access) > oneDayAgo : false
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error getting active users:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении данных о пользователях',
+      error: error.message
+>>>>>>> 9bfb091f (Provide administrators with the ability to view and monitor active users)
     });
   }
 });
 
+<<<<<<< HEAD
 // Проверка, является ли текущий пользователь SMM-администратором
 usersRouter.get('/is-smm-admin', isAuthenticated, async (req: Request, res: Response) => {
   try {
@@ -174,3 +244,33 @@ usersRouter.get('/is-smm-admin', isAuthenticated, async (req: Request, res: Resp
     });
   }
 });
+=======
+/**
+ * Получение информации о текущем пользователе
+ */
+router.get('/me', isAuthenticated, async (req, res) => {
+  try {
+    const user = req.user;
+    return res.json({
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role,
+        status: user.status
+      }
+    });
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении данных текущего пользователя',
+      error: error.message
+    });
+  }
+});
+
+export default router;
+>>>>>>> 9bfb091f (Provide administrators with the ability to view and monitor active users)
