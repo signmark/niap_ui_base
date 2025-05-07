@@ -1504,6 +1504,9 @@ export default function ContentPage() {
                       }}
                       title="Медиа для сторис"
                       hideTitle
+                      contentText={newContent.content || ""}
+                      contentId={newContent.id}
+                      campaignId={newContent.campaignId}
                     />
                   </div>
                 </div>
@@ -1832,6 +1835,9 @@ export default function ContentPage() {
                         }}
                         title="Медиа для сторис"
                         hideTitle
+                        contentText={currentContent.content || ""}
+                        contentId={currentContent.id}
+                        campaignId={currentContent.campaignId}
                       />
                     </div>
                   </div>
