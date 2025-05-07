@@ -20,6 +20,8 @@ import { initializeHeavyServices } from './optimize-startup';
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
+// Импортируем маршруты для работы с контентом
+import apiContentRouter from './routes/api-content';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -255,6 +257,11 @@ app.use((req, res, next) => {
     
     // Маршруты для работы с личными API ключами пользователя уже зарегистрированы в начале файла
     log("User API keys routes already registered early");
+    
+    // Регистрируем маршруты для работы с контентом
+    log("Registering Content API routes...");
+    app.use('/api', apiContentRouter);
+    log("Content API routes registered successfully");
     
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");
