@@ -204,5 +204,78 @@ export function registerDeepSeekRoutes(app: Router) {
     }
   });
 
+  /**
+   * Маршрут для обработки запросов к DeepSeek Chat API
+   */
+  router.post('/api/deepseek/chat', async (req: Request, res: Response) => {
+    try {
+      const { messages, model, temperature, max_tokens, top_p, stop } = req.body;
+      const userId = req.userId;
+      
+      log(`Received chat request from user ${userId}`);
+      
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        log('Missing or invalid messages in chat request');
+        return res.status(400).json({
+          success: false,
+          error: 'Сообщения обязательны и должны быть в формате массива'
+        });
+      }
+      
+      log(`Getting DeepSeek service for user ${userId}`);
+      const deepseekService = await getDeepSeekService(req);
+      
+      if (!deepseekService) {
+        log(`DeepSeek API key not configured for user ${userId}`);
+        return res.status(400).json({
+          success: false,
+          error: 'API ключ DeepSeek не настроен',
+          needApiKey: true
+        });
+      }
+      
+      // Создаем опции для запроса
+      const options = {
+        model: model || 'deepseek-chat',
+        temperature: temperature !== undefined ? temperature : 0.3,
+        max_tokens: max_tokens || 4000,
+        top_p: top_p !== undefined ? top_p : 0.9,
+        stop: stop || undefined
+      };
+
+      log(`Sending chat request to DeepSeek with model ${options.model}`);
+      
+      // Вызываем метод generateText из сервиса DeepSeek
+      const result = await deepseekService.generateText(messages, options);
+      
+      return res.json({
+        success: true,
+        result,
+        model: options.model
+      });
+    } catch (error: any) {
+      log('Error processing DeepSeek chat request:', (error as Error).message);
+      
+      // Проверяем на ошибки, связанные с API ключом
+      if (error.message && (
+          error.message.includes('API ключ') || 
+          error.message.includes('API key') ||
+          error.message.includes('authentication') ||
+          error.message.includes('авторизац')
+      )) {
+        return res.status(401).json({
+          success: false,
+          error: error.message,
+          needApiKey: true
+        });
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Ошибка при обработке запроса к DeepSeek'
+      });
+    }
+  });
+
   return router;
 }
