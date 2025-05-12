@@ -439,13 +439,17 @@ router.post('/publish', authMiddleware, async (req, res) => {
             
             // Отправляем запрос с обработкой различных сценариев ошибок
             try {
-              // Изменяем запрос для получения кампании по campaign_id вместо campaignId
+              // Используем токен пользователя из запроса
+              const userToken = req.headers.authorization?.replace('Bearer ', '') || adminToken;
+              
+              log(`[Social Publishing] Запрос кампании по campaign_id = ${content.campaignId} с токеном пользователя`);
+              
               const response = await directusApi.get(`/items/user_campaigns`, {
                 params: {
                   filter: { campaign_id: { _eq: content.campaignId } }
                 },
                 headers: {
-                  'Authorization': `Bearer ${adminToken}`
+                  'Authorization': req.headers.authorization || `Bearer ${adminToken}`
                 }
               });
               
@@ -479,10 +483,16 @@ router.post('/publish', authMiddleware, async (req, res) => {
                   }
                 }
               } else {
-                log(`[Social Publishing] Не удалось получить настройки кампании напрямую (пустой ответ API)`, 'error');
+                log(`[Social Publishing] Не удалось получить настройки кампании по campaign_id=${content.campaignId} (пустой ответ API или нет данных)`, 'error');
+                
+                // Дополнительное логирование для отладки
+                if (response.data) {
+                  log(`[Social Publishing] Ответ API: ${JSON.stringify(response.data)}`, 'debug');
+                }
+                
                 return res.status(404).json({
                   success: false,
-                  error: `Не найдены настройки кампании для ID ${content.campaignId}`
+                  error: `Кампания не найдена`
                 });
               }
             } catch (apiError) {
