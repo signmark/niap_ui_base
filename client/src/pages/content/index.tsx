@@ -721,6 +721,7 @@ export default function ContentPage() {
         
         requestData = {
           contentId: id,
+          campaignId: currentCampaignId, // Добавляем ID кампании
           platform: selectedPlatform
         };
       } else {
