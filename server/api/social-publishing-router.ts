@@ -1478,20 +1478,22 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
         case 'instagram':
           // Проверяем настройки Instagram
           log(`[Social Publishing] Настройки campaignSettings: ${JSON.stringify(campaignSettings)}`, 'stories');
-          log(`[Social Publishing] socialSettings: ${JSON.stringify(campaignSettings.socialSettings || {})}`, 'stories');
-          log(`[Social Publishing] instagram настройки: ${JSON.stringify(campaignSettings.socialSettings?.instagram || {})}`, 'stories');
+          
+          // Instagram может быть в корне настроек кампании или внутри socialSettings
+          const instagramSettings = campaignSettings.instagram || 
+                                    (campaignSettings.socialSettings && campaignSettings.socialSettings.instagram) || 
+                                    {};
+          
+          log(`[Social Publishing] instagram настройки: ${JSON.stringify(instagramSettings)}`, 'stories');
           
           // Получаем токен из настроек - проверяем оба возможных поля
-          const instToken = campaignSettings.socialSettings?.instagram?.token || campaignSettings.socialSettings?.instagram?.accessToken;
-          const businessId = campaignSettings.socialSettings?.instagram?.businessAccountId;
+          const instToken = instagramSettings.token || instagramSettings.accessToken;
+          const businessId = instagramSettings.businessAccountId;
           
           log(`[Social Publishing] Извлеченный токен: ${instToken ? 'Присутствует' : 'Отсутствует'}, businessAccountId: ${businessId || 'Отсутствует'}`, 'stories');
           
           // Проверяем наличие всех необходимых настроек
-          if (!campaignSettings.socialSettings?.instagram ||
-              (!instToken) ||
-              !businessId) {
-            
+          if (!instagramSettings || !instToken || !businessId) {
             log(`[Social Publishing] Ошибка: не найдены корректные настройки Instagram в кампании`, 'stories', 'error');
             log(`[Social Publishing] Детали: token/accessToken=${instToken ? 'присутствует' : 'отсутствует'}, businessAccountId=${businessId || 'отсутствует'}`, 'stories', 'error');
             
@@ -1502,8 +1504,8 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           }
 
           log(`[Social Publishing] Настройки Instagram получены:`, 'stories');
-          log(`[Social Publishing] - Business Account ID: ${campaignSettings.socialSettings.instagram.businessAccountId}`, 'stories');
-          log(`[Social Publishing] - Access Token: ${campaignSettings.socialSettings.instagram.accessToken ? 'Присутствует' : 'Отсутствует'}`, 'stories');
+          log(`[Social Publishing] - Business Account ID: ${businessId}`, 'stories');
+          log(`[Social Publishing] - Access Token: ${instToken ? 'Присутствует' : 'Отсутствует'}`, 'stories');
           
           // Проверяем наличие медиафайлов для сторис
           const hasMedia = Boolean(content.imageUrl || content.videoUrl || 
@@ -1521,9 +1523,15 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           log(`[Social Publishing] Инициализация сервиса Instagram для публикации`, 'stories');
           const { instagramService } = require('../services/social/instagram-service');
           
+          // Адаптация настроек для instagramService
+          // Передаем настройки в правильной структуре, используя instagramSettings вместо вложенного пути
+          const socialSettings = { instagram: instagramSettings };
+          
           // Обратите внимание: для сторис должен использоваться специальный параметр media_type="STORIES"
           log(`[Social Publishing] Вызов метода publishToPlatform в Instagram сервисе для сторис`, 'stories');
-          result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+          log(`[Social Publishing] Передаваемые настройки в сервис: ${JSON.stringify(socialSettings)}`, 'stories');
+          
+          result = await instagramService.publishToPlatform(content, platform, socialSettings);
           log(`[Social Publishing] Результат публикации сторис в Instagram: ${JSON.stringify(result)}`, 'stories');
           break;
       }
