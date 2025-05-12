@@ -256,17 +256,37 @@ export class InstagramService extends BaseSocialService {
             return null;
           }).filter(Boolean);
         } else if (content.additional_images && Array.isArray(content.additional_images)) {
+          // Подробное логирование содержимого additional_images
+          log(`[Instagram Debug] Содержимое additional_images (with underscore): ${JSON.stringify(content.additional_images)}`, 'instagram');
+          
           mediaFiles = content.additional_images.map(item => {
+            // Логируем каждый элемент
+            log(`[Instagram Debug] Обработка элемента additional_images: ${JSON.stringify(item)}`, 'instagram');
+            
             if (typeof item === 'string') {
+              log(`[Instagram Debug] Элемент является строкой, создаем объект с типом image`, 'instagram');
               return { url: item, type: 'image' };
-            } else if (typeof item === 'object' && item.url) {
-              return { 
-                url: item.url, 
-                type: item.type || 'image'
-              };
+            } else if (typeof item === 'object' && item) {
+              if (item.url) {
+                log(`[Instagram Debug] Элемент имеет URL: ${item.url}`, 'instagram');
+                return { 
+                  url: item.url, 
+                  type: item.type || 'image'
+                };
+              } else if (item.file) {
+                log(`[Instagram Debug] Элемент имеет file: ${item.file}`, 'instagram');
+                return { 
+                  url: item.file, 
+                  type: item.type || 'image'
+                };
+              }
             }
+            log(`[Instagram Debug] Элемент не содержит URL или file, игнорируем`, 'instagram');
             return null;
           }).filter(Boolean);
+          
+          // Логируем результаты обработки
+          log(`[Instagram Debug] Результат обработки additional_images: найдено ${mediaFiles.length} элементов`, 'instagram');
         }
         
         log(`[Instagram] Обнаружено ${mediaFiles.length} дополнительных медиафайлов для сторис`, 'instagram');

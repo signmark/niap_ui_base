@@ -258,18 +258,25 @@ export function registerTestInstagramRoute(app: express.Express) {
       // 4. Подготавливаем социальные настройки
       const socialSettings = prepareSocialSettings(campaign);
 
-      // Логируем все возможные поля с медиафайлами для диагностики
+      // Логируем все возможные поля с медиафайлами для подробной диагностики
       const mediaFields = {
         imageUrl: content.imageUrl,
         videoUrl: content.videoUrl,
         hasAdditionalImages: !!content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0,
         additionalImagesLength: Array.isArray(content.additionalImages) ? content.additionalImages.length : 0,
+        additionalImagesContent: Array.isArray(content.additionalImages) ? content.additionalImages : null,
         hasAdditionalMedia: !!content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0,
         additionalMediaLength: Array.isArray(content.additionalMedia) ? content.additionalMedia.length : 0,
-        contentType: content.contentType
+        additionalMediaContent: Array.isArray(content.additionalMedia) ? content.additionalMedia : null,
+        hasAdditionalImageWithUnderscore: !!content.additional_images && Array.isArray(content.additional_images) && content.additional_images.length > 0,
+        additionalImagesWithUnderscoreLength: Array.isArray(content.additional_images) ? content.additional_images.length : 0,
+        additionalImagesWithUnderscoreContent: Array.isArray(content.additional_images) ? content.additional_images : null,
+        contentType: content.contentType,
+        title: content.title,
+        contentExcerpt: content.content ? content.content.substring(0, 100) + (content.content.length > 100 ? '...' : '') : null
       };
       
-      log(`[Test Route] Медиа для сторис: ${JSON.stringify(mediaFields)}`, 'instagram-stories-test');
+      log(`[Test Route] Медиа для сторис: ${JSON.stringify(mediaFields, null, 2)}`, 'instagram-stories-test');
 
       // 5. Получаем настройки Instagram
       if (!socialSettings.instagram) {
