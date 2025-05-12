@@ -7,7 +7,6 @@
 
 import axios from 'axios';
 import FormData from 'form-data';
-import { generateRandomCaption } from '../../utils/content-generation';
 import { log } from '../../utils/logger';
 
 export class InstagramStoriesService {
@@ -45,12 +44,6 @@ export class InstagramStoriesService {
       log(`InstagramStoriesService: Подготовка к публикации Instagram Stories`);
       log(`InstagramStoriesService: Изображение: ${imageUrl}`);
       
-      if (!caption) {
-        caption = generateRandomCaption();
-      }
-      
-      log(`InstagramStoriesService: Текст: "${caption}"`);
-      
       // Шаг 1: Создание контейнера для медиа
       const mediaContainerId = await this.createMediaContainer(imageUrl, caption);
       log(`InstagramStoriesService: Контейнер для медиа создан с ID: ${mediaContainerId}`);
@@ -79,7 +72,7 @@ export class InstagramStoriesService {
         creationTime
       };
     } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+      log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`);
       return {
         success: false,
         error: error.message || error
@@ -90,7 +83,7 @@ export class InstagramStoriesService {
   /**
    * Создает контейнер для медиа в Instagram
    * @param imageUrl URL изображения
-   * @param caption Текст подписи
+   * @param caption Текст подписи (опционально)
    * @returns ID созданного контейнера
    */
   private async createMediaContainer(imageUrl: string, caption?: string): Promise<string> {
@@ -100,7 +93,8 @@ export class InstagramStoriesService {
       formData.append('image_url', imageUrl);
       formData.append('media_type', 'STORIES');
       
-      // Добавляем подпись, если она предоставлена
+      // Добавляем подпись, если она предоставлена. Подпись не отображается в истории,
+      // но может использоваться как метаданные
       if (caption) {
         formData.append('caption', caption);
       }
@@ -122,7 +116,7 @@ export class InstagramStoriesService {
       // Возвращаем ID созданного контейнера
       return response.data.id;
     } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+      log(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`);
       throw error;
     }
   }
@@ -154,7 +148,7 @@ export class InstagramStoriesService {
       
       return response.data;
     } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`);
       throw error;
     }
   }
@@ -167,8 +161,7 @@ export class InstagramStoriesService {
     // Приоритеты для определения имени пользователя:
     // 1. Переменная окружения INSTAGRAM_USERNAME
     // 2. Переменная окружения IG_USERNAME
-    // 3. Извлечение из businessAccountId (не всегда возможно)
-    // 4. Значение по умолчанию
+    // 3. Значение по умолчанию
     
     // Проверяем переменные окружения
     if (process.env.INSTAGRAM_USERNAME) {
@@ -177,17 +170,6 @@ export class InstagramStoriesService {
     
     if (process.env.IG_USERNAME) {
       return process.env.IG_USERNAME;
-    }
-    
-    // Попытка извлечь имя из businessAccountId
-    try {
-      // Выполняем дополнительный запрос для получения информации об аккаунте
-      // Этот код можно расширить с реальным API запросом при необходимости
-      log(`InstagramStoriesService: Попытка определить имя пользователя по businessAccountId: ${this.businessAccountId}`);
-      
-      // При необходимости здесь можно добавить запрос к Instagram API для получения username
-    } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`);
     }
     
     // Используем значение по умолчанию как последний вариант

@@ -1,185 +1,116 @@
-# API для публикации Instagram Stories
+# Instagram Stories API
 
-Этот документ описывает API для публикации Instagram Stories и получения ID опубликованных историй.
+Этот документ описывает API для публикации Instagram Stories через SMM Manager.
 
-## Общая информация
+## Основная информация
 
-API поддерживает публикацию изображений в качестве историй в Instagram. После успешной публикации возвращается ID истории, который можно использовать для формирования прямой ссылки на опубликованную историю.
+API для публикации Instagram Stories использует Instagram Graph API и позволяет публиковать медиа-контент в Instagram Stories.
+Обратите внимание на следующие особенности:
 
-## Эндпоинты
+1. Instagram API не предоставляет возможность напрямую накладывать текст на изображения в Stories
+2. Текст должен быть наложен на изображение заранее, до публикации
+3. Доступ к API требует бизнес-аккаунт Instagram и токен доступа
+4. Прямые ссылки на конкретные истории недоступны, только общий URL на все истории пользователя
 
-### Публикация Instagram Stories
+## API эндпоинты
 
-**URL**: `/api/publish/instagram-stories`
+### Публикация истории с заданным URL изображения
 
-**Метод**: `POST`
+**Endpoint:** `POST /api/publish/instagram-story`
 
-**Требуется аутентификация**: Да
-
-**Тело запроса**:
+**Body:**
 ```json
 {
-  "contentId": "string" // ID контента для публикации
+  "imageUrl": "https://example.com/image.jpg",
+  "caption": "Текст подписи (опционально)",
+  "campaignId": "uuid-кампании"
 }
 ```
 
-**Успешный ответ**:
+**Ответ:**
 ```json
 {
   "success": true,
   "result": {
-    "platform": "instagram",
-    "status": "published",
-    "publishedAt": "2025-05-12T15:00:00.000Z",
-    "postId": "17123456789012345", // ID истории
-    "postUrl": "https://www.instagram.com/stories/username/17123456789012345/", // URL истории
-    "storyId": "17123456789012345", // ID истории (дублирует postId)
-    "storyUrl": "https://www.instagram.com/stories/username/17123456789012345/", // URL истории
-    "mediaContainerId": "987654321", // ID контейнера медиа в Instagram API
-    "igUsername": "username", // Имя пользователя Instagram
-    "creationTime": "2025-05-12T15:00:00.000Z" // Время создания
-  },
-  "contentId": "string", // ID контента
-  "campaignId": "string" // ID кампании
+    "success": true,
+    "storyId": "12345678901234567",
+    "storyUrl": "https://www.instagram.com/stories/username/",
+    "mediaContainerId": "9876543210987654",
+    "igUsername": "username",
+    "creationTime": "2025-05-12T12:00:00.000Z"
+  }
 }
 ```
 
-**Ответ с ошибкой**:
+### Публикация истории по ID контента
+
+**Endpoint:** `POST /api/publish/instagram-stories`
+
+**Body:**
 ```json
 {
-  "success": false,
-  "error": "Текст ошибки"
+  "contentId": "uuid-контента",
+  "campaignId": "uuid-кампании"
 }
 ```
 
-### Получение статуса публикации
-
-**URL**: `/api/publish/instagram-stories/:contentId/status`
-
-**Метод**: `GET`
-
-**Требуется аутентификация**: Да
-
-**Параметры пути**:
-- `contentId`: ID контента
-
-**Успешный ответ**:
+**Ответ:**
 ```json
 {
   "success": true,
-  "status": {
-    "status": "published",
-    "postId": "17123456789012345",
-    "postUrl": "https://www.instagram.com/stories/username/17123456789012345/",
-    "platform": "instagram_stories",
-    "publishedAt": "2025-05-12T15:00:00.000Z",
-    "mediaContainerId": "987654321",
+  "result": {
+    "success": true,
+    "storyId": "12345678901234567",
+    "storyUrl": "https://www.instagram.com/stories/username/",
+    "mediaContainerId": "9876543210987654",
     "igUsername": "username",
-    "creationTime": "2025-05-12T15:00:00.000Z"
-  },
-  "contentId": "string"
+    "creationTime": "2025-05-12T12:00:00.000Z"
+  }
 }
 ```
 
-**Ответ с ошибкой**:
+### Проверка настроек Instagram для кампании
+
+**Endpoint:** `GET /api/instagram-stories/settings/:campaignId`
+
+**Ответ:**
 ```json
 {
-  "success": false,
-  "error": "Текст ошибки"
-}
-```
-
-## Формирование ссылки на истории
-
-Для формирования ссылки на истории Instagram используется следующий формат:
-
-```
-https://www.instagram.com/stories/{username}/
-```
-
-где:
-- `username` - имя пользователя Instagram
-
-**Важно**: Instagram не предоставляет возможности получить прямую ссылку на конкретную историю. Ссылка всегда ведет на все текущие активные истории пользователя. ID истории (`storyId`) сохраняется для внутреннего использования и возможности отслеживать публикации, но не может быть использован в URL.
-
-## Требования к контенту
-
-Для успешной публикации контент должен содержать:
-
-1. Изображение в одном из следующих полей:
-   - `imageUrl` - URL изображения
-   - `additionalImages` - Массив объектов с URL изображений
-   - `additionalMedia` - Массив объектов с URL медиафайлов
-
-2. Опционально: текст в поле `content` - будет использован как подпись к истории
-
-## Ограничения Instagram API
-
-- Истории исчезают через 24 часа после публикации
-- Подпись не отображается непосредственно на истории, т.к. API Instagram не имеет встроенной функции наложения текста
-- Для просмотра историй необходимо быть авторизованным в Instagram и иметь доступ к аккаунту пользователя
-
-## Примеры использования
-
-### Пример публикации истории
-
-```javascript
-// Пример запроса на публикацию истории
-const response = await fetch('/api/publish/instagram-stories', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_TOKEN'
-  },
-  body: JSON.stringify({
-    contentId: '12345678-abcd-1234-5678-1234567890ab'
-  })
-});
-
-const result = await response.json();
-
-if (result.success) {
-  // История успешно опубликована
-  console.log(`ID истории: ${result.result.storyId}`);
-  console.log(`URL истории: ${result.result.storyUrl}`);
-} else {
-  // Ошибка публикации
-  console.error(`Ошибка: ${result.error}`);
-}
-```
-
-### Пример проверки статуса публикации
-
-```javascript
-// Пример запроса на проверку статуса публикации
-const contentId = '12345678-abcd-1234-5678-1234567890ab';
-const response = await fetch(`/api/publish/instagram-stories/${contentId}/status`, {
-  headers: {
-    'Authorization': 'Bearer YOUR_TOKEN'
+  "success": true,
+  "settings": {
+    "hasToken": true,
+    "hasAccountId": true,
+    "isConfigured": true
   }
-});
-
-const result = await response.json();
-
-if (result.success && result.status) {
-  // Получение статуса успешно
-  console.log(`Статус: ${result.status.status}`);
-  if (result.status.status === 'published') {
-    console.log(`ID истории: ${result.status.postId}`);
-    console.log(`URL истории: ${result.status.postUrl}`);
-  }
-} else {
-  // Ошибка получения статуса
-  console.error(`Ошибка: ${result.error}`);
 }
 ```
 
-## Тестирование
+## Структура данных
 
-Для тестирования публикации историй и получения ID можно использовать скрипт `test-instagram-story-id.js`:
+### Результат публикации истории
 
-```bash
-node test-instagram-story-id.js [URL_изображения]
+```typescript
+interface PublishStoryResult {
+  success: boolean;
+  storyId?: string;          // ID опубликованной истории
+  storyUrl?: string;         // URL истории (общий для всех историй пользователя)
+  mediaContainerId?: string; // ID контейнера медиа-файла
+  igUsername?: string;       // Имя пользователя Instagram
+  creationTime?: string;     // Время публикации
+  error?: any;               // Описание ошибки (если success: false)
+}
 ```
 
-Этот скрипт публикует тестовую историю и выводит информацию о полученном ID и URL.
+## Требования для использования API
+
+1. Наличие настроенного бизнес-аккаунта Instagram
+2. Наличие токена доступа к Instagram API с правами на публикацию медиа
+3. Настроенная кампания с указанными параметрами instagram_token и instagram_business_account_id
+
+## Ограничения
+
+- Максимальный размер изображения: 1080x1920 пикселей
+- Поддерживаемые форматы изображений: JPG, PNG
+- Интервал между публикациями: не менее 5 секунд
+- Истории доступны в течение 24 часов после публикации
+- Прямые ссылки на отдельные истории недоступны в Instagram API
