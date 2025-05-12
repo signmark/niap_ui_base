@@ -1421,7 +1421,7 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
         }
         
         try {
-          const directusApi = await import('../services/directus-api-manager').then(m => m.directusApi);
+          const directusApi = await import('../lib/directus').then(m => m.directusApi);
           log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${content.campaignId}`, 'stories');
           
           const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
