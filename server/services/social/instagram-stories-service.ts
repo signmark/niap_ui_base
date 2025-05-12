@@ -40,24 +40,24 @@ export class InstagramStoriesService {
     error?: any;
   }> {
     try {
-      logger.info(`InstagramStoriesService: Подготовка к публикации Instagram Stories`);
-      logger.info(`InstagramStoriesService: Изображение: ${imageUrl}`);
+      log(`InstagramStoriesService: Подготовка к публикации Instagram Stories`, 'instagram');
+      log(`InstagramStoriesService: Изображение: ${imageUrl}`, 'instagram');
       
       if (!caption) {
         caption = generateRandomCaption();
       }
       
-      logger.info(`InstagramStoriesService: Текст: "${caption}"`);
+      log(`InstagramStoriesService: Текст: "${caption}"`, 'instagram');
       
       // Шаг 1: Создание контейнера для медиа
       const mediaContainerId = await this.createMediaContainer(imageUrl, caption);
-      logger.info(`InstagramStoriesService: Контейнер для медиа создан с ID: ${mediaContainerId}`);
+      log(`InstagramStoriesService: Контейнер для медиа создан с ID: ${mediaContainerId}`, 'instagram');
       
       // Шаг 2: Публикация истории
       const publishResult = await this.publishMedia(mediaContainerId);
       const storyId = publishResult.id;
       
-      logger.info(`InstagramStoriesService: История успешно опубликована с ID: ${storyId}`);
+      log(`InstagramStoriesService: История успешно опубликована с ID: ${storyId}`, 'instagram');
       
       // Форматируем URL истории с корректным ID
       const storyUrl = `https://www.instagram.com/stories/${this.getInstagramUsername()}/${storyId}/`;
@@ -69,7 +69,7 @@ export class InstagramStoriesService {
         mediaContainerId
       };
     } catch (error) {
-      logger.error(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`);
+      log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       return {
         success: false,
         error: error.message || error
