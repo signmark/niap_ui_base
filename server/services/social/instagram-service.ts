@@ -316,7 +316,10 @@ export class InstagramService extends BaseSocialService {
         const storyId = publishResponse.data.id;
         // URL для сторис отличается от URL поста - используем информацию из бизнес-аккаунта
         // Получаем username из настроек или используем ID
-        const username = socialSettings?.instagram?.username || 'profile';
+        // Проверяем socialMediaSettings сначала (передается из social-publishing-router.ts)
+        const username = socialMediaSettings?.instagram?.username || 
+                       (socialSettings && socialSettings.instagram && socialSettings.instagram.username) || 
+                       'profile';
         const storyUrl = `https://www.instagram.com/${username}/`;
 
         log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
