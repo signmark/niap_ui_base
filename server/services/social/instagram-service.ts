@@ -206,122 +206,155 @@ export class InstagramService extends BaseSocialService {
        * @returns 'VIDEO' или 'IMAGE' в зависимости от определения типа
        */
       function determineMediaType(mediaItem: string | any): string {
-        // Более подробное логирование входных данных с дополнительной информацией
-        if (typeof mediaItem === 'string') {
-          log(`[Instagram Debug] Определение типа для строки (${mediaItem.substring(0, 30)}...)`, 'instagram');
-        } else if (typeof mediaItem === 'object' && mediaItem !== null) {
-          log(`[Instagram Debug] Определение типа для объекта: ${JSON.stringify(mediaItem).substring(0, 100)}...`, 'instagram');
-          
-          // Если объект содержит тип медиа, выведем его
-          if (mediaItem.type) {
-            log(`[Instagram Debug] Объект содержит явно указанный тип: ${mediaItem.type}`, 'instagram');
-          }
-          
-          // Выведем ключи объекта для анализа
-          log(`[Instagram Debug] Ключи объекта: ${Object.keys(mediaItem).join(', ')}`, 'instagram');
-        } else {
-          log(`[Instagram Debug] Определение типа для: ${typeof mediaItem}`, 'instagram');
-        }
-        
-        // Обработка null или undefined значений
-        if (mediaItem === null || mediaItem === undefined) {
-          log(`[Instagram Debug] Получен null/undefined, по умолчанию будет использован тип IMAGE`, 'instagram');
-          return 'IMAGE';
-        }
-        
-        // Обработка объектов
-        if (typeof mediaItem !== 'string') {
-          // Если это массив, обрабатываем первый элемент
-          if (Array.isArray(mediaItem)) {
-            if (mediaItem.length === 0) {
-              log(`[Instagram Debug] Получен пустой массив, по умолчанию будет использован тип IMAGE`, 'instagram');
-              return 'IMAGE';
+        try {
+          // Более подробное логирование с безопасной обработкой данных
+          if (typeof mediaItem === 'string') {
+            const safeString = mediaItem.substring(0, 30) + (mediaItem.length > 30 ? '...' : '');
+            log(`[Instagram Debug] Определение типа для строки: "${safeString}"`, 'instagram');
+          } else if (typeof mediaItem === 'object' && mediaItem !== null) {
+            let safeObject;
+            try {
+              safeObject = JSON.stringify(mediaItem).substring(0, 150) + '...';
+            } catch (jsonError) {
+              safeObject = '[Объект невозможно преобразовать в JSON]';
             }
-            log(`[Instagram Debug] Обрабатываю первый элемент массива`, 'instagram');
-            return determineMediaType(mediaItem[0]);
-          }
-          
-          // Если это объект, ищем в нем тип или URL
-          if (mediaItem && typeof mediaItem === 'object') {
-            // 1. Проверка явного поля type
+            log(`[Instagram Debug] Определение типа для объекта: ${safeObject}`, 'instagram');
+            
+            // Если объект содержит тип медиа, выведем его
             if (mediaItem.type) {
-              const typeStr = String(mediaItem.type).toLowerCase();
-              if (typeStr === 'video' || typeStr.includes('video')) {
-                log(`[Instagram Debug] Тип определен из объекта: VIDEO (из поля type: ${mediaItem.type})`, 'instagram');
-                return 'VIDEO';
-              }
-              if (typeStr === 'image' || typeStr.includes('image') || typeStr === 'photo' || typeStr.includes('photo')) {
-                log(`[Instagram Debug] Тип определен из объекта: IMAGE (из поля type: ${mediaItem.type})`, 'instagram');
+              log(`[Instagram Debug] Объект содержит явно указанный тип: ${mediaItem.type}`, 'instagram');
+            }
+            
+            // Выведем ключи объекта для анализа
+            try {
+              const keys = Object.keys(mediaItem);
+              log(`[Instagram Debug] Ключи объекта (${keys.length}): ${keys.join(', ')}`, 'instagram');
+            } catch (keysError) {
+              log(`[Instagram Debug] Не удалось получить ключи объекта: ${keysError.message}`, 'instagram', 'error');
+            }
+          } else {
+            log(`[Instagram Debug] Определение типа для: ${typeof mediaItem}`, 'instagram');
+          }
+          
+          // Обработка null или undefined значений
+          if (mediaItem === null || mediaItem === undefined) {
+            log(`[Instagram Debug] Получен null/undefined, по умолчанию будет использован тип IMAGE`, 'instagram');
+            return 'IMAGE';
+          }
+          
+          // Обработка объектов
+          if (typeof mediaItem !== 'string') {
+            // Если это массив, обрабатываем первый элемент
+            if (Array.isArray(mediaItem)) {
+              log(`[Instagram Debug] Обнаружен массив с ${mediaItem.length} элементами`, 'instagram');
+              if (mediaItem.length === 0) {
+                log(`[Instagram Debug] Получен пустой массив, по умолчанию будет использован тип IMAGE`, 'instagram');
                 return 'IMAGE';
+              }
+              log(`[Instagram Debug] Обрабатываю первый элемент массива`, 'instagram');
+              return determineMediaType(mediaItem[0]);
+            }
+            
+            // Обработка специального случая для объекта с вложенным URL
+            if (mediaItem.url && typeof mediaItem.url === 'object' && mediaItem.url.url) {
+              log(`[Instagram Debug] Обнаружен вложенный URL в объекте: ${mediaItem.url.url}`, 'instagram');
+              if (typeof mediaItem.url.url === 'string') {
+                return determineMediaTypeFromUrl(mediaItem.url.url);
               }
             }
             
-            // 2. Проверка поля mediaType
-            if (mediaItem.mediaType) {
-              const mediaTypeStr = String(mediaItem.mediaType).toLowerCase();
-              if (mediaTypeStr === 'video' || mediaTypeStr.includes('video')) {
-                log(`[Instagram Debug] Тип определен из объекта: VIDEO (из поля mediaType: ${mediaItem.mediaType})`, 'instagram');
-                return 'VIDEO';
-              }
-              if (mediaTypeStr === 'image' || mediaTypeStr.includes('image') || mediaTypeStr === 'photo' || mediaTypeStr.includes('photo')) {
-                log(`[Instagram Debug] Тип определен из объекта: IMAGE (из поля mediaType: ${mediaItem.mediaType})`, 'instagram');
-                return 'IMAGE';
-              }
-            }
-            
-            // 3. Проверка поля mime или mimeType
-            if (mediaItem.mime || mediaItem.mimeType) {
-              const mimeStr = String(mediaItem.mime || mediaItem.mimeType).toLowerCase();
-              if (mimeStr.includes('video/')) {
-                log(`[Instagram Debug] Тип определен из объекта: VIDEO (из поля mime: ${mimeStr})`, 'instagram');
-                return 'VIDEO';
-              }
-              if (mimeStr.includes('image/')) {
-                log(`[Instagram Debug] Тип определен из объекта: IMAGE (из поля mime: ${mimeStr})`, 'instagram');
-                return 'IMAGE';
-              }
-            }
-            
-            // 4. Проверка на основе имени файла, если оно есть
-            if (mediaItem.filename || mediaItem.fileName || mediaItem.name) {
-              const filename = String(mediaItem.filename || mediaItem.fileName || mediaItem.name).toLowerCase();
-              log(`[Instagram Debug] Проверка имени файла: ${filename}`, 'instagram');
-              
-              // Проверка по расширению файла
-              const videoExtensions = ['.mp4', '.mov', '.avi', '.mpeg', '.mpg', '.wmv', '.flv', '.webm', '.mkv', '.m4v'];
-              if (videoExtensions.some(ext => filename.endsWith(ext))) {
-                log(`[Instagram Debug] Тип определен по имени файла: VIDEO (${filename})`, 'instagram');
-                return 'VIDEO';
-              }
-              
-              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.ico', '.heic', '.heif'];
-              if (imageExtensions.some(ext => filename.endsWith(ext))) {
-                log(`[Instagram Debug] Тип определен по имени файла: IMAGE (${filename})`, 'instagram');
-                return 'IMAGE';
-              }
-            }
-            
-            // 5. Если есть URL в объекте, используем его для определения
-            const possibleUrlFields = ['url', 'file', 'src', 'source', 'path', 'link', 'href'];
-            for (const field of possibleUrlFields) {
-              if (mediaItem[field] && typeof mediaItem[field] === 'string') {
-                log(`[Instagram Debug] Определение типа по полю ${field} из объекта: ${mediaItem[field].substring(0, 30)}...`, 'instagram');
-                const typeByUrl = determineMediaTypeFromUrl(mediaItem[field]);
-                if (typeByUrl) {
-                  return typeByUrl;
+            // Если это объект, проверяем различные поля для определения типа
+            if (mediaItem && typeof mediaItem === 'object') {
+              // 1. Проверка явного поля type или media_type
+              const typeFields = ['type', 'media_type', 'mediaType', 'media-type'];
+              for (const field of typeFields) {
+                if (mediaItem[field]) {
+                  const typeStr = String(mediaItem[field]).toLowerCase();
+                  if (typeStr === 'video' || typeStr.includes('video')) {
+                    log(`[Instagram Debug] Тип определен из объекта: VIDEO (из поля ${field}: ${mediaItem[field]})`, 'instagram');
+                    return 'VIDEO';
+                  }
+                  if (typeStr === 'image' || typeStr.includes('image') || typeStr === 'photo' || typeStr.includes('photo')) {
+                    log(`[Instagram Debug] Тип определен из объекта: IMAGE (из поля ${field}: ${mediaItem[field]})`, 'instagram');
+                    return 'IMAGE';
+                  }
                 }
               }
+              
+              // 2. Проверка полей MIME типа
+              const mimeFields = ['mime', 'mimeType', 'mime_type', 'content-type', 'contentType'];
+              for (const field of mimeFields) {
+                if (mediaItem[field]) {
+                  const mimeStr = String(mediaItem[field]).toLowerCase();
+                  if (mimeStr.includes('video/')) {
+                    log(`[Instagram Debug] Тип определен из объекта: VIDEO (из поля ${field}: ${mimeStr})`, 'instagram');
+                    return 'VIDEO';
+                  }
+                  if (mimeStr.includes('image/')) {
+                    log(`[Instagram Debug] Тип определен из объекта: IMAGE (из поля ${field}: ${mimeStr})`, 'instagram');
+                    return 'IMAGE';
+                  }
+                }
+              }
+              
+              // 3. Проверка на основе имени файла
+              const fileNameFields = ['filename', 'fileName', 'name', 'file_name', 'title'];
+              for (const field of fileNameFields) {
+                if (mediaItem[field] && typeof mediaItem[field] === 'string') {
+                  const filename = String(mediaItem[field]).toLowerCase();
+                  log(`[Instagram Debug] Проверка имени файла: ${filename}`, 'instagram');
+                  
+                  // Проверка по расширению файла
+                  const videoExtensions = ['.mp4', '.mov', '.avi', '.mpeg', '.mpg', '.wmv', '.flv', '.webm', '.mkv', '.m4v'];
+                  if (videoExtensions.some(ext => filename.endsWith(ext))) {
+                    log(`[Instagram Debug] Тип определен по имени файла: VIDEO (${filename})`, 'instagram');
+                    return 'VIDEO';
+                  }
+                  
+                  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.ico', '.heic', '.heif'];
+                  if (imageExtensions.some(ext => filename.endsWith(ext))) {
+                    log(`[Instagram Debug] Тип определен по имени файла: IMAGE (${filename})`, 'instagram');
+                    return 'IMAGE';
+                  }
+                }
+              }
+              
+              // 4. Проверка URL-подобных полей
+              const possibleUrlFields = ['url', 'file', 'src', 'source', 'path', 'link', 'href', 'uri', 'location'];
+              for (const field of possibleUrlFields) {
+                if (mediaItem[field]) {
+                  // Если поле - строка
+                  if (typeof mediaItem[field] === 'string') {
+                    log(`[Instagram Debug] Определение типа по полю ${field} (строка): ${mediaItem[field].substring(0, 30)}...`, 'instagram');
+                    const typeByUrl = determineMediaTypeFromUrl(mediaItem[field]);
+                    return typeByUrl;
+                  } 
+                  // Если поле - объект с URL
+                  else if (typeof mediaItem[field] === 'object' && mediaItem[field] !== null) {
+                    // Если объект имеет свойство url
+                    if (mediaItem[field].url && typeof mediaItem[field].url === 'string') {
+                      log(`[Instagram Debug] Определение типа по вложенному полю ${field}.url: ${mediaItem[field].url.substring(0, 30)}...`, 'instagram');
+                      const typeByUrl = determineMediaTypeFromUrl(mediaItem[field].url);
+                      return typeByUrl;
+                    }
+                  }
+                }
+              }
+              
+              log(`[Instagram Debug] Не удалось определить тип из объекта. Используем IMAGE по умолчанию.`, 'instagram');
             }
             
-            log(`[Instagram Debug] Не удалось определить тип из объекта: ${JSON.stringify(mediaItem).substring(0, 100)}...`, 'instagram');
+            // Если мы не смогли определить тип из объекта, используем тип по умолчанию
+            return 'IMAGE';
           }
           
-          // Если мы не смогли определить тип из объекта, используем тип по умолчанию
+          // Если mediaItem - строка, определяем тип по URL
+          return determineMediaTypeFromUrl(mediaItem);
+        } catch (error) {
+          log(`[Instagram Debug] Ошибка при определении типа медиа: ${error.message}`, 'instagram', 'error');
+          // В случае ошибки возвращаем тип по умолчанию
           return 'IMAGE';
         }
-        
-        // Если mediaItem - строка, определяем тип по URL
-        return determineMediaTypeFromUrl(mediaItem);
       }
       
       /**
@@ -330,41 +363,141 @@ export class InstagramService extends BaseSocialService {
        * @returns 'VIDEO', 'IMAGE' или null, если не удалось определить тип
        */
       function determineMediaTypeFromUrl(url: string): string {
-        if (!url || typeof url !== 'string') {
-          return 'IMAGE'; // По умолчанию
-        }
-        
-        const urlLower = url.toLowerCase();
-        
-        // Проверка по расширению файла
-        const videoExtensions = ['.mp4', '.mov', '.avi', '.mpeg', '.mpg', '.wmv', '.flv', '.webm', '.mkv', '.m4v'];
-        if (videoExtensions.some(ext => urlLower.endsWith(ext))) {
-          log(`[Instagram Debug] Тип определен по расширению файла: VIDEO (${urlLower})`, 'instagram');
-          return 'VIDEO';
-        }
-        
-        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.ico'];
-        if (imageExtensions.some(ext => urlLower.endsWith(ext))) {
-          log(`[Instagram Debug] Тип определен по расширению файла: IMAGE (${urlLower})`, 'instagram');
+        try {
+          if (!url || typeof url !== 'string') {
+            log(`[Instagram Debug] URL не является строкой или пустой, возвращаю IMAGE по умолчанию`, 'instagram');
+            return 'IMAGE';
+          }
+          
+          // Безопасная копия URL для логирования
+          const safeUrl = url.substring(0, 100) + (url.length > 100 ? '...' : '');
+          log(`[Instagram Debug] Анализ URL для определения типа: ${safeUrl}`, 'instagram');
+          
+          const urlLower = url.toLowerCase();
+          
+          // Очищаем URL от query-параметров и хэшей для более точного определения
+          const cleanUrl = urlLower.split('?')[0].split('#')[0];
+          
+          // 1. Проверка по расширению файла
+          const videoExtensions = [
+            '.mp4', '.mov', '.avi', '.mpeg', '.mpg', '.wmv', 
+            '.flv', '.webm', '.mkv', '.m4v', '.ts', '.3gp'
+          ];
+          
+          // Проверка по расширению в конце URL
+          if (videoExtensions.some(ext => cleanUrl.endsWith(ext))) {
+            log(`[Instagram Debug] Тип определен по расширению файла: VIDEO (расширение: ${cleanUrl.split('.').pop()})`, 'instagram');
+            return 'VIDEO';
+          }
+          
+          const imageExtensions = [
+            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', 
+            '.bmp', '.tiff', '.tif', '.ico', '.heic', '.heif'
+          ];
+          
+          if (imageExtensions.some(ext => cleanUrl.endsWith(ext))) {
+            log(`[Instagram Debug] Тип определен по расширению файла: IMAGE (расширение: ${cleanUrl.split('.').pop()})`, 'instagram');
+            return 'IMAGE';
+          }
+          
+          // 2. Проверка по паттернам в URL - часто файл не имеет явного расширения,
+          // но URL содержит паттерны, которые могут помочь определить тип
+          
+          // Регулярные выражения для выявления паттернов медиа-файлов
+          const videoPatterns = [
+            /\/video\//i,
+            /\/videos\//i,
+            /type=video/i,
+            /media_type=video/i,
+            /\.mp4($|\?)/i,
+            /\.mov($|\?)/i,
+            /\.avi($|\?)/i,
+          ];
+          
+          for (const pattern of videoPatterns) {
+            if (pattern.test(urlLower)) {
+              log(`[Instagram Debug] Тип определен по паттерну в URL: VIDEO (паттерн: ${pattern})`, 'instagram');
+              return 'VIDEO';
+            }
+          }
+          
+          const imagePatterns = [
+            /\/image\//i,
+            /\/images\//i,
+            /type=image/i,
+            /media_type=image/i,
+            /\.jpg($|\?)/i,
+            /\.jpeg($|\?)/i,
+            /\.png($|\?)/i,
+            /\.gif($|\?)/i,
+          ];
+          
+          for (const pattern of imagePatterns) {
+            if (pattern.test(urlLower)) {
+              log(`[Instagram Debug] Тип определен по паттерну в URL: IMAGE (паттерн: ${pattern})`, 'instagram');
+              return 'IMAGE';
+            }
+          }
+          
+          // 3. Проверка по ключевым словам в URL
+          const videoKeywords = [
+            'video', 'mp4', 'mov', 'avi', 'movie', 'film', 
+            'клип', 'ролик', 'видео'
+          ];
+          
+          if (videoKeywords.some(keyword => urlLower.includes(keyword))) {
+            log(`[Instagram Debug] Тип определен по ключевому слову в URL: VIDEO (слово найдено в URL)`, 'instagram');
+            return 'VIDEO';
+          }
+          
+          const imageKeywords = [
+            'image', 'photo', 'pic', 'picture', 'img', 'jpg', 'jpeg', 'png', 
+            'фото', 'изображение', 'картинка'
+          ];
+          
+          if (imageKeywords.some(keyword => urlLower.includes(keyword))) {
+            log(`[Instagram Debug] Тип определен по ключевому слову в URL: IMAGE (слово найдено в URL)`, 'instagram');
+            return 'IMAGE';
+          }
+          
+          // 4. Проверка части URL после последнего слеша
+          const lastPathSegment = cleanUrl.split('/').pop() || '';
+          
+          // Если в последнем сегменте пути есть точка, пробуем определить тип по части после точки
+          if (lastPathSegment.includes('.')) {
+            const extension = lastPathSegment.split('.').pop();
+            if (extension) {
+              if (videoExtensions.some(ext => ext.substring(1) === extension)) {
+                log(`[Instagram Debug] Тип определен по сегменту пути: VIDEO (расширение: ${extension})`, 'instagram');
+                return 'VIDEO';
+              }
+              if (imageExtensions.some(ext => ext.substring(1) === extension)) {
+                log(`[Instagram Debug] Тип определен по сегменту пути: IMAGE (расширение: ${extension})`, 'instagram');
+                return 'IMAGE';
+              }
+            }
+          }
+          
+          // 5. Если URL содержит известные домены для изображений/видео, пробуем определить по ним
+          if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be') || 
+              urlLower.includes('vimeo.com') || urlLower.includes('facebook.com/watch')) {
+            log(`[Instagram Debug] Тип определен по известному домену: VIDEO (${urlLower.split('/')[2]})`, 'instagram');
+            return 'VIDEO';
+          }
+          
+          if (urlLower.includes('flickr.com') || urlLower.includes('imgur.com') || 
+              urlLower.includes('instagram.com/p/')) {
+            log(`[Instagram Debug] Тип определен по известному домену: IMAGE (${urlLower.split('/')[2]})`, 'instagram');
+            return 'IMAGE';
+          }
+          
+          // Если не удалось определить тип, используем тип по умолчанию
+          log(`[Instagram Debug] Не удалось определить тип по URL, возвращаю IMAGE по умолчанию: ${safeUrl}`, 'instagram');
+          return 'IMAGE';
+        } catch (error) {
+          log(`[Instagram Debug] Ошибка при определении типа по URL: ${error.message}`, 'instagram', 'error');
           return 'IMAGE';
         }
-        
-        // Проверка по ключевым словам в URL
-        const videoKeywords = ['video', 'mp4', 'mov', 'avi', 'movie', 'film'];
-        if (videoKeywords.some(keyword => urlLower.includes(keyword))) {
-          log(`[Instagram Debug] Тип определен по ключевому слову в URL: VIDEO (${urlLower})`, 'instagram');
-          return 'VIDEO';
-        }
-        
-        const imageKeywords = ['image', 'photo', 'pic', 'picture', 'img', 'jpg', 'jpeg', 'png'];
-        if (imageKeywords.some(keyword => urlLower.includes(keyword))) {
-          log(`[Instagram Debug] Тип определен по ключевому слову в URL: IMAGE (${urlLower})`, 'instagram');
-          return 'IMAGE';
-        }
-        
-        // Если не удалось определить тип, используем тип по умолчанию
-        log(`[Instagram Debug] Тип не определен по URL, использую IMAGE: ${urlLower}`, 'instagram');
-        return 'IMAGE';
       }
       
       // Определяем тип медиа и URL
