@@ -550,12 +550,40 @@ router.post('/publish', authMiddleware, async (req, res) => {
             // Передаем campaignSettings.social_media_settings, если они есть, или campaignSettings.socialSettings как запасной вариант
             // это нужно, потому что в разных местах используются разные структуры
             const instagramSettings = campaignSettings.social_media_settings || campaignSettings.socialSettings;
-            log(`[Social Publishing] Instagram публикация сторис, настройки: ${JSON.stringify(instagramSettings)}`);
+            
+            // Дополнительное логирование для отладки
+            log(`[Social Publishing] Оригинальная структура настроек: ${JSON.stringify({
+              social_media_settings: campaignSettings.social_media_settings ? 'имеется' : 'отсутствует',
+              socialSettings: campaignSettings.socialSettings ? 'имеется' : 'отсутствует',
+            })}`);
+            
+            // Проверяем наличие настроек Instagram
+            if (!instagramSettings?.instagram) {
+              log(`[Social Publishing] ВНИМАНИЕ: Не найдены настройки Instagram, используем пустой объект`, 'warn');
+            }
+            
+            // Проверяем token/accessToken
+            const token = instagramSettings?.instagram?.accessToken || instagramSettings?.instagram?.token || null;
+            if (!token) {
+              log(`[Social Publishing] ВНИМАНИЕ: Отсутствует токен Instagram`, 'warn');
+            }
+            
+            // Проверяем businessAccountId
+            const businessAccountId = instagramSettings?.instagram?.businessAccountId || null;
+            if (!businessAccountId) {
+              log(`[Social Publishing] ВНИМАНИЕ: Отсутствует businessAccountId Instagram`, 'warn');
+            }
+            
+            log(`[Social Publishing] Instagram публикация сторис, настройки: ${JSON.stringify({
+              token: token ? `${token.substring(0, 5)}...` : null,
+              businessAccountId
+            })}`);
+            
             result = await instagramService.publishStory(content, 
                          {
-                           token: instagramSettings?.instagram?.accessToken || instagramSettings?.instagram?.token || null,
-                           accessToken: instagramSettings?.instagram?.accessToken || instagramSettings?.instagram?.token || null,
-                           businessAccountId: instagramSettings?.instagram?.businessAccountId || null
+                           token: token,
+                           accessToken: token, // дублируем для совместимости
+                           businessAccountId: businessAccountId
                          },
                          instagramSettings);
             break;
