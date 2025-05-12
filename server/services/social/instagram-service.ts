@@ -374,15 +374,48 @@ export class InstagramService extends BaseSocialService {
           mediaFiles = content.additionalMedia.filter(media => 
             media.type === 'image' || media.type === 'video');
         } else if (content.additionalImages && Array.isArray(content.additionalImages)) {
+          // Подробное логирование содержимого additionalImages
+          log(`[Instagram Debug] Содержимое additionalImages: ${JSON.stringify(content.additionalImages)}`, 'instagram');
+          
           mediaFiles = content.additionalImages.map(item => {
+            // Логируем каждый элемент для отладки
+            log(`[Instagram Debug] Обработка элемента additionalImages: ${JSON.stringify(item)}`, 'instagram');
+            
             if (typeof item === 'string') {
+              log(`[Instagram Debug] Элемент является строкой, создаем объект с типом image`, 'instagram');
               return { url: item, type: 'image' };
-            } else if (typeof item === 'object' && item.url) {
-              return { 
-                url: item.url, 
-                type: item.type || 'image'
-              };
+            } else if (typeof item === 'object' && item) {
+              // Проверяем наличие URL в стандартном или вложенном формате
+              if (item.url) {
+                if (typeof item.url === 'string') {
+                  log(`[Instagram Debug] Элемент имеет строковый URL: ${item.url}`, 'instagram');
+                  return { 
+                    url: item.url, 
+                    type: item.type || 'image'
+                  };
+                } else if (typeof item.url === 'object' && item.url && item.url.url) {
+                  // Обработка вложенного объекта URL
+                  log(`[Instagram Debug] Элемент имеет вложенный URL: ${item.url.url}`, 'instagram');
+                  return { 
+                    url: item.url.url, 
+                    type: item.type || 'image'
+                  };
+                }
+              } else if (item.file) {
+                log(`[Instagram Debug] Элемент имеет file: ${item.file}`, 'instagram');
+                return { 
+                  url: item.file, 
+                  type: item.type || 'image'
+                };
+              } else if (item.uri) {
+                log(`[Instagram Debug] Элемент имеет uri: ${item.uri}`, 'instagram');
+                return { 
+                  url: item.uri, 
+                  type: item.type || 'image'
+                };
+              }
             }
+            log(`[Instagram Debug] Элемент не содержит URL, file или uri, игнорируем`, 'instagram');
             return null;
           }).filter(Boolean);
         } else if (content.additional_images && Array.isArray(content.additional_images)) {
@@ -397,21 +430,37 @@ export class InstagramService extends BaseSocialService {
               log(`[Instagram Debug] Элемент является строкой, создаем объект с типом image`, 'instagram');
               return { url: item, type: 'image' };
             } else if (typeof item === 'object' && item) {
+              // Проверяем наличие URL в стандартном или вложенном формате
               if (item.url) {
-                log(`[Instagram Debug] Элемент имеет URL: ${item.url}`, 'instagram');
-                return { 
-                  url: item.url, 
-                  type: item.type || 'image'
-                };
+                if (typeof item.url === 'string') {
+                  log(`[Instagram Debug] Элемент имеет строковый URL: ${item.url}`, 'instagram');
+                  return { 
+                    url: item.url, 
+                    type: item.type || 'image'
+                  };
+                } else if (typeof item.url === 'object' && item.url && item.url.url) {
+                  // Обработка вложенного объекта URL
+                  log(`[Instagram Debug] Элемент имеет вложенный URL: ${item.url.url}`, 'instagram');
+                  return { 
+                    url: item.url.url, 
+                    type: item.type || 'image'
+                  };
+                }
               } else if (item.file) {
                 log(`[Instagram Debug] Элемент имеет file: ${item.file}`, 'instagram');
                 return { 
                   url: item.file, 
                   type: item.type || 'image'
                 };
+              } else if (item.uri) {
+                log(`[Instagram Debug] Элемент имеет uri: ${item.uri}`, 'instagram');
+                return { 
+                  url: item.uri, 
+                  type: item.type || 'image'
+                };
               }
             }
-            log(`[Instagram Debug] Элемент не содержит URL или file, игнорируем`, 'instagram');
+            log(`[Instagram Debug] Элемент не содержит URL, file или uri, игнорируем`, 'instagram');
             return null;
           }).filter(Boolean);
           
