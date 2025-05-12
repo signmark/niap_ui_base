@@ -399,51 +399,140 @@ router.post('/publish', authMiddleware, async (req, res) => {
         if (!campaignSettings) {
           log(`[Social Publishing] Не найдены настройки кампании для ID: ${content.campaignId}. Попытаемся получить настройки через запрос к user_campaigns`);
           
-          // Получаем токен администратора
-          const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || (await import('../services/directus-auth-manager').then(m => m.directusAuthManager)).getAdminToken();
+          // Получаем токен администратора с улучшенной логикой получения токена
+          const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+          let adminToken = null;
+          
+          // Сначала проверяем активные сессии
+          const sessions = directusAuthManager.getAllActiveSessions();
+          if (sessions && sessions.length > 0) {
+            adminToken = sessions[0].token;
+            log(`[Social Publishing] Используем токен администратора из активной сессии`);
+          } else {
+            // Если нет активных сессий, пробуем получить токен другими методами
+            adminToken = await directusAuthManager.getAdminToken();
+            
+            if (!adminToken) {
+              adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+              log(`[Social Publishing] Используем токен администратора из переменных окружения`);
+            } else {
+              log(`[Social Publishing] Используем токен администратора из метода getAdminToken`);
+            }
+          }
           
           if (!adminToken) {
-            log(`[Social Publishing] Не удалось получить токен администратора для запроса настроек кампании`);
+            log(`[Social Publishing] Не удалось получить токен администратора для запроса настроек кампании. Ни одного метода не сработало.`, 'error');
             return res.status(500).json({
               success: false,
               error: `Не удалось получить токен администратора для запроса настроек кампании`
             });
           }
           
-          // Пробуем получить настройки кампании напрямую
+          // Пробуем получить настройки кампании напрямую с улучшенной обработкой ошибок
           try {
-            const directusApi = await import('../services/directus-api-manager').then(m => m.directusApi);
+            const directusApi = await import('../lib/directus').then(m => m.directusApi);
             log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${content.campaignId}`);
             
-            const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
-              headers: {
-                'Authorization': `Bearer ${adminToken}`
-              }
-            });
+            // Подробное логирование запроса для отладки
+            log(`[Social Publishing] Используем токен администратора: ${adminToken.substring(0, 10)}...`);
             
-            if (response.data?.data) {
-              log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`);
-              
-              // ВАЖНО! Обновляем переменную campaignSettings в родительской области видимости
-              campaignSettings = response.data.data;
-              
-              // Проверяем, что socialSettings присутствуют
-              if (!campaignSettings.socialSettings) {
-                log(`[Social Publishing] В настройках кампании отсутствуют настройки социальных сетей, создаем пустой объект`);
-                campaignSettings.socialSettings = {};
-              }
-            } else {
-              log(`[Social Publishing] Не удалось получить настройки кампании напрямую`);
-              return res.status(404).json({
-                success: false,
-                error: `Не найдены настройки кампании для ID ${content.campaignId}`
+            // Отправляем запрос с обработкой различных сценариев ошибок
+            try {
+              const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+                headers: {
+                  'Authorization': `Bearer ${adminToken}`
+                }
               });
+              
+              if (response.data?.data) {
+                log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`);
+                
+                // ВАЖНО! Обновляем переменную campaignSettings в родительской области видимости
+                campaignSettings = response.data.data;
+                
+                // Проверяем, что socialSettings присутствуют
+                if (!campaignSettings.socialSettings) {
+                  log(`[Social Publishing] В настройках кампании отсутствуют настройки социальных сетей, создаем пустой объект`);
+                  campaignSettings.socialSettings = {};
+                }
+                
+                // Проверяем настройки для Instagram, которые необходимы для сторис
+                if (platform.toLowerCase() === 'instagram' && (!campaignSettings.socialSettings.instagram || 
+                    !campaignSettings.socialSettings.instagram.token || 
+                    !campaignSettings.socialSettings.instagram.businessAccountId)) {
+                  log(`[Social Publishing] Отсутствуют необходимые настройки Instagram в кампании: 
+                    token: ${Boolean(campaignSettings.socialSettings.instagram?.token)}, 
+                    businessAccountId: ${Boolean(campaignSettings.socialSettings.instagram?.businessAccountId)}`, 'warn');
+                  
+                  // Если это Instagram сторис и нет необходимых настроек, возвращаем ошибку
+                  if (content.contentType === 'stories') {
+                    return res.status(400).json({
+                      success: false,
+                      error: `В настройках кампании отсутствуют необходимые параметры для публикации в Instagram`
+                    });
+                  }
+                }
+              } else {
+                log(`[Social Publishing] Не удалось получить настройки кампании напрямую (пустой ответ API)`, 'error');
+                return res.status(404).json({
+                  success: false,
+                  error: `Не найдены настройки кампании для ID ${content.campaignId}`
+                });
+              }
+            } catch (apiError) {
+              // Получаем детали ошибки API
+              const errorDetails = apiError.response ? 
+                `${apiError.response.status}: ${JSON.stringify(apiError.response.data || {})}` : 
+                apiError.message;
+              
+              log(`[Social Publishing] Ошибка API Directus при запросе настроек кампании: ${errorDetails}`, 'error');
+              
+              // Если ошибка 401, значит токен истек или недействителен
+              if (apiError.response && apiError.response.status === 401) {
+                log(`[Social Publishing] Токен администратора недействителен, пытаемся получить новый токен`);
+                
+                // Пытаемся получить новый токен администратора
+                const newToken = await directusAuthManager.refreshAdminToken();
+                
+                if (newToken) {
+                  log(`[Social Publishing] Получен новый токен администратора, повторяем запрос`);
+                  
+                  // Повторяем запрос с новым токеном
+                  try {
+                    // Используем API с новым токеном
+                    const { directusApi } = await import('../lib/directus');
+                    const retryResponse = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+                      headers: {
+                        'Authorization': `Bearer ${newToken}`
+                      }
+                    });
+                    
+                    if (retryResponse.data?.data) {
+                      log(`[Social Publishing] Успешно получены настройки кампании с новым токеном`);
+                      campaignSettings = retryResponse.data.data;
+                      
+                      if (!campaignSettings.socialSettings) {
+                        campaignSettings.socialSettings = {};
+                      }
+                    } else {
+                      throw new Error('Пустой ответ API после обновления токена');
+                    }
+                  } catch (retryError) {
+                    throw new Error(`Ошибка повторного запроса после обновления токена: ${retryError.message}`);
+                  }
+                } else {
+                  throw new Error('Не удалось получить новый токен администратора');
+                }
+              } else {
+                // Другие ошибки API
+                throw apiError;
+              }
             }
           } catch (directusError) {
-            log(`[Social Publishing] Ошибка при прямом запросе настроек кампании: ${directusError.message}`);
+            log(`[Social Publishing] Ошибка при прямом запросе настроек кампании: ${directusError.message}`, 'error');
             return res.status(404).json({
               success: false,
-              error: `Не найдены настройки кампании для ID ${content.campaignId}`
+              error: `Не найдены настройки кампании для ID ${content.campaignId}: ${directusError.message}`
             });
           }
         }

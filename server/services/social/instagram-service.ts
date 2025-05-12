@@ -371,10 +371,33 @@ export class InstagramService extends BaseSocialService {
         log(`[Instagram] Ошибка при подготовке запроса: ${error.message}`, 'instagram', 'error');
       }
       
-      // Форматирование сообщения об ошибке для возврата
-      const errorMessage = error.response && error.response.data && error.response.data.error 
-        ? `${error.response.data.error.code}: ${error.response.data.error.message}`
-        : error.message;
+      // Форматирование сообщения об ошибке для возврата с улучшенным описанием проблемы
+      let errorMessage: string;
+      
+      if (error.response && error.response.data && error.response.data.error) {
+        const apiError = error.response.data.error;
+        const errorCode = apiError.code;
+        
+        // Обработка известных кодов ошибок специфичных для Stories
+        if (errorCode === 190) {
+          errorMessage = 'Недействительный токен доступа. Необходимо обновить токен в настройках Instagram.';
+        } else if (errorCode === 9007) {
+          errorMessage = 'Ошибка валидации токена доступа для Instagram.';
+        } else if (errorCode === 100 && apiError.message.includes('Instagram Business Account')) {
+          errorMessage = 'Не найден Instagram Business Account. Проверьте настройки бизнес-аккаунта.';
+        } else if (apiError.message && (apiError.message.includes('Media_Not_Ready') || apiError.message.includes('not ready'))) {
+          errorMessage = 'Медиа еще не готово для публикации. Система автоматически повторит попытку позже.';
+          log(`[Instagram] Обнаружена ошибка неготовности медиа для сторис`, 'instagram', 'warn');
+        } else if (apiError.message && apiError.message.toLowerCase().includes('story')) {
+          // Специфические ошибки для Stories
+          errorMessage = `Ошибка публикации сторис: ${apiError.message} (код ${errorCode})`;
+          log(`[Instagram] Специфическая ошибка сторис: ${apiError.message}`, 'instagram', 'error');
+        } else {
+          errorMessage = `${errorCode}: ${apiError.message}`;
+        }
+      } else {
+        errorMessage = error.message;
+      }
 
       log(`[Instagram] Итоговое сообщение об ошибке: ${errorMessage}`, 'instagram');
       return {
@@ -929,6 +952,19 @@ export class InstagramService extends BaseSocialService {
             errorMessage = 'Ограничение частоты запросов. Пожалуйста, повторите попытку позже.';
           } else if (apiError.code === 10) {
             errorMessage = 'Ошибка разрешений API. Проверьте, что приложение имеет необходимые разрешения.';
+          } else if (apiError.code === 9007) {
+            errorMessage = 'Ошибка валидации токена доступа. Пожалуйста, обновите токен в настройках.';
+          } else if (apiError.code === 100 && apiError.message.includes('Instagram Business Account')) {
+            errorMessage = 'Ошибка бизнес-аккаунта Instagram. Пожалуйста, проверьте привязку бизнес-аккаунта.';
+          } else if (apiError.message && (apiError.message.includes('Media_Not_Ready') || apiError.message.includes('not ready'))) {
+            errorMessage = 'Медиа еще не готово для публикации. Попробуйте повторить запрос позже.';
+          } else if (apiError.message && apiError.message.includes('Object with ID')) {
+            errorMessage = 'Объект не найден. Возможно, контейнер для публикации истек или был удален.';
+          } else if (content.contentType === 'stories' && 
+                    apiError.message && apiError.message.toLowerCase().includes('story')) {
+            // Специфические ошибки для Stories
+            errorMessage = `Ошибка публикации сторис: ${apiError.message} (код ${apiError.code})`;
+            log(`[Instagram] Специфическая ошибка сторис: ${apiError.message}`, 'instagram', 'error');
           } else {
             errorMessage = `Ошибка API Instagram: ${apiError.message} (код ${apiError.code})`;
           }
