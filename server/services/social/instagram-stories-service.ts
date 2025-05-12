@@ -143,8 +143,8 @@ export class InstagramStoriesService {
       );
       
       return response.data;
-    } catch (error) {
-      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+    } catch (error: any) {
+      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'error');
       throw error;
     }
   }
