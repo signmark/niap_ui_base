@@ -157,6 +157,7 @@ export class InstagramService extends BaseSocialService {
       const containerUrl = `${baseUrl}/${businessAccountId}/media`;
 
       // Формируем параметры запроса для создания контейнера сторис
+      // Создаем параметры для публикации сторис
       const storyParams: any = {
         media_type: "STORIES", // Важно использовать "STORIES" вместо "IMAGE" или "VIDEO"
         caption: caption,
@@ -166,16 +167,26 @@ export class InstagramService extends BaseSocialService {
       // Добавляем URL в зависимости от типа медиа
       if (mediaType === 'VIDEO') {
         storyParams.video_url = mediaUrl;
+        log(`[Instagram] Добавлен video_url для stories: ${mediaUrl.substring(0, 100)}...`, 'instagram');
       } else {
         storyParams.image_url = mediaUrl;
+        log(`[Instagram] Добавлен image_url для stories: ${mediaUrl.substring(0, 100)}...`, 'instagram');
       }
       
-      // Логируем процесс для отладки
-      log(`[Instagram] Тип медиа: ${mediaType}, URL: ${mediaUrl}`, 'instagram');
-      log(`[Instagram] Заголовок: ${caption?.slice(0, 50)}...`, 'instagram');
+      // Детальное логирование для отладки
+      log(`[Instagram] Полная информация о публикации сторис:`, 'instagram');
+      log(`[Instagram]   - Тип медиа: ${mediaType}`, 'instagram');
+      log(`[Instagram]   - URL медиа: ${mediaUrl.substring(0, 100)}...`, 'instagram');
+      log(`[Instagram]   - Бизнес-аккаунт ID: ${businessAccountId}`, 'instagram');
+      log(`[Instagram]   - Заголовок: ${caption ? caption.substring(0, 50) + '...' : 'не указан'}`, 'instagram');
       
-      // Логируем параметры запроса для отладки
-      log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(storyParams)}`, 'instagram');
+      // Логируем детально параметры запроса для отладки
+      // Скрываем токен для безопасности
+      const logParams = {...storyParams};
+      if (logParams.access_token) {
+        logParams.access_token = logParams.access_token.substring(0, 10) + '...[скрыто]';
+      }
+      log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(logParams)}`, 'instagram');
 
       // Отправляем запрос на создание контейнера
       const containerResponse = await axios.post(containerUrl, storyParams);
@@ -248,11 +259,39 @@ export class InstagramService extends BaseSocialService {
         };
       }
     } catch (error: any) {
+      // Расширенное логирование для отладки
+      log(`[Instagram] Произошла ошибка при публикации сторис`, 'instagram', 'error');
+      
+      // Пытаемся извлечь максимум информации из объекта ошибки
+      if (error.response) {
+        // Ошибка от API
+        log(`[Instagram] Статус ошибки: ${error.response.status}`, 'instagram', 'error');
+        log(`[Instagram] Данные ответа: ${JSON.stringify(error.response.data || {})}`, 'instagram', 'error');
+        
+        if (error.response.data && error.response.data.error) {
+          // Структурированная ошибка от Facebook Graph API
+          log(`[Instagram] Код ошибки API: ${error.response.data.error.code}`, 'instagram', 'error');
+          log(`[Instagram] Сообщение от API: ${error.response.data.error.message}`, 'instagram', 'error');
+          log(`[Instagram] Тип ошибки API: ${error.response.data.error.type || 'не указан'}`, 'instagram', 'error');
+          
+          if (error.response.data.error.error_subcode) {
+            log(`[Instagram] Subcode ошибки: ${error.response.data.error.error_subcode}`, 'instagram', 'error');
+          }
+        }
+      } else if (error.request) {
+        // Запрос был сделан, но ответ не получен
+        log(`[Instagram] Ошибка сети: запрос отправлен, но ответ не получен`, 'instagram', 'error');
+      } else {
+        // Что-то произошло при настройке запроса
+        log(`[Instagram] Ошибка при подготовке запроса: ${error.message}`, 'instagram', 'error');
+      }
+      
+      // Форматирование сообщения об ошибке для возврата
       const errorMessage = error.response && error.response.data && error.response.data.error 
         ? `${error.response.data.error.code}: ${error.response.data.error.message}`
         : error.message;
 
-      log(`[Instagram] Исключение при публикации сторис: ${errorMessage}`, 'instagram');
+      log(`[Instagram] Итоговое сообщение об ошибке: ${errorMessage}`, 'instagram');
       return {
         platform: 'instagram',
         status: 'failed',

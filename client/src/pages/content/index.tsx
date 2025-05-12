@@ -633,9 +633,26 @@ export default function ContentPage() {
         console.error("Ошибка при обновлении статуса публикации:", error);
       }
       
-      // Получаем текущий контент для определения его типа
-      const content = contentList.find(c => c.id === variables.id);
-      const isStories = content?.contentType === 'stories';
+      // Определяем тип контента из переменных mutation
+      let isStories = false;
+      
+      // Предполагаем, что в этой точке у нас должны быть данные из результата запроса
+      // Проверяем наличие информации о типе контента в данных ответа
+      if (data && data.contentType) {
+        isStories = data.contentType === 'stories';
+        console.log(`Определен тип контента из ответа API: ${data.contentType}`);
+      } 
+      // Если информации в ответе нет, пробуем из currentContent
+      else if (currentContent && currentContent.id === variables.id) {
+        isStories = currentContent.contentType === 'stories';
+        console.log(`Определен тип контента из currentContent: ${currentContent.contentType}`);
+      }
+      // В крайнем случае используем тип из предыдущего запроса в mutationFn
+      else {
+        // endpoint содержит '/api/publish/stories' для сторис
+        isStories = endpoint.includes('/stories');
+        console.log(`Определен тип контента из использованного endpoint: ${isStories ? 'stories' : 'обычный'}`);
+      }
       
       // Обновляем данные в интерфейсе
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
