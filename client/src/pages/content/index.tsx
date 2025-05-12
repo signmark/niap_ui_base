@@ -587,9 +587,96 @@ export default function ContentPage() {
                                  currentContentData.additional_images || 
                                  currentContentData.additionalMedia;
           
-          const hasAdditionalMedia = Boolean(
-            additionalMedia && Array.isArray(additionalMedia) && additionalMedia.length > 0
-          );
+          // Детальная проверка наличия медиа в массиве
+          let hasValidMedia = false;
+          
+          if (additionalMedia && Array.isArray(additionalMedia) && additionalMedia.length > 0) {
+            // Проверяем каждый элемент в массиве медиа
+            for (const media of additionalMedia) {
+              if (typeof media === 'string' && media.trim() !== '') {
+                // Если это строка с URL
+                hasValidMedia = true;
+                break;
+              } else if (typeof media === 'object' && media !== null) {
+                // Если это объект, проверяем наличие URL
+                if (media.url) {
+                  // Проверяем, что URL является строкой или объектом с полем url
+                  if (typeof media.url === 'string' && media.url.trim() !== '') {
+                    hasValidMedia = true;
+                    break;
+                  } else if (typeof media.url === 'object' && media.url && typeof media.url.url === 'string' && media.url.url.trim() !== '') {
+                    hasValidMedia = true;
+                    break;
+                  }
+                }
+                // Проверяем поле file (альтернативное хранение URL)
+                if (media.file && typeof media.file === 'string' && media.file.trim() !== '') {
+                  hasValidMedia = true;
+                  break;
+                }
+                // Проверяем поле uri (альтернативное хранение URL)
+                if (media.uri && typeof media.uri === 'string' && media.uri.trim() !== '') {
+                  hasValidMedia = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          const hasAdditionalMedia = hasValidMedia;
+          
+          // Выполняем более детальное логирование для отладки
+          console.log('📄 Детальная проверка дополнительных медиа:', { 
+            hasValidMedia,
+            additionalMediaLength: additionalMedia?.length || 0,
+            firstItem: additionalMedia?.[0] || null
+          });
+          
+          // Добавляем детальную диагностику для каждого элемента
+          if (additionalMedia && Array.isArray(additionalMedia)) {
+            console.log('📊 Детальный анализ элементов медиа:');
+            additionalMedia.forEach((item, index) => {
+              const itemType = typeof item;
+              let itemDetails = {
+                index,
+                type: itemType,
+              };
+              
+              if (itemType === 'string') {
+                itemDetails = {
+                  ...itemDetails,
+                  value: item.substring(0, 50) + (item.length > 50 ? '...' : ''),
+                  isValid: item.trim() !== '',
+                };
+              } else if (itemType === 'object' && item !== null) {
+                const hasUrl = Boolean(item.url);
+                const urlType = item.url ? typeof item.url : 'undefined';
+                const urlValue = urlType === 'string' 
+                  ? (item.url.substring(0, 50) + (item.url.length > 50 ? '...' : ''))
+                  : (urlType === 'object' ? JSON.stringify(item.url).substring(0, 50) + '...' : urlType);
+                
+                const hasFile = Boolean(item.file);
+                const fileType = item.file ? typeof item.file : 'undefined';
+                const fileValue = fileType === 'string' 
+                  ? (item.file.substring(0, 50) + (item.file.length > 50 ? '...' : ''))
+                  : fileType;
+                
+                itemDetails = {
+                  ...itemDetails,
+                  mediaType: item.type || 'не указан',
+                  hasUrl,
+                  urlType,
+                  urlValue: hasUrl ? urlValue : undefined,
+                  hasFile,
+                  fileType,
+                  fileValue: hasFile ? fileValue : undefined,
+                  isValid: hasValidMedia,
+                };
+              }
+              
+              console.log(`📄 Элемент ${index}:`, itemDetails);
+            });
+          }
           
           // Проверяем, есть ли хотя бы один медиафайл
           const hasMedia = hasImageUrl || hasVideoUrl || hasAdditionalMedia;
