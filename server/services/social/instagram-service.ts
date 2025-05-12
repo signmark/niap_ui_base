@@ -87,40 +87,16 @@ export class InstagramService extends BaseSocialService {
           // Используем первый файл из additionalMedia
           const mediaFile = mediaFiles[0];
           
-          // Упрощаем логику определения типа медиа-файла
-          // Приоритет отдаём явному полю type, если оно есть
-          if (mediaFile.type === 'image') {
-            const imageUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем изображение из additionalMedia по типу: ${imageUrl}`, 'instagram');
-            content.imageUrl = imageUrl;
-          } 
-          else if (mediaFile.type === 'video') {
-            const videoUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем видео из additionalMedia по типу: ${videoUrl}`, 'instagram');
-            content.videoUrl = videoUrl;
-          }
-          // Резервная проверка по расширению файла, если тип не указан явно
-          else if (typeof mediaFile.file === 'string' && 
-                  (mediaFile.file.endsWith('.jpg') || mediaFile.file.endsWith('.jpeg') || 
-                   mediaFile.file.endsWith('.png') || mediaFile.file.endsWith('.gif'))) {
-            const imageUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем изображение из additionalMedia по расширению: ${imageUrl}`, 'instagram');
-            content.imageUrl = imageUrl;
-          } 
-          else if (typeof mediaFile.file === 'string' && 
-                  (mediaFile.file.endsWith('.mp4') || mediaFile.file.endsWith('.mov'))) {
-            const videoUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем видео из additionalMedia по расширению: ${videoUrl}`, 'instagram');
-            content.videoUrl = videoUrl;
-          }
-          // Если ничего не подошло, но есть URL - по умолчанию считаем изображением
-          else if (mediaFile.url) {
-            log(`[Instagram] Тип медиа в additionalMedia не определен, используем как изображение: ${mediaFile.url}`, 'instagram');
-            content.imageUrl = mediaFile.url;
-          }
-          else if (mediaFile.file) {
-            log(`[Instagram] Тип медиа в additionalMedia не определен, используем file как изображение: ${mediaFile.file}`, 'instagram');
-            content.imageUrl = mediaFile.file;
+          // Используем новую функцию определения типа медиа
+          const mediaUrl = mediaFile.url || mediaFile.file;
+          const mediaTypeResult = determineMediaType(mediaFile);
+          
+          if (mediaTypeResult === 'IMAGE') {
+            log(`[Instagram] Используем изображение из additionalMedia: ${mediaUrl}`, 'instagram');
+            content.imageUrl = mediaUrl;
+          } else {
+            log(`[Instagram] Используем видео из additionalMedia: ${mediaUrl}`, 'instagram');
+            content.videoUrl = mediaUrl;
           }
         }
       }
@@ -156,36 +132,16 @@ export class InstagramService extends BaseSocialService {
           // Используем первый файл из additionalImages
           const mediaFile = mediaFiles[0];
           
-          // Упрощаем логику определения типа медиа-файла
-          // Приоритет отдаём явному полю type, если оно есть
-          if (mediaFile.type === 'image') {
-            const imageUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем изображение из additionalImages по типу: ${imageUrl}`, 'instagram');
-            content.imageUrl = imageUrl;
-          } 
-          else if (mediaFile.type === 'video') {
-            const videoUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем видео из additionalImages по типу: ${videoUrl}`, 'instagram');
-            content.videoUrl = videoUrl;
-          }
-          // Резервная проверка по расширению файла, если тип не указан явно
-          else if (typeof mediaFile.url === 'string' && 
-                  (mediaFile.url.endsWith('.jpg') || mediaFile.url.endsWith('.jpeg') || 
-                   mediaFile.url.endsWith('.png') || mediaFile.url.endsWith('.gif'))) {
-            const imageUrl = mediaFile.url;
-            log(`[Instagram] Используем изображение из additionalImages по расширению: ${imageUrl}`, 'instagram');
-            content.imageUrl = imageUrl;
-          } 
-          else if (typeof mediaFile.url === 'string' && 
-                  (mediaFile.url.endsWith('.mp4') || mediaFile.url.endsWith('.mov'))) {
-            const videoUrl = mediaFile.url;
-            log(`[Instagram] Используем видео из additionalImages по расширению: ${videoUrl}`, 'instagram');
-            content.videoUrl = videoUrl;
-          }
-          // Если ничего не подошло, но есть URL - по умолчанию считаем изображением
-          else if (mediaFile.url) {
-            log(`[Instagram] Тип медиа не определен, используем как изображение: ${mediaFile.url}`, 'instagram');
-            content.imageUrl = mediaFile.url;
+          // Используем новую функцию определения типа медиа
+          const mediaUrl = mediaFile.url || mediaFile.file;
+          const mediaTypeResult = determineMediaType(mediaFile);
+          
+          if (mediaTypeResult === 'IMAGE') {
+            log(`[Instagram] Используем изображение из additionalImages: ${mediaUrl}`, 'instagram');
+            content.imageUrl = mediaUrl;
+          } else {
+            log(`[Instagram] Используем видео из additionalImages: ${mediaUrl}`, 'instagram');
+            content.videoUrl = mediaUrl;
           }
         }
       }
@@ -225,6 +181,58 @@ export class InstagramService extends BaseSocialService {
         }
       }
 
+      // Вспомогательная функция для определения типа медиа по URL или объекту
+      function determineMediaType(mediaItem: string | any): string {
+        // Если передан объект, а не строка
+        if (typeof mediaItem !== 'string') {
+          // Проверка наличия явного указания типа
+          if (mediaItem && typeof mediaItem === 'object' && mediaItem.type) {
+            const typeStr = String(mediaItem.type).toLowerCase();
+            if (typeStr === 'video' || typeStr.includes('video')) {
+              log(`[Instagram Debug] Тип определен из объекта: video (из поля type: ${mediaItem.type})`, 'instagram');
+              return 'VIDEO';
+            }
+            if (typeStr === 'image' || typeStr.includes('image')) {
+              log(`[Instagram Debug] Тип определен из объекта: image (из поля type: ${mediaItem.type})`, 'instagram');
+              return 'IMAGE';
+            }
+          }
+          
+          // Если есть URL в объекте, используем его для определения
+          if (mediaItem && typeof mediaItem === 'object' && mediaItem.url) {
+            log(`[Instagram Debug] Определение типа по URL из объекта: ${mediaItem.url}`, 'instagram');
+            return determineMediaType(mediaItem.url);
+          }
+          
+          // Если есть file в объекте
+          if (mediaItem && typeof mediaItem === 'object' && mediaItem.file) {
+            log(`[Instagram Debug] Определение типа по file из объекта: ${mediaItem.file}`, 'instagram');
+            return determineMediaType(mediaItem.file);
+          }
+          
+          log(`[Instagram Debug] Не удалось определить тип из объекта: ${JSON.stringify(mediaItem)}`, 'instagram');
+          return 'IMAGE'; // По умолчанию
+        }
+        
+        // Определение по расширению файла или ключевым словам в URL
+        const url = String(mediaItem).toLowerCase();
+        if (url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.avi') || 
+            url.includes('video') || url.includes('mp4') || url.includes('mov')) {
+          log(`[Instagram Debug] Тип определен по URL: VIDEO (${url})`, 'instagram');
+          return 'VIDEO';
+        }
+        
+        if (url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || 
+            url.endsWith('.gif') || url.endsWith('.webp') || 
+            url.includes('image') || url.includes('photo')) {
+          log(`[Instagram Debug] Тип определен по URL: IMAGE (${url})`, 'instagram');
+          return 'IMAGE';
+        }
+        
+        log(`[Instagram Debug] Тип не определен по URL, использую IMAGE: ${url}`, 'instagram');
+        return 'IMAGE'; // По умолчанию
+      }
+      
       // Определяем тип медиа и URL
       if (content.videoUrl) {
         mediaType = 'VIDEO';
@@ -314,13 +322,9 @@ export class InstagramService extends BaseSocialService {
             mediaUrl = mediaFile.url;
           }
           
-          if (mediaFile.type === 'image') {
-            mediaType = 'IMAGE';
-            log(`[Instagram] Подготовка изображения из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
-          } else { // video
-            mediaType = 'VIDEO';
-            log(`[Instagram] Подготовка видео из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
-          }
+          // Используем нашу функцию для определения типа медиа
+          mediaType = determineMediaType(mediaFile);
+          log(`[Instagram] Определен тип медиа: ${mediaType} для файла: ${mediaUrl}`, 'instagram');
         } else {
           // Этот код не должен выполниться, но добавим на всякий случай
           return {
