@@ -357,6 +357,39 @@ export class DirectusAuthManager {
   }
 
   /**
+   * Получает токен администратора
+   * @returns Токен администратора или null, если не удалось получить
+   */
+  async getAdminToken(): Promise<string | null> {
+    try {
+      // Пытаемся найти активную сессию администратора
+      const sessions = this.getAllActiveSessions();
+      if (sessions.length > 0) {
+        log(`Using existing admin session token`, this.logPrefix);
+        return sessions[0].token;
+      }
+      
+      // Если нет активных сессий, создаем новую
+      const adminSession = await this.getAdminSession();
+      if (adminSession) {
+        return adminSession.token;
+      }
+      
+      // Пробуем использовать токен из окружения
+      if (process.env.DIRECTUS_ADMIN_TOKEN) {
+        log(`Using DIRECTUS_ADMIN_TOKEN from environment variables`, this.logPrefix);
+        return process.env.DIRECTUS_ADMIN_TOKEN;
+      }
+      
+      log(`Failed to get admin token from any source`, this.logPrefix);
+      return null;
+    } catch (error) {
+      log(`Error getting admin token: ${(error as Error).message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
    * Принудительно обновляет токен авторизации администратора
    * @returns Промис с новой сессией администратора или null
    */
