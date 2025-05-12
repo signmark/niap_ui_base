@@ -3,17 +3,17 @@
  * 
  * Использует API платформы Instagram для публикации сторис
  * 
- * Запуск: node post-instagram-story.js [imageUrl]
+ * Запуск: node post-instagram-story.cjs [imageUrl]
  */
 
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
+const fetch = require('node-fetch');
+const dotenv = require('dotenv');
 
 // Загружаем переменные окружения
 dotenv.config();
 
-// URL изображения для публикации (статическое изображение из надежного источника)
-const IMAGE_URL = process.argv[2] || 'https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg';
+// URL изображения для публикации (по умолчанию случайное изображение)
+const IMAGE_URL = process.argv[2] || `https://picsum.photos/1080/1920?random=${Date.now()}`;
 
 // Настройки Instagram API
 const INSTAGRAM_TOKEN = process.env.INSTAGRAM_TOKEN;
