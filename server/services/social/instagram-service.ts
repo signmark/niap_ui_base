@@ -49,19 +49,25 @@ export class InstagramService extends BaseSocialService {
       // Проверяем наличие медиа в поле additionalMedia
       if (!hasMedia && content.additionalMedia && Array.isArray(content.additionalMedia)) {
         const mediaFiles = content.additionalMedia.filter(media => 
-          media.type === 'image' || media.type === 'video');
+          media.type === 'image' || media.type === 'video' || 
+          (typeof media === 'object' && (media.url || media.file)));
           
         if (mediaFiles.length > 0) {
           hasMedia = true;
           // Используем первый файл из additionalMedia
           const mediaFile = mediaFiles[0];
           
-          if (mediaFile.type === 'image') {
-            log(`[Instagram] Используем изображение из additionalMedia: ${mediaFile.url}`, 'instagram');
-            content.imageUrl = mediaFile.url;
-          } else if (mediaFile.type === 'video') {
-            log(`[Instagram] Используем видео из additionalMedia: ${mediaFile.url}`, 'instagram');
-            content.videoUrl = mediaFile.url;
+          if (mediaFile.type === 'image' || (typeof mediaFile.file === 'string' && 
+               (mediaFile.file.endsWith('.jpg') || mediaFile.file.endsWith('.jpeg') || 
+                mediaFile.file.endsWith('.png') || mediaFile.file.endsWith('.gif')))) {
+            const imageUrl = mediaFile.url || mediaFile.file;
+            log(`[Instagram] Используем изображение из additionalMedia: ${imageUrl}`, 'instagram');
+            content.imageUrl = imageUrl;
+          } else if (mediaFile.type === 'video' || (typeof mediaFile.file === 'string' && 
+                    (mediaFile.file.endsWith('.mp4') || mediaFile.file.endsWith('.mov')))) {
+            const videoUrl = mediaFile.url || mediaFile.file;
+            log(`[Instagram] Используем видео из additionalMedia: ${videoUrl}`, 'instagram');
+            content.videoUrl = videoUrl;
           }
         }
       }
