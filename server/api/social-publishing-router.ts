@@ -444,8 +444,8 @@ router.post('/publish', authMiddleware, async (req, res) => {
               
               log(`[Social Publishing] Запрос кампании по campaign_id = ${content.campaignId} с токеном пользователя`);
               
-              // Проверяем таблицу campaigns вместо user_campaigns
-              const response = await directusApi.get(`/items/campaigns`, {
+              // Проверяем таблицу user_campaigns
+              const response = await directusApi.get(`/items/user_campaigns`, {
                 params: {
                   filter: { id: { _eq: content.campaignId } }
                 },
