@@ -362,6 +362,133 @@ export class DirectusCrud {
       throw new Error(`Ошибка обновления токена: ${error.response?.data?.errors?.[0]?.message || error.message}`);
     }
   }
+  
+  /**
+   * Получает список всех пользователей системы
+   * @param authToken Токен авторизации (должен быть токен администратора)
+   * @returns Массив пользователей системы
+   */
+  async getAllUsers(authToken: string): Promise<any[]> {
+    return this.executeOperation<any[]>('list', 'users', async () => {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      try {
+        log('Получение списка всех пользователей', this.logPrefix);
+        
+        const response = await axios.get(`${directusUrl}/users`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          params: {
+            limit: 100, // Получаем первые 100 пользователей
+            fields: ['id', 'email', 'first_name', 'last_name', 'status', 'role', 'last_access', 'is_smm_admin']
+          }
+        });
+        
+        if (!response.data || !response.data.data) {
+          throw new Error('Неверный формат ответа при получении списка пользователей');
+        }
+        
+        log(`Получено ${response.data.data.length} пользователей`, this.logPrefix);
+        
+        return response.data.data || [];
+      } catch (error: any) {
+        log(`Ошибка при получении списка пользователей: ${error.message}`, this.logPrefix);
+        
+        if (error.response) {
+          log(`Статус ошибки: ${error.response.status}`, this.logPrefix);
+          if (error.response.data && error.response.data.errors) {
+            log(`Детали ошибки: ${JSON.stringify(error.response.data.errors)}`, this.logPrefix);
+          }
+        }
+        
+        // Пробуем запрос через directusApiManager как запасной вариант
+        try {
+          const response = await directusApiManager.request({
+            url: '/users',
+            method: 'get',
+            params: {
+              limit: 100,
+              fields: ['id', 'email', 'first_name', 'last_name', 'status', 'role', 'last_access', 'is_smm_admin']
+            }
+          }, authToken);
+          
+          return response.data.data || [];
+        } catch (secondError) {
+          // Если и второй запрос не удался, выбрасываем оригинальную ошибку
+          throw error;
+        }
+      }
+    });
+  }
+  
+  /**
+   * Получает логи активности пользователей
+   * @param authToken Токен авторизации администратора
+   * @param userId ID пользователя, если нужны логи только одного пользователя
+   * @param limit Количество записей (по умолчанию 50)
+   * @returns Массив логов активности
+   */
+  async getUserActivity(authToken: string, userId?: string, limit: number = 50): Promise<any[]> {
+    return this.executeOperation<any[]>('list', 'activity', async () => {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      try {
+        log('Получение логов активности пользователей', this.logPrefix);
+        
+        // Строим параметры запроса
+        const params: Record<string, any> = {
+          limit,
+          sort: ['-timestamp'], // Сортировка от новых к старым
+          fields: ['*', 'user.id', 'user.email', 'user.first_name', 'user.last_name']
+        };
+        
+        // Если указан ID пользователя, фильтруем только по его активности
+        if (userId) {
+          params.filter = {
+            user: {
+              id: {
+                _eq: userId
+              }
+            }
+          };
+        }
+        
+        const response = await axios.get(`${directusUrl}/activity`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          params
+        });
+        
+        if (!response.data || !response.data.data) {
+          throw new Error('Неверный формат ответа при получении логов активности');
+        }
+        
+        return response.data.data;
+      } catch (error: any) {
+        log(`Ошибка при получении логов активности: ${error.message}`, this.logPrefix);
+        
+        // Пробуем запрос через directusApiManager как запасной вариант
+        try {
+          const result = await directusApiManager.request({
+            url: '/activity',
+            method: 'get',
+            params: {
+              limit,
+              sort: ['-timestamp'],
+              fields: ['*', 'user.id', 'user.email', 'user.first_name', 'user.last_name']
+            }
+          }, authToken);
+          
+          return result.data.data || [];
+        } catch (secondError) {
+          // Если и второй запрос не удался, выбрасываем оригинальную ошибку
+          throw error;
+        }
+      }
+    });
+  }
 }
 
 export const directusCrud = new DirectusCrud();

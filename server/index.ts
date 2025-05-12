@@ -16,12 +16,11 @@ import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { initializeHeavyServices } from './optimize-startup';
+import { initUserActivityTracker } from './services/user-activity-tracker';
 // Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
-// Импортируем маршруты для работы с контентом
-import apiContentRouter from './routes/api-content';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -258,11 +257,6 @@ app.use((req, res, next) => {
     // Маршруты для работы с личными API ключами пользователя уже зарегистрированы в начале файла
     log("User API keys routes already registered early");
     
-    // Регистрируем маршруты для работы с контентом
-    log("Registering Content API routes...");
-    app.use('/api', apiContentRouter);
-    log("Content API routes registered successfully");
-    
     // Закомментировано, т.к. мы уже зарегистрировали тестовые маршруты в начале
     // log("Registering Telegram test routes...");
     // app.use('/api/test', testRouter);
@@ -304,6 +298,17 @@ app.use((req, res, next) => {
       
       // Инициализируем тяжелые сервисы после успешного запуска сервера
       initializeHeavyServices();
+      
+      // Инициализируем сервис отслеживания активности пользователей
+      try {
+        log("Initializing User Activity Tracker...");
+        const activityTracker = initUserActivityTracker(directusApiManager, directusApiManager.getAuthManager());
+        log("User Activity Tracker initialized successfully");
+        // @ts-ignore - игнорируем проверку типов для глобального доступа
+        global['userActivityTracker'] = activityTracker;
+      } catch (error) {
+        log(`Error initializing User Activity Tracker: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

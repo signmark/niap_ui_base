@@ -68,7 +68,7 @@ export interface PlatformPublishInfo {
 }
 
 // Типы контента
-export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed' | 'stories';
+export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed';
 
 // Интерфейс для контента кампании
 // Тип для медиа-файла
@@ -93,7 +93,6 @@ export interface CampaignContent {
   additionalVideos?: string[] | null; // Для обратной совместимости
   additionalMedia?: MediaItem[] | null; // Новое универсальное поле для всех типов медиа
   imagePrompt?: string | null;
-  prompt?: string | null; // Добавляем поле для промта изображения
   status: ContentStatus;
   keywords?: string[];
   metadata?: Record<string, any> | null;

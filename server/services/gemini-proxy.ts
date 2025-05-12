@@ -166,21 +166,13 @@ export class GeminiProxyService {
       // URL для запроса к Gemini API
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
       
-      // Модифицируем промпт, чтобы исключить вступительные фразы и сохранить форматирование
-      const modifiedPrompt = `${prompt}\n\nВАЖНО: 
-1. Верни ТОЛЬКО переработанный текст без вступительных фраз типа "Вот улучшенный вариант текста" или "Вот мой вариант". 
-2. Не добавляй никаких своих комментариев или объяснений в начале или в конце текста.
-3. Сохрани оригинальное форматирование (абзацы, строки, эмодзи, хэштеги).
-4. Не меняй структуру исходного текста и сохрани все эмодзи на своих местах.
-\n\n${text}`;
-      
       // Формируем запрос
       const requestData = {
         contents: [
           {
             parts: [
               {
-                text: modifiedPrompt
+                text: `${prompt}\n\n${text}`
               }
             ]
           }
@@ -204,9 +196,9 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
-        // Очищаем текст только от служебных артефактов, сохраняя HTML-форматирование
+        // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        // НЕ удаляем HTML-теги для сохранения форматирования
+        resultText = resultText.replace(/<[^>]*>/g, '');
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
@@ -234,19 +226,13 @@ export class GeminiProxyService {
       // URL для запроса к Gemini API
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
       
-      // Модифицируем промпт, чтобы исключить вступительные фразы и сохранить форматирование
-      const modifiedPrompt = `${prompt}\n\nВАЖНО: 
-1. Верни ТОЛЬКО сгенерированный текст без вступительных фраз.
-2. Не добавляй никаких своих комментариев, пояснений или заголовков.
-3. Сохрани нужное форматирование (абзацы, строки, эмодзи, хэштеги).`;
-      
       // Формируем запрос
       const requestData = {
         contents: [
           {
             parts: [
               {
-                text: modifiedPrompt
+                text: prompt
               }
             ]
           }
@@ -270,9 +256,9 @@ export class GeminiProxyService {
         // Получаем текст из ответа
         let resultText = response.candidates[0].content.parts[0].text || '';
         
-        // Очищаем текст только от служебных артефактов, сохраняя HTML-форматирование
+        // Очищаем текст от HTML-тегов и других артефактов
         resultText = resultText.replace(/<automatic_updates>[\s\S]*?<\/automatic_updates>/g, '');
-        // НЕ удаляем HTML-теги для сохранения форматирования
+        resultText = resultText.replace(/<[^>]*>/g, '');
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         

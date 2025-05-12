@@ -51,9 +51,6 @@ interface ImageGenerationDialogProps {
     productsServices: string;
   };
   initialContent?: string | ContentItem; // Начальный контент для подсказки, может быть строкой или объектом
-  // Добавляем поля для прямой передачи текста контента и промта (для отладки)
-  contentText?: string;
-  promptText?: string;
   initialPrompt?: string; // Готовый промт из контент-плана
   onImageGenerated?: (imageUrl: string, promptText?: string) => void;
   onClose: () => void;
@@ -100,8 +97,6 @@ export function ImageGenerationDialog({
   contentId,
   businessData,
   initialContent,
-  contentText,  // Добавляем новые параметры
-  promptText,   // Добавляем новые параметры
   initialPrompt,
   onImageGenerated,
   onClose
@@ -134,39 +129,13 @@ export function ImageGenerationDialog({
     console.log("🔄 Сброс состояния ImageGenerationDialog при открытии", { 
       contentId, 
       hasInitialPrompt: !!initialPrompt, 
-      hasInitialContent: !!initialContent,
-      hasContentText: !!contentText,
-      hasPromptText: !!promptText,
+      hasInitialContent: !!initialContent 
     });
-    
-    // Если есть ID контента, явно загружаем его данные для получения промпта
-    if (contentId && !promptText) {
-      console.log(`⚠️ Промпт не передан, но есть contentId: ${contentId}. Загружаем данные...`);
-      
-      api.get(`/api/content/${contentId}`)
-        .then(response => {
-          if (response.data?.success && response.data?.data) {
-            const contentData = response.data.data;
-            console.log('📄 Данные контента получены напрямую:', contentData);
-            
-            if (contentData.prompt) {
-              console.log('✅ Найден промпт в данных контента:', contentData.prompt);
-              // Устанавливаем промпт
-              setPrompt(contentData.prompt);
-              setGeneratedPrompt(contentData.prompt);
-            } else {
-              console.log('⚠️ В данных контента отсутствует промпт');
-            }
-          }
-        })
-        .catch(error => {
-          console.error('❌ Ошибка при загрузке данных контента:', error);
-        });
-    }
     
     // Полный сброс всех состояний
     setNegativePrompt("");
     setImageSize("1024x1024");
+    setContent("");
     setPlatform("instagram");
     setGeneratedImages([]);
     setSelectedImageIndex(-1);
@@ -176,121 +145,99 @@ export function ImageGenerationDialog({
     setNumImages(3); // Используем 3 изображения по умолчанию
     setSavePrompt(true);
     
-    // ОБРАБОТКА ДАННЫХ ПРИ ОТКРЫТИИ ДИАЛОГА:
-    // ВАЖНО: Используем текст контента для возможной генерации промта
-    // 1. Если передан initialPrompt, всегда используем его как готовый промт
-    // 2. Если промта нет, сбрасываем поле промта
-    // 3. Текст контента (initialContent) всегда устанавливается в поле для генерации
+    // Обработка промта по приоритетам:
+    // 1. Если это редактирование существующего контента (contentId) и есть промт, используем его
+    // 2. Если есть originalContent в initialContent (использовать как промпт), используем его
+    // 3. Если это новый контент, всегда начинаем с пустого промта
+    // 4. Если есть контент, подготавливаем его для возможной генерации промта
     
-    // Подробно логируем для отладки
-    console.log('🔍 ОТЛАДКА ПЕРЕДАЧИ ДАННЫХ:');
-    console.log('- contentId:', contentId);
-    console.log('- initialPrompt:', initialPrompt ? `${initialPrompt.substring(0, 20)}...` : 'отсутствует');
-    console.log('- initialContent тип:', typeof initialContent);
-    console.log('- contentText:', contentText ? `${contentText.substring(0, 20)}...` : 'отсутствует');
-    console.log('- promptText:', promptText ? `${promptText.substring(0, 20)}...` : 'отсутствует');
-    
-    if (typeof initialContent === 'string' && initialContent) {
-      console.log('- initialContent строка:', initialContent.substring(0, 20) + '...');
-    } else if (typeof initialContent === 'object' && initialContent !== null) {
-      console.log('- initialContent объект с полями:', Object.keys(initialContent));
-    }
-    
-    // Получаем текст контента из объекта, если это объект
+    // Сначала проверим, если в initialContent есть поле originalContent, которое передаётся из ContentPlanGenerator
     const contentObject = typeof initialContent === 'object' ? initialContent as ContentItem : null;
+    // Проверяем наличие всех возможных полей для использования как промпт
+    const originalContent = contentObject?.prompt || contentObject?.originalContent || contentObject?.imagePrompt || null;
     
-    // ВАЖНО: Используем поле prompt из контента, если оно существует
-    // В соответствии с новыми требованиями, берем промпт из поля prompt контента
-    let promptToUse = "";
-    let promptSource = "none";
-    
-    // Приоритет источников промта:
-    // 1. promptText (переданный явно параметр)
-    // 2. contentObject.prompt (поле prompt в объекте контента)
-    // 3. initialPrompt (устаревший параметр)
-    // Если ничего из этого нет, оставляем поле пустым
-    
-    if (promptText) {
-      promptToUse = promptText;
-      promptSource = "promptText";
-      console.log('✅ Используем переданный promptText:', promptText.substring(0, 30) + '...');
-    } else if (contentObject && contentObject.prompt) {
-      promptToUse = contentObject.prompt;
-      promptSource = "contentObject.prompt";
-      console.log('✅ Используем prompt из объекта контента:', contentObject.prompt.substring(0, 30) + '...');
-    } else if (initialPrompt) {
-      promptToUse = initialPrompt;
-      promptSource = "initialPrompt";
-      console.log('✅ Используем переданный initialPrompt:', initialPrompt.substring(0, 30) + '...');
-    } else {
-      console.log('⚠️ Источники промта не найдены, поле оставлено пустым');
+    // Добавляем отладку для проверки полей
+    if (contentObject) {
+      console.log('Доступные поля контента для использования как промпт:', {
+        prompt: contentObject.prompt || 'отсутствует',
+        originalContent: contentObject.originalContent || 'отсутствует',
+        imagePrompt: contentObject.imagePrompt || 'отсутствует'
+      });
     }
     
-    // Дополнительное логирование
-    console.log('📌 ПРОВЕРКА ВСЕХ ИСТОЧНИКОВ ПРОМТА:');
-    console.log('- promptText:', promptText || 'нет');
-    console.log('- contentObject?.prompt:', contentObject?.prompt || 'нет');
-    console.log('- initialPrompt:', initialPrompt || 'нет');
-    
-    // Устанавливаем значение промта
-    setPrompt(promptToUse); 
-    setGeneratedPrompt(promptToUse);
-    console.log(`📝 Установлено значение промта из источника: ${promptSource}`);
-    
-    // КОНТЕНТ: Приоритет контента для установки
-    // 1. Явно переданный contentText
-    // 2. Если нет, то content из initialContent объекта
-    // 3. Если initialContent - строка, используем её
-    // 4. Если нет ничего, то пустая строка
-    let contentToUse = "";
-    let contentSource = "";
-    
-    if (contentText) {
-      contentToUse = contentText;
-      contentSource = "contentText";
-      console.log('✅ Используем явно переданный contentText:', contentToUse.substring(0, 30) + '...');
-    } else if (contentObject && contentObject.content) {
-      contentToUse = contentObject.content;
-      contentSource = "contentObject.content";
-      console.log('✅ Используем контент из объекта initialContent:', contentToUse.substring(0, 30) + '...');
-    } else if (typeof initialContent === 'string' && initialContent) {
-      contentToUse = initialContent;
-      contentSource = "initialContent (string)";
-      console.log('✅ Используем initialContent как строку:', contentToUse.substring(0, 30) + '...');
+    if (contentId && initialPrompt) {
+      // Редактирование с сохраненным промтом - используем его
+      const cleanPrompt = simpleCleanHtml(initialPrompt);
+      setPrompt(cleanPrompt);
+      setGeneratedPrompt(cleanPrompt);
+      console.log('Использован сохраненный промт из БД:', cleanPrompt.substring(0, 100) + '...');
+    } else if (originalContent) {
+      // Используем originalContent как промпт
+      const cleanPrompt = simpleCleanHtml(originalContent);
+      setPrompt(cleanPrompt);
+      setGeneratedPrompt(cleanPrompt);
+      console.log('Использован оригинальный контент как промпт:', cleanPrompt.substring(0, 100) + '...');
     } else {
-      contentToUse = "";
-      contentSource = "none";
-      console.log('⚠️ Контент не найден ни в одном из источников, поле будет пустым');
+      // Либо новый контент, либо редактирование без промта - в любом случае сбрасываем
+      setPrompt("");
+      setGeneratedPrompt("");
+      
+      if (!contentId) {
+        console.log('Создание нового контента - промт сброшен');
+      } else if (initialContent) {
+        console.log('Редактирование без промта - подготовлен контент для генерации нового промта');
+      } else {
+        console.log('Сброс промта - новый пустой промт для нового редактирования');
+      }
     }
     
-    // Очищаем теги из контента
-    const cleanedContent = simpleCleanHtml(contentToUse);
-    setContent(cleanedContent);
-    console.log(`📝 Установлен финальный контент из источника [${contentSource}]:`, 
-      cleanedContent ? (cleanedContent.substring(0, 50) + '...') : 'пустая строка');
+    // Обрабатываем initialContent, который может быть строкой или объектом
+    if (initialContent) {
+      let contentText = '';
+      
+      // Если initialContent - объект, извлекаем текст из поля content
+      if (typeof initialContent === 'object' && initialContent !== null) {
+        const contentItem = initialContent as ContentItem;
+        contentText = contentItem.content || '';
+      } else if (typeof initialContent === 'string') {
+        contentText = initialContent;
+      }
+      
+      // Очищаем теги из начального контента
+      const cleanedContent = simpleCleanHtml(contentText);
+      setContent(cleanedContent);
+      console.log('Установлен контент для текущего поста:', cleanedContent.substring(0, 100) + '...');
+    } else {
+      // Сбрасываем контент если его нет
+      setContent("");
+    }
     
-    // Всегда открываем вкладку прямого промта (как просил пользователь)
-    // Это позволяет сразу получить доступ к полному редактору без промежуточного шага
-    setActiveTab("prompt");
-    console.log('Выбрана вкладка прямого промта (по запросу пользователя)');
+    // Выбираем активную вкладку в зависимости от данных
+    if (initialPrompt) {
+      // Если есть промт, переключаемся на вкладку прямого промта
+      setActiveTab("prompt");
+      console.log('Выбрана вкладка прямого промта, так как есть сохраненный промт');
+      
+      // Дополнительный лог для отладки
+      console.log(`Используем готовый промт из текущего поста: contentId=${contentId}`);
+    } else if (initialContent) {
+      // Если нет промта, но есть контент
+      setActiveTab("social"); // Переключаемся на вкладку социальных сетей
+      console.log('Выбрана вкладка для генерации на основе текста');
+    } else {
+      // Если вообще нет данных
+      setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
+      console.log('Выбрана вкладка прямого промта (по умолчанию)');
+    }
     
-  }, [contentId, initialContent, initialPrompt, contentText, promptText]); // Добавляем зависимость от всех важных параметров
+  }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от всех важных параметров
   
   // При монтировании компонента загружаем доступные модели FAL.AI
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        // ИСПРАВЛЕНИЕ ДУБЛИРОВАНИЯ ПУТИ API - был '/api/api/fal-ai-models', меняем на '/api/fal-ai-models'
         // Добавляем случайный параметр для предотвращения кеширования
-        console.log('Запрос списка моделей FAL.AI без дублирования /api/');
         const response = await api.get('/api/fal-ai-models?nocache=' + Date.now());
-        
-        console.log('Ответ сервера для моделей:', {
-          status: response.status,
-          contentType: response.headers?.['content-type'] || 'не указан',
-          isHTML: response.data?.toString().includes('<!DOCTYPE html>')
-        });
-        
         if (response.data?.success && response.data?.models) {
           console.log('Загружены модели для генерации:', response.data.models);
           
@@ -300,16 +247,9 @@ export function ImageGenerationDialog({
           });
           
           setAvailableModels(response.data.models);
-        } else {
-          // Если список моделей не получен, используем модели по умолчанию
-          console.warn('Не удалось получить список моделей от сервера, используем список по умолчанию');
-          setAvailableModels(DEFAULT_MODELS);
         }
       } catch (error) {
         console.error('Ошибка при получении списка моделей:', error);
-        // В случае ошибки используем список по умолчанию
-        console.log('Устанавливаем список моделей по умолчанию из-за ошибки');
-        setAvailableModels(DEFAULT_MODELS);
       }
     };
 
@@ -351,13 +291,7 @@ export function ImageGenerationDialog({
         
         // Генерируем промт через DeepSeek напрямую из русского текста
         // DeepSeek сам переведет и преобразует текст в промт для изображения
-        console.log("Отправляем запрос на генерацию промта с параметрами:", {
-          content: cleanedText.length > 100 ? cleanedText.substring(0, 100) + '...' : cleanedText,
-          keywordsCount: keywords.length
-        });
-        
-        // ИСПРАВЛЕНИЕ: используем правильный путь к API
-        const response = await api.post("/api/generate-image-prompt", {
+        const response = await api.post("/generate-image-prompt", {
           content: cleanedText, // Отправляем оригинальный русский текст
           keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
         });
@@ -479,7 +413,7 @@ export function ImageGenerationDialog({
       }
       
       console.log('Переводим промт на английский для улучшения качества генерации');
-      const response = await api.post('/api/translate-to-english', { text: cleanedText });
+      const response = await api.post('/translate-to-english', { text: cleanedText });
       
       if (response.data?.success && response.data?.translatedText) {
         console.log('Промт переведен:', response.data.translatedText);
@@ -507,12 +441,11 @@ export function ImageGenerationDialog({
       console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
       
       try {
-        // Используем специальный API-маршрут для обновления контента вместо прямого вызова Directus
-        console.log('Отправляем запрос PATCH к /api/publish/update-content/' + contentId);
+        // Добавляем детальное логирование запроса
+        console.log('Отправляем запрос PATCH к /campaign-content/' + contentId);
         console.log('Данные запроса:', { prompt: promptText });
         
-        // Используем специальный маршрут publish/update-content который обновит свойство prompt
-        const response = await api.patch(`/api/publish/update-content/${contentId}`, {
+        const response = await api.patch(`/campaign-content/${contentId}`, {
           prompt: promptText
         });
         
@@ -520,11 +453,11 @@ export function ImageGenerationDialog({
         console.log('Ответ от сервера:', {
           status: response.status,
           statusText: response.statusText,
-          data: typeof response.data === 'string' ? response.data.substring(0, 100) + '...' : response.data
+          data: response.data
         });
         
-        if (response.status === 200) {
-          console.log('✅ Промт успешно сохранен в базе данных через API');
+        if (response.data && response.status === 200) {
+          console.log('✅ Промт успешно сохранен в базе данных');
           return true;
         } else {
           console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
@@ -676,9 +609,7 @@ export function ImageGenerationDialog({
             
             // Генерируем промт через DeepSeek напрямую из русского текста
             // DeepSeek сам переведет и преобразует текст в промт для изображения
-            console.log("Отправляем запрос на генерацию промта с текстом:", cleanedText.substring(0, 100) + "...");
-            
-            const response = await api.post("/api/generate-image-prompt", {
+            const response = await api.post("/generate-image-prompt", {
               content: cleanedText, // Отправляем оригинальный русский текст
               keywords: keywords || [] // Добавляем извлеченные ключевые слова для улучшения релевантности
             });
@@ -796,7 +727,7 @@ export function ImageGenerationDialog({
       
       // Устанавливаем увеличенный таймаут для запроса
       try {
-        const response = await api.post("/api/generate-image", requestData, {
+        const response = await api.post("/generate-image", requestData, {
           timeout: 300000, // 5 минут таймаут
           headers: {
             // Дополнительно передаем userId в заголовке
@@ -1011,17 +942,7 @@ export function ImageGenerationDialog({
   };
 
   return (
-    <DialogContent 
-      className="sm:max-w-[600px] max-h-[90vh] overflow-auto" 
-      onPointerDownOutside={(e) => {
-        // Предотвращаем закрытие диалога при клике внутри скроллируемой области
-        e.preventDefault();
-      }}
-      // Отключаем все обработчики событий, которые могут мешать скроллу
-      onScroll={(e) => {
-        e.stopPropagation();
-      }}
-    >
+    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображений</DialogTitle>
         <DialogDescription className="text-xs text-muted-foreground mt-1">
@@ -1084,9 +1005,11 @@ export function ImageGenerationDialog({
         // При переключении вкладок нужно сохранять промт для всех вкладок
         setActiveTab(value);
         
-        // Отключаем автоматическую подстановку промта при переключении вкладок
-        // Пользователь сам введет нужный промт
-        console.log("Переключение на вкладку:", value);
+        // При переключении на вкладку произвольного запроса, если есть сгенерированный промт, устанавливаем его
+        if (value === "prompt" && generatedPrompt && !prompt) {
+          setPrompt(generatedPrompt);
+          console.log("Установлен сгенерированный промт при переключении на вкладку произвольного запроса:", generatedPrompt.substring(0, 100) + "...");
+        }
       }} className="w-full">
         <TabsList className="grid grid-cols-2 mb-2">
           <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
@@ -1176,11 +1099,6 @@ export function ImageGenerationDialog({
               placeholder="Введите контент поста для генерации изображения..."
               className="min-h-[100px]"
             />
-            {!content && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Здесь должен отображаться текст контента для генерации промта
-              </p>
-            )}
           </div>
           
           <div className="flex justify-between items-center">
@@ -1278,19 +1196,9 @@ export function ImageGenerationDialog({
       
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
-        <div className="mt-4 space-y-4 overflow-visible">
+        <div className="mt-4 space-y-4">
           <h3 className="text-base font-semibold">Сгенерированные изображения</h3>
-          <div 
-            className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`} 
-            onClick={(e) => e.stopPropagation()}
-            onWheel={(e) => {
-              // Предотвращаем закрытие диалога при прокрутке
-              e.stopPropagation();
-            }}
-            onScroll={(e) => {
-              // Предотвращаем дефолтные события скролла
-              e.stopPropagation();
-            }}>
+          <div className={`grid ${generatedImages.length > 2 ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
             {generatedImages.map((imageUrl, index) => (
               <div 
                 key={index}

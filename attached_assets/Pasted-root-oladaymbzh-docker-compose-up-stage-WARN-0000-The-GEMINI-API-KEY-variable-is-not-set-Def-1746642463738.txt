@@ -1,0 +1,127 @@
+root@oladaymbzh:~# docker-compose up stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Running 1/1
+ ✔ Container root-stage-1  Recreated                                                                                                                                                                        0.2s
+Attaching to stage-1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642450153:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642450153:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642450153:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642450153:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1 exited with code 1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642451078:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642451078:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642451078:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642451078:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642452092:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642452092:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642452092:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642452092:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642453286:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642453286:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642453286:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642453286:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642454878:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642454878:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642454878:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642454878:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |

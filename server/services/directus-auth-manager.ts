@@ -357,49 +357,6 @@ export class DirectusAuthManager {
   }
 
   /**
-   * Принудительно обновляет токен авторизации администратора
-   * @returns Промис с новой сессией администратора или null
-   */
-  async refreshAdminAuth(): Promise<{ token: string; id: string } | null> {
-    try {
-      // Получаем данные для повторной авторизации администратора из окружения
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      
-      if (!email || !password) {
-        log('Missing DIRECTUS_ADMIN_EMAIL or DIRECTUS_ADMIN_PASSWORD environment variables', this.logPrefix);
-        return null;
-      }
-      
-      log(`Force refreshing admin session (${email})`, this.logPrefix);
-      
-      const authResult = await directusCrud.login(email, password);
-      
-      // Получаем информацию о пользователе администратора
-      const adminUser = await directusCrud.getCurrentUser({
-        authToken: authResult.access_token
-      });
-      
-      // Сохраняем обновленную сессию в кэше
-      this.addAdminSession({
-        id: adminUser.id,
-        token: authResult.access_token,
-        email: adminUser.email
-      });
-      
-      log(`Admin session refreshed successfully (${adminUser.id})`, this.logPrefix);
-      
-      return {
-        token: authResult.access_token,
-        id: adminUser.id
-      };
-    } catch (error) {
-      log(`Error refreshing admin session: ${(error as Error).message}`, this.logPrefix);
-      return null;
-    }
-  }
-
-  /**
    * Останавливает интервал обновления сессий
    */
   dispose(): void {

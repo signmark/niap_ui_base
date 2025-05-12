@@ -8,126 +8,6 @@ import { BaseSocialService } from './base-service';
  */
 export class VkService extends BaseSocialService {
   /**
-   * Публикует сторис в ВКонтакте
-   * @param content Контент для публикации
-   * @param vkSettings Настройки ВКонтакте
-   * @returns Результат публикации
-   */
-  async publishStory(
-    content: CampaignContent, 
-    vkSettings: SocialMediaSettings
-  ): Promise<SocialPublication> {
-    try {
-      if (!vkSettings.token || !vkSettings.groupId) {
-        log(`Ошибка публикации сторис в VK: отсутствуют настройки. Token: ${vkSettings.token ? 'задан' : 'отсутствует'}, GroupID: ${vkSettings.groupId ? 'задан' : 'отсутствует'}`, 'social-publishing');
-        return {
-          platform: 'vk',
-          status: 'failed',
-          error: 'Отсутствуют настройки подключения к ВКонтакте',
-          publishedAt: null,
-        };
-      }
-
-      const token = vkSettings.token;
-      const groupId = parseInt(vkSettings.groupId, 10);
-      const ownerId = `-${groupId}`; // Групповые ID в VK отрицательные
-
-      log(`Подготовка сторис в VK: группа ${groupId}, owner_id = ${ownerId}`, 'social-publishing');
-      
-      // Проверяем, что у нас есть изображение или видео для сторис
-      if (!content.imageUrl && !content.videoUrl) {
-        return {
-          platform: 'vk',
-          status: 'failed',
-          error: 'Для публикации сторис необходимо изображение или видео',
-          publishedAt: null,
-        };
-      }
-
-      // Для сторис в ВК используем метод stories.post
-      const apiUrl = 'https://api.vk.com/method/stories.post';
-      
-      // Подготавливаем параметры в зависимости от типа медиа
-      const params: any = {
-        access_token: token,
-        v: '5.131',
-        group_id: groupId,
-        link_text: 'Подробнее',
-        link_url: vkSettings.siteUrl || null,
-      };
-
-      // Добавляем фото или видео
-      if (content.videoUrl) {
-        // Для видео-сторис
-        log(`Подготовка видео для сторис в VK: ${content.videoUrl}`, 'social-publishing');
-        params.video_url = content.videoUrl;
-        params.add_to_news = 1; // Добавить в новости
-        
-        // Опционально добавляем текст, если он есть
-        if (content.content) {
-          const formattedText = this.formatTextForVk(content.content);
-          if (formattedText.length > 0) {
-            params.caption = formattedText.slice(0, 2200); // Ограничение для подписи сторис
-          }
-        }
-      } else if (content.imageUrl) {
-        // Для фото-сторис
-        log(`Подготовка изображения для сторис в VK: ${content.imageUrl}`, 'social-publishing');
-        params.photo_url = content.imageUrl;
-        params.add_to_news = 1;
-        
-        // Опционально добавляем текст, если он есть
-        if (content.content) {
-          const formattedText = this.formatTextForVk(content.content);
-          if (formattedText.length > 0) {
-            params.caption = formattedText.slice(0, 2200);
-          }
-        }
-      }
-
-      // Отправляем запрос на публикацию сторис
-      const response = await axios.post(apiUrl, null, { params });
-      
-      if (response.data && response.data.response && response.data.response.id) {
-        const storyId = response.data.response.id;
-        const storyUrl = `https://vk.com/wall${ownerId}_${storyId}`;
-        
-        log(`Сторис успешно опубликован в VK: ${storyUrl}`, 'social-publishing');
-        
-        return {
-          platform: 'vk',
-          status: 'published',
-          postId: storyId.toString(),
-          postUrl: storyUrl,
-          publishedAt: new Date(),
-        };
-      } else {
-        const errorMsg = response.data && response.data.error 
-          ? `${response.data.error.error_code}: ${response.data.error.error_msg}`
-          : 'Неизвестная ошибка';
-          
-        log(`Ошибка при публикации сторис в VK: ${errorMsg}`, 'social-publishing');
-        
-        return {
-          platform: 'vk',
-          status: 'failed',
-          error: errorMsg,
-          publishedAt: null,
-        };
-      }
-    } catch (error: any) {
-      log(`Исключение при публикации сторис в VK: ${error.message}`, 'social-publishing');
-      
-      return {
-        platform: 'vk',
-        status: 'failed',
-        error: error.message,
-        publishedAt: null,
-      };
-    }
-  }
-
-  /**
    * Форматирует текст для публикации в ВКонтакте
    * @param content Исходный текст контента
    * @returns Отформатированный текст для ВКонтакте
@@ -609,14 +489,7 @@ export class VkService extends BaseSocialService {
         error: 'Отсутствуют настройки для ВКонтакте (токен или ID группы). Убедитесь, что настройки заданы в кампании.'
       };
     }
-    
-    // Проверяем тип контента - если это сторис, используем специальный метод
-    if (content.contentType === 'stories') {
-      log(`VkService.publishToPlatform: Обнаружен контент типа 'stories', используем метод publishStory`, 'social-publishing');
-      return this.publishStory(content, vkSettings);
-    }
-    
-    // Для всех остальных типов контента используем стандартный метод
+
     return this.publishToVk(content, vkSettings);
   }
 }

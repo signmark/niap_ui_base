@@ -54,7 +54,6 @@ export interface IStorage {
   updateCampaignContent(id: string, updates: Partial<InsertCampaignContent>): Promise<CampaignContent>;
   deleteCampaignContent(id: string): Promise<void>;
   getScheduledContent(userId: string, campaignId?: string): Promise<CampaignContent[]>;
-  updateContentPlatformStatus(contentId: string, platform: string, result: any): Promise<CampaignContent>;
   
   // Business Questionnaire
   getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
@@ -1712,83 +1711,6 @@ export class DatabaseStorage implements IStorage {
       }
       
       throw new Error('Failed to update campaign keyword');
-    }
-  }
-  
-  /**
-   * Обновляет статус социальной платформы для контента
-   * @param contentId ID контента
-   * @param platform Платформа для обновления
-   * @param result Результат публикации
-   * @returns Обновленный контент
-   */
-  async updateContentPlatformStatus(contentId: string, platform: string, result: any): Promise<CampaignContent> {
-    try {
-      console.log(`[DatabaseStorage] Обновление статуса платформы ${platform} для контента ${contentId}`);
-      
-      // Получаем текущий контент
-      const content = await this.getCampaignContentById(contentId);
-      
-      if (!content) {
-        throw new Error(`Контент с ID ${contentId} не найден`);
-      }
-      
-      // Импортируем directusAuthManager для получения токена администратора
-      const directusAuthManager = await import('./services/directus-auth-manager').then(m => m.directusAuthManager);
-      let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
-      const sessions = directusAuthManager.getAllActiveSessions();
-      
-      if (sessions.length > 0) {
-        adminToken = sessions[0].token;
-      }
-      
-      // Создаем копию объекта socialPlatforms или создаем новый, если его нет
-      const socialPlatforms = { ...content.socialPlatforms } || {};
-      
-      // Обновляем информацию о платформе
-      socialPlatforms[platform] = {
-        ...socialPlatforms[platform],
-        platform,
-        status: 'published',
-        publishedAt: new Date(),
-        ...result
-      };
-      
-      console.log(`[DatabaseStorage] Обновленные данные платформы ${platform}: ${JSON.stringify(socialPlatforms[platform])}`);
-      
-      // Обновляем контент с новыми статусами платформ
-      const updatedContent = await this.updateCampaignContent(
-        contentId,
-        { socialPlatforms },
-        adminToken
-      );
-      
-      // Проверяем статусы всех выбранных платформ
-      const selectedPlatforms = Object.entries(socialPlatforms)
-        .filter(([_, data]: [string, any]) => data.selected === true)
-        .map(([platform]) => platform);
-        
-      const publishedSelectedPlatforms = Object.entries(socialPlatforms)
-        .filter(([_, data]: [string, any]) => data.selected === true && data.status === 'published')
-        .map(([platform]) => platform);
-      
-      console.log(`[DatabaseStorage] Проверка статусов платформ: выбрано=${selectedPlatforms.length}, опубликовано=${publishedSelectedPlatforms.length}`);
-      
-      // Если все выбранные платформы опубликованы, обновляем статус контента на published
-      if (selectedPlatforms.length > 0 && publishedSelectedPlatforms.length === selectedPlatforms.length) {
-        console.log(`[DatabaseStorage] Все выбранные платформы опубликованы, обновляем статус контента на 'published'`);
-        
-        await this.updateCampaignContent(
-          contentId,
-          { status: 'published', publishedAt: new Date() },
-          adminToken
-        );
-      }
-      
-      return updatedContent;
-    } catch (error) {
-      console.error(`[DatabaseStorage] Ошибка при обновлении статуса платформы для контента ${contentId}:`, error);
-      throw new Error(`Не удалось обновить статус платформы: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
     }
   }
 }

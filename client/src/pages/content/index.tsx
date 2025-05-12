@@ -48,7 +48,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { AdditionalImagesUploader } from "@/components/AdditionalImagesUploader";
 import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
-import { AdditionalMediaUploader, MediaItem } from "@/components/AdditionalMediaUploader";
+import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { 
   Popover, 
@@ -1390,7 +1390,6 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
-                  <SelectItem value="stories">Сторис</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1469,47 +1468,6 @@ export default function ContentPage() {
                   onChange={(videos) => setNewContent({...newContent, additionalVideos: videos})}
                   label="Дополнительные видео"
                 />
-              </div>
-            )}
-            
-            {/* Медиа для сторис */}
-            {newContent.contentType === "stories" && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Медиа для сторис</Label>
-                  <div className="rounded-md border p-4 bg-muted/20">
-                    <div className="mb-4 text-sm text-muted-foreground">
-                      <span className="font-semibold text-destructive">Важно:</span> Для публикации сторис необходимо загрузить хотя бы одно изображение или видео.
-                    </div>
-                    <AdditionalMediaUploader
-                      value={newContent.additionalImages || []}
-                      onChange={(media) => {
-                        // Проверяем формат текущего additionalImages
-                        // Если это массив строк, то и новые данные преобразуем в массив строк
-                        const isStringArray = Array.isArray(newContent.additionalImages) && 
-                          newContent.additionalImages.length > 0 && 
-                          typeof newContent.additionalImages[0] === 'string';
-                        
-                        let updatedAdditionalImages;
-                        if (isStringArray && !Array.isArray(media)) {
-                          // Если был массив строк, но вернулся объект MediaItem[]
-                          const stringUrls = (media as any as MediaItem[]).map(item => item.url);
-                          updatedAdditionalImages = stringUrls;
-                        } else {
-                          // Используем как есть
-                          updatedAdditionalImages = media;
-                        }
-                        
-                        setNewContent({...newContent, additionalImages: updatedAdditionalImages});
-                      }}
-                      title="Медиа для сторис"
-                      hideTitle
-                      contentText={newContent.content || ""}
-                      contentId={newContent.id}
-                      campaignId={newContent.campaignId}
-                    />
-                  </div>
-                </div>
               </div>
             )}
             
@@ -1709,7 +1667,6 @@ export default function ContentPage() {
                     <SelectItem value="text-image">Текст с изображением</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="video-text">Видео с текстом</SelectItem>
-                    <SelectItem value="stories">Сторис</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1803,46 +1760,7 @@ export default function ContentPage() {
                 </div>
               )}
               
-              {/* Медиа для сторис */}
-              {currentContent.contentType === "stories" && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Медиа для сторис</Label>
-                    <div className="rounded-md border p-4 bg-muted/20">
-                      <div className="mb-4 text-sm text-muted-foreground">
-                        <span className="font-semibold text-destructive">Важно:</span> Для публикации сторис необходимо загрузить хотя бы одно изображение или видео.
-                      </div>
-                      <AdditionalMediaUploader
-                        value={currentContent.additionalImages || []}
-                        onChange={(media) => {
-                          // Проверяем формат текущего additionalImages
-                          // Если это массив строк, то и новые данные преобразуем в массив строк
-                          const isStringArray = Array.isArray(currentContent.additionalImages) && 
-                            currentContent.additionalImages.length > 0 && 
-                            typeof currentContent.additionalImages[0] === 'string';
-                          
-                          let updatedContent;
-                          if (isStringArray && !Array.isArray(media)) {
-                            // Если был массив строк, но вернулся объект MediaItem[]
-                            const stringUrls = (media as any as MediaItem[]).map(item => item.url);
-                            updatedContent = {...currentContent, additionalImages: stringUrls};
-                          } else {
-                            // Используем как есть
-                            updatedContent = {...currentContent, additionalImages: media};
-                          }
-                          
-                          setCurrentContentSafe(updatedContent);
-                        }}
-                        title="Медиа для сторис"
-                        hideTitle
-                        contentText={currentContent.content || ""}
-                        contentId={currentContent.id}
-                        campaignId={currentContent.campaignId}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Скрыли универсальное поле additional_media */}
               
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">
@@ -2232,11 +2150,8 @@ export default function ContentPage() {
         <ImageGenerationDialog 
           campaignId={selectedCampaignId}
           contentId={currentContent?.id} // Передаем ID контента, если редактируем
-          // Передаем весь объект контента, а не только текст
-          initialContent={currentContent || newContent}
-          // ПРЯМО ПЕРЕДАЕМ ЗНАЧЕНИЯ ПОЛЕЙ content и prompt для отладки
-          contentText={currentContent ? currentContent.content : newContent.content}
-          promptText={currentContent ? (currentContent.prompt || "") : (newContent.prompt || "")}
+          // Корректно передаем контент в зависимости от режима (редактирование или создание)
+          initialContent={currentContent ? currentContent.content : newContent.content}
           // Передаем промт в зависимости от режима (редактирование, создание или доп.изображение)
           initialPrompt={
             currentContent ? (currentContent.prompt || "") :
