@@ -578,14 +578,31 @@ export default function ContentPage() {
             throw new Error('Не удалось получить данные контента для публикации');
           }
           
-          // Проверяем наличие медиа для публикации сторис в Instagram
+          // Расширенная проверка наличия медиа для публикации сторис в Instagram
           const hasImageUrl = Boolean(currentContentData.imageUrl);
           const hasVideoUrl = Boolean(currentContentData.videoUrl);
           
-          // Проверяем наличие дополнительных медиа
-          const additionalMedia = currentContentData.additionalImages || 
-                                 currentContentData.additional_images || 
-                                 currentContentData.additionalMedia;
+          // Подробное логирование для диагностики
+          console.log('🔍 Проверка медиа для Instagram Stories:');
+          console.log(`- Основное изображение (imageUrl): ${hasImageUrl ? 'НАЙДЕНО' : 'отсутствует'}`);
+          console.log(`- Основное видео (videoUrl): ${hasVideoUrl ? 'НАЙДЕНО' : 'отсутствует'}`);
+          
+          // Проверяем наличие дополнительных медиа во всех возможных полях
+          const additionalImagesArray = currentContentData.additionalImages || [];
+          const additionalImagesWithUnderscoreArray = currentContentData.additional_images || [];
+          const additionalMediaArray = currentContentData.additionalMedia || [];
+          
+          // Объединяем все массивы для проверки
+          const additionalMedia = [
+            ...(Array.isArray(additionalImagesArray) ? additionalImagesArray : []),
+            ...(Array.isArray(additionalImagesWithUnderscoreArray) ? additionalImagesWithUnderscoreArray : []),
+            ...(Array.isArray(additionalMediaArray) ? additionalMediaArray : [])
+          ];
+          
+          console.log(`- Дополнительные изображения (additionalImages): ${additionalImagesArray.length} элементов`);
+          console.log(`- Дополнительные изображения (additional_images): ${additionalImagesWithUnderscoreArray.length} элементов`);
+          console.log(`- Дополнительные медиа (additionalMedia): ${additionalMediaArray.length} элементов`);
+          console.log(`- Всего объединенных элементов: ${additionalMedia.length}`);
           
           // Детальная проверка наличия медиа в массиве
           let hasValidMedia = false;

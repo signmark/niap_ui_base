@@ -206,10 +206,22 @@ export class InstagramService extends BaseSocialService {
        * @returns 'VIDEO' или 'IMAGE' в зависимости от определения типа
        */
       function determineMediaType(mediaItem: string | any): string {
-        // Логируем входные данные для начала
-        log(`[Instagram Debug] Определение типа для: ${typeof mediaItem === 'string' ? 
-          mediaItem.substring(0, 30) + '...' : 
-          (typeof mediaItem === 'object' ? 'Объект' : typeof mediaItem)}`, 'instagram');
+        // Более подробное логирование входных данных с дополнительной информацией
+        if (typeof mediaItem === 'string') {
+          log(`[Instagram Debug] Определение типа для строки (${mediaItem.substring(0, 30)}...)`, 'instagram');
+        } else if (typeof mediaItem === 'object' && mediaItem !== null) {
+          log(`[Instagram Debug] Определение типа для объекта: ${JSON.stringify(mediaItem).substring(0, 100)}...`, 'instagram');
+          
+          // Если объект содержит тип медиа, выведем его
+          if (mediaItem.type) {
+            log(`[Instagram Debug] Объект содержит явно указанный тип: ${mediaItem.type}`, 'instagram');
+          }
+          
+          // Выведем ключи объекта для анализа
+          log(`[Instagram Debug] Ключи объекта: ${Object.keys(mediaItem).join(', ')}`, 'instagram');
+        } else {
+          log(`[Instagram Debug] Определение типа для: ${typeof mediaItem}`, 'instagram');
+        }
         
         // Обработка null или undefined значений
         if (mediaItem === null || mediaItem === undefined) {
