@@ -636,22 +636,46 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`[DatabaseStorage] Получение кампании по ID: ${campaignId}`);
       
-      // Используем напрямую directusApi, чтобы убедиться, что мы получим все поля, включая social_media_settings
-      const authToken = token || process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      // Используем постоянный токен, указанный пользователем
+      const authToken = token || process.env.DIRECTUS_ADMIN_TOKEN || 'wj9Z9srRD0QVROTOC3BNSfY97yKKu-vF';
       
-      const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+      // Сначала пробуем получить из таблицы campaigns
+      try {
+        const response = await directusApi.get(`/items/campaigns`, {
+          params: {
+            filter: { id: { _eq: campaignId } }
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+          console.log(`[DatabaseStorage] Найдена кампания в таблице campaigns: ${response.data.data[0].name || 'без имени'}`);
+          return response.data.data[0];
+        }
+      } catch (error) {
+        console.log(`[DatabaseStorage] Ошибка при поиске в таблице campaigns: ${error.message}`);
+      }
+      
+      // Если не найдено, ищем в user_campaigns
+      const response = await directusApi.get(`/items/user_campaigns`, {
+        params: {
+          filter: { campaign_id: { _eq: campaignId } }
+        },
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
       });
       
-      if (!response.data?.data) {
-        console.error(`[DatabaseStorage] Кампания с ID ${campaignId} не найдена`);
+      if (!response.data?.data || (Array.isArray(response.data.data) && response.data.data.length === 0)) {
+        console.error(`[DatabaseStorage] Кампания с ID ${campaignId} не найдена в user_campaigns`);
         return null;
       }
       
-      const item = response.data.data;
-      console.log(`[DatabaseStorage] Получена кампания: ${item.name}`);
+      // Обрабатываем случай, когда API возвращает массив (поиск по фильтру)
+      const item = Array.isArray(response.data.data) ? response.data.data[0] : response.data.data;
+      console.log(`[DatabaseStorage] Получена кампания: ${item.name || 'без имени'}`);
       
       return item;
     } catch (error) {

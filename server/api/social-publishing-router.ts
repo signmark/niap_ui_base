@@ -444,14 +444,19 @@ router.post('/publish', authMiddleware, async (req, res) => {
               
               log(`[Social Publishing] Запрос кампании по campaign_id = ${content.campaignId} с токеном пользователя`);
               
-              const response = await directusApi.get(`/items/user_campaigns`, {
+              // Проверяем таблицу campaigns вместо user_campaigns
+              const response = await directusApi.get(`/items/campaigns`, {
                 params: {
-                  filter: { campaign_id: { _eq: content.campaignId } }
+                  filter: { id: { _eq: content.campaignId } }
                 },
                 headers: {
                   'Authorization': req.headers.authorization || `Bearer ${adminToken}`
                 }
               });
+              
+              // Дополнительное логирование
+              log(`[Social Publishing] API Response campaignId=${content.campaignId}: ${JSON.stringify(response.data?.data || "пустой ответ")}`);
+              
               
               // Проверяем, что в ответе есть массив данных (так как мы теперь запрашиваем список с фильтром)
               if (response.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
