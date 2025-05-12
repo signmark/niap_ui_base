@@ -51,7 +51,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       }
       
       if (!campaignId) {
-        log('Отсутствует ID кампании для публикации', 'error', 'instagram-stories');
+        log('Отсутствует ID кампании для публикации');
         return res.status(400).json({
           success: false,
           error: 'Требуется ID кампании'
@@ -59,7 +59,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       }
       
       // Получаем реквизиты публикации из кампании
-      log(`Получение настроек Instagram из кампании ID: ${campaignId}`, 'info', 'instagram-stories');
+      log(`Получение настроек Instagram из кампании ID: ${campaignId}`);
       
       try {
         // Запрос к глобальному объекту directusApiManager для получения настроек кампании
@@ -68,7 +68,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         });
         
         if (!campaign) {
-          log(`Кампания с ID ${campaignId} не найдена`, 'error', 'instagram-stories');
+          log(`Кампания с ID ${campaignId} не найдена`);
           return res.status(404).json({
             success: false,
             error: 'Кампания не найдена'
@@ -79,7 +79,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         const instagramBusinessAccountId = campaign.instagram_business_account_id;
         
         if (!instagramToken || !instagramBusinessAccountId) {
-          log('В настройках кампании отсутствуют учетные данные Instagram API', 'error', 'instagram-stories');
+          log('В настройках кампании отсутствуют учетные данные Instagram API');
           return res.status(400).json({
             success: false,
             error: 'В настройках кампании отсутствуют учетные данные Instagram API'
@@ -100,14 +100,14 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
           result
         });
       } catch (campaignError) {
-        log(`Ошибка при получении настроек кампании: ${campaignError}`, 'error', 'instagram-stories');
+        log(`Ошибка при получении настроек кампании: ${campaignError}`);
         return res.status(500).json({
           success: false,
           error: `Не удалось получить настройки кампании: ${campaignError}`
         });
       }
     } catch (error) {
-      log(`Ошибка при публикации Instagram Stories: ${error}`, 'error', 'instagram-stories');
+      log(`Ошибка при публикации Instagram Stories: ${error}`);
       return res.status(500).json({
         success: false,
         error: `Не удалось опубликовать историю: ${error}`
@@ -130,7 +130,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       const { contentId, campaignId } = req.body;
       
       if (!contentId) {
-        log('Отсутствует ID контента для публикации', 'error', 'instagram-stories');
+        log('Отсутствует ID контента для публикации');
         return res.status(400).json({
           success: false,
           error: 'Требуется ID контента'
@@ -138,7 +138,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       }
       
       if (!campaignId) {
-        log('Отсутствует ID кампании для публикации', 'error', 'instagram-stories');
+        log('Отсутствует ID кампании для публикации');
         return res.status(400).json({
           success: false,
           error: 'Требуется ID кампании'
@@ -146,7 +146,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       }
       
       // Получаем реквизиты публикации из кампании
-      log(`Получение настроек Instagram из кампании ID: ${campaignId}`, 'info', 'instagram-stories');
+      log(`Получение настроек Instagram из кампании ID: ${campaignId}`);
       
       try {
         // Запрос к глобальному объекту directusApiManager для получения настроек кампании
@@ -155,7 +155,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         });
         
         if (!campaign) {
-          log(`Кампания с ID ${campaignId} не найдена`, 'error', 'instagram-stories');
+          log(`Кампания с ID ${campaignId} не найдена`);
           return res.status(404).json({
             success: false,
             error: 'Кампания не найдена'
@@ -166,7 +166,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         const instagramBusinessAccountId = campaign.instagram_business_account_id;
         
         if (!instagramToken || !instagramBusinessAccountId) {
-          log('В настройках кампании отсутствуют учетные данные Instagram API', 'error', 'instagram-stories');
+          log('В настройках кампании отсутствуют учетные данные Instagram API');
           return res.status(400).json({
             success: false,
             error: 'В настройках кампании отсутствуют учетные данные Instagram API'
@@ -179,7 +179,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         });
         
         if (!content) {
-          log(`Контент с ID ${contentId} не найден`, 'error', 'instagram-stories');
+          log(`Контент с ID ${contentId} не найден`);
           return res.status(404).json({
             success: false,
             error: 'Контент не найден'
@@ -217,7 +217,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         
         // Если изображение не найдено
         if (!imageUrl) {
-          log(`Не удалось найти медиафайл для контента ID: ${contentId}`, 'error', 'instagram-stories');
+          log(`Не удалось найти медиафайл для контента ID: ${contentId}`);
           return res.status(400).json({
             success: false,
             error: 'Не удалось найти медиафайл для публикации'
@@ -244,7 +244,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         try {
           await global.directusApiManager.updateItem('campaign_content', contentId, updateData);
         } catch (updateError) {
-          log(`Ошибка при обновлении статуса контента: ${updateError}`, 'error', 'instagram-stories');
+          log(`Ошибка при обновлении статуса контента: ${updateError}`);
           // Ошибка обновления не должна прерывать выполнение, т.к. публикация уже произошла
         }
         
@@ -253,14 +253,14 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
           result
         });
       } catch (processingError) {
-        log(`Ошибка при обработке контента: ${processingError}`, 'error', 'instagram-stories');
+        log(`Ошибка при обработке контента: ${processingError}`);
         return res.status(500).json({
           success: false,
           error: `Не удалось обработать контент: ${processingError}`
         });
       }
     } catch (error) {
-      log(`Ошибка при публикации контента в Instagram Stories: ${error}`, 'error', 'instagram-stories');
+      log(`Ошибка при публикации контента в Instagram Stories: ${error}`);
       return res.status(500).json({
         success: false,
         error: `Не удалось опубликовать контент: ${error}`
@@ -308,7 +308,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         }
       });
     } catch (error) {
-      log(`Ошибка при получении настроек Instagram: ${error}`, 'error', 'instagram-stories');
+      log(`Ошибка при получении настроек Instagram: ${error}`);
       return res.status(500).json({
         success: false,
         error: `Не удалось получить настройки: ${error}`

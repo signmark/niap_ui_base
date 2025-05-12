@@ -23,7 +23,7 @@ export class InstagramStoriesService {
     this.token = token;
     this.businessAccountId = businessAccountId;
     
-    log('InstagramStoriesService: Сервис инициализирован', 'instagram');
+    log('InstagramStoriesService: Сервис инициализирован');
   }
   
   /**
@@ -42,25 +42,25 @@ export class InstagramStoriesService {
     error?: any;
   }> {
     try {
-      log(`InstagramStoriesService: Подготовка к публикации Instagram Stories`, 'instagram');
-      log(`InstagramStoriesService: Изображение: ${imageUrl}`, 'instagram');
+      log(`InstagramStoriesService: Подготовка к публикации Instagram Stories`);
+      log(`InstagramStoriesService: Изображение: ${imageUrl}`);
       
       if (!caption) {
         caption = generateRandomCaption();
       }
       
-      log(`InstagramStoriesService: Текст: "${caption}"`, 'instagram');
+      log(`InstagramStoriesService: Текст: "${caption}"`);
       
       // Шаг 1: Создание контейнера для медиа
       const mediaContainerId = await this.createMediaContainer(imageUrl, caption);
-      log(`InstagramStoriesService: Контейнер для медиа создан с ID: ${mediaContainerId}`, 'instagram');
+      log(`InstagramStoriesService: Контейнер для медиа создан с ID: ${mediaContainerId}`);
       
       // Шаг 2: Публикация истории
       const publishResult = await this.publishMedia(mediaContainerId);
       const storyId = publishResult.id;
       
-      log(`InstagramStoriesService: История успешно опубликована с ID: ${storyId}`, 'instagram');
-      log(`InstagramStoriesService: Полные данные ответа: ${JSON.stringify(publishResult)}`, 'instagram');
+      log(`InstagramStoriesService: История успешно опубликована с ID: ${storyId}`);
+      log(`InstagramStoriesService: Полные данные ответа: ${JSON.stringify(publishResult)}`);
       
       // Получаем дополнительную информацию о публикации, если она доступна
       const igUsername = this.getInstagramUsername();
@@ -183,11 +183,11 @@ export class InstagramStoriesService {
     try {
       // Выполняем дополнительный запрос для получения информации об аккаунте
       // Этот код можно расширить с реальным API запросом при необходимости
-      log(`InstagramStoriesService: Попытка определить имя пользователя по businessAccountId: ${this.businessAccountId}`, 'instagram');
+      log(`InstagramStoriesService: Попытка определить имя пользователя по businessAccountId: ${this.businessAccountId}`);
       
       // При необходимости здесь можно добавить запрос к Instagram API для получения username
     } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`, 'instagram', 'error');
+      log(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`);
     }
     
     // Используем значение по умолчанию как последний вариант
