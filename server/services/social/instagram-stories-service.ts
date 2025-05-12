@@ -68,8 +68,8 @@ export class InstagramStoriesService {
         storyUrl,
         mediaContainerId
       };
-    } catch (error) {
-      log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+    } catch (error: any) {
+      log.error(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram');
       return {
         success: false,
         error: error.message || error
@@ -111,8 +111,8 @@ export class InstagramStoriesService {
       
       // Возвращаем ID созданного контейнера
       return response.data.id;
-    } catch (error) {
-      log(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
+    } catch (error: any) {
+      log.error(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram');
       throw error;
     }
   }
@@ -144,7 +144,7 @@ export class InstagramStoriesService {
       
       return response.data;
     } catch (error: any) {
-      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'error');
+      log.error(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram');
       throw error;
     }
   }
