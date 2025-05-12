@@ -21,7 +21,8 @@ export class InstagramService extends BaseSocialService {
    */
   async publishStory(
     content: CampaignContent,
-    instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null }
+    instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null },
+    socialMediaSettings?: any
   ): Promise<SocialPublication> {
     try {
       // Проверяем наличие необходимых параметров

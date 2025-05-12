@@ -1479,11 +1479,12 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           // Проверяем настройки Instagram
           log(`[Social Publishing] Настройки campaignSettings: ${JSON.stringify(campaignSettings)}`, 'stories');
           
-          // Instagram может быть в корне настроек кампании или внутри socialSettings
-          const instagramSettings = campaignSettings.instagram || 
-                                    (campaignSettings.socialSettings && campaignSettings.socialSettings.instagram) || 
-                                    {};
+          // Доступ к полю social_media_settings в соответствии со структурой таблицы кампании
+          const socialMediaSettings = campaignSettings.social_media_settings || {};
+          log(`[Social Publishing] social_media_settings: ${JSON.stringify(socialMediaSettings)}`, 'stories');
           
+          // Получаем настройки Instagram из social_media_settings
+          const instagramSettings = socialMediaSettings.instagram || {};
           log(`[Social Publishing] instagram настройки: ${JSON.stringify(instagramSettings)}`, 'stories');
           
           // Получаем токен из настроек - проверяем оба возможных поля
@@ -1521,17 +1522,25 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
 
           // Получаем сервис Instagram для публикации сторис
           log(`[Social Publishing] Инициализация сервиса Instagram для публикации`, 'stories');
-          const { instagramService } = require('../services/social/instagram-service');
+          const { InstagramService } = require('../services/social/instagram-service');
           
-          // Адаптация настроек для instagramService
-          // Передаем настройки в правильной структуре, используя instagramSettings вместо вложенного пути
-          const socialSettings = { instagram: instagramSettings };
+          // Инициализируем сервис Instagram
+          const instagramService = new InstagramService();
           
           // Обратите внимание: для сторис должен использоваться специальный параметр media_type="STORIES"
-          log(`[Social Publishing] Вызов метода publishToPlatform в Instagram сервисе для сторис`, 'stories');
-          log(`[Social Publishing] Передаваемые настройки в сервис: ${JSON.stringify(socialSettings)}`, 'stories');
+          log(`[Social Publishing] Вызов метода publishStory в Instagram сервисе`, 'stories');
           
-          result = await instagramService.publishToPlatform(content, platform, socialSettings);
+          // Передаем настройки и social_media_settings для корректной публикации сторис
+          const instagramConfig = {
+            token: instToken,
+            accessToken: instagramSettings.accessToken,
+            businessAccountId: businessId
+          };
+          
+          log(`[Social Publishing] Передаваемые настройки в сервис: ${JSON.stringify(instagramConfig)}`, 'stories');
+          
+          // Используем метод publishStory, который специально создан для сторис
+          result = await instagramService.publishStory(content, instagramConfig, socialMediaSettings);
           log(`[Social Publishing] Результат публикации сторис в Instagram: ${JSON.stringify(result)}`, 'stories');
           break;
       }
