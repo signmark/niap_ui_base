@@ -14,7 +14,7 @@ import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
-import { registerInstagramStoriesRoutes } from './api/instagram-stories-router-fixed';
+import { registerInstagramStoriesRoutes } from './api/instagram-stories-router';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { initializeHeavyServices } from './optimize-startup';
 import { initUserActivityTracker } from './services/user-activity-tracker';

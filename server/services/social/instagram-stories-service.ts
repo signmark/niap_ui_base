@@ -38,7 +38,7 @@ export class InstagramStoriesService {
     mediaContainerId?: string;
     igUsername?: string;
     creationTime?: string;
-    instagramStoryId?: string; // Добавляем отдельное поле для ID истории
+    profileUrl?: string; // Добавляем поле для URL профиля
     error?: any;
   }> {
     try {
@@ -60,22 +60,22 @@ export class InstagramStoriesService {
       const igUsername = this.getInstagramUsername();
       const creationTime = new Date().toISOString();
       
-      // Сохраняем оригинальный ID истории в Instagram для дальнейшего использования
-      const instagramStoryId = storyId;
+      // ID истории в Instagram не может быть использован для создания прямых ссылок
+      // Вместо этого используем профиль пользователя
       
-      // Форматируем URL истории - для Instagram Stories нельзя получить прямую ссылку на конкретную историю,
-      // только на все истории пользователя
+      // Форматируем URL истории - для Instagram Stories доступна только ссылка на профиль
       const storyUrl = `https://www.instagram.com/stories/${igUsername}/`;
       
-      // Возвращаем результат с добавленным полем instagramStoryId
+      // Хотя мы сохраняем ID истории, важно понимать,
+      // что его нельзя использовать для создания прямой ссылки на конкретную историю
       return {
         success: true,
-        storyId,
-        storyUrl,
-        mediaContainerId,
-        igUsername,
-        creationTime,
-        instagramStoryId // Добавлен отдельный идентификатор для истории
+        storyId,                // ID для обратной совместимости
+        storyUrl,               // Ссылка на истории профиля
+        mediaContainerId,       // ID контейнера для отладки
+        igUsername,             // Имя пользователя Instagram
+        creationTime,           // Время создания
+        profileUrl: `https://www.instagram.com/${igUsername}/` // Ссылка на профиль для дополнительного использования
       };
     } catch (error: any) {
       log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`);

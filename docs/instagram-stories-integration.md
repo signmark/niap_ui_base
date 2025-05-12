@@ -1,128 +1,113 @@
-# Интеграция Instagram Stories в SMM Manager
+# Интеграция Instagram Stories
 
-Этот документ описывает особенности работы с функционалом публикации контента в Instagram Stories через SMM Manager.
+## Описание
 
-## Формат данных для Instagram Stories
+Этот документ описывает интеграцию публикации Instagram Stories в SMM Manager. Интеграция позволяет публиковать контент из системы как истории (сторис) в Instagram, используя API Instagram Graph.
 
-### Необходимые поля в контенте
+## Особенности
 
-Для корректной публикации в Instagram Stories контент должен содержать следующие данные:
+1. **Источник данных**: Используются настройки из кампании (поля `instagram_token` и `instagram_business_account_id`)
+2. **Формат медиа**: Поддерживаются изображения из поля `additional_images`
+3. **Результат публикации**: Сохраняется ID истории и URL профиля
+4. **Ограничения**: Instagram не предоставляет прямых ссылок на опубликованные истории
 
-1. **Основное поле изображения**
-   - `imageUrl` - URL изображения для публикации
-   - `image_url` - Альтернативное поле для URL изображения (snake_case)
+## API Endpoints
 
-2. **Массив дополнительных изображений**
-   - `additionalImages` или `additional_images` - Массив с объектами изображений
-   
-   Формат массива должен соответствовать одному из следующих вариантов:
+### 1. POST /api/publish/instagram-stories
 
-   a) JSON-строка с массивом объектов:
-   ```json
-   [
-     {
-       "url": "https://example.com/image1.jpg",
-       "type": "image"
-     }
-   ]
-   ```
-   
-   b) Массив объектов с полями `url` и `type`:
-   ```javascript
-   [
-     {
-       url: "https://example.com/image1.jpg",
-       type: "image"
-     }
-   ]
-   ```
+Публикует контент в Instagram Stories по ID контента.
 
-3. **Текстовое содержимое**
-   - `content_text` или `title` - Текст для подписи к истории
-
-### Важные замечания
-
-1. **Поле `additional_images`** - имеет приоритет при поиске медиафайлов для публикации. Это первое поле, которое проверяется системой при подготовке публикации.
-
-2. **Формат хранения изображений** - в базе данных изображения могут храниться как:
-   - JSON-строка (в полях, ожидающих массив)
-   - Массив объектов с URL
-   - Прямой URL в текстовом поле
-
-3. **Порядок проверки полей**:
-   1. `additional_images` (snake_case)
-   2. `additionalImages` (camelCase) 
-   3. `imageUrl` или `image_url`
-   4. Другие поля, содержащие медиа
-
-## API для публикации Instagram Stories
-
-### Endpoint: `/api/publish/stories`
-
-**Метод**: POST
-
-**Параметры запроса**:
-```javascript
+**Параметры запроса:**
+```json
 {
-  contentId: "идентификатор-контента",
-  campaignId: "идентификатор-кампании",
-  platform: "instagram"
+  "contentId": "string",
+  "campaignId": "string",
+  "platform": "instagram"
 }
 ```
 
-**Ответ сервера в случае успеха**:
-```javascript
+**Пример успешного ответа:**
+```json
 {
-  success: true,
-  result: {
-    storyId: "идентификатор-истории",
-    storyUrl: "https://www.instagram.com/stories/username/",
-    publishedAt: "2025-05-12T16:26:14.000Z",
-    igUsername: "имя-пользователя-в-Instagram"
+  "success": true,
+  "result": {
+    "success": true,
+    "storyId": "17987654321098765",
+    "storyUrl": "https://www.instagram.com/stories/username/",
+    "profileUrl": "https://www.instagram.com/username/",
+    "igUsername": "username",
+    "creationTime": "2025-05-12T16:40:00.000Z"
   }
 }
 ```
 
-### Endpoint: `/api/publish/instagram-story`
+### 2. POST /api/publish/instagram-story
 
-**Метод**: POST
+Публикует историю в Instagram с заданным URL изображения.
 
-**Параметры запроса**:
-```javascript
+**Параметры запроса:**
+```json
 {
-  imageUrl: "https://example.com/image.jpg",
-  caption: "Текст подписи",
-  campaignId: "идентификатор-кампании"
+  "imageUrl": "string",
+  "caption": "string",
+  "campaignId": "string"
 }
 ```
 
-## Особенности работы с Instagram Stories
+**Пример успешного ответа:**
+```json
+{
+  "success": true,
+  "result": {
+    "success": true,
+    "storyId": "17987654321098765",
+    "storyUrl": "https://www.instagram.com/stories/username/",
+    "profileUrl": "https://www.instagram.com/username/",
+    "igUsername": "username",
+    "creationTime": "2025-05-12T16:40:00.000Z"
+  }
+}
+```
 
-1. **Прямые ссылки на истории не доступны**
-   - Instagram API предоставляет только общую ссылку на все истории пользователя
-   - Формат ссылки: `https://www.instagram.com/stories/username/`
+### 3. GET /api/instagram-stories/settings/:campaignId
 
-2. **Текст в историях**
-   - Instagram API не поддерживает наложение текста прямо на изображение
-   - Текст, указанный в `caption`, будет добавлен как подпись, но не будет виден на самом изображении
+Получает параметры доступа к Instagram API для конкретной кампании.
 
-3. **Получение ID истории**
-   - API Instagram возвращает идентификатор опубликованной истории
-   - ID истории сохраняется в базе данных в поле `instagram_stories_id`
-   - Это поле может использоваться для отслеживания статуса истории в будущем
+**Пример успешного ответа:**
+```json
+{
+  "success": true,
+  "settings": {
+    "hasToken": true,
+    "hasAccountId": true,
+    "isConfigured": true
+  }
+}
+```
 
-## Отладка и устранение неполадок
+## Сохраняемые данные в контенте
 
-При возникновении проблем с публикацией историй в Instagram, проверьте следующее:
+После успешной публикации истории в таблице `campaign_content` обновляются следующие поля:
 
-1. **Формат данных контента**
-   - Убедитесь, что поле `additional_images` содержит корректный массив объектов с URL изображений
-   - Проверьте, что изображения имеют соответствующий формат (JPEG, PNG) и соотношение сторон (9:16 рекомендуется для историй)
+- `instagram_stories_status`: 'published'
+- `instagram_stories_id`: ID истории в Instagram
+- `instagram_stories_url`: URL на истории пользователя
+- `instagram_profile_url`: URL профиля пользователя
+- `instagram_username`: Имя пользователя Instagram
+- `instagram_stories_published_at`: Время публикации
 
-2. **Токены Instagram API**
-   - Проверьте, что в настройках кампании указаны корректные токены Instagram API
-   - Токены должны иметь права на публикацию контента (`instagram_content_publish`)
+## Важные замечания
 
-3. **Размер изображения**
-   - Рекомендуемый размер для изображений в Instagram Stories: 1080x1920 пикселей
-   - Изображения меньшего размера могут быть масштабированы API Instagram
+1. **Отсутствие прямых ссылок**: Instagram API не предоставляет возможности получить прямую ссылку на конкретную историю. Доступна только ссылка на все истории пользователя в формате `https://www.instagram.com/stories/username/`
+
+2. **Срок жизни историй**: Истории в Instagram исчезают через 24 часа после публикации
+
+3. **API Ограничения**: Для публикации историй требуется бизнес-аккаунт Instagram и соответствующие разрешения API
+
+## Отладка
+
+Для отладки публикации историй можно использовать следующие утилиты:
+
+- `test-instagram-story-id-improved.js`: Тестирование публикации и получения информации о истории
+- `test-instagram-stories.js`: Тестирование базовой публикации истории
+- `debug-instagram-stories.js`: Диагностика проблем с медиа в контенте
