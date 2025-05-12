@@ -117,7 +117,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         
         // КРИТИЧНО: обработка JSON строк для медиа прямо в роутере
         try {
-          log(`Проверка и обработка медиа в формате JSON строк`, 'stories', 'warn');
+          log(`Проверка и обработка медиа в формате JSON строк`, 'stories');
           
           // Обработка additionalImages если это JSON строка
           if (content.additionalImages && typeof content.additionalImages === 'string') {
@@ -125,8 +125,9 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
             try {
               content.additionalImages = JSON.parse(content.additionalImages);
               log(`Успешно распарсили JSON строку additionalImages`, 'stories');
-            } catch (parseError) {
-              log(`Ошибка при парсинге JSON строки additionalImages: ${parseError.message}`, 'stories', 'error');
+            } catch (error) {
+              const parseError = error as Error;
+              log(`Ошибка при парсинге JSON строки additionalImages: ${parseError.message}`, 'stories');
             }
           }
           
@@ -136,12 +137,14 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
             try {
               content.additional_images = JSON.parse(content.additional_images);
               log(`Успешно распарсили JSON строку additional_images`, 'stories');
-            } catch (parseError) {
-              log(`Ошибка при парсинге JSON строки additional_images: ${parseError.message}`, 'stories', 'error');
+            } catch (error) {
+              const parseError = error as Error;
+              log(`Ошибка при парсинге JSON строки additional_images: ${parseError.message}`, 'stories');
             }
           }
-        } catch (jsonError) {
-          log(`Общая ошибка при обработке JSON строк: ${jsonError.message}`, 'stories', 'error');
+        } catch (error) {
+          const jsonError = error as Error;
+          log(`Общая ошибка при обработке JSON строк: ${jsonError.message}`, 'stories');
         }
         
         // Проверяем поле additional_images (snake_case)
