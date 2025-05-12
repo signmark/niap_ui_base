@@ -14,6 +14,7 @@ import { setupVite, serveStatic } from "./vite";
 import { log } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
+import { registerInstagramStoriesRoutes } from './api/instagram-stories-router';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { initializeHeavyServices } from './optimize-startup';
 import { initUserActivityTracker } from './services/user-activity-tracker';
@@ -245,6 +246,11 @@ app.use((req, res, next) => {
     log("Registering Imgur Uploader routes...");
     registerImgurRoutes(app);
     log("Imgur Uploader routes registered successfully");
+    
+    // Регистрируем маршруты для Instagram Stories
+    log("Registering Instagram Stories routes...");
+    registerInstagramStoriesRoutes(app);
+    log("Instagram Stories routes registered successfully");
     
     // Регистрируем маршруты для получения моделей DeepSeek
     log("Registering DeepSeek Models route...");

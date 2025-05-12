@@ -82,8 +82,9 @@ async function publishInstagramStory(imageUrl, caption = 'Тестовая пу�
     const storyId = publishResponse.data.id;
     log(`История успешно опубликована с ID: ${storyId}`);
     
-    // Форматируем URL истории
-    const storyUrl = `https://www.instagram.com/stories/${INSTAGRAM_USERNAME}/${storyId}/`;
+    // Форматируем URL истории - для Instagram Stories нельзя получить прямую ссылку на конкретную историю,
+    // только на все истории пользователя
+    const storyUrl = `https://www.instagram.com/stories/${INSTAGRAM_USERNAME}/`;
     log(`URL истории: ${storyUrl}`);
     
     // Возвращаем полную информацию о публикации
