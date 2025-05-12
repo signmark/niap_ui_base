@@ -119,12 +119,44 @@ export class InstagramService extends BaseSocialService {
         log(`[Instagram] Подготовка изображения для сторис: ${mediaUrl}`, 'instagram');
       } else {
         // Здесь мы уже знаем, что медиа есть (проверили выше),
-        // поэтому берем первый медиафайл из additionalMedia
-        const mediaFiles = content.additionalMedia?.filter(media => 
-          media.type === 'image' || media.type === 'video');
-          
+        // поэтому берем первый медиафайл из всех возможных полей с дополнительным медиа
+        let mediaFiles = [];
+        
+        // Проверяем все возможные источники дополнительных медиа
+        if (content.additionalMedia && Array.isArray(content.additionalMedia)) {
+          mediaFiles = content.additionalMedia.filter(media => 
+            media.type === 'image' || media.type === 'video');
+        } else if (content.additionalImages && Array.isArray(content.additionalImages)) {
+          mediaFiles = content.additionalImages.map(item => {
+            if (typeof item === 'string') {
+              return { url: item, type: 'image' };
+            } else if (typeof item === 'object' && item.url) {
+              return { 
+                url: item.url, 
+                type: item.type || 'image'
+              };
+            }
+            return null;
+          }).filter(Boolean);
+        } else if (content.additional_images && Array.isArray(content.additional_images)) {
+          mediaFiles = content.additional_images.map(item => {
+            if (typeof item === 'string') {
+              return { url: item, type: 'image' };
+            } else if (typeof item === 'object' && item.url) {
+              return { 
+                url: item.url, 
+                type: item.type || 'image'
+              };
+            }
+            return null;
+          }).filter(Boolean);
+        }
+        
+        log(`[Instagram] Обнаружено ${mediaFiles.length} дополнительных медиафайлов для сторис`, 'instagram');
+        
         if (mediaFiles && mediaFiles.length > 0) {
           const mediaFile = mediaFiles[0];
+          log(`[Instagram] Используем первый медиафайл из дополнительных: ${JSON.stringify(mediaFile)}`, 'instagram');
           
           // Убедимся, что URL доступен - иногда URL может быть не строкой, а объектом
           if (typeof mediaFile.url !== 'string') {

@@ -1518,16 +1518,45 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           log(`[Social Publishing] - Business Account ID: ${businessId}`, 'stories');
           log(`[Social Publishing] - Access Token: ${instToken ? 'Присутствует' : 'Отсутствует'}`, 'stories');
           
-          // Проверяем наличие медиафайлов для сторис
-          const hasMedia = Boolean(content.imageUrl || content.videoUrl || 
-              (content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0));
+          // Проверяем наличие медиафайлов для сторис, с учетом всех возможных полей для медиа
+          const additionalImagesField = content.additionalImages || content.additional_images || content.additionalMedia;
+          const hasAdditionalMedia = Boolean(
+            additionalImagesField && Array.isArray(additionalImagesField) && additionalImagesField.length > 0
+          );
+          
+          const hasMedia = Boolean(content.imageUrl || content.videoUrl || hasAdditionalMedia);
+          
+          log(`[Social Publishing] Проверка медиафайлов для сторис: imageUrl=${Boolean(content.imageUrl)}, videoUrl=${Boolean(content.videoUrl)}, hasAdditionalMedia=${hasAdditionalMedia}`, 'stories');
           
           if (!hasMedia) {
             log(`[Social Publishing] Ошибка: не найдены медиафайлы для публикации сторис в Instagram`, 'stories', 'error');
+            log(`[Social Publishing] Детали контента: ${JSON.stringify({
+              contentId,
+              contentType: content.contentType,
+              hasImageUrl: Boolean(content.imageUrl),
+              hasVideoUrl: Boolean(content.videoUrl),
+              hasAdditionalImages: hasAdditionalMedia,
+              additionalImagesType: additionalImagesField ? typeof additionalImagesField : 'undefined'
+            })}`, 'stories', 'error');
+            
             return res.status(400).json({
               success: false,
               error: 'Для публикации сторис в Instagram необходимо указать изображение или видео'
             });
+          }
+          
+          // Если есть дополнительные медиа, но нет основного media_url, используем первое из дополнительных
+          if (!content.imageUrl && !content.videoUrl && hasAdditionalMedia) {
+            const firstMedia = additionalImagesField[0];
+            if (firstMedia && typeof firstMedia === 'object' && firstMedia.url) {
+              if (firstMedia.type === 'video') {
+                content.videoUrl = firstMedia.url;
+                log(`[Social Publishing] Используем первое видео из дополнительных медиа: ${firstMedia.url.substring(0, 100)}...`, 'stories');
+              } else {
+                content.imageUrl = firstMedia.url;
+                log(`[Social Publishing] Используем первое изображение из дополнительных медиа: ${firstMedia.url.substring(0, 100)}...`, 'stories');
+              }
+            }
           }
 
           // Получаем сервис Instagram для публикации сторис
