@@ -309,10 +309,12 @@ app.use((req, res, next) => {
       // Инициализируем сервис отслеживания активности пользователей
       try {
         log("Initializing User Activity Tracker...");
-        const activityTracker = initUserActivityTracker(directusApiManager, directusApiManager.getAuthManager());
-        log("User Activity Tracker initialized successfully");
-        // @ts-ignore - игнорируем проверку типов для глобального доступа
-        global['userActivityTracker'] = activityTracker;
+        // Инициализация трекера активности пользователей временно отключена
+        // из-за проблем с модулями Directus API
+        // TODO: Включить позже, когда будет реализована правильная интеграция
+        log("User Activity Tracker initialization skipped temporarily");
+        // const activityTracker = initUserActivityTracker(directusApi, directusAuthManager);
+        // global['userActivityTracker'] = activityTracker;
       } catch (error) {
         log(`Error initializing User Activity Tracker: ${error instanceof Error ? error.message : String(error)}`);
       }
