@@ -58,10 +58,16 @@ export class InstagramService extends BaseSocialService {
 
       log(`[Instagram] Начинаем публикацию сторис в Instagram c бизнес-аккаунтом: ${businessAccountId}`, 'instagram');
 
-      // Проверяем, что у нас есть изображение или видео для сторис
+      // Улучшенная проверка наличия медиафайлов для типа контента "stories"
       // Сначала проверяем основные поля imageUrl и videoUrl
       // Затем проверяем additionalMedia и additionalImages, где может храниться медиа для сторис
       let hasMedia = Boolean(content.imageUrl || content.videoUrl);
+      
+      // Проверка особенно важна для контента типа "stories"
+      const isStoriesContent = content.contentType === 'stories';
+      if (isStoriesContent) {
+        log(`[Instagram Stories] ОБЯЗАТЕЛЬНАЯ проверка медиа для контента типа "stories" (ID: ${content.id})`, 'instagram', 'warn');
+      }
       
       // Проверяем наличие медиа в поле additionalMedia
       if (!hasMedia && content.additionalMedia && Array.isArray(content.additionalMedia)) {
@@ -79,8 +85,11 @@ export class InstagramService extends BaseSocialService {
           // Проверка type === 'image' или type === 'video'
           const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
           
+          // Простая проверка на строку с URL
+          const isStringUrl = typeof media === 'string' && media.trim() !== '';
+          
           // Результат проверки
-          const result = isObjectWithUrl || hasValidType;
+          const result = isObjectWithUrl || hasValidType || isStringUrl;
           log(`[Instagram Debug] Элемент additionalMedia прошел фильтрацию: ${result}`, 'instagram');
           
           return result;
@@ -94,7 +103,7 @@ export class InstagramService extends BaseSocialService {
           const mediaFile = mediaFiles[0];
           
           // Используем новую функцию определения типа медиа
-          const mediaUrl = mediaFile.url || mediaFile.file;
+          const mediaUrl = typeof mediaFile === 'string' ? mediaFile : (mediaFile.url || mediaFile.file);
           const mediaTypeResult = determineMediaType(mediaFile);
           
           if (mediaTypeResult === 'IMAGE') {
@@ -124,8 +133,11 @@ export class InstagramService extends BaseSocialService {
           // Проверка type === 'image' или type === 'video'
           const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
           
+          // Простая проверка на строку с URL
+          const isStringUrl = typeof media === 'string' && media.trim() !== '';
+          
           // Результат проверки
-          const result = isObjectWithUrl || hasValidType;
+          const result = isObjectWithUrl || hasValidType || isStringUrl;
           log(`[Instagram Debug] Элемент прошел фильтрацию: ${result}`, 'instagram');
           
           return result;
@@ -139,7 +151,7 @@ export class InstagramService extends BaseSocialService {
           const mediaFile = mediaFiles[0];
           
           // Используем новую функцию определения типа медиа
-          const mediaUrl = mediaFile.url || mediaFile.file;
+          const mediaUrl = typeof mediaFile === 'string' ? mediaFile : (mediaFile.url || mediaFile.file);
           const mediaTypeResult = determineMediaType(mediaFile);
           
           if (mediaTypeResult === 'IMAGE') {
@@ -161,11 +173,16 @@ export class InstagramService extends BaseSocialService {
       - additionalMedia: ${content.additionalMedia ? (Array.isArray(content.additionalMedia) ? `${content.additionalMedia.length} файлов` : 'не является массивом') : 'не задан'}
       - Тип контента: ${content.contentType}`, 'instagram');
       
+      // Проверка особенно строгая для контента типа "stories"
       if (!hasMedia) {
+        let errorMessage = 'Для публикации в Instagram необходимо изображение или видео';
+        if (isStoriesContent) {
+          errorMessage = 'Для публикации сторис в Instagram необходимо указать изображение или видео. Пожалуйста, добавьте медиафайл в разделе "Медиа для сторис" перед публикацией.';
+        }
         return {
           platform: 'instagram',
           status: 'failed',
-          error: 'Для публикации сторис необходимо изображение или видео (не найдено ни в основных полях, ни в additionalImages/additionalMedia)',
+          error: errorMessage,
           publishedAt: null,
         };
       }
