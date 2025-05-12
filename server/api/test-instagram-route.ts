@@ -211,6 +211,145 @@ export function registerTestInstagramRoute(app: express.Express) {
     }
   });
 
+  // Тестовый маршрут для публикации сторис в Instagram
+  app.post('/api/test/instagram-stories', async (req: Request, res: Response) => {
+    const { contentId } = req.body;
+
+    if (!contentId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Необходимо указать contentId' 
+      });
+    }
+
+    log(`[Test Route] Тестовая публикация сторис в Instagram для контента: ${contentId}`, 'instagram-stories-test');
+
+    try {
+      // 1. Получаем системный токен
+      const systemToken = await getSystemToken();
+      
+      if (!systemToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось получить системный токен'
+        });
+      }
+
+      // 2. Получаем данные контента из Directus
+      const content = await fetchContent(contentId, systemToken);
+      
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Не удалось найти контент'
+        });
+      }
+
+      // 3. Получаем данные кампании для настроек соцсетей
+      const campaign = await fetchCampaign(content.campaignId, systemToken);
+      
+      if (!campaign || !campaign.social_media_settings) {
+        return res.status(404).json({
+          success: false,
+          error: 'Не удалось получить настройки социальных сетей'
+        });
+      }
+
+      // 4. Подготавливаем социальные настройки
+      const socialSettings = prepareSocialSettings(campaign);
+
+      // Логируем все возможные поля с медиафайлами для диагностики
+      const mediaFields = {
+        imageUrl: content.imageUrl,
+        videoUrl: content.videoUrl,
+        hasAdditionalImages: !!content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0,
+        additionalImagesLength: Array.isArray(content.additionalImages) ? content.additionalImages.length : 0,
+        hasAdditionalMedia: !!content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0,
+        additionalMediaLength: Array.isArray(content.additionalMedia) ? content.additionalMedia.length : 0,
+        contentType: content.contentType
+      };
+      
+      log(`[Test Route] Медиа для сторис: ${JSON.stringify(mediaFields)}`, 'instagram-stories-test');
+
+      // 5. Получаем настройки Instagram
+      if (!socialSettings.instagram) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют настройки для Instagram',
+          socialSettings
+        });
+      }
+
+      // Проверяем и логируем настройки Instagram
+      const instagramSettings = socialSettings.instagram;
+      const instToken = instagramSettings.accessToken || instagramSettings.token;
+      const businessId = instagramSettings.businessAccountId || instagramSettings.instagramBusinessId;
+      
+      if (!instToken || !businessId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют обязательные параметры Instagram API (token или businessAccountId)',
+          token: !!instToken,
+          businessId: !!businessId,
+          settings: JSON.stringify({
+            token: instToken ? 'Присутствует' : 'Отсутствует',
+            businessId: businessId ? 'Присутствует' : 'Отсутствует'
+          })
+        });
+      }
+
+      // 6. Подготавливаем конфигурацию для публикации сторис
+      const instagramConfig = {
+        accessToken: instToken,
+        businessAccountId: businessId
+      };
+      
+      log(`[Test Route] Настройки Instagram для сторис: ${JSON.stringify({
+        tokenLength: instToken ? instToken.length : 0,
+        businessId: businessId
+      })}`, 'instagram-stories-test');
+
+      // 7. Публикуем сторис через сервис Instagram
+      const result = await instagramService.publishStory(content, instagramConfig, socialSettings);
+      
+      log(`[Test Route] Результат публикации сторис в Instagram: ${JSON.stringify(result)}`, 'instagram-stories-test');
+
+      // 8. Обновляем статус публикации
+      if (result) {
+        const updatedContent = await socialPublishingWithImgurService.updatePublicationStatus(
+          contentId,
+          'instagram',
+          result
+        );
+
+        // 9. Получаем финальный контент для проверки
+        const finalContent = await fetchContent(contentId, systemToken);
+
+        return res.json({
+          success: true,
+          publication: result,
+          updatedContent: updatedContent,
+          finalContent: finalContent,
+          socialPlatforms: finalContent?.socialPlatforms || {},
+          instagram: finalContent?.socialPlatforms?.instagram || null
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Публикация не вернула результат'
+        });
+      }
+    } catch (error: any) {
+      console.error('Ошибка в тестовом маршруте Instagram Stories:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при публикации сторис: ${error.message}`,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
+
   console.log('Тестовый маршрут для Instagram зарегистрирован');
 }
 
