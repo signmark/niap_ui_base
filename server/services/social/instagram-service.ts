@@ -116,13 +116,30 @@ export class InstagramService extends BaseSocialService {
         if (mediaFiles && mediaFiles.length > 0) {
           const mediaFile = mediaFiles[0];
           
+          // Убедимся, что URL доступен - иногда URL может быть не строкой, а объектом
+          if (typeof mediaFile.url !== 'string') {
+            log(`[Instagram] Ошибка: URL медиафайла имеет некорректный формат: ${JSON.stringify(mediaFile.url)}`, 'instagram', 'error');
+            
+            if (mediaFile.url && typeof mediaFile.url === 'object' && mediaFile.url.url) {
+              mediaUrl = mediaFile.url.url;
+              log(`[Instagram] Извлечен URL из объекта: ${mediaUrl}`, 'instagram');
+            } else {
+              return {
+                platform: 'instagram',
+                status: 'failed',
+                error: 'Некорректный формат URL медиафайла',
+                publishedAt: null,
+              };
+            }
+          } else {
+            mediaUrl = mediaFile.url;
+          }
+          
           if (mediaFile.type === 'image') {
             mediaType = 'IMAGE';
-            mediaUrl = mediaFile.url;
             log(`[Instagram] Подготовка изображения из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
           } else { // video
             mediaType = 'VIDEO';
-            mediaUrl = mediaFile.url;
             log(`[Instagram] Подготовка видео из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
           }
         } else {
@@ -144,7 +161,6 @@ export class InstagramService extends BaseSocialService {
         media_type: "STORIES", // Важно использовать "STORIES" вместо "IMAGE" или "VIDEO"
         caption: caption,
         access_token: token
-        // Убрали параметр is_carousel_item, т.к. он может вызывать ошибки при публикации сторис
       };
 
       // Добавляем URL в зависимости от типа медиа
@@ -153,12 +169,10 @@ export class InstagramService extends BaseSocialService {
       } else {
         storyParams.image_url = mediaUrl;
       }
-
-      // Изменяем media_type на STORIES (это правильный параметр для сторис)
-      storyParams.media_type = 'STORIES';
       
-      // Удаляем параметр is_story, который не поддерживается в API
-      // Instagram API требует media_type="STORIES" вместо параметра is_story=true
+      // Логируем процесс для отладки
+      log(`[Instagram] Тип медиа: ${mediaType}, URL: ${mediaUrl}`, 'instagram');
+      log(`[Instagram] Заголовок: ${caption?.slice(0, 50)}...`, 'instagram');
       
       // Логируем параметры запроса для отладки
       log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(storyParams)}`, 'instagram');
@@ -207,7 +221,10 @@ export class InstagramService extends BaseSocialService {
       // Проверяем результат публикации
       if (publishResponse.data && publishResponse.data.id) {
         const storyId = publishResponse.data.id;
-        const storyUrl = `https://www.instagram.com/stories/${storyId}/`;
+        // URL для сторис отличается от URL поста - используем информацию из бизнес-аккаунта
+        // Получаем username из настроек или используем ID
+        const username = socialSettings?.instagram?.username || 'profile';
+        const storyUrl = `https://www.instagram.com/${username}/`;
 
         log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
         return {
