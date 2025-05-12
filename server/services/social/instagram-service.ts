@@ -192,7 +192,31 @@ export class InstagramService extends BaseSocialService {
       log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(logParams)}`, 'instagram');
 
       // Отправляем запрос на создание контейнера
-      const containerResponse = await axios.post(containerUrl, storyParams);
+      let containerResponse;
+      try {
+        log(`[Instagram] Отправка запроса на создание контейнера для сторис (${storyParams.media_type})`, 'instagram');
+        containerResponse = await axios.post(containerUrl, storyParams);
+        
+        // Подробное логирование ответа
+        log(`[Instagram] Получен ответ от API Instagram: ${JSON.stringify(containerResponse.data)}`, 'instagram');
+      } catch (error) {
+        const errorMsg = error.response && error.response.data && error.response.data.error
+          ? `${error.response.data.error.code}: ${error.response.data.error.message}`
+          : `Ошибка запроса: ${error.message}`;
+          
+        log(`[Instagram] Ошибка при запросе контейнера для сторис: ${errorMsg}`, 'instagram', 'error');
+        log(`[Instagram] Детали запроса: URL=${containerUrl}, Параметры=${JSON.stringify({
+          ...storyParams,
+          access_token: '***скрыто***'
+        })}`, 'instagram', 'error');
+        
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          error: errorMsg,
+          publishedAt: null,
+        };
+      }
 
       // Проверяем ответ
       if (!containerResponse.data || !containerResponse.data.id) {
@@ -200,7 +224,7 @@ export class InstagramService extends BaseSocialService {
           ? `${containerResponse.data.error.code}: ${containerResponse.data.error.message}`
           : 'Ошибка при создании контейнера для сторис';
 
-        log(`[Instagram] ${errorMsg}`, 'instagram');
+        log(`[Instagram] ${errorMsg}`, 'instagram', 'error');
         return {
           platform: 'instagram',
           status: 'failed',
@@ -239,10 +263,52 @@ export class InstagramService extends BaseSocialService {
       }
       log(`[Instagram] Параметры публикации: ${JSON.stringify(logPublishParams)}`, 'instagram');
       
-      const publishResponse = await axios.post(publishUrl, publishParams);
-
-      // Логируем полный ответ для анализа
-      log(`[Instagram] Ответ от API: ${JSON.stringify(publishResponse.data)}`, 'instagram');
+      // Публикуем сторис с обработкой ошибок
+      let publishResponse;
+      try {
+        publishResponse = await axios.post(publishUrl, publishParams);
+        
+        // Логируем полный ответ для анализа
+        log(`[Instagram] Ответ от API публикации: ${JSON.stringify(publishResponse.data)}`, 'instagram');
+      } catch (error) {
+        const errorMsg = error.response && error.response.data && error.response.data.error
+          ? `${error.response.data.error.code}: ${error.response.data.error.message}`
+          : `Ошибка запроса публикации: ${error.message}`;
+          
+        log(`[Instagram] Ошибка при публикации сторис: ${errorMsg}`, 'instagram', 'error');
+        log(`[Instagram] Детали запроса публикации: URL=${publishUrl}, creation_id=${containerId}`, 'instagram', 'error');
+        
+        // Если ошибка связана с тем, что видео еще не готово, добавим дополнительную задержку и попробуем ещё раз
+        if (error.response && error.response.data && error.response.data.error && 
+            (error.response.data.error.code === 9007 || // Error validating access token
+             error.response.data.error.message.includes('Media_Not_Ready') || 
+             error.response.data.error.message.includes('not ready'))) {
+          
+          log(`[Instagram] Обнаружена ошибка неготовности медиа, ожидаем ещё 10 секунд и повторяем попытку...`, 'instagram', 'warn');
+          await sleep(10000);
+          
+          try {
+            publishResponse = await axios.post(publishUrl, publishParams);
+            log(`[Instagram] Повторная попытка публикации успешна: ${JSON.stringify(publishResponse.data)}`, 'instagram');
+          } catch (retryError) {
+            log(`[Instagram] Повторная попытка публикации не удалась: ${retryError.message}`, 'instagram', 'error');
+            
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              error: `Не удалось опубликовать сторис после повторной попытки: ${errorMsg}`,
+              publishedAt: null
+            };
+          }
+        } else {
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            error: errorMsg,
+            publishedAt: null
+          };
+        }
+      }
       
       // Проверяем результат публикации
       if (publishResponse.data && publishResponse.data.id) {
@@ -540,24 +606,36 @@ export class InstagramService extends BaseSocialService {
         // Также передаем access_token в запросе создания контейнера (рекомендовано документацией)
         // Это может решить проблему с ошибкой "Object with ID does not exist"
         
+        // Определяем тип медиа в зависимости от типа контента
+        // Для сторис всегда используем специальный тип "STORIES" вместо "IMAGE" или "VIDEO"
+        const isStory = content.contentType === 'stories';
+        
+        if (isStory) {
+          log(`[Instagram] Обнаружен контент типа "stories", будет использован media_type=STORIES`, 'instagram');
+        }
+        
         // Добавляем ссылку на медиа в зависимости от типа (изображение или видео)
         if (isVideo && videoUrl) {
           log(`[Instagram] Обнаружено видео для публикации: ${videoUrl.substring(0, 50)}...`, 'instagram');
           containerParams = {
             caption: caption,
             video_url: videoUrl,
-            media_type: 'VIDEO', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            media_type: isStory ? 'STORIES' : 'VIDEO', // Для сторис используем STORIES вместо VIDEO
             access_token: token  // Добавляем токен доступа к запросу создания контейнера
           };
+          
+          log(`[Instagram] Выбран media_type=${containerParams.media_type} для видео (${isStory ? 'сторис' : 'обычный пост'})`, 'instagram');
         } else {
           // Если это не видео или видео отсутствует, используем изображение
           log(`[Instagram] Публикация с изображением: ${imgurContent.imageUrl?.substring(0, 50)}...`, 'instagram');
           containerParams = {
             caption: caption,
             image_url: imgurContent.imageUrl,
-            media_type: 'IMAGE', // ВАЖНО: Явно указываем тип медиа для Instagram в теле запроса
+            media_type: isStory ? 'STORIES' : 'IMAGE', // Для сторис используем STORIES вместо IMAGE
             access_token: token  // Добавляем токен доступа к запросу создания контейнера
           };
+          
+          log(`[Instagram] Выбран media_type=${containerParams.media_type} для изображения (${isStory ? 'сторис' : 'обычный пост'})`, 'instagram');
         }
         
         // Логируем тело запроса для отладки
