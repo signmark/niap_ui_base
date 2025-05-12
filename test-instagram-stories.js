@@ -6,21 +6,26 @@
  * Если contentId не указан, будет использоваться тестовый контент с изображением
  */
 
-import fetch from 'node-fetch';
-import { env } from 'process';
+import axios from 'axios';
+import dotenv from 'dotenv';
 
-// Настройки API
-const API_URL = env.API_URL || 'http://localhost:5000';
-const STORY_PUBLISHING_ENDPOINT = '/api/publish/stories';
+// Загружаем переменные окружения
+dotenv.config();
 
-// Токен авторизации (при необходимости)
-const AUTH_TOKEN = env.AUTH_TOKEN;
+// Константы
+const API_URL = process.env.API_URL || 'http://localhost:3000';
+const CAMPAIGN_ID = process.env.TEST_CAMPAIGN_ID || '46868c44-c6a4-4bed-accf-9ad07bba790e';
 
-// Содержимое тестового запроса
-const TEST_CONTENT_ID = env.TEST_CONTENT_ID || 'c8db1fd0-6fd3-4a21-ab5d-c4efd801bb63';
-
-// Целевая платформа - Instagram
-const PLATFORM = 'instagram';
+// Функция для логирования
+function log(message, type = 'info') {
+  const timestamp = new Date().toLocaleTimeString();
+  const prefix = type === 'error' ? '🔴 ОШИБКА' : 
+                 type === 'warn' ? '⚠️ ПРЕДУПРЕЖДЕНИЕ' : 
+                 type === 'success' ? '✅ УСПЕХ' : 
+                 type === 'step' ? '📋 ШАГ' : 'ℹ️ ИНФО';
+  
+  console.log(`${timestamp} [${prefix}] ${message}`);
+}
 
 /**
  * Выполняет публикацию сторис
@@ -28,71 +33,72 @@ const PLATFORM = 'instagram';
  * @returns {Promise<Object>} - Результат публикации
  */
 async function publishStory(contentId) {
-    try {
-        console.log(`[Test] Публикация Instagram Story для контента ID: ${contentId}`);
-        
-        // Подготовка параметров запроса
-        const payload = {
-            contentId,
-            platform: PLATFORM
-        };
-        
-        // Настройки запроса
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(AUTH_TOKEN ? { 'Authorization': `Bearer ${AUTH_TOKEN}` } : {})
-            },
-            body: JSON.stringify(payload)
-        };
-        
-        console.log(`[Test] Отправка запроса на ${API_URL}${STORY_PUBLISHING_ENDPOINT}`);
-        console.log(`[Test] Параметры: ${JSON.stringify(payload)}`);
-        
-        // Отправка запроса
-        const response = await fetch(`${API_URL}${STORY_PUBLISHING_ENDPOINT}`, requestOptions);
-        const result = await response.json();
-        
-        // Проверка результата
-        if (response.ok) {
-            console.log('[Test] Публикация выполнена успешно');
-            console.log(`[Test] Статус код: ${response.status}`);
-            console.log(`[Test] Результат: ${JSON.stringify(result, null, 2)}`);
-            return result;
-        } else {
-            console.error('[Test] Ошибка при публикации');
-            console.error(`[Test] Статус код: ${response.status}`);
-            console.error(`[Test] Ошибка: ${JSON.stringify(result, null, 2)}`);
-            throw new Error(`Ошибка API: ${result.error || 'Неизвестная ошибка'}`);
-        }
-    } catch (error) {
-        console.error(`[Test] Критическая ошибка: ${error.message}`);
-        throw error;
+  log(`Публикация контента ${contentId} в Instagram Stories...`, 'step');
+  
+  try {
+    const response = await axios.post(`${API_URL}/api/publish/instagram-stories`, {
+      contentId,
+      campaignId: CAMPAIGN_ID,
+      platform: 'instagram'
+    });
+    
+    if (response.data && response.data.success) {
+      log('Публикация успешно выполнена', 'success');
+      return response.data;
+    } else {
+      const errorMessage = response.data && response.data.error 
+        ? response.data.error 
+        : 'Неизвестная ошибка';
+      
+      log(`Ошибка при публикации: ${errorMessage}`, 'error');
+      return response.data;
     }
+  } catch (error) {
+    log(`Ошибка запроса: ${error.message}`, 'error');
+    
+    if (error.response && error.response.data) {
+      log(`Детали ошибки: ${JSON.stringify(error.response.data)}`, 'error');
+      return error.response.data;
+    }
+    
+    return { success: false, error: error.message };
+  }
 }
 
 /**
  * Главная функция скрипта
  */
 async function main() {
-    try {
-        // Получаем ID контента из аргументов или используем тестовый ID
-        const contentId = process.argv[2] || TEST_CONTENT_ID;
-        console.log(`[Test] Запуск тестирования публикации Instagram Story`);
-        console.log(`[Test] API URL: ${API_URL}`);
-        console.log(`[Test] Content ID: ${contentId}`);
-        
-        // Публикуем сторис
-        const result = await publishStory(contentId);
-        
-        console.log(`[Test] Тестирование завершено успешно`);
-        process.exit(0);
-    } catch (error) {
-        console.error(`[Test] Тестирование завершилось с ошибкой: ${error.message}`);
-        process.exit(1);
+  try {
+    // Получаем ID контента из аргументов командной строки или используем тестовый
+    const contentId = process.argv[2];
+    
+    if (!contentId) {
+      log('ID контента не указан. Используйте: node test-instagram-stories.js CONTENT_ID', 'warn');
+      process.exit(1);
     }
+    
+    log(`Начинаем публикацию контента ${contentId} в Instagram Stories`);
+    
+    // Публикуем сторис
+    const result = await publishStory(contentId);
+    
+    // Выводим результат
+    if (result.success) {
+      log(`Результат публикации:
+      ID истории: ${result.result.storyId || 'не указан'}
+      URL истории: ${result.result.storyUrl || 'не указан'}
+      Время публикации: ${result.result.publishedAt ? new Date(result.result.publishedAt).toLocaleString() : 'не указано'}
+      Имя пользователя: ${result.result.igUsername || 'не указано'}`, 'success');
+    } else {
+      log(`Публикация не удалась: ${result.error || 'неизвестная ошибка'}`, 'error');
+    }
+    
+  } catch (error) {
+    log(`Критическая ошибка: ${error.message}`, 'error');
+    process.exit(1);
+  }
 }
 
-// Запуск скрипта
+// Запускаем основную функцию
 main();
