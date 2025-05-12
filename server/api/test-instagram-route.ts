@@ -300,6 +300,7 @@ export function registerTestInstagramRoute(app: express.Express) {
 
       // 6. Подготавливаем конфигурацию для публикации сторис
       const instagramConfig = {
+        token: instToken,
         accessToken: instToken,
         businessAccountId: businessId
       };
