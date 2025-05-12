@@ -115,19 +115,25 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
       if (result.status === 'published') {
         log(`[Instagram Stories] Публикация успешна, обновляем статус контента в Directus`, 'instagram-stories');
         
-        // Формируем данные для обновления контента
+        // Формируем данные для обновления контента с расширенной информацией
         const updateData = {
           socialPlatforms: {
             ...(content.socialPlatforms || {}),
             instagram_stories: {
               status: 'published',
-              postId: result.postId,
+              postId: result.storyId || result.postId, // Приоритет storyId из расширенного ответа
               postUrl: result.storyUrl || result.postUrl,
               platform: 'instagram_stories',
-              publishedAt: new Date().toISOString()
+              publishedAt: new Date().toISOString(),
+              // Дополнительные поля для улучшенного отслеживания
+              mediaContainerId: result.mediaContainerId,
+              igUsername: result.igUsername,
+              creationTime: result.creationTime || new Date().toISOString()
             }
           }
         };
+        
+        log(`[Instagram Stories] Данные для обновления контента: ${JSON.stringify(updateData)}`, 'instagram-stories');
         
         // Обновляем контент в Directus
         await directusApi.patch(`/items/campaign_content/${contentId}`, updateData, {

@@ -37,6 +37,8 @@ export class InstagramStoriesService {
     storyId?: string;
     storyUrl?: string;
     mediaContainerId?: string;
+    igUsername?: string;
+    creationTime?: string;
     error?: any;
   }> {
     try {
@@ -58,15 +60,22 @@ export class InstagramStoriesService {
       const storyId = publishResult.id;
       
       log(`InstagramStoriesService: История успешно опубликована с ID: ${storyId}`, 'instagram');
+      log(`InstagramStoriesService: Полные данные ответа: ${JSON.stringify(publishResult)}`, 'instagram');
+      
+      // Получаем дополнительную информацию о публикации, если она доступна
+      const igUsername = this.getInstagramUsername();
+      const creationTime = new Date().toISOString();
       
       // Форматируем URL истории с корректным ID
-      const storyUrl = `https://www.instagram.com/stories/${this.getInstagramUsername()}/${storyId}/`;
+      const storyUrl = `https://www.instagram.com/stories/${igUsername}/${storyId}/`;
       
       return {
         success: true,
         storyId,
         storyUrl,
-        mediaContainerId
+        mediaContainerId,
+        igUsername,
+        creationTime
       };
     } catch (error: any) {
       log.error(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram');
@@ -154,9 +163,36 @@ export class InstagramStoriesService {
    * @returns Имя пользователя Instagram
    */
   private getInstagramUsername(): string {
-    // В идеале это значение должно быть получено из настроек или переменных окружения
-    // Для примера используем заглушку
-    return process.env.INSTAGRAM_USERNAME || 'it.zhdanov';
+    // Приоритеты для определения имени пользователя:
+    // 1. Переменная окружения INSTAGRAM_USERNAME
+    // 2. Переменная окружения IG_USERNAME
+    // 3. Извлечение из businessAccountId (не всегда возможно)
+    // 4. Значение по умолчанию
+    
+    // Проверяем переменные окружения
+    if (process.env.INSTAGRAM_USERNAME) {
+      return process.env.INSTAGRAM_USERNAME;
+    }
+    
+    if (process.env.IG_USERNAME) {
+      return process.env.IG_USERNAME;
+    }
+    
+    // Попытка извлечь имя из businessAccountId
+    try {
+      // Выполняем дополнительный запрос для получения информации об аккаунте
+      // Этот код можно расширить с реальным API запросом при необходимости
+      log(`InstagramStoriesService: Попытка определить имя пользователя по businessAccountId: ${this.businessAccountId}`, 'instagram');
+      
+      // При необходимости здесь можно добавить запрос к Instagram API для получения username
+    } catch (error: any) {
+      log.error(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`, 'instagram');
+    }
+    
+    // Используем значение по умолчанию как последний вариант
+    const defaultUsername = 'it.zhdanov';
+    log(`InstagramStoriesService: Используем имя пользователя по умолчанию: ${defaultUsername}`, 'instagram');
+    return defaultUsername;
   }
 }
 

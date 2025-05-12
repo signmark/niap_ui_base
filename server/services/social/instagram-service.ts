@@ -451,12 +451,20 @@ export class InstagramService extends BaseSocialService {
           
           // Публикация успешна
           log(`[Instagram Stories] Успешная публикация сторис: ${result.storyId}`, 'instagram');
+          
+          // Формируем расширенные данные о публикации
           return {
             platform: 'instagram',
             status: 'published',
             publishedAt: new Date(),
             postId: result.storyId,
             postUrl: result.storyUrl || `https://www.instagram.com/stories/`,
+            // Расширенные данные для улучшенного отслеживания
+            storyId: result.storyId,
+            storyUrl: result.storyUrl,
+            mediaContainerId: result.mediaContainerId,
+            igUsername: result.igUsername,
+            creationTime: result.creationTime
           };
         } catch (error) {
           log(`[Instagram Stories] Критическая ошибка в сервисе публикации сторис: ${error.message || error}`, 'instagram', 'error');
