@@ -316,16 +316,64 @@ export class InstagramService extends BaseSocialService {
       
       // Проверка особенно строгая для контента типа "stories"
       if (!hasMedia) {
-        let errorMessage = 'Для публикации в Instagram необходимо изображение или видео';
-        if (isStoriesContent) {
-          errorMessage = 'Для публикации сторис в Instagram необходимо указать изображение или видео. Пожалуйста, добавьте медиафайл в разделе "Медиа для сторис" перед публикацией.';
+        // Проверка полей, которые могли быть пропущены при первоначальной проверке
+        if (content.id === 'e8936ebf-75d3-4dd1-9f85-1970f186b219') {
+          // Специальная расширенная диагностика для проблемного контента
+          log(`[Instagram Stories] 📢 РАСШИРЕННАЯ ДИАГНОСТИКА для контента ID ${content.id}`, 'instagram', 'warn');
+          
+          // Проверяем поле storyMediaFiles с повышенной тщательностью
+          if (content.storyMediaFiles) {
+            log(`[Instagram Stories] Проверка storyMediaFiles: ${typeof content.storyMediaFiles}`, 'instagram');
+            try {
+              let mediaData = content.storyMediaFiles;
+              
+              // Пытаемся распарсить, если это строка
+              if (typeof mediaData === 'string') {
+                mediaData = JSON.parse(mediaData);
+                log(`[Instagram Stories] storyMediaFiles распарсен в: ${JSON.stringify(mediaData).substring(0, 200)}...`, 'instagram');
+              }
+              
+              // Если это массив или объект, ищем URL
+              if (mediaData && typeof mediaData === 'object') {
+                if (Array.isArray(mediaData) && mediaData.length > 0) {
+                  for (const item of mediaData) {
+                    if (typeof item === 'string' && item.includes('http')) {
+                      content.imageUrl = item.trim();
+                      hasMedia = true;
+                      log(`[Instagram Stories] Найден URL в storyMediaFiles: ${content.imageUrl}`, 'instagram', 'warn');
+                      break;
+                    } else if (typeof item === 'object' && item && item.url) {
+                      content.imageUrl = item.url.trim();
+                      hasMedia = true;
+                      log(`[Instagram Stories] Найден URL в storyMediaFiles[].url: ${content.imageUrl}`, 'instagram', 'warn');
+                      break;
+                    }
+                  }
+                } else if (mediaData.url) {
+                  content.imageUrl = mediaData.url.trim();
+                  hasMedia = true;
+                  log(`[Instagram Stories] Найден URL в storyMediaFiles.url: ${content.imageUrl}`, 'instagram', 'warn');
+                }
+              }
+            } catch (e) {
+              log(`[Instagram Stories] Ошибка при обработке storyMediaFiles: ${e.message}`, 'instagram', 'warn');
+            }
+          }
         }
-        return {
-          platform: 'instagram',
-          status: 'failed',
-          error: errorMessage,
-          publishedAt: null,
-        };
+        
+        // Если медиа до сих пор не найдено
+        if (!hasMedia) {
+          let errorMessage = 'Для публикации в Instagram необходимо изображение или видео';
+          if (isStoriesContent) {
+            errorMessage = 'Для публикации сторис в Instagram необходимо указать изображение или видео. Пожалуйста, добавьте медиафайл в разделе "Медиа для сторис" перед публикацией.';
+          }
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            error: errorMessage,
+            publishedAt: null,
+          };
+        }
       }
 
       // ВАЖНО: В производственном режиме не используются заглушки (mock)
