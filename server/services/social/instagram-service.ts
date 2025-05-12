@@ -406,6 +406,68 @@ export class InstagramService extends BaseSocialService {
           postUrl: `https://www.instagram.com/stories/dev_test_${Date.now()}/`
         };
       }
+
+      // Используем специализированный сервис для публикации Instagram Stories
+      if (isStoriesContent) {
+        try {
+          log(`[Instagram Stories] Используем InstagramStoriesService для публикации сторис`, 'instagram');
+          
+          // Проверяем, есть ли URL изображения для публикации
+          if (!content.imageUrl) {
+            log(`[Instagram Stories] ОШИБКА: Отсутствует URL изображения для публикации сторис`, 'instagram', 'error');
+            log(`[Instagram Stories] additionalImages: ${JSON.stringify(content.additionalImages)}`, 'instagram', 'error');
+            log(`[Instagram Stories] additionalMedia: ${JSON.stringify(content.additionalMedia)}`, 'instagram', 'error');
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              error: 'Отсутствует URL изображения для публикации сторис',
+              publishedAt: null,
+            };
+          }
+
+          // Создаем экземпляр сервиса Instagram Stories
+          const storiesService = new InstagramStoriesService(token, businessAccountId);
+          
+          // Получаем текст для подписи
+          let caption = '';
+          if (content.content) {
+            caption = this.formatTextForInstagram(content.content);
+          }
+          
+          // Публикуем сторис
+          log(`[Instagram Stories] Публикация сторис с изображением: ${content.imageUrl}`, 'instagram');
+          const result = await storiesService.publishStory(content.imageUrl, caption);
+          
+          // Проверяем результат публикации
+          if (!result.success) {
+            log(`[Instagram Stories] Ошибка при публикации сторис: ${result.error}`, 'instagram', 'error');
+            return {
+              platform: 'instagram',
+              status: 'failed',
+              error: result.error || 'Ошибка при публикации сторис',
+              publishedAt: null,
+            };
+          }
+          
+          // Публикация успешна
+          log(`[Instagram Stories] Успешная публикация сторис: ${result.storyId}`, 'instagram');
+          return {
+            platform: 'instagram',
+            status: 'published',
+            publishedAt: new Date(),
+            postId: result.storyId,
+            postUrl: result.storyUrl || `https://www.instagram.com/stories/`,
+          };
+        } catch (error) {
+          log(`[Instagram Stories] Критическая ошибка в сервисе публикации сторис: ${error.message || error}`, 'instagram', 'error');
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            error: `Ошибка в сервисе публикации сторис: ${error.message || 'Неизвестная ошибка'}`,
+            publishedAt: null,
+          };
+        }
+      }
       
       // Базовый URL для Graph API
       const baseUrl = 'https://graph.facebook.com/v17.0';

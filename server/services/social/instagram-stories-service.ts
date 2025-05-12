@@ -23,7 +23,7 @@ export class InstagramStoriesService {
     this.token = token;
     this.businessAccountId = businessAccountId;
     
-    logger.info('InstagramStoriesService: Сервис инициализирован');
+    log('InstagramStoriesService: Сервис инициализирован', 'instagram');
   }
   
   /**
