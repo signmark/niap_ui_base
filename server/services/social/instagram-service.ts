@@ -58,70 +58,246 @@ export class InstagramService extends BaseSocialService {
 
       log(`[Instagram] Начинаем публикацию сторис в Instagram c бизнес-аккаунтом: ${businessAccountId}`, 'instagram');
 
-      // ПРОСТАЯ ПРОВЕРКА МЕДИА ДЛЯ СТОРИС
+      // РАСШИРЕННАЯ ПРОВЕРКА МЕДИА ДЛЯ СТОРИС
+      // Проверка стандартных полей медиа
       let hasMedia = Boolean(content.imageUrl || content.videoUrl);
       // Определяем тип контента для сторис
       const isStoriesContent = content.contentType === 'stories';
       
-      // Логируем тип контента
+      // СПЕЦИАЛЬНАЯ ОБРАБОТКА JSON-ОБЪЕКТОВ В ФОРМАТЕ ["url": "...", "type": "image"]
+      // Проверяем поле additionalImages - массив JSON объектов как на скриншоте
+      if (!hasMedia && content.additionalImages) {
+        log(`[Instagram] Проверка поля additionalImages на формат JSON-объектов с url и type...`, 'instagram');
+        
+        // Если это строка, пытаемся парсить её как JSON
+        if (typeof content.additionalImages === 'string') {
+          try {
+            log(`[Instagram] additionalImages является строкой, пробуем парсить JSON...`, 'instagram');
+            content.additionalImages = JSON.parse(content.additionalImages);
+            log(`[Instagram] additionalImages успешно преобразован из JSON в объект`, 'instagram');
+          } catch (e) {
+            log(`[Instagram] Ошибка при парсинге JSON в additionalImages: ${e.message}`, 'instagram', 'warn');
+          }
+        }
+        
+        // Теперь проверяем, является ли поле массивом объектов с полем url
+        if (Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+          // Детальное логирование первого элемента
+          const firstItem = content.additionalImages[0];
+          log(`[Instagram] Первый элемент additionalImages: ${JSON.stringify(firstItem)}`, 'instagram');
+          
+          // Проверяем наличие поля url у первого элемента массива
+          if (typeof firstItem === 'object' && firstItem && firstItem.url) {
+            log(`[Instagram] ОБНАРУЖЕН URL В ОБЪЕКТЕ ФОРМАТА {url, type}: ${firstItem.url}`, 'instagram');
+            // Используем найденный URL как основной для публикации
+            content.imageUrl = firstItem.url;
+            hasMedia = true;
+            log(`[Instagram] Установлен imageUrl из additionalImages[0].url: ${content.imageUrl}`, 'instagram');
+          }
+        }
+      }
+      
+      // Аналогичная проверка для поля additional_images (с подчеркиванием)
+      if (!hasMedia && content.additional_images) {
+        log(`[Instagram] Проверка поля additional_images на формат JSON-объектов с url и type...`, 'instagram');
+        
+        // Если это строка, пытаемся парсить её как JSON
+        if (typeof content.additional_images === 'string') {
+          try {
+            log(`[Instagram] additional_images является строкой, пробуем парсить JSON...`, 'instagram');
+            content.additional_images = JSON.parse(content.additional_images);
+            log(`[Instagram] additional_images успешно преобразован из JSON в объект`, 'instagram');
+          } catch (e) {
+            log(`[Instagram] Ошибка при парсинге JSON в additional_images: ${e.message}`, 'instagram', 'warn');
+          }
+        }
+        
+        // Теперь проверяем, является ли поле массивом объектов с полем url
+        if (Array.isArray(content.additional_images) && content.additional_images.length > 0) {
+          // Детальное логирование первого элемента
+          const firstItem = content.additional_images[0];
+          log(`[Instagram] Первый элемент additional_images: ${JSON.stringify(firstItem)}`, 'instagram');
+          
+          // Проверяем наличие поля url у первого элемента массива
+          if (typeof firstItem === 'object' && firstItem && firstItem.url) {
+            log(`[Instagram] ОБНАРУЖЕН URL В ОБЪЕКТЕ ФОРМАТА {url, type}: ${firstItem.url}`, 'instagram');
+            // Используем найденный URL как основной для публикации
+            content.imageUrl = firstItem.url;
+            hasMedia = true;
+            log(`[Instagram] Установлен imageUrl из additional_images[0].url: ${content.imageUrl}`, 'instagram');
+          }
+        }
+      }
+      
+      // Логируем тип контента и начинаем поиск медиа
       log(`[Instagram Stories] Тип контента: ${content.contentType}, isStoriesContent: ${isStoriesContent}`, 'instagram');
+      
+      // ПОДРОБНОЕ ЛОГИРОВАНИЕ ВСЕХ ПОЛЕЙ КОНТЕНТА ДЛЯ ОТЛАДКИ
+      log(`[Instagram Stories] ДИАГНОСТИКА: Доступные поля в контенте:
+        id: ${content.id || 'отсутствует'}
+        contentType: ${content.contentType || 'отсутствует'}
+        Текст заголовка: ${content.title ? content.title.substring(0, 50) + '...' : 'отсутствует'}
+        Текст контента: ${content.content ? content.content.substring(0, 50) + '...' : 'отсутствует'}
+        imageUrl: ${content.imageUrl || 'отсутствует'}
+        videoUrl: ${content.videoUrl || 'отсутствует'}
+        additionalImages: ${content.additionalImages ? (typeof content.additionalImages === 'string' ? 'строка (возможно JSON)' : (Array.isArray(content.additionalImages) ? `массив (${content.additionalImages.length} элементов)` : typeof content.additionalImages)) : 'отсутствует'}
+        additionalMedia: ${content.additionalMedia ? (typeof content.additionalMedia === 'string' ? 'строка (возможно JSON)' : (Array.isArray(content.additionalMedia) ? `массив (${content.additionalMedia.length} элементов)` : typeof content.additionalMedia)) : 'отсутствует'}
+        mediaFiles: ${content.mediaFiles ? (Array.isArray(content.mediaFiles) ? `массив (${content.mediaFiles.length} элементов)` : typeof content.mediaFiles) : 'отсутствует'}
+        media: ${content.media ? (typeof content.media === 'string' ? 'строка (возможно JSON)' : typeof content.media) : 'отсутствует'}
+        storyMedia: ${content.storyMedia ? (typeof content.storyMedia === 'string' ? 'строка (возможно JSON)' : typeof content.storyMedia) : 'отсутствует'}
+        storiesMedia: ${content.storiesMedia ? (typeof content.storiesMedia === 'string' ? 'строка (возможно JSON)' : typeof content.storiesMedia) : 'отсутствует'}
+        additional_images: ${content.additional_images ? (typeof content.additional_images === 'string' ? 'строка (возможно JSON)' : (Array.isArray(content.additional_images) ? `массив (${content.additional_images.length} элементов)` : typeof content.additional_images)) : 'отсутствует'}
+      `, 'instagram');
       
       try {
         // Если основные поля пусты - ищем в дополнительных полях
         if (!hasMedia) {
           log(`[Instagram Stories] imageUrl и videoUrl отсутствуют, проверяем дополнительные поля`, 'instagram');
           
-          // Обрабатываем JSON-строки в полях с медиа
-          function tryParseJson(value) {
+          // Обрабатываем JSON-строки в полях с медиа - с расширенным логированием
+          function tryParseJson(value, fieldName) {
+            if (!value) return null;
+            
             if (typeof value === 'string' && (value.trim().startsWith('[') || value.trim().startsWith('{'))) {
               try {
+                log(`[Instagram Stories] Попытка распарсить JSON в поле ${fieldName}`, 'instagram');
                 const parsed = JSON.parse(value);
-                log(`[Instagram Stories] Успешно распарсили JSON: ${typeof parsed === 'object' ? 'объект' : typeof parsed}`, 'instagram');
+                log(`[Instagram Stories] Успешно распарсили JSON в поле ${fieldName}: ${typeof parsed === 'object' ? (Array.isArray(parsed) ? `массив (${parsed.length} элементов)` : 'объект') : typeof parsed}`, 'instagram');
                 return parsed;
               } catch (e) {
-                log(`[Instagram Stories] Ошибка парсинга JSON: ${e.message}`, 'instagram');
+                log(`[Instagram Stories] Ошибка парсинга JSON в поле ${fieldName}: ${e.message}`, 'instagram');
                 return value;
               }
             }
             return value;
           }
           
-          // Обрабатываем возможные поля с медиа
-          const additionalMediaParsed = tryParseJson(content.additionalMedia);
-          const additionalImagesParsed = tryParseJson(content.additionalImages);
-          const additional_imagesParsed = tryParseJson(content.additional_images);
+          // Расширенный список полей с медиа для проверки
+          const fieldChecklist = [
+            { field: 'additionalMedia', value: content.additionalMedia },
+            { field: 'additionalImages', value: content.additionalImages },
+            { field: 'additional_images', value: content.additional_images },
+            { field: 'mediaFiles', value: content.mediaFiles },
+            { field: 'media', value: content.media },
+            { field: 'storyMedia', value: content.storyMedia },
+            { field: 'storiesMedia', value: content.storiesMedia },
+            { field: 'storyMediaFiles', value: content.storyMediaFiles },
+            { field: 'story_media', value: content.story_media }
+          ];
           
-          // Получаем первый медиа-элемент из массива или объекта
-          function getFirstMediaUrl(mediaField) {
+          // Перебираем все возможные поля и пытаемся распарсить JSON
+          const parsedFields = fieldChecklist.map(item => ({
+            field: item.field,
+            value: tryParseJson(item.value, item.field)
+          })).filter(item => item.value !== null);
+          
+          // Расширенная функция для извлечения URL из различных структур данных
+          function extractMediaUrl(mediaField, fieldName) {
             if (!mediaField) return null;
+            
+            // Логируем тип обрабатываемого значения
+            log(`[Instagram Stories] Обработка поля ${fieldName}: ${typeof mediaField} ${Array.isArray(mediaField) ? `(массив из ${mediaField.length} элементов)` : ''}`, 'instagram');
             
             // Если это массив
             if (Array.isArray(mediaField) && mediaField.length > 0) {
-              const firstItem = mediaField[0];
-              if (typeof firstItem === 'string') return firstItem;
-              if (typeof firstItem === 'object' && firstItem) return firstItem.url || firstItem.file;
+              // Перебираем все элементы в поисках медиа
+              for (let i = 0; i < mediaField.length; i++) {
+                const item = mediaField[i];
+                // Если элемент - строка
+                if (typeof item === 'string' && item.trim()) {
+                  log(`[Instagram Stories] Найден URL в массиве ${fieldName}[${i}]: ${item.substring(0, 50)}...`, 'instagram');
+                  return item.trim();
+                }
+                // Если элемент - объект
+                else if (typeof item === 'object' && item) {
+                  // Проверяем все возможные поля с URL
+                  const possibleUrlFields = ['url', 'file', 'src', 'path', 'uri', 'link', 'href', 'image', 'video'];
+                  for (const urlField of possibleUrlFields) {
+                    if (item[urlField] && typeof item[urlField] === 'string' && item[urlField].trim()) {
+                      log(`[Instagram Stories] Найден URL в ${fieldName}[${i}].${urlField}: ${item[urlField].substring(0, 50)}...`, 'instagram');
+                      return item[urlField].trim();
+                    }
+                  }
+                  
+                  // Проверяем вложенные объекты на уровень глубже
+                  if (item.image && typeof item.image === 'object' && item.image.url) {
+                    log(`[Instagram Stories] Найден URL в ${fieldName}[${i}].image.url: ${item.image.url.substring(0, 50)}...`, 'instagram');
+                    return item.image.url;
+                  }
+                  if (item.video && typeof item.video === 'object' && item.video.url) {
+                    log(`[Instagram Stories] Найден URL в ${fieldName}[${i}].video.url: ${item.video.url.substring(0, 50)}...`, 'instagram');
+                    return item.video.url;
+                  }
+                }
+              }
             }
             // Если это объект с URL
             else if (typeof mediaField === 'object' && mediaField) {
-              return mediaField.url || mediaField.file;
+              // Проверяем все возможные поля с URL
+              const possibleUrlFields = ['url', 'file', 'src', 'path', 'uri', 'link', 'href', 'image', 'video'];
+              for (const urlField of possibleUrlFields) {
+                if (mediaField[urlField]) {
+                  if (typeof mediaField[urlField] === 'string' && mediaField[urlField].trim()) {
+                    log(`[Instagram Stories] Найден URL в ${fieldName}.${urlField}: ${mediaField[urlField].substring(0, 50)}...`, 'instagram');
+                    return mediaField[urlField].trim();
+                  } else if (typeof mediaField[urlField] === 'object' && mediaField[urlField] && mediaField[urlField].url) {
+                    log(`[Instagram Stories] Найден URL в ${fieldName}.${urlField}.url: ${mediaField[urlField].url.substring(0, 50)}...`, 'instagram');
+                    return mediaField[urlField].url;
+                  }
+                }
+              }
+              
+              // Проверяем вложенные объекты
+              if (mediaField.image && typeof mediaField.image === 'object' && mediaField.image.url) {
+                log(`[Instagram Stories] Найден URL в ${fieldName}.image.url: ${mediaField.image.url.substring(0, 50)}...`, 'instagram');
+                return mediaField.image.url;
+              }
+              if (mediaField.video && typeof mediaField.video === 'object' && mediaField.video.url) {
+                log(`[Instagram Stories] Найден URL в ${fieldName}.video.url: ${mediaField.video.url.substring(0, 50)}...`, 'instagram');
+                return mediaField.video.url;
+              }
             }
             // Если это строка (URL)
             else if (typeof mediaField === 'string' && mediaField.trim()) {
+              log(`[Instagram Stories] Найден URL в ${fieldName}: ${mediaField.substring(0, 50)}...`, 'instagram');
               return mediaField.trim();
             }
             return null;
           }
           
-          // Проверяем все возможные поля с медиа
-          const mediaUrl = getFirstMediaUrl(additionalMediaParsed) || 
-                          getFirstMediaUrl(additionalImagesParsed) || 
-                          getFirstMediaUrl(additional_imagesParsed);
+          // Ищем медиа-URL в каждом распарсенном поле
+          let mediaUrl = null;
+          for (const parsedField of parsedFields) {
+            const extractedUrl = extractMediaUrl(parsedField.value, parsedField.field);
+            if (extractedUrl) {
+              mediaUrl = extractedUrl;
+              log(`[Instagram Stories] Найден медиа-URL в поле ${parsedField.field}: ${mediaUrl.substring(0, 50)}...`, 'instagram');
+              break;
+            }
+          }
           
+          // Если ничего не нашли, проверяем непарсенные поля напрямую
+          if (!mediaUrl) {
+            for (const item of fieldChecklist) {
+              if (!item.value) continue;
+              
+              const extractedUrl = extractMediaUrl(item.value, item.field);
+              if (extractedUrl) {
+                mediaUrl = extractedUrl;
+                log(`[Instagram Stories] Найден медиа-URL в непарсенном поле ${item.field}: ${mediaUrl.substring(0, 50)}...`, 'instagram');
+                break;
+              }
+            }
+          }
+          
+          // Если нашли медиа, сохраняем его
           if (mediaUrl) {
-            log(`[Instagram Stories] Найдено медиа: ${mediaUrl}`, 'instagram');
+            log(`[Instagram Stories] УСПЕХ! Найдено медиа: ${mediaUrl.substring(0, 100)}...`, 'instagram');
             // По умолчанию считаем, что это изображение
             content.imageUrl = mediaUrl;
             hasMedia = true;
+          } else {
+            log(`[Instagram Stories] ПРЕДУПРЕЖДЕНИЕ: Не удалось найти медиа в контенте. Публикация будет отклонена.`, 'instagram', 'warn');
           }
         }
       } catch (error) {
