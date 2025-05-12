@@ -1303,6 +1303,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerClaudeRoutes(app);
   registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
+  // Регистрируем маршруты для публикации Instagram Stories
+  registerInstagramStoriesRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
