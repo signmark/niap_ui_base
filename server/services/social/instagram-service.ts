@@ -59,26 +59,68 @@ export class InstagramService extends BaseSocialService {
       
       // Проверяем наличие медиа в поле additionalMedia
       if (!hasMedia && content.additionalMedia && Array.isArray(content.additionalMedia)) {
-        const mediaFiles = content.additionalMedia.filter(media => 
-          media.type === 'image' || media.type === 'video' || 
-          (typeof media === 'object' && (media.url || media.file)));
+        // Логируем полное содержимое additionalMedia для диагностики
+        log(`[Instagram Debug] Содержимое additionalMedia перед фильтрацией: ${JSON.stringify(content.additionalMedia)}`, 'instagram');
+        
+        // Изменение логики фильтрации - меньше условий, упрощенная проверка
+        const mediaFiles = content.additionalMedia.filter(media => {
+          // Логируем каждый элемент для проверки
+          log(`[Instagram Debug] Проверка элемента additionalMedia: ${JSON.stringify(media)}`, 'instagram');
+          
+          // Проверка, является ли media объектом с url 
+          const isObjectWithUrl = typeof media === 'object' && media && (media.url || media.file);
+          
+          // Проверка type === 'image' или type === 'video'
+          const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
+          
+          // Результат проверки
+          const result = isObjectWithUrl || hasValidType;
+          log(`[Instagram Debug] Элемент additionalMedia прошел фильтрацию: ${result}`, 'instagram');
+          
+          return result;
+        });
+        
+        log(`[Instagram Debug] Результат фильтрации additionalMedia: найдено ${mediaFiles.length} элементов`, 'instagram');
           
         if (mediaFiles.length > 0) {
           hasMedia = true;
           // Используем первый файл из additionalMedia
           const mediaFile = mediaFiles[0];
           
-          if (mediaFile.type === 'image' || (typeof mediaFile.file === 'string' && 
-               (mediaFile.file.endsWith('.jpg') || mediaFile.file.endsWith('.jpeg') || 
-                mediaFile.file.endsWith('.png') || mediaFile.file.endsWith('.gif')))) {
+          // Упрощаем логику определения типа медиа-файла
+          // Приоритет отдаём явному полю type, если оно есть
+          if (mediaFile.type === 'image') {
             const imageUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем изображение из additionalMedia: ${imageUrl}`, 'instagram');
+            log(`[Instagram] Используем изображение из additionalMedia по типу: ${imageUrl}`, 'instagram');
             content.imageUrl = imageUrl;
-          } else if (mediaFile.type === 'video' || (typeof mediaFile.file === 'string' && 
-                    (mediaFile.file.endsWith('.mp4') || mediaFile.file.endsWith('.mov')))) {
+          } 
+          else if (mediaFile.type === 'video') {
             const videoUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем видео из additionalMedia: ${videoUrl}`, 'instagram');
+            log(`[Instagram] Используем видео из additionalMedia по типу: ${videoUrl}`, 'instagram');
             content.videoUrl = videoUrl;
+          }
+          // Резервная проверка по расширению файла, если тип не указан явно
+          else if (typeof mediaFile.file === 'string' && 
+                  (mediaFile.file.endsWith('.jpg') || mediaFile.file.endsWith('.jpeg') || 
+                   mediaFile.file.endsWith('.png') || mediaFile.file.endsWith('.gif'))) {
+            const imageUrl = mediaFile.url || mediaFile.file;
+            log(`[Instagram] Используем изображение из additionalMedia по расширению: ${imageUrl}`, 'instagram');
+            content.imageUrl = imageUrl;
+          } 
+          else if (typeof mediaFile.file === 'string' && 
+                  (mediaFile.file.endsWith('.mp4') || mediaFile.file.endsWith('.mov'))) {
+            const videoUrl = mediaFile.url || mediaFile.file;
+            log(`[Instagram] Используем видео из additionalMedia по расширению: ${videoUrl}`, 'instagram');
+            content.videoUrl = videoUrl;
+          }
+          // Если ничего не подошло, но есть URL - по умолчанию считаем изображением
+          else if (mediaFile.url) {
+            log(`[Instagram] Тип медиа в additionalMedia не определен, используем как изображение: ${mediaFile.url}`, 'instagram');
+            content.imageUrl = mediaFile.url;
+          }
+          else if (mediaFile.file) {
+            log(`[Instagram] Тип медиа в additionalMedia не определен, используем file как изображение: ${mediaFile.file}`, 'instagram');
+            content.imageUrl = mediaFile.file;
           }
         }
       }
@@ -86,35 +128,82 @@ export class InstagramService extends BaseSocialService {
       // Проверяем наличие медиа в поле additionalImages (второй вариант хранения медиа)
       log(`[Instagram Debug] Проверка additionalImages: ${JSON.stringify(content.additionalImages)}`, 'instagram');
       if (!hasMedia && content.additionalImages && Array.isArray(content.additionalImages)) {
-        const mediaFiles = content.additionalImages.filter(media => 
-          media.type === 'image' || media.type === 'video' || 
-          (typeof media === 'object' && (media.url || media.file)));
+        // Логируем полное содержимое additionalImages для диагностики
+        log(`[Instagram Debug] Содержимое additionalImages перед фильтрацией: ${JSON.stringify(content.additionalImages)}`, 'instagram');
+        
+        // Изменение логики фильтрации - меньше условий, упрощенная проверка
+        const mediaFiles = content.additionalImages.filter(media => {
+          // Логируем каждый элемент для проверки
+          log(`[Instagram Debug] Проверка элемента additionalImages: ${JSON.stringify(media)}`, 'instagram');
           
+          // Проверка, является ли media объектом с url 
+          const isObjectWithUrl = typeof media === 'object' && media && (media.url || media.file);
+          
+          // Проверка type === 'image' или type === 'video'
+          const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
+          
+          // Результат проверки
+          const result = isObjectWithUrl || hasValidType;
+          log(`[Instagram Debug] Элемент прошел фильтрацию: ${result}`, 'instagram');
+          
+          return result;
+        });
+        
+        log(`[Instagram Debug] Результат фильтрации additionalImages: найдено ${mediaFiles.length} элементов`, 'instagram');
+        
         if (mediaFiles.length > 0) {
           hasMedia = true;
           // Используем первый файл из additionalImages
           const mediaFile = mediaFiles[0];
           
-          if (mediaFile.type === 'image' || (typeof mediaFile.url === 'string' && 
-               (mediaFile.url.endsWith('.jpg') || mediaFile.url.endsWith('.jpeg') || 
-                mediaFile.url.endsWith('.png') || mediaFile.url.endsWith('.gif')))) {
+          // Упрощаем логику определения типа медиа-файла
+          // Приоритет отдаём явному полю type, если оно есть
+          if (mediaFile.type === 'image') {
             const imageUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем изображение из additionalImages: ${imageUrl}`, 'instagram');
+            log(`[Instagram] Используем изображение из additionalImages по типу: ${imageUrl}`, 'instagram');
             content.imageUrl = imageUrl;
-          } else if (mediaFile.type === 'video' || (typeof mediaFile.url === 'string' && 
-                    (mediaFile.url.endsWith('.mp4') || mediaFile.url.endsWith('.mov')))) {
+          } 
+          else if (mediaFile.type === 'video') {
             const videoUrl = mediaFile.url || mediaFile.file;
-            log(`[Instagram] Используем видео из additionalImages: ${videoUrl}`, 'instagram');
+            log(`[Instagram] Используем видео из additionalImages по типу: ${videoUrl}`, 'instagram');
             content.videoUrl = videoUrl;
+          }
+          // Резервная проверка по расширению файла, если тип не указан явно
+          else if (typeof mediaFile.url === 'string' && 
+                  (mediaFile.url.endsWith('.jpg') || mediaFile.url.endsWith('.jpeg') || 
+                   mediaFile.url.endsWith('.png') || mediaFile.url.endsWith('.gif'))) {
+            const imageUrl = mediaFile.url;
+            log(`[Instagram] Используем изображение из additionalImages по расширению: ${imageUrl}`, 'instagram');
+            content.imageUrl = imageUrl;
+          } 
+          else if (typeof mediaFile.url === 'string' && 
+                  (mediaFile.url.endsWith('.mp4') || mediaFile.url.endsWith('.mov'))) {
+            const videoUrl = mediaFile.url;
+            log(`[Instagram] Используем видео из additionalImages по расширению: ${videoUrl}`, 'instagram');
+            content.videoUrl = videoUrl;
+          }
+          // Если ничего не подошло, но есть URL - по умолчанию считаем изображением
+          else if (mediaFile.url) {
+            log(`[Instagram] Тип медиа не определен, используем как изображение: ${mediaFile.url}`, 'instagram');
+            content.imageUrl = mediaFile.url;
           }
         }
       }
+      
+      // Более подробное логирование состояния медиа перед проверкой
+      log(`[Instagram Debug] Итоговое состояние медиа-файлов:
+      - hasMedia: ${hasMedia}
+      - imageUrl: ${content.imageUrl || 'не задан'}
+      - videoUrl: ${content.videoUrl || 'не задан'}
+      - additionalImages: ${content.additionalImages ? (Array.isArray(content.additionalImages) ? `${content.additionalImages.length} файлов` : 'не является массивом') : 'не задан'}
+      - additionalMedia: ${content.additionalMedia ? (Array.isArray(content.additionalMedia) ? `${content.additionalMedia.length} файлов` : 'не является массивом') : 'не задан'}
+      - Тип контента: ${content.contentType}`, 'instagram');
       
       if (!hasMedia) {
         return {
           platform: 'instagram',
           status: 'failed',
-          error: 'Для публикации сторис необходимо изображение или видео (не найдено ни в основных полях, ни в additionalMedia)',
+          error: 'Для публикации сторис необходимо изображение или видео (не найдено ни в основных полях, ни в additionalImages/additionalMedia)',
           publishedAt: null,
         };
       }
