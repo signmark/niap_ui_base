@@ -553,9 +553,9 @@ export default function ContentPage() {
       const isStories = contentType === 'stories';
       
       // Используем правильный эндпоинт в зависимости от типа контента
-      const endpoint = isStories ? '/api/publish/stories' : '/api/publish/now';
+      const endpoint = isStories ? '/api/publish/instagram-stories' : '/api/publish/now';
       
-      console.log(`🚀 Используем эндпоинт ${endpoint} для типа контента ${isStories ? 'stories' : 'обычный'}`);
+      console.log(`🚀 Используем эндпоинт ${endpoint} для типа контента ${isStories ? 'instagram-stories' : 'обычный'}`);
       
       // Определяем данные запроса в зависимости от типа контента
       let requestData = {};

@@ -27,8 +27,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
   /**
    * Публикует контент в Instagram Stories по ID контента
    * 
-   * POST /api/publish/stories    - для обратной совместимости с клиентом
-   * POST /api/publish/instagram-stories - основной маршрут
+   * POST /api/publish/instagram-stories - маршрут для публикации историй
    * 
    * Body: {
    *   contentId: string,
@@ -36,7 +35,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
    *   platform: string // 'instagram'
    * }
    */
-  app.post(['/api/publish/stories', '/api/publish/instagram-stories'], validateAuthentication, async (req, res) => {
+  app.post('/api/publish/instagram-stories', validateAuthentication, async (req, res) => {
     try {
       const { contentId, campaignId, platform } = req.body;
       
