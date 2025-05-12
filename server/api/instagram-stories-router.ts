@@ -190,24 +190,37 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         let imageUrl = null;
         let caption = content.content_text || content.title || '';
         
-        // Пытаемся найти медиафайл в additionalImages
+        log(`Проверка медиафайлов для контента: ${JSON.stringify({
+          contentId,
+          hasAdditionalImages: !!content.additional_images,
+          additionalImagesType: content.additional_images ? typeof content.additional_images : 'undefined',
+          hasAdditionalImagesArray: content.additional_images && Array.isArray(content.additional_images),
+          additionalImagesLength: content.additional_images && Array.isArray(content.additional_images) ? content.additional_images.length : 0
+        })}`);
+        
+        // Обработка поля additional_images (snake_case)
         if (content.additional_images && Array.isArray(content.additional_images)) {
+          log(`Найдено ${content.additional_images.length} медиафайлов в поле additional_images`);
+          
           // Берем первое изображение из массива
           for (const imgItem of content.additional_images) {
             if (typeof imgItem === 'object' && imgItem.url && typeof imgItem.url === 'string') {
               imageUrl = imgItem.url;
+              log(`Найдено изображение в объекте: ${imageUrl}`);
               break;
             } else if (typeof imgItem === 'string') {
               try {
                 const parsedImg = JSON.parse(imgItem);
                 if (parsedImg.url && typeof parsedImg.url === 'string') {
                   imageUrl = parsedImg.url;
+                  log(`Найдено изображение в JSON строке: ${imageUrl}`);
                   break;
                 }
               } catch (e) {
                 // Если строка не является JSON, проверяем, может это прямая ссылка
                 if (imgItem.startsWith('http')) {
                   imageUrl = imgItem;
+                  log(`Найдено изображение в прямой ссылке: ${imageUrl}`);
                   break;
                 }
               }
