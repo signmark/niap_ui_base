@@ -527,18 +527,47 @@ export default function ContentPage() {
       console.log("ID контента:", id);
       console.log("Выбранные платформы:", platforms || {});
       
-      // Вызываем новый API эндпоинт, который сразу публикует во все выбранные платформы
-      // и сохраняет информацию о выбранных платформах в Directus
-      const response = await fetch('/api/publish/now', {
+      // Получаем текущий контент для определения его типа
+      const content = contentList.find(c => c.id === id);
+      const isStories = content?.contentType === 'stories';
+      
+      // Используем правильный эндпоинт в зависимости от типа контента
+      const endpoint = isStories ? '/api/publish/stories' : '/api/publish/now';
+      
+      console.log(`🚀 Используем эндпоинт ${endpoint} для типа контента ${isStories ? 'stories' : 'обычный'}`);
+      
+      // Определяем данные запроса в зависимости от типа контента
+      let requestData = {};
+      
+      if (isStories) {
+        // Для сторис нужна только одна платформа за раз, берем первую выбранную
+        const selectedPlatform = Object.entries(platforms || {})
+          .find(([platform, isSelected]) => isSelected)?.[0];
+        
+        if (!selectedPlatform) {
+          throw new Error('Выберите платформу для публикации сторис');
+        }
+        
+        requestData = {
+          contentId: id,
+          platform: selectedPlatform
+        };
+      } else {
+        // Для обычного контента отправляем все выбранные платформы
+        requestData = {
+          contentId: id,
+          platforms: platforms || {}
+        };
+      }
+      
+      // Вызываем API эндпоинт
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
-        body: JSON.stringify({
-          contentId: id,
-          platforms: platforms || {} // используем переданные платформы или пустой объект
-        })
+        body: JSON.stringify(requestData)
       });
       
       // Проверяем статус ответа
@@ -583,12 +612,18 @@ export default function ContentPage() {
         console.error("Ошибка при обновлении статуса публикации:", error);
       }
       
+      // Получаем текущий контент для определения его типа
+      const content = contentList.find(c => c.id === variables.id);
+      const isStories = content?.contentType === 'stories';
+      
       // Обновляем данные в интерфейсе
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
         .then(() => {
           toast({
-            title: "Контент опубликован",
-            description: "Контент успешно отправлен в социальные сети",
+            title: isStories ? "Сторис опубликован" : "Контент опубликован",
+            description: isStories 
+              ? "Сторис успешно отправлен в выбранную платформу" 
+              : "Контент успешно отправлен в социальные сети",
           });
         });
     },
