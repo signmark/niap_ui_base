@@ -1822,10 +1822,30 @@ router.post('/publish/instagram/stories', authMiddleware, async (req, res) => {
       Доп. медиа: ${content.additionalMedia ? 'присутствуют' : 'отсутствуют'}`, 'instagram');
 
     // Получаем данные кампании для настроек Instagram
+    log(`[Instagram Stories] Получение данных кампании: ID ${content.campaignId}`, 'instagram');
     const campaign = await storage.getCampaignById(content.campaignId);
     
-    if (!campaign) {
+    // Дополнительное логирование результата поиска кампании
+    if (campaign) {
+      log(`[Instagram Stories] Кампания найдена: ${campaign.name || 'без имени'}`, 'instagram');
+      log(`[Instagram Stories] Данные кампании: ${JSON.stringify(campaign).substring(0, 200)}...`, 'instagram');
+    } else {
       log(`[Instagram Stories] Ошибка: кампания с ID ${content.campaignId} не найдена`, 'instagram', 'error');
+      
+      // Пробуем получить данные кампании из другого источника
+      try {
+        // Импортируем утилиту для прямого доступа к Directus
+        const { getDirectusItemById } = await import('../utils/directus-admin-helper');
+        const directusCampaign = await getDirectusItemById('user_campaigns', content.campaignId);
+        
+        if (directusCampaign) {
+          log(`[Instagram Stories] Кампания найдена через directus-admin-helper: ${directusCampaign.name || 'без имени'}`, 'instagram');
+          return await publishInstagramStory(content, directusCampaign, res);
+        }
+      } catch (directusError) {
+        log(`[Instagram Stories] Ошибка при альтернативном поиске кампании: ${directusError.message}`, 'instagram', 'error');
+      }
+      
       return res.status(404).json({
         success: false,
         error: 'Кампания не найдена'

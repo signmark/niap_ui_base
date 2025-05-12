@@ -369,10 +369,44 @@ async function main() {
     log(`ID контента: ${CONTENT_ID}`, 'highlight');
     log(`API URL: ${API_URL}`, 'highlight');
     
+    // Прямая авторизация в Directus
+    try {
+      log('Попытка прямой авторизации в Directus...', 'step');
+      const authUrl = 'https://directus.nplanner.ru/auth/login';
+      
+      const authResponse = await fetch(authUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+        }),
+      });
+      
+      const authData = await authResponse.json();
+      
+      if (authResponse.ok && authData.data && authData.data.access_token) {
+        ADMIN_TOKEN = authData.data.access_token;
+        const maskedToken = ADMIN_TOKEN.substring(0, 10) + '...';
+        log(`Авторизация успешна: получен токен ${maskedToken}`, 'success');
+      } else {
+        const errorMsg = authData.errors ? authData.errors[0].message : 'Неизвестная ошибка';
+        log(`Ошибка авторизации: ${errorMsg}`, 'error');
+        log('Будет использован резервный токен авторизации', 'warning');
+        ADMIN_TOKEN = FALLBACK_TOKEN;
+      }
+    } catch (error) {
+      log(`Ошибка при попытке авторизации: ${error.message}`, 'error');
+      log('Будет использован резервный токен авторизации', 'warning');
+      ADMIN_TOKEN = FALLBACK_TOKEN;
+    }
+    
     // Проверяем наличие токена
     if (!ADMIN_TOKEN) {
-      log('ДИРЕКТИВНЫЙ ТОКЕН НЕ НАЙДЕН В .ENV ФАЙЛЕ!', 'error');
-      log('Добавьте DIRECTUS_ADMIN_TOKEN в .env файл и повторите попытку', 'error');
+      log('ТОКЕН АВТОРИЗАЦИИ НЕ ПОЛУЧЕН!', 'error');
+      log('Проверьте настройки авторизации и повторите попытку', 'error');
       return;
     }
     
