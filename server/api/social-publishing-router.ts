@@ -393,12 +393,60 @@ router.post('/publish', authMiddleware, async (req, res) => {
       log(`[Social Publishing] Обнаружен контент типа 'stories', используем прямую публикацию`);
       
       try {
+        log(`[Social Publishing] Пытаемся получить настройки кампании для ID: ${content.campaignId}`);
         const campaignSettings = await storage.getCampaignById(content.campaignId);
+        
         if (!campaignSettings) {
-          return res.status(404).json({
-            success: false,
-            error: `Не найдены настройки кампании для ID ${content.campaignId}`
-          });
+          log(`[Social Publishing] Не найдены настройки кампании для ID: ${content.campaignId}. Попытаемся получить настройки через запрос к user_campaigns`);
+          
+          // Получаем токен администратора
+          const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || (await import('../services/directus-auth-manager').then(m => m.directusAuthManager)).getAdminToken();
+          
+          if (!adminToken) {
+            log(`[Social Publishing] Не удалось получить токен администратора для запроса настроек кампании`);
+            return res.status(500).json({
+              success: false,
+              error: `Не удалось получить токен администратора для запроса настроек кампании`
+            });
+          }
+          
+          // Пробуем получить настройки кампании напрямую
+          try {
+            const directusApi = await import('../services/directus-api-manager').then(m => m.directusApi);
+            log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${content.campaignId}`);
+            
+            const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+              headers: {
+                'Authorization': `Bearer ${adminToken}`
+              }
+            });
+            
+            if (response.data?.data) {
+              log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`);
+              // ВАЖНО! Используем let для переназначения переменной
+              const campaignSettings = response.data.data;
+              
+              // Проверяем, что socialSettings присутствуют
+              if (!campaignSettings.socialSettings) {
+                log(`[Social Publishing] В настройках кампании отсутствуют настройки социальных сетей, создаем пустой объект`);
+                campaignSettings.socialSettings = {};
+              }
+              
+              return campaignSettings;
+            } else {
+              log(`[Social Publishing] Не удалось получить настройки кампании напрямую`);
+              return res.status(404).json({
+                success: false,
+                error: `Не найдены настройки кампании для ID ${content.campaignId}`
+              });
+            }
+          } catch (directusError) {
+            log(`[Social Publishing] Ошибка при прямом запросе настроек кампании: ${directusError.message}`);
+            return res.status(404).json({
+              success: false,
+              error: `Не найдены настройки кампании для ID ${content.campaignId}`
+            });
+          }
         }
         
         // Получаем сервис в зависимости от платформы
