@@ -63,6 +63,9 @@ export class InstagramService extends BaseSocialService {
       // Определяем тип контента для сторис
       const isStoriesContent = content.contentType === 'stories';
       
+      // Логируем тип контента
+      log(`[Instagram Stories] Тип контента: ${content.contentType}, isStoriesContent: ${isStoriesContent}`, 'instagram');
+      
       try {
         // Если основные поля пусты - ищем в дополнительных полях
         if (!hasMedia) {
@@ -72,8 +75,11 @@ export class InstagramService extends BaseSocialService {
           function tryParseJson(value) {
             if (typeof value === 'string' && (value.trim().startsWith('[') || value.trim().startsWith('{'))) {
               try {
-                return JSON.parse(value);
+                const parsed = JSON.parse(value);
+                log(`[Instagram Stories] Успешно распарсили JSON: ${typeof parsed === 'object' ? 'объект' : typeof parsed}`, 'instagram');
+                return parsed;
               } catch (e) {
+                log(`[Instagram Stories] Ошибка парсинга JSON: ${e.message}`, 'instagram');
                 return value;
               }
             }
@@ -644,7 +650,8 @@ export class InstagramService extends BaseSocialService {
       const containerUrl = `${baseUrl}/${businessAccountId}/media`;
 
       // Формируем параметры запроса для создания контейнера сторис
-      // Создаем параметры для публикации сторис
+      // ВАЖНО: для Instagram Stories используем media_type="STORIES" 
+      // (а не "IMAGE"/"VIDEO") и НЕ используем параметр is_story=true
       const storyParams: any = {
         media_type: "STORIES", // Важно использовать "STORIES" вместо "IMAGE" или "VIDEO"
         caption: caption,
