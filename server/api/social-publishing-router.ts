@@ -13,6 +13,56 @@ import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
 import { instagramService } from '../services/social/instagram-service';
 
+// Вспомогательная функция для публикации Instagram Stories
+async function publishInstagramStory(content: any, campaign: any, res: express.Response) {
+  try {
+    log(`[Instagram Stories] Начинаем публикацию контента ${content.id} в Instagram Stories`);
+    
+    // Получаем настройки Instagram из данных кампании
+    const socialSettings = campaign.social_settings || campaign.socialSettings || {};
+    
+    log(`[Instagram Stories] Настройки кампании: ${JSON.stringify(socialSettings).substring(0, 200)}...`);
+    
+    const instagramSettings = socialSettings.instagram || {};
+    
+    if (!instagramSettings || !instagramSettings.accessToken) {
+      log(`[Instagram Stories] Ошибка: отсутствуют настройки Instagram или токен для кампании ${campaign.id}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствуют настройки Instagram или токен доступа'
+      });
+    }
+    
+    // Публикуем контент через Instagram сервис
+    const publishResult = await instagramService.publishStory(content, instagramSettings);
+    
+    log(`[Instagram Stories] Результат публикации: ${JSON.stringify(publishResult)}`);
+    
+    if (publishResult.success) {
+      // Обновляем статус публикации в контенте
+      await storage.updateContentPlatformStatus(content.id, 'instagram', publishResult);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Instagram Stories успешно опубликован',
+        result: publishResult
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: publishResult.error || 'Ошибка при публикации Instagram Stories',
+        details: publishResult
+      });
+    }
+  } catch (error: any) {
+    log(`[Instagram Stories] Ошибка при публикации контента ${content.id}: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка при публикации: ${error.message}`
+    });
+  }
+}
+
 const router = express.Router();
 
 /**
@@ -1852,26 +1902,8 @@ router.post('/publish/instagram/stories', authMiddleware, async (req, res) => {
       });
     }
 
-    // Получаем настройки Instagram из кампании
-    const socialMediaSettings = campaign.social_media_settings || {};
-    const instagramSettings = socialMediaSettings.instagram || {};
-    
-    // Проверяем наличие токена и business_account_id
-    if (!instagramSettings.token && !instagramSettings.accessToken) {
-      log(`[Instagram Stories] Ошибка: отсутствует токен Instagram в настройках кампании`, 'instagram', 'error');
-      return res.status(400).json({
-        success: false,
-        error: 'Отсутствует токен Instagram в настройках кампании'
-      });
-    }
-
-    if (!instagramSettings.businessAccountId) {
-      log(`[Instagram Stories] Ошибка: отсутствует ID бизнес-аккаунта Instagram в настройках кампании`, 'instagram', 'error');
-      return res.status(400).json({
-        success: false,
-        error: 'Отсутствует ID бизнес-аккаунта Instagram в настройках кампании'
-      });
-    }
+    // Вызываем вспомогательную функцию для публикации Instagram Stories
+    return await publishInstagramStory(content, campaign, res);
 
     // Подготавливаем структуру для платформ в контенте, если она не существует
     const socialPlatforms = content.socialPlatforms || {};
