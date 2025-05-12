@@ -1478,11 +1478,12 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
         case 'instagram':
           // Проверяем настройки Instagram
           if (!campaignSettings.socialSettings.instagram ||
-              !campaignSettings.socialSettings.instagram.accessToken ||
+              (!campaignSettings.socialSettings.instagram.token && !campaignSettings.socialSettings.instagram.accessToken) ||
               !campaignSettings.socialSettings.instagram.businessAccountId) {
             
             log(`[Social Publishing] Ошибка: не найдены корректные настройки Instagram в кампании`, 'stories', 'error');
             log(`[Social Publishing] socialSettings.instagram: ${JSON.stringify(campaignSettings.socialSettings.instagram || {})}`, 'stories', 'error');
+            log(`[Social Publishing] Требуется token/accessToken и businessAccountId`, 'stories', 'error');
             
             return res.status(400).json({
               success: false,
