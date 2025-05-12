@@ -714,10 +714,45 @@ export default function ContentPage() {
         body: JSON.stringify(requestData)
       });
       
-      // Проверяем статус ответа
+      // Проверяем статус ответа с расширенным логированием
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Ошибка публикации (${response.status})`);
+        try {
+          const responseText = await response.text();
+          let errorMessage = `Ошибка публикации (${response.status})`;
+          let errorData;
+          
+          // Пытаемся распарсить JSON из ответа
+          try {
+            errorData = JSON.parse(responseText);
+            errorMessage = errorData.error || errorMessage;
+            
+            // Подробное логирование для диагностики
+            console.error('⛔ Ошибка API при публикации:', {
+              status: response.status,
+              statusText: response.statusText,
+              responseData: errorData,
+              endpoint,
+              requestData
+            });
+          } catch (parseError) {
+            // Если ответ не в формате JSON, используем текст как есть
+            console.error('⛔ Ошибка API при публикации (не JSON):', {
+              status: response.status, 
+              statusText: response.statusText,
+              responseText,
+              endpoint,
+              requestData,
+              parseError
+            });
+            
+            errorMessage = responseText || errorMessage;
+          }
+          
+          throw new Error(errorMessage);
+        } catch (responseError) {
+          console.error('⛔ Критическая ошибка при обработке ответа API:', responseError);
+          throw new Error(`Ошибка публикации: ${responseError.message || 'не удалось обработать ответ сервера'}`);
+        }
       }
       
       // Получаем результат публикации
