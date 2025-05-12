@@ -729,8 +729,25 @@ export class DatabaseStorage implements IStorage {
         return this.tokenCache[userId].token;
       }
       
-      // Если в кэше нет или токен устарел, получаем новый
-      console.log(`Token for user ${userId} not in cache or expired, fetching new one`);
+      // Если в кэше нет или токен устарел, пробуем получить из directusAuthManager
+      if (directusAuthManager) {
+        console.log(`Attempting to get token from directusAuthManager for user ${userId}`);
+        // Передаем true в параметр autoRefresh, чтобы гарантировать попытку обновления истекшего токена
+        const directusToken = await directusAuthManager.getAuthToken(userId, true);
+        if (directusToken) {
+          console.log(`Successfully obtained token from directusAuthManager for user ${userId}`);
+          
+          // Сохраняем в кэш с временем жизни 30 минут (меньше чем в DirectusAuthManager)
+          this.tokenCache[userId] = {
+            token: directusToken,
+            expiresAt: now + 30 * 60 * 1000 // 30 минут
+          };
+          return directusToken;
+        }
+      }
+      
+      // Если directusAuthManager не смог дать токен, получаем из старого метода
+      console.log(`Token not available via directusAuthManager, trying legacy method for user ${userId}`);
       const tokenInfo = await this.getUserTokenInfo(userId);
       
       if (tokenInfo && tokenInfo.token) {
@@ -741,6 +758,18 @@ export class DatabaseStorage implements IStorage {
         };
         console.log(`Cached new token for user ${userId}, expires in 50 minutes`);
         return tokenInfo.token;
+      }
+      
+      // Если ничего не получилось, пробуем получить токен администратора через directusAuthManager
+      console.log(`No user token found, trying admin token via directusAuthManager`);
+      try {
+        const adminSession = await directusAuthManager.getAdminSession();
+        if (adminSession && adminSession.token) {
+          console.log(`Successfully obtained admin token via directusAuthManager`);
+          return adminSession.token;
+        }
+      } catch (e) {
+        console.warn(`Error getting admin token via directusAuthManager:`, e);
       }
       
       console.warn('No token found for user:', userId);
