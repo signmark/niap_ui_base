@@ -1460,14 +1460,15 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
  * @apiNote Для Instagram важно использовать параметр media_type="STORIES" (а не "IMAGE"/"VIDEO")
  * и не использовать параметр is_story=true, который не принимается API.
  */
-router.post('/publish/stories', authMiddleware, async (req, res) => {
+router.post('/publish/instagram-stories', authMiddleware, async (req, res) => {
   try {
-    const { contentId, platform } = req.body;
+    const { contentId, platform, campaignId } = req.body;
     
     // Расширенное логирование для диагностики
-    log(`[Social Publishing] Получен запрос на публикацию сторис:`, 'stories');
+    log(`[Social Publishing] Получен запрос на публикацию Instagram сторис:`, 'stories');
     log(`[Social Publishing] - contentId: ${contentId}`, 'stories');
     log(`[Social Publishing] - platform: ${platform}`, 'stories');
+    log(`[Social Publishing] - campaignId: ${campaignId}`, 'stories');
     log(`[Social Publishing] - body: ${JSON.stringify(req.body)}`, 'stories');
     
     // Детальное логирование для отладки
@@ -1483,6 +1484,15 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать contentId и platform'
+      });
+    }
+    
+    // Проверяем наличие campaignId, который необходим для instagram-stories
+    if (!campaignId) {
+      log(`[Social Publishing] Ошибка: не указан campaignId для публикации Instagram Stories`, 'stories', 'error');
+      return res.status(400).json({
+        success: false,
+        error: 'Требуется ID кампании'
       });
     }
     
@@ -1562,8 +1572,11 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
     }
     
     try {
-      // Получаем настройки кампании
-      let campaignSettings = await storage.getCampaignById(content.campaignId);
+      // Получаем настройки кампании (используем campaignId из запроса или из контента)
+      const campaignIdToUse = campaignId || content.campaignId;
+      log(`[Social Publishing] Используем ID кампании для запроса настроек: ${campaignIdToUse}`, 'stories');
+      
+      let campaignSettings = await storage.getCampaignById(campaignIdToUse);
       log(`[Social Publishing] Получены настройки кампании для сторис: ${campaignSettings ? 'Да' : 'Нет'}`, 'stories');
       
       // Если настройки не получены через стандартный метод, пробуем получить через прямой API запрос
@@ -1582,9 +1595,9 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
         
         try {
           const directusApi = await import('../lib/directus').then(m => m.directusApi);
-          log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${content.campaignId}`, 'stories');
+          log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${campaignIdToUse}`, 'stories');
           
-          const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+          const response = await directusApi.get(`/items/user_campaigns/${campaignIdToUse}`, {
             headers: {
               'Authorization': `Bearer ${adminToken}`
             }
@@ -1605,7 +1618,7 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
             log(`[Social Publishing] Не удалось получить настройки кампании напрямую`, 'stories', 'error');
             return res.status(404).json({
               success: false,
-              error: `Не найдены настройки кампании для ID ${content.campaignId}`
+              error: `Не найдены настройки кампании для ID ${campaignIdToUse}`
             });
           }
         } catch (directusError) {
