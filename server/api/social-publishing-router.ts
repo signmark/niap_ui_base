@@ -1477,13 +1477,23 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           
         case 'instagram':
           // Проверяем настройки Instagram
-          if (!campaignSettings.socialSettings.instagram ||
-              (!campaignSettings.socialSettings.instagram.token && !campaignSettings.socialSettings.instagram.accessToken) ||
-              !campaignSettings.socialSettings.instagram.businessAccountId) {
+          log(`[Social Publishing] Настройки campaignSettings: ${JSON.stringify(campaignSettings)}`, 'stories');
+          log(`[Social Publishing] socialSettings: ${JSON.stringify(campaignSettings.socialSettings || {})}`, 'stories');
+          log(`[Social Publishing] instagram настройки: ${JSON.stringify(campaignSettings.socialSettings?.instagram || {})}`, 'stories');
+          
+          // Получаем токен из настроек - проверяем оба возможных поля
+          const instToken = campaignSettings.socialSettings?.instagram?.token || campaignSettings.socialSettings?.instagram?.accessToken;
+          const businessId = campaignSettings.socialSettings?.instagram?.businessAccountId;
+          
+          log(`[Social Publishing] Извлеченный токен: ${instToken ? 'Присутствует' : 'Отсутствует'}, businessAccountId: ${businessId || 'Отсутствует'}`, 'stories');
+          
+          // Проверяем наличие всех необходимых настроек
+          if (!campaignSettings.socialSettings?.instagram ||
+              (!instToken) ||
+              !businessId) {
             
             log(`[Social Publishing] Ошибка: не найдены корректные настройки Instagram в кампании`, 'stories', 'error');
-            log(`[Social Publishing] socialSettings.instagram: ${JSON.stringify(campaignSettings.socialSettings.instagram || {})}`, 'stories', 'error');
-            log(`[Social Publishing] Требуется token/accessToken и businessAccountId`, 'stories', 'error');
+            log(`[Social Publishing] Детали: token/accessToken=${instToken ? 'присутствует' : 'отсутствует'}, businessAccountId=${businessId || 'отсутствует'}`, 'stories', 'error');
             
             return res.status(400).json({
               success: false,
