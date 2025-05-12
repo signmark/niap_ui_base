@@ -841,8 +841,6 @@ export class InstagramService extends BaseSocialService {
         log(`[Instagram] Поиск username для URL сторис. Проверяем все варианты настроек:`, 'instagram');
         log(`[Instagram] socialMediaSettings?.instagram?.username: ${socialMediaSettings?.instagram?.username || 'не найден'}`, 'instagram');
         log(`[Instagram] socialMediaSettings?.instagram?.profile: ${socialMediaSettings?.instagram?.profile || 'не найден'}`, 'instagram');
-        log(`[Instagram] socialSettings?.instagram?.username: ${(socialSettings && socialSettings.instagram && socialSettings.instagram.username) || 'не найден'}`, 'instagram');
-        log(`[Instagram] socialSettings?.instagram?.profile: ${(socialSettings && socialSettings.instagram && socialSettings.instagram.profile) || 'не найден'}`, 'instagram');
         
         // Проверяем все возможные места, где может храниться username в настройках
         const username = socialMediaSettings?.instagram?.username || 
