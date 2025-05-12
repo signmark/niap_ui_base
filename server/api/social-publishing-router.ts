@@ -759,9 +759,14 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     
     // Автоматически вызываем обновление статуса после публикации
     try {
-      const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const { getAdminToken } = await import('../utils/directus-admin-helper');
+      const adminToken = await getAdminToken();
       const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
+      
+      if (!adminToken) {
+        log(`[Social Publishing] Ошибка: Не удалось получить токен администратора для обновления статуса`);
+        return;
+      }
       
       log(`[Social Publishing] Автоматический вызов обновления статуса после асинхронной публикации в ${platform}`);
       

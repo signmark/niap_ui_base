@@ -23,11 +23,12 @@ export async function getAdminToken(): Promise<string | null> {
     // Если нет, пробуем принудительно обновить сессию администратора
     console.log('Отсутствует сессия администратора, пробуем принудительно обновить');
     
-    // Принудительно обновляем токен администратора
-    await directusAuthManager.refreshSession();
-    
     // Пробуем войти под администратором
-    await directusAuthManager.loginAdmin();
+    const adminLoginResult = await directusAuthManager.loginAdmin();
+    
+    if (!adminLoginResult.success) {
+      console.log('Не удалось автоматически войти под админом, требуется ручной вход');
+    }
     
     // Получаем обновленный токен
     const refreshedSessions = directusAuthManager.getAllActiveSessions();
