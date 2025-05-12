@@ -8,7 +8,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import { generateRandomCaption } from '../../utils/content-generation';
-import { logger } from '../../utils/logger';
+import { log } from '../../utils/logger';
 
 export class InstagramStoriesService {
   private token: string;

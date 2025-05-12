@@ -5,6 +5,7 @@ import { BaseSocialService } from './base-service';
 import FormData from 'form-data';
 import * as fs from 'fs';
 import * as path from 'path';
+import InstagramStoriesService from './instagram-stories-service';
 
 // Вспомогательная функция для задержки выполнения кода
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -82,6 +83,12 @@ export class InstagramService extends BaseSocialService {
         
         // Теперь проверяем, является ли поле массивом объектов с полем url
         if (Array.isArray(content.additionalImages) && content.additionalImages.length > 0) {
+          // Детальное логирование всех элементов массива
+          log(`[Instagram] additionalImages содержит ${content.additionalImages.length} элементов`, 'instagram');
+          content.additionalImages.forEach((item, index) => {
+            log(`[Instagram] additionalImages[${index}]: ${JSON.stringify(item)}`, 'instagram');
+          });
+          
           // Детальное логирование первого элемента
           const firstItem = content.additionalImages[0];
           log(`[Instagram] Первый элемент additionalImages: ${JSON.stringify(firstItem)}`, 'instagram');
