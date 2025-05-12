@@ -2953,6 +2953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
+  registerMediaTypesTestRoute(app);
   console.log('Test Instagram routes registered');
   console.log('Social platform webhook routes registered successfully');
   
