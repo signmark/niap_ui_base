@@ -719,9 +719,22 @@ export default function ContentPage() {
           }
         }
         
+        // Добавляем дополнительное логирование для диагностики
+        console.log('🔍 Проверка ID кампании для публикации сторис:', {
+          currentCampaignId,
+          alternativeCampaignId: currentContent?.campaignId
+        });
+        
+        // Используем ID кампании из currentCampaignId или из текущего контента
+        const campaignIdToUse = currentCampaignId || currentContent?.campaignId;
+        
+        if (!campaignIdToUse) {
+          throw new Error('Не удалось определить ID кампании для публикации сторис');
+        }
+        
         requestData = {
           contentId: id,
-          campaignId: currentCampaignId, // Добавляем ID кампании
+          campaignId: campaignIdToUse,
           platform: selectedPlatform
         };
       } else {
