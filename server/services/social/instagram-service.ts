@@ -702,6 +702,39 @@ export class InstagramService extends BaseSocialService {
       }
       log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(logParams)}`, 'instagram');
 
+      // Проверяем корректность URL медиа перед отправкой в API
+      if (!mediaUrl.startsWith('http')) {
+        log(`[Instagram] ОШИБКА: Некорректный URL медиа файла: ${mediaUrl.substring(0, 30)}...`, 'instagram', 'error');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          error: 'URL медиа файла должен начинаться с http:// или https://',
+          publishedAt: null,
+        };
+      }
+
+      // Пробуем сделать HEAD-запрос для проверки доступности медиа перед отправкой в API
+      try {
+        log(`[Instagram] Проверка доступности медиа файла перед публикацией: ${mediaUrl.substring(0, 30)}...`, 'instagram');
+        const headResponse = await axios.head(mediaUrl, { timeout: 5000 });
+        
+        // Дополнительно проверяем Content-Type, если он доступен
+        if (headResponse.headers['content-type']) {
+          const contentType = headResponse.headers['content-type'].toLowerCase();
+          log(`[Instagram] Проверка медиа: Content-Type: ${contentType}`, 'instagram');
+          
+          if (mediaType === 'VIDEO' && !contentType.includes('video')) {
+            log(`[Instagram] Предупреждение: Тип медиа определен как VIDEO, но Content-Type (${contentType}) не соответствует видео`, 'instagram', 'warn');
+          } else if (mediaType === 'IMAGE' && !contentType.includes('image')) {
+            log(`[Instagram] Предупреждение: Тип медиа определен как IMAGE, но Content-Type (${contentType}) не соответствует изображению`, 'instagram', 'warn');
+          }
+        }
+      } catch (checkError) {
+        // Логируем, но продолжаем, возможно Instagram API сможет обработать URL
+        log(`[Instagram] Предупреждение: Не удалось проверить доступность медиа файла: ${checkError.message}`, 'instagram', 'warn');
+        log(`[Instagram] Продолжаем публикацию, но есть риск ошибки API`, 'instagram', 'warn');
+      }
+
       // Отправляем запрос на создание контейнера
       let containerResponse;
       try {
@@ -843,11 +876,12 @@ export class InstagramService extends BaseSocialService {
         // Чистим username от @ в начале, если он есть
         const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
         
-        // URL для Stories - используем username для создания ссылки на профиль
-        const storyUrl = `https://www.instagram.com/${cleanUsername}/`;
+        // Формируем URL для Stories с правильным форматированием
+        // По формату Instagram URL для сторис: https://www.instagram.com/stories/username/storyId/
+        const storyUrl = `https://www.instagram.com/stories/${cleanUsername}/${storyId}/`;
         
         log(`[Instagram] Итоговый username для URL сторис: ${cleanUsername}`, 'instagram');
-
+        log(`[Instagram] Итоговый storyId: ${storyId}`, 'instagram');
         log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
         log(`[Instagram] URL сторис: ${storyUrl}`, 'instagram');
         
