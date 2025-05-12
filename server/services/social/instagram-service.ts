@@ -42,11 +42,35 @@ export class InstagramService extends BaseSocialService {
       log(`[Instagram] Начинаем публикацию сторис в Instagram c бизнес-аккаунтом: ${businessAccountId}`, 'instagram');
 
       // Проверяем, что у нас есть изображение или видео для сторис
-      if (!content.imageUrl && !content.videoUrl) {
+      // Сначала проверяем основные поля imageUrl и videoUrl
+      // Затем проверяем additionalMedia, где может храниться медиа для сторис
+      let hasMedia = Boolean(content.imageUrl || content.videoUrl);
+      
+      // Проверяем наличие медиа в поле additionalMedia
+      if (!hasMedia && content.additionalMedia && Array.isArray(content.additionalMedia)) {
+        const mediaFiles = content.additionalMedia.filter(media => 
+          media.type === 'image' || media.type === 'video');
+          
+        if (mediaFiles.length > 0) {
+          hasMedia = true;
+          // Используем первый файл из additionalMedia
+          const mediaFile = mediaFiles[0];
+          
+          if (mediaFile.type === 'image') {
+            log(`[Instagram] Используем изображение из additionalMedia: ${mediaFile.url}`, 'instagram');
+            content.imageUrl = mediaFile.url;
+          } else if (mediaFile.type === 'video') {
+            log(`[Instagram] Используем видео из additionalMedia: ${mediaFile.url}`, 'instagram');
+            content.videoUrl = mediaFile.url;
+          }
+        }
+      }
+      
+      if (!hasMedia) {
         return {
           platform: 'instagram',
           status: 'failed',
-          error: 'Для публикации сторис необходимо изображение или видео',
+          error: 'Для публикации сторис необходимо изображение или видео (не найдено ни в основных полях, ни в additionalMedia)',
           publishedAt: null,
         };
       }
@@ -73,10 +97,37 @@ export class InstagramService extends BaseSocialService {
         mediaType = 'VIDEO';
         mediaUrl = content.videoUrl;
         log(`[Instagram] Подготовка видео для сторис: ${mediaUrl}`, 'instagram');
-      } else {
+      } else if (content.imageUrl) {
         mediaType = 'IMAGE';
         mediaUrl = content.imageUrl as string;
         log(`[Instagram] Подготовка изображения для сторис: ${mediaUrl}`, 'instagram');
+      } else {
+        // Здесь мы уже знаем, что медиа есть (проверили выше),
+        // поэтому берем первый медиафайл из additionalMedia
+        const mediaFiles = content.additionalMedia?.filter(media => 
+          media.type === 'image' || media.type === 'video');
+          
+        if (mediaFiles && mediaFiles.length > 0) {
+          const mediaFile = mediaFiles[0];
+          
+          if (mediaFile.type === 'image') {
+            mediaType = 'IMAGE';
+            mediaUrl = mediaFile.url;
+            log(`[Instagram] Подготовка изображения из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
+          } else { // video
+            mediaType = 'VIDEO';
+            mediaUrl = mediaFile.url;
+            log(`[Instagram] Подготовка видео из additionalMedia для сторис: ${mediaUrl}`, 'instagram');
+          }
+        } else {
+          // Этот код не должен выполниться, но добавим на всякий случай
+          return {
+            platform: 'instagram',
+            status: 'failed',
+            error: 'Не удалось найти медиа для сторис',
+            publishedAt: null,
+          };
+        }
       }
 
       // Создаем URL запроса для создания контейнера
@@ -97,9 +148,12 @@ export class InstagramService extends BaseSocialService {
         storyParams.image_url = mediaUrl;
       }
 
-      // Добавляем параметр, указывающий, что это сторис
-      storyParams.is_story = true;
-
+      // Изменяем media_type на STORIES (это правильный параметр для сторис)
+      storyParams.media_type = 'STORIES';
+      
+      // Удаляем параметр is_story, который не поддерживается в API
+      // Instagram API требует media_type="STORIES" вместо параметра is_story=true
+      
       // Логируем параметры запроса для отладки
       log(`[Instagram] Параметры запроса на создание контейнера сторис: ${JSON.stringify(storyParams)}`, 'instagram');
 
