@@ -281,11 +281,21 @@ function analyzeContentMedia(content) {
 /**
  * Публикует Instagram Stories через API
  * @param {string} contentId ID контента
+ * @param {Object} content Данные контента
  * @returns {Promise<Object>} Результат публикации
  */
-async function publishInstagramStory(contentId) {
+async function publishInstagramStory(contentId, content) {
   try {
     log(`Публикация Instagram Stories для контента ${contentId}`, 'step');
+    
+    // Получаем campaignId из контента
+    const campaignId = content.campaignId;
+    
+    if (!campaignId) {
+      throw new Error('Не найден ID кампании (campaignId) для данного контента');
+    }
+    
+    log(`Используем ID кампании: ${campaignId}`, 'info');
     
     // Формируем заголовки запроса с токеном авторизации
     const headers = {
@@ -308,7 +318,8 @@ async function publishInstagramStory(contentId) {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
-        contentId: contentId
+        contentId: contentId,
+        campaignId: campaignId
       })
     });
     
@@ -363,6 +374,15 @@ async function main() {
     // Шаг 1: Получаем информацию о контенте
     const content = await getContentInfo(CONTENT_ID);
     
+    // Проверяем наличие campaignId
+    if (!content.campaignId) {
+      log('ОШИБКА: у контента отсутствует campaignId!', 'error');
+      log('Необходимо, чтобы контент был привязан к кампании', 'error');
+      return;
+    }
+    
+    log(`Кампания контента (campaignId): ${content.campaignId}`, 'success');
+    
     // Шаг 2: Анализируем медиа в контенте
     const mediaInfo = analyzeContentMedia(content);
     
@@ -371,6 +391,7 @@ async function main() {
     console.log(`${colors.cyan}СВОДКА О КОНТЕНТЕ:${colors.reset}`);
     console.log(`${colors.cyan}Заголовок:${colors.reset} ${content.title || 'Не указан'}`);
     console.log(`${colors.cyan}Тип контента:${colors.reset} ${content.contentType || 'Не указан'}`);
+    console.log(`${colors.cyan}ID кампании:${colors.reset} ${content.campaignId || 'Не указан'}`);
     console.log(`${colors.cyan}Наличие основного изображения:${colors.reset} ${mediaInfo.hasImage ? 'Да' : 'Нет'}`);
     console.log(`${colors.cyan}Наличие основного видео:${colors.reset} ${mediaInfo.hasVideo ? 'Да' : 'Нет'}`);
     console.log(`${colors.cyan}Наличие дополнительных изображений:${colors.reset} ${mediaInfo.hasAdditionalImages ? 'Да' : 'Нет'}`);
@@ -378,7 +399,7 @@ async function main() {
     
     // Шаг 4: Публикуем сторис
     log('Начинаем публикацию Instagram Stories...', 'highlight');
-    const result = await publishInstagramStory(CONTENT_ID);
+    const result = await publishInstagramStory(CONTENT_ID, content);
     
     // Шаг 5: Выводим результат
     console.log(`${colors.yellow}======================================================${colors.reset}`);

@@ -439,17 +439,22 @@ router.post('/publish', authMiddleware, async (req, res) => {
             
             // Отправляем запрос с обработкой различных сценариев ошибок
             try {
-              const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+              // Изменяем запрос для получения кампании по campaign_id вместо campaignId
+              const response = await directusApi.get(`/items/user_campaigns`, {
+                params: {
+                  filter: { campaign_id: { _eq: content.campaignId } }
+                },
                 headers: {
                   'Authorization': `Bearer ${adminToken}`
                 }
               });
               
-              if (response.data?.data) {
-                log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`);
+              // Проверяем, что в ответе есть массив данных (так как мы теперь запрашиваем список с фильтром)
+              if (response.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+                log(`[Social Publishing] Успешно получены настройки кампании по campaign_id: ${response.data.data[0].name}`);
                 
                 // ВАЖНО! Обновляем переменную campaignSettings в родительской области видимости
-                campaignSettings = response.data.data;
+                campaignSettings = response.data.data[0];
                 
                 // Проверяем, что socialSettings присутствуют
                 if (!campaignSettings.socialSettings) {
