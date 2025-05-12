@@ -1,0 +1,862 @@
+Directus API error details: {
+  status: 401,
+  data: { errors: [ [Object] ] },
+  config: { url: '/users/me', method: 'get', params: undefined }
+}
+1:55:17 PM [directus] Ошибка авторизации при запросе к Directus API
+Error getting user data: AxiosError: Request failed with status code 401
+    at settle (file:///home/runner/workspace/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///home/runner/workspace/node_modules/axios/lib/adapters/http.js:599:11)
+    at IncomingMessage.emit (node:events:530:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at Axios.request (file:///home/runner/workspace/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/api/auth-routes.ts:215:24) {
+  code: 'ERR_BAD_REQUEST',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function [FormData]], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY',
+      'User-Agent': 'axios/1.8.4',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    baseURL: 'https://directus.nplanner.ru',
+    method: 'get',
+    url: '/users/me',
+    allowAbsoluteUrls: true,
+    data: undefined
+  },
+  request: <ref *1> ClientRequest {
+    _events: [Object: null prototype] {
+      abort: [Function (anonymous)],
+      aborted: [Function (anonymous)],
+      connect: [Function (anonymous)],
+      error: [Function (anonymous)],
+      socket: [Function (anonymous)],
+      timeout: [Function (anonymous)],
+      finish: [Function: requestOnFinish]
+    },
+    _eventsCount: 7,
+    _maxListeners: undefined,
+    outputData: [],
+    outputSize: 0,
+    writable: true,
+    destroyed: true,
+    _last: true,
+    chunkedEncoding: false,
+    shouldKeepAlive: true,
+    maxRequestsOnConnectionReached: false,
+    _defaultKeepAlive: true,
+    useChunkedEncodingByDefault: false,
+    sendDate: false,
+    _removedConnection: false,
+    _removedContLen: false,
+    _removedTE: false,
+    strictContentLength: false,
+    _contentLength: 0,
+    _hasBody: true,
+    _trailer: '',
+    finished: true,
+    _headerSent: true,
+    _closed: true,
+    socket: TLSSocket {
+      _tlsOptions: [Object],
+      _secureEstablished: true,
+      _securePending: false,
+      _newSessionPending: false,
+      _controlReleased: true,
+      secureConnecting: false,
+      _SNICallback: null,
+      servername: 'directus.nplanner.ru',
+      alpnProtocol: false,
+      authorized: true,
+      authorizationError: null,
+      encrypted: true,
+      _events: [Object: null prototype],
+      _eventsCount: 9,
+      connecting: false,
+      _hadError: false,
+      _parent: null,
+      _host: 'directus.nplanner.ru',
+      _closeAfterHandlingError: false,
+      _readableState: [ReadableState],
+      _writableState: [WritableState],
+      allowHalfOpen: false,
+      _maxListeners: undefined,
+      _sockname: null,
+      _pendingData: null,
+      _pendingEncoding: '',
+      server: undefined,
+      _server: null,
+      ssl: [TLSWrap],
+      _requestCert: true,
+      _rejectUnauthorized: true,
+      timeout: 5000,
+      parser: null,
+      _httpMessage: null,
+      [Symbol(alpncallback)]: null,
+      [Symbol(res)]: [TLSWrap],
+      [Symbol(verified)]: true,
+      [Symbol(pendingSession)]: null,
+      [Symbol(async_id_symbol)]: -1,
+      [Symbol(kHandle)]: [TLSWrap],
+      [Symbol(lastWriteQueueSize)]: 0,
+      [Symbol(timeout)]: Timeout {
+        _idleTimeout: 5000,
+        _idlePrev: [TimersList],
+        _idleNext: [Timeout],
+        _idleStart: 145548,
+        _onTimeout: [Function: bound ],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(refed)]: false,
+        [Symbol(kHasPrimitive)]: false,
+        [Symbol(asyncId)]: 16617,
+        [Symbol(triggerId)]: 16615
+      },
+      [Symbol(kBuffer)]: null,
+      [Symbol(kBufferCb)]: null,
+      [Symbol(kBufferGen)]: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kSetNoDelay)]: false,
+      [Symbol(kSetKeepAlive)]: true,
+      [Symbol(kSetKeepAliveInitialDelay)]: 1,
+      [Symbol(kBytesRead)]: 0,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(connect-options)]: [Object]
+    },
+    _header: 'GET /users/me HTTP/1.1\r\n' +
+      'Accept: application/json, text/plain, */*\r\n' +
+      'Content-Type: application/json\r\n' +
+      'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY\r\n' +
+      'User-Agent: axios/1.8.4\r\n' +
+      'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+      'Host: directus.nplanner.ru\r\n' +
+      'Connection: keep-alive\r\n' +
+      '\r\n',
+    _keepAliveTimeout: 0,
+    _onPendingData: [Function: nop],
+    agent: Agent {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      defaultPort: 443,
+      protocol: 'https:',
+      options: [Object: null prototype],
+      requests: [Object: null prototype] {},
+      sockets: [Object: null prototype],
+      freeSockets: [Object: null prototype],
+      keepAliveMsecs: 1000,
+      keepAlive: true,
+      maxSockets: Infinity,
+      maxFreeSockets: 256,
+      scheduling: 'lifo',
+      maxTotalSockets: Infinity,
+      totalSocketCount: 4,
+      maxCachedSessions: 100,
+      _sessionCache: [Object],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false
+    },
+    socketPath: undefined,
+    method: 'GET',
+    maxHeaderSize: undefined,
+    insecureHTTPParser: undefined,
+    joinDuplicateHeaders: undefined,
+    path: '/users/me',
+    _ended: true,
+    res: IncomingMessage {
+      _events: [Object],
+      _readableState: [ReadableState],
+      _maxListeners: undefined,
+      socket: null,
+      httpVersionMajor: 1,
+      httpVersionMinor: 1,
+      httpVersion: '1.1',
+      complete: true,
+      rawHeaders: [Array],
+      rawTrailers: [],
+      joinDuplicateHeaders: undefined,
+      aborted: false,
+      upgrade: false,
+      url: '',
+      method: null,
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      client: [TLSSocket],
+      _consuming: false,
+      _dumped: false,
+      req: [Circular *1],
+      _eventsCount: 4,
+      responseUrl: 'https://directus.nplanner.ru/users/me',
+      redirects: [],
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kHeaders)]: [Object],
+      [Symbol(kHeadersCount)]: 18,
+      [Symbol(kTrailers)]: null,
+      [Symbol(kTrailersCount)]: 0
+    },
+    aborted: false,
+    timeoutCb: null,
+    upgradeOrConnect: false,
+    parser: null,
+    maxHeadersCount: null,
+    reusedSocket: true,
+    host: 'directus.nplanner.ru',
+    protocol: 'https:',
+    _redirectable: Writable {
+      _events: [Object],
+      _writableState: [WritableState],
+      _maxListeners: undefined,
+      _options: [Object],
+      _ended: true,
+      _ending: true,
+      _redirectCount: 0,
+      _redirects: [],
+      _requestBodyLength: 0,
+      _requestBodyBuffers: [],
+      _eventsCount: 3,
+      _onNativeResponse: [Function (anonymous)],
+      _currentRequest: [Circular *1],
+      _currentUrl: 'https://directus.nplanner.ru/users/me',
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false
+    },
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false,
+    [Symbol(kBytesWritten)]: 0,
+    [Symbol(kNeedDrain)]: false,
+    [Symbol(corked)]: 0,
+    [Symbol(kOutHeaders)]: [Object: null prototype] {
+      accept: [Array],
+      'content-type': [Array],
+      authorization: [Array],
+      'user-agent': [Array],
+      'accept-encoding': [Array],
+      host: [Array]
+    },
+    [Symbol(errored)]: null,
+    [Symbol(kHighWaterMark)]: 16384,
+    [Symbol(kRejectNonStandardBodyWrites)]: false,
+    [Symbol(kUniqueHeaders)]: null
+  },
+  response: {
+    status: 401,
+    statusText: 'Unauthorized',
+    headers: Object [AxiosHeaders] {
+      'access-control-allow-credentials': 'true',
+      'access-control-expose-headers': 'Content-Range',
+      'content-length': '79',
+      'content-security-policy': "script-src 'self' 'unsafe-eval';worker-src 'self' blob:;child-src 'self' blob:;img-src 'self' data: blob: https://raw.githubusercontent.com https://avatars.githubusercontent.com;media-src 'self';connect-src 'self' https://* wss://*;default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';style-src 'self' https: 'unsafe-inline'",
+      'content-type': 'application/json; charset=utf-8',
+      date: 'Mon, 12 May 2025 13:55:17 GMT',
+      etag: 'W/"4f-lsLidoCOOiTyDVjYkFZzRb1La9s"',
+      vary: 'Origin',
+      'x-powered-by': 'Directus'
+    },
+    config: {
+      transitional: [Object],
+      adapter: [Array],
+      transformRequest: [Array],
+      transformResponse: [Array],
+      timeout: 0,
+      xsrfCookieName: 'XSRF-TOKEN',
+      xsrfHeaderName: 'X-XSRF-TOKEN',
+      maxContentLength: -1,
+      maxBodyLength: -1,
+      env: [Object],
+      validateStatus: [Function: validateStatus],
+      headers: [Object [AxiosHeaders]],
+      baseURL: 'https://directus.nplanner.ru',
+      method: 'get',
+      url: '/users/me',
+      allowAbsoluteUrls: true,
+      data: undefined
+    },
+    request: <ref *1> ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 7,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: true,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: false,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 0,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: true,
+      socket: [TLSSocket],
+      _header: 'GET /users/me HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY\r\n' +
+        'User-Agent: axios/1.8.4\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: directus.nplanner.ru\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'GET',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: undefined,
+      joinDuplicateHeaders: undefined,
+      path: '/users/me',
+      _ended: true,
+      res: [IncomingMessage],
+      aborted: false,
+      timeoutCb: null,
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: true,
+      host: 'directus.nplanner.ru',
+      protocol: 'https:',
+      _redirectable: [Writable],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(kNeedDrain)]: false,
+      [Symbol(corked)]: 0,
+      [Symbol(kOutHeaders)]: [Object: null prototype],
+      [Symbol(errored)]: null,
+      [Symbol(kHighWaterMark)]: 16384,
+      [Symbol(kRejectNonStandardBodyWrites)]: false,
+      [Symbol(kUniqueHeaders)]: null
+    },
+    data: { errors: [Array] }
+  },
+  status: 401
+}
+IS-ADMIN ROUTE CALLED
+1:55:17 PM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+1:55:17 PM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+Directus API Error: {
+  status: 401,
+  data: { errors: [ [Object] ] },
+  config: { url: '/users/me', method: 'get', params: undefined }
+}
+Directus API error details: {
+  status: 401,
+  data: { errors: [ [Object] ] },
+  config: { url: '/users/me', method: 'get', params: undefined }
+}
+1:55:17 PM [directus] Ошибка авторизации при запросе к Directus API
+Error checking token: AxiosError: Request failed with status code 401
+    at settle (file:///home/runner/workspace/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///home/runner/workspace/node_modules/axios/lib/adapters/http.js:599:11)
+    at IncomingMessage.emit (node:events:530:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at Axios.request (file:///home/runner/workspace/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/api/auth-routes.ts:31:24) {
+  code: 'ERR_BAD_REQUEST',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function [FormData]], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY',
+      'User-Agent': 'axios/1.8.4',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    baseURL: 'https://directus.nplanner.ru',
+    method: 'get',
+    url: '/users/me',
+    allowAbsoluteUrls: true,
+    data: undefined
+  },
+  request: <ref *1> ClientRequest {
+    _events: [Object: null prototype] {
+      abort: [Function (anonymous)],
+      aborted: [Function (anonymous)],
+      connect: [Function (anonymous)],
+      error: [Function (anonymous)],
+      socket: [Function (anonymous)],
+      timeout: [Function (anonymous)],
+      finish: [Function: requestOnFinish]
+    },
+    _eventsCount: 7,
+    _maxListeners: undefined,
+    outputData: [],
+    outputSize: 0,
+    writable: true,
+    destroyed: true,
+    _last: true,
+    chunkedEncoding: false,
+    shouldKeepAlive: true,
+    maxRequestsOnConnectionReached: false,
+    _defaultKeepAlive: true,
+    useChunkedEncodingByDefault: false,
+    sendDate: false,
+    _removedConnection: false,
+    _removedContLen: false,
+    _removedTE: false,
+    strictContentLength: false,
+    _contentLength: 0,
+    _hasBody: true,
+    _trailer: '',
+    finished: true,
+    _headerSent: true,
+    _closed: true,
+    socket: TLSSocket {
+      _tlsOptions: [Object],
+      _secureEstablished: true,
+      _securePending: false,
+      _newSessionPending: false,
+      _controlReleased: true,
+      secureConnecting: false,
+      _SNICallback: null,
+      servername: 'directus.nplanner.ru',
+      alpnProtocol: false,
+      authorized: true,
+      authorizationError: null,
+      encrypted: true,
+      _events: [Object: null prototype],
+      _eventsCount: 9,
+      connecting: false,
+      _hadError: false,
+      _parent: null,
+      _host: 'directus.nplanner.ru',
+      _closeAfterHandlingError: false,
+      _readableState: [ReadableState],
+      _writableState: [WritableState],
+      allowHalfOpen: false,
+      _maxListeners: undefined,
+      _sockname: null,
+      _pendingData: null,
+      _pendingEncoding: '',
+      server: undefined,
+      _server: null,
+      ssl: [TLSWrap],
+      _requestCert: true,
+      _rejectUnauthorized: true,
+      timeout: 5000,
+      parser: null,
+      _httpMessage: null,
+      [Symbol(alpncallback)]: null,
+      [Symbol(res)]: [TLSWrap],
+      [Symbol(verified)]: true,
+      [Symbol(pendingSession)]: null,
+      [Symbol(async_id_symbol)]: -1,
+      [Symbol(kHandle)]: [TLSWrap],
+      [Symbol(lastWriteQueueSize)]: 0,
+      [Symbol(timeout)]: Timeout {
+        _idleTimeout: 5000,
+        _idlePrev: [TimersList],
+        _idleNext: [Timeout],
+        _idleStart: 145848,
+        _onTimeout: [Function: bound ],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(refed)]: false,
+        [Symbol(kHasPrimitive)]: false,
+        [Symbol(asyncId)]: 16696,
+        [Symbol(triggerId)]: 16694
+      },
+      [Symbol(kBuffer)]: null,
+      [Symbol(kBufferCb)]: null,
+      [Symbol(kBufferGen)]: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kSetNoDelay)]: false,
+      [Symbol(kSetKeepAlive)]: true,
+      [Symbol(kSetKeepAliveInitialDelay)]: 1,
+      [Symbol(kBytesRead)]: 0,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(connect-options)]: [Object]
+    },
+    _header: 'GET /users/me HTTP/1.1\r\n' +
+      'Accept: application/json, text/plain, */*\r\n' +
+      'Content-Type: application/json\r\n' +
+      'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY\r\n' +
+      'User-Agent: axios/1.8.4\r\n' +
+      'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+      'Host: directus.nplanner.ru\r\n' +
+      'Connection: keep-alive\r\n' +
+      '\r\n',
+    _keepAliveTimeout: 0,
+    _onPendingData: [Function: nop],
+    agent: Agent {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      defaultPort: 443,
+      protocol: 'https:',
+      options: [Object: null prototype],
+      requests: [Object: null prototype] {},
+      sockets: [Object: null prototype],
+      freeSockets: [Object: null prototype],
+      keepAliveMsecs: 1000,
+      keepAlive: true,
+      maxSockets: Infinity,
+      maxFreeSockets: 256,
+      scheduling: 'lifo',
+      maxTotalSockets: Infinity,
+      totalSocketCount: 4,
+      maxCachedSessions: 100,
+      _sessionCache: [Object],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false
+    },
+    socketPath: undefined,
+    method: 'GET',
+    maxHeaderSize: undefined,
+    insecureHTTPParser: undefined,
+    joinDuplicateHeaders: undefined,
+    path: '/users/me',
+    _ended: true,
+    res: IncomingMessage {
+      _events: [Object],
+      _readableState: [ReadableState],
+      _maxListeners: undefined,
+      socket: null,
+      httpVersionMajor: 1,
+      httpVersionMinor: 1,
+      httpVersion: '1.1',
+      complete: true,
+      rawHeaders: [Array],
+      rawTrailers: [],
+      joinDuplicateHeaders: undefined,
+      aborted: false,
+      upgrade: false,
+      url: '',
+      method: null,
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+      client: [TLSSocket],
+      _consuming: false,
+      _dumped: false,
+      req: [Circular *1],
+      _eventsCount: 4,
+      responseUrl: 'https://directus.nplanner.ru/users/me',
+      redirects: [],
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kHeaders)]: [Object],
+      [Symbol(kHeadersCount)]: 18,
+      [Symbol(kTrailers)]: null,
+      [Symbol(kTrailersCount)]: 0
+    },
+    aborted: false,
+    timeoutCb: null,
+    upgradeOrConnect: false,
+    parser: null,
+    maxHeadersCount: null,
+    reusedSocket: true,
+    host: 'directus.nplanner.ru',
+    protocol: 'https:',
+    _redirectable: Writable {
+      _events: [Object],
+      _writableState: [WritableState],
+      _maxListeners: undefined,
+      _options: [Object],
+      _ended: true,
+      _ending: true,
+      _redirectCount: 0,
+      _redirects: [],
+      _requestBodyLength: 0,
+      _requestBodyBuffers: [],
+      _eventsCount: 3,
+      _onNativeResponse: [Function (anonymous)],
+      _currentRequest: [Circular *1],
+      _currentUrl: 'https://directus.nplanner.ru/users/me',
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false
+    },
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false,
+    [Symbol(kBytesWritten)]: 0,
+    [Symbol(kNeedDrain)]: false,
+    [Symbol(corked)]: 0,
+    [Symbol(kOutHeaders)]: [Object: null prototype] {
+      accept: [Array],
+      'content-type': [Array],
+      authorization: [Array],
+      'user-agent': [Array],
+      'accept-encoding': [Array],
+      host: [Array]
+    },
+    [Symbol(errored)]: null,
+    [Symbol(kHighWaterMark)]: 16384,
+    [Symbol(kRejectNonStandardBodyWrites)]: false,
+    [Symbol(kUniqueHeaders)]: null
+  },
+  response: {
+    status: 401,
+    statusText: 'Unauthorized',
+    headers: Object [AxiosHeaders] {
+      'access-control-allow-credentials': 'true',
+      'access-control-expose-headers': 'Content-Range',
+      'content-length': '79',
+      'content-security-policy': "script-src 'self' 'unsafe-eval';worker-src 'self' blob:;child-src 'self' blob:;img-src 'self' data: blob: https://raw.githubusercontent.com https://avatars.githubusercontent.com;media-src 'self';connect-src 'self' https://* wss://*;default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';style-src 'self' https: 'unsafe-inline'",
+      'content-type': 'application/json; charset=utf-8',
+      date: 'Mon, 12 May 2025 13:55:17 GMT',
+      etag: 'W/"4f-lsLidoCOOiTyDVjYkFZzRb1La9s"',
+      vary: 'Origin',
+      'x-powered-by': 'Directus'
+    },
+    config: {
+      transitional: [Object],
+      adapter: [Array],
+      transformRequest: [Array],
+      transformResponse: [Array],
+      timeout: 0,
+      xsrfCookieName: 'XSRF-TOKEN',
+      xsrfHeaderName: 'X-XSRF-TOKEN',
+      maxContentLength: -1,
+      maxBodyLength: -1,
+      env: [Object],
+      validateStatus: [Function: validateStatus],
+      headers: [Object [AxiosHeaders]],
+      baseURL: 'https://directus.nplanner.ru',
+      method: 'get',
+      url: '/users/me',
+      allowAbsoluteUrls: true,
+      data: undefined
+    },
+    request: <ref *1> ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 7,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: true,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: false,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 0,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: true,
+      socket: [TLSSocket],
+      _header: 'GET /users/me HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0NzA1NTMwOCwiZXhwIjoxNzQ3MDU2MjA4LCJpc3MiOiJkaXJlY3R1cyJ9.MU3PADEhvaNZeao_rIXXaRMsGNZRpMrcLZ_htJiAKKY\r\n' +
+        'User-Agent: axios/1.8.4\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: directus.nplanner.ru\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'GET',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: undefined,
+      joinDuplicateHeaders: undefined,
+      path: '/users/me',
+      _ended: true,
+      res: [IncomingMessage],
+      aborted: false,
+      timeoutCb: null,
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: true,
+      host: 'directus.nplanner.ru',
+      protocol: 'https:',
+      _redirectable: [Writable],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(kNeedDrain)]: false,
+      [Symbol(corked)]: 0,
+      [Symbol(kOutHeaders)]: [Object: null prototype],
+      [Symbol(errored)]: null,
+      [Symbol(kHighWaterMark)]: 16384,
+      [Symbol(kRejectNonStandardBodyWrites)]: false,
+      [Symbol(kUniqueHeaders)]: null
+    },
+    data: { errors: [Array] }
+  },
+  status: 401
+}
+User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+Fetching campaigns for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Sending request to Directus with filter user_id = 53921f16-f51d-4591-80b9-8caa4fde4d13
+1:55:17 PM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+User data for admin check: {
+  email: 'lbrspb@gmail.com',
+  is_smm_admin: true,
+  role: undefined,
+  roleName: undefined,
+  roleAdmin: undefined
+}
+Admin check results: { isSmmAdmin: true, finalResult: true }
+1:55:17 PM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+1:55:17 PM [auth] Результат проверки администратора: true
+Filtering server-side for userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Found 9 campaigns for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (filtered from 9 total)
+All campaign user_ids in response: 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13
+User ID from request: 53921f16-f51d-4591-80b9-8caa4fde4d13
+Types - userId: string first db userId: string
+1:55:18 PM [express] GET /api/campaigns 304 in 273ms :: {"data":[{"id":"45daab2a-4c6f-4578-8665-3a04…
+User data for admin check: {
+  email: 'lbrspb@gmail.com',
+  is_smm_admin: true,
+  role: undefined,
+  roleName: undefined,
+  roleAdmin: undefined
+}
+Admin check results: { isSmmAdmin: true, finalResult: true }
+1:55:18 PM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+1:55:18 PM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+1:55:18 PM [directus-crud] Выполнение операции read для коллекции users/me
+1:55:18 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+Получение списка активных пользователей
+1:55:18 PM [directus-crud] Выполнение операции list для коллекции users
+1:55:18 PM [directus-crud] Получение списка всех пользователей
+1:55:18 PM [directus-crud] Получено 10 пользователей
+1:55:18 PM [directus-crud] Операция list для коллекции users выполнена успешно
+1:55:18 PM [express] GET /api/users/active 200 in 281ms :: {"success":true,"data":{"total":10,"activ…
+IS-ADMIN ROUTE CALLED
+1:55:18 PM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+1:55:18 PM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+User data for admin check: {
+  email: 'lbrspb@gmail.com',
+  is_smm_admin: true,
+  role: undefined,
+  roleName: undefined,
+  roleAdmin: undefined
+}
+Admin check results: { isSmmAdmin: true, finalResult: true }
+1:55:18 PM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+1:55:18 PM [auth] Результат проверки администратора: true
+1:55:18 PM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+User data for admin check: {
+  email: 'lbrspb@gmail.com',
+  is_smm_admin: true,
+  role: undefined,
+  roleName: undefined,
+  roleAdmin: undefined
+}
+Admin check results: { isSmmAdmin: true, finalResult: true }
+1:55:18 PM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+1:55:18 PM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 34,
+  firstKeyword: {
+    id: '0b3a0505-4222-4cd8-b711-a6dbab16f7dc',
+    keyword: 'анализ диеты',
+    trend_score: 3500,
+    mentions_count: 75,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-05-09T14:02:44.082Z',
+    date_created: '2025-05-09T14:02:45.025Z'
+  }
+}
+1:55:19 PM [express] GET /api/keywords 304 in 139ms :: {"data":[{"id":"0b3a0505-4222-4cd8-b711-a6dba…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 0 []
+1:55:20 PM [express] GET /api/campaign-content 304 in 800ms :: {"data":[{"id":"e8936ebf-75d3-4dd1-9f…
+Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Directus keywords API response: {
+  status: 200,
+  dataLength: 34,
+  firstKeyword: {
+    id: '0b3a0505-4222-4cd8-b711-a6dbab16f7dc',
+    keyword: 'анализ диеты',
+    trend_score: 3500,
+    mentions_count: 75,
+    campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e',
+    last_checked: '2025-05-09T14:02:44.082Z',
+    date_created: '2025-05-09T14:02:45.025Z'
+  }
+}
+1:55:30 PM [express] GET /api/keywords 304 in 392ms :: {"data":[{"id":"0b3a0505-4222-4cd8-b711-a6dba…
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 0 []
+1:55:31 PM [express] GET /api/campaign-content 304 in 796ms :: {"data":[{"id":"e8936ebf-75d3-4dd1-9f…
+1:55:33 PM [scheduler] Проверка запланированных публикаций
+1:55:33 PM [scheduler] Принудительное обновление токена администратора
+1:55:33 PM [scheduler] Запуск проверки статусов контента
+1:55:33 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+1:55:33 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+1:55:34 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+1:55:34 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+1:55:34 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+1:55:34 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+1:55:34 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+1:55:34 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+1:55:34 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+1:55:34 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+1:55:34 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+1:55:35 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+1:55:35 PM [directus-crud] Выполнение операции read для коллекции users/me
+1:55:35 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+1:55:35 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+1:55:35 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+1:55:35 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+1:55:35 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+1:55:35 PM [scheduler] Получено 50 элементов контента для проверки статусов платформ
+1:55:35 PM [scheduler] DEBUG: Детальная проверка платформ для контента 006c2b56-ebd6-475b-a64c-0b931754e71f:
+1:55:35 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"301","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_301","platform":"vk","analytics":{"likes":1,"views":18,"clicks":1,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:47.558Z","engagementRate":10},"publishedAt":"2025-04-06T15:57:38.463Z"},"facebook":{"status":"published","analytics":{"likes":0,"views":6,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:47.558Z","engagementRate":11},"permalink":"https://facebook.com/985366027084025","publishedAt":"2025-04-23T12:15:20.183Z"},"telegram":{"error":"Ошибка при публикации в Telegram: Request failed with status code 400","status":"failed","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","platform":"telegram","publishedAt":null}}

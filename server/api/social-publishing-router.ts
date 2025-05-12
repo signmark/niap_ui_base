@@ -1407,6 +1407,40 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
       });
     }
     
+    // КРИТИЧНО: обработка JSON строк для медиа прямо в роутере
+    try {
+      log(`[Social Publishing] Проверка и обработка медиа в формате JSON строк`, 'stories', 'warn');
+      
+      // Логирование исходных данных
+      log(`[Social Publishing] Типы данных полей:
+        additionalImages: ${typeof content.additionalImages} ${content.additionalImages ? (Array.isArray(content.additionalImages) ? 'это массив' : 'не массив') : 'undefined'}
+        additionalMedia: ${typeof content.additionalMedia} ${content.additionalMedia ? (Array.isArray(content.additionalMedia) ? 'это массив' : 'не массив') : 'undefined'}`, 'stories');
+      
+      // Обработка additionalImages если это JSON строка
+      if (content.additionalImages && typeof content.additionalImages === 'string') {
+        log(`[Social Publishing] additionalImages это строка, пробуем распарсить JSON: ${content.additionalImages}`, 'stories');
+        try {
+          content.additionalImages = JSON.parse(content.additionalImages);
+          log(`[Social Publishing] Успешно распарсили JSON строку additionalImages: ${JSON.stringify(content.additionalImages)}`, 'stories');
+        } catch (parseError) {
+          log(`[Social Publishing] Ошибка при парсинге JSON строки additionalImages: ${parseError.message}`, 'stories', 'error');
+        }
+      }
+      
+      // Обработка additionalMedia если это JSON строка
+      if (content.additionalMedia && typeof content.additionalMedia === 'string') {
+        log(`[Social Publishing] additionalMedia это строка, пробуем распарсить JSON: ${content.additionalMedia}`, 'stories');
+        try {
+          content.additionalMedia = JSON.parse(content.additionalMedia);
+          log(`[Social Publishing] Успешно распарсили JSON строку additionalMedia: ${JSON.stringify(content.additionalMedia)}`, 'stories');
+        } catch (parseError) {
+          log(`[Social Publishing] Ошибка при парсинге JSON строки additionalMedia: ${parseError.message}`, 'stories', 'error');
+        }
+      }
+    } catch (error) {
+      log(`[Social Publishing] Общая ошибка при обработке JSON строк: ${error.message}`, 'stories', 'error');
+    }
+    
     // Проверяем, что тип контента - stories
     if (content.contentType !== 'stories') {
       return res.status(400).json({
@@ -1531,9 +1565,50 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           log(`[Social Publishing] - Access Token: ${instToken ? 'Присутствует' : 'Отсутствует'}`, 'stories');
           
           // Проверяем наличие медиафайлов для сторис, с учетом всех возможных полей для медиа
+          // Пытаемся преобразовать строки JSON в объекты для всех полей медиа
+          try {
+            if (content.additionalImages && typeof content.additionalImages === 'string') {
+              try {
+                log(`[Social Publishing] Поле additionalImages - строка, попытка парсинга JSON: ${content.additionalImages}`, 'stories');
+                content.additionalImages = JSON.parse(content.additionalImages);
+                log(`[Social Publishing] Успешно распарсили JSON в поле additionalImages`, 'stories');
+              } catch (e) {
+                log(`[Social Publishing] Ошибка парсинга JSON в поле additionalImages: ${e.message}`, 'stories', 'error');
+              }
+            }
+            
+            if (content.additionalMedia && typeof content.additionalMedia === 'string') {
+              try {
+                log(`[Social Publishing] Поле additionalMedia - строка, попытка парсинга JSON: ${content.additionalMedia}`, 'stories');
+                content.additionalMedia = JSON.parse(content.additionalMedia);
+                log(`[Social Publishing] Успешно распарсили JSON в поле additionalMedia`, 'stories');
+              } catch (e) {
+                log(`[Social Publishing] Ошибка парсинга JSON в поле additionalMedia: ${e.message}`, 'stories', 'error');
+              }
+            }
+            
+            if (content.additional_images && typeof content.additional_images === 'string') {
+              try {
+                log(`[Social Publishing] Поле additional_images - строка, попытка парсинга JSON: ${content.additional_images}`, 'stories');
+                content.additional_images = JSON.parse(content.additional_images);
+                log(`[Social Publishing] Успешно распарсили JSON в поле additional_images`, 'stories');
+              } catch (e) {
+                log(`[Social Publishing] Ошибка парсинга JSON в поле additional_images: ${e.message}`, 'stories', 'error');
+              }
+            }
+          } catch (error) {
+            log(`[Social Publishing] Общая ошибка при обработке JSON медиа: ${error.message}`, 'stories', 'error');
+          }
+          
+          // После обработки JSON строк, проверяем наличие медиа
           const additionalImagesField = content.additionalImages || content.additional_images || content.additionalMedia;
+          log(`[Social Publishing] Тип additionalImagesField: ${typeof additionalImagesField}, isArray: ${Array.isArray(additionalImagesField)}, length: ${additionalImagesField && Array.isArray(additionalImagesField) ? additionalImagesField.length : 'N/A'}`, 'stories');
+          
           const hasAdditionalMedia = Boolean(
-            additionalImagesField && Array.isArray(additionalImagesField) && additionalImagesField.length > 0
+            additionalImagesField && (
+              (Array.isArray(additionalImagesField) && additionalImagesField.length > 0) ||
+              (typeof additionalImagesField === 'string' && additionalImagesField.trim() !== '')
+            )
           );
           
           const hasMedia = Boolean(content.imageUrl || content.videoUrl || hasAdditionalMedia);
@@ -1542,6 +1617,13 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
           
           if (!hasMedia) {
             log(`[Social Publishing] Ошибка: не найдены медиафайлы для публикации сторис в Instagram`, 'stories', 'error');
+            log(`[Social Publishing] СОДЕРЖИМОЕ КОНТЕНТА (ДЕТАЛЬНО):
+              additionalImages: ${JSON.stringify(content.additionalImages)}
+              additionalMedia: ${JSON.stringify(content.additionalMedia)}
+              additional_images: ${JSON.stringify(content.additional_images)}
+              imageUrl: ${content.imageUrl || 'не указан'}
+              videoUrl: ${content.videoUrl || 'не указан'}
+            `, 'stories', 'error');
             log(`[Social Publishing] Детали контента: ${JSON.stringify({
               contentId,
               contentType: content.contentType,

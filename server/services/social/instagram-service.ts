@@ -58,110 +58,68 @@ export class InstagramService extends BaseSocialService {
 
       log(`[Instagram] Начинаем публикацию сторис в Instagram c бизнес-аккаунтом: ${businessAccountId}`, 'instagram');
 
-      // Улучшенная проверка наличия медиафайлов для типа контента "stories"
-      // Сначала проверяем основные поля imageUrl и videoUrl
-      // Затем проверяем additionalMedia и additionalImages, где может храниться медиа для сторис
+      // ПРОСТАЯ ПРОВЕРКА МЕДИА ДЛЯ СТОРИС
       let hasMedia = Boolean(content.imageUrl || content.videoUrl);
-      
-      // Проверка особенно важна для контента типа "stories"
+      // Определяем тип контента для сторис
       const isStoriesContent = content.contentType === 'stories';
-      if (isStoriesContent) {
-        log(`[Instagram Stories] ОБЯЗАТЕЛЬНАЯ проверка медиа для контента типа "stories" (ID: ${content.id})`, 'instagram', 'warn');
-      }
       
-      // Проверяем наличие медиа в поле additionalMedia
-      if (!hasMedia && content.additionalMedia && Array.isArray(content.additionalMedia)) {
-        // Логируем полное содержимое additionalMedia для диагностики
-        log(`[Instagram Debug] Содержимое additionalMedia перед фильтрацией: ${JSON.stringify(content.additionalMedia)}`, 'instagram');
-        
-        // Изменение логики фильтрации - меньше условий, упрощенная проверка
-        const mediaFiles = content.additionalMedia.filter(media => {
-          // Логируем каждый элемент для проверки
-          log(`[Instagram Debug] Проверка элемента additionalMedia: ${JSON.stringify(media)}`, 'instagram');
+      try {
+        // Если основные поля пусты - ищем в дополнительных полях
+        if (!hasMedia) {
+          log(`[Instagram Stories] imageUrl и videoUrl отсутствуют, проверяем дополнительные поля`, 'instagram');
           
-          // Проверка, является ли media объектом с url 
-          const isObjectWithUrl = typeof media === 'object' && media && (media.url || media.file);
+          // Обрабатываем JSON-строки в полях с медиа
+          function tryParseJson(value) {
+            if (typeof value === 'string' && (value.trim().startsWith('[') || value.trim().startsWith('{'))) {
+              try {
+                return JSON.parse(value);
+              } catch (e) {
+                return value;
+              }
+            }
+            return value;
+          }
           
-          // Проверка type === 'image' или type === 'video'
-          const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
+          // Обрабатываем возможные поля с медиа
+          const additionalMediaParsed = tryParseJson(content.additionalMedia);
+          const additionalImagesParsed = tryParseJson(content.additionalImages);
+          const additional_imagesParsed = tryParseJson(content.additional_images);
           
-          // Простая проверка на строку с URL
-          const isStringUrl = typeof media === 'string' && media.trim() !== '';
+          // Получаем первый медиа-элемент из массива или объекта
+          function getFirstMediaUrl(mediaField) {
+            if (!mediaField) return null;
+            
+            // Если это массив
+            if (Array.isArray(mediaField) && mediaField.length > 0) {
+              const firstItem = mediaField[0];
+              if (typeof firstItem === 'string') return firstItem;
+              if (typeof firstItem === 'object' && firstItem) return firstItem.url || firstItem.file;
+            }
+            // Если это объект с URL
+            else if (typeof mediaField === 'object' && mediaField) {
+              return mediaField.url || mediaField.file;
+            }
+            // Если это строка (URL)
+            else if (typeof mediaField === 'string' && mediaField.trim()) {
+              return mediaField.trim();
+            }
+            return null;
+          }
           
-          // Результат проверки
-          const result = isObjectWithUrl || hasValidType || isStringUrl;
-          log(`[Instagram Debug] Элемент additionalMedia прошел фильтрацию: ${result}`, 'instagram');
+          // Проверяем все возможные поля с медиа
+          const mediaUrl = getFirstMediaUrl(additionalMediaParsed) || 
+                          getFirstMediaUrl(additionalImagesParsed) || 
+                          getFirstMediaUrl(additional_imagesParsed);
           
-          return result;
-        });
-        
-        log(`[Instagram Debug] Результат фильтрации additionalMedia: найдено ${mediaFiles.length} элементов`, 'instagram');
-          
-        if (mediaFiles.length > 0) {
-          hasMedia = true;
-          // Используем первый файл из additionalMedia
-          const mediaFile = mediaFiles[0];
-          
-          // Используем новую функцию определения типа медиа
-          const mediaUrl = typeof mediaFile === 'string' ? mediaFile : (mediaFile.url || mediaFile.file);
-          const mediaTypeResult = determineMediaType(mediaFile);
-          
-          if (mediaTypeResult === 'IMAGE') {
-            log(`[Instagram] Используем изображение из additionalMedia: ${mediaUrl}`, 'instagram');
+          if (mediaUrl) {
+            log(`[Instagram Stories] Найдено медиа: ${mediaUrl}`, 'instagram');
+            // По умолчанию считаем, что это изображение
             content.imageUrl = mediaUrl;
-          } else {
-            log(`[Instagram] Используем видео из additionalMedia: ${mediaUrl}`, 'instagram');
-            content.videoUrl = mediaUrl;
+            hasMedia = true;
           }
         }
-      }
-      
-      // Проверяем наличие медиа в поле additionalImages (второй вариант хранения медиа)
-      log(`[Instagram Debug] Проверка additionalImages: ${JSON.stringify(content.additionalImages)}`, 'instagram');
-      if (!hasMedia && content.additionalImages && Array.isArray(content.additionalImages)) {
-        // Логируем полное содержимое additionalImages для диагностики
-        log(`[Instagram Debug] Содержимое additionalImages перед фильтрацией: ${JSON.stringify(content.additionalImages)}`, 'instagram');
-        
-        // Изменение логики фильтрации - меньше условий, упрощенная проверка
-        const mediaFiles = content.additionalImages.filter(media => {
-          // Логируем каждый элемент для проверки
-          log(`[Instagram Debug] Проверка элемента additionalImages: ${JSON.stringify(media)}`, 'instagram');
-          
-          // Проверка, является ли media объектом с url 
-          const isObjectWithUrl = typeof media === 'object' && media && (media.url || media.file);
-          
-          // Проверка type === 'image' или type === 'video'
-          const hasValidType = typeof media === 'object' && media && (media.type === 'image' || media.type === 'video');
-          
-          // Простая проверка на строку с URL
-          const isStringUrl = typeof media === 'string' && media.trim() !== '';
-          
-          // Результат проверки
-          const result = isObjectWithUrl || hasValidType || isStringUrl;
-          log(`[Instagram Debug] Элемент прошел фильтрацию: ${result}`, 'instagram');
-          
-          return result;
-        });
-        
-        log(`[Instagram Debug] Результат фильтрации additionalImages: найдено ${mediaFiles.length} элементов`, 'instagram');
-        
-        if (mediaFiles.length > 0) {
-          hasMedia = true;
-          // Используем первый файл из additionalImages
-          const mediaFile = mediaFiles[0];
-          
-          // Используем новую функцию определения типа медиа
-          const mediaUrl = typeof mediaFile === 'string' ? mediaFile : (mediaFile.url || mediaFile.file);
-          const mediaTypeResult = determineMediaType(mediaFile);
-          
-          if (mediaTypeResult === 'IMAGE') {
-            log(`[Instagram] Используем изображение из additionalImages: ${mediaUrl}`, 'instagram');
-            content.imageUrl = mediaUrl;
-          } else {
-            log(`[Instagram] Используем видео из additionalImages: ${mediaUrl}`, 'instagram');
-            content.videoUrl = mediaUrl;
-          }
-        }
+      } catch (error) {
+        log(`[Instagram Stories] Ошибка при обработке медиа: ${error.message}`, 'instagram', 'error');
       }
       
       // Более подробное логирование состояния медиа перед проверкой
@@ -171,7 +129,8 @@ export class InstagramService extends BaseSocialService {
       - videoUrl: ${content.videoUrl || 'не задан'}
       - additionalImages: ${content.additionalImages ? (Array.isArray(content.additionalImages) ? `${content.additionalImages.length} файлов` : 'не является массивом') : 'не задан'}
       - additionalMedia: ${content.additionalMedia ? (Array.isArray(content.additionalMedia) ? `${content.additionalMedia.length} файлов` : 'не является массивом') : 'не задан'}
-      - Тип контента: ${content.contentType}`, 'instagram');
+      - Тип контента: ${content.contentType}
+      - Это сторис: ${isStoriesContent}`, 'instagram');
       
       // Проверка особенно строгая для контента типа "stories"
       if (!hasMedia) {
