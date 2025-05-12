@@ -135,7 +135,7 @@ export class InstagramService extends BaseSocialService {
 
       // Формируем параметры запроса для создания контейнера сторис
       const storyParams: any = {
-        media_type: mediaType,
+        media_type: "STORIES", // Важно использовать "STORIES" вместо "IMAGE" или "VIDEO"
         caption: caption,
         access_token: token,
         is_carousel_item: false

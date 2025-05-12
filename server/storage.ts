@@ -1,6 +1,7 @@
 import { directusApi } from "./lib/directus";
 import { directusStorageAdapter } from './services/directus';
 import axios from 'axios';
+import { directusAuthManager } from './services/directus-auth-manager';
 import { 
   type Campaign, 
   type InsertCampaign, 
@@ -730,20 +731,26 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Если в кэше нет или токен устарел, пробуем получить из directusAuthManager
-      if (directusAuthManager) {
-        console.log(`Attempting to get token from directusAuthManager for user ${userId}`);
-        // Передаем true в параметр autoRefresh, чтобы гарантировать попытку обновления истекшего токена
-        const directusToken = await directusAuthManager.getAuthToken(userId, true);
-        if (directusToken) {
-          console.log(`Successfully obtained token from directusAuthManager for user ${userId}`);
-          
-          // Сохраняем в кэш с временем жизни 30 минут (меньше чем в DirectusAuthManager)
-          this.tokenCache[userId] = {
-            token: directusToken,
-            expiresAt: now + 30 * 60 * 1000 // 30 минут
-          };
-          return directusToken;
+      try {
+        if (typeof directusAuthManager !== 'undefined' && directusAuthManager) {
+          console.log(`Attempting to get token from directusAuthManager for user ${userId}`);
+          // Передаем true в параметр autoRefresh, чтобы гарантировать попытку обновления истекшего токена
+          const directusToken = await directusAuthManager.getAuthToken(userId, true);
+          if (directusToken) {
+            console.log(`Successfully obtained token from directusAuthManager for user ${userId}`);
+            
+            // Сохраняем в кэш с временем жизни 30 минут (меньше чем в DirectusAuthManager)
+            this.tokenCache[userId] = {
+              token: directusToken,
+              expiresAt: now + 30 * 60 * 1000 // 30 минут
+            };
+            return directusToken;
+          }
+        } else {
+          console.log(`DirectusAuthManager is not initialized, skipping this method`);
         }
+      } catch (err) {
+        console.error(`Error getting token from directusAuthManager: ${err.message}`);
       }
       
       // Если directusAuthManager не смог дать токен, получаем из старого метода
@@ -763,10 +770,14 @@ export class DatabaseStorage implements IStorage {
       // Если ничего не получилось, пробуем получить токен администратора через directusAuthManager
       console.log(`No user token found, trying admin token via directusAuthManager`);
       try {
-        const adminSession = await directusAuthManager.getAdminSession();
-        if (adminSession && adminSession.token) {
-          console.log(`Successfully obtained admin token via directusAuthManager`);
-          return adminSession.token;
+        if (typeof directusAuthManager !== 'undefined' && directusAuthManager) {
+          const adminSession = await directusAuthManager.getAdminSession();
+          if (adminSession && adminSession.token) {
+            console.log(`Successfully obtained admin token via directusAuthManager`);
+            return adminSession.token;
+          }
+        } else {
+          console.log(`DirectusAuthManager is not initialized for admin token, skipping this method`);
         }
       } catch (e) {
         console.warn(`Error getting admin token via directusAuthManager:`, e);
