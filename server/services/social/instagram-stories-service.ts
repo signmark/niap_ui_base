@@ -192,7 +192,7 @@ export class InstagramStoriesService {
     
     // Используем значение по умолчанию как последний вариант
     const defaultUsername = 'it.zhdanov';
-    log(`InstagramStoriesService: Используем имя пользователя по умолчанию: ${defaultUsername}`, 'instagram');
+    log(`InstagramStoriesService: Используем имя пользователя по умолчанию: ${defaultUsername}`);
     return defaultUsername;
   }
 }
