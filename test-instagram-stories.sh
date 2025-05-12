@@ -26,26 +26,42 @@ echo -e "\n=== РЕЗУЛЬТАТ ЗАПРОСА ===" | tee -a "$LOG_FILE"
 if [ $result -eq 0 ]; then
   echo "Запрос успешно выполнен (код: $result)" | tee -a "$LOG_FILE"
   
-  # Красиво форматируем JSON ответ с помощью python
+  # Красиво форматируем JSON ответ с помощью python (если python установлен)
   echo -e "\n=== ОТВЕТ СЕРВЕРА ===" | tee -a "$LOG_FILE"
-  echo "$response" | python -m json.tool | tee -a "$LOG_FILE"
-  
-  # Извлекаем статус публикации
-  if [[ "$response" == *"\"status\""* ]]; then
-    status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-    echo -e "\nСтатус публикации: $status" | tee -a "$LOG_FILE"
+  if command -v python &> /dev/null; then
+    echo "$response" | python -m json.tool | tee -a "$LOG_FILE"
+  elif command -v jq &> /dev/null; then
+    echo "$response" | jq | tee -a "$LOG_FILE"
+  else
+    echo "$response" | tee -a "$LOG_FILE"
   fi
   
-  # Извлекаем URL публикации, если есть
-  if [[ "$response" == *"\"postUrl\""* ]]; then
-    postUrl=$(echo "$response" | grep -o '"postUrl":"[^"]*"' | cut -d'"' -f4)
-    echo "URL публикации: $postUrl" | tee -a "$LOG_FILE"
+  # Проверяем, успешный ли запрос
+  if [[ "$response" == *"\"success\":true"* ]]; then
+    echo -e "\nЗапрос выполнен успешно" | tee -a "$LOG_FILE"
+    
+    # Извлекаем информацию о публикации
+    if [[ "$response" == *"\"publication\""* && "$response" == *"\"status\""* ]]; then
+      # Используем grep для поиска статуса публикации
+      status=$(echo "$response" | grep -o '"publication":{[^}]*"status":"[^"]*"' | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+      echo -e "Статус публикации: $status" | tee -a "$LOG_FILE"
+      
+      # Извлекаем URL публикации, если есть
+      if [[ "$response" == *"\"postUrl\""* ]]; then
+        postUrl=$(echo "$response" | grep -o '"postUrl":"[^"]*"' | head -1 | cut -d'"' -f4)
+        echo "URL публикации: $postUrl" | tee -a "$LOG_FILE"
+      fi
+    fi
+  else
+    echo -e "\nЗапрос завершился с ошибкой" | tee -a "$LOG_FILE"
   fi
   
   # Проверяем на наличие ошибок
   if [[ "$response" == *"\"error\""* ]]; then
-    error=$(echo "$response" | grep -o '"error":"[^"]*"' | cut -d'"' -f4)
-    echo "ОШИБКА: $error" | tee -a "$LOG_FILE"
+    IFS=$'\n' read -rd '' -a errors < <(echo "$response" | grep -o '"error":"[^"]*"' | cut -d'"' -f4)
+    for error in "${errors[@]}"; do
+      echo "ОШИБКА: $error" | tee -a "$LOG_FILE"
+    done
   fi
 else
   echo "Ошибка при выполнении запроса. Код: $result" | tee -a "$LOG_FILE"

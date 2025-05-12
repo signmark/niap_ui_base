@@ -270,7 +270,26 @@ export class InstagramService extends BaseSocialService {
               }
             }
             
-            // 4. Если есть URL в объекте, используем его для определения
+            // 4. Проверка на основе имени файла, если оно есть
+            if (mediaItem.filename || mediaItem.fileName || mediaItem.name) {
+              const filename = String(mediaItem.filename || mediaItem.fileName || mediaItem.name).toLowerCase();
+              log(`[Instagram Debug] Проверка имени файла: ${filename}`, 'instagram');
+              
+              // Проверка по расширению файла
+              const videoExtensions = ['.mp4', '.mov', '.avi', '.mpeg', '.mpg', '.wmv', '.flv', '.webm', '.mkv', '.m4v'];
+              if (videoExtensions.some(ext => filename.endsWith(ext))) {
+                log(`[Instagram Debug] Тип определен по имени файла: VIDEO (${filename})`, 'instagram');
+                return 'VIDEO';
+              }
+              
+              const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif', '.ico', '.heic', '.heif'];
+              if (imageExtensions.some(ext => filename.endsWith(ext))) {
+                log(`[Instagram Debug] Тип определен по имени файла: IMAGE (${filename})`, 'instagram');
+                return 'IMAGE';
+              }
+            }
+            
+            // 5. Если есть URL в объекте, используем его для определения
             const possibleUrlFields = ['url', 'file', 'src', 'source', 'path', 'link', 'href'];
             for (const field of possibleUrlFields) {
               if (mediaItem[field] && typeof mediaItem[field] === 'string') {
