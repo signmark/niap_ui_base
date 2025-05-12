@@ -249,6 +249,7 @@ app.use((req, res, next) => {
     
     // Регистрируем маршруты для Instagram Stories
     log("Registering Instagram Stories routes...");
+    // Используем оригинальную версию маршрутизатора Instagram Stories
     registerInstagramStoriesRoutes(app);
     log("Instagram Stories routes registered successfully");
     

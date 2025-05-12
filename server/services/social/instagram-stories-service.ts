@@ -38,6 +38,7 @@ export class InstagramStoriesService {
     mediaContainerId?: string;
     igUsername?: string;
     creationTime?: string;
+    instagramStoryId?: string; // Добавляем отдельное поле для ID истории
     error?: any;
   }> {
     try {
@@ -59,17 +60,22 @@ export class InstagramStoriesService {
       const igUsername = this.getInstagramUsername();
       const creationTime = new Date().toISOString();
       
+      // Сохраняем оригинальный ID истории в Instagram для дальнейшего использования
+      const instagramStoryId = storyId;
+      
       // Форматируем URL истории - для Instagram Stories нельзя получить прямую ссылку на конкретную историю,
       // только на все истории пользователя
       const storyUrl = `https://www.instagram.com/stories/${igUsername}/`;
       
+      // Возвращаем результат с добавленным полем instagramStoryId
       return {
         success: true,
         storyId,
         storyUrl,
         mediaContainerId,
         igUsername,
-        creationTime
+        creationTime,
+        instagramStoryId // Добавлен отдельный идентификатор для истории
       };
     } catch (error: any) {
       log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`);

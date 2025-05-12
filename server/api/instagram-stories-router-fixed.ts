@@ -157,9 +157,33 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
             const firstImg = content.additional_images[0];
             log(`Первый элемент additional_images: ${JSON.stringify(firstImg)}`, 'stories');
             
-            if (typeof firstImg === 'object' && firstImg && firstImg.url) {
-              imageUrl = firstImg.url;
-              log(`Найдено изображение в additional_images[0].url: ${imageUrl}`, 'stories');
+            log(`Анализ объекта в additional_images[0]: ${JSON.stringify(firstImg)}`, 'stories');
+            
+            if (typeof firstImg === 'object' && firstImg) {
+              // Проверяем разные поля, которые могут содержать URL
+              if (firstImg.url) {
+                imageUrl = firstImg.url;
+                log(`Найдено изображение в additional_images[0].url: ${imageUrl}`, 'stories');
+              } else if (firstImg["url"]) {
+                imageUrl = firstImg["url"];
+                log(`Найдено изображение в additional_images[0]["url"]: ${imageUrl}`, 'stories');
+              } else if (firstImg.uri) {
+                imageUrl = firstImg.uri;
+                log(`Найдено изображение в additional_images[0].uri: ${imageUrl}`, 'stories');
+              } else if (firstImg.src) {
+                imageUrl = firstImg.src;
+                log(`Найдено изображение в additional_images[0].src: ${imageUrl}`, 'stories');
+              } else {
+                // Ищем любое поле, которое похоже на URL
+                for (const key in firstImg) {
+                  const value = firstImg[key];
+                  if (typeof value === 'string' && value.startsWith('http')) {
+                    imageUrl = value;
+                    log(`Найдено изображение в additional_images[0].${key}: ${imageUrl}`, 'stories');
+                    break;
+                  }
+                }
+              }
             } else if (typeof firstImg === 'string' && firstImg.startsWith('http')) {
               imageUrl = firstImg;
               log(`Найдена прямая ссылка в additional_images[0]: ${imageUrl}`, 'stories');
@@ -176,9 +200,33 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
             const firstImg = content.additionalImages[0];
             log(`Первый элемент additionalImages: ${JSON.stringify(firstImg)}`, 'stories');
             
-            if (typeof firstImg === 'object' && firstImg && firstImg.url) {
-              imageUrl = firstImg.url;
-              log(`Найдено изображение в additionalImages[0].url: ${imageUrl}`, 'stories');
+            log(`Анализ объекта в additionalImages[0]: ${JSON.stringify(firstImg)}`, 'stories');
+            
+            if (typeof firstImg === 'object' && firstImg) {
+              // Проверяем разные поля, которые могут содержать URL
+              if (firstImg.url) {
+                imageUrl = firstImg.url;
+                log(`Найдено изображение в additionalImages[0].url: ${imageUrl}`, 'stories');
+              } else if (firstImg["url"]) {
+                imageUrl = firstImg["url"];
+                log(`Найдено изображение в additionalImages[0]["url"]: ${imageUrl}`, 'stories');
+              } else if (firstImg.uri) {
+                imageUrl = firstImg.uri;
+                log(`Найдено изображение в additionalImages[0].uri: ${imageUrl}`, 'stories');
+              } else if (firstImg.src) {
+                imageUrl = firstImg.src;
+                log(`Найдено изображение в additionalImages[0].src: ${imageUrl}`, 'stories');
+              } else {
+                // Ищем любое поле, которое похоже на URL
+                for (const key in firstImg) {
+                  const value = firstImg[key];
+                  if (typeof value === 'string' && value.startsWith('http')) {
+                    imageUrl = value;
+                    log(`Найдено изображение в additionalImages[0].${key}: ${imageUrl}`, 'stories');
+                    break;
+                  }
+                }
+              }
             } else if (typeof firstImg === 'string' && firstImg.startsWith('http')) {
               imageUrl = firstImg;
               log(`Найдена прямая ссылка в additionalImages[0]: ${imageUrl}`, 'stories');

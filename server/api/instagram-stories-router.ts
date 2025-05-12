@@ -249,7 +249,7 @@ export function registerInstagramStoriesRoutes(app: express.Express) {
         // Обновляем статус контента, добавляя информацию о публикации в Instagram Stories
         const updateData = {
           instagram_stories_status: 'published',
-          instagram_stories_id: result.storyId,
+          instagram_stories_id: result.instagramStoryId || result.storyId, // Используем новое поле или старое для обратной совместимости
           instagram_stories_url: result.storyUrl,
           instagram_stories_published_at: new Date().toISOString()
         };
