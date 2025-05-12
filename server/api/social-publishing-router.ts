@@ -1365,7 +1365,11 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
   try {
     const { contentId, platform } = req.body;
     
-    log(`[Social Publishing] Получен запрос на публикацию сторис: contentId=${contentId}, platform=${platform}`, 'stories');
+    // Расширенное логирование для диагностики
+    log(`[Social Publishing] Получен запрос на публикацию сторис:`, 'stories');
+    log(`[Social Publishing] - contentId: ${contentId}`, 'stories');
+    log(`[Social Publishing] - platform: ${platform}`, 'stories');
+    log(`[Social Publishing] - body: ${JSON.stringify(req.body)}`, 'stories');
     
     if (!contentId || !platform) {
       log(`[Social Publishing] Ошибка: не указан contentId или platform`, 'stories', 'error');
