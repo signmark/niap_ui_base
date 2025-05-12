@@ -324,12 +324,29 @@ export class InstagramService extends BaseSocialService {
       if (publishResponse.data && publishResponse.data.id) {
         const storyId = publishResponse.data.id;
         // URL для сторис отличается от URL поста - используем информацию из бизнес-аккаунта
-        // Получаем username из настроек или используем ID
-        // Проверяем socialMediaSettings сначала (передается из social-publishing-router.ts)
+        // Получаем username из настроек или используем ID в различных форматах
+        // Подробно логируем все варианты для диагностики
+        
+        // Возможные варианты настроек, где может быть username
+        log(`[Instagram] Поиск username для URL сторис. Проверяем все варианты настроек:`, 'instagram');
+        log(`[Instagram] socialMediaSettings?.instagram?.username: ${socialMediaSettings?.instagram?.username || 'не найден'}`, 'instagram');
+        log(`[Instagram] socialMediaSettings?.instagram?.profile: ${socialMediaSettings?.instagram?.profile || 'не найден'}`, 'instagram');
+        log(`[Instagram] socialSettings?.instagram?.username: ${(socialSettings && socialSettings.instagram && socialSettings.instagram.username) || 'не найден'}`, 'instagram');
+        log(`[Instagram] socialSettings?.instagram?.profile: ${(socialSettings && socialSettings.instagram && socialSettings.instagram.profile) || 'не найден'}`, 'instagram');
+        
+        // Проверяем все возможные места, где может храниться username в настройках
         const username = socialMediaSettings?.instagram?.username || 
-                       (socialSettings && socialSettings.instagram && socialSettings.instagram.username) || 
-                       'profile';
-        const storyUrl = `https://www.instagram.com/${username}/`;
+                       socialMediaSettings?.instagram?.profile ||
+                       (socialSettings && socialSettings.instagram && (socialSettings.instagram.username || socialSettings.instagram.profile)) ||
+                       'instagram'; // Резервный вариант для общей страницы Instagram
+        
+        // Чистим username от @ в начале, если он есть
+        const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+        
+        // URL для Stories - используем username для создания ссылки на профиль
+        const storyUrl = `https://www.instagram.com/${cleanUsername}/`;
+        
+        log(`[Instagram] Итоговый username для URL сторис: ${cleanUsername}`, 'instagram');
 
         log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
         log(`[Instagram] URL сторис: ${storyUrl}`, 'instagram');

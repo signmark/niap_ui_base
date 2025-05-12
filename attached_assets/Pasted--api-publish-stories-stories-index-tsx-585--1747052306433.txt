@@ -1,0 +1,54 @@
+ Используем эндпоинт /api/publish/stories для типа контента stories
+index.tsx:585 
+            
+            
+           POST https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev/api/publish/stories 400 (Bad Request)
+mutationFn @ index.tsx:585
+fn @ @tanstack_react-query.js?v=7de2acc6:1189
+run @ @tanstack_react-query.js?v=7de2acc6:494
+start @ @tanstack_react-query.js?v=7de2acc6:536
+execute @ @tanstack_react-query.js?v=7de2acc6:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=7de2acc6:2630
+(anonymous) @ @tanstack_react-query.js?v=7de2acc6:3295
+onClick @ index.tsx:2238
+callCallback2 @ chunk-RPCDYKBN.js?v=7de2acc6:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=7de2acc6:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=7de2acc6:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=7de2acc6:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=7de2acc6:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=7de2acc6:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=7de2acc6:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=7de2acc6:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=7de2acc6:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=7de2acc6:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=7de2acc6:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=7de2acc6:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=7de2acc6:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=7de2acc6:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=7de2acc6:5449Understand this error
+index.tsx:669 Ошибка публикации: Error: Для публикации сторис в Instagram необходимо указать изображение или видео
+    at Object.mutationFn (index.tsx:597:15)
+overrideMethod @ hook.js:608
+onError @ index.tsx:669
+execute @ @tanstack_react-query.js?v=7de2acc6:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=7de2acc6:2630
+(anonymous) @ @tanstack_react-query.js?v=7de2acc6:3295
+onClick @ index.tsx:2238
+callCallback2 @ chunk-RPCDYKBN.js?v=7de2acc6:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=7de2acc6:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=7de2acc6:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=7de2acc6:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=7de2acc6:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=7de2acc6:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=7de2acc6:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=7de2acc6:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=7de2acc6:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=7de2acc6:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=7de2acc6:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=7de2acc6:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=7de2acc6:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=7de2acc6:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=7de2acc6:5449Understand this error
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d
