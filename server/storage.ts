@@ -890,7 +890,35 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Запрос контента по ID: ${id}`);
       
-      // Настраиваем headers с токеном, если он передан
+      // Импортируем вспомогательную утилиту для работы с Directus
+      const { getDirectusContentById } = await import('./utils/directus-admin-helper');
+      
+      // Пытаемся получить данные через новую утилиту
+      const directusContent = await getDirectusContentById('campaign_content', id);
+      
+      if (directusContent) {
+        console.log(`Успешно получен контент через directus-admin-helper`);
+        
+        return {
+          id: directusContent.id,
+          userId: directusContent.user_id,
+          content: directusContent.content,
+          campaignId: directusContent.campaign_id,
+          status: directusContent.status,
+          contentType: directusContent.content_type || "text",
+          title: directusContent.title || null,
+          imageUrl: directusContent.image_url,
+          videoUrl: directusContent.video_url,
+          prompt: directusContent.prompt || "",
+          scheduledAt: directusContent.scheduled_at ? new Date(directusContent.scheduled_at) : null,
+          createdAt: new Date(directusContent.created_at),
+          socialPlatforms: directusContent.social_platforms,
+          publishedPlatforms: directusContent.published_platforms || [],
+          keywords: directusContent.keywords || []
+        };
+      }
+        
+      // Если новая утилита не сработала, используем старый механизм
       let response = null;
       
       // Попытка 1: Используем переданный токен авторизации (если он есть)

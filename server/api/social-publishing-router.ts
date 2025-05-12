@@ -52,15 +52,36 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       });
     }
     
-    // Получаем контент для проверки типа
-    const content = await storage.getCampaignContentById(contentId);
-    if (!content) {
+    // Получаем контент для проверки типа с использованием вспомогательной утилиты
+    const { getDirectusContentById } = await import('../utils/directus-admin-helper');
+    const directusContent = await getDirectusContentById('campaign_content', contentId);
+    
+    if (!directusContent) {
       log(`[Social Publishing] Ошибка: не найден контент с ID ${contentId}`);
       return res.status(404).json({
         success: false,
         error: `Контент с ID ${contentId} не найден`
       });
     }
+    
+    // Преобразуем данные из Directus в формат CampaignContent
+    const content = {
+      id: directusContent.id,
+      userId: directusContent.user_id,
+      content: directusContent.content,
+      campaignId: directusContent.campaign_id,
+      status: directusContent.status,
+      contentType: directusContent.content_type || "text",
+      title: directusContent.title || null,
+      imageUrl: directusContent.image_url,
+      videoUrl: directusContent.video_url,
+      prompt: directusContent.prompt || "",
+      scheduledAt: directusContent.scheduled_at ? new Date(directusContent.scheduled_at) : null,
+      createdAt: new Date(directusContent.created_at),
+      socialPlatforms: directusContent.social_platforms,
+      publishedPlatforms: directusContent.published_platforms || [],
+      keywords: directusContent.keywords || [] 
+    };
     
     // Если тип контента stories, возвращаем ошибку, так как сторис должны публиковаться напрямую
     if (content.contentType === 'stories') {
