@@ -66,8 +66,9 @@ export class InstagramStoriesService {
       const igUsername = this.getInstagramUsername();
       const creationTime = new Date().toISOString();
       
-      // Форматируем URL истории с корректным ID
-      const storyUrl = `https://www.instagram.com/stories/${igUsername}/${storyId}/`;
+      // Форматируем URL истории - для Instagram Stories нельзя получить прямую ссылку на конкретную историю,
+      // только на все истории пользователя
+      const storyUrl = `https://www.instagram.com/stories/${igUsername}/`;
       
       return {
         success: true,
@@ -78,7 +79,7 @@ export class InstagramStoriesService {
         creationTime
       };
     } catch (error: any) {
-      log.error(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram');
+      log(`InstagramStoriesService: Ошибка при публикации истории: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       return {
         success: false,
         error: error.message || error
@@ -121,7 +122,7 @@ export class InstagramStoriesService {
       // Возвращаем ID созданного контейнера
       return response.data.id;
     } catch (error: any) {
-      log.error(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram');
+      log(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       throw error;
     }
   }
@@ -153,7 +154,7 @@ export class InstagramStoriesService {
       
       return response.data;
     } catch (error: any) {
-      log.error(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram');
+      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       throw error;
     }
   }
@@ -186,7 +187,7 @@ export class InstagramStoriesService {
       
       // При необходимости здесь можно добавить запрос к Instagram API для получения username
     } catch (error: any) {
-      log.error(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`, 'instagram');
+      log(`InstagramStoriesService: Ошибка при определении имени пользователя: ${error.message}`, 'instagram', 'error');
     }
     
     // Используем значение по умолчанию как последний вариант
