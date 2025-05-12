@@ -1749,4 +1749,178 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * @api {post} /api/publish/instagram/stories Публикация Instagram Stories
+ * @apiDescription Публикует Instagram Stories напрямую через Instagram API (минуя n8n)
+ * @apiVersion 1.0.0
+ * @apiName PublishInstagramStories
+ * @apiGroup SocialPublishing
+ * 
+ * @apiParam {String} contentId ID контента для публикации
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат публикации
+ */
+router.post('/publish/instagram/stories', authMiddleware, async (req, res) => {
+  try {
+    log(`[Instagram Stories] Получен запрос на публикацию сторис: ${JSON.stringify(req.body)}`);
+    
+    const { contentId } = req.body;
+    
+    if (!contentId) {
+      log(`[Instagram Stories] Ошибка: не указан contentId`);
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId'
+      });
+    }
+
+    // Получаем данные контента
+    const content = await storage.getCampaignContentById(contentId);
+    
+    if (!content) {
+      log(`[Instagram Stories] Ошибка: контент с ID ${contentId} не найден`, 'instagram', 'error');
+      return res.status(404).json({
+        success: false,
+        error: 'Контент не найден'
+      });
+    }
+
+    // Подробный лог данных контента для отладки
+    log(`[Instagram Stories] Детали контента для публикации:
+      ID: ${content.id}
+      Тип: ${content.contentType}
+      Заголовок: ${content.title}
+      Текст: ${content.content ? content.content.substring(0, 50) + '...' : 'отсутствует'}
+      Основное изображение: ${content.imageUrl || 'отсутствует'}
+      Доп. изображения: ${content.additionalImages ? 'присутствуют' : 'отсутствуют'}
+      Доп. медиа: ${content.additionalMedia ? 'присутствуют' : 'отсутствуют'}`, 'instagram');
+
+    // Получаем данные кампании для настроек Instagram
+    const campaign = await storage.getCampaignById(content.campaignId);
+    
+    if (!campaign) {
+      log(`[Instagram Stories] Ошибка: кампания с ID ${content.campaignId} не найдена`, 'instagram', 'error');
+      return res.status(404).json({
+        success: false,
+        error: 'Кампания не найдена'
+      });
+    }
+
+    // Получаем настройки Instagram из кампании
+    const socialMediaSettings = campaign.social_media_settings || {};
+    const instagramSettings = socialMediaSettings.instagram || {};
+    
+    // Проверяем наличие токена и business_account_id
+    if (!instagramSettings.token && !instagramSettings.accessToken) {
+      log(`[Instagram Stories] Ошибка: отсутствует токен Instagram в настройках кампании`, 'instagram', 'error');
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует токен Instagram в настройках кампании'
+      });
+    }
+
+    if (!instagramSettings.businessAccountId) {
+      log(`[Instagram Stories] Ошибка: отсутствует ID бизнес-аккаунта Instagram в настройках кампании`, 'instagram', 'error');
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствует ID бизнес-аккаунта Instagram в настройках кампании'
+      });
+    }
+
+    // Подготавливаем структуру для платформ в контенте, если она не существует
+    const socialPlatforms = content.socialPlatforms || {};
+    
+    // Устанавливаем статус "pending" для Instagram
+    socialPlatforms.instagram = {
+      ...socialPlatforms.instagram, 
+      status: 'pending',
+      platform: 'instagram',
+      userId: req.user?.id || null,
+      error: null
+    };
+    
+    // Получаем токен администратора
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    const adminToken = await directusAuthManager.getAdminToken();
+    
+    if (!adminToken) {
+      log(`[Instagram Stories] Ошибка: не удалось получить токен администратора`, 'instagram', 'error');
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка авторизации администратора'
+      });
+    }
+    
+    // Сохраняем выбранные платформы для контента
+    await storage.updateCampaignContent(
+      contentId,
+      { socialPlatforms: socialPlatforms },
+      adminToken
+    );
+
+    // Публикуем через специальный метод publishStory
+    log(`[Instagram Stories] Публикация сторис через Instagram API`, 'instagram');
+    
+    // Подготавливаем конфигурацию для Instagram
+    const instagramConfig = {
+      token: instagramSettings.token || instagramSettings.accessToken,
+      businessAccountId: instagramSettings.businessAccountId,
+      // Явно указываем, что это сторис
+      mediaType: 'STORIES'
+    };
+    
+    log(`[Instagram Stories] Передаем конфигурацию: ${JSON.stringify(instagramConfig)}`, 'instagram');
+    
+    // Вызываем метод publishStory напрямую
+    const result = await instagramService.publishStory(content, instagramConfig, socialMediaSettings);
+    
+    log(`[Instagram Stories] Результат публикации: ${JSON.stringify(result)}`, 'instagram');
+    
+    // Обновляем статус публикации в Instagram
+    await storage.updateCampaignContent(
+      contentId,
+      {
+        socialPlatforms: {
+          ...socialPlatforms,
+          instagram: result
+        }
+      },
+      adminToken
+    );
+
+    // Проверяем результат публикации
+    if (result.error) {
+      log(`[Instagram Stories] Ошибка при публикации: ${result.error}`, 'instagram', 'error');
+      return res.status(400).json({
+        success: false,
+        error: result.error,
+        result
+      });
+    }
+
+    // Если публикация прошла успешно, обновляем статус контента, если он был в статусе draft
+    if (content.status === 'draft') {
+      await storage.updateCampaignContent(
+        contentId,
+        { status: 'scheduled' },
+        adminToken
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Сторис успешно опубликованы в Instagram',
+      result
+    });
+
+  } catch (error) {
+    log(`[Instagram Stories] Критическая ошибка при публикации: ${error.message}`, 'instagram', 'error');
+    return res.status(500).json({
+      success: false,
+      error: `Внутренняя ошибка сервера: ${error.message}`
+    });
+  }
+});
+
 export default router;
