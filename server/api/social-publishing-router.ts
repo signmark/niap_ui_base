@@ -1486,6 +1486,11 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
       });
     }
     
+    // ТЕСТ: Логируем полученный контент для Instagram Stories для отладки
+    if (platform.toLowerCase() === 'instagram') {
+      log(`[Instagram Stories] ДИАГНОСТИКА: DEBUG полный контент: ${JSON.stringify(content)}`, 'instagram');
+    }
+    
     try {
       // Получаем настройки кампании
       let campaignSettings = await storage.getCampaignById(content.campaignId);
