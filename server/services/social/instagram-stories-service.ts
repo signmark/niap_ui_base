@@ -112,7 +112,7 @@ export class InstagramStoriesService {
       // Возвращаем ID созданного контейнера
       return response.data.id;
     } catch (error) {
-      logger.error(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`);
+      log(`InstagramStoriesService: Ошибка при создании контейнера: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       throw error;
     }
   }
@@ -144,7 +144,7 @@ export class InstagramStoriesService {
       
       return response.data;
     } catch (error) {
-      logger.error(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`);
+      log(`InstagramStoriesService: Ошибка при публикации: ${error.message || JSON.stringify(error)}`, 'instagram', 'error');
       throw error;
     }
   }
