@@ -569,6 +569,42 @@ export default function ContentPage() {
           throw new Error('Выберите платформу для публикации сторис');
         }
         
+        // Проверяем наличие медиа для публикации сторис
+        if (selectedPlatform === 'instagram') {
+          // Получаем текущий контент
+          const currentContentData = currentContent || campaignContent?.find(item => item.id === id);
+          
+          if (!currentContentData) {
+            throw new Error('Не удалось получить данные контента для публикации');
+          }
+          
+          // Проверяем наличие медиа для публикации сторис в Instagram
+          const hasImageUrl = Boolean(currentContentData.imageUrl);
+          const hasVideoUrl = Boolean(currentContentData.videoUrl);
+          
+          // Проверяем наличие дополнительных медиа
+          const additionalMedia = currentContentData.additionalImages || 
+                                 currentContentData.additional_images || 
+                                 currentContentData.additionalMedia;
+          
+          const hasAdditionalMedia = Boolean(
+            additionalMedia && Array.isArray(additionalMedia) && additionalMedia.length > 0
+          );
+          
+          // Проверяем, есть ли хотя бы один медиафайл
+          const hasMedia = hasImageUrl || hasVideoUrl || hasAdditionalMedia;
+          
+          console.log('📄 Проверка медиафайлов для сторис:', { 
+            hasImageUrl, 
+            hasVideoUrl, 
+            hasAdditionalMedia 
+          });
+          
+          if (!hasMedia) {
+            throw new Error('Для публикации сторис в Instagram необходимо указать изображение или видео');
+          }
+        }
+        
         requestData = {
           contentId: id,
           platform: selectedPlatform
