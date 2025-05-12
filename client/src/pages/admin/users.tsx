@@ -1,353 +1,246 @@
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { formatDistance } from "date-fns";
-import { ru } from "date-fns/locale";
-import { User, BadgeCheck, Users, Clock, Ban, UserCheck, UserX, Calendar } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/lib/store';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { apiRequest } from "@/lib/queryClient";
-import { API_ROUTES } from "@/config/routes";
+// Тип для активности пользователя
+interface UserAction {
+  description: string;
+  timestamp: string;
+  collection: string;
+  action: string;
+}
 
-interface UserData {
+// Тип для последней активности пользователя
+interface LastActivity {
+  action: string;
+  collection: string;
+  timestamp: string;
+}
+
+// Тип для пользователя
+interface User {
   id: string;
   name: string;
   email: string;
   status: string;
   lastAccess: string | null;
   isActive: boolean;
+  isSmmAdmin: boolean;
+  activityCount: number;
+  lastActivity: LastActivity | null;
+  recentActions: UserAction[];
 }
 
-interface UsersResponse {
+// Тип для ответа API
+interface ApiResponse {
   success: boolean;
   data: {
     total: number;
     active: number;
-    users: UserData[];
+    users: User[];
   };
+  error?: string;
 }
 
-export default function AdminUsersPage() {
+export default function UsersPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const { token, isAdmin } = useAuthStore();
+  const [isMounted, setIsMounted] = useState(false);
 
-  const { data: usersData, isLoading, error, refetch } = useQuery<UsersResponse>({
-    queryKey: ["users", "active"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/users/active");
-      const data = await response.json();
-      return data;
-    },
-    staleTime: 5 * 60 * 1000, // 5 минут
-  });
-
-  // Обработка ошибок
+  // Проверка прав администратора при монтировании компонента
   useEffect(() => {
-    if (error) {
+    setIsMounted(true);
+
+    if (!isAdmin) {
       toast({
-        title: "Ошибка загрузки данных",
-        description: "Не удалось загрузить информацию о пользователях",
-        variant: "destructive",
+        title: 'Доступ запрещен',
+        description: 'У вас нет прав для просмотра этой страницы',
+        variant: 'destructive',
       });
     }
-  }, [error, toast]);
+  }, [isAdmin, toast]);
 
-  const getFilteredUsers = () => {
-    if (!usersData?.data?.users) return [];
+  // Запрос данных о пользователях
+  const { data, isLoading, error } = useQuery<ApiResponse>({
+    queryKey: ['/api/users/active'],
+    enabled: !!token && isAdmin && isMounted,
+  });
 
-    if (activeTab === "active") {
-      return usersData.data.users.filter(user => user.isActive);
-    } else if (activeTab === "inactive") {
-      return usersData.data.users.filter(user => !user.isActive && user.status === "active");
-    } else {
-      return usersData.data.users;
-    }
-  };
-
-  const formatLastAccess = (lastAccess: string | null) => {
-    if (!lastAccess) return "Никогда";
+  // Форматирование даты последнего доступа
+  const formatLastAccess = (date: string | null): string => {
+    if (!date) return 'Нет данных';
     
     try {
-      const date = new Date(lastAccess);
-      return formatDistance(date, new Date(), { addSuffix: true, locale: ru });
+      return format(new Date(date), 'dd MMM yyyy, HH:mm', { locale: ru });
     } catch (e) {
-      return "Некорректная дата";
+      return 'Некорректная дата';
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name || name.trim() === "") return "?";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase();
-  };
-
-  const getUserStatusBadge = (user: UserData) => {
-    if (user.status === "active") {
-      return user.isActive ? (
-        <Badge variant="success" className="flex items-center gap-1">
-          <UserCheck size={12} />
-          <span>Активен</span>
-        </Badge>
-      ) : (
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Clock size={12} />
-          <span>Неактивен</span>
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge variant="destructive" className="flex items-center gap-1">
-          <Ban size={12} />
-          <span>Заблокирован</span>
-        </Badge>
-      );
-    }
-  };
+  // Если пользователь не админ, показываем сообщение о доступе
+  if (!isAdmin && isMounted) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Управление пользователями</CardTitle>
+            <CardDescription>
+              Доступ к этой странице ограничен для администраторов
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center p-6">
+              <p className="text-center text-muted-foreground">
+                У вас нет прав для просмотра информации о пользователях
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Пользователи системы</h1>
-          <p className="text-muted-foreground">
-            Управление пользователями и мониторинг активности
-          </p>
-        </div>
-        <Button onClick={() => refetch()} variant="outline">
-          Обновить
-        </Button>
-      </div>
+    <div className="container mx-auto py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Управление пользователями</CardTitle>
+          <CardDescription>
+            Просмотр активных пользователей системы
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            // Скелетон загрузки
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : error ? (
+            // Сообщение об ошибке
+            <div className="flex items-center justify-center p-6">
+              <p className="text-center text-destructive">
+                Ошибка при загрузке данных о пользователях
+              </p>
+            </div>
+          ) : data?.success ? (
+            // Таблица с пользователями
+            <>
+              <div className="flex justify-between mb-6">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Всего пользователей: <span className="font-medium">{data.data.total}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Активных за 24 часа: <span className="font-medium">{data.data.active}</span>
+                  </p>
+                </div>
+              </div>
 
-      <div className="grid gap-6 mb-8">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="all" className="flex items-center gap-2">
-                <Users size={16} />
-                <span>Все</span>
-                {usersData?.data?.total && (
-                  <Badge variant="secondary">{usersData.data.total}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="active" className="flex items-center gap-2">
-                <UserCheck size={16} />
-                <span>Активные</span>
-                {usersData?.data?.active && (
-                  <Badge variant="secondary">{usersData.data.active}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="inactive" className="flex items-center gap-2">
-                <UserX size={16} />
-                <span>Неактивные</span>
-                {usersData?.data?.total && usersData?.data?.active && (
-                  <Badge variant="secondary">{usersData.data.total - usersData.data.active}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="all" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Все пользователи системы</CardTitle>
-                <CardDescription>
-                  Полный список пользователей платформы
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-[250px]" />
-                          <Skeleton className="h-4 w-[200px]" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {getFilteredUsers().map((user) => (
-                      <div key={user.id} className="flex items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                        <Avatar className="h-12 w-12 mr-4">
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center">
-                            <p className="text-sm font-medium text-primary truncate mr-2">
-                              {user.name || "Без имени"}
-                            </p>
-                            {getUserStatusBadge(user)}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end text-right">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {formatLastAccess(user.lastAccess)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {getFilteredUsers().length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        {activeTab === "active" ? (
-                          <p>Нет активных пользователей за последние 24 часа</p>
-                        ) : activeTab === "inactive" ? (
-                          <p>Все пользователи активны</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Имя</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>Последняя активность</TableHead>
+                    <TableHead>Роль</TableHead>
+                    <TableHead>Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.data.users.map((user) => (
+                    <TableRow key={user.id} className={user.isActive ? 'bg-green-50/20' : ''}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {user.isActive ? (
+                          <Badge variant="success">Активен</Badge>
                         ) : (
-                          <p>Пользователи не найдены</p>
+                          <Badge variant="outline">Неактивен</Badge>
                         )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <p className="text-xs text-muted-foreground">
-                  Активный пользователь - тот, кто был в системе за последние 24 часа
-                </p>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="active" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Активные пользователи</CardTitle>
-                <CardDescription>
-                  Пользователи, активные за последние 24 часа
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Содержимое то же самое, что и для all */}
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-[250px]" />
-                          <Skeleton className="h-4 w-[200px]" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {getFilteredUsers().map((user) => (
-                      <div key={user.id} className="flex items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                        <Avatar className="h-12 w-12 mr-4">
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center">
-                            <p className="text-sm font-medium text-primary truncate mr-2">
-                              {user.name || "Без имени"}
-                            </p>
-                            {getUserStatusBadge(user)}
+                      </TableCell>
+                      <TableCell>
+                        {user.lastActivity ? (
+                          <div className="flex flex-col">
+                            <span className="text-sm">
+                              {user.lastActivity.action === 'create' && 'Создал запись'}
+                              {user.lastActivity.action === 'update' && 'Обновил запись'}
+                              {user.lastActivity.action === 'delete' && 'Удалил запись'}
+                              {user.lastActivity.action === 'login' && 'Вход в систему'}
+                              {!['create', 'update', 'delete', 'login'].includes(user.lastActivity.action) && user.lastActivity.action}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {user.lastActivity.collection && user.lastActivity.collection !== 'directus_users' ? 
+                                `в разделе "${user.lastActivity.collection}"` : ''}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatLastAccess(user.lastActivity.timestamp)}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end text-right">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        ) : (
+                          <div>
+                            <span className="text-sm">Последний вход:</span>
+                            <span className="block text-xs text-muted-foreground">
                               {formatLastAccess(user.lastAccess)}
                             </span>
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.isSmmAdmin ? (
+                          <Badge variant="default">Администратор</Badge>
+                        ) : (
+                          <Badge variant="secondary">Пользователь</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span className="font-medium">{user.activityCount || 0}</span> действий
+                          {user.recentActions && user.recentActions.length > 0 && (
+                            <div className="mt-1">
+                              <details className="text-xs cursor-pointer">
+                                <summary className="font-medium text-primary">Последние действия</summary>
+                                <ul className="pl-2 mt-1 space-y-1">
+                                  {user.recentActions.map((action, index) => (
+                                    <li key={index} className="list-disc list-inside">
+                                      <span>{action.description}</span>
+                                      <span className="block text-xs text-muted-foreground ml-4">
+                                        {formatLastAccess(action.timestamp)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </details>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
-
-                    {getFilteredUsers().length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>Нет активных пользователей за последние 24 часа</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="inactive" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Неактивные пользователи</CardTitle>
-                <CardDescription>
-                  Пользователи, которые не заходили в систему более 24 часов
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Содержимое то же самое, что и для all */}
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center space-x-4">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-[250px]" />
-                          <Skeleton className="h-4 w-[200px]" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {getFilteredUsers().map((user) => (
-                      <div key={user.id} className="flex items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                        <Avatar className="h-12 w-12 mr-4">
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center">
-                            <p className="text-sm font-medium text-primary truncate mr-2">
-                              {user.name || "Без имени"}
-                            </p>
-                            {getUserStatusBadge(user)}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {user.email}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end text-right">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {formatLastAccess(user.lastAccess)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {getFilteredUsers().length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>Нет неактивных пользователей</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          ) : (
+            // Сообщение об отсутствии данных
+            <div className="flex items-center justify-center p-6">
+              <p className="text-center text-muted-foreground">
+                Нет данных о пользователях
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,0 +1,208 @@
+root@oladaymbzh:~# docker-compose build stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Building 108.2s (24/24) FINISHED                                                                                                                                                              docker:default
+ => [stage internal] load build definition from Dockerfile                                                                                                                                                  0.0s
+ => => transferring dockerfile: 2.98kB                                                                                                                                                                      0.0s
+ => [stage internal] load metadata for docker.io/library/node:18                                                                                                                                            0.4s
+ => [stage internal] load .dockerignore                                                                                                                                                                     0.0s
+ => => transferring context: 2B                                                                                                                                                                             0.0s
+ => [stage  1/19] FROM docker.io/library/node:18@sha256:867be01f97d45cb7d89a8ef0b328d23e8207412ebec4564441ed8cabc8cc4ecd                                                                                    0.0s
+ => [stage internal] load build context                                                                                                                                                                     2.3s
+ => => transferring context: 2.99MB                                                                                                                                                                         2.1s
+ => CACHED [stage  2/19] WORKDIR /app                                                                                                                                                                       0.0s
+ => CACHED [stage  3/19] RUN apt-get update &&     apt-get install -y python3 make g++ ffmpeg curl wget &&     rm -rf /var/lib/apt/lists/*                                                                  0.0s
+ => CACHED [stage  4/19] COPY package*.json ./                                                                                                                                                              0.0s
+ => CACHED [stage  5/19] RUN rm -rf node_modules package-lock.json                                                                                                                                          0.0s
+ => CACHED [stage  6/19] RUN npm install --no-audit --verbose                                                                                                                                               0.0s
+ => CACHED [stage  7/19] RUN npm install -g tsx                                                                                                                                                             0.0s
+ => [stage  8/19] RUN npm install dotenv --save --no-audit                                                                                                                                                  2.9s
+ => [stage  9/19] RUN npm install react-draggable@4.4.6 --save --no-audit                                                                                                                                   3.5s
+ => [stage 10/19] RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit                                                                                                                 3.1s
+ => [stage 11/19] RUN npm install @google/generative-ai socks-proxy-agent --save --no-audit                                                                                                                 3.1s
+ => [stage 12/19] RUN npm install emoji-picker-react --save --no-audit                                                                                                                                      3.0s
+ => [stage 13/19] RUN npm install --save --no-audit     @aws-sdk/client-s3@3.523.0     @aws-sdk/s3-request-presigner@3.523.0     @aws-sdk/lib-storage@3.523.0     && npm ls @aws-sdk/client-s3     && ech  22.2s
+ => [stage 14/19] RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls socks-proxy-agent && npm ls @aws-sdk/client-s3 && npm ls emoji-picker-react && npm ls dotenv       10.9s
+ => [stage 15/19] RUN ffmpeg -version                                                                                                                                                                       0.5s
+ => [stage 16/19] COPY . .                                                                                                                                                                                 43.2s
+ => [stage 17/19] RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK client-s3:', e); p                       0.6s
+ => [stage 18/19] RUN node -e "try { require('@aws-sdk/lib-storage'); console.log('AWS SDK lib-storage доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK lib-storage:',                       0.5s
+ => [stage 19/19] RUN node -e "try { require('dotenv'); console.log('dotenv доступен'); } catch (e) { console.error('Ошибка импорта dotenv:', e); process.exit(1); }"                                       0.3s
+ => [stage] exporting to image                                                                                                                                                                             11.2s
+ => => exporting layers                                                                                                                                                                                    11.2s
+ => => writing image sha256:1355ae4a12d1dc84542d5271afaff41d6b3de1ed7efd543fa35da6fd9b61828c                                                                                                                0.0s
+ => => naming to docker.io/library/root-stage                                                                                                                                                               0.0s
+root@oladaymbzh:~# docker-compose up stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Running 1/1
+ ✔ Container root-stage-1  Recreated                                                                                                                                                                        0.2s
+Attaching to stage-1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642628269:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642628269:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642628269:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642628269:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1 exited with code 1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642629193:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642629193:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642629193:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642629193:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642630139:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642630139:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642630139:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642630139:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642631332:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642631332:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642631332:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642631332:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642632947:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642632947:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642632947:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642632947:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+^CGracefully stopping... (press Ctrl+C again to force)
+[+] Stopping 1/1
+ ✔ Container root-stage-1  Stopped                                                                                                                                                                          0.9s
+canceled
+root@oladaymbzh:~# cd stage/
+root@oladaymbzh:~/stage# npm install dotenv
+
+changed 1 package, and audited 1101 packages in 3s
+
+131 packages are looking for funding
+  run `npm fund` for details
+
+9 vulnerabilities (1 low, 8 moderate)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+root@oladaymbzh:~/stage# docker-compose up stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Running 1/0
+ ✔ Container root-stage-1  Created                                                                                                                                                                          0.0s
+Attaching to stage-1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  |
+stage-1  | node:internal/process/esm_loader:40
+stage-1  |       internalBinding('errors').triggerUncaughtException(
+stage-1  |                                 ^
+stage-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dotenv' imported from /app/server/index.ts
+stage-1  |     at new NodeError (node:internal/errors:405:5)
+stage-1  |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+stage-1  |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+stage-1  |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+stage-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+stage-1  |     at resolveBase (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642655017:2:3212)
+stage-1  |     at resolveDirectory (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642655017:2:3584)
+stage-1  |     at resolveTsPaths (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642655017:2:4073)
+stage-1  |     at async resolve (file:///usr/local/lib/node_modules/tsx/dist/esm/index.mjs?1746642655017:2:4441)
+stage-1  |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+stage-1  |   code: 'ERR_MODULE_NOT_FOUND'
+stage-1  | }
+stage-1  |
+stage-1  | Node.js v18.20.8
+stage-1 exited with code 0
+root@oladaymbzh:~/stage#
