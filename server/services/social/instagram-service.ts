@@ -170,15 +170,27 @@ export class InstagramService extends BaseSocialService {
         };
       }
 
-      // Публикация сторис в Instagram через Graph API
-      // Для тестового режима можем просто вернуть успешный результат
-      if (process.env.INSTAGRAM_TEST_MODE === 'mock' || content.id === '244c9fbd-dfab-445c-bc5d-dff085eb482d') {
-        log(`[Instagram] Тестовый режим: возвращаем успешный результат без реального обращения к API`, 'instagram');
+      // ВАЖНО: В производственном режиме не используются заглушки (mock)
+      // Только если специально указан тестовый режим в .env и мы в режиме разработки
+      if (process.env.INSTAGRAM_TEST_MODE === 'mock' && process.env.NODE_ENV === 'development') {
+        log(`[Instagram] Тестовый режим в среде разработки: возвращаем фиктивный результат без реального обращения к API`, 'instagram', 'warn');
+        log(`[Instagram] В ПРОИЗВОДСТВЕННОЙ СРЕДЕ ЗАГЛУШКИ ДОЛЖНЫ БЫТЬ ОТКЛЮЧЕНЫ`, 'instagram', 'warn');
         return {
           platform: 'instagram',
           status: 'published',
           publishedAt: new Date(),
-          postUrl: 'https://www.instagram.com/stories/mock_test/'
+          postUrl: `https://www.instagram.com/stories/user_test_${Date.now()}/`
+        };
+      }
+      
+      // Для сервера разработки добавляем дополнительную проверку тестового контента
+      if (process.env.NODE_ENV === 'development' && process.env.INSTAGRAM_TEST_CONTENT_ID && content.id === process.env.INSTAGRAM_TEST_CONTENT_ID) {
+        log(`[Instagram] Обнаружен тестовый контент с ID: ${content.id}. Пропускаем реальное обращение к API только для этого контента.`, 'instagram', 'warn');
+        return {
+          platform: 'instagram',
+          status: 'published',
+          publishedAt: new Date(),
+          postUrl: `https://www.instagram.com/stories/dev_test_${Date.now()}/`
         };
       }
       
@@ -1557,12 +1569,25 @@ export class InstagramService extends BaseSocialService {
     // Проверяем тип контента - если это сторис, используем специальный метод
     if (content.contentType === 'stories') {
       log(`[Instagram] Обнаружен контент типа 'stories', используем метод publishStory`, 'instagram');
-      // Передаем settings целиком как третий параметр, чтобы иметь доступ к полной структуре настроек
-      return this.publishStory(content, 
+      
+      // Подготовка токенов и businessAccountId для вызова publishStory
+      const token = settings.instagram.token || settings.instagram.accessToken || null;
+      const accessToken = settings.instagram.accessToken || settings.instagram.token || null;
+      const businessAccountId = settings.instagram.businessAccountId || null;
+      
+      // Подробное логирование перед передачей в publishStory
+      log(`[Instagram] Подготовлены данные для публикации сторис:
+      - Token/accessToken: ${token ? 'задан (первые 10 символов: ' + token.substr(0, 10) + '...)' : 'отсутствует'}
+      - Business Account ID: ${businessAccountId || 'отсутствует'}
+      - Content ID: ${content.id}`, 'instagram');
+      
+      // Передаем параметры в метод публикации stories
+      return this.publishStory(
+        content, 
         {
-          token: settings.instagram.token || settings.instagram.accessToken || null,
-          accessToken: settings.instagram.accessToken || settings.instagram.token || null,
-          businessAccountId: settings.instagram.businessAccountId || null
+          token: token,
+          accessToken: accessToken,
+          businessAccountId: businessAccountId
         }, 
         settings);
     }
