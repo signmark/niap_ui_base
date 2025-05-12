@@ -11,6 +11,7 @@ import { authMiddleware } from '../middleware/auth';
 import * as instagramCarouselHandler from './instagram-carousel-webhook';
 import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
+import { instagramService } from '../services/social/instagram-service';
 
 const router = express.Router();
 
