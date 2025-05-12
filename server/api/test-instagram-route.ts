@@ -256,23 +256,76 @@ export function registerTestInstagramRoute(app: express.Express) {
       }
 
       // 4. Подготавливаем социальные настройки
-      const socialSettings = prepareSocialSettings(campaign);
+      const socialSettings = prepareSocialSettings(campaign) || {};
+      
+      // Проверяем наличие настроек Instagram
+      if (!socialSettings.instagram) {
+        log(`[Test Route] Ошибка: Не найдены настройки Instagram в кампании`, 'instagram-stories-test');
+        
+        // Добавляем заглушку для тестовых целей, чтобы обойти ошибку socialSettings is not defined
+        socialSettings.instagram = {
+          token: process.env.INSTAGRAM_TEST_TOKEN || null,
+          accessToken: process.env.INSTAGRAM_TEST_TOKEN || null,
+          businessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || null
+        };
+        
+        log(`[Test Route] Предупреждение: Используются тестовые настройки Instagram из переменных окружения`, 'instagram-stories-test');
+      }
 
       // Логируем все возможные поля с медиафайлами для подробной диагностики
       const mediaFields = {
+        id: content.id,
+        campaignId: content.campaignId,
+        contentType: content.contentType,
+        status: content.status,
+        title: content.title ? (content.title.length > 50 ? content.title.substring(0, 50) + '...' : content.title) : null,
+        
+        // Все доступные URL
         imageUrl: content.imageUrl,
         videoUrl: content.videoUrl,
+        
+        // Дополнительные изображения (camelCase)
         hasAdditionalImages: !!content.additionalImages && Array.isArray(content.additionalImages) && content.additionalImages.length > 0,
         additionalImagesLength: Array.isArray(content.additionalImages) ? content.additionalImages.length : 0,
-        additionalImagesContent: Array.isArray(content.additionalImages) ? content.additionalImages : null,
+        additionalImagesContent: Array.isArray(content.additionalImages) && content.additionalImages.length > 0 
+          ? content.additionalImages.map(img => ({
+              type: typeof img,
+              isObject: typeof img === 'object',
+              url: typeof img === 'object' ? img?.url || null : null,
+              file: typeof img === 'object' ? img?.file || null : null,
+              mediaType: typeof img === 'object' ? img?.type || null : null,
+              value: typeof img === 'string' ? img : null
+            }))
+          : null,
+        
+        // Дополнительное медиа (camelCase)
         hasAdditionalMedia: !!content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0,
         additionalMediaLength: Array.isArray(content.additionalMedia) ? content.additionalMedia.length : 0,
-        additionalMediaContent: Array.isArray(content.additionalMedia) ? content.additionalMedia : null,
+        additionalMediaContent: Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0
+          ? content.additionalMedia.map(media => ({
+              type: typeof media,
+              isObject: typeof media === 'object',
+              url: typeof media === 'object' ? media?.url || null : null,
+              file: typeof media === 'object' ? media?.file || null : null,
+              mediaType: typeof media === 'object' ? media?.type || null : null,
+              value: typeof media === 'string' ? media : null
+            }))
+          : null,
+        
+        // Дополнительные изображения (snake_case)
         hasAdditionalImageWithUnderscore: !!content.additional_images && Array.isArray(content.additional_images) && content.additional_images.length > 0,
         additionalImagesWithUnderscoreLength: Array.isArray(content.additional_images) ? content.additional_images.length : 0,
-        additionalImagesWithUnderscoreContent: Array.isArray(content.additional_images) ? content.additional_images : null,
-        contentType: content.contentType,
-        title: content.title,
+        additionalImagesWithUnderscoreContent: Array.isArray(content.additional_images) && content.additional_images.length > 0
+          ? content.additional_images.map(img => ({
+              type: typeof img,
+              isObject: typeof img === 'object',
+              url: typeof img === 'object' ? img?.url || null : null,
+              file: typeof img === 'object' ? img?.file || null : null,
+              mediaType: typeof img === 'object' ? img?.type || null : null,
+              value: typeof img === 'string' ? img : null
+            }))
+          : null,
+        
         contentExcerpt: content.content ? content.content.substring(0, 100) + (content.content.length > 100 ? '...' : '') : null
       };
       
