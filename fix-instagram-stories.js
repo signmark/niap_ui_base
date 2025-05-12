@@ -13,7 +13,7 @@ import fs from 'fs';
 
 // Настройки API
 const API_URL = env.API_URL || 'http://localhost:5000';
-const ENDPOINT = `/api/publish/instagram/stories`;
+const ENDPOINT = `/api/publish/instagram-stories`;
 const AUTH_TOKEN = env.AUTH_TOKEN;
 const FORCE_TEST_IMAGE = true; // Принудительное добавление тестового изображения
 

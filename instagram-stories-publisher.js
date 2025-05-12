@@ -317,9 +317,9 @@ async function publishInstagramStory(contentId, content) {
     }
     
     // Отправляем запрос на публикацию
-    log(`Отправка запроса на ${API_URL}/api/publish/instagram/stories`, 'step');
+    log(`Отправка запроса на ${API_URL}/api/publish/instagram-stories`, 'step');
     
-    const response = await fetch(`${API_URL}/api/publish/instagram/stories`, {
+    const response = await fetch(`${API_URL}/api/publish/instagram-stories`, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({

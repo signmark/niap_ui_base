@@ -139,7 +139,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       log(`[Social Publishing] Ошибка: попытка опубликовать контент типа 'stories' через n8n`);
       return res.status(400).json({
         success: false,
-        error: 'Для публикации сторис используйте отдельный эндпоинт /api/publish/stories'
+        error: 'Для публикации сторис используйте отдельный эндпоинт /api/publish/instagram-stories'
       });
     }
     
