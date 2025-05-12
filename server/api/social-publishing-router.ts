@@ -1258,15 +1258,30 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
  * 
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат публикации
+ * 
+ * @apiNote Для Instagram важно использовать параметр media_type="STORIES" (а не "IMAGE"/"VIDEO")
+ * и не использовать параметр is_story=true, который не принимается API.
  */
 router.post('/publish/stories', authMiddleware, async (req, res) => {
   try {
     const { contentId, platform } = req.body;
     
+    log(`[Social Publishing] Получен запрос на публикацию сторис: contentId=${contentId}, platform=${platform}`, 'stories');
+    
     if (!contentId || !platform) {
+      log(`[Social Publishing] Ошибка: не указан contentId или platform`, 'stories', 'error');
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать contentId и platform'
+      });
+    }
+    
+    // Проверяем, что платформа поддерживает сторис
+    if (!['instagram', 'vk'].includes(platform)) {
+      log(`[Social Publishing] Ошибка: платформа ${platform} не поддерживает сторис`, 'stories', 'error');
+      return res.status(400).json({
+        success: false,
+        error: `Платформа ${platform} не поддерживает сторис`
       });
     }
     
@@ -1298,7 +1313,62 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
     }
     
     try {
-      const campaignSettings = await storage.getCampaignById(content.campaignId);
+      // Получаем настройки кампании
+      let campaignSettings = await storage.getCampaignById(content.campaignId);
+      log(`[Social Publishing] Получены настройки кампании для сторис: ${campaignSettings ? 'Да' : 'Нет'}`, 'stories');
+      
+      // Если настройки не получены через стандартный метод, пробуем получить через прямой API запрос
+      if (!campaignSettings || !campaignSettings.socialSettings) {
+        log(`[Social Publishing] Не удалось получить настройки через storage, пробуем через API`, 'stories');
+        
+        // Получаем админский токен для запроса
+        const adminToken = await storage.getAdminToken();
+        if (!adminToken) {
+          log(`[Social Publishing] Ошибка: не удалось получить токен администратора`, 'stories', 'error');
+          return res.status(500).json({
+            success: false,
+            error: 'Ошибка авторизации при получении настроек кампании'
+          });
+        }
+        
+        try {
+          const directusApi = await import('../services/directus-api-manager').then(m => m.directusApi);
+          log(`[Social Publishing] Выполняем запрос к /items/user_campaigns/${content.campaignId}`, 'stories');
+          
+          const response = await directusApi.get(`/items/user_campaigns/${content.campaignId}`, {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`
+            }
+          });
+          
+          if (response.data?.data) {
+            log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`, 'stories');
+            
+            // Обновляем переменную campaignSettings
+            campaignSettings = response.data.data;
+            
+            // Проверяем, что socialSettings присутствуют
+            if (!campaignSettings.socialSettings) {
+              log(`[Social Publishing] В настройках кампании отсутствуют настройки социальных сетей, создаем пустой объект`, 'stories');
+              campaignSettings.socialSettings = {};
+            }
+          } else {
+            log(`[Social Publishing] Не удалось получить настройки кампании напрямую`, 'stories', 'error');
+            return res.status(404).json({
+              success: false,
+              error: `Не найдены настройки кампании для ID ${content.campaignId}`
+            });
+          }
+        } catch (directusError) {
+          log(`[Social Publishing] Ошибка при прямом запросе настроек кампании: ${directusError.message}`, 'stories', 'error');
+          return res.status(500).json({
+            success: false,
+            error: `Ошибка при получении настроек кампании: ${directusError.message}`
+          });
+        }
+      }
+      
+      // Финальная проверка настроек
       if (!campaignSettings) {
         return res.status(404).json({
           success: false,
@@ -1310,18 +1380,73 @@ router.post('/publish/stories', authMiddleware, async (req, res) => {
       let result;
       switch (platform.toLowerCase()) {
         case 'vk':
+          log(`[Social Publishing] Инициализация VK сервиса для публикации сторис`, 'stories');
           const { vkService } = require('../services/social/vk-service');
           result = await vkService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+          log(`[Social Publishing] Результат публикации сторис в VK: ${JSON.stringify(result)}`, 'stories');
           break;
           
         case 'instagram':
+          // Проверяем настройки Instagram
+          if (!campaignSettings.socialSettings.instagram ||
+              !campaignSettings.socialSettings.instagram.accessToken ||
+              !campaignSettings.socialSettings.instagram.businessAccountId) {
+            
+            log(`[Social Publishing] Ошибка: не найдены корректные настройки Instagram в кампании`, 'stories', 'error');
+            log(`[Social Publishing] socialSettings.instagram: ${JSON.stringify(campaignSettings.socialSettings.instagram || {})}`, 'stories', 'error');
+            
+            return res.status(400).json({
+              success: false,
+              error: 'Не найдены корректные настройки Instagram в кампании'
+            });
+          }
+
+          log(`[Social Publishing] Настройки Instagram получены:`, 'stories');
+          log(`[Social Publishing] - Business Account ID: ${campaignSettings.socialSettings.instagram.businessAccountId}`, 'stories');
+          log(`[Social Publishing] - Access Token: ${campaignSettings.socialSettings.instagram.accessToken ? 'Присутствует' : 'Отсутствует'}`, 'stories');
+          
+          // Проверяем наличие медиафайлов для сторис
+          const hasMedia = Boolean(content.imageUrl || content.videoUrl || 
+              (content.additionalMedia && Array.isArray(content.additionalMedia) && content.additionalMedia.length > 0));
+          
+          if (!hasMedia) {
+            log(`[Social Publishing] Ошибка: не найдены медиафайлы для публикации сторис в Instagram`, 'stories', 'error');
+            return res.status(400).json({
+              success: false,
+              error: 'Для публикации сторис в Instagram необходимо указать изображение или видео'
+            });
+          }
+
+          // Получаем сервис Instagram для публикации сторис
+          log(`[Social Publishing] Инициализация сервиса Instagram для публикации`, 'stories');
           const { instagramService } = require('../services/social/instagram-service');
+          
+          // Обратите внимание: для сторис должен использоваться специальный параметр media_type="STORIES"
+          log(`[Social Publishing] Вызов метода publishToPlatform в Instagram сервисе для сторис`, 'stories');
           result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+          log(`[Social Publishing] Результат публикации сторис в Instagram: ${JSON.stringify(result)}`, 'stories');
           break;
       }
       
       // Обновляем статус в базе данных
-      await storage.updateContentPlatformStatus(contentId, platform, result);
+      try {
+        log(`[Social Publishing] Обновление статуса платформы в базе данных: contentId=${contentId}, platform=${platform}`, 'stories');
+        const adminToken = await storage.getAdminToken();
+        
+        if (!adminToken) {
+          log(`[Social Publishing] Предупреждение: не удалось получить токен администратора для обновления статуса`, 'stories', 'warn');
+        }
+        
+        const updatedContent = await storage.updateContentPlatformStatus(contentId, platform, result);
+        log(`[Social Publishing] Статус платформы успешно обновлен: ${platform}`, 'stories');
+        
+        // Проверяем обновленный статус для платформы
+        const updatedPlatformStatus = updatedContent.social_platforms?.[platform]?.status || 'unknown';
+        log(`[Social Publishing] Новый статус для платформы ${platform}: ${updatedPlatformStatus}`, 'stories');
+      } catch (updateError) {
+        log(`[Social Publishing] Ошибка при обновлении статуса платформы: ${updateError.message}`, 'stories', 'error');
+        // Продолжаем выполнение даже при ошибке обновления статуса
+      }
       
       return res.status(200).json({
         success: true,
