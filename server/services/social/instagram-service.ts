@@ -703,7 +703,7 @@ export class InstagramService extends BaseSocialService {
           } else {
             // Альтернативный метод создания ссылки - на основе имени бизнес-аккаунта
             // Получаем имя аккаунта из ID или используем просто ID если имя недоступно
-        const accountName = (instagramSettings.businessAccountId ? 
+            const accountName = (instagramSettings.businessAccountId ? 
                               instagramSettings.businessAccountId.toString() : 'instagram');
             postUrl = `https://www.instagram.com/${accountName}/`;
             log(`[Instagram] Не удалось создать прямую ссылку на пост, используем ссылку на профиль: ${postUrl}`, 'instagram');
