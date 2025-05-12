@@ -370,8 +370,19 @@ export function registerTestInstagramRoute(app: express.Express) {
         businessId: businessId
       })}`, 'instagram-stories-test');
 
+      // Дополнительное логирование для проверки наличия медиа для публикации
+      log(`[Test Route] Проверка наличия медиа для публикации:
+        - imageUrl: ${content.imageUrl ? 'Да' : 'Нет'}
+        - videoUrl: ${content.videoUrl ? 'Да' : 'Нет'}
+        - additionalImages: ${Array.isArray(content.additionalImages) ? `Массив с ${content.additionalImages.length} элементами` : 'Нет'}
+        - additional_images: ${Array.isArray(content.additional_images) ? `Массив с ${content.additional_images.length} элементами` : 'Нет'}
+        - additionalMedia: ${Array.isArray(content.additionalMedia) ? `Массив с ${content.additionalMedia.length} элементами` : 'Нет'}
+      `, 'instagram-stories-test');
+
       // 7. Публикуем сторис через сервис Instagram
+      log(`[Test Route] Вызов instagramService.publishStory...`, 'instagram-stories-test');
       const result = await instagramService.publishStory(content, instagramConfig, socialSettings);
+      log(`[Test Route] instagramService.publishStory вернул результат: ${JSON.stringify(result)}`, 'instagram-stories-test');
       
       log(`[Test Route] Результат публикации сторис в Instagram: ${JSON.stringify(result)}`, 'instagram-stories-test');
 
