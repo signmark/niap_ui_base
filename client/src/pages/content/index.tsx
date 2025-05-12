@@ -527,9 +527,30 @@ export default function ContentPage() {
       console.log("ID контента:", id);
       console.log("Выбранные платформы:", platforms || {});
       
-      // Получаем текущий контент для определения его типа
-      const content = contentList.find(c => c.id === id);
-      const isStories = content?.contentType === 'stories';
+      // Получаем типа контента из currentContent, если ID совпадает
+      // или через отдельный запрос к API
+      let contentType = null;
+      
+      // Проверяем, есть ли текущий контент и совпадает ли его ID с передаваемым
+      if (currentContent && currentContent.id === id) {
+        contentType = currentContent.contentType;
+        console.log(`🔍 Используем тип контента из currentContent: ${contentType}`);
+      } else {
+        console.log(`⚠️ currentContent не определен или имеет другой ID, получаем тип через API`);
+        // Дополнительный запрос для получения информации о контенте, если текущий контент не загружен
+        try {
+          const response = await apiRequest(`/api/campaign-content/${id}`);
+          const contentData = await response;
+          contentType = contentData.contentType || 'text';
+          console.log(`🔍 Получен тип контента через API: ${contentType}`);
+        } catch (error) {
+          console.error('Ошибка при получении типа контента:', error);
+          // Если запрос не удался, предполагаем, что это обычный контент
+          contentType = 'text';
+        }
+      }
+      
+      const isStories = contentType === 'stories';
       
       // Используем правильный эндпоинт в зависимости от типа контента
       const endpoint = isStories ? '/api/publish/stories' : '/api/publish/now';
