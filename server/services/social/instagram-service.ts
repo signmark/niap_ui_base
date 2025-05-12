@@ -163,6 +163,9 @@ export class InstagramService extends BaseSocialService {
         caption: caption,
         access_token: token
       };
+      
+      // Подробное логирование параметров запроса
+      log(`[Instagram] Тип контента: ${content.contentType}, используем media_type=${storyParams.media_type}`, 'instagram');
 
       // Добавляем URL в зависимости от типа медиа
       if (mediaType === 'VIDEO') {

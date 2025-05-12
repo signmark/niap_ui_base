@@ -423,16 +423,15 @@ router.post('/publish', authMiddleware, async (req, res) => {
             
             if (response.data?.data) {
               log(`[Social Publishing] Успешно получены настройки кампании напрямую: ${response.data.data.name}`);
-              // ВАЖНО! Используем let для переназначения переменной
-              const campaignSettings = response.data.data;
+              
+              // ВАЖНО! Обновляем переменную campaignSettings в родительской области видимости
+              campaignSettings = response.data.data;
               
               // Проверяем, что socialSettings присутствуют
               if (!campaignSettings.socialSettings) {
                 log(`[Social Publishing] В настройках кампании отсутствуют настройки социальных сетей, создаем пустой объект`);
                 campaignSettings.socialSettings = {};
               }
-              
-              return campaignSettings;
             } else {
               log(`[Social Publishing] Не удалось получить настройки кампании напрямую`);
               return res.status(404).json({
