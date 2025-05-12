@@ -17,12 +17,13 @@ export class InstagramService extends BaseSocialService {
    * Публикует сторис в Instagram
    * @param content Контент для публикации
    * @param instagramSettings Настройки Instagram API
+   * @param socialMediaSettings Настройки социальных медиа
    * @returns Результат публикации
    */
   async publishStory(
     content: CampaignContent,
     instagramSettings: { token: string | null; accessToken: string | null; businessAccountId: string | null },
-    socialMediaSettings?: any
+    socialMediaSettings: SocialMediaSettings
   ): Promise<SocialPublication> {
     try {
       // Более подробное логирование
@@ -369,7 +370,6 @@ export class InstagramService extends BaseSocialService {
         // Проверяем все возможные места, где может храниться username в настройках
         const username = socialMediaSettings?.instagram?.username || 
                        socialMediaSettings?.instagram?.profile ||
-                       (socialSettings && socialSettings.instagram && (socialSettings.instagram.username || socialSettings.instagram.profile)) ||
                        'instagram'; // Резервный вариант для общей страницы Instagram
         
         // Чистим username от @ в начале, если он есть
