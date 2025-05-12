@@ -42,8 +42,9 @@ export async function getAdminToken(): Promise<string | null> {
     console.log('Все предыдущие попытки получения токена администратора не удались, пробуем напрямую');
     
     // Получаем e-mail и пароль администратора из переменных окружения
-    const email = process.env.DIRECTUS_EMAIL;
-    const password = process.env.DIRECTUS_PASSWORD;
+    // Проверяем варианты названий переменных окружения, которые могут содержать учетные данные
+    const email = process.env.DIRECTUS_EMAIL || process.env.DIRECTUS_ADMIN_EMAIL;
+    const password = process.env.DIRECTUS_PASSWORD || process.env.DIRECTUS_ADMIN_PASSWORD;
     
     if (!email || !password) {
       console.error('Отсутствуют учетные данные администратора (DIRECTUS_EMAIL, DIRECTUS_PASSWORD)');

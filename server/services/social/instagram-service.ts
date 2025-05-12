@@ -137,8 +137,8 @@ export class InstagramService extends BaseSocialService {
       const storyParams: any = {
         media_type: "STORIES", // Важно использовать "STORIES" вместо "IMAGE" или "VIDEO"
         caption: caption,
-        access_token: token,
-        is_carousel_item: false
+        access_token: token
+        // Убрали параметр is_carousel_item, т.к. он может вызывать ошибки при публикации сторис
       };
 
       // Добавляем URL в зависимости от типа медиа
