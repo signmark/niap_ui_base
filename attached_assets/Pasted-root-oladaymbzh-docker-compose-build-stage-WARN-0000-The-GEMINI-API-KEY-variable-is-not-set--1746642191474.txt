@@ -1,0 +1,69 @@
+root@oladaymbzh:~# docker-compose build stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Building 238.1s (20/20) FINISHED                                                                                                                                                              docker:default
+ => [stage internal] load build definition from Dockerfile                                                                                                                                                  0.0s
+ => => transferring dockerfile: 2.36kB                                                                                                                                                                      0.0s
+ => [stage internal] load metadata for docker.io/library/node:18                                                                                                                                            1.1s
+ => [stage internal] load .dockerignore                                                                                                                                                                     0.0s
+ => => transferring context: 2B                                                                                                                                                                             0.0s
+ => [stage  1/15] FROM docker.io/library/node:18@sha256:867be01f97d45cb7d89a8ef0b328d23e8207412ebec4564441ed8cabc8cc4ecd                                                                                    0.2s
+ => => resolve docker.io/library/node:18@sha256:867be01f97d45cb7d89a8ef0b328d23e8207412ebec4564441ed8cabc8cc4ecd                                                                                            0.0s
+ => => sha256:867be01f97d45cb7d89a8ef0b328d23e8207412ebec4564441ed8cabc8cc4ecd 6.41kB / 6.41kB                                                                                                              0.0s
+ => => sha256:a0ee20d21ff7e3199f16644fd076ef1435b42689ca015daf08e47c02fd6cfc38 2.49kB / 2.49kB                                                                                                              0.0s
+ => => sha256:e56a6e3bc5724c51df0a1ad86c6e38aee233bb343457e98c943c3c7c1c9a2a84 6.39kB / 6.39kB                                                                                                              0.0s
+ => [stage internal] load build context                                                                                                                                                                    29.4s
+ => => transferring context: 833.19MB                                                                                                                                                                      29.0s
+ => [stage  2/15] WORKDIR /app                                                                                                                                                                              0.1s
+ => [stage  3/15] RUN apt-get update &&     apt-get install -y python3 make g++ ffmpeg curl wget &&     rm -rf /var/lib/apt/lists/*                                                                        41.7s
+ => [stage  4/15] COPY package*.json ./                                                                                                                                                                     0.5s
+ => [stage  5/15] RUN rm -rf node_modules package-lock.json                                                                                                                                                 0.3s
+ => [stage  6/15] RUN npm install --no-audit --verbose                                                                                                                                                     90.8s
+ => [stage  7/15] RUN npm install react-draggable@4.4.6 --save --no-audit                                                                                                                                   3.5s
+ => [stage  8/15] RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit                                                                                                                 2.8s
+ => [stage  9/15] RUN npm install @google/generative-ai --save --no-audit                                                                                                                                   2.8s
+ => [stage 10/15] RUN npm install --save --no-audit     @aws-sdk/client-s3@3.523.0     @aws-sdk/s3-request-presigner@3.523.0     @aws-sdk/lib-storage@3.523.0     && npm ls @aws-sdk/client-s3     && ech  19.1s
+ => [stage 11/15] RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls @aws-sdk/client-s3                                                                                  6.5s
+ => [stage 12/15] RUN ffmpeg -version                                                                                                                                                                       0.9s
+ => [stage 13/15] COPY . .                                                                                                                                                                                 35.2s
+ => [stage 14/15] RUN node -e "try { require('@aws-sdk/client-s3'); console.log('AWS SDK client-s3 доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK client-s3:', e); p                       0.7s
+ => [stage 15/15] RUN node -e "try { require('@aws-sdk/lib-storage'); console.log('AWS SDK lib-storage доступен'); } catch (e) { console.error('Ошибка импорта AWS SDK lib-storage:',                       0.5s
+ => [stage] exporting to image                                                                                                                                                                             31.1s
+ => => exporting layers                                                                                                                                                                                    31.1s
+ => => writing image sha256:39fd6f7c238be7ae77cf302c534d0eb47417edeb37196a96dae3705a2e8c99dc                                                                                                                0.0s
+ => => naming to docker.io/library/root-stage                                                                                                                                                               0.0s
+root@oladaymbzh:~# docker-compose up stage
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Running 1/1
+ ✔ Container root-stage-1  Recreated                                                                                                                                                                        0.4s
+Attaching to stage-1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1 exited with code 127
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+^CGracefully stopping... (press Ctrl+C again to force)
+[+] Stopping 1/0
+ ✔ Container root-stage-1  Stopped                              

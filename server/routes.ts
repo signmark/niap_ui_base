@@ -41,6 +41,7 @@ import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
 import { analyticsRouter } from './routes/api-analytics';
+import { usersRouter } from './routes/api-users';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
@@ -2942,6 +2943,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
   app.use('/api/gemini', geminiTestRouter);
   console.log('Gemini API test routes registered successfully');
+  
+  // Регистрируем маршруты для работы с пользователями
+  console.log('Registering user management routes...');
+  app.use('/api/users', usersRouter);
+  console.log('User management routes registered successfully');
   
   // Регистрируем маршруты для тестирования Instagram
   registerTestInstagramRoute(app);

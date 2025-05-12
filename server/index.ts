@@ -16,6 +16,7 @@ import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
 import { initializeHeavyServices } from './optimize-startup';
+import { initUserActivityTracker } from './services/user-activity-tracker';
 // Импортируем тестовые маршруты для Telegram
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
@@ -304,6 +305,17 @@ app.use((req, res, next) => {
       
       // Инициализируем тяжелые сервисы после успешного запуска сервера
       initializeHeavyServices();
+      
+      // Инициализируем сервис отслеживания активности пользователей
+      try {
+        log("Initializing User Activity Tracker...");
+        const activityTracker = initUserActivityTracker(directusApiManager, directusApiManager.getAuthManager());
+        log("User Activity Tracker initialized successfully");
+        // @ts-ignore - игнорируем проверку типов для глобального доступа
+        global['userActivityTracker'] = activityTracker;
+      } catch (error) {
+        log(`Error initializing User Activity Tracker: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

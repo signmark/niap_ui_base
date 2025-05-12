@@ -45,6 +45,12 @@ export class PublishScheduler {
    * Запускает планировщик публикаций
    */
   start() {
+    // Проверяем переменную окружения DISABLE_SCHEDULER
+    if (process.env.DISABLE_SCHEDULER === 'true') {
+      log('Планировщик публикаций отключен через переменную DISABLE_SCHEDULER', 'scheduler');
+      return;
+    }
+    
     if (this.isRunning) {
       log('Планировщик публикаций уже запущен', 'scheduler');
       return;

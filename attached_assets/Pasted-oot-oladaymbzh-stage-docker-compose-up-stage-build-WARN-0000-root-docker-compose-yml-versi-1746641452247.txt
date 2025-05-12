@@ -1,0 +1,66 @@
+oot@oladaymbzh:~/stage# docker-compose up stage --build
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Building 192.8s (11/11) FINISHED                                                                                                                                                              docker:default
+ => [stage internal] load build definition from Dockerfile                                                                                                                                                  0.0s
+ => => transferring dockerfile: 581B                                                                                                                                                                        0.0s
+ => [stage internal] load metadata for docker.io/library/node:16                                                                                                                                            1.0s
+ => [stage internal] load .dockerignore                                                                                                                                                                     0.0s
+ => => transferring context: 2B                                                                                                                                                                             0.0s
+ => [stage internal] load build context                                                                                                                                                                    19.2s
+ => => transferring context: 943.99MB                                                                                                                                                                      18.7s
+ => [stage 1/6] FROM docker.io/library/node:16@sha256:f77a1aef2da8d83e45ec990f45df50f1a286c5fe8bbfb8c6e4246c6389705c0b                                                                                      0.0s
+ => CACHED [stage 2/6] WORKDIR /app                                                                                                                                                                         0.0s
+ => CACHED [stage 3/6] COPY package*.json ./                                                                                                                                                                0.0s
+ => CACHED [stage 4/6] RUN npm install                                                                                                                                                                      0.0s
+ => CACHED [stage 5/6] RUN npm install react-draggable                                                                                                                                                      0.0s
+ => [stage 6/6] COPY . .                                                                                                                                                                                   99.9s
+ => [stage] exporting to image                                                                                                                                                                             72.4s
+ => => exporting layers                                                                                                                                                                                    72.4s
+ => => writing image sha256:f57b80a06fb3d414e23efd97e43358e93fddd399c47fc0743f596d073ed3f7a9                                                                                                                0.0s
+ => => naming to docker.io/library/root-stage                                                                                                                                                               0.0s
+[+] Running 1/1
+ ✔ Container root-stage-1  Recreated                                                                                                                                                                        0.2s
+Attaching to stage-1
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1 exited with code 0
+root@oladaymbzh:~/stage# docker-compose logs stage
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
+stage-1  |
+stage-1  | > rest-express@1.0.0 dev
+stage-1  | > tsx server/index.ts
+stage-1  |
+stage-1  | sh: 1: tsx: not found
