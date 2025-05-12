@@ -636,10 +636,70 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`[DatabaseStorage] Получение кампании по ID: ${campaignId}`);
       
-      // Используем постоянный токен, указанный пользователем
-      const authToken = token || process.env.DIRECTUS_ADMIN_TOKEN || 'wj9Z9srRD0QVROTOC3BNSfY97yKKu-vF';
+      // Получаем токен авторизации, предпочитая переданный токен
+      let authToken = token;
       
-      // Сначала пробуем получить из таблицы campaigns
+      // Если токен не передан, используем токен админа из кэша или переменной окружения
+      if (!authToken) {
+        const { directusAuthManager } = await import('./services/directus-auth-manager');
+        const sessions = directusAuthManager.getAllActiveSessions();
+        if (sessions && sessions.length > 0) {
+          authToken = sessions[0].token;
+        } else {
+          authToken = await directusAuthManager.getAdminToken();
+        }
+        
+        // Если всё ещё нет токена, используем из переменной окружения
+        if (!authToken) {
+          authToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+        }
+      }
+      
+      if (!authToken) {
+        console.error('[DatabaseStorage] Не удалось получить токен для доступа к API');
+        return null;
+      }
+      
+      console.log(`[DatabaseStorage] Поиск кампании в таблице user_campaigns`);
+      
+      // Сразу ищем в основной таблице user_campaigns
+      try {
+        const response = await directusApi.get(`/items/user_campaigns`, {
+          params: {
+            filter: { id: { _eq: campaignId } }
+          },
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+          console.log(`[DatabaseStorage] Найдена кампания в таблице user_campaigns: ${response.data.data[0].name || 'без имени'}`);
+          return response.data.data[0];
+        } else {
+          console.log(`[DatabaseStorage] Кампания не найдена в таблице user_campaigns по id, проверяем дополнительные поля`);
+        }
+      } catch (error) {
+        console.error(`[DatabaseStorage] Ошибка при поиске в таблице user_campaigns по id: ${error.message}`);
+      }
+      
+      // Пробуем искать по прямому обращению к объекту
+      try {
+        const response = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.data?.data) {
+          console.log(`[DatabaseStorage] Найдена кампания через прямой доступ: ${response.data.data.name || 'без имени'}`);
+          return response.data.data;
+        }
+      } catch (error) {
+        console.log(`[DatabaseStorage] Ошибка при прямом доступе к кампании: ${error.message}`);
+      }
+      
+      // Если всё ещё ничего не найдено, ищем в старой таблице campaigns
       try {
         const response = await directusApi.get(`/items/campaigns`, {
           params: {
@@ -658,28 +718,10 @@ export class DatabaseStorage implements IStorage {
         console.log(`[DatabaseStorage] Ошибка при поиске в таблице campaigns: ${error.message}`);
       }
       
-      // Если не найдено, ищем в user_campaigns
-      const response = await directusApi.get(`/items/user_campaigns`, {
-        params: {
-          filter: { campaign_id: { _eq: campaignId } }
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      
-      if (!response.data?.data || (Array.isArray(response.data.data) && response.data.data.length === 0)) {
-        console.error(`[DatabaseStorage] Кампания с ID ${campaignId} не найдена в user_campaigns`);
-        return null;
-      }
-      
-      // Обрабатываем случай, когда API возвращает массив (поиск по фильтру)
-      const item = Array.isArray(response.data.data) ? response.data.data[0] : response.data.data;
-      console.log(`[DatabaseStorage] Получена кампания: ${item.name || 'без имени'}`);
-      
-      return item;
+      console.error(`[DatabaseStorage] Кампания с ID ${campaignId} не найдена ни в одной таблице`);
+      return null;
     } catch (error) {
-      console.error(`[DatabaseStorage] Ошибка при получении кампании по ID ${campaignId}:`, error);
+      console.error(`[DatabaseStorage] Критическая ошибка при получении кампании по ID ${campaignId}:`, error);
       return null;
     }
   }

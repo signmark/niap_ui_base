@@ -31,8 +31,13 @@ const CONTENT_ID = process.argv[2] || 'e8936ebf-75d3-4dd1-9f85-1970f186b219';
 
 // URL API и настройки
 const API_URL = process.env.API_URL || 'http://localhost:5000';
-// Используем токен из .env (постоянный API ключ для Directus)
-const ADMIN_TOKEN = "wj9Z9srRD0QVROTOC3BNSfY97yKKu-vF";
+// Для авторизации используем логин/пароль из переменных окружения
+const ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+const ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'Qwerty123!';
+// Резервный постоянный токен (будет использоваться только если авторизация не удалась)
+const FALLBACK_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN || "wj9Z9srRD0QVROTOC3BNSfY97yKKu-vF";
+// Переменная для хранения полученного токена после авторизации
+let ADMIN_TOKEN = null;
 
 // Функция для вывода в консоль с цветом и меткой времени
 function log(message, type = 'info') {
