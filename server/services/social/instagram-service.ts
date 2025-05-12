@@ -230,8 +230,20 @@ export class InstagramService extends BaseSocialService {
 
       // Публикуем сторис
       log(`[Instagram] Этап 2 - публикация сторис с containerId: ${containerId}`, 'instagram');
+      log(`[Instagram] URL публикации: ${publishUrl}`, 'instagram');
+      
+      // Логируем параметры запроса (без токена)
+      const logPublishParams = {...publishParams};
+      if (logPublishParams.access_token) {
+        logPublishParams.access_token = logPublishParams.access_token.substring(0, 10) + '...[скрыто]';
+      }
+      log(`[Instagram] Параметры публикации: ${JSON.stringify(logPublishParams)}`, 'instagram');
+      
       const publishResponse = await axios.post(publishUrl, publishParams);
 
+      // Логируем полный ответ для анализа
+      log(`[Instagram] Ответ от API: ${JSON.stringify(publishResponse.data)}`, 'instagram');
+      
       // Проверяем результат публикации
       if (publishResponse.data && publishResponse.data.id) {
         const storyId = publishResponse.data.id;
@@ -241,6 +253,8 @@ export class InstagramService extends BaseSocialService {
         const storyUrl = `https://www.instagram.com/${username}/`;
 
         log(`[Instagram] Сторис успешно опубликован: ${storyId}`, 'instagram');
+        log(`[Instagram] URL сторис: ${storyUrl}`, 'instagram');
+        
         return {
           platform: 'instagram',
           status: 'published',
@@ -253,7 +267,9 @@ export class InstagramService extends BaseSocialService {
           ? `${publishResponse.data.error.code}: ${publishResponse.data.error.message}`
           : 'Неизвестная ошибка при публикации сторис';
 
-        log(`[Instagram] Ошибка при публикации сторис: ${errorMsg}`, 'instagram');
+        log(`[Instagram] Ошибка при публикации сторис: ${errorMsg}`, 'instagram', 'error');
+        log(`[Instagram] Полный ответ с ошибкой: ${JSON.stringify(publishResponse.data)}`, 'instagram', 'error');
+        
         return {
           platform: 'instagram',
           status: 'failed',
