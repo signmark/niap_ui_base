@@ -25,6 +25,15 @@ export class InstagramService extends BaseSocialService {
     socialMediaSettings?: any
   ): Promise<SocialPublication> {
     try {
+      // Более подробное логирование
+      log(`[Instagram Stories] Началась публикация сторис с параметрами:
+      - Токен: ${instagramSettings.token ? 'Задан (первые 10 символов: ' + instagramSettings.token.substr(0, 10) + '...)' : 'Отсутствует'}
+      - Access Токен: ${instagramSettings.accessToken ? 'Задан (первые 10 символов: ' + instagramSettings.accessToken.substr(0, 10) + '...)' : 'Отсутствует'}
+      - Business Account ID: ${instagramSettings.businessAccountId || 'отсутствует'}
+      - Тип контента: ${content.contentType}
+      - ID контента: ${content.id}
+      - Передан объект socialMediaSettings: ${socialMediaSettings ? 'Да' : 'Нет'}`, 'instagram');
+      
       // Проверяем наличие необходимых параметров
       if (!instagramSettings.token && !instagramSettings.accessToken || !instagramSettings.businessAccountId) {
         log(`Ошибка публикации сторис в Instagram: отсутствуют настройки. Token/accessToken: ${instagramSettings.token || instagramSettings.accessToken ? 'задан' : 'отсутствует'}, Business Account ID: ${instagramSettings.businessAccountId ? 'задан' : 'отсутствует'}`, 'instagram');
@@ -1043,7 +1052,14 @@ export class InstagramService extends BaseSocialService {
     // Проверяем тип контента - если это сторис, используем специальный метод
     if (content.contentType === 'stories') {
       log(`[Instagram] Обнаружен контент типа 'stories', используем метод publishStory`, 'instagram');
-      return this.publishStory(content, settings.instagram);
+      // Передаем settings целиком как третий параметр, чтобы иметь доступ к полной структуре настроек
+      return this.publishStory(content, 
+        {
+          token: settings.instagram.token || settings.instagram.accessToken || null,
+          accessToken: settings.instagram.accessToken || settings.instagram.token || null,
+          businessAccountId: settings.instagram.businessAccountId || null
+        }, 
+        settings);
     }
     
     // Для всех остальных типов контента используем стандартный метод

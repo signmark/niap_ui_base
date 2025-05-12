@@ -547,7 +547,17 @@ router.post('/publish', authMiddleware, async (req, res) => {
             
           case 'instagram':
             const { instagramService } = require('../services/social/instagram-service');
-            result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
+            // Передаем campaignSettings.social_media_settings, если они есть, или campaignSettings.socialSettings как запасной вариант
+            // это нужно, потому что в разных местах используются разные структуры
+            const instagramSettings = campaignSettings.social_media_settings || campaignSettings.socialSettings;
+            log(`[Social Publishing] Instagram публикация сторис, настройки: ${JSON.stringify(instagramSettings)}`);
+            result = await instagramService.publishStory(content, 
+                         {
+                           token: instagramSettings?.instagram?.accessToken || instagramSettings?.instagram?.token || null,
+                           accessToken: instagramSettings?.instagram?.accessToken || instagramSettings?.instagram?.token || null,
+                           businessAccountId: instagramSettings?.instagram?.businessAccountId || null
+                         },
+                         instagramSettings);
             break;
             
           default:
