@@ -44,9 +44,9 @@ export function PublishInstagramStory({
       
       // Запрос к API для публикации истории
       const response = await apiRequest({
-        url: '/api/publish/instagram-stories',
+        url: '/api/publish/stories',
         method: 'POST',
-        body: { contentId, campaignId }
+        body: { contentId, campaignId, platform: 'instagram' }
       });
 
       if (response.success) {
