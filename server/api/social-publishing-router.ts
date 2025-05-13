@@ -99,6 +99,41 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         log(`[Social Publishing] Публикация Instagram Stories через унифицированный механизм publishViaN8n`);
         log(`[Social Publishing] БЕЗОПАСНЫЙ РЕЖИМ: Игнорируем другие платформы при публикации Stories`);
         
+        // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
+        // Этот блок кода предотвращает публикацию заранее запланированного контента
+        const existingContent = await storage.getCampaignContentById(contentId);
+        if (existingContent && existingContent.social_platforms) {
+          let socialPlatforms = existingContent.social_platforms;
+          
+          // Преобразуем в объект, если это строка
+          if (typeof socialPlatforms === 'string') {
+            try {
+              socialPlatforms = JSON.parse(socialPlatforms);
+            } catch (e) {
+              // Игнорируем ошибку, если не удалось распарсить
+            }
+          }
+          
+          // Проверяем есть ли запланированная дата для Instagram
+          if (socialPlatforms.instagram && 
+              socialPlatforms.instagram.status === 'scheduled' && 
+              socialPlatforms.instagram.scheduledFor) {
+            
+            const scheduledTime = new Date(socialPlatforms.instagram.scheduledFor);
+            const now = new Date();
+            
+            // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
+            if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+              log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: Контент ${contentId} уже запланирован на ${scheduledTime.toISOString()}`);
+              
+              return res.status(400).json({
+                success: false,
+                error: `Этот контент уже запланирован на ${scheduledTime.toLocaleString()}. Дождитесь запланированного времени или измените время публикации.`
+              });
+            }
+          }
+        }
+        
         // Используем тот же подход, что и для обычных постов, но с платформой instagram-stories
         return publishViaN8n(contentId, 'instagram-stories', req, res);
       } else {
@@ -115,6 +150,53 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         : Object.keys(platforms).filter(p => platforms[p] === true);
       
       log(`[Social Publishing] Публикация в стандартные платформы: ${platformsForOtherNetworks.join(', ')}`);
+      
+      // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
+      // Этот блок кода предотвращает публикацию заранее запланированного контента
+      const existingContent = await storage.getCampaignContentById(contentId);
+      if (existingContent && existingContent.social_platforms) {
+        let socialPlatforms = existingContent.social_platforms;
+        
+        // Преобразуем в объект, если это строка
+        if (typeof socialPlatforms === 'string') {
+          try {
+            socialPlatforms = JSON.parse(socialPlatforms);
+          } catch (e) {
+            // Игнорируем ошибку, если не удалось распарсить
+          }
+        }
+        
+        // Проверяем наличие запланированных платформ
+        let scheduledMessage = '';
+        let hasScheduledPlatforms = false;
+        
+        // Проверяем каждую платформу из выбранных
+        for (const platform of platformsForOtherNetworks) {
+          if (socialPlatforms[platform] && 
+              socialPlatforms[platform].status === 'scheduled' && 
+              socialPlatforms[platform].scheduledFor) {
+            
+            const scheduledTime = new Date(socialPlatforms[platform].scheduledFor);
+            const now = new Date();
+            
+            // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
+            if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+              scheduledMessage += `\n- ${platform}: ${scheduledTime.toLocaleString()}`;
+              hasScheduledPlatforms = true;
+            }
+          }
+        }
+        
+        // Если есть запланированные платформы, выводим сообщение об ошибке
+        if (hasScheduledPlatforms) {
+          log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: Контент ${contentId} уже запланирован`);
+          
+          return res.status(400).json({
+            success: false,
+            error: `Этот контент уже запланирован для следующих платформ:${scheduledMessage}\n\nДождитесь запланированного времени или измените время публикации.`
+          });
+        }
+      }
       
       // Результаты публикации для каждой платформы
       const publishResults = [];
@@ -417,6 +499,44 @@ router.post('/publish/telegram', authMiddleware, async (req, res) => {
 async function publishViaN8n(contentId: string, platform: string, req: express.Request, res: express.Response) {
   try {
     log(`[Social Publishing] Публикация контента ${contentId} в ${platform} через n8n вебхук`);
+    
+    // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
+    // для указанной платформы
+    const existingContent = await storage.getCampaignContentById(contentId);
+    if (existingContent && existingContent.social_platforms) {
+      let socialPlatforms = existingContent.social_platforms;
+      
+      // Преобразуем в объект, если это строка
+      if (typeof socialPlatforms === 'string') {
+        try {
+          socialPlatforms = JSON.parse(socialPlatforms);
+        } catch (e) {
+          // Игнорируем ошибку, если не удалось распарсить
+        }
+      }
+      
+      // Преобразуем platform для проверки (instagram-stories → instagram)
+      const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
+      
+      // Проверяем есть ли запланированная дата для указанной платформы
+      if (socialPlatforms[checkPlatform] && 
+          socialPlatforms[checkPlatform].status === 'scheduled' && 
+          socialPlatforms[checkPlatform].scheduledFor) {
+        
+        const scheduledTime = new Date(socialPlatforms[checkPlatform].scheduledFor);
+        const now = new Date();
+        
+        // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
+        if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+          log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: Контент ${contentId} для платформы ${checkPlatform} уже запланирован на ${scheduledTime.toISOString()}`);
+          
+          return res.status(400).json({
+            success: false,
+            error: `Этот контент уже запланирован для публикации в ${checkPlatform} на ${scheduledTime.toLocaleString()}. Дождитесь запланированного времени или измените время публикации.`
+          });
+        }
+      }
+    }
     
     // Маппинг платформ на соответствующие n8n вебхуки
     const webhookMap: Record<string, string> = {
