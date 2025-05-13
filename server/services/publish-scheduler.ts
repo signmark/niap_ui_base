@@ -1803,17 +1803,41 @@ export class PublishScheduler {
         let publishUrl;
         let logMessage;
         
-        // Проверяем, является ли контент Stories
+        // Проверяем, является ли контент Stories с подробным логированием
         const isStoriesContent = this.isContentTypeStories(content);
         
-        if (platformToUse.toLowerCase() === 'instagram' && isStoriesContent) {
-          // Специальная обработка для Instagram Stories
-          publishUrl = `${appUrl}/api/publish`;
-          // Важно! Меняем название платформы для маршрутизатора
-          platformToUse = 'instagram-stories';
-          logMessage = `Вызов API публикации для Instagram Stories (запланированный контент ${content.id})`;
-          log(logMessage, 'scheduler');
-          log(`Обнаружен контент типа Stories, используем специальный маршрут 'instagram-stories'`, 'scheduler');
+        // Добавляем подробное логирование для понимания типа контента
+        log(`Проверка типа контента ID ${content.id}: ${isStoriesContent ? 'STORIES' : 'обычный пост'}`, 'scheduler');
+        if (content.title) {
+          log(`Заголовок: "${content.title}"`, 'scheduler');
+        }
+        log(`Детали типа: contentType=${content.contentType}, content_type=${content.content_type}, type=${content.type}`, 'scheduler');
+        log(`Флаги: isStories=${content.isStories}, hasStories=${content.hasStories}`, 'scheduler');
+        
+        if (isStoriesContent) {
+          // Для всех типов Stories контента используем специальную маршрутизацию
+          log(`Обнаружен контент типа STORIES с ID ${content.id}`, 'scheduler');
+          
+          if (platformToUse.toLowerCase() === 'instagram') {
+            // Специальная обработка для Instagram Stories
+            publishUrl = `${appUrl}/api/publish`;
+            // Важно! Меняем название платформы для маршрутизатора
+            platformToUse = 'instagram-stories';
+            logMessage = `Вызов API публикации для Instagram Stories (запланированный контент ${content.id})`;
+            log(logMessage, 'scheduler');
+            log(`Использование специального маршрута 'instagram-stories'`, 'scheduler');
+          } else if (platformToUse.toLowerCase() === 'vk') {
+            // Для VK Stories используем обычный маршрут, но с отметкой, что это stories
+            publishUrl = `${appUrl}/api/publish`;
+            logMessage = `Вызов API публикации для VK Stories (запланированный контент ${content.id})`;
+            log(logMessage, 'scheduler');
+            log(`Использование маршрута для VK с отметкой stories`, 'scheduler');
+          } else {
+            // Для остальных платформ Stories
+            publishUrl = `${appUrl}/api/publish`;
+            logMessage = `Вызов API публикации для Stories на платформе ${platformToUse} (запланированный контент ${content.id})`;
+            log(logMessage, 'scheduler');
+          }
         } else if (platformToUse.toLowerCase() === 'facebook') {
           // Используем прямой маршрут для Facebook
           publishUrl = `${appUrl}/api/facebook-webhook-direct`;
@@ -1827,10 +1851,24 @@ export class PublishScheduler {
         }
         
         try {
-          // Параметры различаются в зависимости от платформы
-          const requestData = platformToUse.toLowerCase() === 'facebook' 
-            ? { contentId: content.id } // для Facebook
-            : { contentId: content.id, platform: platformToUse }; // для остальных платформ
+          // Параметры различаются в зависимости от платформы и типа контента
+          let requestData;
+          
+          if (platformToUse.toLowerCase() === 'facebook') {
+            // для Facebook
+            requestData = { contentId: content.id };
+          } else if (isStoriesContent) {
+            // для Stories добавляем специальный параметр
+            requestData = { 
+              contentId: content.id, 
+              platform: platformToUse,
+              content_type: 'stories' // Явно указываем тип контента stories
+            };
+            log(`Добавлен параметр content_type=stories для контента ID ${content.id}`, 'scheduler');
+          } else {
+            // для обычных постов
+            requestData = { contentId: content.id, platform: platformToUse };
+          }
           
           const apiResponse = await axios.post(publishUrl, requestData, {
             headers: {
