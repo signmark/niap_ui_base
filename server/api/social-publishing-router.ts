@@ -883,15 +883,15 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
           const nowSeconds = Math.floor(now.getTime() / 1000);
           const scheduledSeconds = Math.floor(scheduledTime.getTime() / 1000);
           
-          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем с точностью до секунды и добавляем буфер в 10 секунд
-          // Публикуем, только если прошло не менее 10 секунд после запланированного времени
-          if (scheduledSeconds > nowSeconds - 10) { // Более строгая проверка
+          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем с точностью до секунды
+          // Публикуем ТОЛЬКО если запланированное время уже наступило или прошло
+          if (nowSeconds < scheduledSeconds) { // Если текущее время МЕНЬШЕ запланированного
             // Освобождаем блокировку, так как публикация отменена
             markPublicationEnd(contentId, platform);
             
-            const secondsUntilScheduled = scheduledSeconds - nowSeconds + 10; // +10 секунд буфера
-            const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()}. До публикации осталось ${secondsUntilScheduled} сек. (с учетом буфера 10 сек).`;
-            log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
+            const secondsUntilScheduled = scheduledSeconds - nowSeconds;
+            const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()}. До публикации осталось ${secondsUntilScheduled} сек.`;
+            log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`, 'error');
             throw new Error(errorMsg);
           }
         }
