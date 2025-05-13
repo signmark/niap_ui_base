@@ -1548,7 +1548,24 @@ export class PublishScheduler {
               log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, время публикации НАСТУПИЛО`, 'scheduler');
               return true;
             }
-          } else {
+          } 
+          // Проверяем поле updatedAt для совместимости с форматом данных в UI
+          else if (platformData.updatedAt) {
+            const platformScheduledTime = new Date(platformData.updatedAt);
+            const diffMs = platformScheduledTime.getTime() - currentDate.getTime();
+            const diffMinutes = Math.floor(diffMs / 1000 / 60);
+            
+            log(`  - ${platform}: найдено поле updatedAt вместо scheduledAt: ${platformScheduledTime.toISOString()}`, 'scheduler');
+            
+            if (platformScheduledTime > currentDate) {
+              log(`  - ${platform}: запланирован (updatedAt) на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., ПРОПУСКАЕМ`, 'scheduler');
+              return false;
+            } else {
+              log(`  - ${platform}: запланирован (updatedAt) на ${platformScheduledTime.toISOString()}, время публикации НАСТУПИЛО`, 'scheduler');
+              return true;
+            }
+          }
+          else {
             // Если нет специфического времени для платформы, все равно включаем ее
             log(`  - ${platform}: нет точного времени, используем общее время (если есть)`, 'scheduler');
             
