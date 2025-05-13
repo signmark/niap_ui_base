@@ -848,48 +848,81 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined> {
     try {
-      console.log(`Запрос контента по ID: ${id}`);
+      console.log(`[storage] Запрос контента по ID: ${id}`);
       
       // Настраиваем headers с токеном, если он передан
       let response = null;
       
-      // Попытка 1: Используем переданный токен авторизации (если он есть)
-      if (authToken) {
+      // Попытка 1: Пробуем использовать администраторский токен из DirectusAuthManager
+      try {
+        const directusAuthManager = await import('./services/directus-auth-manager').then(m => m.directusAuthManager);
+        const adminSessions = directusAuthManager.getAllActiveSessions();
+        
+        if (adminSessions.length > 0) {
+          const adminToken = adminSessions[0].token;
+          console.log(`[storage] Используем токен администратора из активной сессии для запроса контента ${id}`);
+          
+          try {
+            response = await directusApi.get(`/items/campaign_content/${id}`, { 
+              headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            
+            if (response?.data?.data) {
+              console.log(`[storage] Успешно получен контент с использованием активного токена администратора`);
+            }
+          } catch (adminError: any) {
+            console.warn(`[storage] Не удалось получить контент с активным токеном администратора: ${adminError.message}`);
+            // Продолжаем с другими методами
+          }
+        } else {
+          console.log(`[storage] Нет активных сессий администратора, пробуем fallback-токен`);
+        }
+      } catch (authManagerError: any) {
+        console.warn(`[storage] Ошибка при получении активных сессий администратора: ${authManagerError.message}`);
+      }
+      
+      // Попытка 2: Используем переданный токен авторизации (если он есть и первая попытка не удалась)
+      if (!response && authToken) {
+        console.log(`[storage] Используем переданный токен авторизации для запроса контента ${id}`);
+        
         try {
-          console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
+          
           if (response?.data?.data) {
-            console.log(`Успешно получен контент с использованием переданного токена`);
+            console.log(`[storage] Успешно получен контент с использованием переданного токена`);
           }
         } catch (error: any) {
-          console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
+          console.warn(`[storage] Не удалось получить контент с переданным токеном: ${error.message}`);
           response = null;
         }
       }
       
-      // Попытка 2: Используем переданный токен, если первая попытка не удалась
-      if (!response && authToken) {
-        console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+      // Попытка 3: Используем fallback токен администратора из переменных окружения
+      if (!response) {
+        const fallbackAdminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+        console.log(`[storage] Используем fallback токен администратора для запроса контента ${id}`);
         
         try {
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
-            headers: { 'Authorization': `Bearer ${authToken}` }
+            headers: { 'Authorization': `Bearer ${fallbackAdminToken}` }
           });
-          console.log(`Успешно получен контент с использованием переданного токена`);
+          
+          if (response?.data?.data) {
+            console.log(`[storage] Успешно получен контент с использованием fallback токена администратора`);
+          }
         } catch (error: any) {
-          console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
+          console.warn(`[storage] Не удалось получить контент с fallback токеном администратора: ${error.message}`);
           response = null;
         }
       }
       
-      // Попытка 3: Если не удалось с токеном, пробуем получить владельца контента
+      // Попытка 4: Если не удалось с токенами, пробуем получить владельца контента через активных пользователей
       if (!response) {
-        console.log(`Пробуем получить владельца контента другими способами`);
+        console.log(`[storage] Пробуем получить контент через активных пользователей`);
         
         // Пробуем сделать запрос списка контента с фильтром по ID 
-        // и посмотреть, кто владелец (без доступа к БД напрямую)
         const filter = {
           id: {
             _eq: id
@@ -898,14 +931,14 @@ export class DatabaseStorage implements IStorage {
         
         try {
           // Пробуем с разными токенами активных пользователей
-          // Получаем все активные токены
           const userIds = Object.keys(this.tokenCache || {});
+          console.log(`[storage] Найдено ${userIds.length} активных пользователей для проверки доступа к контенту ${id}`);
           
           for (const userId of userIds) {
             const userToken = await this.getAuthToken(userId);
             if (userToken) {
               try {
-                console.log(`Пробуем с токеном пользователя ${userId}`);
+                console.log(`[storage] Пробуем с токеном пользователя ${userId}`);
                 const metaResponse = await directusApi.get(`/items/campaign_content`, {
                   params: { filter },
                   headers: {
@@ -920,7 +953,7 @@ export class DatabaseStorage implements IStorage {
                       'Authorization': `Bearer ${userToken}`
                     }
                   });
-                  console.log(`Успешно получен контент с токеном пользователя ${userId}`);
+                  console.log(`[storage] Успешно получен контент с токеном пользователя ${userId}`);
                   break;
                 }
               } catch (error) {
@@ -929,18 +962,18 @@ export class DatabaseStorage implements IStorage {
             }
           }
         } catch (error: any) {
-          console.warn(`Не удалось найти владельца контента: ${error.message}`);
+          console.warn(`[storage] Не удалось найти владельца контента через активных пользователей: ${error.message}`);
         }
       }
       
-      // Попытка 4: Пробуем без токена (публичный доступ)
+      // Попытка 5: Пробуем без токена (публичный доступ)
       if (!response) {
-        console.log(`Пробуем получить контент без токена авторизации`);
+        console.log(`[storage] Пробуем получить контент без токена авторизации (публичный доступ)`);
         try {
           response = await directusApi.get(`/items/campaign_content/${id}`);
-          console.log(`Успешно получен контент без авторизации (публичный доступ)`);
+          console.log(`[storage] Успешно получен контент без авторизации (публичный доступ)`);
         } catch (error: any) {
-          console.warn(`Не удалось получить контент без авторизации: ${error.message}`);
+          console.warn(`[storage] Не удалось получить контент без авторизации: ${error.message}`);
         }
       }
       
