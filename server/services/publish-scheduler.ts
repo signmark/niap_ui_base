@@ -1040,42 +1040,44 @@ export class PublishScheduler {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {
-            // Проверяем общее время публикации и тип контента
-            if (content.scheduledAt) {
-              const scheduledTime = new Date(content.scheduledAt);
-              
-              // Добавляем буфер в 10 секунд (чтобы публикация не происходила раньше запланированного времени)
-              // Проблема была в публикации за 2 минуты до запланированного времени
-              const bufferMs = 10 * 1000; // 10 секунд в миллисекундах 
-              const bufferTime = new Date(scheduledTime.getTime() - bufferMs);
-              
-              // Логируем данные о времени при проверке
-              if (this.verboseLogging) {
-                log(`Проверка времени для контента ${content.id}: Запланировано=${scheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((scheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
-              }
-              
-              // Точная проверка времени: публикуем, только если текущее время >= запланированное время
-              // Уменьшаем точность сравнения до минут для избежания проблем с миллисекундами
-              const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-              const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
-              
-              // Проверяем, наступило ли время публикации (с точностью до минуты)
-              if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
-                // Если это Stories или флаг selected установлен, публикуем
-                const isStories = this.isContentTypeStories(content);
+            // Для консистентности игнорируем общее поле scheduledAt
+            // и требуем наличия платформо-специфичных настроек времени
+            
+            // Проверяем, является ли контент Stories
+            const isStories = this.isContentTypeStories(content);
+            
+            if (isStories) {
+              // Для контента типа Stories используем общее время публикации, так как 
+              // Stories имеют единое время публикации для всех платформ
+              if (content.scheduledAt) {
+                const scheduledTime = new Date(content.scheduledAt);
                 
-                // Добавляем подробные логи для Stories
-                if (isStories) {
+                // Логируем данные о времени при проверке
+                if (this.verboseLogging) {
+                  log(`Проверка времени для Stories контента ${content.id}: Запланировано=${scheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((scheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
+                }
+                
+                // Точная проверка времени с точностью до минут
+                const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+                const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+                
+                // Проверяем, наступило ли время публикации
+                if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
                   logMessages.push(`${platform}: Обнаружен Stories контент со временем ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
                   log(`Контент ID ${content.id} "${content.title}" - это STORIES с общим временем публикации ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ`, 'scheduler');
                   anyPlatformReady = true;
-                } else {
-                  logMessages.push(`${platform}: Использовано общее время ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
-                  anyPlatformReady = true;
                 }
+              } else {
+                logMessages.push(`${platform}: Stories контент без времени публикации, нужно задать scheduledAt`);
               }
             } else {
-              logMessages.push(`${platform}: нет данных о времени публикации, selected=${platformData?.selected || 'undefined (считаем как true)'}`);
+              // Для обычного контента требуем только платформо-специфичные настройки времени
+              logMessages.push(`${platform}: нет индивидуальных данных о времени публикации для платформы, ignored`);
+              
+              // Для отладки указываем, что общее поле scheduledAt игнорируется
+              if (content.scheduledAt && this.verboseLogging) {
+                logMessages.push(`${platform}: общее время публикации ${new Date(content.scheduledAt).toISOString()} игнорируется, требуется платформо-специфичное время`);
+              }
             }
           }
         }
@@ -1088,11 +1090,17 @@ export class PublishScheduler {
           if (this.verboseLogging) {
             logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
             
-            // Если общее поле scheduledAt указано, логируем его тоже
+            // Разное отображение для Stories и обычного контента
             if (content.scheduledAt) {
               const scheduledTime = new Date(content.scheduledAt);
               const timeUntilPublish = scheduledTime.getTime() - now.getTime();
-              log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ`, 'scheduler');
+              const isStories = this.isContentTypeStories(content);
+              
+              if (isStories) {
+                log(`  - Общее время для Stories: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИСПОЛЬЗУЕТСЯ`, 'scheduler');
+              } else {
+                log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ для обычного контента`, 'scheduler');
+              }
             }
           }
         }
