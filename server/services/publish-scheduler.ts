@@ -1056,8 +1056,10 @@ export class PublishScheduler {
                 platformData.scheduledAt || 
                 platformData.scheduled_at || 
                 platformData.scheduledFor || 
-                // Для обратной совместимости со старой структурой
-                (content.scheduled_at_deprecated_ || null);
+                // Для обратной совместимости проверяем оба варианта общего поля
+                content.scheduled_at || 
+                content.scheduled_at_deprecated_ || 
+                null;
               
               if (scheduledTimeStr) {
                 const scheduledTime = new Date(scheduledTimeStr);
@@ -1098,9 +1100,13 @@ export class PublishScheduler {
             // Информация о времени публикации из JSON платформы
             const isStories = this.isContentTypeStories(content);
             
-            // Проверяем deprecated поле, только если это необходимо для отладки
+            // Информация о полях времени публикации
+            if (content.scheduled_at) {
+              log(`  - Общее поле scheduled_at: ${new Date(content.scheduled_at).toISOString()} - ${isStories ? 'ИСПОЛЬЗУЕТСЯ для Stories' : 'частично игнорируется'}`, 'scheduler');
+            }
+            
             if (content.scheduled_at_deprecated_) {
-              log(`  - Устаревшее поле scheduled_at_deprecated_: ${new Date(content.scheduled_at_deprecated_).toISOString()} - ИГНОРИРУЕТСЯ`, 'scheduler');
+              log(`  - Устаревшее поле scheduled_at_deprecated_: ${new Date(content.scheduled_at_deprecated_).toISOString()} - используется как запасной вариант`, 'scheduler');
             }
             
             // Показываем информацию для каждой платформы
