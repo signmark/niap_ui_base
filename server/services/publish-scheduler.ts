@@ -533,6 +533,51 @@ export class PublishScheduler {
           const hasPending = pendingPlatforms.length > 0 || scheduledPlatforms.length > 0;
           const onlyErrorsRemain = hasErrors && !hasPending;
           
+          // Проверка, запланирована ли публикация на будущее время
+          const now = new Date();
+          const scheduledTime = item.scheduledAt;
+          const isScheduledForFuture = scheduledTime && new Date(scheduledTime) > now;
+          
+          if (isScheduledForFuture) {
+            log(`ПРОВЕРКА ВРЕМЕНИ: Контент ${item.id} запланирован на ${scheduledTime}. Текущее время: ${now.toISOString()}`, 'scheduler');
+            
+            // Если контент запланирован на будущее, но имеет статус "published"
+            if (item.status === 'published') {
+              log(`ИСПРАВЛЕНИЕ: Контент ${item.id} имеет статус 'published', но запланирован на будущее время (${scheduledTime})`, 'scheduler');
+              try {
+                await this.directusApiManager.updateRecord('campaign_content', item.id, {
+                  status: 'scheduled'
+                }, adminToken);
+                updatedCount++;
+                
+                // Также исправляем статусы платформ, если они неправильно установлены
+                const platformsToFix = Object.entries(item.socialPlatforms || {})
+                  .filter(([_, platformData]) => platformData && platformData.status === 'published')
+                  .map(([name, _]) => name);
+                
+                if (platformsToFix.length > 0) {
+                  log(`ИСПРАВЛЕНИЕ: Найдены платформы с неправильным статусом (${platformsToFix.join(', ')})`, 'scheduler');
+                  
+                  const fixedPlatforms = {...item.socialPlatforms};
+                  platformsToFix.forEach(platform => {
+                    if (fixedPlatforms[platform]) {
+                      fixedPlatforms[platform].status = 'pending';
+                    }
+                  });
+                  
+                  await this.directusApiManager.updateRecord('campaign_content', item.id, {
+                    social_platforms: fixedPlatforms
+                  }, adminToken);
+                }
+              } catch (error) {
+                log(`Ошибка при исправлении статуса контента ${item.id}: ${error}`, 'scheduler');
+              }
+            }
+            
+            // Пропускаем обновление на статус published для контента, запланированного на будущее
+            continue;
+          }
+          
           // Дополнительная проверка для случая с TG+IG
           const isTelegramInstagramCombo = hasTelegram && hasInstagram && allPlatforms.length === 2 && 
                                       telegramPublished && instagramPublished && item.status === 'scheduled';

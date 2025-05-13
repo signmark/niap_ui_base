@@ -1052,6 +1052,10 @@ export function registerPublishingRoutes(app: Express): void {
           const scheduledAtDate = new Date(scheduledAt);
           log(`Установлено общее время публикации: ${scheduledAtDate.toISOString()}`, 'api');
           
+          // Проверяем, указано ли время публикации в будущем
+          const isFuturePublication = scheduledAtDate > new Date();
+          log(`Запланирована публикация в будущем: ${isFuturePublication ? 'ДА' : 'НЕТ'}`, 'api');
+          
           // Получаем список всех платформ для публикации
           const allPlatforms = Object.keys(mergedSocialPlatforms);
           
@@ -1061,6 +1065,18 @@ export function registerPublishingRoutes(app: Express): void {
             const hasTime = mergedSocialPlatforms[platform] && 
                            (mergedSocialPlatforms[platform].scheduledAt || 
                             mergedSocialPlatforms[platform].scheduled_at);
+            
+            // Проверяем текущий статус платформы
+            const currentStatus = mergedSocialPlatforms[platform]?.status || '';
+            
+            // Если это будущая публикация, убедимся, что статус 'pending', а не 'published'
+            // Это исправит проблему преждевременного отображения статуса 'published'
+            if (isFuturePublication && (currentStatus === 'published')) {
+              log(`ИСПРАВЛЕНО: Статус платформы ${platform} изменен с 'published' на 'pending', так как время публикации в будущем`, 'api');
+              if (mergedSocialPlatforms[platform]) {
+                mergedSocialPlatforms[platform].status = 'pending';
+              }
+            }
             
             if (!mergedSocialPlatforms[platform]) {
               // Если платформа указана, но нет данных, создаем объект
