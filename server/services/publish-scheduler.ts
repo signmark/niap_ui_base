@@ -1150,10 +1150,21 @@ export class PublishScheduler {
                 // БЕЗОПАСНЫЙ РЕЖИМ: Публикуем только если время наступило И прошло не более 3 минут с запланированного времени
                 // Это предотвращает повторную публикацию контента, который уже был опубликован, но статус не обновился
                 const maxPublishWindowMs = 3 * 60 * 1000; // 3 минуты
-                const isWithinPublishWindow = (nowFullTime - scheduledFullTime) <= maxPublishWindowMs;
+                const timeDifferenceMs = nowFullTime - scheduledFullTime;
                 
-                // Проверяем условия публикации - время наступило и находимся в окне публикации
-                const timeHasReached = nowFullTime >= scheduledFullTime && isWithinPublishWindow;
+                // УЛУЧШЕННАЯ ПРОВЕРКА: с точностью до миллисекунд
+                const isWithinPublishWindow = timeDifferenceMs >= 0 && timeDifferenceMs <= maxPublishWindowMs;
+                
+                // Проверяем условия публикации: 
+                // 1. Наступило ровно запланированное время или прошло не более чем указанное окно публикации
+                // 2. Находимся в пределах защитного окна публикации
+                const timeHasReached = isWithinPublishWindow;
+                
+                // Логируем информацию о точной разнице времени для отладки
+                if (this.verboseLogging) {
+                  const secondsDiff = Math.floor(timeDifferenceMs / 1000);
+                  log(`Stories время публикации - разница: ${secondsDiff} сек, окно: ${maxPublishWindowMs/1000} сек, готов: ${timeHasReached}`, 'scheduler');
+                }
                 
                 // Проверяем готовность к публикации с учетом настроек платформы
                 if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {

@@ -184,6 +184,29 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         log(`[Social Publishing] Публикация Instagram Stories через унифицированный механизм publishViaN8n`);
         log(`[Social Publishing] БЕЗОПАСНЫЙ РЕЖИМ: Игнорируем другие платформы при публикации Stories`);
         
+        // УСИЛЕНИЕ ФИЛЬТРАЦИИ: При определении типа контента как Stories, 
+        // игнорируем все выбранные платформы, кроме Instagram
+        if (Array.isArray(platforms)) {
+          // Если платформы представлены массивом
+          platforms = platforms.filter(p => p === 'instagram');
+          
+          if (platforms.length === 0) {
+            // Если Instagram не был выбран, добавляем его
+            platforms = ['instagram'];
+            log(`[Social Publishing] Instagram автоматически добавлен как обязательная платформа для Stories`);
+          }
+        } else {
+          // Если платформы представлены объектом
+          const instagramSelected = platforms.instagram === true;
+          platforms = { instagram: true };
+          
+          if (!instagramSelected) {
+            log(`[Social Publishing] Instagram автоматически добавлен как обязательная платформа для Stories`);
+          }
+        }
+        
+        log(`[Social Publishing] Скорректированный список платформ для Stories: ${JSON.stringify(platforms)}`);
+        
         // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
         // Этот блок кода предотвращает публикацию заранее запланированного контента
         const existingContent = await storage.getCampaignContentById(contentId);
@@ -881,6 +904,21 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     });
   } catch (error) {
     log(`[Social Publishing] Ошибка при публикации через n8n вебхук: ${error.message}`);
+    
+    // Снимаем блокировку публикации в случае ошибки
+    try {
+      // Преобразуем platform для единообразной проверки (instagram-stories → instagram)
+      const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
+      
+      // В случае ошибки полностью снимаем блокировку (а не маркируем завершение с защитным периодом)
+      const key = `${contentId}_${checkPlatform}`;
+      if (inProgressPublications.has(key)) {
+        inProgressPublications.delete(key);
+        log(`[Social Publishing] Снята блокировка для ${contentId} в ${checkPlatform} из-за ошибки при публикации`, 'social-publishing');
+      }
+    } catch (unlockError: any) {
+      log(`[Social Publishing] Ошибка при снятии блокировки: ${unlockError.message || 'Неизвестная ошибка'}`, 'social-publishing');
+    }
     
     return res.status(500).json({
       success: false,
