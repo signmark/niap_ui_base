@@ -568,12 +568,12 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
         const scheduledTime = new Date(socialPlatforms[checkPlatform].scheduledFor);
         const now = new Date();
         
-        // Уменьшаем точность сравнения до минут
-        const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-        const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+        // ИСПРАВЛЕНО: Строгое сравнение на уровне миллисекунд
+        const scheduledFullTime = scheduledTime.getTime();
+        const nowFullTime = now.getTime();
         
-        // Проверяем, не запланировано ли время на более чем текущую минуту
-        if (scheduledMinutes > nowMinutes) {
+        // Проверяем, не запланировано ли время на будущее
+        if (scheduledFullTime > nowFullTime) {
           log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: Контент ${contentId} для платформы ${checkPlatform} уже запланирован на ${scheduledTime.toISOString()}`);
           
           return res.status(400).json({
@@ -879,17 +879,18 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
           // Добавляем логи для отладки
           log(`[Social Publishing] Проверка времени публикации: запланировано=${scheduledTime.toISOString()}, сейчас=${now.toISOString()}`); 
           
-          // ИСПРАВЛЕНО: Используем секунды для более точного сравнения
-          const nowSeconds = Math.floor(now.getTime() / 1000);
-          const scheduledSeconds = Math.floor(scheduledTime.getTime() / 1000);
+          // ПОЛНОСТЬЮ ИСПРАВЛЕНО: Используем строгое сравнение на уровне миллисекунд
+          const nowFullTime = now.getTime();
+          const scheduledFullTime = scheduledTime.getTime();
           
-          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем с точностью до секунды
+          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем с максимальной точностью
           // Публикуем ТОЛЬКО если запланированное время уже наступило или прошло
-          if (nowSeconds < scheduledSeconds) { // Если текущее время МЕНЬШЕ запланированного
+          if (nowFullTime < scheduledFullTime) { // Если текущее время МЕНЬШЕ запланированного
             // Освобождаем блокировку, так как публикация отменена
             markPublicationEnd(contentId, platform);
             
-            const secondsUntilScheduled = scheduledSeconds - nowSeconds;
+            const msUntilScheduled = scheduledFullTime - nowFullTime;
+            const secondsUntilScheduled = Math.floor(msUntilScheduled / 1000);
             const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()}. До публикации осталось ${secondsUntilScheduled} сек.`;
             log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`, 'error');
             throw new Error(errorMsg);

@@ -22,6 +22,12 @@ export class PublishScheduler {
   // Публикации активированы
   public disablePublishing = false;
   
+  // NEW: Защита от дублирования публикаций с метками времени
+  // Хранит метки времени последних публикаций для каждого контента
+  private publicationLocks = new Map<string, { timestamp: number, platforms: Set<string> }>();
+  // Интервал блокировки повторных публикаций в мс (3 минуты)
+  private publicationLockInterval = 3 * 60 * 1000;
+  
   // Флаг для вывода информационных сообщений и детального логирования
   // Установлен в false для уменьшения количества логов
   private verboseLogging = false;
@@ -1042,10 +1048,11 @@ export class PublishScheduler {
             logMessages.push(`${platform}: Детальное сравнение времени: Запланировано=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}`);
             logMessages.push(`${platform}: Минуты: план=${scheduledMinutes}, сейчас=${nowMinutes}; Секунды: план=${scheduledSeconds}, сейчас=${nowSeconds}`);
             
-            // НОВАЯ ЛОГИКА: Точное сравнение с учетом и минут, и секунд
-            // Публикуем только когда текущее время строго больше запланированного
-            const timeHasReached = (nowMinutes > scheduledMinutes) || 
-                                  (nowMinutes === scheduledMinutes && nowSeconds >= scheduledSeconds);
+            // ИСПРАВЛЕННАЯ ЛОГИКА: Обязательное сравнение на уровне миллисекунд!
+            // Публикуем ТОЛЬКО когда текущее время строго больше или равно запланированному
+            const scheduledFullTime = platformScheduledTime.getTime();
+            const nowFullTime = now.getTime();
+            const timeHasReached = nowFullTime >= scheduledFullTime;
             
             // Если время публикации для этой платформы наступило И selected=true или не задано
             if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {
@@ -1088,8 +1095,13 @@ export class PublishScheduler {
                 const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
                 const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
                 
-                // Проверяем, наступило ли время публикации
-                if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
+                // Проверяем, наступило ли время публикации - строгое сравнение на уровне миллисекунд
+                const scheduledFullTime = scheduledTime.getTime();
+                const nowFullTime = now.getTime();
+                const timeHasReached = nowFullTime >= scheduledFullTime;
+                
+                // Проверяем готовность к публикации с учетом настроек платформы
+                if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {
                   logMessages.push(`${platform}: Обнаружен Stories контент со временем ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
                   log(`Контент ID ${content.id} "${content.title}" - это STORIES с общим временем публикации ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ`, 'scheduler');
                   anyPlatformReady = true;
