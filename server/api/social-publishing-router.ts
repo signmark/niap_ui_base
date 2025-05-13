@@ -821,6 +821,7 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
       'instagram': 'publish-instagram',
+      'instagram-stories': 'publish-instagram-stories',
       'facebook': 'publish-facebook'
     };
     
