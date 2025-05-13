@@ -2120,11 +2120,12 @@ export class PublishScheduler {
           if (platformToUse.toLowerCase() === 'instagram') {
             // Специальная обработка для Instagram Stories
             publishUrl = `${appUrl}/api/publish`;
-            // Важно! Меняем название платформы для маршрутизатора
-            platformToUse = 'instagram-stories';
+            // ИСПРАВЛЕНО: Используем просто 'instagram' вместо 'instagram-stories'
+            // для унификации работы с единым вебхуком
+            platformToUse = 'instagram';
             logMessage = `Вызов API публикации для Instagram Stories (запланированный контент ${content.id})`;
             log(logMessage, 'scheduler');
-            log(`Использование специального маршрута 'instagram-stories'`, 'scheduler');
+            log(`УНИФИЦИРОВАННЫЙ ПОДХОД: Использование стандартного маршрута 'instagram' для Stories`, 'scheduler');
           } else if (platformToUse.toLowerCase() === 'vk') {
             // Для VK Stories используем обычный маршрут, но с отметкой, что это stories
             publishUrl = `${appUrl}/api/publish`;
