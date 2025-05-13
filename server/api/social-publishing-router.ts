@@ -625,6 +625,50 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     // Логируем URL для отладки
     log(`[Social Publishing] Сформирован URL для n8n webhook: ${webhookUrl}`);
     
+    // Перед отправкой запроса в n8n, обновляем статус публикации на pending с параметром selected: true
+    try {
+      log(`[Social Publishing] Устанавливаем статус платформы ${platform} для контента ${contentId} в 'pending' с флагом selected: true`);
+      
+      // Получаем текущий контент
+      const content = await storage.getCampaignContentById(contentId);
+      
+      if (content) {
+        // Получаем платформы или инициализируем пустой объект
+        let platformsData = content.socialPlatforms || content.social_platforms || {};
+        
+        if (typeof platformsData === 'string') {
+          try {
+            platformsData = JSON.parse(platformsData);
+          } catch (e) {
+            platformsData = {};
+          }
+        }
+        
+        // Обновляем или создаем запись для платформы со статусом pending и selected: true
+        platformsData[platform] = {
+          ...(platformsData[platform] || {}),
+          status: 'pending',
+          selected: true,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Обновляем настройки платформ в контенте
+        const updateData: any = {};
+        
+        // Используем правильное имя поля в зависимости от того, что используется в контенте
+        if (content.hasOwnProperty('socialPlatforms')) {
+          updateData.socialPlatforms = platformsData;
+        } else {
+          updateData.social_platforms = platformsData;
+        }
+        
+        await storage.updateCampaignContent(contentId, updateData);
+        log(`[Social Publishing] Статус платформы ${platform} установлен в 'pending' со selected: true для контента ${contentId}`);
+      }
+    } catch (pendingUpdateError) {
+      log(`[Social Publishing] Ошибка при установке статуса pending: ${pendingUpdateError.message}`);
+    }
+    
     // Для n8n вебхуков отправляем только contentId, как указано в требованиях
     const webhookPayload = {
       contentId
@@ -666,10 +710,11 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
         socialPlatforms[platform] = {};
       }
       
-      // Обновляем статус платформы на published
+      // Обновляем статус платформы на published и обязательно сохраняем selected: true
       socialPlatforms[platform] = {
         ...socialPlatforms[platform],
         status: 'published',
+        selected: true,
         publishedAt: new Date().toISOString()
       };
       
