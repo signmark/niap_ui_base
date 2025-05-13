@@ -599,6 +599,19 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
   try {
     log(`[Social Publishing] Публикация контента ${contentId} в ${platform} через n8n вебхук`);
     
+    // Преобразуем platform для единообразной проверки (instagram-stories → instagram)
+    const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
+    
+    // НОВАЯ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ: Проверяем, не активна ли блокировка
+    if (isPublicationInProgress(contentId, checkPlatform)) {
+      log(`[Social Publishing] ОТМЕНА ПУБЛИКАЦИИ: Активна блокировка для ${contentId} в ${checkPlatform} - предотвращение повторной публикации`, 'social-publishing');
+      
+      return res.status(429).json({
+        success: false,
+        error: `Данный контент уже публикуется или недавно был опубликован в ${checkPlatform}. Пожалуйста, подождите несколько минут перед повторной попыткой.`
+      });
+    }
+    
     // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
     // для указанной платформы
     const existingContent = await storage.getCampaignContentById(contentId);
@@ -613,9 +626,6 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
           // Игнорируем ошибку, если не удалось распарсить
         }
       }
-      
-      // Преобразуем platform для проверки (instagram-stories → instagram)
-      const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
       
       // Проверяем есть ли запланированная дата для указанной платформы
       if (socialPlatforms[checkPlatform] && 
@@ -639,7 +649,23 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
           });
         }
       }
+      
+      // Проверяем статус контента и не был ли он уже опубликован
+      if (socialPlatforms[checkPlatform] && 
+          socialPlatforms[checkPlatform].status === 'published') {
+        log(`[Social Publishing] ОТМЕНА ПУБЛИКАЦИИ: Контент ${contentId} для платформы ${checkPlatform} уже опубликован`, 'social-publishing');
+        
+        return res.status(400).json({
+          success: false,
+          error: `Данный контент уже был опубликован в ${checkPlatform}.`,
+          postUrl: socialPlatforms[checkPlatform].postUrl || null,
+          postId: socialPlatforms[checkPlatform].postId || null
+        });
+      }
     }
+    
+    // Устанавливаем блокировку на публикацию
+    markPublicationStart(contentId, checkPlatform);
     
     // Маппинг платформ на соответствующие n8n вебхуки
     const webhookMap: Record<string, string> = {
@@ -694,6 +720,11 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     // Обновляем статус платформы после успешной публикации
     try {
       log(`[Social Publishing] Обновление статуса платформы ${platform} для контента ${contentId} на "published"`);
+      
+      // Отмечаем завершение публикации для учета в системе блокировок
+      // Это не удаляет блокировку сразу, а лишь обновляет ее время для защитного периода
+      markPublicationEnd(contentId, checkPlatform);
+      log(`[Social Publishing] Отмечено завершение публикации для ${contentId} в ${checkPlatform} с защитным периодом ${PUBLICATION_SAFETY_LOCK/1000} сек`, 'social-publishing');
       
       // Получаем токен администратора
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
