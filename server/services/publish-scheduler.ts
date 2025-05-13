@@ -918,12 +918,13 @@ export class PublishScheduler {
         
         // Быстрая проверка на пендинги - результаты сохраняем для логирования
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
-          // Если платформа выбрана и статус pending - публикуем немедленно
-          if (platformData?.selected === true && platformData?.status === 'pending') {
+          // Если платформа имеет статус pending - публикуем немедленно (независимо от наличия поля selected)
+          if (platformData?.status === 'pending') {
             // Сохраняем информацию для отладки
             if (this.verboseLogging) {
               logMessages.push(`${platform}: статус ${platformData?.status} - ГОТОВ К ПУБЛИКАЦИИ`);
             }
+            log(`${platform}: имеет статус "pending", считаем готовым к немедленной публикации (поле selected=${platformData?.selected})`, 'scheduler');
             anyPlatformPending = true;
           }
         }
@@ -941,6 +942,13 @@ export class PublishScheduler {
           // Проверяем статус и пропускаем если уже опубликован
           if (platformData?.status === 'published') {
             logMessages.push(`${platform}: уже опубликован`);
+            continue;
+          }
+          
+          // Если статус pending - считаем готовым к публикации немедленно
+          if (platformData?.status === 'pending') {
+            logMessages.push(`${platform}: статус "pending", ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
+            anyPlatformReady = true;
             continue;
           }
           
