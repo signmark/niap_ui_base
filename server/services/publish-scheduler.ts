@@ -1427,6 +1427,10 @@ export class PublishScheduler {
     // Добавляем подробное логирование при публикации
     log(`[Публикация] Начало публикации контента ID: ${content.id}`, 'scheduler');
     
+    // Проверяем, является ли контент Stories
+    const isStories = this.isContentTypeStories(content);
+    log(`[Публикация] Тип контента: ${isStories ? 'Stories' : 'Обычный пост'}`, 'scheduler');
+    
     // Логируем детали платформ
     try {
       log(`[Публикация] Содержимое social_platforms: ${JSON.stringify(content.socialPlatforms)}`, 'scheduler');
