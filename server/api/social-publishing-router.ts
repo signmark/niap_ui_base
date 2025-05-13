@@ -431,45 +431,76 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       // Получаем текущий контент
       const content = await storage.getCampaignContentById(contentId);
       
-      if (!content || !content.socialPlatforms) {
-        log(`[Social Publishing] Не удалось получить контент ${contentId} или нет настроек платформ`); 
+      if (!content) {
+        log(`[Social Publishing] Не удалось получить контент ${contentId}`); 
         return;
       }
       
-      // Обновляем статус конкретной платформы
-      const updatedPlatforms = { ...content.socialPlatforms };
+      // Определяем, с каким полем работаем: socialPlatforms или social_platforms
+      let platformsData = content.socialPlatforms || content.social_platforms;
       
-      // Проверяем, есть ли данная платформа в настройках
-      if (updatedPlatforms[platform]) {
-        log(`[Social Publishing] Обновление статуса платформы ${platform} на published`);
-        
-        // Обновляем статус платформы на published
-        updatedPlatforms[platform] = {
-          ...updatedPlatforms[platform],
-          status: 'published',
-          publishedAt: new Date()
-        };
-        
-        // Если пришла информация о postUrl, добавляем её
-        if (response.data && response.data.postUrl) {
-          updatedPlatforms[platform].postUrl = response.data.postUrl;
+      if (typeof platformsData === 'string') {
+        try {
+          platformsData = JSON.parse(platformsData);
+        } catch (e) {
+          platformsData = {};
         }
-        
-        // Если пришла информация о postId, добавляем её
-        if (response.data && response.data.postId) {
-          updatedPlatforms[platform].postId = response.data.postId;
-        }
-        
-        // Обновляем настройки платформ в контенте
-        await storage.updateCampaignContent(contentId, {
-          socialPlatforms: updatedPlatforms
-        });
-        
-        log(`[Social Publishing] Статус платформы ${platform} обновлен на published для контента ${contentId}`);
-      } else {
-        log(`[Social Publishing] Платформа ${platform} не найдена в настройках контента ${contentId}`);
       }
-    } catch (error) {
+      
+      if (!platformsData) {
+        platformsData = {};
+      }
+      
+      // Создаем объект платформы, если его нет
+      if (!platformsData[platform]) {
+        platformsData[platform] = {};
+      }
+      
+      // Обновляем статус платформы
+      log(`[Social Publishing] Обновление статуса платформы ${platform} на published`);
+      
+      // Обновляем статус платформы на published
+      platformsData[platform] = {
+        ...platformsData[platform],
+        status: 'published',
+        publishedAt: new Date().toISOString(),
+        selected: true
+      };
+      
+      // Если пришла информация о postUrl, добавляем её
+      if (response.data && response.data.postUrl) {
+        platformsData[platform].postUrl = response.data.postUrl;
+      }
+      
+      // Если пришла информация о postId, добавляем её
+      if (response.data && response.data.postId) {
+        platformsData[platform].postId = response.data.postId;
+      }
+      
+      // Обновляем настройки платформ в контенте
+      const updateData: any = {};
+      
+      // Используем правильное имя поля в зависимости от того, что используется в контенте
+      if (content.hasOwnProperty('socialPlatforms')) {
+        updateData.socialPlatforms = platformsData;
+      } else {
+        updateData.social_platforms = platformsData;
+      }
+      
+      await storage.updateCampaignContent(contentId, updateData);
+      
+      log(`[Social Publishing] Статус платформы ${platform} обновлен на published для контента ${contentId}`);
+      
+      // Принудительно обновляем статус контента через сервис проверки статусов
+      try {
+        const statusChecker = await import('../services/status-checker').then(m => m.statusChecker);
+        log(`[Social Publishing] Вызов принудительного обновления статуса контента ${contentId}`);
+        await statusChecker.checkSpecificContentIssue(contentId);
+        log(`[Social Publishing] Принудительное обновление статуса контента ${contentId} выполнено`);
+      } catch (statusError: any) {
+        log(`[Social Publishing] Ошибка при вызове обновления статуса: ${statusError.message}`);
+      }
+    } catch (error: any) {
       log(`[Social Publishing] Ошибка при обновлении статуса платформы: ${error.message}`);
     }
     

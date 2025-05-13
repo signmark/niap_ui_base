@@ -304,6 +304,12 @@ class PublicationStatusChecker {
         const allFinalized = pendingPlatforms.length === 0 && 
                             selectedPlatforms.length > 0;
         
+        // Выводим дополнительную отладку для всех контентов
+        log(`DEBUG: Детальная проверка платформ для контента ${item.id}:`, 'scheduler');
+        log(`DEBUG: Исходная структура social_platforms: ${JSON.stringify(platformsData)}`, 'scheduler');
+        log(`DEBUG: Платформа ${selectedPlatforms.join(', ')}, статус: ${publishedPlatforms.map(p => platformsData[p]?.status || 'unknown').join(', ')}, selected: ДА/НЕ УСТАНОВЛЕНО`, 'scheduler');
+        log(`DEBUG: Статистика платформ - Всего: ${selectedPlatforms.length}, С данными: ${Object.keys(platformsData).length}, Без selected: ${Object.keys(platformsData).filter(k => !platformsData[k].selected).length}`, 'scheduler');
+        
         // Определяем необходимость обновления статуса
         let shouldUpdateStatus = false;
         let newStatus = item.status;
