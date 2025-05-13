@@ -62,9 +62,36 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       });
     }
     
-    // Если тип контента stories, переадресуем на webhookUrl для Instagram Stories
-    if (content.contentType === 'stories') {
-      log(`[Social Publishing] Обнаружен контент типа 'stories', переадресуем на специальный эндпоинт`);
+    // Детальное логирование для отладки
+    const contentTypeDebug = content.contentType || content.content_type || 'не указан';
+    log(`[Social Publishing] ДЕТАЛЬНЫЙ ЛОГ: Контент ${contentId}, тип: "${contentTypeDebug}", поля: ${Object.keys(content).join(', ')}`);
+    
+    // Проверяем тип контента с учетом разных возможных записей поля
+    // - contentType = 'stories' (основное условие)
+    // - content_type = 'stories' (альтернативное именование)
+    // - type = 'stories' (еще один возможный вариант)
+    // - isStories = true (прямой флаг)
+    // - hasStories = true (еще один вариант флага)
+    // - title содержит [stories] или #stories (маркер в заголовке)
+    const isStoriesContent = 
+      content.contentType === 'stories' || 
+      content.content_type === 'stories' ||
+      content.type === 'stories' ||
+      content.isStories === true ||
+      content.hasStories === true ||
+      (content.title && (
+        content.title.toLowerCase().includes('[stories]') || 
+        content.title.toLowerCase().includes('#stories')
+      ));
+    
+    // ПРИНУДИТЕЛЬНЫЙ РЕЖИМ: Также трактуем как Stories, если публикуется ТОЛЬКО в Instagram
+    // Это удобно для пользователей, которые не понимают механику типов контента
+    const onlyInstagram = Array.isArray(platforms) 
+      ? platforms.length === 1 && platforms[0] === 'instagram'
+      : Object.keys(platforms).filter(p => platforms[p] === true).length === 1 && platforms.instagram === true;
+        
+    if (isStoriesContent || onlyInstagram) {
+      log(`[Social Publishing] Обнаружен контент для Instagram Stories (тип=${contentTypeDebug}, onlyInstagram=${onlyInstagram}), переадресуем на специальный эндпоинт`);
       
       // Проверяем, включена ли Instagram в выбранных платформах
       if (Array.isArray(platforms) && platforms.includes('instagram') || 
@@ -79,9 +106,20 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           const instagramStoriesHandler = await import('./instagram-stories-webhook').then(m => m.default);
           
           // Используем аналогичную логику, как в handlePublishRequest
-          // Отправляем запрос на webhook для Instagram Stories
+          // Но отправляем более детальные данные для webhook Instagram Stories
           const dataForN8n = {
-            contentId
+            contentId,
+            content: {
+              id: content.id,
+              title: content.title,
+              content: content.content,
+              contentType: content.contentType || content.content_type || 'stories',
+              imageUrl: content.imageUrl,
+              additionalImages: content.additionalImages || [],
+              campaignId: content.campaignId
+            },
+            isStories: true,
+            contentType: 'stories'
           };
           
           const response = await axios.post(n8nWebhookUrl, dataForN8n);
