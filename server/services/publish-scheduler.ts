@@ -1164,9 +1164,31 @@ export class PublishScheduler {
                 }
               }
               
-              // Обновляем только если это НЕ запланированный контент или у него нет выбранных платформ в статусе pending
-              if (!isInitiallyScheduled || !hasSelectedPendingPlatforms) {
-                log(`ОБНОВЛЕНИЕ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет ВСЕ (${publishedPlatforms.length}/${allPlatforms.length}) платформы в статусе published - обновляем статус контента на published`, 'scheduler');
+              // ВАЖНАЯ ДОРАБОТКА: проверяем, что у всех SELECTED платформ со статусом published есть ссылки на публикации
+              let allSelectedPlatformsHaveLinks = true;
+              let selectedPlatformsCount = 0;
+              
+              if (freshData.social_platforms) {
+                for (const [platform, data] of Object.entries(freshData.social_platforms)) {
+                  if (data.selected === true) {
+                    selectedPlatformsCount++;
+                    if (data.status === 'published' && (!data.postUrl || data.postUrl.trim() === '')) {
+                      allSelectedPlatformsHaveLinks = false;
+                      log(`БЛОКИРОВКА ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет выбранную платформу ${platform} со статусом published, но без ссылки на публикацию`, 'scheduler');
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              // Обновляем только если:
+              // 1. Это НЕ запланированный контент или у него нет выбранных платформ в статусе pending
+              // 2. У всех выбранных опубликованных платформ есть ссылки на публикации
+              // 3. Есть хотя бы одна выбранная платформа
+              if ((!isInitiallyScheduled || !hasSelectedPendingPlatforms) && 
+                  allSelectedPlatformsHaveLinks && 
+                  selectedPlatformsCount > 0) {
+                log(`ОБНОВЛЕНИЕ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет ВСЕ (${publishedPlatforms.length}/${allPlatforms.length}) платформы в статусе published с валидными ссылками - обновляем статус контента на published`, 'scheduler');
                 
                 await axios.patch(
                   `${baseDirectusUrl}/items/campaign_content/${content.id}`,
@@ -1178,6 +1200,10 @@ export class PublishScheduler {
                 );
                 
                 updatedStatusCount++;
+              } else if (!allSelectedPlatformsHaveLinks) {
+                log(`ПРОПУСК ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет платформы без ссылок на публикации`, 'scheduler');
+              } else if (selectedPlatformsCount === 0) {
+                log(`ПРОПУСК ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" не имеет выбранных платформ`, 'scheduler');
               } else {
                 log(`ПРОПУСК ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" находится в статусе scheduled и имеет выбранные платформы для публикации (n8n webhook еще не был вызван)`, 'scheduler');
               }
