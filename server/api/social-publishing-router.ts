@@ -33,6 +33,9 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     const { contentId, platforms } = req.body;
     
+    // Объявляем переменную platformsForOtherNetworks для использования в разных частях функции
+    let platformsForOtherNetworks: any = null;
+    
     log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ: ${JSON.stringify(platforms)}`);
     
     if (!contentId) {
@@ -259,18 +262,22 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       }
     }
     
+    // После обработки Instagram Stories, работаем с оставшимися платформами (platformsForOtherNetworks)
     // Поддерживаем два формата: объект {platformName: boolean} и массив строк ["platform1", "platform2"]
-    log(`[Social Publishing] Проверка формата объекта platforms: ${JSON.stringify(platforms)}`);
+    log(`[Social Publishing] Проверка формата объекта платформ: ${JSON.stringify(platformsForOtherNetworks || platforms)}`);
     const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook'];
     
     let selectedPlatforms: string[] = [];
     
+    // Используем platformsForOtherNetworks, если мы обрабатывали Instagram Stories, иначе используем исходные platforms
+    const platformsToProcess = platformsForOtherNetworks || platforms;
+    
     // Обработка формата массива ["facebook", "telegram", ...]
-    if (Array.isArray(platforms)) {
-      log(`[Social Publishing] Обнаружен формат массива для platforms`);
+    if (Array.isArray(platformsToProcess)) {
+      log(`[Social Publishing] Обнаружен формат массива для платформ`);
       
       // Фильтруем только валидные платформы
-      selectedPlatforms = platforms.filter(platform => 
+      selectedPlatforms = platformsToProcess.filter(platform => 
         typeof platform === 'string' && validPlatformKeys.includes(platform)
       );
       
@@ -278,19 +285,19 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     } 
     // Обработка объектного формата {facebook: true, telegram: false, ...}
     else {
-      log(`[Social Publishing] Обнаружен объектный формат для platforms`);
-      const receivedPlatformKeys = Object.keys(platforms);
+      log(`[Social Publishing] Обнаружен объектный формат для платформ`);
+      const receivedPlatformKeys = Object.keys(platformsToProcess);
       
       log(`[Social Publishing] Ожидаемые ключи платформ: ${validPlatformKeys.join(', ')}`);
       log(`[Social Publishing] Полученные ключи платформ: ${receivedPlatformKeys.join(', ')}`);
       
       // Проверяем, что хотя бы один ключ валидный и его значение - boolean
       const validFormat = receivedPlatformKeys.length > 0 && receivedPlatformKeys.some(key => 
-        validPlatformKeys.includes(key) && typeof platforms[key] === 'boolean'
+        validPlatformKeys.includes(key) && typeof platformsToProcess[key] === 'boolean'
       );
       
       if (!validFormat) {
-        log(`[Social Publishing] Ошибка: неверный формат объекта platforms`);
+        log(`[Social Publishing] Ошибка: неверный формат объекта платформ`);
         return res.status(400).json({
           success: false,
           error: 'Неверный формат платформ. Ожидается объект с ключами: telegram, vk, instagram, facebook или массив строк'
@@ -298,7 +305,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       }
       
       // Получаем список выбранных платформ (где значение true)
-      selectedPlatforms = Object.entries(platforms)
+      selectedPlatforms = Object.entries(platformsToProcess)
         .filter(([_, selected]) => selected === true)
         .map(([name]) => name);
     }
