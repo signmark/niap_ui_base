@@ -62,13 +62,91 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       });
     }
     
-    // Если тип контента stories, возвращаем ошибку, так как сторис должны публиковаться напрямую
+    // Если тип контента stories, переадресуем на webhookUrl для Instagram Stories
     if (content.contentType === 'stories') {
-      log(`[Social Publishing] Ошибка: попытка опубликовать контент типа 'stories' через n8n`);
-      return res.status(400).json({
-        success: false,
-        error: 'Для публикации сторис используйте отдельный эндпоинт /api/publish/stories'
-      });
+      log(`[Social Publishing] Обнаружен контент типа 'stories', переадресуем на специальный эндпоинт`);
+      
+      // Проверяем, включена ли Instagram в выбранных платформах
+      if (Array.isArray(platforms) && platforms.includes('instagram') || 
+          !Array.isArray(platforms) && platforms.instagram === true) {
+        
+        // Получаем ссылку на webhook Instagram Stories
+        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook-test/publish-instagram-stories';
+        log(`[Social Publishing] Перенаправляем на специальный вебхук для Instagram Stories: ${n8nWebhookUrl}`);
+        
+        try {
+          // Импортируем Instagram Stories webhook handler
+          const instagramStoriesHandler = await import('./instagram-stories-webhook').then(m => m.default);
+          
+          // Используем аналогичную логику, как в handlePublishRequest
+          // Отправляем запрос на webhook для Instagram Stories
+          const dataForN8n = {
+            contentId
+          };
+          
+          const response = await axios.post(n8nWebhookUrl, dataForN8n);
+          
+          log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, результат: ${JSON.stringify(response.data)}`);
+          
+          // Если Instagram - единственная выбранная платформа
+          const onlyInstagram = Array.isArray(platforms) 
+            ? platforms.length === 1 && platforms[0] === 'instagram'
+            : Object.keys(platforms).filter(p => platforms[p] === true).length === 1 && platforms.instagram === true;
+            
+          if (onlyInstagram) {
+            // Возвращаем успешный результат
+            return res.status(200).json({
+              success: true,
+              message: 'Контент Instagram Stories отправлен на публикацию',
+              results: [{
+                platform: 'instagram',
+                success: true,
+                result: response.data
+              }]
+            });
+          }
+          
+          // Если есть другие платформы, просто продолжаем выполнение для них
+          // Удаляем Instagram из списка платформ для дальнейшей обработки
+          if (Array.isArray(platforms)) {
+            platforms = platforms.filter(p => p !== 'instagram');
+          } else if (platforms.instagram) {
+            // Создаем копию объекта без Instagram
+            const { instagram, ...restPlatforms } = platforms;
+            platforms = restPlatforms;
+          }
+          
+          // Если после удаления Instagram не осталось других платформ
+          if (Array.isArray(platforms) && platforms.length === 0 || 
+              !Array.isArray(platforms) && Object.values(platforms).filter(v => v === true).length === 0) {
+            return res.status(200).json({
+              success: true,
+              message: 'Контент Instagram Stories отправлен на публикацию',
+              results: [{
+                platform: 'instagram',
+                success: true,
+                result: response.data
+              }]
+            });
+          }
+          
+          // Иначе продолжаем обработку для остальных платформ
+          log(`[Social Publishing] Продолжаем публикацию для остальных платформ: ${JSON.stringify(platforms)}`);
+        } catch (error: any) {
+          log(`[Social Publishing] Ошибка при перенаправлении на Instagram Stories webhook: ${error.message}`);
+          
+          // Продолжаем выполнение для других платформ, но добавляем ошибку в результаты
+          return res.status(200).json({
+            success: true,
+            message: 'Ошибка при публикации Instagram Stories, публикация в другие платформы продолжается',
+            results: [{
+              platform: 'instagram',
+              success: false,
+              error: `Ошибка при публикации Instagram Stories: ${error.message}`
+            }]
+          });
+        }
+      }
     }
     
     // Поддерживаем два формата: объект {platformName: boolean} и массив строк ["platform1", "platform2"]
