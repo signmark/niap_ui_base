@@ -1671,7 +1671,7 @@ export class PublishScheduler {
           logMessage = `Вызов API публикации для Instagram Stories (запланированный контент ${content.id})`;
           log(logMessage, 'scheduler');
           log(`Обнаружен контент типа Stories, используем специальный маршрут 'instagram-stories'`, 'scheduler');
-        } else if (platformName.toLowerCase() === 'facebook') {
+        } else if (platformToUse.toLowerCase() === 'facebook') {
           // Используем прямой маршрут для Facebook
           publishUrl = `${appUrl}/api/facebook-webhook-direct`;
           logMessage = `Вызов прямого API публикации Facebook для запланированного контента ${content.id}`;
@@ -1679,15 +1679,15 @@ export class PublishScheduler {
         } else {
           // Используем route /api/publish для остальных платформ, которые маршрутизирует запросы через n8n
           publishUrl = `${appUrl}/api/publish`;
-          logMessage = `Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platformName}`;
+          logMessage = `Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platformToUse}`;
           log(logMessage, 'scheduler');
         }
         
         try {
           // Параметры различаются в зависимости от платформы
-          const requestData = platformName.toLowerCase() === 'facebook' 
+          const requestData = platformToUse.toLowerCase() === 'facebook' 
             ? { contentId: content.id } // для Facebook
-            : { contentId: content.id, platform: platformName }; // для остальных платформ
+            : { contentId: content.id, platform: platformToUse }; // для остальных платформ
           
           const apiResponse = await axios.post(publishUrl, requestData, {
             headers: {
