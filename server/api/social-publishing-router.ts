@@ -108,13 +108,19 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           
           // Если есть другие платформы, просто продолжаем выполнение для них
           // Удаляем Instagram из списка платформ для дальнейшей обработки
+          let updatedPlatforms;
           if (Array.isArray(platforms)) {
-            platforms = platforms.filter(p => p !== 'instagram');
+            updatedPlatforms = platforms.filter(p => p !== 'instagram');
           } else if (platforms.instagram) {
             // Создаем копию объекта без Instagram
             const { instagram, ...restPlatforms } = platforms;
-            platforms = restPlatforms;
+            updatedPlatforms = restPlatforms;
+          } else {
+            updatedPlatforms = platforms;
           }
+          
+          // Обновляем платформы для дальнейшей обработки
+          platforms = updatedPlatforms;
           
           // Если после удаления Instagram не осталось других платформ
           if (Array.isArray(platforms) && platforms.length === 0 || 
@@ -445,9 +451,18 @@ router.post('/publish', authMiddleware, async (req, res) => {
       });
     }
     
-    // Если тип контента stories, используем прямую публикацию через Instagram Stories webhook
-    if (content.contentType === 'stories') {
-      log(`[Social Publishing] Обнаружен контент типа 'stories', используем прямую публикацию через Instagram Stories webhook`);
+    // Детальное логирование полученного контента (без вывода больших полей)
+    const contentTypeDebug = content.contentType || content.content_type || 'не указан';
+    log(`[Social Publishing] Получен контент ${contentId}, тип: "${contentTypeDebug}"`);
+    log(`[Social Publishing] Доступные поля в контенте: ${Object.keys(content).join(', ')}`);
+    
+    // Проверяем тип контента с учетом разных вариантов записи поля
+    const contentType = content.contentType || content.content_type;
+    
+    // Если тип контента stories ИЛИ контент содержит специальный маркер isStories,
+    // используем прямую публикацию через Instagram Stories webhook
+    if (contentType === 'stories' || content.isStories === true) {
+      log(`[Social Publishing] Обнаружен контент типа 'stories' (contentType=${contentType}), используем прямую публикацию через Instagram Stories webhook`);
       
       try {
         // Проверяем, что запрос для Instagram
@@ -518,6 +533,8 @@ router.post('/publish', authMiddleware, async (req, res) => {
           // Путь к нашему собственному эндпоинту Instagram Stories webhook в Express
           const localWebhookUrl = '/api/instagram-stories-webhook';
           
+          let resultData: any = null;
+          
           try {
             // Отправляем запрос на наш локальный эндпоинт
             const localResponse = await axios.post(`http://localhost:${process.env.PORT || 5000}${localWebhookUrl}`, { 
@@ -544,8 +561,6 @@ router.post('/publish', authMiddleware, async (req, res) => {
                   forceStories: true // Принудительная обработка как Stories
                 } 
               };
-              
-              let resultData: any = null;
               
               const mockRes: any = {
                 json: (data: any) => {
@@ -575,7 +590,9 @@ router.post('/publish', authMiddleware, async (req, res) => {
                 const handler = postHandler.route.stack[0].handle;
                 
                 // Вызываем обработчик напрямую с нашими mock-объектами
-                await handler(mockReq, mockRes);
+                await handler(mockReq, mockRes, () => {
+                  log(`[Social Publishing] Middleware next() вызван в обработчике Instagram Stories`);
+                });
               } else {
                 log(`[Social Publishing] Не удалось найти обработчик POST запросов в Instagram Stories webhook`);
               }
