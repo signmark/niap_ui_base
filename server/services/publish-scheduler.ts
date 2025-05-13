@@ -918,9 +918,8 @@ export class PublishScheduler {
         
         // Быстрая проверка на пендинги - результаты сохраняем для логирования
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
-          // Если платформа выбрана и статус pending/scheduled - публикуем немедленно
-          if (platformData?.selected === true && 
-              (platformData?.status === 'pending' || platformData?.status === 'scheduled')) {
+          // Если платформа выбрана и статус pending - публикуем немедленно
+          if (platformData?.selected === true && platformData?.status === 'pending') {
             // Сохраняем информацию для отладки
             if (this.verboseLogging) {
               logMessages.push(`${platform}: статус ${platformData?.status} - ГОТОВ К ПУБЛИКАЦИИ`);
@@ -929,10 +928,10 @@ export class PublishScheduler {
           }
         }
         
-        // Если есть хотя бы одна платформа в pending или scheduled, сразу возвращаем true
+        // Если есть хотя бы одна платформа в pending, сразу возвращаем true
         if (anyPlatformPending) {
             // Минимальное логирование - только ID контента
-            log(`Контент ID ${content.id} имеет платформы в статусе pending/scheduled - обрабатываем`, 'scheduler');
+            log(`Контент ID ${content.id} имеет платформы в статусе pending - обрабатываем`, 'scheduler');
             return true;
         }
         
