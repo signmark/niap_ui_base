@@ -2229,6 +2229,12 @@ export class SocialPublishingWithImgurService {
     })}`, 'social-publishing');
     
     try {
+      // Проверяем тип контента для Stories
+      if (content.contentType === 'stories') {
+        log(`Обнаружен тип контента 'stories', перенаправляем на специальный вебхук для Instagram Stories`, 'social-publishing');
+        return await this.publishInstagramStories(content, instagramSettings);
+      }
+      
       // Напрямую используем реализацию из отдельного сервиса Instagram
       // который содержит правильную реализацию публикации
       log(`Делегирование публикации в Instagram специализированному сервису`, 'social-publishing');
@@ -2271,6 +2277,111 @@ export class SocialPublishingWithImgurService {
         status: 'failed',
         publishedAt: null,
         error: `Ошибка при делегировании публикации в Instagram: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Публикует Instagram Stories через webhook
+   * @param content Контент для публикации типа stories
+   * @param instagramSettings Настройки Instagram API
+   * @returns Результат публикации
+   */
+  async publishInstagramStories(
+    content: CampaignContent,
+    instagramSettings?: SocialMediaSettings['instagram']
+  ): Promise<SocialPublication> {
+    try {
+      // Проверяем, что это действительно Stories
+      if (content.contentType !== 'stories') {
+        log(`Ошибка: Неверный тип контента для Instagram Stories: ${content.contentType}`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: `Неверный тип контента для Instagram Stories: ${content.contentType}`
+        };
+      }
+
+      // Проверяем наличие ID контента
+      if (!content.id) {
+        log(`Ошибка: Отсутствует ID контента для публикации Instagram Stories`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Отсутствует ID контента для публикации'
+        };
+      }
+
+      // Проверяем наличие изображения или видео
+      if (!content.imageUrl && !content.videoUrl) {
+        log(`Ошибка: Отсутствуют медиа-файлы для публикации Instagram Stories`, 'social-publishing');
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Для Instagram Stories необходимо изображение или видео'
+        };
+      }
+
+      // Отправляем запрос на webhook для публикации Stories
+      log(`Отправка запроса на вебхук для публикации Instagram Stories (contentId: ${content.id})`, 'social-publishing');
+      
+      // Получаем базовый URL для API
+      const baseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
+      const webhookUrl = `${baseUrl}/api/instagram-stories-webhook`;
+      
+      log(`Отправка запроса на вебхук для Instagram Stories по URL: ${webhookUrl}`, 'social-publishing');
+      
+      // Используем axios для отправки запроса
+      const response = await axios.post(webhookUrl, {
+        contentId: content.id
+      });
+
+      // Обрабатываем ответ
+      if (response.data && response.data.success) {
+        log(`Запрос на публикацию Instagram Stories отправлен успешно`, 'social-publishing');
+        
+        // Если в ответе есть результат публикации, используем его
+        if (response.data.result) {
+          log(`Получен результат публикации от webhook: ${JSON.stringify(response.data.result)}`, 'social-publishing');
+          
+          // Если webhook вернул готовый объект публикации, используем его
+          if (response.data.result.status && response.data.result.platform === 'instagram') {
+            return response.data.result;
+          }
+        }
+        
+        // Если нет результата, возвращаем pending статус
+        return {
+          platform: 'instagram',
+          status: 'pending',
+          publishedAt: null,
+          message: 'Запрос на публикацию Instagram Stories отправлен успешно. Ожидание результата.'
+        };
+      } else {
+        // Если есть ошибка, возвращаем её
+        const errorMessage = response.data?.error || 'Неизвестная ошибка при отправке запроса на публикацию Instagram Stories';
+        log(`Ошибка публикации Instagram Stories: ${errorMessage}`, 'social-publishing');
+        
+        return {
+          platform: 'instagram',
+          status: 'failed',
+          publishedAt: null,
+          error: errorMessage
+        };
+      }
+    } catch (error: any) {
+      // Обрабатываем ошибки
+      const errorMessage = error.response?.data?.error || error.message;
+      log(`Исключение при публикации Instagram Stories: ${errorMessage}`, 'social-publishing');
+      
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: `Ошибка при публикации Instagram Stories: ${errorMessage}`
       };
     }
   }

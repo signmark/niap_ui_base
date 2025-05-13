@@ -52,6 +52,7 @@ import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
+import instagramStoriesWebhookRoutes from './api/instagram-stories-webhook';
 import facebookWebhookRoutes from './api/facebook-webhook-v2';
 import facebookWebhookV3Routes from './api/facebook-webhook-v3';
 import facebookWebhookDirectRoutes from './api/facebook-webhook-direct';
@@ -2912,6 +2913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
+  app.use('/api/instagram-stories-webhook', instagramStoriesWebhookRoutes);
   // Регистрируем унифицированный вебхук Facebook (основной)
   app.use('/api/facebook', facebookWebhookUnifiedRoutes);
   
