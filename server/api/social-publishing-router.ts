@@ -764,6 +764,41 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
 async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
   try {
     log(`[Social Publishing] Публикация контента ${contentId} в ${platform} через n8n вебхук (async)`);
+
+    // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
+    // для указанной платформы
+    const existingContent = await storage.getCampaignContentById(contentId);
+    if (existingContent && existingContent.social_platforms) {
+      let socialPlatforms = existingContent.social_platforms;
+      
+      // Преобразуем в объект, если это строка
+      if (typeof socialPlatforms === 'string') {
+        try {
+          socialPlatforms = JSON.parse(socialPlatforms);
+        } catch (e) {
+          // Игнорируем ошибку, если не удалось распарсить
+        }
+      }
+      
+      // Преобразуем platform для проверки (instagram-stories → instagram)
+      const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
+      
+      // Проверяем есть ли запланированная дата для указанной платформы
+      if (socialPlatforms[checkPlatform] && 
+          socialPlatforms[checkPlatform].status === 'scheduled' && 
+          socialPlatforms[checkPlatform].scheduledFor) {
+        
+        const scheduledTime = new Date(socialPlatforms[checkPlatform].scheduledFor);
+        const now = new Date();
+        
+        // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
+        if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+          const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} уже запланирован на ${scheduledTime.toISOString()}. Дождитесь запланированного времени.`;
+          log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
+          throw new Error(errorMsg);
+        }
+      }
+    }
     
     // Маппинг платформ на соответствующие n8n вебхуки
     const webhookMap: Record<string, string> = {
