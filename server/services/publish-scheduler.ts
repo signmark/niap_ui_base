@@ -31,6 +31,29 @@ export class PublishScheduler {
   private adminTokenTimestamp: number = 0;
   private tokenExpirationMs = 30 * 60 * 1000; // 30 минут для токена
   
+  /**
+   * Определяет, является ли контент типа "Stories"
+   * Проверяет различные поля, которые могут указывать на тип контента Stories
+   * @param content Контент для проверки
+   * @returns true если контент является Stories, иначе false
+   */
+  public isContentTypeStories(content: any): boolean {
+    if (!content) return false;
+    
+    // Проверяем различные поля, которые могут указывать на тип Stories
+    return (
+      content.contentType === 'stories' || 
+      content.content_type === 'stories' ||
+      content.type === 'stories' ||
+      content.isStories === true ||
+      content.hasStories === true ||
+      (content.title && (
+        content.title.toLowerCase().includes('[stories]') || 
+        content.title.toLowerCase().includes('#stories')
+      ))
+    );
+  }
+  
   // Кэш для настроек кампаний
   private campaignSettingsCache = new Map<string, any>();
   private campaignCacheTimestamp = new Map<string, number>();
@@ -1631,13 +1654,24 @@ export class PublishScheduler {
         const appUrl = process.env.APP_URL || 'http://localhost:5000';
         
         // Передаем имя платформы как строку, чтобы избежать ошибки "Platform [object Object] is not supported yet"
-        const platformName = typeof platform === 'string' ? platform : String(platform);
+        let platformToUse = typeof platform === 'string' ? platform : String(platform);
         
         // Для Facebook используем специальный прямой URL, для остальных - стандартный
         let publishUrl;
         let logMessage;
         
-        if (platformName.toLowerCase() === 'facebook') {
+        // Проверяем, является ли контент Stories
+        const isStoriesContent = this.isContentTypeStories(content);
+        
+        if (platformToUse.toLowerCase() === 'instagram' && isStoriesContent) {
+          // Специальная обработка для Instagram Stories
+          publishUrl = `${appUrl}/api/publish`;
+          // Важно! Меняем название платформы для маршрутизатора
+          platformToUse = 'instagram-stories';
+          logMessage = `Вызов API публикации для Instagram Stories (запланированный контент ${content.id})`;
+          log(logMessage, 'scheduler');
+          log(`Обнаружен контент типа Stories, используем специальный маршрут 'instagram-stories'`, 'scheduler');
+        } else if (platformName.toLowerCase() === 'facebook') {
           // Используем прямой маршрут для Facebook
           publishUrl = `${appUrl}/api/facebook-webhook-direct`;
           logMessage = `Вызов прямого API публикации Facebook для запланированного контента ${content.id}`;
