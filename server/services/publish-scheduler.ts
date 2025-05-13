@@ -1144,18 +1144,43 @@ export class PublishScheduler {
             
             // Если все платформы опубликованы и нет платформ в ожидании - обновляем статус на published
             if (allPlatformsPublished && !hasPendingStatusAnyPlatform) {
-              log(`ОБНОВЛЕНИЕ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет ВСЕ (${publishedPlatforms.length}/${allPlatforms.length}) платформы в статусе published - обновляем статус контента на published`, 'scheduler');
+              // КЛЮЧЕВАЯ ПРОВЕРКА: проверяем, был ли контент изначально в статусе "scheduled"
+              // Если контент был запланирован и все платформы опубликованы, это значит что
+              // n8n webhook уже был вызван и все публикации выполнились успешно
               
-              await axios.patch(
-                `${baseDirectusUrl}/items/campaign_content/${content.id}`,
-                { 
-                  status: 'published',
-                  published_at: new Date().toISOString()
-                },
-                { headers: { 'Authorization': `Bearer ${authToken}` } }
-              );
+              // Важно! Обновляем статус ТОЛЬКО когда изначальный статус контента не "scheduled"
+              // или если в social_platforms нет selected=true с status=pending
+              const isInitiallyScheduled = freshData.status === 'scheduled';
+              let hasSelectedPendingPlatforms = false;
               
-              updatedStatusCount++;
+              if (isInitiallyScheduled && freshData.social_platforms) {
+                // Проверяем, есть ли выбранные платформы в pending/scheduled
+                for (const [platform, data] of Object.entries(freshData.social_platforms)) {
+                  if (data.selected === true && (data.status === 'pending' || data.status === 'scheduled')) {
+                    hasSelectedPendingPlatforms = true;
+                    log(`БЛОКИРОВКА ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет выбранную платформу ${platform} в статусе ${data.status}`, 'scheduler');
+                    break;
+                  }
+                }
+              }
+              
+              // Обновляем только если это НЕ запланированный контент или у него нет выбранных платформ в статусе pending
+              if (!isInitiallyScheduled || !hasSelectedPendingPlatforms) {
+                log(`ОБНОВЛЕНИЕ СТАТУСА: Контент ID ${content.id} "${freshData.title}" имеет ВСЕ (${publishedPlatforms.length}/${allPlatforms.length}) платформы в статусе published - обновляем статус контента на published`, 'scheduler');
+                
+                await axios.patch(
+                  `${baseDirectusUrl}/items/campaign_content/${content.id}`,
+                  { 
+                    status: 'published',
+                    published_at: new Date().toISOString()
+                  },
+                  { headers: { 'Authorization': `Bearer ${authToken}` } }
+                );
+                
+                updatedStatusCount++;
+              } else {
+                log(`ПРОПУСК ОБНОВЛЕНИЯ СТАТУСА: Контент ID ${content.id} "${freshData.title}" находится в статусе scheduled и имеет выбранные платформы для публикации (n8n webhook еще не был вызван)`, 'scheduler');
+              }
             }
           } catch (error) {
             log(`Ошибка при проверке статуса контента ${content.id}: ${error.message}`, 'scheduler');
