@@ -445,38 +445,34 @@ router.post('/publish', authMiddleware, async (req, res) => {
       });
     }
     
-    // Если тип контента stories, используем прямую публикацию
+    // Если тип контента stories, используем прямую публикацию через Instagram Stories webhook
     if (content.contentType === 'stories') {
-      log(`[Social Publishing] Обнаружен контент типа 'stories', используем прямую публикацию`);
+      log(`[Social Publishing] Обнаружен контент типа 'stories', используем прямую публикацию через Instagram Stories webhook`);
       
       try {
-        const campaignSettings = await storage.getCampaignById(content.campaignId);
-        if (!campaignSettings) {
-          return res.status(404).json({
+        // Проверяем, что запрос для Instagram
+        if (platform.toLowerCase() !== 'instagram') {
+          return res.status(400).json({
             success: false,
-            error: `Не найдены настройки кампании для ID ${content.campaignId}`
+            error: `Платформа ${platform} не поддерживает публикацию сторис`
           });
         }
         
-        // Получаем сервис в зависимости от платформы
-        let result;
-        switch (platform.toLowerCase()) {
-          case 'vk':
-            const { vkService } = require('../services/social/vk-service');
-            result = await vkService.publishToPlatform(content, platform, campaignSettings.socialSettings);
-            break;
-            
-          case 'instagram':
-            const { instagramService } = require('../services/social/instagram-service');
-            result = await instagramService.publishToPlatform(content, platform, campaignSettings.socialSettings);
-            break;
-            
-          default:
-            return res.status(400).json({
-              success: false,
-              error: `Платформа ${platform} не поддерживает сторис`
-            });
-        }
+        // Получаем ссылку на webhook Instagram Stories
+        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook-test/publish-instagram-stories';
+        log(`[Social Publishing] Перенаправляем на специальный вебхук для Instagram Stories: ${n8nWebhookUrl}`);
+        
+        // Отправляем запрос на webhook для Instagram Stories
+        const dataForN8n = {
+          contentId
+        };
+        
+        const response = await axios.post(n8nWebhookUrl, dataForN8n);
+        
+        log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, результат: ${JSON.stringify(response.data)}`);
+
+        // Формируем результат на основе ответа webhook
+        let result = response.data;
         
         // Обновляем статус в базе данных
         await storage.updateContentPlatformStatus(contentId, platform, result);
