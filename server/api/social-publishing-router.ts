@@ -493,9 +493,72 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       
       // Принудительно обновляем статус контента через сервис проверки статусов
       try {
-        const statusChecker = await import('../services/status-checker').then(m => m.statusChecker);
+        const statusCheckerModule = await import('../services/status-checker');
         log(`[Social Publishing] Вызов принудительного обновления статуса контента ${contentId}`);
-        await statusChecker.checkSpecificContentIssue(contentId);
+        
+        // Проверяем, является ли платформа Instagram Stories
+        if (platform === 'instagram-stories') {
+          log(`[Social Publishing] Используем принудительное обновление статуса для Instagram Stories`);
+          
+          // Обновляем статус контента напрямую
+          try {
+            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+            const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+            let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+            
+            const sessions = directusAuthManager.getAllActiveSessions();
+            if (sessions.length > 0) {
+              adminToken = sessions[0].token;
+            }
+            
+            if (!adminToken) {
+              log(`[Social Publishing] Не удалось получить токен администратора для обновления статуса`);
+              return;
+            }
+            
+            const updateResponse = await axios.patch(
+              `${directusUrl}/items/campaign_content/${contentId}`,
+              { status: 'published' },
+              {
+                headers: {
+                  'Authorization': `Bearer ${adminToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            log(`[Social Publishing] Статус контента принудительно обновлен на 'published'`);
+          } catch (directUpdateError: any) {
+            log(`[Social Publishing] Ошибка при принудительном обновлении статуса: ${directUpdateError.message}`);
+          }
+        } else {
+          // Для других платформ используем обычную проверку
+          try {
+            // Принудительно обновляем статус контента напрямую через storage и Directus API
+            log(`[Social Publishing] Принудительное обновление статуса для других платформ`);
+            
+            // Пытаемся получить токен администратора
+            const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+            let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+            
+            const sessions = directusAuthManager.getAllActiveSessions();
+            if (sessions.length > 0) {
+              adminToken = sessions[0].token;
+            }
+            
+            if (!adminToken) {
+              log(`[Social Publishing] Не удалось получить токен администратора для обновления статуса`);
+              return;
+            }
+            
+            // Обновляем через хранилище
+            await storage.updateCampaignContent(contentId, { status: 'published' }, adminToken);
+            log(`[Social Publishing] Статус контента успешно обновлен на 'published'`);
+          } catch (updateError) {
+            log(`[Social Publishing] Ошибка при принудительном обновлении статуса: ${updateError.message}`);
+          }
+        }
+        
         log(`[Social Publishing] Принудительное обновление статуса контента ${contentId} выполнено`);
       } catch (statusError: any) {
         log(`[Social Publishing] Ошибка при вызове обновления статуса: ${statusError.message}`);

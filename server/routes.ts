@@ -45,9 +45,10 @@ import usersRouter from './routes/api-users';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
+import { registerTestInstagramStoriesUpdateRoute } from './api/test-instagram-stories-update';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
-import { publicationStatusChecker } from './services/status-checker';
+import { statusChecker } from './services/status-checker';
 import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
@@ -2991,7 +2992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   publishScheduler.start();
   
   // Запускаем сервис проверки статусов публикаций
-  publicationStatusChecker.start();
+  statusChecker.start();
   
   // Применяем наш фикс для правильной обработки keywords
   fixCampaignContent(app);

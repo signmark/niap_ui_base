@@ -616,7 +616,76 @@ class PublicationStatusChecker {
       log(`СПЕЦИАЛЬНАЯ ПРОВЕРКА: Ошибка при проверке контента: ${error.message}`, 'status-checker');
     }
   }
+  /**
+   * Принудительное обновление статуса контента после публикации в Instagram Stories
+   * Эта версия функции принудительно устанавливает статус 'published'
+   * @param contentId ID контента для проверки
+   */
+  async forceUpdateStatusAfterPublish(contentId: string) {
+    try {
+      log(`FORCE UPDATE: Принудительное обновление статуса для контента ID ${contentId}`, 'status-checker');
+      
+      // Получаем токен администратора
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        log(`FORCE UPDATE: Не удалось получить токен администратора`, 'status-checker');
+        return;
+      }
+      
+      // Получаем контент
+      const content = await storage.getCampaignContentById(contentId);
+      
+      if (!content) {
+        log(`FORCE UPDATE: Контент ${contentId} не найден`, 'status-checker');
+        return;
+      }
+      
+      log(`FORCE UPDATE: Получены данные контента "${content.title}" (статус: ${content.status})`, 'status-checker');
+      
+      // Если контент уже опубликован, ничего не делаем
+      if (content.status === 'published') {
+        log(`FORCE UPDATE: Контент уже имеет статус 'published'`, 'status-checker');
+        return;
+      }
+      
+      // Принудительно устанавливаем статус 'published'
+      try {
+        log(`FORCE UPDATE: Обновление статуса контента на 'published'`, 'status-checker');
+        
+        // Обновляем через хранилище
+        await storage.updateCampaignContent(contentId, { status: 'published' }, adminToken);
+        log(`FORCE UPDATE: Статус контента успешно обновлен на 'published'`, 'status-checker');
+      } catch (updateError: any) {
+        log(`FORCE UPDATE: Ошибка при обновлении статуса: ${updateError.message}`, 'status-checker');
+        
+        // Если не удалось через хранилище, пробуем напрямую через API
+        try {
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const response = await axios.patch(
+            `${directusUrl}/items/campaign_content/${contentId}`,
+            { status: 'published' },
+            {
+              headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (response.status >= 200 && response.status < 300) {
+            log(`FORCE UPDATE: Успешно обновлен статус через API`, 'status-checker');
+          } else {
+            log(`FORCE UPDATE: Не удалось обновить статус через API: ${response.status}`, 'status-checker');
+          }
+        } catch (apiError: any) {
+          log(`FORCE UPDATE: Ошибка при обновлении через API: ${apiError.message}`, 'status-checker');
+        }
+      }
+    } catch (error: any) {
+      log(`FORCE UPDATE: Ошибка при обновлении контента: ${error.message}`, 'status-checker');
+    }
+  }
 }
 
 // Экспортируем экземпляр класса для использования в других модулях
-export const publicationStatusChecker = new PublicationStatusChecker();
+export const statusChecker = new PublicationStatusChecker();
