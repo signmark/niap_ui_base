@@ -122,8 +122,12 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             const scheduledTime = new Date(socialPlatforms.instagram.scheduledFor);
             const now = new Date();
             
-            // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
-            if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+            // Уменьшаем точность сравнения до минут
+            const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+            const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+            
+            // Проверяем, не запланировано ли время на более чем 1 минуту в будущем
+            if (scheduledMinutes > nowMinutes) {
               log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: Контент ${contentId} уже запланирован на ${scheduledTime.toISOString()}`);
               
               return res.status(400).json({
