@@ -1298,6 +1298,33 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Тестовый маршрут для проверки получения контента по ID
+  app.get('/api/test/content/:id', async (req: Request, res: Response) => {
+    try {
+      const contentId = req.params.id;
+      console.log(`[API test] Попытка получить контент с ID ${contentId}`);
+      
+      const content = await storage.getCampaignContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: `Контент с ID ${contentId} не найден`
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        content
+      });
+    } catch (error: any) {
+      console.error(`[API test] Ошибка при получении контента: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
   registerFalAiImageRoutes(app);
