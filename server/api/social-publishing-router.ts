@@ -244,6 +244,27 @@ router.post('/publish/later', authMiddleware, async (req, res) => {
       });
     }
     
+    // Для отладки: показываем тип контента, чтобы понимать, как система его определяет
+    const contentTypeDebug = content.contentType || content.content_type || 'не указан';
+    log(`[Social Publishing] Планирование - тип контента: ${contentTypeDebug}`);
+    
+    // Определяем, является ли контент Instagram Stories
+    const isStoriesContent = 
+      content.contentType === 'stories' || 
+      content.content_type === 'stories' ||
+      content.type === 'stories' ||
+      content.isStories === true ||
+      content.hasStories === true ||
+      (content.title && (
+        content.title.toLowerCase().includes('[stories]') || 
+        content.title.toLowerCase().includes('#stories')
+      ));
+    
+    // ПРИНУДИТЕЛЬНЫЙ РЕЖИМ: Также трактуем как Stories, если публикуется ТОЛЬКО в Instagram
+    const onlyInstagram = Array.isArray(platforms) 
+      ? platforms.length === 1 && platforms[0] === 'instagram'
+      : Object.keys(platforms).filter(p => platforms[p] === true).length === 1 && platforms.instagram === true;
+    
     // Преобразуем дату
     const scheduleDate = new Date(scheduleTime);
     
@@ -259,9 +280,30 @@ router.post('/publish/later', authMiddleware, async (req, res) => {
     const jobId = `publish_${contentId}_${scheduleDate.getTime()}`;
     
     // Платформы для публикации
-    const platformsList = Array.isArray(platforms) 
+    let platformsList = Array.isArray(platforms) 
       ? platforms 
       : Object.keys(platforms).filter(p => platforms[p] === true);
+      
+    // ВАЖНО: Для Stories контента публикуем только в Instagram
+    if (isStoriesContent || onlyInstagram) {
+      log(`[Social Publishing] Обнаружен контент типа STORIES при планировании публикации (ID: ${contentId})`);
+      
+      // Проверяем, есть ли Instagram в списке платформ
+      const hasInstagram = platformsList.includes('instagram');
+      
+      if (!hasInstagram) {
+        return res.status(400).json({
+          success: false,
+          error: 'Instagram must be selected for Stories content'
+        });
+      }
+      
+      // Оставляем ТОЛЬКО Instagram для Stories
+      if (platformsList.length > 1) {
+        log(`[Social Publishing] БЕЗОПАСНЫЙ РЕЖИМ: Для Stories отфильтровываем все платформы кроме Instagram`);
+        platformsList = ['instagram'];
+      }
+    }
     
     try {
       // Получаем текущие данные контента
