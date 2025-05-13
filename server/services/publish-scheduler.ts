@@ -1040,17 +1040,27 @@ export class PublishScheduler {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {
-            // Для консистентности игнорируем общее поле scheduledAt
-            // и требуем наличия платформо-специфичных настроек времени
+            // Проверка на наличие данных для платформы
+            if (!platformData) {
+              logMessages.push(`${platform}: отсутствуют данные о платформе, ignored`);
+              continue;
+            }
             
             // Проверяем, является ли контент Stories
             const isStories = this.isContentTypeStories(content);
             
             if (isStories) {
-              // Для контента типа Stories используем общее время публикации, так как 
-              // Stories имеют единое время публикации для всех платформ
-              if (content.scheduledAt) {
-                const scheduledTime = new Date(content.scheduledAt);
+              // Для Stories ищем время публикации в данных платформы
+              // Проверяем все возможные поля, где может храниться время
+              const scheduledTimeStr = 
+                platformData.scheduledAt || 
+                platformData.scheduled_at || 
+                platformData.scheduledFor || 
+                // Для обратной совместимости со старой структурой
+                (content.scheduled_at_deprecated_ || null);
+              
+              if (scheduledTimeStr) {
+                const scheduledTime = new Date(scheduledTimeStr);
                 
                 // Логируем данные о времени при проверке
                 if (this.verboseLogging) {
@@ -1068,16 +1078,11 @@ export class PublishScheduler {
                   anyPlatformReady = true;
                 }
               } else {
-                logMessages.push(`${platform}: Stories контент без времени публикации, нужно задать scheduledAt`);
+                logMessages.push(`${platform}: Stories контент без указанного времени публикации`);
               }
             } else {
-              // Для обычного контента требуем только платформо-специфичные настройки времени
+              // Для обычного контента просто информируем, что нет индивидуальных настроек времени
               logMessages.push(`${platform}: нет индивидуальных данных о времени публикации для платформы, ignored`);
-              
-              // Для отладки указываем, что общее поле scheduledAt игнорируется
-              if (content.scheduledAt && this.verboseLogging) {
-                logMessages.push(`${platform}: общее время публикации ${new Date(content.scheduledAt).toISOString()} игнорируется, требуется платформо-специфичное время`);
-              }
             }
           }
         }
@@ -1090,16 +1095,27 @@ export class PublishScheduler {
           if (this.verboseLogging) {
             logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
             
-            // Разное отображение для Stories и обычного контента
-            if (content.scheduledAt) {
-              const scheduledTime = new Date(content.scheduledAt);
-              const timeUntilPublish = scheduledTime.getTime() - now.getTime();
-              const isStories = this.isContentTypeStories(content);
+            // Информация о времени публикации из JSON платформы
+            const isStories = this.isContentTypeStories(content);
+            
+            // Проверяем deprecated поле, только если это необходимо для отладки
+            if (content.scheduled_at_deprecated_) {
+              log(`  - Устаревшее поле scheduled_at_deprecated_: ${new Date(content.scheduled_at_deprecated_).toISOString()} - ИГНОРИРУЕТСЯ`, 'scheduler');
+            }
+            
+            // Показываем информацию для каждой платформы
+            for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
+              if (!platformData) continue;
               
-              if (isStories) {
-                log(`  - Общее время для Stories: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИСПОЛЬЗУЕТСЯ`, 'scheduler');
-              } else {
-                log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ для обычного контента`, 'scheduler');
+              const scheduledTimeStr = 
+                platformData.scheduledAt || 
+                platformData.scheduled_at || 
+                platformData.scheduledFor;
+                
+              if (scheduledTimeStr) {
+                const platformTime = new Date(scheduledTimeStr);
+                const timeLeft = Math.floor((platformTime.getTime() - now.getTime()) / 1000 / 60);
+                log(`  - Платформа ${platform}: ${platformTime.toISOString()} (через ${timeLeft} мин.)`, 'scheduler');
               }
             }
           }
