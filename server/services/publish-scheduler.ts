@@ -1048,18 +1048,57 @@ export class PublishScheduler {
             logMessages.push(`${platform}: Детальное сравнение времени: Запланировано=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}`);
             logMessages.push(`${platform}: Минуты: план=${scheduledMinutes}, сейчас=${nowMinutes}; Секунды: план=${scheduledSeconds}, сейчас=${nowSeconds}`);
             
-            // ИСПРАВЛЕННАЯ ЛОГИКА: Обязательное сравнение на уровне миллисекунд!
-            // Публикуем ТОЛЬКО когда текущее время строго больше или равно запланированному
+            // ИСПРАВЛЕННАЯ ЛОГИКА: используем строгое сравнение времени на уровне миллисекунд
+            // и добавляем защиту от двойной публикации
             const scheduledFullTime = platformScheduledTime.getTime();
             const nowFullTime = now.getTime();
-            const timeHasReached = nowFullTime >= scheduledFullTime;
+            
+            // Проверяем, не находится ли эта платформа в блокировке (недавно публиковалась)
+            const platformLockKey = `${content.id}_${platform}`;
+            const lockInfo = this.publicationLocks.get(platformLockKey);
+            
+            // Если блокировка активна, пропускаем этот контент
+            if (lockInfo && (nowFullTime - lockInfo.timestamp) < this.publicationLockInterval) {
+              const secondsLeft = Math.floor((this.publicationLockInterval - (nowFullTime - lockInfo.timestamp)) / 1000);
+              log(`${platform}: БЛОКИРОВКА АКТИВНА еще ${secondsLeft} сек, предотвращение повторной публикации`, 'scheduler');
+              logMessages.push(`${platform}: ЗАЩИТА ОТ ПОВТОРНОЙ ПУБЛИКАЦИИ активна еще ${secondsLeft} сек`);
+              continue;
+            }
+            
+            // БЕЗОПАСНЫЙ РЕЖИМ: Публикуем только если время наступило И прошло не более 3 минут с запланированного времени
+            // Это предотвращает повторную публикацию контента, который уже был опубликован, но статус не обновился
+            const maxPublishWindowMs = 3 * 60 * 1000; // 3 минуты
+            const isWithinPublishWindow = (nowFullTime - scheduledFullTime) <= maxPublishWindowMs;
+            
+            // Публикуем ТОЛЬКО когда текущее время строго больше или равно запланированному
+            // И находимся в пределах окна публикации (не более 3 минут после запланированного времени)
+            const timeHasReached = nowFullTime >= scheduledFullTime && isWithinPublishWindow;
+            
+            // Детальный лог для отладки с новой логикой окна публикации
+            logMessages.push(`${platform}: Сравнение времени: План=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}`);
+            logMessages.push(`${platform}: Миллисекунды: план=${scheduledFullTime}, сейчас=${nowFullTime}; Разница=${nowFullTime - scheduledFullTime} мс`);
+            logMessages.push(`${platform}: В окне публикации (макс 3 мин): ${isWithinPublishWindow ? 'ДА' : 'НЕТ'}`);
             
             // Если время публикации для этой платформы наступило И selected=true или не задано
             if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {
               logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
-              anyPlatformReady = true;
+              
+              // Устанавливаем блокировку на публикацию этой платформы
+              const lockKey = `${content.id}_${platform}`;
+              if (!this.publicationLocks.has(lockKey)) {
+                this.publicationLocks.set(lockKey, { 
+                  timestamp: nowFullTime,
+                  platforms: new Set([platform])
+                });
+                log(`Установлена блокировка публикации для ${content.id}_${platform} на ${this.publicationLockInterval/1000} сек`, 'scheduler');
+                anyPlatformReady = true;
+              } else {
+                logMessages.push(`${platform}: Блокировка уже установлена, пропускаем`);
+              }
             } else if (timeHasReached && platformData?.selected === false) {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
+            } else if (!timeHasReached && !isWithinPublishWindow) {
+              logMessages.push(`${platform}: время публикации еще не наступило или прошло более 3 минут - ПРОПУСКАЕМ`);
             }
           } else {
             // Проверка на наличие данных для платформы
