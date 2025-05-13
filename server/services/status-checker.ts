@@ -337,6 +337,72 @@ class PublicationStatusChecker {
   }
   
   /**
+   * Сканирует контент в поисках Stories и обновляет их статусы
+   * Специальная функция для периодической проверки и исправления статусов
+   */
+  async scanAndUpdateInstagramStories() {
+    try {
+      log(`Запуск сканирования контента для Stories...`, 'status-checker');
+      
+      // Получаем токен администратора
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        log(`Не удалось получить токен администратора для сканирования Stories`, 'status-checker');
+        return;
+      }
+      
+      // Запрос на получение контента в статусе 'draft' или 'scheduled' с опубликованной платформой
+      try {
+        // Получаем контент через API storage
+        const response = await axios.get(
+          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/campaign_content`,
+          {
+            params: {
+              filter: {
+                status: {
+                  _in: ['draft', 'scheduled']
+                },
+                // Дополнительное условие на наличие платформ
+                // к сожалению, невозможно фильтровать по вложенным JSON полям напрямую через API
+              },
+              limit: 100, // Увеличиваем лимит для сканирования большего числа записей
+              fields: ['id', 'title', 'status', 'content_type', 'contentType', 'type', 'social_platforms']
+            },
+            headers: {
+              'Authorization': `Bearer ${adminToken}`
+            }
+          }
+        );
+        
+        const items = response.data?.data || [];
+        log(`STORIES SCAN: Найдено ${items.length} контентов для проверки`, 'status-checker');
+        
+        // Счетчики для статистики
+        let checkedCount = 0;
+        let updatedCount = 0;
+        
+        // Проверяем каждый контент на наличие Stories
+        for (const item of items) {
+          // Обновляем с помощью универсального метода
+          const updated = await this.forceUpdateStoriesContent(item.id);
+          if (updated) {
+            updatedCount++;
+            checkedCount++;
+          }
+        }
+        
+        log(`STORIES SCAN: Проверено ${checkedCount} контентов, обновлено ${updatedCount}`, 'status-checker');
+        
+      } catch (apiError: any) {
+        log(`STORIES SCAN: Ошибка при получении контента через API: ${apiError.message}`, 'status-checker');
+      }
+      
+    } catch (error: any) {
+      log(`STORIES SCAN: Критическая ошибка при сканировании: ${error.message}`, 'status-checker');
+    }
+  }
+  
+  /**
    * Проверяет статусы публикаций и обновляет общие статусы контента
    * Имеет встроенные меры безопасности:
    * 1. Проверка статусов конкретной платформы (должны быть либо published, либо failed)
