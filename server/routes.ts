@@ -46,6 +46,7 @@ import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { registerTestInstagramStoriesUpdateRoute } from './api/test-instagram-stories-update';
+import { registerSchedulerDebugRoutes } from './api/scheduler-debug-routes';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { statusChecker } from './services/status-checker';
