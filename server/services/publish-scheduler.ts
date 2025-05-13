@@ -1022,11 +1022,21 @@ export class PublishScheduler {
             const minutesDiff = Math.floor(timeUntilPublish / 1000 / 60);
             logMessages.push(`${platform}: запланирован на ${platformScheduledTime.toISOString()} (через ${minutesDiff} мин.), selected=${platformData?.selected || 'undefined (считаем как true)'}`);
             
+            // Логируем данные о времени при проверке индивидуальной платформы
+            if (this.verboseLogging) {
+              log(`Проверка времени для платформы ${platform}: Запланировано=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((platformScheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
+            }
+            
+            // Точная проверка времени: публикуем, только если текущее время >= запланированное время
+            // Уменьшаем точность сравнения до минут для избежания проблем с миллисекундами
+            const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+            const scheduledMinutes = Math.floor(platformScheduledTime.getTime() / (60 * 1000));
+            
             // Если время публикации для этой платформы наступило И selected=true или не задано
-            if (platformScheduledTime <= now && (platformData?.selected === true || platformData?.selected === undefined)) {
+            if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
               logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
               anyPlatformReady = true;
-            } else if (platformScheduledTime <= now && platformData?.selected === false) {
+            } else if (nowMinutes >= scheduledMinutes && platformData?.selected === false) {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {
@@ -1034,8 +1044,23 @@ export class PublishScheduler {
             if (content.scheduledAt) {
               const scheduledTime = new Date(content.scheduledAt);
               
-              // Проверяем, наступило ли время публикации
-              if (scheduledTime <= now && (platformData?.selected === true || platformData?.selected === undefined)) {
+              // Добавляем буфер в 10 секунд (чтобы публикация не происходила раньше запланированного времени)
+              // Проблема была в публикации за 2 минуты до запланированного времени
+              const bufferMs = 10 * 1000; // 10 секунд в миллисекундах 
+              const bufferTime = new Date(scheduledTime.getTime() - bufferMs);
+              
+              // Логируем данные о времени при проверке
+              if (this.verboseLogging) {
+                log(`Проверка времени для контента ${content.id}: Запланировано=${scheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((scheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
+              }
+              
+              // Точная проверка времени: публикуем, только если текущее время >= запланированное время
+              // Уменьшаем точность сравнения до минут для избежания проблем с миллисекундами
+              const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+              const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+              
+              // Проверяем, наступило ли время публикации (с точностью до минуты)
+              if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
                 // Если это Stories или флаг selected установлен, публикуем
                 const isStories = this.isContentTypeStories(content);
                 
