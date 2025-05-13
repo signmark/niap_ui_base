@@ -843,6 +843,26 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       // Проверяем есть ли запланированная дата для указанной платформы
       // Поиск любого запланированного времени в данных платформы
       const platformData = socialPlatforms[checkPlatform];
+      
+      // Проверяем текущий статус платформы, если он уже published - пропускаем повторную публикацию
+      if (platformData && platformData.status === 'published') {
+        log(`[Social Publishing] Контент ${contentId} уже опубликован в ${platform} (статус: published). Пропускаем повторную публикацию.`, 'error');
+        
+        // Снимаем блокировку
+        markPublicationEnd(contentId, platform);
+        
+        return {
+          platform,
+          success: true,
+          data: {
+            message: 'Контент уже опубликован',
+            status: 'published',
+            postUrl: platformData.postUrl || null,
+            postId: platformData.postId || null
+          }
+        };
+      }
+      
       if (platformData) {
         // Проверяем все возможные поля с временем публикации
         const scheduledTimeStr = 

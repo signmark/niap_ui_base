@@ -2021,11 +2021,24 @@ export class PublishScheduler {
             requestData = { contentId: content.id, platform: platformToUse };
           }
           
+          // Добавляем уникальный идентификатор для отслеживания запросов на публикацию
+          // и предотвращения дублирующихся публикаций с одним contentId
+          requestData.requestId = `scheduler_${content.id}_${platformToUse}_${Date.now()}`;
+          log(`Добавлен идентификатор запроса: ${requestData.requestId}`, 'scheduler');
+          
+          // Добавляем таймаут в 10 секунд между каждой публикацией для разных платформ
+          // чтобы избежать гонки данных и проблем с одновременной публикацией
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const apiResponse = await axios.post(publishUrl, requestData, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+              // Добавляем заголовок для отслеживания запроса от планировщика
+              'X-Scheduler-Request-ID': requestData.requestId
+            },
+            // Увеличиваем таймаут для API запросов, чтобы предотвратить дублирование
+            timeout: 30000 // 30 секунд
           });
           
           // Проверяем успешность публикации
