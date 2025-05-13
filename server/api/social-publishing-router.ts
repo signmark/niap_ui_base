@@ -55,7 +55,12 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     const contentTypeDebug = content.contentType || content.content_type || 'не указан';
     log(`[Social Publishing] Тип контента: ${contentTypeDebug}`);
     
+    // Получаем значение параметра content_type из запроса, если оно есть
+    const requestContentType = req.body.content_type || '';
+    log(`[Social Publishing] Тип контента из параметров запроса: ${requestContentType}`);
+    
     // Определяем, является ли контент Instagram Stories по нескольким возможным атрибутам:
+    // - Параметр запроса content_type = 'stories'
     // - contentType = 'stories' (стандартное именование)
     // - content_type = 'stories' (альтернативное именование)
     // - type = 'stories' (еще один возможный вариант)
@@ -63,6 +68,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     // - hasStories = true (еще один вариант флага)
     // - title содержит [stories] или #stories (маркер в заголовке)
     const isStoriesContent = 
+      requestContentType === 'stories' ||
       content.contentType === 'stories' || 
       content.content_type === 'stories' ||
       content.type === 'stories' ||
@@ -78,15 +84,20 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     const onlyInstagram = Array.isArray(platforms) 
       ? platforms.length === 1 && platforms[0] === 'instagram'
       : Object.keys(platforms).filter(p => platforms[p] === true).length === 1 && platforms.instagram === true;
-        
+    
+    // Явная публикация Stories - КРИТИЧЕСКИ ВАЖНО, чтобы другие платформы не выбирались!
     if (isStoriesContent || onlyInstagram) {
-      log(`[Social Publishing] Обнаружен контент для Instagram Stories (тип=${contentTypeDebug}, onlyInstagram=${onlyInstagram}), используем унифицированный подход`);
+      log(`[Social Publishing] Обнаружен контент для Instagram Stories (тип=${contentTypeDebug}, onlyInstagram=${onlyInstagram}), используем специальный маршрут`);
+      
+      // ВАЖНО: Если выбрано больше одной платформы для Stories - это ошибка!
+      // Публикуем ТОЛЬКО в Instagram, игнорируя другие платформы для безопасности
       
       // Проверяем, включена ли Instagram в выбранных платформах
       if (Array.isArray(platforms) && platforms.includes('instagram') || 
           !Array.isArray(platforms) && platforms.instagram === true) {
         
         log(`[Social Publishing] Публикация Instagram Stories через унифицированный механизм publishViaN8n`);
+        log(`[Social Publishing] БЕЗОПАСНЫЙ РЕЖИМ: Игнорируем другие платформы при публикации Stories`);
         
         // Используем тот же подход, что и для обычных постов, но с платформой instagram-stories
         return publishViaN8n(contentId, 'instagram-stories', req, res);
@@ -98,7 +109,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         });
       }
     } else {
-      // Платформы для других социальных сетей (не для Instagram Stories)
+      // Платформы для обычных постов (не Stories)
       const platformsForOtherNetworks = Array.isArray(platforms) 
         ? platforms 
         : Object.keys(platforms).filter(p => platforms[p] === true);

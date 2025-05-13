@@ -1814,6 +1814,36 @@ export class PublishScheduler {
         return;
       }
 
+      // Проверяем, является ли контент типа "Stories" и обрабатываем специальным образом
+      const isContentStories = this.isContentTypeStories(content);
+      if (isContentStories) {
+        log(`ВНИМАНИЕ: Контент ${content.id} определен как STORIES, проверка специальных правил публикации`, 'scheduler');
+        
+        // Если это Stories, проверяем наличие Instagram в списке для публикации
+        const hasInstagram = platformsToPublish.includes('instagram');
+        
+        // Для Stories контента, если Instagram не выбран совсем, прекращаем публикацию
+        if (!hasInstagram) {
+          log(`КРИТИЧЕСКАЯ ОШИБКА: Для контента типа Stories (ID ${content.id}) не выбран Instagram. Публикация отменена.`, 'scheduler');
+          return;
+        }
+        
+        // Если в platformsToPublish есть другие платформы кроме Instagram, фильтруем их
+        if (platformsToPublish.length > 1) {
+          log(`БЕЗОПАСНЫЙ РЕЖИМ: Контент ${content.id} является Stories, но выбрано ${platformsToPublish.length} платформ`, 'scheduler');
+          log(`КОРРЕКЦИЯ: Для Stories будет опубликован ТОЛЬКО в Instagram, другие платформы будут игнорироваться`, 'scheduler');
+          
+          // Оставляем только Instagram
+          const filteredPlatforms = platformsToPublish.filter(p => p === 'instagram');
+          
+          // Обновляем список платформ для публикации
+          platformsToPublish.length = 0;
+          filteredPlatforms.forEach(p => platformsToPublish.push(p));
+          
+          log(`ИТОГО после фильтрации: ${platformsToPublish.length} платформ для публикации Stories`, 'scheduler');
+        }
+      }
+      
       // Публикуем в каждую платформу
       let successfulPublications = 0;
       let totalAttempts = 0;
