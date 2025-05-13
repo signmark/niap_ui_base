@@ -467,12 +467,54 @@ router.post('/publish', authMiddleware, async (req, res) => {
           contentId
         };
         
-        const response = await axios.post(n8nWebhookUrl, dataForN8n);
+        // Добавляем подробное логирование перед отправкой запроса
+        log(`[Social Publishing] Отправляем запрос на Instagram Stories webhook: URL=${n8nWebhookUrl}, данные=${JSON.stringify(dataForN8n)}`);
         
-        log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, результат: ${JSON.stringify(response.data)}`);
-
-        // Формируем результат на основе ответа webhook
-        let result = response.data;
+        let result: any = {};
+        
+        try {
+          const response = await axios.post(n8nWebhookUrl, dataForN8n);
+          
+          log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, результат: ${JSON.stringify(response.data)}`);
+  
+          // Формируем результат на основе ответа webhook
+          result = response.data;
+        } catch (webhookError: any) {
+          // Детальное логирование ошибки при вызове webhook
+          log(`[Social Publishing] ОШИБКА при вызове Instagram Stories webhook: ${webhookError.message}`);
+          if (webhookError.response) {
+            log(`[Social Publishing] Детали ошибки webhook: status=${webhookError.response.status}, data=${JSON.stringify(webhookError.response.data)}`);
+          }
+          
+          // Пробуем альтернативный подход - прямой вызов функции обработчика
+          log(`[Social Publishing] Пробуем вызвать обработчик Instagram Stories напрямую`);
+          
+          // Импортируем Instagram Stories webhook handler
+          const instagramStoriesHandler = await import('./instagram-stories-webhook').then(m => m.default);
+          
+          // Создаем имитацию запроса и ответа
+          const mockReq: any = { body: { contentId } };
+          let resultData: any = null;
+          
+          const mockRes: any = {
+            json: (data: any) => {
+              log(`[Social Publishing] Прямой вызов обработчика Instagram Stories успешен: ${JSON.stringify(data)}`);
+              resultData = data;
+              return mockRes;
+            },
+            status: (code: number) => {
+              log(`[Social Publishing] Прямой вызов обработчика Instagram Stories вернул статус: ${code}`);
+              return mockRes;
+            }
+          };
+          
+          // Вызываем обработчик напрямую
+          await instagramStoriesHandler(mockReq, mockRes);
+          
+          if (resultData) {
+            result = resultData;
+          }
+        }
         
         // Обновляем статус в базе данных
         await storage.updateContentPlatformStatus(contentId, platform, result);
