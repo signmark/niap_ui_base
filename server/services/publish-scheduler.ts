@@ -1002,28 +1002,35 @@ export class PublishScheduler {
             continue;
           }
           
-          // Если статус pending - считаем готовым к публикации немедленно
-          if (platformData?.status === 'pending') {
-            logMessages.push(`${platform}: статус "pending", ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
+          // Если статус pending и selected:true - считаем готовым к публикации немедленно
+          if (platformData?.status === 'pending' && (platformData?.selected === true || platformData?.selected === undefined)) {
+            logMessages.push(`${platform}: статус "pending", selected=${platformData?.selected || 'undefined (считаем как true)'}, ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`);
             anyPlatformReady = true;
+            continue;
+          } else if (platformData?.status === 'pending' && platformData?.selected === false) {
+            logMessages.push(`${platform}: статус "pending" но selected=false, платформа не выбрана для публикации`);
             continue;
           }
           
-          // Проверяем индивидуальную дату для платформы
-          if (platformData?.scheduledAt) {
+          // Проверяем индивидуальную дату для платформы только если selected=true или не указано
+          if (platformData?.selected === false) {
+            logMessages.push(`${platform}: selected=false, платформа не выбрана для публикации`);
+          } else if (platformData?.scheduledAt) {
             const platformScheduledTime = new Date(platformData.scheduledAt);
             const timeUntilPublish = platformScheduledTime.getTime() - now.getTime();
             
             const minutesDiff = Math.floor(timeUntilPublish / 1000 / 60);
-            logMessages.push(`${platform}: запланирован на ${platformScheduledTime.toISOString()} (через ${minutesDiff} мин.)`);
+            logMessages.push(`${platform}: запланирован на ${platformScheduledTime.toISOString()} (через ${minutesDiff} мин.), selected=${platformData?.selected || 'undefined (считаем как true)'}`);
             
-            // Если время публикации для этой платформы наступило
-            if (platformScheduledTime <= now) {
+            // Если время публикации для этой платформы наступило И selected=true или не задано
+            if (platformScheduledTime <= now && (platformData?.selected === true || platformData?.selected === undefined)) {
               logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
               anyPlatformReady = true;
+            } else if (platformScheduledTime <= now && platformData?.selected === false) {
+              logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {
-            logMessages.push(`${platform}: нет данных о времени публикации`);
+            logMessages.push(`${platform}: нет данных о времени публикации, selected=${platformData?.selected || 'undefined (считаем как true)'}`);
           }
         }
         
@@ -1593,34 +1600,51 @@ export class PublishScheduler {
             return false;
           }
           
-          // ИСПРАВЛЕНИЕ: Для платформ в статусе 'pending', всегда включаем 
-          // их в список для публикации независимо от времени
+          // ИСПРАВЛЕНИЕ: Для платформ в статусе 'pending' и с флагом selected=true (или не указан)
+          // включаем их в список для публикации независимо от времени
           if (platformData.status === 'pending') {
-            log(`  - ${platform}: статус "pending", ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`, 'scheduler');
-            return true;
+            if (platformData.selected === false) {
+              log(`  - ${platform}: статус "pending", но selected=false - НЕ ВЫБРАН ДЛЯ ПУБЛИКАЦИИ`, 'scheduler');
+              return false;
+            } else {
+              log(`  - ${platform}: статус "pending", selected=${platformData.selected || 'undefined (считаем как true)'}, ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`, 'scheduler');
+              return true;
+            }
           }
           
           // Если у платформы есть своё scheduledAt, используем его для проверки
           if (platformData.scheduledAt) {
+            // Если selected=false, пропускаем эту платформу полностью
+            if (platformData.selected === false) {
+              log(`  - ${platform}: selected=false, платформа не выбрана для публикации`, 'scheduler');
+              return false;
+            }
+            
             const platformScheduledTime = new Date(platformData.scheduledAt);
             const diffMs = platformScheduledTime.getTime() - currentDate.getTime();
             const diffMinutes = Math.floor(diffMs / 1000 / 60);
             
             if (platformScheduledTime > currentDate) {
-              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., ПРОПУСКАЕМ`, 'scheduler');
+              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., selected=${platformData.selected || 'undefined (считаем как true)'}, ПРОПУСКАЕМ`, 'scheduler');
               return false;
             } else {
-              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, время публикации НАСТУПИЛО`, 'scheduler');
+              log(`  - ${platform}: запланирован на ${platformScheduledTime.toISOString()}, время публикации НАСТУПИЛО, selected=${platformData.selected || 'undefined (считаем как true)'}`, 'scheduler');
               return true;
             }
           } 
           // Проверяем поле updatedAt для совместимости с форматом данных в UI
           else if (platformData.updatedAt) {
+            // Если selected=false, пропускаем эту платформу полностью
+            if (platformData.selected === false) {
+              log(`  - ${platform}: selected=false, платформа не выбрана для публикации (updatedAt)`, 'scheduler');
+              return false;
+            }
+            
             const platformScheduledTime = new Date(platformData.updatedAt);
             const diffMs = platformScheduledTime.getTime() - currentDate.getTime();
             const diffMinutes = Math.floor(diffMs / 1000 / 60);
             
-            log(`  - ${platform}: найдено поле updatedAt вместо scheduledAt: ${platformScheduledTime.toISOString()}`, 'scheduler');
+            log(`  - ${platform}: найдено поле updatedAt вместо scheduledAt: ${platformScheduledTime.toISOString()}, selected=${platformData.selected || 'undefined (считаем как true)'}`, 'scheduler');
             
             if (platformScheduledTime > currentDate) {
               log(`  - ${platform}: запланирован (updatedAt) на ${platformScheduledTime.toISOString()}, еще ${diffMinutes} мин., ПРОПУСКАЕМ`, 'scheduler');
@@ -1631,16 +1655,29 @@ export class PublishScheduler {
             }
           }
           else {
+            // Если selected=false, пропускаем эту платформу полностью
+            if (platformData.selected === false) {
+              log(`  - ${platform}: selected=false, платформа не выбрана для публикации (общее время)`, 'scheduler');
+              return false;
+            }
+            
             // Если нет специфического времени для платформы, все равно включаем ее
-            log(`  - ${platform}: нет точного времени, используем общее время (если есть)`, 'scheduler');
+            log(`  - ${platform}: нет точного времени, используем общее время (если есть), selected=${platformData.selected || 'undefined (считаем как true)'}`, 'scheduler');
             
             // Используем общее поле scheduledAt только если нет индивидуального времени
             if (content.scheduledAt) {
-              return content.scheduledAt <= currentDate;
+              // Если время наступило и selected=true или не указан, публикуем
+              if (content.scheduledAt <= currentDate) {
+                log(`  - ${platform}: общее время публикации НАСТУПИЛО, статус selected=${platformData.selected || 'undefined (считаем как true)'}`, 'scheduler');
+                return true;
+              } else {
+                log(`  - ${platform}: общее время публикации еще не наступило, ПРОПУСКАЕМ`, 'scheduler');
+                return false;
+              }
             }
             
             // Если нет ни индивидуального, ни общего времени - включаем для публикации по умолчанию
-            log(`  - ${platform}: нет времени публикации вообще, считаем готовым`, 'scheduler');
+            log(`  - ${platform}: нет времени публикации вообще, считаем готовым, selected=${platformData.selected || 'undefined (считаем как true)'}`, 'scheduler');
             return true;
           }
         })
