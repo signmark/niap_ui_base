@@ -1024,6 +1024,10 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       log(`[Social Publishing] Ошибка при обновлении статуса платформы: ${error.message}`);
     }
     
+    // Освобождаем блокировку перед возвратом результата
+    markPublicationEnd(contentId, platform);
+    log(`[Social Publishing] Публикация завершена, блокировка снята для ${contentId} в ${platform}`);
+    
     // Возвращаем результат публикации
     return {
       platform,
@@ -1031,7 +1035,10 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       data: response.data
     };
   } catch (error) {
+    // Важно: освобождаем блокировку даже при ошибке
+    markPublicationEnd(contentId, platform);
     log(`[Social Publishing] Ошибка при публикации через n8n вебхук: ${error.message}`);
+    log(`[Social Publishing] Публикация не удалась, блокировка снята для ${contentId} в ${platform}`);
     
     return {
       platform,
