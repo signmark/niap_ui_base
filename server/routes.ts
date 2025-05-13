@@ -2984,7 +2984,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
   registerTestInstagramStoriesUpdateRoute(app);
+  
+  // Регистрируем маршруты для отладки планировщика публикаций
+  registerSchedulerDebugRoutes(app);
+  
   console.log('Test Instagram routes registered');
+  console.log('Scheduler debug routes registered');
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном
