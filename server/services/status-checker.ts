@@ -44,7 +44,18 @@ class PublicationStatusChecker {
     // Запускаем регулярные проверки по интервалу
     this.intervalId = setInterval(() => {
       this.checkPublicationStatuses();
+      
+      // Запускаем специальную проверку Instagram Stories каждые 2 минуты
+      if (Math.floor(Date.now() / (2 * 60 * 1000)) % 2 === 0) {
+        this.scanAndUpdateInstagramStories();
+      }
     }, this.checkIntervalMs);
+    
+    // Запускаем первое сканирование Instagram Stories через 20 секунд
+    // после запуска сервиса
+    setTimeout(() => {
+      this.scanAndUpdateInstagramStories();
+    }, 20000);
     
     this.isRunning = true;
     
@@ -173,6 +184,156 @@ class PublicationStatusChecker {
       }
       return null;
     }
+  }
+  
+  /**
+   * Принудительно обновляет статус контента при наличии опубликованных сторис на любой платформе
+   * @param contentId Идентификатор контента для проверки и обновления
+   */
+  async forceUpdateStoriesContent(contentId: string): Promise<boolean> {
+    try {
+      // Получаем токен администратора
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        log(`Не удалось получить токен администратора для обновления статуса сторис`, 'status-checker');
+        return false;
+      }
+      
+      // Получаем данные контента
+      const content = await storage.getCampaignContentById(contentId);
+      if (!content) {
+        log(`Контент с ID ${contentId} не найден`, 'status-checker');
+        return false;
+      }
+      
+      // Получаем данные о платформах
+      const platformsData = content.social_platforms || {};
+      
+      // Проверяем наличие опубликованных сторис на любой платформе
+      let hasStoriesPublished = false;
+      let storiesPlatform = '';
+      
+      // Проверка для Instagram Stories
+      const hasInstagramStories = platformsData.instagram && 
+                                 platformsData.instagram.status === 'published' && 
+                                 (platformsData.instagram.isStory === true || 
+                                  typeof platformsData.instagram.postUrl === 'string' && 
+                                  platformsData.instagram.postUrl.includes('/stories/'));
+      
+      // Проверка для VK Stories
+      const hasVkStories = platformsData.vk && 
+                          platformsData.vk.status === 'published' && 
+                          (platformsData.vk.isStory === true || 
+                           platformsData.vk.contentType === 'stories' ||
+                           typeof platformsData.vk.postUrl === 'string' && 
+                           platformsData.vk.postUrl.includes('/stories'));
+      
+      // Проверка для Telegram Stories
+      const hasTelegramStories = platformsData.telegram && 
+                                platformsData.telegram.status === 'published' && 
+                                (platformsData.telegram.isStory === true || 
+                                 platformsData.telegram.contentType === 'stories');
+      
+      // Определяем наличие сторис
+      if (hasInstagramStories) {
+        hasStoriesPublished = true;
+        storiesPlatform = 'Instagram';
+      } else if (hasVkStories) {
+        hasStoriesPublished = true;
+        storiesPlatform = 'VK';
+      } else if (hasTelegramStories) {
+        hasStoriesPublished = true;
+        storiesPlatform = 'Telegram';
+      }
+      
+      // Дополнительная проверка по названию контента и типу контента
+      if (!hasStoriesPublished) {
+        // Проверка по типу контента
+        const isStoriesContent = (content.contentType === 'stories' || 
+                                 content.content_type === 'stories' || 
+                                 content.type === 'stories');
+        
+        // Проверка по названию
+        const hasStoriesInTitle = typeof content.title === 'string' && 
+                                 (content.title.toLowerCase().includes('stories') || 
+                                  content.title.toLowerCase().includes('сторис') || 
+                                  content.title.includes('[stories]') || 
+                                  content.title.includes('#stories'));
+        
+        if ((isStoriesContent || hasStoriesInTitle) && 
+            Object.values(platformsData).some((platform: any) => platform?.status === 'published')) {
+          hasStoriesPublished = true;
+          storiesPlatform = 'По названию/типу контента';
+        }
+      }
+      
+      if (!hasStoriesPublished) {
+        log(`Контент ${contentId} не содержит опубликованных сторис`, 'status-checker');
+        return false;
+      }
+      
+      // Если контент уже имеет статус 'published', нет необходимости обновлять
+      if (content.status === 'published') {
+        log(`Контент ${contentId} уже имеет статус 'published'`, 'status-checker');
+        return true;
+      }
+      
+      // Обновляем статус контента
+      log(`STORIES (${storiesPlatform}): Обновление статуса контента ${contentId} на 'published'`, 'status-checker');
+      
+      // Попытка обновления через storage API
+      try {
+        await storage.updateCampaignContent(
+          contentId,
+          { status: 'published' },
+          adminToken
+        );
+        log(`STORIES (${storiesPlatform}): Статус контента ${contentId} успешно обновлен через storage API`, 'status-checker');
+      } catch (storageError: any) {
+        log(`STORIES (${storiesPlatform}): Ошибка при обновлении через storage API: ${storageError.message}`, 'status-checker');
+      }
+      
+      // Дополнительная попытка через прямой запрос к Directus
+      try {
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        await axios.patch(
+          `${directusUrl}/items/campaign_content/${contentId}`,
+          { status: 'published' },
+          {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        log(`STORIES (${storiesPlatform}): Статус контента ${contentId} успешно обновлен через прямой API запрос`, 'status-checker');
+      } catch (apiError: any) {
+        log(`STORIES (${storiesPlatform}): Ошибка при обновлении через прямой API запрос: ${apiError.message}`, 'status-checker');
+      }
+      
+      // Проверяем результат обновления
+      const updatedContent = await storage.getCampaignContentById(contentId);
+      const isUpdated = updatedContent?.status === 'published';
+      
+      if (isUpdated) {
+        log(`STORIES (${storiesPlatform}): Статус контента ${contentId} успешно обновлен на 'published'`, 'status-checker');
+      } else {
+        log(`STORIES (${storiesPlatform}): Не удалось обновить статус контента ${contentId}`, 'status-checker');
+      }
+      
+      return isUpdated;
+    } catch (error: any) {
+      log(`STORIES: Критическая ошибка при обновлении: ${error.message}`, 'status-checker');
+      return false;
+    }
+  }
+  
+  /**
+   * Обратная совместимость для Instagram Stories
+   * @deprecated Используйте forceUpdateStoriesContent вместо этого метода
+   */
+  async forceUpdateInstagramStoriesContent(contentId: string): Promise<boolean> {
+    return this.forceUpdateStoriesContent(contentId);
   }
   
   /**
@@ -320,7 +481,18 @@ class PublicationStatusChecker {
           log(`  - allFinalized = ${allFinalized}`, 'status-checker');
         }
         
-        if (allPublished) {
+        // Специальная проверка для Instagram Stories
+        const hasInstagramStories = platformsData.instagram && 
+                                    platformsData.instagram.status === 'published' && 
+                                    (platformsData.instagram.isStory === true || 
+                                     typeof platformsData.instagram.postUrl === 'string' && 
+                                     platformsData.instagram.postUrl.includes('/stories/'));
+        
+        if (hasInstagramStories) {
+          log(`Обнаружен опубликованный Instagram Stories для контента ${item.id}`, 'status-checker');
+          shouldUpdateStatus = true;
+          newStatus = 'published';
+        } else if (allPublished) {
           // Если все платформы опубликованы, ставим статус 'published'
           shouldUpdateStatus = true;
           newStatus = 'published';
