@@ -16,36 +16,87 @@ const router = express.Router();
 
 // Блокировка для предотвращения параллельных публикаций одного и того же контента
 // Map для хранения идентификаторов контента, который в процессе публикации
-// Ключ: contentId + "_" + platform, Значение: timestamp начала публикации
-const inProgressPublications = new Map<string, number>();
+// Ключ: contentId + "_" + platform, Значение: { timestamp: number, attempts: number }
+const inProgressPublications = new Map<string, { timestamp: number, attempts: number }>();
+
+// Константы для управления блокировками
+const PUBLICATION_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 минут - максимальное время блокировки для активной публикации
+const PUBLICATION_SAFETY_LOCK = 3 * 60 * 1000;  // 3 минуты - время защитной блокировки для предотвращения множественной публикации
+const MAX_ATTEMPTS = 3;  // Максимальное число попыток публикации в течение 5 минут
 
 // Функция для проверки, не публикуется ли уже этот контент для этой платформы
 const isPublicationInProgress = (contentId: string, platform: string): boolean => {
   const key = `${contentId}_${platform}`;
-  const timestamp = inProgressPublications.get(key);
+  const lockInfo = inProgressPublications.get(key);
   
-  if (!timestamp) return false;
+  if (!lockInfo) return false;
   
-  // Если прошло больше 5 минут, считаем, что публикация зависла и разрешаем повторную
   const now = Date.now();
-  if (now - timestamp > 5 * 60 * 1000) {
+  const timeSinceLock = now - lockInfo.timestamp;
+
+  // Если прошло больше допустимого времени, считаем, что публикация зависла и разрешаем повторную
+  if (timeSinceLock > PUBLICATION_LOCK_TIMEOUT) {
+    log(`Снята блокировка публикации для ${key} - превышено время ожидания ${PUBLICATION_LOCK_TIMEOUT / 1000} сек`, 'social-publishing');
     inProgressPublications.delete(key);
     return false;
   }
   
-  return true;
+  // Проверка количества попыток - если превышен лимит, блокируем на более длительное время
+  if (lockInfo.attempts >= MAX_ATTEMPTS) {
+    log(`Заблокирована публикация ${key} - превышен лимит попыток (${MAX_ATTEMPTS}) в течение короткого периода`, 'social-publishing');
+    return true;
+  }
+  
+  // Если прошло менее PUBLICATION_SAFETY_LOCK времени, считаем что контент еще в процессе публикации
+  if (timeSinceLock < PUBLICATION_SAFETY_LOCK) {
+    log(`Публикация ${key} защищена блокировкой еще ${Math.floor((PUBLICATION_SAFETY_LOCK - timeSinceLock) / 1000)} сек`, 'social-publishing');
+    return true;
+  }
+  
+  return false;
 };
 
 // Функция для маркировки начала публикации
 const markPublicationStart = (contentId: string, platform: string): void => {
   const key = `${contentId}_${platform}`;
-  inProgressPublications.set(key, Date.now());
+  const existingLock = inProgressPublications.get(key);
+  
+  if (existingLock) {
+    // Если уже есть блокировка, увеличиваем счетчик попыток публикации
+    existingLock.attempts += 1;
+    log(`Увеличен счетчик попыток публикации для ${key} до ${existingLock.attempts}`, 'social-publishing');
+  } else {
+    // Создаем новую блокировку
+    inProgressPublications.set(key, { timestamp: Date.now(), attempts: 1 });
+    log(`Установлена блокировка публикации для ${key}`, 'social-publishing');
+  }
 };
 
 // Функция для маркировки завершения публикации
 const markPublicationEnd = (contentId: string, platform: string): void => {
   const key = `${contentId}_${platform}`;
-  inProgressPublications.delete(key);
+  
+  // Проверяем, есть ли запись о блокировке
+  if (inProgressPublications.has(key)) {
+    log(`Завершена публикация и сохранена защитная блокировка для ${key} на ${PUBLICATION_SAFETY_LOCK / 1000} сек`, 'social-publishing');
+    
+    // Обновляем время, но не удаляем блокировку сразу
+    // Это нужно для защиты от множественной публикации одного контента
+    inProgressPublications.set(key, { 
+      timestamp: Date.now(), 
+      attempts: inProgressPublications.get(key)!.attempts 
+    });
+    
+    // Установка таймера на удаление блокировки через PUBLICATION_SAFETY_LOCK миллисекунд
+    setTimeout(() => {
+      // Проверяем, не была ли блокировка уже обновлена другим запросом
+      const lockInfo = inProgressPublications.get(key);
+      if (lockInfo && (Date.now() - lockInfo.timestamp >= PUBLICATION_SAFETY_LOCK)) {
+        inProgressPublications.delete(key);
+        log(`Автоматически снята защитная блокировка для ${key} после ${PUBLICATION_SAFETY_LOCK / 1000} сек`, 'social-publishing');
+      }
+    }, PUBLICATION_SAFETY_LOCK + 1000); // +1 секунда для надежности
+  }
 };
 
 /**
@@ -217,13 +268,19 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             const scheduledTime = new Date(socialPlatforms[platform].scheduledFor);
             const now = new Date();
             
-            // Уменьшаем точность сравнения до минут
-            const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-            const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+            // ИСПРАВЛЕНО: Используем строгое сравнение на уровне миллисекунд
+            const scheduledFullTime = scheduledTime.getTime();
+            const nowFullTime = now.getTime();
             
-            // Проверяем, не запланировано ли время на более чем 1 минуту в будущем
-            if (scheduledMinutes > nowMinutes) {
+            // Проверяем, не запланировано ли время на будущее
+            if (scheduledFullTime > nowFullTime) {
               scheduledMessage += `\n- ${platform}: ${scheduledTime.toLocaleString()}`;
+              hasScheduledPlatforms = true;
+            }
+            
+            // Также проверяем наличие блокировки для этой платформы
+            if (isPublicationInProgress(contentId, platform)) {
+              scheduledMessage += `\n- ${platform}: БЛОКИРОВКА АКТИВНА - недавно была попытка публикации`;
               hasScheduledPlatforms = true;
             }
           }

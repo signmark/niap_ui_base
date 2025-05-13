@@ -1130,20 +1130,54 @@ export class PublishScheduler {
                   log(`Проверка времени для Stories контента ${content.id}: Запланировано=${scheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((scheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
                 }
                 
-                // Точная проверка времени с точностью до минут
-                const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-                const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
-                
-                // Проверяем, наступило ли время публикации - строгое сравнение на уровне миллисекунд
+                // ИСПРАВЛЕННАЯ ЛОГИКА: используем строгое сравнение времени на уровне миллисекунд
+                // и добавляем защиту от двойной публикации
                 const scheduledFullTime = scheduledTime.getTime();
                 const nowFullTime = now.getTime();
-                const timeHasReached = nowFullTime >= scheduledFullTime;
+                
+                // Проверяем, не находится ли эта платформа в блокировке (недавно публиковалась)
+                const platformLockKey = `${content.id}_${platform}`;
+                const lockInfo = this.publicationLocks.get(platformLockKey);
+                
+                // Если блокировка активна, пропускаем этот контент
+                if (lockInfo && (nowFullTime - lockInfo.timestamp) < this.publicationLockInterval) {
+                  const secondsLeft = Math.floor((this.publicationLockInterval - (nowFullTime - lockInfo.timestamp)) / 1000);
+                  log(`${platform}: БЛОКИРОВКА АКТИВНА еще ${secondsLeft} сек, предотвращение повторной публикации Stories`, 'scheduler');
+                  logMessages.push(`${platform}: ЗАЩИТА ОТ ПОВТОРНОЙ ПУБЛИКАЦИИ Stories активна еще ${secondsLeft} сек`);
+                  continue;
+                }
+                
+                // БЕЗОПАСНЫЙ РЕЖИМ: Публикуем только если время наступило И прошло не более 3 минут с запланированного времени
+                // Это предотвращает повторную публикацию контента, который уже был опубликован, но статус не обновился
+                const maxPublishWindowMs = 3 * 60 * 1000; // 3 минуты
+                const isWithinPublishWindow = (nowFullTime - scheduledFullTime) <= maxPublishWindowMs;
+                
+                // Проверяем условия публикации - время наступило и находимся в окне публикации
+                const timeHasReached = nowFullTime >= scheduledFullTime && isWithinPublishWindow;
                 
                 // Проверяем готовность к публикации с учетом настроек платформы
                 if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {
                   logMessages.push(`${platform}: Обнаружен Stories контент со временем ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
                   log(`Контент ID ${content.id} "${content.title}" - это STORIES с общим временем публикации ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ`, 'scheduler');
-                  anyPlatformReady = true;
+                  
+                  // Устанавливаем блокировку на публикацию этой платформы
+                  const lockKey = `${content.id}_${platform}`;
+                  if (!this.publicationLocks.has(lockKey)) {
+                    this.publicationLocks.set(lockKey, { 
+                      timestamp: nowFullTime,
+                      platforms: new Set([platform])
+                    });
+                    log(`Установлена блокировка публикации Stories для ${content.id}_${platform} на ${this.publicationLockInterval/1000} сек`, 'scheduler');
+                    anyPlatformReady = true;
+                  } else {
+                    logMessages.push(`${platform}: Блокировка Stories уже установлена, пропускаем`);
+                  }
+                } else if (!timeHasReached) {
+                  if (nowFullTime < scheduledFullTime) {
+                    logMessages.push(`${platform}: время публикации Stories еще не наступило - ПРОПУСКАЕМ`);
+                  } else if (!isWithinPublishWindow) {
+                    logMessages.push(`${platform}: Stories - прошло более 3 минут с запланированного времени - ПРОПУСКАЕМ`);
+                  }
                 }
               } else {
                 logMessages.push(`${platform}: Stories контент без указанного времени публикации`);
@@ -1981,6 +2015,25 @@ export class PublishScheduler {
           successfulPublications++;
           continue;
         }
+        
+        // НОВАЯ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ: Проверяем, не установлена ли блокировка на публикацию
+        const platformLockKey = `${content.id}_${platform}`;
+        const lockInfo = this.publicationLocks.get(platformLockKey);
+        const now = Date.now();
+        
+        // Если блокировка активна, пропускаем этот контент
+        if (lockInfo && (now - lockInfo.timestamp) < this.publicationLockInterval) {
+          const secondsLeft = Math.floor((this.publicationLockInterval - (now - lockInfo.timestamp)) / 1000);
+          log(`БЛОКИРОВКА: Пропуск публикации ${content.id} в ${platform} - активна блокировка еще ${secondsLeft} сек`, 'scheduler');
+          continue;
+        }
+        
+        // Устанавливаем блокировку на данную публикацию
+        this.publicationLocks.set(platformLockKey, {
+          timestamp: now,
+          platforms: new Set([platform])
+        });
+        log(`Установлена блокировка публикации для ${content.id}_${platform} на ${this.publicationLockInterval/1000} сек`, 'scheduler');
 
         totalAttempts++;
 
