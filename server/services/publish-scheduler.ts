@@ -1027,16 +1027,31 @@ export class PublishScheduler {
               log(`Проверка времени для платформы ${platform}: Запланировано=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}, Разница=${Math.floor((platformScheduledTime.getTime() - now.getTime()) / 1000)} сек`, 'scheduler');
             }
             
-            // Точная проверка времени: публикуем, только если текущее время >= запланированное время
-            // Уменьшаем точность сравнения до минут для избежания проблем с миллисекундами
-            const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-            const scheduledMinutes = Math.floor(platformScheduledTime.getTime() / (60 * 1000));
+            // ИСПРАВЛЕННАЯ точная проверка времени: публикуем ТОЛЬКО если текущая минута СТРОГО БОЛЬШЕ запланированной
+            // или если текущая минута равна запланированной, НО секунды текущего времени > секунд запланированного
+            const nowMs = now.getTime();
+            const scheduledMs = platformScheduledTime.getTime();
+            
+            // Расчет компонентов времени
+            const nowMinutes = Math.floor(nowMs / (60 * 1000));
+            const scheduledMinutes = Math.floor(scheduledMs / (60 * 1000));
+            const nowSeconds = Math.floor((nowMs / 1000) % 60);
+            const scheduledSeconds = Math.floor((scheduledMs / 1000) % 60);
+            
+            // Детальный лог для отладки
+            logMessages.push(`${platform}: Детальное сравнение времени: Запланировано=${platformScheduledTime.toISOString()}, Сейчас=${now.toISOString()}`);
+            logMessages.push(`${platform}: Минуты: план=${scheduledMinutes}, сейчас=${nowMinutes}; Секунды: план=${scheduledSeconds}, сейчас=${nowSeconds}`);
+            
+            // НОВАЯ ЛОГИКА: Точное сравнение с учетом и минут, и секунд
+            // Публикуем только когда текущее время строго больше запланированного
+            const timeHasReached = (nowMinutes > scheduledMinutes) || 
+                                  (nowMinutes === scheduledMinutes && nowSeconds >= scheduledSeconds);
             
             // Если время публикации для этой платформы наступило И selected=true или не задано
-            if (nowMinutes >= scheduledMinutes && (platformData?.selected === true || platformData?.selected === undefined)) {
+            if (timeHasReached && (platformData?.selected === true || platformData?.selected === undefined)) {
               logMessages.push(`${platform}: ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
               anyPlatformReady = true;
-            } else if (nowMinutes >= scheduledMinutes && platformData?.selected === false) {
+            } else if (timeHasReached && platformData?.selected === false) {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {

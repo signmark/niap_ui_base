@@ -796,22 +796,36 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       const checkPlatform = platform === 'instagram-stories' ? 'instagram' : platform;
       
       // Проверяем есть ли запланированная дата для указанной платформы
-      if (socialPlatforms[checkPlatform] && 
-          socialPlatforms[checkPlatform].status === 'scheduled' && 
-          socialPlatforms[checkPlatform].scheduledFor) {
+      // Поиск любого запланированного времени в данных платформы
+      const platformData = socialPlatforms[checkPlatform];
+      if (platformData) {
+        // Проверяем все возможные поля с временем публикации
+        const scheduledTimeStr = 
+          platformData.scheduledAt || 
+          platformData.scheduledFor || 
+          platformData.scheduled_at;
         
-        const scheduledTime = new Date(socialPlatforms[checkPlatform].scheduledFor);
-        const now = new Date();
-        
-        // Уменьшаем точность сравнения до минут
-        const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-        const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
-        
-        // Проверяем, не запланировано ли время на более чем текущую минуту
-        if (scheduledMinutes > nowMinutes) {
-          const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} уже запланирован на ${scheduledTime.toISOString()}. Дождитесь запланированного времени.`;
-          log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
-          throw new Error(errorMsg);
+        if (scheduledTimeStr) {
+          log(`[Social Publishing] Найдено запланированное время для ${checkPlatform}: ${scheduledTimeStr}`);
+          
+          const scheduledTime = new Date(scheduledTimeStr);
+          const now = new Date();
+          
+          // Добавляем логи для отладки
+          log(`[Social Publishing] Проверка времени публикации: запланировано=${scheduledTime.toISOString()}, сейчас=${now.toISOString()}`); 
+          
+          // Уменьшаем точность сравнения до минут
+          const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+          const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+          
+          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем, не запланировано ли время на РАВНУЮ ИЛИ БОЛЕЕ позднюю минуту 
+          // чем текущая - то есть публикуем только если scheduledMinutes < nowMinutes
+          if (scheduledMinutes >= nowMinutes) {
+            const minutesUntilScheduled = scheduledMinutes - nowMinutes;
+            const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()} (через ${minutesUntilScheduled} мин). Дождитесь запланированного времени.`;
+            log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
+            throw new Error(errorMsg);
+          }
         }
       }
     }
