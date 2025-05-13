@@ -1030,7 +1030,28 @@ export class PublishScheduler {
               logMessages.push(`${platform}: время публикации наступило, но selected=false - ПРОПУСКАЕМ`);
             }
           } else {
-            logMessages.push(`${platform}: нет данных о времени публикации, selected=${platformData?.selected || 'undefined (считаем как true)'}`);
+            // Проверяем общее время публикации и тип контента
+            if (content.scheduledAt) {
+              const scheduledTime = new Date(content.scheduledAt);
+              
+              // Проверяем, наступило ли время публикации
+              if (scheduledTime <= now && (platformData?.selected === true || platformData?.selected === undefined)) {
+                // Если это Stories или флаг selected установлен, публикуем
+                const isStories = this.isContentTypeStories(content);
+                
+                // Добавляем подробные логи для Stories
+                if (isStories) {
+                  logMessages.push(`${platform}: Обнаружен Stories контент со временем ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
+                  log(`Контент ID ${content.id} "${content.title}" - это STORIES с общим временем публикации ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ`, 'scheduler');
+                  anyPlatformReady = true;
+                } else {
+                  logMessages.push(`${platform}: Использовано общее время ${scheduledTime.toISOString()}, ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`);
+                  anyPlatformReady = true;
+                }
+              }
+            } else {
+              logMessages.push(`${platform}: нет данных о времени публикации, selected=${platformData?.selected || 'undefined (считаем как true)'}`);
+            }
           }
         }
         
