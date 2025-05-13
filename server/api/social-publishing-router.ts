@@ -101,7 +101,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           !Array.isArray(platforms) && platforms.instagram === true) {
         
         // Получаем ссылку на webhook Instagram Stories
-        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook-test/publish-instagram-stories';
+        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook/publish-instagram-stories';
         log(`[Social Publishing] Перенаправляем на специальный вебхук для Instagram Stories: ${n8nWebhookUrl}`);
         
         try {
@@ -585,7 +585,7 @@ router.post('/publish', authMiddleware, async (req, res) => {
         }
         
         // Получаем ссылку на webhook Instagram Stories
-        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook-test/publish-instagram-stories';
+        const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook/publish-instagram-stories';
         log(`[Social Publishing] Перенаправляем на специальный вебхук для Instagram Stories: ${n8nWebhookUrl}`);
         
         // Подготавливаем данные для отправки в n8n, аналогично instagram-stories-webhook.ts
