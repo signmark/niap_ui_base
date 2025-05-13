@@ -941,6 +941,13 @@ export class PublishScheduler {
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
           // Проверяем статус и пропускаем если уже опубликован
           if (platformData?.status === 'published') {
+            // Проверяем есть ли postUrl или postId - если нет, значит публикация не была фактически выполнена
+            if (!platformData.postUrl && !platformData.postId) {
+              logMessages.push(`${platform}: имеет статус published, но отсутствует postUrl/postId - ТРЕБУЕТСЯ ПЕРЕОТПРАВКА`);
+              anyPlatformReady = true;
+              continue;
+            }
+            
             logMessages.push(`${platform}: уже опубликован`);
             continue;
           }
