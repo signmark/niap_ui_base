@@ -211,7 +211,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         // Не присваиваем напрямую, т.к. это константа - создаем новую переменную
         let processedPlatforms = filteredPlatforms;
         
-        log(`[Social Publishing] Скорректированный список платформ для Stories: ${JSON.stringify(platforms)}`);
+        log(`[Social Publishing] Скорректированный список платформ для Stories: ${JSON.stringify(filteredPlatforms)}`);
         
         // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
         // Этот блок кода предотвращает публикацию заранее запланированного контента
@@ -252,8 +252,10 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           }
         }
         
-        // Используем тот же подход, что и для обычных постов, но с платформой instagram-stories
-        return publishViaN8n(contentId, 'instagram-stories', req, res);
+        // ИСПРАВЛЕНИЕ: Используем просто 'instagram' вместо 'instagram-stories' 
+        // т.к. используется единый webhook, который определяет тип контента
+        log(`[Social Publishing] Используем обычный вебхук Instagram для публикации Stories`, 'social');
+        return publishViaN8n(contentId, 'instagram', req, res);
       } else {
         // Если Instagram не выбран, сообщаем об ошибке
         return res.status(400).json({
