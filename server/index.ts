@@ -246,6 +246,13 @@ app.use((req, res, next) => {
     registerImgurRoutes(app);
     log("Imgur Uploader routes registered successfully");
     
+    // Регистрируем тестовый маршрут для проверки статуса шедулера
+    log("Registering Test Scheduler Status route...");
+    import('./api/test-scheduler-status').then(module => {
+      module.default(app);
+      log("Test Scheduler Status route registered successfully");
+    });
+    
     // Регистрируем маршруты для получения моделей DeepSeek
     log("Registering DeepSeek Models route...");
     registerDeepSeekModelsRoute(app);
