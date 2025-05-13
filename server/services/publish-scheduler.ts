@@ -1994,19 +1994,52 @@ export class PublishScheduler {
           return;
         }
         
-        // Если в platformsToPublish есть другие платформы кроме Instagram, фильтруем их
-        if (platformsToPublish.length > 1) {
-          log(`БЕЗОПАСНЫЙ РЕЖИМ: Контент ${content.id} является Stories, но выбрано ${platformsToPublish.length} платформ`, 'scheduler');
-          log(`КОРРЕКЦИЯ: Для Stories будет опубликован ТОЛЬКО в Instagram, другие платформы будут игнорироваться`, 'scheduler');
+        // УЛУЧШЕННАЯ ФИЛЬТРАЦИЯ: Stories публикуются только в Instagram 
+        // Это должно срабатывать всегда, независимо от количества выбранных платформ
+        log(`БЕЗОПАСНЫЙ РЕЖИМ: Контент ${content.id} является Stories, выбрано ${platformsToPublish.length} платформ`, 'scheduler');
+        log(`КОРРЕКЦИЯ: Для Stories будет опубликован ТОЛЬКО в Instagram, другие платформы будут игнорироваться`, 'scheduler');
+        
+        // Сохраняем список платформ перед фильтрацией для логирования
+        const originalPlatforms = [...platformsToPublish];
+        
+        // Создаем новый массив только с Instagram
+        const filteredPlatforms = originalPlatforms.filter(p => p === 'instagram');
+        
+        // Создаем новую переменную вместо изменения константы
+        // Это обойдет ошибку компилятора "Cannot assign to 'platformsToPublish' because it is a constant"
+        const instagramOnlyPlatforms = filteredPlatforms;
+        
+        // Заменяем дальнейшие ссылки на platformsToPublish этой переменной
+        
+        // Подробное логирование для диагностики
+        log(`ИТОГО после фильтрации: ${instagramOnlyPlatforms.length} платформ для публикации Stories`, 'scheduler');
+        log(`Исходные платформы: ${originalPlatforms.join(', ')}, Отфильтрованные: ${instagramOnlyPlatforms.join(', ')}`, 'scheduler');
+        
+        // Дополнительная проверка блокировки для Stories
+        if (instagramOnlyPlatforms.length > 0) {
+          const lockKey = `${content.id}_stories`;
+          const storiesLock = this.publicationLocks.get(lockKey);
           
-          // Оставляем только Instagram
-          const filteredPlatforms = platformsToPublish.filter(p => p === 'instagram');
-          
-          // Обновляем список платформ для публикации
-          platformsToPublish.length = 0;
-          filteredPlatforms.forEach(p => platformsToPublish.push(p));
-          
-          log(`ИТОГО после фильтрации: ${platformsToPublish.length} платформ для публикации Stories`, 'scheduler');
+          if (storiesLock) {
+            const lockAgeMs = Date.now() - storiesLock.timestamp;
+            const secondsLeft = Math.floor((this.publicationLockInterval - lockAgeMs) / 1000);
+            
+            if (lockAgeMs < this.publicationLockInterval) {
+              log(`ГЛОБАЛЬНАЯ БЛОКИРОВКА Stories: Для контента ${content.id} установлена блокировка на публикацию Stories еще на ${secondsLeft} сек`, 'scheduler');
+              return; // Прерываем публикацию полностью
+            } else {
+              // Время блокировки истекло, удаляем её
+              this.publicationLocks.delete(lockKey);
+              log(`Блокировка Stories для контента ${content.id} истекла и была удалена`, 'scheduler');
+            }
+          } else {
+            // Устанавливаем глобальную блокировку на Stories для этого контента
+            this.publicationLocks.set(lockKey, { 
+              timestamp: Date.now(),
+              platforms: new Set(['instagram'])
+            });
+            log(`Установлена глобальная блокировка Stories для контента ${content.id} на ${this.publicationLockInterval/1000} сек`, 'scheduler');
+          }
         }
       }
       

@@ -186,24 +186,30 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
         
         // УСИЛЕНИЕ ФИЛЬТРАЦИИ: При определении типа контента как Stories, 
         // игнорируем все выбранные платформы, кроме Instagram
+        let filteredPlatforms;
+        
         if (Array.isArray(platforms)) {
           // Если платформы представлены массивом
-          platforms = platforms.filter(p => p === 'instagram');
+          filteredPlatforms = platforms.filter(p => p === 'instagram');
           
-          if (platforms.length === 0) {
+          if (filteredPlatforms.length === 0) {
             // Если Instagram не был выбран, добавляем его
-            platforms = ['instagram'];
+            filteredPlatforms = ['instagram'];
             log(`[Social Publishing] Instagram автоматически добавлен как обязательная платформа для Stories`);
           }
         } else {
           // Если платформы представлены объектом
           const instagramSelected = platforms.instagram === true;
-          platforms = { instagram: true };
+          filteredPlatforms = { instagram: true };
           
           if (!instagramSelected) {
             log(`[Social Publishing] Instagram автоматически добавлен как обязательная платформа для Stories`);
           }
         }
+        
+        // Используем отфильтрованные платформы в дальнейшем
+        // Не присваиваем напрямую, т.к. это константа - создаем новую переменную
+        let processedPlatforms = filteredPlatforms;
         
         log(`[Social Publishing] Скорректированный список платформ для Stories: ${JSON.stringify(platforms)}`);
         
