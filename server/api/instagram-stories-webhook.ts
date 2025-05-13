@@ -46,36 +46,29 @@ router.post('/', async (req: Request, res: Response) => {
       const accessToken = authResponse.data.data.access_token;
       
       // Теперь используем токен для запроса данных контента
-      try {
-        const directusResponse = await directusApiManager.get(`/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        });
-        
-        // Полный лог ответа от Directus для отладки
-        log(`Структура ответа от Directus: ${JSON.stringify(Object.keys(directusResponse))}`, 'instagram-webhook');
-        log(`Структура directusResponse.data: ${JSON.stringify(directusResponse.data ? Object.keys(directusResponse.data) : 'нет данных')}`, 'instagram-webhook');
-        
-        if (!directusResponse.data) {
-          log(`Пустой ответ от Directus API: ${JSON.stringify(directusResponse)}`, 'instagram-webhook');
-          throw new Error('Пустой ответ от Directus API');
+      // Получаем данные контента
+      const directusResponse = await directusApiManager.get(`/items/campaign_content/${contentId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
         }
-        
-        const contentData = directusResponse.data.data;
-        
-        // Дополнительный лог для отладки
-        log(`Получены данные контента: ${JSON.stringify(contentData)}`, 'instagram-webhook');
-      } catch (error: any) {
-        log(`Ошибка при получении данных из Directus: ${error.message}`, 'instagram-webhook');
+      });
+      
+      // Полный лог ответа от Directus для отладки
+      log(`Структура ответа от Directus: ${JSON.stringify(Object.keys(directusResponse))}`, 'instagram-webhook');
+      log(`Структура directusResponse.data: ${JSON.stringify(directusResponse.data ? Object.keys(directusResponse.data) : 'нет данных')}`, 'instagram-webhook');
+      
+      if (!directusResponse.data) {
+        log(`Пустой ответ от Directus API: ${JSON.stringify(directusResponse)}`, 'instagram-webhook');
         return res.status(500).json({
           success: false,
-          error: `Ошибка при получении данных из Directus: ${error.message}`
+          error: 'Пустой ответ от Directus API'
         });
       }
       
-      // Используем переменную из внешнего контекста
       const contentData = directusResponse.data.data;
+      
+      // Дополнительный лог для отладки
+      log(`Получены данные контента: ${JSON.stringify(contentData)}`, 'instagram-webhook');
       
       if (!contentData) {
         log(`Ошибка: не удалось найти контент с ID ${contentId}`, 'instagram-webhook');
@@ -85,18 +78,22 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
 
-      // Проверяем тип контента
-      if (contentData.contentType !== 'stories') {
-        log(`Ошибка: неверный тип контента для Instagram Stories: ${contentData.contentType}`, 'instagram-webhook');
+      // Проверяем тип контента (учитываем возможные варианты именования поля)
+      const contentType = contentData.contentType || contentData.content_type;
+      if (contentType !== 'stories') {
+        log(`Ошибка: неверный тип контента для Instagram Stories: ${contentType}`, 'instagram-webhook');
         return res.status(400).json({
           success: false,
-          error: `Неверный тип контента для Instagram Stories: ${contentData.contentType}`
+          error: `Неверный тип контента для Instagram Stories: ${contentType}`
         });
       }
 
-      // Проверяем наличие изображений или видео
-      if (!contentData.imageUrl && !contentData.videoUrl && 
-          (!contentData.additionalImages || contentData.additionalImages.length === 0)) {
+      // Проверяем наличие изображений или видео (учитываем различные варианты именования полей)
+      const imageUrl = contentData.imageUrl || contentData.image_url;
+      const videoUrl = contentData.videoUrl || contentData.video_url;
+      const additionalImages = contentData.additionalImages || contentData.additional_images || [];
+      
+      if (!imageUrl && !videoUrl && additionalImages.length === 0) {
         log(`Ошибка: отсутствуют медиа-файлы для публикации Instagram Stories`, 'instagram-webhook');
         return res.status(400).json({
           success: false,
@@ -107,17 +104,23 @@ router.post('/', async (req: Request, res: Response) => {
       // Адрес webhook для n8n
       const n8nWebhookUrl = process.env.INSTAGRAM_STORIES_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook-test/publish-instagram-stories';
       
-      // Подготавливаем данные для отправки в n8n
+      // Подготавливаем данные для отправки в n8n (учитываем различные варианты именования полей)
+      const title = contentData.title || "";
+      const content = contentData.content || "";
+      const campaignId = contentData.campaignId || contentData.campaign_id;
+      const additionalVideos = contentData.additionalVideos || contentData.additional_videos || [];
+      const metadata = contentData.metadata || {};
+      
       const dataForN8n = {
         contentId,
-        title: contentData.title,
-        content: contentData.content,
-        imageUrl: contentData.imageUrl,
-        additionalImages: contentData.additionalImages || [],
-        videoUrl: contentData.videoUrl,
-        additionalVideos: contentData.additionalVideos || [],
-        metadata: contentData.metadata || {},
-        campaignId: contentData.campaignId,
+        title,
+        content,
+        imageUrl,
+        additionalImages,
+        videoUrl,
+        additionalVideos,
+        metadata,
+        campaignId,
         // Добавляем дополнительные поля для n8n
         requestTimestamp: Date.now(),
         source: 'smm-manager'
@@ -130,8 +133,8 @@ router.post('/', async (req: Request, res: Response) => {
       if (webhookResponse.status >= 200 && webhookResponse.status < 300) {
         log(`Данные успешно отправлены на n8n webhook, ответ: ${JSON.stringify(webhookResponse.data)}`, 'instagram-webhook');
         
-        // Обновляем статус публикации в Directus
-        const socialPublications = contentData.socialPublications || {};
+        // Обновляем статус публикации в Directus (учитываем различные варианты именования полей)
+        const socialPublications = contentData.socialPublications || contentData.social_publications || contentData.social_platforms || {};
         const now = new Date().toISOString();
         
         // Добавляем или обновляем статус публикации для Instagram
