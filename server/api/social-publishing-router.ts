@@ -803,8 +803,12 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
         const scheduledTime = new Date(socialPlatforms[checkPlatform].scheduledFor);
         const now = new Date();
         
-        // Если запланированное время в будущем (больше чем текущее время + 2 минуты)
-        if (scheduledTime > new Date(now.getTime() + 2 * 60000)) {
+        // Уменьшаем точность сравнения до минут
+        const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
+        const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+        
+        // Проверяем, не запланировано ли время на более чем текущую минуту
+        if (scheduledMinutes > nowMinutes) {
           const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} уже запланирован на ${scheduledTime.toISOString()}. Дождитесь запланированного времени.`;
           log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
           throw new Error(errorMsg);
