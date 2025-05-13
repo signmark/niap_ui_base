@@ -14,6 +14,40 @@ import { SocialPlatform } from '@shared/schema';
 
 const router = express.Router();
 
+// Блокировка для предотвращения параллельных публикаций одного и того же контента
+// Map для хранения идентификаторов контента, который в процессе публикации
+// Ключ: contentId + "_" + platform, Значение: timestamp начала публикации
+const inProgressPublications = new Map<string, number>();
+
+// Функция для проверки, не публикуется ли уже этот контент для этой платформы
+const isPublicationInProgress = (contentId: string, platform: string): boolean => {
+  const key = `${contentId}_${platform}`;
+  const timestamp = inProgressPublications.get(key);
+  
+  if (!timestamp) return false;
+  
+  // Если прошло больше 5 минут, считаем, что публикация зависла и разрешаем повторную
+  const now = Date.now();
+  if (now - timestamp > 5 * 60 * 1000) {
+    inProgressPublications.delete(key);
+    return false;
+  }
+  
+  return true;
+};
+
+// Функция для маркировки начала публикации
+const markPublicationStart = (contentId: string, platform: string): void => {
+  const key = `${contentId}_${platform}`;
+  inProgressPublications.set(key, Date.now());
+};
+
+// Функция для маркировки завершения публикации
+const markPublicationEnd = (contentId: string, platform: string): void => {
+  const key = `${contentId}_${platform}`;
+  inProgressPublications.delete(key);
+};
+
 /**
  * @api {post} /api/publish/now Публикация контента сразу в выбранные социальные сети
  * @apiDescription Публикует контент сразу в выбранные социальные сети и сохраняет выбранные платформы
@@ -775,7 +809,18 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
  */
 async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
   try {
-    log(`[Social Publishing] Публикация контента ${contentId} в ${platform} через n8n вебхук (async)`);
+    log(`[Social Publishing] Проверка блокировки для контента ${contentId} в ${platform}`);
+    
+    // КРИТИЧЕСКИ ВАЖНАЯ ПРОВЕРКА: Смотрим, не публикуется ли уже этот контент
+    if (isPublicationInProgress(contentId, platform)) {
+      const errorMsg = `БЛОКИРОВКА: Контент ${contentId} для платформы ${platform} УЖЕ находится в процессе публикации! Пропускаем дублирующийся запрос.`;
+      log(`[Social Publishing] ${errorMsg}`, 'error');
+      throw new Error(errorMsg);
+    }
+    
+    // Маркируем начало публикации
+    markPublicationStart(contentId, platform);
+    log(`[Social Publishing] Публикация контента ${contentId} в ${platform} через n8n вебхук (async) - начата и заблокирована для параллельных запросов`);
 
     // НОВАЯ ПРОВЕРКА: Проверяем, нет ли для этого контента запланированного времени
     // для указанной платформы
@@ -814,15 +859,18 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
           // Добавляем логи для отладки
           log(`[Social Publishing] Проверка времени публикации: запланировано=${scheduledTime.toISOString()}, сейчас=${now.toISOString()}`); 
           
-          // Уменьшаем точность сравнения до минут
-          const nowMinutes = Math.floor(now.getTime() / (60 * 1000));
-          const scheduledMinutes = Math.floor(scheduledTime.getTime() / (60 * 1000));
+          // ИСПРАВЛЕНО: Используем секунды для более точного сравнения
+          const nowSeconds = Math.floor(now.getTime() / 1000);
+          const scheduledSeconds = Math.floor(scheduledTime.getTime() / 1000);
           
-          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем, не запланировано ли время на РАВНУЮ ИЛИ БОЛЕЕ позднюю минуту 
-          // чем текущая - то есть публикуем только если scheduledMinutes < nowMinutes
-          if (scheduledMinutes >= nowMinutes) {
-            const minutesUntilScheduled = scheduledMinutes - nowMinutes;
-            const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()} (через ${minutesUntilScheduled} мин). Дождитесь запланированного времени.`;
+          // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем с точностью до секунды и добавляем буфер в 10 секунд
+          // Публикуем, только если прошло не менее 10 секунд после запланированного времени
+          if (scheduledSeconds > nowSeconds - 10) { // Более строгая проверка
+            // Освобождаем блокировку, так как публикация отменена
+            markPublicationEnd(contentId, platform);
+            
+            const secondsUntilScheduled = scheduledSeconds - nowSeconds + 10; // +10 секунд буфера
+            const errorMsg = `Контент ${contentId} для платформы ${checkPlatform} запланирован на ${scheduledTime.toISOString()}. До публикации осталось ${secondsUntilScheduled} сек. (с учетом буфера 10 сек).`;
             log(`[Social Publishing] ОТМЕНА НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ: ${errorMsg}`);
             throw new Error(errorMsg);
           }
