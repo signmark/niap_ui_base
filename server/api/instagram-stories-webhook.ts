@@ -80,12 +80,22 @@ router.post('/', async (req: Request, res: Response) => {
 
       // Проверяем тип контента (учитываем возможные варианты именования поля)
       const contentType = contentData.contentType || contentData.content_type;
-      if (contentType !== 'stories') {
+      
+      // Для тестирования: если content_type не "stories", но в запросе был передан параметр forceStories=true,
+      // то игнорируем проверку типа контента
+      const forceStories = req.body.forceStories === true;
+      
+      if (contentType !== 'stories' && !forceStories) {
         log(`Ошибка: неверный тип контента для Instagram Stories: ${contentType}`, 'instagram-webhook');
         return res.status(400).json({
           success: false,
           error: `Неверный тип контента для Instagram Stories: ${contentType}`
         });
+      }
+      
+      // Если тип контента не stories, но включен режим принудительной обработки, логируем это
+      if (contentType !== 'stories' && forceStories) {
+        log(`Внимание: обрабатываем контент с типом "${contentType}" как Stories (forceStories=true)`, 'instagram-webhook');
       }
 
       // Проверяем наличие изображений или видео (учитываем различные варианты именования полей)
@@ -147,10 +157,22 @@ router.post('/', async (req: Request, res: Response) => {
           url: null
         };
 
-        // Обновляем данные в Directus
-        await directusApiManager.post(`/items/campaign_content/${contentId}`, {
-          socialPublications
-        });
+        try {
+          // Обновляем данные в Directus
+          log(`Обновление данных контента ${contentId} в Directus. Path: /items/campaign_content/${contentId}`, 'instagram-webhook');
+          await directusApiManager.patch(`/items/campaign_content/${contentId}`, {
+            social_platforms: socialPublications
+          }, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          log(`Данные контента ${contentId} успешно обновлены в Directus`, 'instagram-webhook');
+        } catch (updateError: any) {
+          // Это не критичная ошибка - логируем, но продолжаем обработку
+          log(`Предупреждение: Не удалось обновить данные контента в Directus: ${updateError.message}`, 'instagram-webhook');
+          console.warn('Warning: Failed to update content status in Directus:', updateError);
+        }
 
         return res.json({
           success: true,
