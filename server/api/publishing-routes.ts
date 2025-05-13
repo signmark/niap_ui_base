@@ -1069,12 +1069,25 @@ export function registerPublishingRoutes(app: Express): void {
             // Проверяем текущий статус платформы
             const currentStatus = mergedSocialPlatforms[platform]?.status || '';
             
-            // Если это будущая публикация, убедимся, что статус 'pending', а не 'published'
-            // Это исправит проблему преждевременного отображения статуса 'published'
-            if (isFuturePublication && (currentStatus === 'published')) {
-              log(`ИСПРАВЛЕНО: Статус платформы ${platform} изменен с 'published' на 'pending', так как время публикации в будущем`, 'api');
+            // Для будущих публикаций всегда устанавливаем статус 'pending' и флаг 'selected: true'
+            if (isFuturePublication) {
+              if (currentStatus === 'published') {
+                log(`ИСПРАВЛЕНО: Статус платформы ${platform} изменен с 'published' на 'pending', так как время публикации в будущем`, 'api');
+                if (mergedSocialPlatforms[platform]) {
+                  mergedSocialPlatforms[platform].status = 'pending';
+                }
+              } else if (!currentStatus || currentStatus !== 'pending') {
+                // Если статус не установлен или не 'pending', устанавливаем 'pending'
+                log(`Установлен статус 'pending' для платформы ${platform}, так как время публикации в будущем`, 'api');
+                if (mergedSocialPlatforms[platform]) {
+                  mergedSocialPlatforms[platform].status = 'pending';
+                }
+              }
+              
+              // Всегда устанавливаем флаг selected: true для платформы
               if (mergedSocialPlatforms[platform]) {
-                mergedSocialPlatforms[platform].status = 'pending';
+                mergedSocialPlatforms[platform].selected = true;
+                log(`Установлен флаг 'selected: true' для платформы ${platform}`, 'api');
               }
             }
             
@@ -1083,15 +1096,23 @@ export function registerPublishingRoutes(app: Express): void {
               mergedSocialPlatforms[platform] = {
                 platform: platform,
                 status: 'pending',
+                selected: true, // Обязательно устанавливаем флаг selected
                 scheduledAt: scheduledAtDate.toISOString(),
                 scheduled_at: scheduledAtDate.toISOString() // Добавляем оба формата для совместимости
               };
-              log(`Создана новая запись для платформы ${platform} со временем ${scheduledAtDate.toISOString()}`, 'api');
+              log(`Создана новая запись для платформы ${platform} со временем ${scheduledAtDate.toISOString()} и флагом selected=true`, 'api');
             } 
             else if (!hasTime) {
               // Если у платформы отсутствует время публикации, устанавливаем общее
               mergedSocialPlatforms[platform].scheduledAt = scheduledAtDate.toISOString();
               mergedSocialPlatforms[platform].scheduled_at = scheduledAtDate.toISOString();
+              
+              // Убедимся, что флаг selected установлен
+              if (!mergedSocialPlatforms[platform].selected) {
+                mergedSocialPlatforms[platform].selected = true;
+                log(`Установлен флаг 'selected: true' для платформы ${platform} при обновлении времени`, 'api');
+              }
+              
               log(`Установлено время для платформы ${platform}: ${scheduledAtDate.toISOString()}`, 'api');
             }
           });
