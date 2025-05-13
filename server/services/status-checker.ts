@@ -206,6 +206,13 @@ class PublicationStatusChecker {
         return false;
       }
       
+      // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем статус контента - для 'scheduled' не делаем проверку изображений,
+      // т.к. это должно делать n8n только в момент публикации
+      if (content.status === 'scheduled') {
+        log(`Контент ${contentId} имеет статус 'scheduled' - пропускаем проверку и валидацию изображений`, 'status-checker');
+        return false; // Пропускаем проверку для запланированного контента
+      }
+      
       // Получаем данные о платформах
       const platformsData = content.social_platforms || {};
       
@@ -351,7 +358,9 @@ class PublicationStatusChecker {
         return;
       }
       
-      // Запрос на получение контента в статусе 'draft' или 'scheduled' с опубликованной платформой
+      // Запрос на получение контента в статусе 'draft' с опубликованной платформой
+      // ВАЖНОЕ ИЗМЕНЕНИЕ: Проверяем только контент в статусе 'draft', 
+      // а не 'scheduled', т.к. для scheduled контента не должна выполняться валидация
       try {
         // Получаем контент через API storage
         const response = await axios.get(
@@ -360,7 +369,7 @@ class PublicationStatusChecker {
             params: {
               filter: {
                 status: {
-                  _in: ['draft', 'scheduled']
+                  _eq: 'draft' // Только статус 'draft', игнорируем 'scheduled'
                 },
                 // Дополнительное условие на наличие платформ
                 // к сожалению, невозможно фильтровать по вложенным JSON полям напрямую через API
@@ -375,7 +384,7 @@ class PublicationStatusChecker {
         );
         
         const items = response.data?.data || [];
-        log(`STORIES SCAN: Найдено ${items.length} контентов для проверки`, 'status-checker');
+        log(`STORIES SCAN: Найдено ${items.length} контентов для проверки (только со статусом 'draft')`, 'status-checker');
         
         // Счетчики для статистики
         let checkedCount = 0;
