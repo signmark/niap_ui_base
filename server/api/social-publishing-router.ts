@@ -122,9 +122,76 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             contentType: 'stories'
           };
           
-          const response = await axios.post(n8nWebhookUrl, dataForN8n);
+          log(`[Social Publishing] Отправка запроса на webhook Instagram Stories: ${n8nWebhookUrl}`);
+          log(`[Social Publishing] Данные для webhook: ${JSON.stringify(dataForN8n)}`);
           
-          log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, результат: ${JSON.stringify(response.data)}`);
+          let response;
+          try {
+            // Устанавливаем таймаут для запроса, чтобы не зависать вечно
+            response = await axios.post(n8nWebhookUrl, dataForN8n, {
+              timeout: 30000, // 30 секунд таймаут
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            log(`[Social Publishing] Успешно перенаправлено на Instagram Stories webhook, статус: ${response.status}, результат: ${JSON.stringify(response.data)}`);
+            
+            // Обработка ответа от webhook
+            if (response.data && response.data.success) {
+              log(`[Social Publishing] n8n webhook вернул успешный результат`);
+              
+              // Обновляем статус в Directus
+              try {
+                // Получаем текущие данные контента для обновления социальных платформ
+                const existingContent = await storage.getCampaignContentById(contentId);
+                
+                if (existingContent) {
+                  // Формируем структуру social_platforms для Instagram
+                  let socialPlatforms = existingContent.social_platforms || {};
+                  
+                  if (typeof socialPlatforms === 'string') {
+                    try {
+                      socialPlatforms = JSON.parse(socialPlatforms);
+                    } catch (e) {
+                      socialPlatforms = {};
+                    }
+                  }
+                  
+                  // Обновляем или создаем запись для Instagram
+                  socialPlatforms.instagram = {
+                    ...(socialPlatforms.instagram || {}),
+                    status: 'published',
+                    selected: true,
+                    platform: 'instagram',
+                    publishedAt: new Date().toISOString(),
+                    postUrl: response.data.postUrl || 'https://instagram.com',
+                    contentType: 'stories'
+                  };
+                  
+                  // Обновляем контент
+                  await storage.updateCampaignContent(contentId, {
+                    social_platforms: socialPlatforms
+                  });
+                  
+                  log(`[Social Publishing] Успешно обновлен статус контента Instagram Stories с ID ${contentId}`);
+                }
+              } catch (updateError) {
+                log(`[Social Publishing] Ошибка при обновлении статуса контента: ${updateError.message || updateError}`);
+              }
+            } else {
+              log(`[Social Publishing] n8n webhook вернул ошибку или некорректный результат: ${JSON.stringify(response.data)}`);
+            }
+          } catch (webhookError) {
+            log(`[Social Publishing] Ошибка при отправке на webhook Instagram Stories: ${webhookError.message || webhookError}`);
+            response = { 
+              data: { 
+                success: false, 
+                error: webhookError.message || 'Ошибка при отправке на webhook',
+                isErrorHandled: true
+              } 
+            };
+          }
           
           // Если Instagram - единственная выбранная платформа
           const onlyInstagram = Array.isArray(platforms) 
@@ -146,23 +213,22 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           
           // Если есть другие платформы, просто продолжаем выполнение для них
           // Удаляем Instagram из списка платформ для дальнейшей обработки
-          let updatedPlatforms;
+          let platformsForOtherNetworks; // Новая переменная вместо изменения константы platforms
           if (Array.isArray(platforms)) {
-            updatedPlatforms = platforms.filter(p => p !== 'instagram');
+            platformsForOtherNetworks = platforms.filter(p => p !== 'instagram');
           } else if (platforms.instagram) {
             // Создаем копию объекта без Instagram
             const { instagram, ...restPlatforms } = platforms;
-            updatedPlatforms = restPlatforms;
+            platformsForOtherNetworks = restPlatforms;
           } else {
-            updatedPlatforms = platforms;
+            platformsForOtherNetworks = platforms;
           }
           
-          // Обновляем платформы для дальнейшей обработки
-          platforms = updatedPlatforms;
+          // Продолжаем с новой переменной платформ без Instagram
           
           // Если после удаления Instagram не осталось других платформ
-          if (Array.isArray(platforms) && platforms.length === 0 || 
-              !Array.isArray(platforms) && Object.values(platforms).filter(v => v === true).length === 0) {
+          if (Array.isArray(platformsForOtherNetworks) && platformsForOtherNetworks.length === 0 || 
+              !Array.isArray(platformsForOtherNetworks) && Object.values(platformsForOtherNetworks).filter(v => v === true).length === 0) {
             return res.status(200).json({
               success: true,
               message: 'Контент Instagram Stories отправлен на публикацию',
@@ -175,7 +241,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           }
           
           // Иначе продолжаем обработку для остальных платформ
-          log(`[Social Publishing] Продолжаем публикацию для остальных платформ: ${JSON.stringify(platforms)}`);
+          log(`[Social Publishing] Продолжаем публикацию для остальных платформ: ${JSON.stringify(platformsForOtherNetworks)}`);
         } catch (error: any) {
           log(`[Social Publishing] Ошибка при перенаправлении на Instagram Stories webhook: ${error.message}`);
           
