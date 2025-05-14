@@ -417,48 +417,25 @@ async publishVkStory(
   }
 }
 ```
-          caption,
-          story_link: storySettings.linkUrl || null,
-          access_token: token
-        }
-      );
-      
-      const containerId = containerResponse.data.id;
-      
-      // 2. Публикуем историю
-      const publishResponse = await axios.post(
-        `https://graph.facebook.com/v18.0/${businessAccountId}/stories`,
-        {
-          creation_id: containerId,
-          access_token: token
-        }
-      );
-      
-      const storyId = publishResponse.data.id;
-      
-      // 3. Возвращаем результат публикации
-      return {
-        platform: 'instagram',
-        contentType: 'story',
-        status: 'published',
-        publishedAt: new Date().toISOString(),
-        mediaId: storyId,
-        postUrl: `https://www.instagram.com/stories/...` // Формирование URL истории
-      };
-      
-    } catch (error) {
-      return {
-        platform: 'instagram',
-        contentType: 'story',
-        status: 'failed',
-        error: error.message
-      };
-    }
-  }
-}
-```
 
-## 7. Рекомендации по дизайну и SEO
+## 7. Заключение
+
+Интеграция функционала Stories и Shorts в SMM Manager позволит расширить возможности платформы и предоставить пользователям больше инструментов для управления социальными медиа. Реализация будет следовать существующим паттернам, используя текущую инфраструктуру и системы автоматизации.
+
+### Ключевые технические решения
+
+1. Расширение текущих типов контента вместо создания новой структуры данных
+2. Использование правильных media_type для Instagram API (STORIES, REELS)
+3. Следование формату вебхуков n8n, принятому в системе
+4. Совместимость с существующей системой обновления статусов публикаций
+
+### Следующие шаги
+
+1. Реализация бэкенд сервисов для публикации Stories и Reels
+2. Создание новых вебхук эндпоинтов для n8n
+3. Разработка фронтенд компонентов для создания и редактирования Stories/Reels
+4. Тестирование интеграции на тестовых аккаунтах социальных сетей
+
 
 ### Дизайн Stories и Reels
 - Соотношение сторон 9:16 (1080x1920px)
