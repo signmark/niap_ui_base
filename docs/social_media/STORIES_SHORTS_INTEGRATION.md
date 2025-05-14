@@ -128,13 +128,6 @@ POST https://graph.facebook.com/v18.0/{instagram-business-id}/media
   "caption": "Текст для Reels #hashtag",
   "share_to_feed": true,
   "access_token": "{access-token}"
-}ok.com/v18.0/{instagram-business-id}/media
-{
-  "video_url": "https://example.com/reels-video.mp4",
-  "media_type": "REELS",
-  "caption": "Текст для Reels #hashtag",
-  "share_to_feed": true,
-  "access_token": "{access-token}"
 }
 ```
 
@@ -190,10 +183,11 @@ UI-компоненты для редактора:
 
 ### Новые wеbhook-эндпоинты для n8n
 
-Новые эндпоинты для интеграции с n8n:
-- `/api/instagram-stories/publish` - для публикации историй
-- `/api/instagram-reels/publish` - для публикации Reels
-- `/api/tiktok/publish` - для публикации в TikTok
+Новые эндпоинты для интеграции с n8n (в соответствии с существующими форматами):
+- `https://n8n.nplanner.ru/webhook/publish-instagram-stories` - для публикации историй Instagram
+- `https://n8n.nplanner.ru/webhook/publish-vk-stories` - для публикации историй ВКонтакте
+- `https://n8n.nplanner.ru/webhook/publish-instagram-reels` - для публикации Reels
+- `https://n8n.nplanner.ru/webhook/publish-tiktok` - для публикации в TikTok
 
 ### Процесс автоматизации для Stories
 
@@ -214,44 +208,215 @@ UI-компоненты для редактора:
 
 ## 6. Примеры реализации на TypeScript
 
-### Сервис для публикации Instagram Stories
+### Метод для публикации Instagram Stories
 
 ```typescript
-export class InstagramStoriesService {
-  /**
-   * Публикует историю в Instagram через Graph API
-   */
-  async publishStory(content, settings) {
-    try {
-      const { businessAccountId, token } = settings;
-      
-      if (!businessAccountId || !token) {
-        throw new Error('Не указаны обязательные параметры Instagram API');
+/**
+ * Публикует историю в Instagram с использованием Graph API
+ * @param content Контент для публикации
+ * @param instagramSettings Настройки Instagram API
+ * @returns Результат публикации
+ */
+async publishInstagramStory(
+  content: CampaignContent,
+  instagramSettings: SocialPlatformSettings
+): Promise<SocialPublication> {
+  try {
+    log(`Публикация истории в Instagram для контента ID: ${content.id}`, 'instagram-stories');
+    
+    // Проверка наличия настроек Instagram API
+    if (!instagramSettings.token || !instagramSettings.businessAccountId) {
+      log(`Ошибка публикации истории: отсутствуют настройки Instagram API`, 'instagram-stories');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки Instagram API (токен или ID бизнес-аккаунта)'
+      };
+    }
+    
+    // Проверка наличия изображения для истории
+    if (!content.imageUrl) {
+      log(`Ошибка публикации истории: отсутствует изображение`, 'instagram-stories');
+      return {
+        platform: 'instagram',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует изображение для публикации истории'
+      };
+    }
+    
+    // Публикация в Instagram Stories состоит из 2 этапов:
+    // 1. Создание контейнера для медиа с типом STORIES
+    const baseUrl = 'https://graph.facebook.com/v18.0';
+    const containerUrl = `${baseUrl}/${instagramSettings.businessAccountId}/media`;
+    
+    // Параметры для создания контейнера истории
+    const containerParams = {
+      image_url: content.imageUrl,
+      media_type: 'STORIES', // Важно: для историй используется тип STORIES
+      caption: this.formatTextForInstagram(content.content || ''),
+      access_token: instagramSettings.token
+    };
+    
+    // Если есть ссылка для swipe-up, добавляем её
+    if (content.linkUrl) {
+      containerParams['story_link'] = content.linkUrl;
+    }
+    
+    // Отправляем запрос на создание контейнера
+    const containerResponse = await axios.post(
+      containerUrl, 
+      containerParams, 
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    if (!containerResponse.data || !containerResponse.data.id) {
+      throw new Error('Не удалось создать контейнер для истории');
+    }
+    
+    // Получаем ID контейнера
+    const containerId = containerResponse.data.id;
+    
+    // 2. Публикация истории с указанием созданного контейнера
+    const publishUrl = `${baseUrl}/${instagramSettings.businessAccountId}/stories`;
+    
+    const publishResponse = await axios.post(
+      publishUrl,
+      {
+        creation_id: containerId,
+        access_token: instagramSettings.token
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    if (!publishResponse.data || !publishResponse.data.id) {
+      throw new Error('Не удалось опубликовать историю');
+    }
+    
+    // Формируем результат публикации
+    return {
+      platform: 'instagram',
+      status: 'published',
+      publishedAt: new Date().toISOString(),
+      postId: publishResponse.data.id,
+      postUrl: `https://www.instagram.com/stories/${instagramSettings.username}/`,
+      userId: content.userId
+    };
+  } catch (error) {
+    log(`Ошибка при публикации истории в Instagram: ${error.message}`, 'instagram-stories');
+    return {
+      platform: 'instagram',
+      status: 'failed',
+      publishedAt: null,
+      error: `Ошибка при публикации истории: ${error.message}`
+    };
+  }
+}
+
+/**
+ * Публикует историю в ВКонтакте
+ * @param content Контент для публикации
+ * @param vkSettings Настройки ВКонтакте API
+ * @returns Результат публикации
+ */
+async publishVkStory(
+  content: CampaignContent,
+  vkSettings: SocialPlatformSettings
+): Promise<SocialPublication> {
+  try {
+    log(`Публикация истории в ВКонтакте для контента ID: ${content.id}`, 'vk-stories');
+    
+    // Проверка наличия настроек ВКонтакте API
+    if (!vkSettings.token || !vkSettings.groupId) {
+      log(`Ошибка публикации истории: отсутствуют настройки ВКонтакте API`, 'vk-stories');
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствуют настройки ВКонтакте API (токен или ID группы)'
+      };
+    }
+    
+    // Проверка наличия изображения для истории
+    if (!content.imageUrl) {
+      log(`Ошибка публикации истории: отсутствует изображение`, 'vk-stories');
+      return {
+        platform: 'vk',
+        status: 'failed',
+        publishedAt: null,
+        error: 'Отсутствует изображение для публикации истории'
+      };
+    }
+    
+    // Загрузка изображения на сервер ВКонтакте
+    // Шаг 1: Получение URL для загрузки изображения
+    const getUploadUrlResponse = await axios.get('https://api.vk.com/method/stories.getPhotoUploadServer', {
+      params: {
+        add_to_news: 1,
+        group_id: vkSettings.groupId.replace('-', ''), // Убираем минус из ID группы если есть
+        access_token: vkSettings.token,
+        v: '5.131'
       }
-      
-      // Получаем URL изображения или видео для истории
-      const mediaUrl = content.image_url || content.media_url || '';
-      
-      if (!mediaUrl) {
-        throw new Error('История не содержит медиафайл');
+    });
+    
+    if (!getUploadUrlResponse.data.response || !getUploadUrlResponse.data.response.upload_url) {
+      throw new Error('Не удалось получить URL для загрузки изображения');
+    }
+    
+    const uploadUrl = getUploadUrlResponse.data.response.upload_url;
+    
+    // Шаг 2: Загрузка изображения
+    // Скачиваем изображение и формируем FormData
+    const imageResponse = await axios.get(content.imageUrl, { responseType: 'arraybuffer' });
+    const formData = new FormData();
+    formData.append('photo', Buffer.from(imageResponse.data), 'story.jpg');
+    
+    // Отправляем изображение на сервер ВКонтакте
+    const uploadResponse = await axios.post(uploadUrl, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    if (!uploadResponse.data.upload_result) {
+      throw new Error('Не удалось загрузить изображение для истории');
+    }
+    
+    // Шаг 3: Добавление истории в ВКонтакте
+    const addStoryResponse = await axios.get('https://api.vk.com/method/stories.save', {
+      params: {
+        upload_results: uploadResponse.data.upload_result,
+        access_token: vkSettings.token,
+        v: '5.131'
       }
-      
-      // Получаем текст истории
-      const caption = content.text || '';
-      
-      // Получаем настройки истории
-      const storySettings = content.story_settings || {};
-      
-      // Определяем тип медиа (фото/видео)
-      const isVideo = mediaUrl.match(/\.(mp4|mov|avi|wmv|flv|webm)$/i) !== null;
-      const mediaType = isVideo ? 'VIDEO' : 'IMAGE';
-      
-      // 1. Создаем медиа-контейнер для истории
-      const containerResponse = await axios.post(
-        `https://graph.facebook.com/v18.0/${businessAccountId}/media`,
-        {
-          [isVideo ? 'video_url' : 'image_url']: mediaUrl,
-          media_type: mediaType,
+    });
+    
+    if (!addStoryResponse.data.response || !addStoryResponse.data.response.story_id) {
+      throw new Error('Не удалось сохранить историю');
+    }
+    
+    const storyId = addStoryResponse.data.response.story_id;
+    const storyOwnerId = addStoryResponse.data.response.owner_id || vkSettings.groupId;
+    
+    // Формируем результат публикации
+    return {
+      platform: 'vk',
+      status: 'published',
+      publishedAt: new Date().toISOString(),
+      postId: storyId,
+      postUrl: `https://vk.com/stories${storyOwnerId}_${storyId}`,
+      userId: content.userId
+    };
+  } catch (error) {
+    log(`Ошибка при публикации истории в ВКонтакте: ${error.message}`, 'vk-stories');
+    return {
+      platform: 'vk',
+      status: 'failed',
+      publishedAt: null,
+      error: `Ошибка при публикации истории: ${error.message}`
+    };
+  }
+}
+```
           caption,
           story_link: storySettings.linkUrl || null,
           access_token: token
