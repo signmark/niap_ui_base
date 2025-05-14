@@ -4,15 +4,16 @@
 
 Расширение функциональности SMM Manager для поддержки создания и публикации:
 - **Instagram Stories** - временный вертикальный контент длительностью до 24 часов
+- **ВКонтакте Истории** - аналогичный формат историй во ВКонтакте
 - **Короткие вертикальные видео** (Instagram Reels, TikTok, YouTube Shorts) - видео в вертикальном формате длительностью до 60 секунд
 
 ## 1. Изменения в модели данных Directus
 
 ### Расширение поля `content_type` в таблице `campaign_content`
 
-К существующим типам контента (`post`, `carousel`) добавляем:
-- `story` - для Instagram Stories
-- `reels` - для коротких вертикальных видео
+К существующим типам контента (`text`, `text-image`, `video`, `video-text`, `mixed`) добавляем:
+- `story` - для Instagram и ВКонтакте Stories
+- `short-video` - для коротких вертикальных видео (Reels/Shorts)
 
 ### Дополнительные поля для таблицы `campaign_content`
 
@@ -87,7 +88,7 @@
 POST https://graph.facebook.com/v18.0/{instagram-business-id}/media
 {
   "image_url": "https://example.com/story-image.jpg",
-  "media_type": "IMAGE", // или "VIDEO"
+  "media_type": "STORIES", // тип для Instagram Stories (не "IMAGE" или "VIDEO")
   "caption": "Текст истории",
   "story_link": "https://yourwebsite.com/promo", // опционально для swipe-up
   "access_token": "{access-token}"
@@ -121,6 +122,13 @@ POST https://graph.facebook.com/v18.0/{instagram-business-id}/stories
 Пример запроса для создания Reels:
 ```
 POST https://graph.facebook.com/v18.0/{instagram-business-id}/media
+{
+  "video_url": "https://example.com/reels-video.mp4",
+  "media_type": "REELS", // тип для Instagram Reels
+  "caption": "Текст для Reels #hashtag",
+  "share_to_feed": true,
+  "access_token": "{access-token}"
+}ok.com/v18.0/{instagram-business-id}/media
 {
   "video_url": "https://example.com/reels-video.mp4",
   "media_type": "REELS",
