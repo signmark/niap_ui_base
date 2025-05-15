@@ -917,12 +917,13 @@ export default function Analytics() {
                               
                               // Функция для получения URL первой платформы с постом (для превью)
                               const getPostUrl = (post: any) => {
-                                if (!post.platforms) return '#';
+                                if (!post.platforms) return null;
                                 const platforms = Object.values(post.platforms);
                                 for (const platform of platforms) {
-                                  if ((platform as any).postUrl) return (platform as any).postUrl;
+                                  if ((platform as any).postUrl && (platform as any).postUrl !== "#" && (platform as any).postUrl !== '') 
+                                    return (platform as any).postUrl;
                                 }
-                                return '#';
+                                return null;
                               };
                               
                               return (
@@ -953,12 +954,21 @@ export default function Analytics() {
                                     </span>
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <a href={getPostUrl(post)} target="_blank" rel="noopener noreferrer">
-                                      <Button variant="ghost" size="icon">
-                                        <ExternalLink className="h-4 w-4" />
-                                        <span className="sr-only">Открыть публикацию</span>
-                                      </Button>
-                                    </a>
+                                    {getPostUrl(post) ? (
+                                      <a href={getPostUrl(post)} target="_blank" rel="noopener noreferrer">
+                                        <Button variant="ghost" size="icon" title="Открыть публикацию">
+                                          <ExternalLink className="h-4 w-4" />
+                                          <span className="sr-only">Открыть публикацию</span>
+                                        </Button>
+                                      </a>
+                                    ) : (
+                                      <a href={`/content/${post.id}`}>
+                                        <Button variant="ghost" size="icon" title="Просмотр контента">
+                                          <FileText className="h-4 w-4" />
+                                          <span className="sr-only">Просмотр контента</span>
+                                        </Button>
+                                      </a>
+                                    )}
                                   </TableCell>
                                 </TableRow>
                               );
