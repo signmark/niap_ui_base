@@ -5,7 +5,7 @@ import { useCampaignStore } from "@/lib/campaignStore";
 import { directusApi } from "@/lib/directus";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap } from "lucide-react";
+import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
@@ -576,7 +576,10 @@ export default function Analytics() {
                         (platformsStatsData?.data?.aggregated?.totalShares || 0)
                       )}
                     </div>
-                  </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Лайки, комментарии и репосты
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
