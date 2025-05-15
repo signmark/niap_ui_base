@@ -238,7 +238,8 @@ export default function Analytics() {
     return Object.entries(platformsStatsData.data.platforms)
       .filter(([_, metrics]) => metrics.views > 0)
       .map(([platform, metrics]) => ({
-        name: platform,
+        id: platform,
+        label: platform.charAt(0).toUpperCase() + platform.slice(1),
         value: metrics.views,
         color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#888'
       }));
@@ -250,18 +251,21 @@ export default function Analytics() {
     
     return [
       {
-        name: 'Лайки',
-        value: platformsStatsData.data.aggregated.totalLikes,
+        id: 'likes',
+        label: 'Лайки',
+        value: platformsStatsData.data.aggregated.totalLikes || 0,
         color: ENGAGEMENT_COLORS.likes
       },
       {
-        name: 'Комментарии',
-        value: platformsStatsData.data.aggregated.totalComments,
+        id: 'comments',
+        label: 'Комментарии',
+        value: platformsStatsData.data.aggregated.totalComments || 0,
         color: ENGAGEMENT_COLORS.comments
       },
       {
-        name: 'Репосты',
-        value: platformsStatsData.data.aggregated.totalShares,
+        id: 'shares',
+        label: 'Репосты',
+        value: platformsStatsData.data.aggregated.totalShares || 0,
         color: ENGAGEMENT_COLORS.shares
       }
     ];
@@ -614,6 +618,7 @@ export default function Analytics() {
               description="Распределение по типам взаимодействий"
               isLoading={isLoadingPlatformsStats}
               height={300}
+              colorMapping={(d) => d.data.color || '#3498db'}
             />
             
             <NivoAnalyticsLineChart
@@ -651,7 +656,7 @@ export default function Analytics() {
             <NivoAnalyticsBarChart
               data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
                 platform,
-                engagementRate: Number(data.engagementRate.toFixed(2)),
+                engagementRate: Number((data.engagementRate || 0).toFixed(2)),
                 color: platform === 'vk' ? '#0077FF' : 
                        platform === 'instagram' ? '#E1306C' : 
                        platform === 'telegram' ? '#0088CC' : '#6366F1'
@@ -663,6 +668,12 @@ export default function Analytics() {
               isLoading={isLoadingPlatformsStats}
               height={300}
               layout="horizontal"
+              colorMapping={(d) => {
+                const platform = d.data.indexValue;
+                return platform === 'vk' ? '#0077FF' : 
+                       platform === 'instagram' ? '#E1306C' : 
+                       platform === 'telegram' ? '#0088CC' : '#6366F1';
+              }}
             />
           </div>
         </TabsContent>

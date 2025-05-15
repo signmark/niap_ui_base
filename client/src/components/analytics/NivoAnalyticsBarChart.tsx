@@ -13,6 +13,7 @@ interface BarChartProps {
   groupMode?: 'grouped' | 'stacked';
   layout?: 'horizontal' | 'vertical';
   colors?: string[] | ((bar: any) => string);
+  colorMapping?: (bar: any) => string;
 }
 
 export default function NivoAnalyticsBarChart({
@@ -26,6 +27,7 @@ export default function NivoAnalyticsBarChart({
   groupMode = 'grouped',
   layout = 'vertical',
   colors,
+  colorMapping,
 }: BarChartProps) {
   // Выбираем цвета в зависимости от платформ
   const getColorByPlatform = (platform: string): string => {
