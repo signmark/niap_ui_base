@@ -11,6 +11,9 @@ import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
 import AnalyticsPieChart from "@/components/analytics/AnalyticsPieChart";
 import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
+import NivoAnalyticsPieChart from "@/components/analytics/NivoAnalyticsPieChart";
+import NivoAnalyticsBarChart from "@/components/analytics/NivoAnalyticsBarChart";
+import NivoAnalyticsLineChart from "@/components/analytics/NivoAnalyticsLineChart";
 
 // Типы для аналитики
 interface AnalyticsStatusResponse {
