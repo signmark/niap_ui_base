@@ -101,7 +101,7 @@ export default function NivoAnalyticsBarChart({
               data={data}
               keys={keys}
               indexBy={indexBy}
-              margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+              margin={{ top: 50, right: 160, bottom: 50, left: 80 }}
               padding={0.3}
               layout={layout}
               groupMode={groupMode}
