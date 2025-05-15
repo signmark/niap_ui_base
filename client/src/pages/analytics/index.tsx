@@ -1093,10 +1093,10 @@ export default function Analytics() {
           </Card>
 
           {/* Сравнение показателей в диаграммах */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* График распределения вовлеченности */}
-            <Card className="mb-8">
-              <CardHeader>
+            <Card className="h-[550px] overflow-hidden">
+              <CardHeader className="pb-2">
                 <CardTitle>Вовлеченность по платформам</CardTitle>
                 <CardDescription>Сравнение коэффициента вовлеченности</CardDescription>
               </CardHeader>
@@ -1106,7 +1106,7 @@ export default function Analytics() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="h-[400px]">
+                  <div className="h-[450px]">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
                       <NivoAnalyticsPieChart
                         data={Object.entries(platformsStatsData?.data?.platforms || {})
@@ -1118,7 +1118,7 @@ export default function Analytics() {
                           }))}
                         title="Вовлеченность аудитории"
                         description="Распределение коэффициента вовлеченности по платформам"
-                        height={350}
+                        height={400}
                         centerText="Вовлеченность"
                         colorMapping={(item) => {
                           const colors = {
@@ -1141,8 +1141,8 @@ export default function Analytics() {
             </Card>
 
             {/* График просмотров по платформам */}
-            <Card className="mb-8">
-              <CardHeader>
+            <Card className="h-[550px] overflow-hidden">
+              <CardHeader className="pb-2">
                 <CardTitle>Просмотры по платформам</CardTitle>
                 <CardDescription>Сравнение охвата контента</CardDescription>
               </CardHeader>
