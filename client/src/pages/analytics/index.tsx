@@ -1139,18 +1139,18 @@ export default function Analytics() {
             </Card>
 
             {/* График просмотров по платформам */}
-            <Card>
+            <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Просмотры по платформам</CardTitle>
                 <CardDescription>Сравнение охвата контента</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-10">
                 {isLoadingPlatformsStats ? (
                   <div className="flex justify-center items-center h-40">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="h-[300px]">
+                  <div className="h-[450px]">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
                       <NivoAnalyticsBarChart
                         data={Object.entries(platformsStatsData?.data?.platforms || {})
@@ -1161,6 +1161,7 @@ export default function Analytics() {
                           }))}
                         keys={['views']}
                         indexBy="platform"
+                        height={400}
                         title="Просмотры"
                         description="Сравнение просмотров по платформам"
                         colorMapping={(bar) => {
