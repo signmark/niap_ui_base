@@ -1116,8 +1116,6 @@ export default function Analytics() {
                             label: platform.charAt(0).toUpperCase() + platform.slice(1),
                             value: parseFloat(metrics.engagementRate.toFixed(2))
                           }))}
-                        title="Вовлеченность аудитории"
-                        description="Распределение коэффициента вовлеченности по платформам"
                         height={400}
                         centerText="Вовлеченность"
                         colorMapping={(item) => {
@@ -1164,8 +1162,6 @@ export default function Analytics() {
                         keys={['views']}
                         indexBy="platform"
                         height={400}
-                        title="Просмотры"
-                        description="Сравнение просмотров по платформам"
                         colorMapping={(bar) => {
                           const colors = {
                             Telegram: '#2AABEE',
