@@ -1077,38 +1077,62 @@ export default function Analytics() {
                           };
 
                           return (
-                            <div key={platform} className={`p-4 border rounded-md border-l-4`} style={{ borderLeftColor: color }}>
-                              <h3 className="text-lg font-medium capitalize mb-3 flex items-center gap-2">
+                            <div key={platform} className="p-4 border rounded-md shadow-sm" style={{ borderTop: `4px solid ${color}` }}>
+                              <h3 className="text-sm flex items-center gap-2 mt-1 mb-2 text-muted-foreground">
                                 {getPlatformIcon()}
-                                {platform}
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
                               </h3>
-                              <div className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span>Просмотры:</span>
-                                  <span className="font-medium">{formatNumber(metrics.views)}</span>
+                              
+                              {/* Публикации и просмотры в две колонки */}
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Публикации</div>
+                                  <div className="text-xl font-semibold mt-1">{metrics.posts}</div>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span>Лайки:</span>
-                                  <span className="font-medium">{formatNumber(metrics.likes)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Комментарии:</span>
-                                  <span className="font-medium">{formatNumber(metrics.comments)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Репосты:</span>
-                                  <span className="font-medium">{formatNumber(metrics.shares)}</span>
-                                </div>
-                                <div className="flex justify-between pt-2 border-t">
-                                  <span>Вовлеченность:</span>
-                                  <span className={cn(
-                                    "font-medium px-2 py-0.5 rounded-full text-xs",
-                                    metrics.engagementRate > 5 ? "bg-green-100 text-green-700" :
-                                    metrics.engagementRate > 1 ? "bg-amber-100 text-amber-700" :
-                                    "bg-red-100 text-red-700"
-                                  )}>{metrics.engagementRate.toFixed(2)}%</span>
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Просмотры</div>
+                                  <div className="text-xl font-semibold mt-1">{formatNumber(metrics.views)}</div>
                                 </div>
                               </div>
+                              
+                              {/* Лайки и комментарии в две колонки */}
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Лайки</div>
+                                  <div className="text-xl font-semibold mt-1">{formatNumber(metrics.likes)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Комментарии</div>
+                                  <div className="text-xl font-semibold mt-1">{formatNumber(metrics.comments)}</div>
+                                </div>
+                              </div>
+                              
+                              {/* Репосты и вовлеченность в две колонки */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Репосты</div>
+                                  <div className="text-xl font-semibold mt-1">{formatNumber(metrics.shares)}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-muted-foreground">Вовлеченность</div>
+                                  <div className="text-xl font-semibold mt-1">{metrics.engagementRate.toFixed(2)}%</div>
+                                </div>
+                              </div>
+                              
+                              {/* Полоса прогресса вовлеченности */}
+                              {metrics.engagementRate > 0 && (
+                                <div className="w-full h-1 bg-gray-200 mt-4 rounded-full overflow-hidden">
+                                  <div 
+                                    className={cn(
+                                      "h-full",
+                                      metrics.engagementRate > 5 ? "bg-green-500" : 
+                                      metrics.engagementRate > 1 ? "bg-amber-500" : 
+                                      "bg-red-500"
+                                    )}
+                                    style={{ width: `${Math.min(metrics.engagementRate * 5, 100)}%` }} 
+                                  />
+                                </div>
+                              )}
                             </div>
                           )
                         })}
