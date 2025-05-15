@@ -5,10 +5,14 @@ import { useCampaignStore } from "@/lib/campaignStore";
 import { directusApi } from "@/lib/directus";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText } from "lucide-react";
+import { 
+  Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText,
+  TrendingUp, AlertTriangle, Lightbulb, Users, Percent 
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import AnalyticsPieChart from "@/components/analytics/AnalyticsPieChart";
 import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
 import NivoAnalyticsPieChart from "@/components/analytics/NivoAnalyticsPieChart";
@@ -93,6 +97,93 @@ export default function Analytics() {
   // Функция для форматирования числа с разделителями тысяч
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('ru-RU').format(num);
+  };
+  
+  // Тип для рекомендаций по контенту
+  interface ContentRecommendation {
+    title: string;
+    description: string;
+    type: 'success' | 'warning' | 'info';
+  }
+  
+  // Получаем рекомендации по контенту на основе аналитических данных
+  const getContentRecommendations = (): ContentRecommendation[] => {
+    if (!platformsStatsData?.data) return [];
+    
+    const recommendations: ContentRecommendation[] = [];
+    const { aggregated, platforms } = platformsStatsData.data;
+    
+    // Рекомендации на основе общей статистики
+    if ((aggregated?.totalViews || 0) > 100) {
+      recommendations.push({
+        title: "Хорошее количество просмотров",
+        description: "У вашего контента хорошие показатели просмотров. Продолжайте публиковать похожий контент.",
+        type: "success"
+      });
+    }
+    
+    // Рекомендации на основе средней вовлеченности
+    if ((aggregated?.averageEngagementRate || 0) < 2) {
+      recommendations.push({
+        title: "Низкий уровень вовлеченности",
+        description: "Попробуйте добавить призывы к действию и вопросы в ваш контент, чтобы повысить вовлеченность аудитории.",
+        type: "warning"
+      });
+    } else if ((aggregated?.averageEngagementRate || 0) > 5) {
+      recommendations.push({
+        title: "Высокая вовлеченность",
+        description: "Ваш контент вызывает значительный отклик. Продолжайте использовать успешные форматы.",
+        type: "success"
+      });
+    }
+    
+    // Рекомендации по платформам
+    if (platforms && Object.keys(platforms).length > 0) {
+      const platformEntries = Object.entries(platforms);
+      
+      // Находим лучшую платформу по просмотрам
+      const bestPlatformByViews = platformEntries.reduce((best, [platform, metrics]) => {
+        if (metrics.views > (best?.metrics?.views || 0)) {
+          return { platform, metrics };
+        }
+        return best;
+      }, { platform: '', metrics: null as any });
+      
+      if (bestPlatformByViews.platform) {
+        recommendations.push({
+          title: `${bestPlatformByViews.platform.charAt(0).toUpperCase() + bestPlatformByViews.platform.slice(1)} - лучшая платформа по просмотрам`,
+          description: `Эта платформа показывает наилучшие результаты по просмотрам. Рассмотрите возможность увеличения активности на ней.`,
+          type: "info"
+        });
+      }
+      
+      // Находим лучшую платформу по вовлеченности
+      const bestPlatformByEngagement = platformEntries.reduce((best, [platform, metrics]) => {
+        if ((metrics.engagementRate || 0) > (best?.metrics?.engagementRate || 0)) {
+          return { platform, metrics };
+        }
+        return best;
+      }, { platform: '', metrics: null as any });
+      
+      if (bestPlatformByEngagement.platform && bestPlatformByEngagement.platform !== bestPlatformByViews.platform) {
+        recommendations.push({
+          title: `${bestPlatformByEngagement.platform.charAt(0).toUpperCase() + bestPlatformByEngagement.platform.slice(1)} - лучшая по вовлеченности`,
+          description: `Эта платформа показывает наилучший коэффициент вовлеченности. Возможно, ваша целевая аудитория более активна здесь.`,
+          type: "info"
+        });
+      }
+    }
+    
+    // Если нет метрик - добавляем рекомендацию по сбору данных
+    if ((aggregated?.totalViews || 0) === 0 && (aggregated?.totalPosts || 0) === 0) {
+      recommendations.push({
+        title: "Недостаточно данных для анализа",
+        description: "Опубликуйте больше контента или обновите аналитику, чтобы получить персонализированные рекомендации.",
+        type: "info"
+      });
+    }
+    
+    return recommendations;
   };
 
   // Получаем список всех кампаний

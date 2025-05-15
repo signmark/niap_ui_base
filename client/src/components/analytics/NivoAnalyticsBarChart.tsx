@@ -49,12 +49,22 @@ export default function NivoAnalyticsBarChart({
 
   // Функция для создания цветовой схемы
   const getColors = (bar: any) => {
+    // Если предоставлен colorMapping, используем его
+    if (colorMapping) {
+      return colorMapping(bar);
+    }
+    
     if (typeof colors === 'function') {
       return colors(bar);
     }
     
     if (Array.isArray(colors)) {
       return colors[bar.index % colors.length];
+    }
+
+    // Если у нас есть поле color в данных
+    if (bar.data.color) {
+      return bar.data.color;
     }
 
     // Если у нас есть поле 'platform', используем его для цвета
