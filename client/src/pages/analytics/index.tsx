@@ -7,12 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText,
-  TrendingUp, AlertTriangle, Lightbulb, Users, Percent 
+  TrendingUp, AlertTriangle, Lightbulb, Users, Percent, Activity, ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { 
+  Table, TableBody, TableCaption, TableCell, TableHead, 
+  TableHeader, TableRow 
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import AnalyticsPieChart from "@/components/analytics/AnalyticsPieChart";
 import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
 import NivoAnalyticsPieChart from "@/components/analytics/NivoAnalyticsPieChart";
@@ -770,131 +781,116 @@ export default function Analytics() {
         </TabsContent>
         
         <TabsContent value="publications" className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Топ по просмотрам</CardTitle>
-                <CardDescription>Посты с наибольшим охватом</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTopPosts ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle>Публикации</CardTitle>
+                <div className="flex gap-2">
+                  <Select defaultValue="views">
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Сортировка" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="views">По просмотрам</SelectItem>
+                      <SelectItem value="engagement">По вовлеченности</SelectItem>
+                      <SelectItem value="likes">По лайкам</SelectItem>
+                      <SelectItem value="comments">По комментариям</SelectItem>
+                      <SelectItem value="shares">По репостам</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <CardDescription>Статистика публикаций с возможностью фильтрации</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingTopPosts ? (
+                <div className="flex justify-center items-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="overflow-hidden rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>Название</TableHead>
+                          <TableHead className="w-[90px] text-center"><Eye className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead className="w-[90px] text-center"><ThumbsUp className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead className="w-[90px] text-center"><MessageSquare className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead className="w-[90px] text-center"><Share2 className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead className="w-[90px] text-center"><Activity className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead className="w-[80px]"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {topPostsData?.data?.topByViews && topPostsData.data.topByViews.length > 0 ? (
+                          topPostsData.data.topByViews.map((post, index) => {
+                            const totalLikes = post.platforms 
+                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.likes || 0), 0) 
+                              : 0;
+                            const totalComments = post.platforms 
+                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.comments || 0), 0) 
+                              : 0;
+                            const totalShares = post.platforms 
+                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.shares || 0), 0) 
+                              : 0;
+                            
+                            return (
+                              <TableRow key={post.id}>
+                                <TableCell className="font-medium">{index + 1}</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium truncate max-w-[300px]">{post.title}</span>
+                                    <span className="text-xs text-muted-foreground truncate max-w-[300px]">
+                                      {post.content && post.content.length > 60 
+                                        ? `${post.content.substring(0, 60)}...` 
+                                        : post.content}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center font-medium">{formatNumber(post.totalViews || 0)}</TableCell>
+                                <TableCell className="text-center">{formatNumber(totalLikes)}</TableCell>
+                                <TableCell className="text-center">{formatNumber(totalComments)}</TableCell>
+                                <TableCell className="text-center">{formatNumber(totalShares)}</TableCell>
+                                <TableCell className="text-center font-medium">
+                                  <span className={cn(
+                                    "px-2 py-1 rounded-full text-xs",
+                                    post.engagementRate > 5 ? "bg-green-100 text-green-700" :
+                                    post.engagementRate > 1 ? "bg-amber-100 text-amber-700" :
+                                    "bg-red-100 text-red-700"
+                                  )}>
+                                    {post.engagementRate.toFixed(2)}%
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="ghost" size="icon">
+                                    <ExternalLink className="h-4 w-4" />
+                                    <span className="sr-only">Открыть публикацию</span>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                              Нет данных о публикациях
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {topPostsData?.data?.topByViews && topPostsData.data.topByViews.length > 0 ? (
-                      topPostsData.data.topByViews.map((post, index) => (
-                        <div key={post.id} className="flex flex-col space-y-2 border-b pb-3 last:border-0">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                              <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-medium text-sm">
-                                {index + 1}
-                              </div>
-                              <div className="font-semibold">{post.title}</div>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Eye className="h-4 w-4" />
-                              <span className="font-medium">{formatNumber(post.totalViews)}</span>
-                            </div>
-                          </div>
-                          <div className="text-sm text-muted-foreground pl-8">
-                            {post.content.length > 80 ? `${post.content.substring(0, 80)}...` : post.content}
-                          </div>
-                          <div className="flex gap-4 pl-8 text-sm">
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.likes || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.comments || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Share2 className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.shares || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-muted-foreground py-6">
-                        Нет данных о публикациях
-                      </div>
-                    )}
+                  
+                  {/* Дополнительная информация внизу таблицы */}
+                  <div className="text-sm text-muted-foreground mt-4">
+                    <p>Показано {topPostsData?.data?.topByViews?.length || 0} публикаций из {topPostsData?.data?.totalPosts || 0}</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Топ по вовлеченности</CardTitle>
-                <CardDescription>Посты с наибольшим взаимодействием</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTopPosts ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {topPostsData?.data?.topByEngagement && topPostsData.data.topByEngagement.length > 0 ? (
-                      topPostsData.data.topByEngagement.map((post, index) => (
-                        <div key={post.id} className="flex flex-col space-y-2 border-b pb-3 last:border-0">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                              <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center font-medium text-sm">
-                                {index + 1}
-                              </div>
-                              <div className="font-semibold">{post.title}</div>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Zap className="h-4 w-4" />
-                              <span className="font-medium">{post.engagementRate.toFixed(2)}%</span>
-                            </div>
-                          </div>
-                          <div className="text-sm text-muted-foreground pl-8">
-                            {post.content.length > 80 ? `${post.content.substring(0, 80)}...` : post.content}
-                          </div>
-                          <div className="flex gap-4 pl-8 text-sm">
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.likes || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageSquare className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.comments || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Share2 className="h-3 w-3" />
-                              <span>{formatNumber(post.platforms ? Object.values(post.platforms).reduce((acc: number, platform: any) => {
-                                return acc + (platform.analytics?.shares || 0);
-                              }, 0) : 0)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-muted-foreground py-6">
-                        Нет данных о публикациях
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="platforms" className="space-y-4">
