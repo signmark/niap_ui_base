@@ -1008,6 +1008,49 @@ export default function Analytics() {
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
+          <div className="mt-0 mb-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Рекомендации по контенту</CardTitle>
+                <CardDescription>На основе анализа эффективности контента</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingPlatformsStats ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {getContentRecommendations().length > 0 ? (
+                      getContentRecommendations().map((recommendation, index) => (
+                        <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border">
+                          <div className={cn(
+                            "rounded-full p-2 flex-shrink-0", 
+                            recommendation.type === 'success' ? "bg-green-100 text-green-600" : 
+                            recommendation.type === 'warning' ? "bg-amber-100 text-amber-600" :
+                            "bg-blue-100 text-blue-600"
+                          )}>
+                            {recommendation.type === 'success' ? <TrendingUp className="h-5 w-5" /> : 
+                             recommendation.type === 'warning' ? <AlertTriangle className="h-5 w-5" /> :
+                             <Lightbulb className="h-5 w-5" />}
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{recommendation.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{recommendation.description}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        Недостаточно данных для формирования рекомендаций
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Эффективность кампании */}
             <Card>
