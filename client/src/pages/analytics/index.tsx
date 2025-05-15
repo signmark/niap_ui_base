@@ -9,6 +9,9 @@ import {
   Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText,
   TrendingUp, AlertTriangle, Lightbulb, Users, Percent, Activity, ExternalLink
 } from "lucide-react";
+import {
+  SiTelegram, SiVk, SiInstagram, SiFacebook
+} from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
@@ -1502,34 +1505,51 @@ export default function Analytics() {
                 ) : (
                   <div className="h-80">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, metrics]) => (
-                          <div key={platform} className="p-4 border rounded-md">
-                            <h3 className="text-lg font-medium capitalize mb-3">{platform}</h3>
-                            <div className="space-y-2">
-                              <div className="flex justify-between">
-                                <span>Просмотры:</span>
-                                <span className="font-medium">{formatNumber(metrics.views)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Лайки:</span>
-                                <span className="font-medium">{formatNumber(metrics.likes)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Комментарии:</span>
-                                <span className="font-medium">{formatNumber(metrics.comments)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Репосты:</span>
-                                <span className="font-medium">{formatNumber(metrics.shares)}</span>
-                              </div>
-                              <div className="flex justify-between pt-2 border-t">
-                                <span>Вовлеченность:</span>
-                                <span className="font-medium">{metrics.engagementRate.toFixed(2)}%</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                        {Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, metrics]) => {
+                          // Определяем цвет для платформы
+                          const platformColors = {
+                            telegram: '#2AABEE',
+                            vk: '#4C75A3',
+                            facebook: '#3b5998',
+                            instagram: '#E4405F'
+                          };
+                          const color = platformColors[platform] || '#888888';
+                          
+                          return (
+                            <div key={platform} className="p-5 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                              <h3 className="text-lg font-medium capitalize mb-4 flex items-center gap-2" style={{ color }}>
+                                {platform === 'telegram' && <SiTelegram className="h-5 w-5" />}
+                                {platform === 'vk' && <SiVk className="h-5 w-5" />}
+                                {platform === 'instagram' && <SiInstagram className="h-5 w-5" />}
+                                {platform === 'facebook' && <SiFacebook className="h-5 w-5" />}
+                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                              </h3>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
+                                  <span className="text-sm text-muted-foreground">Просмотры:</span>
+                                  <span className="font-medium">{formatNumber(metrics.views)}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
+                                  <span className="text-sm text-muted-foreground">Лайки:</span>
+                                  <span className="font-medium">{formatNumber(metrics.likes)}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
+                                  <span className="text-sm text-muted-foreground">Комментарии:</span>
+                                  <span className="font-medium">{formatNumber(metrics.comments)}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
+                                  <span className="text-sm text-muted-foreground">Репосты:</span>
+                                  <span className="font-medium">{formatNumber(metrics.shares)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2 mt-1 rounded bg-primary/10 border border-primary/20">
+                                  <span className="font-medium">Вовлеченность:</span>
+                                  <span className="font-bold">{metrics.engagementRate.toFixed(2)}%</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="flex justify-center items-center h-full text-muted-foreground">
