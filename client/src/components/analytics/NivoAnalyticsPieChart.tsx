@@ -73,7 +73,7 @@ export default function NivoAnalyticsPieChart({
               arcLinkLabelsThickness={2}
               arcLinkLabelsColor={{ from: 'color' }}
               arcLinkLabelsOffset={2}
-              arcLinkLabel={d => `${d.value}%`}
+              arcLinkLabel={d => `${d.value}`}
               arcLabelsSkipAngle={10}
               arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
               layers={[
@@ -111,11 +111,20 @@ export default function NivoAnalyticsPieChart({
                         itemsSpacing: 0,
                         itemWidth: 100,
                         itemHeight: 18,
-                        itemTextColor: '#999',
+                        itemTextColor: '#333',
                         itemDirection: 'left-to-right',
                         itemOpacity: 1,
                         symbolSize: 18,
                         symbolShape: 'circle',
+                        effects: [
+                          {
+                            on: 'hover',
+                            style: {
+                              itemTextColor: '#000',
+                              itemOpacity: 1
+                            }
+                          }
+                        ]
                       },
                     ]
                   : []

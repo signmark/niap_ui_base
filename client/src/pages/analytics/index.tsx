@@ -819,11 +819,51 @@ export default function Analytics() {
                         <TableRow>
                           <TableHead className="w-12">#</TableHead>
                           <TableHead>Название</TableHead>
-                          <TableHead className="w-[90px] text-center"><Eye className="h-4 w-4 mx-auto" /></TableHead>
-                          <TableHead className="w-[90px] text-center"><ThumbsUp className="h-4 w-4 mx-auto" /></TableHead>
-                          <TableHead className="w-[90px] text-center"><MessageSquare className="h-4 w-4 mx-auto" /></TableHead>
-                          <TableHead className="w-[90px] text-center"><Share2 className="h-4 w-4 mx-auto" /></TableHead>
-                          <TableHead className="w-[90px] text-center"><Activity className="h-4 w-4 mx-auto" /></TableHead>
+                          <TableHead 
+                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "views" && "text-primary")}
+                            onClick={() => setPublicationsSortType("views")}
+                          >
+                            <div className="flex flex-col items-center">
+                              <Eye className="h-4 w-4 mx-auto" />
+                              <span className="text-xs font-normal mt-1">Просмотры</span>
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "likes" && "text-primary")}
+                            onClick={() => setPublicationsSortType("likes")}
+                          >
+                            <div className="flex flex-col items-center">
+                              <ThumbsUp className="h-4 w-4 mx-auto" />
+                              <span className="text-xs font-normal mt-1">Лайки</span>
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "comments" && "text-primary")}
+                            onClick={() => setPublicationsSortType("comments")}
+                          >
+                            <div className="flex flex-col items-center">
+                              <MessageSquare className="h-4 w-4 mx-auto" />
+                              <span className="text-xs font-normal mt-1">Комм.</span>
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "shares" && "text-primary")}
+                            onClick={() => setPublicationsSortType("shares")}
+                          >
+                            <div className="flex flex-col items-center">
+                              <Share2 className="h-4 w-4 mx-auto" />
+                              <span className="text-xs font-normal mt-1">Репосты</span>
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "engagement" && "text-primary")}
+                            onClick={() => setPublicationsSortType("engagement")}
+                          >
+                            <div className="flex flex-col items-center">
+                              <Activity className="h-4 w-4 mx-auto" />
+                              <span className="text-xs font-normal mt-1">Вовл.</span>
+                            </div>
+                          </TableHead>
                           <TableHead className="w-[80px]"></TableHead>
                         </TableRow>
                       </TableHeader>
