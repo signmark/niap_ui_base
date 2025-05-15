@@ -666,15 +666,15 @@ export default function Analytics() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col border-l-4 border-l-purple-500">
-              <CardHeader className="pb-2">
+            <Card className="flex flex-col border-l-4 border-l-purple-500 h-[140px]">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <MessageSquare className="h-4 w-4 text-purple-500 mr-2" />
                   Взаимодействия
                 </CardTitle>
-                <CardDescription>Все взаимодействия с постами</CardDescription>
+                <CardDescription className="text-xs">Все взаимодействия с постами</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
+              <CardContent className="flex-1 flex flex-col pt-1">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -682,14 +682,14 @@ export default function Analytics() {
                   </div>
                 ) : (
                   <>
-                    <div className="text-3xl font-bold text-purple-500">
+                    <div className="text-2xl font-bold text-purple-500">
                       {formatNumber(
                         (platformsStatsData?.data?.aggregated?.totalLikes || 0) +
                         (platformsStatsData?.data?.aggregated?.totalComments || 0) +
                         (platformsStatsData?.data?.aggregated?.totalShares || 0)
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Лайки, комментарии и репосты
                     </div>
                   </>
@@ -698,34 +698,48 @@ export default function Analytics() {
             </Card>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <NivoAnalyticsPieChart
-              data={getPieChartData()}
-              title="Распределение просмотров"
-              description="Просмотры по платформам"
-              isLoading={isLoadingPlatformsStats}
-              height={300}
-              centerText="Просмотры"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="overflow-hidden h-[450px]">
+              <CardHeader className="pb-2">
+                <CardTitle>Распределение просмотров</CardTitle>
+                <CardDescription>Просмотры по платформам</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NivoAnalyticsPieChart
+                  data={getPieChartData()}
+                  isLoading={isLoadingPlatformsStats}
+                  height={360}
+                  centerText="Просмотры"
+                />
+              </CardContent>
+            </Card>
             
-            <NivoAnalyticsBarChart
-              data={getEngagementChartData().map(item => ({
-                id: item.id,
-                [item.id]: item.value,
-                value: item.value,
-                label: item.label,
-                color: item.id === 'likes' ? '#e74c3c' : 
-                       item.id === 'comments' ? '#2ecc71' : 
-                       item.id === 'shares' ? '#f39c12' : '#3498db'
-              }))}
-              keys={['value']}
-              indexBy="label"
-              title="Типы вовлеченности"
-              description="Распределение по типам взаимодействий"
-              isLoading={isLoadingPlatformsStats}
-              height={300}
-              colorMapping={(d) => d.data.color || '#3498db'}
-            />
+            <Card className="overflow-hidden h-[450px]">
+              <CardHeader className="pb-2">
+                <CardTitle>Активность по платформам</CardTitle>
+                <CardDescription>Сравнение взаимодействий</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NivoAnalyticsBarChart
+                  data={getEngagementChartData().map(item => ({
+                    id: item.id,
+                    [item.id]: item.value,
+                    value: item.value,
+                    label: item.label,
+                    color: item.id === 'likes' ? '#e74c3c' : 
+                           item.id === 'comments' ? '#2ecc71' : 
+                           item.id === 'shares' ? '#f39c12' : '#3498db'
+                  }))}
+                  keys={['value']}
+                  indexBy="label"
+                  title="Типы вовлеченности"
+                  description="Распределение по типам взаимодействий"
+                  isLoading={isLoadingPlatformsStats}
+                  height={360}
+                  colorMapping={(d) => d.data.color || '#3498db'}
+                />
+              </CardContent>
+            </Card>
             
             <NivoAnalyticsLineChart
               data={[
