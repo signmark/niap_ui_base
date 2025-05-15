@@ -741,59 +741,77 @@ export default function Analytics() {
               </CardContent>
             </Card>
             
-            <NivoAnalyticsLineChart
-              data={[
-                {
-                  id: 'views',
-                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                    x: platform,
-                    y: data.views
-                  }))
-                },
-                {
-                  id: 'likes',
-                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                    x: platform,
-                    y: data.likes
-                  }))
-                },
-                {
-                  id: 'comments',
-                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                    x: platform,
-                    y: data.comments
-                  }))
-                }
-              ]}
-              title="Показатели по платформам"
-              description="Сравнение различных метрик по социальным сетям"
-              isLoading={isLoadingPlatformsStats}
-              height={300}
-              yAxisLegend="Количество"
-              xAxisLegend="Платформа"
-            />
+            <Card className="overflow-hidden h-[450px]">
+              <CardHeader className="pb-2">
+                <CardTitle>Показатели по платформам</CardTitle>
+                <CardDescription>Сравнение различных метрик по социальным сетям</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NivoAnalyticsLineChart
+                  data={[
+                    {
+                      id: 'views',
+                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                        x: platform,
+                        y: data.views
+                      }))
+                    },
+                    {
+                      id: 'likes',
+                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                        x: platform,
+                        y: data.likes
+                      }))
+                    },
+                    {
+                      id: 'comments',
+                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                        x: platform,
+                        y: data.comments
+                      }))
+                    }
+                  ]}
+                  isLoading={isLoadingPlatformsStats}
+                  height={360}
+                  yAxisLegend="Количество"
+                  xAxisLegend="Платформа"
+                  lineColors={{
+                    views: '#3498db',
+                    likes: '#e74c3c',
+                    comments: '#2ecc71'
+                  }}
+                />
+              </CardContent>
+            </Card>
             
-            <NivoAnalyticsBarChart
-              data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                platform,
-                engagementRate: Number((data.engagementRate || 0).toFixed(2)),
-                color: platform === 'vk' ? '#0077FF' : 
-                       platform === 'instagram' ? '#E1306C' : 
-                       platform === 'telegram' ? '#0088CC' : '#6366F1'
-              }))}
-              keys={['engagementRate']}
-              indexBy="platform"
-              title="Рейтинг вовлеченности по платформам"
-              description="Сравнение эффективности различных социальных сетей"
-              isLoading={isLoadingPlatformsStats}
-              height={300}
-              layout="horizontal"
-              colorMapping={(d) => {
-                const platform = d.data.indexValue;
-                return platform === 'vk' ? '#0077FF' : 
-                       platform === 'instagram' ? '#E1306C' : 
-                       platform === 'telegram' ? '#0088CC' : '#6366F1';
-              }}
+            <Card className="overflow-hidden h-[450px]">
+              <CardHeader className="pb-2">
+                <CardTitle>Рейтинг вовлеченности по платформам</CardTitle>
+                <CardDescription>Сравнение эффективности различных социальных сетей</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NivoAnalyticsBarChart
+                  data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                    platform,
+                    engagementRate: Number((data.engagementRate || 0).toFixed(2)),
+                    color: platform === 'vk' ? '#0077FF' : 
+                           platform === 'instagram' ? '#E1306C' : 
+                           platform === 'telegram' ? '#0088CC' : '#6366F1'
+                  }))}
+                  keys={['engagementRate']}
+                  indexBy="platform"
+                  isLoading={isLoadingPlatformsStats}
+                  height={360}
+                  layout="horizontal"
+                  colorMapping={(d) => {
+                    const platform = d.data.indexValue;
+                    return platform === 'vk' ? '#0077FF' : 
+                           platform === 'instagram' ? '#E1306C' : 
+                           platform === 'telegram' ? '#0088CC' : '#6366F1';
+                  }}
+                />
+              </CardContent>
+            </Card>
             />
           </div>
         </TabsContent>
