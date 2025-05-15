@@ -565,10 +565,9 @@ export default function Analytics() {
       )}
 
       <Tabs defaultValue="overview" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Обзор</TabsTrigger>
           <TabsTrigger value="publications">Публикации</TabsTrigger>
-          <TabsTrigger value="platforms">Платформы</TabsTrigger>
           <TabsTrigger value="insights">Аналитические выводы</TabsTrigger>
         </TabsList>
         
