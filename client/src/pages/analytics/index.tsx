@@ -452,95 +452,130 @@ export default function Analytics() {
       )}
 
       <Tabs defaultValue="overview" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Обзор</TabsTrigger>
           <TabsTrigger value="publications">Публикации</TabsTrigger>
           <TabsTrigger value="platforms">Платформы</TabsTrigger>
+          <TabsTrigger value="insights">Аналитические выводы</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="flex flex-col">
+            <Card className="flex flex-col border-l-4 border-l-blue-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Просмотры</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Eye className="h-4 w-4 text-blue-500 mr-2" />
+                  Просмотры
+                </CardTitle>
                 <CardDescription>Общее количество просмотров</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center">
+              <CardContent className="flex-1 flex flex-col">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>Загрузка...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-8 w-8 text-primary" />
-                    <div className="text-3xl font-bold">
-                      {formatNumber(platformsStatsData?.data?.aggregated?.totalViews || 0)}
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="text-3xl font-bold text-blue-500">
+                        {formatNumber(platformsStatsData?.data?.aggregated?.totalViews || 0)}
+                      </div>
                     </div>
-                  </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Среднее на пост: {formatNumber(Math.round((platformsStatsData?.data?.aggregated?.totalViews || 0) / 
+                      (platformsStatsData?.data?.aggregated?.totalPosts || 1)))}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col">
+            <Card className="flex flex-col border-l-4 border-l-yellow-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Вовлеченность</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Zap className="h-4 w-4 text-yellow-500 mr-2" />
+                  Вовлеченность
+                </CardTitle>
                 <CardDescription>Средний показатель вовлеченности</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center">
+              <CardContent className="flex-1 flex flex-col">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>Загрузка...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-8 w-8 text-primary" />
-                    <div className="text-3xl font-bold">
-                      {(platformsStatsData?.data?.aggregated?.averageEngagementRate || 0).toFixed(2)}%
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="text-3xl font-bold text-yellow-500">
+                        {(platformsStatsData?.data?.aggregated?.averageEngagementRate || 0).toFixed(2)}%
+                      </div>
                     </div>
-                  </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
+                        <span className="text-green-600">Высокая вовлеченность</span>
+                      ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
+                        <span className="text-yellow-600">Средняя вовлеченность</span>
+                      ) : (
+                        <span className="text-red-600">Низкая вовлеченность</span>
+                      )}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col">
+            <Card className="flex flex-col border-l-4 border-l-green-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Публикации</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <FileText className="h-4 w-4 text-green-500 mr-2" />
+                  Публикации
+                </CardTitle>
                 <CardDescription>Опубликованные посты</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center">
+              <CardContent className="flex-1 flex flex-col">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>Загрузка...</span>
                   </div>
                 ) : (
-                  <div className="text-3xl font-bold">
-                    {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
-                  </div>
+                  <>
+                    <div className="text-3xl font-bold text-green-500">
+                      {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      По {Object.keys(platformsStatsData?.data?.platforms || {}).length || 0} платформам
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col">
+            <Card className="flex flex-col border-l-4 border-l-purple-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Взаимодействия</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <MessageSquare className="h-4 w-4 text-purple-500 mr-2" />
+                  Взаимодействия
+                </CardTitle>
                 <CardDescription>Все взаимодействия с постами</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex items-center">
+              <CardContent className="flex-1 flex flex-col">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>Загрузка...</span>
                   </div>
                 ) : (
-                  <div className="text-3xl font-bold">
-                    {formatNumber(
-                      (platformsStatsData?.data?.aggregated?.totalLikes || 0) +
-                      (platformsStatsData?.data?.aggregated?.totalComments || 0) +
-                      (platformsStatsData?.data?.aggregated?.totalShares || 0)
-                    )}
+                  <>
+                    <div className="text-3xl font-bold text-purple-500">
+                      {formatNumber(
+                        (platformsStatsData?.data?.aggregated?.totalLikes || 0) +
+                        (platformsStatsData?.data?.aggregated?.totalComments || 0) +
+                        (platformsStatsData?.data?.aggregated?.totalShares || 0)
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -830,6 +865,196 @@ export default function Analytics() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Эффективность кампании */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <span className="mr-2">Эффективность кампании</span>
+                  {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
+                    <span className="text-green-500 text-lg">●</span>
+                  ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
+                    <span className="text-yellow-500 text-lg">●</span>
+                  ) : (
+                    <span className="text-red-500 text-lg">●</span>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Анализ эффективности кампании на основе вовлеченности и охвата
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingPlatformsStats ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Оценка эффективности:</h3>
+                      <div className="p-4 rounded-md border bg-background">
+                        {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
+                          <div className="text-green-600 font-medium">
+                            Высокая эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
+                          </div>
+                        ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
+                          <div className="text-yellow-600 font-medium">
+                            Средняя эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
+                          </div>
+                        ) : (
+                          <div className="text-red-600 font-medium">
+                            Низкая эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-medium mb-2">Рекомендации по улучшению:</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {platformsStatsData?.data?.aggregated?.totalViews < 100 && (
+                          <li>Увеличьте охват публикаций для большего количества просмотров</li>
+                        )}
+                        {platformsStatsData?.data?.aggregated?.totalLikes / platformsStatsData?.data?.aggregated?.totalViews < 0.05 && (
+                          <li>Улучшите вовлеченность пользователей через более интерактивный контент</li>
+                        )}
+                        {platformsStatsData?.data?.aggregated?.totalComments / platformsStatsData?.data?.aggregated?.totalPosts < 1 && (
+                          <li>Стимулируйте обсуждение в комментариях через вопросы и опросы</li>
+                        )}
+                        <li>Проанализируйте наиболее успешные публикации для создания похожего контента</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Лучшие социальные сети */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Эффективность социальных сетей</CardTitle>
+                <CardDescription>
+                  Сравнительный анализ эффективности различных платформ
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingPlatformsStats ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Рейтинг платформ:</h3>
+                      <div className="space-y-3">
+                        {Object.entries(platformsStatsData?.data?.platforms || {})
+                          .sort((a, b) => b[1].engagementRate - a[1].engagementRate)
+                          .map(([platform, metrics], index) => (
+                            <div key={platform} className="flex items-center justify-between p-2 border rounded-md">
+                              <div className="flex items-center">
+                                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground font-medium mr-2">
+                                  {index + 1}
+                                </div>
+                                <div className="capitalize">{platform}</div>
+                              </div>
+                              <div>
+                                <span className="font-medium">{metrics.engagementRate.toFixed(2)}%</span> вовлеченность
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-medium mb-2">Лучшая платформа для:</h3>
+                      <div className="space-y-2">
+                        {/* Определяем лучшую платформу для просмотров */}
+                        {(() => {
+                          const entries = Object.entries(platformsStatsData?.data?.platforms || {});
+                          if (entries.length === 0) return null;
+                          
+                          const bestForViews = entries.reduce((a, b) => a[1].views > b[1].views ? a : b);
+                          const bestForEngagement = entries.reduce((a, b) => a[1].engagementRate > b[1].engagementRate ? a : b);
+                          const bestForComments = entries.reduce((a, b) => a[1].comments > b[1].comments ? a : b);
+                          
+                          return (
+                            <>
+                              <div className="p-2 border rounded-md">
+                                <span className="font-medium">Охвата:</span> {bestForViews[0]} ({bestForViews[1].views} просмотров)
+                              </div>
+                              <div className="p-2 border rounded-md">
+                                <span className="font-medium">Вовлеченности:</span> {bestForEngagement[0]} ({bestForEngagement[1].engagementRate.toFixed(2)}%)
+                              </div>
+                              <div className="p-2 border rounded-md">
+                                <span className="font-medium">Общения:</span> {bestForComments[0]} ({bestForComments[1].comments} комментариев)
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* График сравнения вовлеченности */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Сравнение эффективности платформ</CardTitle>
+                <CardDescription>
+                  Визуализация ключевых метрик по социальным сетям
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingPlatformsStats ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="h-80">
+                    {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, metrics]) => (
+                          <div key={platform} className="p-4 border rounded-md">
+                            <h3 className="text-lg font-medium capitalize mb-3">{platform}</h3>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span>Просмотры:</span>
+                                <span className="font-medium">{formatNumber(metrics.views)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Лайки:</span>
+                                <span className="font-medium">{formatNumber(metrics.likes)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Комментарии:</span>
+                                <span className="font-medium">{formatNumber(metrics.comments)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Репосты:</span>
+                                <span className="font-medium">{formatNumber(metrics.shares)}</span>
+                              </div>
+                              <div className="flex justify-between pt-2 border-t">
+                                <span>Вовлеченность:</span>
+                                <span className="font-medium">{metrics.engagementRate.toFixed(2)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center h-full text-muted-foreground">
+                        Нет данных о платформах
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
