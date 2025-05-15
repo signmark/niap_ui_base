@@ -327,15 +327,57 @@ export default function Analytics() {
   };
 
   // Обновляем данные аналитики
-  const refreshAnalytics = () => {
-    refetchPlatformsStats();
-    refetchTopPosts();
-    refetchStatus();
-    
-    toast({
-      title: "Обновление данных",
-      description: "Данные аналитики обновляются"
-    });
+  const refreshAnalytics = async () => {
+    if (!campaignId) {
+      toast({
+        title: "Ошибка",
+        description: "Не выбрана кампания",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Отправляем запрос в n8n webhook для обновления аналитики
+      const response = await fetch('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          campaignId: campaignId,
+          days: period // Используем выбранный период (7 или 30 дней)
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Обновление данных",
+          description: "Запрос на обновление аналитики отправлен успешно"
+        });
+        
+        // Обновляем данные после небольшой задержки
+        setTimeout(() => {
+          refetchPlatformsStats();
+          refetchTopPosts();
+          refetchStatus();
+        }, 2000);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast({
+          title: "Ошибка",
+          description: errorData.message || "Не удалось отправить запрос на обновление аналитики",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error("Ошибка при обновлении аналитики:", error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось отправить запрос на обновление аналитики",
+        variant: "destructive"
+      });
+    }
   };
 
   // Обработчик изменения периода
