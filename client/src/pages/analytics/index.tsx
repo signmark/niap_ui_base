@@ -1328,43 +1328,6 @@ export default function Analytics() {
               </>
             )}
           </div>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle>Запуск сбора аналитики</CardTitle>
-                <Button 
-                  onClick={startCollectingAnalytics}
-                  disabled={isCollectingAnalytics || !campaignId}
-                >
-                  {isCollectingAnalytics ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Сбор данных...
-                    </>
-                  ) : (
-                    'Собрать аналитику'
-                  )}
-                </Button>
-              </div>
-              <CardDescription>
-                Обновление аналитики для всех публикаций в текущей кампании
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {isCollectingAnalytics ? (
-                  <div className="space-y-2">
-                    <div>Сбор и обработка данных по публикациям во всех социальных сетях...</div>
-                    <Progress value={analyticsStatusData?.status?.progress || 0} max={100} className="h-2" />
-                    <div className="text-right text-xs">{analyticsStatusData?.status?.progress || 0}%</div>
-                  </div>
-                ) : (
-                  <div>Запустите сбор аналитики, чтобы получить актуальные данные о просмотрах, лайках, комментариях и репостах для всех публикаций в выбранной кампании.</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
