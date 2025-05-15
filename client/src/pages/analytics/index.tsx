@@ -1077,53 +1077,46 @@ export default function Analytics() {
                           };
 
                           return (
-                            <div key={platform} className="p-4 border rounded-md shadow-sm" style={{ borderLeft: `4px solid ${color}` }}>
-                              <h3 className="text-sm flex items-center gap-2 mb-4 font-medium">
+                            <div key={platform} className="p-3 border rounded-md shadow-sm" style={{ borderLeft: `4px solid ${color}` }}>
+                              <div className="flex items-center gap-1 text-sm font-medium mb-3">
                                 {getPlatformIcon()}
                                 {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                              </h3>
+                              </div>
                               
-                              <div className="grid grid-cols-2 gap-x-10 gap-y-6">
-                                {/* Публикации */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Публикации</div>
-                                  <div className="text-xl font-bold">{metrics.posts}</div>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Публикации</div>
+                                  <div className="text-lg font-bold">{metrics.posts}</div>
                                 </div>
                                 
-                                {/* Просмотры */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Просмотры</div>
-                                  <div className="text-xl font-bold">{formatNumber(metrics.views)}</div>
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Просмотры</div>
+                                  <div className="text-lg font-bold">{formatNumber(metrics.views)}</div>
                                 </div>
                                 
-                                {/* Лайки */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Лайки</div>
-                                  <div className="text-xl font-bold">{formatNumber(metrics.likes)}</div>
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Лайки</div>
+                                  <div className="text-lg font-bold">{formatNumber(metrics.likes)}</div>
                                 </div>
                                 
-                                {/* Комментарии */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Комментарии</div>
-                                  <div className="text-xl font-bold">{formatNumber(metrics.comments)}</div>
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Комментарии</div>
+                                  <div className="text-lg font-bold">{formatNumber(metrics.comments)}</div>
                                 </div>
                                 
-                                {/* Репосты */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Репосты</div>
-                                  <div className="text-xl font-bold">{formatNumber(metrics.shares)}</div>
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Репосты</div>
+                                  <div className="text-lg font-bold">{formatNumber(metrics.shares)}</div>
                                 </div>
                                 
-                                {/* Вовлеченность */}
-                                <div className="text-center">
-                                  <div className="text-xs text-muted-foreground mb-1">Вовлеченность</div>
-                                  <div className="text-xl font-bold">{metrics.engagementRate.toFixed(2)}%</div>
+                                <div className="flex flex-col items-center">
+                                  <div className="text-xs text-muted-foreground">Вовлеченность</div>
+                                  <div className="text-lg font-bold">{metrics.engagementRate.toFixed(2)}%</div>
                                 </div>
                               </div>
                               
-                              {/* Полоса прогресса вовлеченности */}
                               {metrics.engagementRate > 0 && (
-                                <div className="w-full h-1 bg-gray-200 mt-6 rounded-full overflow-hidden">
+                                <div className="w-full h-1 bg-gray-200 mt-3 rounded-full overflow-hidden">
                                   <div 
                                     className={cn(
                                       "h-full",
