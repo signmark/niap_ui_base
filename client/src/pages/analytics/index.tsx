@@ -574,15 +574,15 @@ export default function Analytics() {
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="flex flex-col border-l-4 border-l-blue-500">
-              <CardHeader className="pb-2">
+            <Card className="flex flex-col border-l-4 border-l-blue-500 h-[140px]">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Eye className="h-4 w-4 text-blue-500 mr-2" />
                   Просмотры
                 </CardTitle>
-                <CardDescription>Общее количество просмотров</CardDescription>
+                <CardDescription className="text-xs">Общее количество просмотров</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
+              <CardContent className="flex-1 flex flex-col pt-1">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -591,11 +591,11 @@ export default function Analytics() {
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="text-3xl font-bold text-blue-500">
+                      <div className="text-2xl font-bold text-blue-500">
                         {formatNumber(platformsStatsData?.data?.aggregated?.totalViews || 0)}
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Среднее на пост: {formatNumber(Math.round((platformsStatsData?.data?.aggregated?.totalViews || 0) / 
                       (platformsStatsData?.data?.aggregated?.totalPosts || 1)))}
                     </div>
@@ -604,15 +604,15 @@ export default function Analytics() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col border-l-4 border-l-yellow-500">
-              <CardHeader className="pb-2">
+            <Card className="flex flex-col border-l-4 border-l-yellow-500 h-[140px]">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Zap className="h-4 w-4 text-yellow-500 mr-2" />
                   Вовлеченность
                 </CardTitle>
-                <CardDescription>Средний показатель вовлеченности</CardDescription>
+                <CardDescription className="text-xs">Средний показатель вовлеченности</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
+              <CardContent className="flex-1 flex flex-col pt-1">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -621,11 +621,11 @@ export default function Analytics() {
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="text-3xl font-bold text-yellow-500">
+                      <div className="text-2xl font-bold text-yellow-500">
                         {(platformsStatsData?.data?.aggregated?.averageEngagementRate || 0).toFixed(2)}%
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
                         <span className="text-green-600">Высокая вовлеченность</span>
                       ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
@@ -639,15 +639,15 @@ export default function Analytics() {
               </CardContent>
             </Card>
 
-            <Card className="flex flex-col border-l-4 border-l-green-500">
-              <CardHeader className="pb-2">
+            <Card className="flex flex-col border-l-4 border-l-green-500 h-[140px]">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <FileText className="h-4 w-4 text-green-500 mr-2" />
                   Публикации
                 </CardTitle>
-                <CardDescription>Опубликованные посты</CardDescription>
+                <CardDescription className="text-xs">Опубликованные посты</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
+              <CardContent className="flex-1 flex flex-col pt-1">
                 {isLoadingPlatformsStats ? (
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -655,10 +655,10 @@ export default function Analytics() {
                   </div>
                 ) : (
                   <>
-                    <div className="text-3xl font-bold text-green-500">
+                    <div className="text-2xl font-bold text-green-500">
                       {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-2">
+                    <div className="text-xs text-muted-foreground mt-1">
                       По {Object.keys(platformsStatsData?.data?.platforms || {}).length || 0} платформам
                     </div>
                   </>
@@ -1540,26 +1540,30 @@ export default function Analytics() {
                                 )}
                                 {platform.charAt(0).toUpperCase() + platform.slice(1)}
                               </h3>
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
-                                  <span className="text-sm text-muted-foreground">Просмотры:</span>
-                                  <span className="font-medium">{formatNumber(metrics.views)}</span>
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="bg-muted/30 p-2 rounded text-center">
+                                    <span className="text-xs text-muted-foreground block">Просмотры</span>
+                                    <span className="font-medium text-sm">{formatNumber(metrics.views)}</span>
+                                  </div>
+                                  <div className="bg-muted/30 p-2 rounded text-center">
+                                    <span className="text-xs text-muted-foreground block">Лайки</span>
+                                    <span className="font-medium text-sm">{formatNumber(metrics.likes)}</span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
-                                  <span className="text-sm text-muted-foreground">Лайки:</span>
-                                  <span className="font-medium">{formatNumber(metrics.likes)}</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="bg-muted/30 p-2 rounded text-center">
+                                    <span className="text-xs text-muted-foreground block">Комментарии</span>
+                                    <span className="font-medium text-sm">{formatNumber(metrics.comments)}</span>
+                                  </div>
+                                  <div className="bg-muted/30 p-2 rounded text-center">
+                                    <span className="text-xs text-muted-foreground block">Репосты</span>
+                                    <span className="font-medium text-sm">{formatNumber(metrics.shares)}</span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
-                                  <span className="text-sm text-muted-foreground">Комментарии:</span>
-                                  <span className="font-medium">{formatNumber(metrics.comments)}</span>
-                                </div>
-                                <div className="flex justify-between items-center bg-muted/30 p-2 rounded">
-                                  <span className="text-sm text-muted-foreground">Репосты:</span>
-                                  <span className="font-medium">{formatNumber(metrics.shares)}</span>
-                                </div>
-                                <div className="flex justify-between items-center p-2 mt-1 rounded bg-primary/10 border border-primary/20">
-                                  <span className="font-medium">Вовлеченность:</span>
-                                  <span className="font-bold">{metrics.engagementRate.toFixed(2)}%</span>
+                                <div className="p-2 mt-1 rounded bg-primary/10 border border-primary/20 text-center">
+                                  <span className="text-xs text-muted-foreground block">Вовлеченность</span>
+                                  <span className="font-bold">{metrics.engagementRate ? `${metrics.engagementRate.toFixed(2)}%` : '0%'}</span>
                                 </div>
                               </div>
                             </div>
