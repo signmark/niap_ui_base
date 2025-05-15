@@ -113,7 +113,9 @@ export default function NivoAnalyticsBarChart({
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: layout === 'vertical' ? indexBy : keys[0],
+                legend: layout === 'vertical' ? 
+                  (indexBy === 'platform' ? '' : indexBy) : 
+                  (keys[0] === 'engagementRate' ? 'Вовлеченность' : keys[0]),
                 legendPosition: 'middle',
                 legendOffset: 32,
               }}
@@ -121,7 +123,9 @@ export default function NivoAnalyticsBarChart({
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: layout === 'vertical' ? keys[0] : indexBy,
+                legend: layout === 'vertical' ? 
+                  (keys[0] === 'engagementRate' ? 'Вовлеченность' : keys[0]) : 
+                  (indexBy === 'platform' ? '' : indexBy),
                 legendPosition: 'middle',
                 legendOffset: -40,
               }}
