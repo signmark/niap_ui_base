@@ -1106,7 +1106,7 @@ export default function Analytics() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="h-[380px]">
+                  <div className="h-[300px]">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
                       <NivoAnalyticsPieChart
                         data={Object.entries(platformsStatsData?.data?.platforms || {})
@@ -1150,7 +1150,7 @@ export default function Analytics() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="h-[380px]">
+                  <div className="h-[300px]">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
                       <NivoAnalyticsBarChart
                         data={Object.entries(platformsStatsData?.data?.platforms || {})
