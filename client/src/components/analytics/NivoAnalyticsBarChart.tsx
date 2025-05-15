@@ -96,7 +96,7 @@ export default function NivoAnalyticsBarChart({
             Нет данных для отображения
           </div>
         ) : (
-          <div style={{ height: `${height}px` }}>
+          <div className="w-full" style={{ height: `${height}px` }}>
             <ResponsiveBar
               data={data}
               keys={keys}
