@@ -589,49 +589,81 @@ export default function Analytics() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Распределение просмотров</CardTitle>
-                <CardDescription>Просмотры по платформам</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2 flex justify-center">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center justify-center h-60">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : getPieChartData().length > 0 ? (
-                  <div className="h-60">
-                    <AnalyticsPieChart data={getPieChartData()} height={250} />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-60 text-muted-foreground">
-                    Нет данных о просмотрах
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <NivoAnalyticsPieChart
+              data={getPieChartData()}
+              title="Распределение просмотров"
+              description="Просмотры по платформам"
+              isLoading={isLoadingPlatformsStats}
+              height={300}
+              centerText="Просмотры"
+            />
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Типы вовлеченности</CardTitle>
-                <CardDescription>Распределение по типам взаимодействий</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center justify-center h-60">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : getEngagementChartData().some(item => item.value > 0) ? (
-                  <div className="h-60">
-                    <AnalyticsBarChart data={getEngagementChartData()} height={250} />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-60 text-muted-foreground">
-                    Нет данных о вовлеченности
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <NivoAnalyticsBarChart
+              data={getEngagementChartData().map(item => ({
+                id: item.id,
+                [item.id]: item.value,
+                value: item.value,
+                label: item.label,
+                color: item.id === 'likes' ? '#e74c3c' : 
+                       item.id === 'comments' ? '#2ecc71' : 
+                       item.id === 'shares' ? '#f39c12' : '#3498db'
+              }))}
+              keys={['value']}
+              indexBy="label"
+              title="Типы вовлеченности"
+              description="Распределение по типам взаимодействий"
+              isLoading={isLoadingPlatformsStats}
+              height={300}
+            />
+            
+            <NivoAnalyticsLineChart
+              data={[
+                {
+                  id: 'views',
+                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                    x: platform,
+                    y: data.views
+                  }))
+                },
+                {
+                  id: 'likes',
+                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                    x: platform,
+                    y: data.likes
+                  }))
+                },
+                {
+                  id: 'comments',
+                  data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                    x: platform,
+                    y: data.comments
+                  }))
+                }
+              ]}
+              title="Показатели по платформам"
+              description="Сравнение различных метрик по социальным сетям"
+              isLoading={isLoadingPlatformsStats}
+              height={300}
+              yAxisLegend="Количество"
+              xAxisLegend="Платформа"
+            />
+            
+            <NivoAnalyticsBarChart
+              data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                platform,
+                engagementRate: Number(data.engagementRate.toFixed(2)),
+                color: platform === 'vk' ? '#0077FF' : 
+                       platform === 'instagram' ? '#E1306C' : 
+                       platform === 'telegram' ? '#0088CC' : '#6366F1'
+              }))}
+              keys={['engagementRate']}
+              indexBy="platform"
+              title="Рейтинг вовлеченности по платформам"
+              description="Сравнение эффективности различных социальных сетей"
+              isLoading={isLoadingPlatformsStats}
+              height={300}
+              layout="horizontal"
+            />
           </div>
         </TabsContent>
         
