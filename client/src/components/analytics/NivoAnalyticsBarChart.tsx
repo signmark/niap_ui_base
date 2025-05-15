@@ -101,8 +101,8 @@ export default function NivoAnalyticsBarChart({
               data={data}
               keys={keys}
               indexBy={indexBy}
-              margin={{ top: 30, right: 120, bottom: 50, left: 60 }}
-              padding={0.3}
+              margin={{ top: 30, right: 80, bottom: 70, left: 60 }}
+              padding={0.4}
               layout={layout}
               groupMode={groupMode}
               colors={getColors}
@@ -147,22 +147,24 @@ export default function NivoAnalyticsBarChart({
               legends={[
                 {
                   dataFrom: 'keys',
-                  anchor: 'bottom-right',
-                  direction: 'column',
+                  anchor: 'bottom',
+                  direction: 'row',
                   justify: false,
-                  translateX: 100,
-                  translateY: 0,
-                  itemsSpacing: 2,
-                  itemWidth: 80,
+                  translateX: 0,
+                  translateY: 65,
+                  itemsSpacing: 10,
+                  itemWidth: 90,
                   itemHeight: 18,
                   itemDirection: 'left-to-right',
-                  itemOpacity: 0.85,
-                  symbolSize: 20,
+                  itemOpacity: 0.9,
+                  symbolSize: 16,
+                  symbolShape: 'square',
                   effects: [
                     {
                       on: 'hover',
                       style: {
                         itemOpacity: 1,
+                        itemTextColor: '#333',
                       },
                     },
                   ],

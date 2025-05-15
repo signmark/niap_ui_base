@@ -1095,18 +1095,18 @@ export default function Analytics() {
           {/* Сравнение показателей в диаграммах */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* График распределения вовлеченности */}
-            <Card>
+            <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Вовлеченность по платформам</CardTitle>
                 <CardDescription>Сравнение коэффициента вовлеченности</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-6">
                 {isLoadingPlatformsStats ? (
                   <div className="flex justify-center items-center h-40">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="h-[300px]">
+                  <div className="h-[400px]">
                     {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
                       <NivoAnalyticsPieChart
                         data={Object.entries(platformsStatsData?.data?.platforms || {})
@@ -1118,6 +1118,8 @@ export default function Analytics() {
                           }))}
                         title="Вовлеченность аудитории"
                         description="Распределение коэффициента вовлеченности по платформам"
+                        height={350}
+                        centerText="Вовлеченность"
                         colorMapping={(item) => {
                           const colors = {
                             Telegram: '#2AABEE',
