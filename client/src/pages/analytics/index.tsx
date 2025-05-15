@@ -100,6 +100,7 @@ export default function Analytics() {
   const [period, setPeriod] = useState(7); // период в днях
   const [activeTab, setActiveTab] = useState("overview");
   const [isCollectingAnalytics, setIsCollectingAnalytics] = useState(false);
+  const [publicationsSortType, setPublicationsSortType] = useState("views"); // Сортировка публикаций
 
   // Используем глобальный стор для выбранной кампании
   const { selectedCampaign } = useCampaignStore();
@@ -786,7 +787,10 @@ export default function Analytics() {
               <div className="flex justify-between items-center">
                 <CardTitle>Публикации</CardTitle>
                 <div className="flex gap-2">
-                  <Select defaultValue="views">
+                  <Select 
+                    value={publicationsSortType} 
+                    onValueChange={setPublicationsSortType}
+                  >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Сортировка" />
                     </SelectTrigger>
@@ -824,54 +828,102 @@ export default function Analytics() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {topPostsData?.data?.topByViews && topPostsData.data.topByViews.length > 0 ? (
-                          topPostsData.data.topByViews.map((post, index) => {
-                            const totalLikes = post.platforms 
-                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.likes || 0), 0) 
-                              : 0;
-                            const totalComments = post.platforms 
-                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.comments || 0), 0) 
-                              : 0;
-                            const totalShares = post.platforms 
-                              ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.shares || 0), 0) 
-                              : 0;
+                        {topPostsData?.data ? (
+                          (() => {
+                            // Определение данных для отображения на основе типа сортировки
+                            let postsToShow = [];
                             
-                            return (
-                              <TableRow key={post.id}>
-                                <TableCell className="font-medium">{index + 1}</TableCell>
-                                <TableCell>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium truncate max-w-[300px]">{post.title}</span>
-                                    <span className="text-xs text-muted-foreground truncate max-w-[300px]">
-                                      {post.content && post.content.length > 60 
-                                        ? `${post.content.substring(0, 60)}...` 
-                                        : post.content}
+                            if (publicationsSortType === 'engagement' && topPostsData.data.topByEngagement) {
+                              postsToShow = [...topPostsData.data.topByEngagement];
+                            } else if (publicationsSortType === 'views' && topPostsData.data.topByViews) {
+                              postsToShow = [...topPostsData.data.topByViews];
+                            } else if (topPostsData.data.topByViews) {
+                              // Для остальных типов сортировки (likes, comments, shares) берем исходные данные
+                              postsToShow = [...topPostsData.data.topByViews];
+                              
+                              // И сортируем по выбранному параметру
+                              postsToShow.sort((a, b) => {
+                                const getTotal = (post: any, field: string) => {
+                                  return post.platforms 
+                                    ? Object.values(post.platforms).reduce((acc: number, platform: any) => 
+                                        acc + (platform.analytics?.[field] || 0), 0) 
+                                    : 0;
+                                };
+                                
+                                return getTotal(b, publicationsSortType) - getTotal(a, publicationsSortType);
+                              });
+                            }
+                            
+                            if (postsToShow.length === 0) {
+                              return (
+                                <TableRow>
+                                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                                    Нет данных о публикациях
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
+                            
+                            return postsToShow.map((post, index) => {
+                              const totalLikes = post.platforms 
+                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.likes || 0), 0) 
+                                : 0;
+                              const totalComments = post.platforms 
+                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.comments || 0), 0) 
+                                : 0;
+                              const totalShares = post.platforms 
+                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.shares || 0), 0) 
+                                : 0;
+                              
+                              // Функция для получения URL первой платформы с постом (для превью)
+                              const getPostUrl = (post: any) => {
+                                if (!post.platforms) return '#';
+                                const platforms = Object.values(post.platforms);
+                                for (const platform of platforms) {
+                                  if ((platform as any).postUrl) return (platform as any).postUrl;
+                                }
+                                return '#';
+                              };
+                              
+                              return (
+                                <TableRow key={post.id}>
+                                  <TableCell className="font-medium">{index + 1}</TableCell>
+                                  <TableCell>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium truncate max-w-[300px]">{post.title}</span>
+                                      <span className="text-xs text-muted-foreground truncate max-w-[300px]">
+                                        {post.content && post.content.length > 60 
+                                          ? `${post.content.substring(0, 60)}...` 
+                                          : post.content}
+                                      </span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-center font-medium">{formatNumber(post.totalViews || 0)}</TableCell>
+                                  <TableCell className="text-center">{formatNumber(totalLikes)}</TableCell>
+                                  <TableCell className="text-center">{formatNumber(totalComments)}</TableCell>
+                                  <TableCell className="text-center">{formatNumber(totalShares)}</TableCell>
+                                  <TableCell className="text-center font-medium">
+                                    <span className={cn(
+                                      "px-2 py-1 rounded-full text-xs",
+                                      post.engagementRate > 5 ? "bg-green-100 text-green-700" :
+                                      post.engagementRate > 1 ? "bg-amber-100 text-amber-700" :
+                                      "bg-red-100 text-red-700"
+                                    )}>
+                                      {post.engagementRate.toFixed(2)}%
                                     </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center font-medium">{formatNumber(post.totalViews || 0)}</TableCell>
-                                <TableCell className="text-center">{formatNumber(totalLikes)}</TableCell>
-                                <TableCell className="text-center">{formatNumber(totalComments)}</TableCell>
-                                <TableCell className="text-center">{formatNumber(totalShares)}</TableCell>
-                                <TableCell className="text-center font-medium">
-                                  <span className={cn(
-                                    "px-2 py-1 rounded-full text-xs",
-                                    post.engagementRate > 5 ? "bg-green-100 text-green-700" :
-                                    post.engagementRate > 1 ? "bg-amber-100 text-amber-700" :
-                                    "bg-red-100 text-red-700"
-                                  )}>
-                                    {post.engagementRate.toFixed(2)}%
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button variant="ghost" size="icon">
-                                    <ExternalLink className="h-4 w-4" />
-                                    <span className="sr-only">Открыть публикацию</span>
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <a href={getPostUrl(post)} target="_blank" rel="noopener noreferrer">
+                                      <Button variant="ghost" size="icon">
+                                        <ExternalLink className="h-4 w-4" />
+                                        <span className="sr-only">Открыть публикацию</span>
+                                      </Button>
+                                    </a>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            });
+                          })()
                         ) : (
                           <TableRow>
                             <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
@@ -885,7 +937,7 @@ export default function Analytics() {
                   
                   {/* Дополнительная информация внизу таблицы */}
                   <div className="text-sm text-muted-foreground mt-4">
-                    <p>Показано {topPostsData?.data?.topByViews?.length || 0} публикаций из {topPostsData?.data?.totalPosts || 0}</p>
+                    <p>Показано top-10 публикаций по выбранному критерию</p>
                   </div>
                 </div>
               )}

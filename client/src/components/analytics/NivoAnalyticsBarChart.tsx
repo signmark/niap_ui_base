@@ -113,21 +113,33 @@ export default function NivoAnalyticsBarChart({
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: layout === 'vertical' ? 
-                  (indexBy === 'platform' ? '' : indexBy) : 
-                  (keys[0] === 'engagementRate' ? 'Вовлеченность' : keys[0]),
+                legend: layout === 'vertical' ? '' : 
+                  (keys[0] === 'engagementRate' ? 'Вовлеченность (%)' : 
+                   keys[0] === 'views' ? 'Просмотры' :
+                   keys[0] === 'likes' ? 'Лайки' :
+                   keys[0] === 'comments' ? 'Комментарии' :
+                   keys[0] === 'shares' ? 'Репосты' : ''),
                 legendPosition: 'middle',
                 legendOffset: 32,
+                format: value => typeof value === 'string' ? 
+                  (value === 'vk' ? 'ВКонтакте' : 
+                   value === 'telegram' ? 'Телеграм' :
+                   value === 'instagram' ? 'Инстаграм' :
+                   value === 'facebook' ? 'Фейсбук' : value) : String(value)
               }}
               axisLeft={{
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
                 legend: layout === 'vertical' ? 
-                  (keys[0] === 'engagementRate' ? 'Вовлеченность' : keys[0]) : 
-                  (indexBy === 'platform' ? '' : indexBy),
+                  (keys[0] === 'engagementRate' ? 'Вовлеченность (%)' : 
+                   keys[0] === 'views' ? 'Просмотры' :
+                   keys[0] === 'likes' ? 'Лайки' :
+                   keys[0] === 'comments' ? 'Комментарии' :
+                   keys[0] === 'shares' ? 'Репосты' : '') : '',
                 legendPosition: 'middle',
                 legendOffset: -40,
+                format: value => String(value)
               }}
               labelSkipWidth={12}
               labelSkipHeight={12}
