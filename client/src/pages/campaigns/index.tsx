@@ -306,15 +306,38 @@ export default function Campaigns() {
           try {
             // При статусе 409 всегда открываем диалог подтверждения
             if (serverResponse.status === 409) {
-              const errorData = JSON.parse(serverErrorText);
-              console.log('[УДАЛЕНИЕ] Сервер сообщил о наличии связанных данных:', errorData.relatedData);
-              
-              // Устанавливаем данные и открываем диалог подтверждения
-              if (errorData.relatedData) {
-                setRelatedData(errorData.relatedData);
-              } else {
-                // Для безопасности: если данных нет, создаем минимальный набор
-                setRelatedData({
+              try {
+                const errorData = JSON.parse(serverErrorText);
+                console.log('[УДАЛЕНИЕ] Сервер сообщил о наличии связанных данных:', errorData.relatedData);
+                
+                // Устанавливаем данные и открываем диалог подтверждения
+                if (errorData.relatedData) {
+                  setRelatedData(errorData.relatedData);
+                } else {
+                  // Для безопасности: если данных нет, создаем минимальный набор
+                  setRelatedData({
+                    hasContent: true,
+                    hasKeywords: true,
+                    hasTrends: true,
+                    totalItems: {
+                      content: 1,
+                      keywords: 1,
+                      trends: 1
+                    }
+                  });
+                }
+                
+                setConfirmDialogOpen(true);
+                return { 
+                  success: false, 
+                  requireConfirmation: true,
+                  relatedData: errorData.relatedData || { hasContent: true, hasKeywords: true, hasTrends: true }
+                };
+              } catch (jsonError) {
+                console.error('[УДАЛЕНИЕ] Ошибка при разборе JSON:', jsonError);
+                
+                // Создаем базовый набор данных в случае ошибки
+                const defaultRelatedData = {
                   hasContent: true,
                   hasKeywords: true,
                   hasTrends: true,
@@ -323,25 +346,33 @@ export default function Campaigns() {
                     keywords: 1,
                     trends: 1
                   }
-                });
+                };
+                
+                setRelatedData(defaultRelatedData);
+                setConfirmDialogOpen(true);
+                return { 
+                  success: false, 
+                  requireConfirmation: true,
+                  relatedData: defaultRelatedData
+                };
               }
-              
-              setConfirmDialogOpen(true);
-              return { 
-                success: false, 
-                requireConfirmation: true,
-                relatedData: errorData.relatedData || { hasContent: true, hasKeywords: true, hasTrends: true }
-              };
-            } else if (serverResponse.status !== 409 && errorData.requireConfirmation && errorData.relatedData) {
-              // Дополнительная проверка для других статусов с требованием подтверждения
-              console.log('[УДАЛЕНИЕ] Сервер запросил подтверждение:', errorData.relatedData);
-              setRelatedData(errorData.relatedData);
-              setConfirmDialogOpen(true);
-              return { 
-                success: false, 
-                requireConfirmation: true,
-                relatedData: errorData.relatedData 
-              };
+            } else {
+              try {
+                const parsedData = JSON.parse(serverErrorText);
+                // Проверка для других статусов, где может требоваться подтверждение
+                if (parsedData.requireConfirmation && parsedData.relatedData) {
+                  console.log('[УДАЛЕНИЕ] Сервер запросил подтверждение:', parsedData.relatedData);
+                  setRelatedData(parsedData.relatedData);
+                  setConfirmDialogOpen(true);
+                  return { 
+                    success: false, 
+                    requireConfirmation: true,
+                    relatedData: parsedData.relatedData 
+                  };
+                }
+              } catch (parseError) {
+                console.warn('[УДАЛЕНИЕ] Не удалось разобрать другие данные как JSON:', parseError);
+              }
             }
           } catch (parseError) {
             console.warn('[УДАЛЕНИЕ] Не удалось разобрать ответ сервера как JSON:', parseError);
