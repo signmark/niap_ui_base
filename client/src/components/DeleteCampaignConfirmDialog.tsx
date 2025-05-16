@@ -232,14 +232,14 @@ export function DeleteCampaignConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>
+          <AlertDialogTitle className="text-xl font-bold">
             {relatedData 
               ? "Внимание: будут удалены связанные данные" 
               : `Удалить кампанию "${campaign?.name || ''}"`}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-gray-700">
             {isCheckingData || isPending ? (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
@@ -276,7 +276,7 @@ export function DeleteCampaignConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel
             style={{ backgroundColor: "#f3f4f6" }}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded font-medium"
             onClick={handleCancel}
             disabled={isCheckingData || isPending}
           >
@@ -286,7 +286,7 @@ export function DeleteCampaignConfirmDialog({
           {relatedData ? (
             <AlertDialogAction
               style={{ backgroundColor: "#dc2626" }}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center"
               onClick={handleConfirmDelete}
               disabled={isCheckingData || isPending}
             >
@@ -296,7 +296,7 @@ export function DeleteCampaignConfirmDialog({
           ) : (
             <AlertDialogAction
               style={{ backgroundColor: "#dc2626" }}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center"
               onClick={handleDeleteRequest}
               disabled={isCheckingData || isPending}
             >
