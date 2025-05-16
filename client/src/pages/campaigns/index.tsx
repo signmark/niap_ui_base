@@ -187,38 +187,117 @@ export default function Campaigns() {
       
       try {
         // Шаг 1: Последовательное удаление связанных данных
+        let hasRelatedData = false;
+        let relatedDataCounts = {
+          keywords: 0,
+          trends: 0, 
+          content: 0
+        };
+        
         try {
-          console.log('[УДАЛЕНИЕ] Шаг 1: Удаляем ключевые слова');
-          const keywordsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}`, {
-            method: 'DELETE',
+          // Сначала проверяем наличие связанных данных
+          console.log('[УДАЛЕНИЕ] Проверка наличия ключевых слов');
+          const keywordsCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}&limit=1`, {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
-          console.log('[УДАЛЕНИЕ] Результат удаления ключевых слов:', keywordsResponse.status);
           
-          console.log('[УДАЛЕНИЕ] Шаг 2: Удаляем темы трендов');
-          const trendsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_trend_topics?filter[campaign_id][_eq]=${id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          console.log('[УДАЛЕНИЕ] Результат удаления тем трендов:', trendsResponse.status);
+          if (keywordsCheckResponse.ok) {
+            const keywordsData = await keywordsCheckResponse.json();
+            relatedDataCounts.keywords = keywordsData.data?.length || 0;
+            if (relatedDataCounts.keywords > 0) hasRelatedData = true;
+            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.keywords} ключевых слов для кампании`);
+          }
           
-          console.log('[УДАЛЕНИЕ] Шаг 3: Удаляем контент');
-          const contentResponse = await fetch(`https://directus.nplanner.ru/items/campaign_content?filter[campaign_id][_eq]=${id}`, {
-            method: 'DELETE',
+          console.log('[УДАЛЕНИЕ] Проверка наличия тем трендов');
+          const trendsCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_trend_topics?filter[campaign_id][_eq]=${id}&limit=1`, {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
-          console.log('[УДАЛЕНИЕ] Результат удаления контента:', contentResponse.status);
+          
+          if (trendsCheckResponse.ok) {
+            const trendsData = await trendsCheckResponse.json();
+            relatedDataCounts.trends = trendsData.data?.length || 0;
+            if (relatedDataCounts.trends > 0) hasRelatedData = true;
+            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.trends} тем трендов для кампании`);
+          }
+          
+          console.log('[УДАЛЕНИЕ] Проверка наличия контента');
+          const contentCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_content?filter[campaign_id][_eq]=${id}&limit=1`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (contentCheckResponse.ok) {
+            const contentData = await contentCheckResponse.json();
+            relatedDataCounts.content = contentData.data?.length || 0;
+            if (relatedDataCounts.content > 0) hasRelatedData = true;
+            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.content} контента для кампании`);
+          }
+          
+          // Если обнаружены связанные данные, показываем диалог подтверждения
+          if (hasRelatedData && !deleteWithData) {
+            console.log('[УДАЛЕНИЕ] Обнаружены связанные данные, требуется подтверждение');
+            return {
+              success: false,
+              error: 'Нельзя удалить кампанию со связанными данными',
+              requireConfirmation: true,
+              relatedData: {
+                hasContent: relatedDataCounts.content > 0,
+                hasKeywords: relatedDataCounts.keywords > 0,
+                hasTrends: relatedDataCounts.trends > 0,
+                totalItems: {
+                  content: relatedDataCounts.content,
+                  keywords: relatedDataCounts.keywords,
+                  trends: relatedDataCounts.trends
+                }
+              }
+            };
+          }
+          
+          // Если пользователь подтвердил удаление или нет связанных данных, продолжаем
+          if (hasRelatedData) {
+            console.log('[УДАЛЕНИЕ] Шаг 1: Удаляем ключевые слова');
+            const keywordsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('[УДАЛЕНИЕ] Результат удаления ключевых слов:', keywordsResponse.status);
+            
+            console.log('[УДАЛЕНИЕ] Шаг 2: Удаляем темы трендов');
+            const trendsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_trend_topics?filter[campaign_id][_eq]=${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('[УДАЛЕНИЕ] Результат удаления тем трендов:', trendsResponse.status);
+            
+            console.log('[УДАЛЕНИЕ] Шаг 3: Удаляем контент');
+            const contentResponse = await fetch(`https://directus.nplanner.ru/items/campaign_content?filter[campaign_id][_eq]=${id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('[УДАЛЕНИЕ] Результат удаления контента:', contentResponse.status);
+          }
         } catch (relatedError) {
-          console.warn('[УДАЛЕНИЕ] Ошибка при удалении связанных данных:', relatedError);
+          console.warn('[УДАЛЕНИЕ] Ошибка при проверке/удалении связанных данных:', relatedError);
         }
         
         // Шаг 2: Удаление самой кампании
@@ -232,8 +311,20 @@ export default function Campaigns() {
         });
         
         if (response.status === 204) {
-          console.log('[УДАЛЕНИЕ] Кампания успешно удалена');
+          console.log('[УДАЛЕНИЕ] Кампания успешно удалена напрямую');
           return { success: true, id };
+        }
+        
+        // Получаем текст ошибки если возможно
+        let errorText = '';
+        if (response.status !== 204) {
+          try {
+            const errorData = await response.text();
+            console.error('[УДАЛЕНИЕ] Ошибка при удалении кампании:', response.status, errorData);
+            errorText = errorData;
+          } catch (e) {
+            console.error('[УДАЛЕНИЕ] Не удалось получить текст ошибки:', e);
+          }
         }
         
         // Если простое удаление не сработало, пробуем с параметром force=true
@@ -251,25 +342,60 @@ export default function Campaigns() {
           return { success: true, id };
         }
         
-        // Если ничего не сработало, выбрасываем ошибку
-        throw new Error(`Ошибка при удалении кампании. Код статуса: ${response.status}`);
-      } catch (error: any) {
-        console.error('[УДАЛЕНИЕ] Ошибка при удалении кампании:', error);
+        // Получаем текст ошибки принудительного удаления если возможно
+        let forceErrorText = '';
+        try {
+          const forceErrorData = await forceResponse.text();
+          console.error('[УДАЛЕНИЕ] Ошибка при принудительном удалении кампании:', forceResponse.status, forceErrorData);
+          forceErrorText = forceErrorData;
+        } catch (e) {
+          console.error('[УДАЛЕНИЕ] Не удалось получить текст ошибки принудительного удаления:', e);
+        }
         
-        // Возвращаем информацию об ошибке, если это ошибка связанных данных
+        // Если оба метода не сработали, пробуем через API сервера
+        console.log('[УДАЛЕНИЕ] Оба метода прямого удаления не сработали, пробуем через API сервера');
+        try {
+          const serverResponse = await fetch(`/api/campaigns/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (serverResponse.ok) {
+            console.log('[УДАЛЕНИЕ] Кампания успешно удалена через серверный API');
+            return { success: true, id };
+          }
+          
+          const serverErrorText = await serverResponse.text();
+          console.error('[УДАЛЕНИЕ] Ошибка при удалении через API сервера:', serverResponse.status, serverErrorText);
+        } catch (serverError) {
+          console.error('[УДАЛЕНИЕ] Ошибка при обращении к API сервера:', serverError);
+        }
+        
+        // Если все методы не сработали, выбрасываем ошибку
+        throw new Error(`Ошибка при удалении кампании. Код статуса: ${response.status}, подробности: ${errorText || forceErrorText || 'нет дополнительной информации'}`);
+      } catch (error: any) {
+        console.error('[УДАЛЕНИЕ] Критическая ошибка при удалении кампании:', error);
+        
+        // Проверяем ошибку на наличие ограничений внешнего ключа
         if (error.message && (
             error.message.includes('Constraint violation') || 
-            error.message.includes('Foreign key constraint failed'))) {
+            error.message.includes('Foreign key constraint failed') ||
+            error.message.includes('foreign key'))) {
+          
+          // Проверяем наличие связанных данных и возвращаем соответствующий результат
           return {
             success: false,
-            error: 'Нельзя удалить кампанию со связанными данными',
+            error: 'Нельзя удалить кампанию со связанными данными. Сначала удалите все связанные данные.',
             requireConfirmation: true,
             relatedData: {
               hasContent: true,
               hasKeywords: true,
               hasTrends: true,
               totalItems: {
-                content: 1,
+                content: 1, // Предполагаем минимум 1 элемент каждого типа
                 keywords: 1,
                 trends: 1
               }
