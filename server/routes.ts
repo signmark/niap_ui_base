@@ -8415,18 +8415,24 @@ https://t.me/channelname/ - description`;
       
       console.log(`[CRITICAL] Прямой запрос на удаление кампании ${campaignId}`);
       
-      // Максимально прямолинейное удаление, точно как на скриншоте
+      // Максимально прямолинейное удаление, идентично Postman-запросу
       try {
         const url = `https://directus.nplanner.ru/items/user_campaigns/${campaignId}`;
         console.log(`[CRITICAL] Отправляем DELETE запрос по URL: ${url}`);
+        console.log(`[CRITICAL] Токен для авторизации: ${token.substring(0, 20)}...`);
         
-        const result = await axios({
+        const config = {
           method: 'DELETE',
           url: url,
           headers: {
-            Authorization: `Bearer ${token}` // Точно такой же формат, как на скриншоте
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
-        });
+        };
+        
+        console.log(`[CRITICAL] Конфигурация запроса:`, JSON.stringify(config, null, 2));
+        const result = await axios(config);
         
         console.log(`[CRITICAL] Успешно удалена кампания ${campaignId}, статус: ${result.status}`);
         console.log(`[CRITICAL] Ответ сервера:`, result.data);
