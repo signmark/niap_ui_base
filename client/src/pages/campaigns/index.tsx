@@ -143,51 +143,15 @@ export default function Campaigns() {
     }
   });
 
-  const { mutate: deleteCampaign } = useMutation({
-    mutationFn: async (id: string) => {
-      // Получаем токен напрямую из localStorage - точно такой же, как в Postman
-      let token = localStorage.getItem('auth_token');
-      
-      console.log(`Токен для удаления кампании: ${token ? 'найден, длина: ' + token.length : 'НЕ НАЙДЕН!'}`);
-      
-      // Для отладки выведем все ключи из localStorage
-      console.log('Содержимое localStorage:');
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          const value = localStorage.getItem(key);
-          console.log(`${key}: ${value ? (key.includes('token') ? value.slice(0, 10) + '...' : value.length + ' символов') : 'null'}`);
-        }
-      }
-      
-      // Если нет токена, попробуем получить его из auth объекта
-      if (!token) {
-        const auth = JSON.parse(localStorage.getItem('auth-storage') || '{}');
-        console.log('Проверяем auth-storage:', auth);
-        if (auth.state?.token && typeof auth.state.token === 'string') {
-          token = auth.state.token;
-          console.log('Получен токен из auth-storage, длина:', token.length);
-        } else {
-          console.error('Токен не найден ни в одном из хранилищ');
-          throw new Error("Отсутствует токен авторизации");
-        }
-      }
-      
-      // Дополнительная проверка после попыток найти токен
-      if (typeof token !== 'string' || token.length < 10) {
-        console.error('Токен некорректный:', token);
-        throw new Error("Некорректный токен авторизации");
-      }
-      
-      // Проверяем наличие токена перед использованием
-      if (!token) {
-        throw new Error("Не удалось получить токен авторизации из всех доступных источников");
-      }
-      
-      console.log(`[УДАЛЕНИЕ] Начинаем процесс удаления кампании ${id}`);
-      
-      try {
-        // Шаг 1: Последовательное удаление связанных данных
+  // Простая мутация для инициирования процесса удаления
+  const { mutate: initiateDeleteCampaign } = useMutation({
+    mutationFn: async (campaign: { id: string; name: string }) => {
+      // Сохраняем данные выбранной кампании и открываем диалог подтверждения
+      setCampaignToDelete(campaign);
+      setConfirmDialogOpen(true);
+      return campaign;
+    }
+  });
         let hasRelatedData = false;
         let relatedDataCounts = {
           keywords: 0,
