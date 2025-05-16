@@ -33,6 +33,11 @@ import NivoAnalyticsPieChart from "@/components/analytics/NivoAnalyticsPieChart"
 import NivoAnalyticsBarChart from "@/components/analytics/NivoAnalyticsBarChart";
 import NivoAnalyticsLineChart from "@/components/analytics/NivoAnalyticsLineChart";
 
+// Добавляем прямые импорты компонентов Nivo
+import { ResponsivePie } from '@nivo/pie';
+import { ResponsiveBar } from '@nivo/bar';
+import { ResponsiveLine } from '@nivo/line';
+
 // Типы для аналитики
 interface AnalyticsStatusResponse {
   success: boolean;
