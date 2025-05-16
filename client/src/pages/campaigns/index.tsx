@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, AlertTriangle, Trash } from "lucide-react";
+import { Plus, Search, Pencil, Trash } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -13,6 +13,7 @@ import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
+import { DeleteCampaignConfirmDialog } from "@/components/DeleteCampaignConfirmDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -659,69 +660,17 @@ export default function Campaigns() {
       </Dialog>
 
       {/* Диалог подтверждения удаления кампании с данными */}
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent style={{ backgroundColor: "white", opacity: 1 }} className="fixed z-50 bg-white shadow-lg w-full max-w-lg rounded-lg border border-gray-200">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-gray-900">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Подтверждение удаления
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-700">
-              {relatedData && (
-                <div className="space-y-4">
-                  <p>
-                    Кампания "{campaignToDelete?.name}" содержит связанные данные, которые также будут удалены:
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {relatedData.hasContent && (
-                      <li>Контент{relatedData.totalItems.content > 0 ? `: ${relatedData.totalItems.content} шт.` : ""}</li>
-                    )}
-                    {relatedData.hasKeywords && (
-                      <li>Ключевые слова{relatedData.totalItems.keywords > 0 ? `: ${relatedData.totalItems.keywords} шт.` : ""}</li>
-                    )}
-                    {relatedData.hasTrends && (
-                      <li>Темы трендов{relatedData.totalItems.trends > 0 ? `: ${relatedData.totalItems.trends} шт.` : ""}</li>
-                    )}
-                  </ul>
-                  <p className="text-amber-600 font-medium">
-                    Это действие невозможно отменить. Удаленные данные будут потеряны безвозвратно.
-                  </p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              style={{ backgroundColor: "#f3f4f6" }}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded"
-              onClick={() => {
-                setCampaignToDelete(null);
-                setDeleteWithData(false);
-                setRelatedData(null);
-              }}
-            >
-              Отмена
-            </AlertDialogCancel>
-            <AlertDialogAction
-              style={{ backgroundColor: "#dc2626" }}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-              onClick={() => {
-                if (campaignToDelete) {
-                  console.log("Подтверждаем удаление кампании со всеми данными:", campaignToDelete.id);
-                  // Устанавливаем флаг принудительного удаления
-                  setDeleteWithData(true);
-                  // Запускаем процесс удаления
-                  deleteCampaign(campaignToDelete.id);
-                  // Закрываем диалог (не требуется, так как он закроется в обработчике успешного удаления)
-                }
-              }}
-            >
-              <Trash className="h-4 w-4 mr-2" />
-              Удалить со всеми данными
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteCampaignConfirmDialog 
+        open={confirmDialogOpen} 
+        onOpenChange={setConfirmDialogOpen}
+        campaign={campaignToDelete}
+        onDelete={() => {
+          // После успешного удаления
+          setCampaignToDelete(null);
+          setRelatedData(null);
+          setDeleteWithData(false);
+        }}
+      />
     </div>
   );
 }
