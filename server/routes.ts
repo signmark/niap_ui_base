@@ -8413,78 +8413,39 @@ https://t.me/channelname/ - description`;
       
       const token = authHeader.replace('Bearer ', '');
       
-      console.log(`[CRITICAL] Запрос на удаление кампании ${campaignId}`);
+      console.log(`[CRITICAL] Прямой запрос на удаление кампании ${campaignId}`);
       
-      // Прямое удаление записи без проверок
+      // Максимально прямолинейное удаление, как на скриншоте
       try {
-        // Первый вариант - стандартный DELETE запрос
-        const result = await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+        const url = `https://directus.nplanner.ru/items/user_campaigns/${campaignId}`;
+        console.log(`[CRITICAL] Отправляем DELETE запрос по URL: ${url}`);
+        
+        const result = await axios.delete(url, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}` // Точно такой же формат, как на скриншоте
           }
         });
         
         console.log(`[CRITICAL] Успешно удалена кампания ${campaignId}, статус: ${result.status}`);
-        return res.status(200).json({ success: true, message: "Кампания успешно удалена" });
-      } catch (error1) {
-        console.error(`[CRITICAL] Ошибка при первом методе удаления кампании ${campaignId}:`, error1.message);
+        console.log(`[CRITICAL] Ответ сервера:`, result.data);
         
-        // Второй вариант - через SQL
-        try {
-          console.log(`[CRITICAL] Пробуем удаление через прямой SQL`);
-          
-          // В Directus есть специальный эндпоинт для системных запросов
-          const systemResult = await directusApi.post('/utils/run-script', {
-            script: `
-              // Прямое удаление через knex
-              const result = await database.knex.raw('DELETE FROM user_campaigns WHERE id = ?', ['${campaignId}']);
-              return { success: true, message: 'Удалено записей: ' + result.rowCount };
-            `
-          }, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          console.log(`[CRITICAL] Результат системного запроса:`, systemResult.data);
-          return res.status(200).json({ 
-            success: true, 
-            message: "Кампания успешно удалена через системный запрос" 
-          });
-        } catch (error2) {
-          console.error(`[CRITICAL] Ошибка при системном запросе:`, error2.message);
-          
-          // Третий вариант - специальный формат DELETE запроса
-          try {
-            console.log(`[CRITICAL] Последняя попытка удаления через специальный запрос`);
-            
-            // Используем параметр для обхода всех проверок доступа
-            await directusApi.delete(`/items/user_campaigns/${campaignId}?access_token=${token}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            return res.status(200).json({ 
-              success: true, 
-              message: "Кампания успешно удалена через специальный запрос" 
-            });
-          } catch (error3) {
-            console.error(`[CRITICAL] Все попытки удаления кампании ${campaignId} не удались:`);
-            console.error(`[CRITICAL] 1: ${error1.message}`);
-            console.error(`[CRITICAL] 2: ${error2.message}`);
-            console.error(`[CRITICAL] 3: ${error3.message}`);
-            
-            return res.status(500).json({ 
-              error: "Не удалось удалить кампанию никаким способом",
-              details: {
-                method1: error1.message,
-                method2: error2.message,
-                method3: error3.message
-              }
-            });
-          }
+        return res.status(200).json({ 
+          success: true, 
+          message: "Кампания успешно удалена",
+          directusResponse: result.data
+        });
+      } catch (error) {
+        console.error(`[CRITICAL] Ошибка при удалении кампании ${campaignId}:`, error.message);
+        if (error.response) {
+          console.error(`[CRITICAL] Статус ошибки: ${error.response.status}`);
+          console.error(`[CRITICAL] Данные ошибки:`, error.response.data);
         }
+        
+        return res.status(500).json({ 
+          success: false,
+          error: "Не удалось удалить кампанию",
+          directusError: error.response?.data || error.message
+        });
       }
     } catch (error) {
       console.error("[CRITICAL] Критическая ошибка при удалении кампании:", error);
