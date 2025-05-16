@@ -210,7 +210,16 @@ export default function Campaigns() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {campaignsResponse.data.map((campaign) => (
+          {/* Сортируем кампании: сначала новые, потом старые */}
+          {campaignsResponse.data
+            .sort((a, b) => {
+              // При отсутствии дат у одной из кампаний, считаем что она старее
+              if (!a.createdAt) return 1;
+              if (!b.createdAt) return -1;
+              // Сортируем по убыванию даты (новые сначала)
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            })
+            .map((campaign) => (
             <Card key={campaign.id}>
               <CardHeader>
                 {editingId === campaign.id ? (
