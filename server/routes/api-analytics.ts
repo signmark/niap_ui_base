@@ -263,3 +263,44 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
     });
   }
 });
+
+/**
+ * POST /api/analytics/update
+ * Запрос на обновление аналитики через n8n вебхук
+ * Отправляет запрос на обновление данных аналитики для указанной кампании
+ */
+analyticsRouter.post('/update', authenticateUser, async (req, res) => {
+  try {
+    // TypeScript требует проверку на существование req.user
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Требуется авторизация'
+      });
+    }
+    
+    const { campaignId, days = 7 } = req.body;
+    
+    if (!campaignId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Не указан ID кампании'
+      });
+    }
+    
+    // Запрашиваем обновление аналитики через n8n вебхук
+    const result = await analyticsService.requestAnalyticsUpdate(
+      campaignId,
+      days,
+      req.user.id
+    );
+    
+    res.json(result);
+  } catch (error: any) {
+    log.error(`[api-analytics] Ошибка при запросе обновления аналитики: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: `Ошибка при запросе обновления аналитики: ${error.message}`
+    });
+  }
+});
