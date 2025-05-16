@@ -184,7 +184,12 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
             </SelectTrigger>
             <SelectContent>
               {campaignsResponse?.data
-                ?.sort((a: Campaign, b: Campaign) => a.name.localeCompare(b.name)) // Сортировка кампаний по алфавиту
+                ?.sort((a: Campaign, b: Campaign) => {
+                  // Сортируем как и на странице кампаний - сначала новые, потом старые
+                  if (!a.createdAt) return 1;
+                  if (!b.createdAt) return -1;
+                  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                })
                 .map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
