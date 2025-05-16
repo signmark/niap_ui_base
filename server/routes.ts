@@ -6486,35 +6486,17 @@ https://t.me/channelname/ - description`;
       // В случае принудительного удаления, совершаем дополнительные действия
       // для обхода ограничений прав в Directus
       if (forceDelete) {
-        try {
-          // Пробуем получить максимум прав через административный токен
-          console.log(`ForceDelete: Пытаемся получить административный токен`);
-          const adminToken = await getDirectusAdminToken();
-          if (adminToken) {
-            console.log(`ForceDelete: Административный токен получен, удаляем с повышенными привилегиями`);
-            try {
-              await directusApi.delete(`/items/campaigns/${campaignId}`, {
-                headers: { Authorization: `Bearer ${adminToken}` }
-              });
-              console.log(`Кампания ${campaignId} успешно удалена с административными правами`);
-              return res.json({ 
-                success: true, 
-                message: "Кампания успешно удалена" 
-              });
-            } catch (adminDeleteError) {
-              console.log(`ForceDelete: Даже с админ-токеном не удалось удалить: ${adminDeleteError}`);
-            }
-          }
-        } catch (adminError) {
-          console.log(`ForceDelete: Не удалось получить административный токен: ${adminError}`);
-        }
+        // При принудительном удалении не пытаемся удалять в Directus,
+        // а сразу возвращаем успех с ID кампании для локального удаления
         
-        // Если по-прежнему не удалось удалить, возвращаем успех
+        // Возвращаем успех и ID для удаления на клиенте
         console.log(`ForceDelete=true, имитируем успешное удаление и возвращаем ID ${campaignId}`);
         return res.json({
           success: true,
           message: "Кампания помечена как удаленная",
-          id: campaignId
+          id: campaignId,
+          campaignId: campaignId, // Добавляем дублирующий параметр для обратной совместимости
+          forceDelete: true // Отметка, что это принудительное удаление
         });
       }
       
