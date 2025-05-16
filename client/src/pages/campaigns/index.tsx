@@ -372,13 +372,13 @@ export default function Campaigns() {
 
       {/* Диалог подтверждения удаления кампании с данными */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent className="bg-background border border-border">
+        <AlertDialogContent style={{ backgroundColor: "white", opacity: 1 }} className="fixed z-50 bg-white shadow-lg w-full max-w-lg rounded-lg border border-gray-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
+            <AlertDialogTitle className="flex items-center gap-2 text-gray-900">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               Подтверждение удаления
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-foreground/80">
+            <AlertDialogDescription className="text-gray-700">
               {relatedData && (
                 <div className="space-y-4">
                   <p>
@@ -404,7 +404,8 @@ export default function Campaigns() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="bg-muted hover:bg-muted/80"
+              style={{ backgroundColor: "#f3f4f6" }}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded"
               onClick={() => {
                 setCampaignToDelete(null);
                 setDeleteWithData(false);
@@ -414,7 +415,8 @@ export default function Campaigns() {
               Отмена
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ backgroundColor: "#dc2626" }}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
               onClick={() => {
                 if (campaignToDelete) {
                   setDeleteWithData(true);
