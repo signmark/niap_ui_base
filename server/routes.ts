@@ -18,6 +18,7 @@ import { socialPublishingWithImgurService } from './services/social-publishing-w
 import express, { Express, Request, Response, NextFunction } from "express";
 import { isUserAdmin } from "./routes-global-api-keys";
 import { createServer, Server } from "http";
+import { insertBusinessQuestionnaireSchema } from '@shared/schema';
 import path from "path";
 import axios from "axios";
 import * as https from 'https';
