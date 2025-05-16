@@ -567,6 +567,12 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       });
       
       posts = response.data?.data || [];
+      log.info(`[analytics-service] Получено ${posts.length} постов для статистики. Кампания: ${campaignId}, период: ${period} дней`);
+      
+      // Добавляем детальное логирование для отладки
+      posts.forEach((post, index) => {
+        log.info(`[analytics-service] Пост ${index + 1}: ID=${post.id}, created_at=${post.created_at}`);
+      });
     } catch (error) {
       log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
       // В случае ошибки возвращаем пустой массив
