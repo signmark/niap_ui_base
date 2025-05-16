@@ -59,8 +59,8 @@ export default function Campaigns() {
   const [deleteWithData, setDeleteWithData] = useState(false);
   const [relatedData, setRelatedData] = useState<RelatedDataInfo | null>(null);
   
-  // Получаем функцию для установки выбранной кампании
-  const { setSelectedCampaign } = useCampaignStore();
+  // Получаем функции для управления кампаниями
+  const { setSelectedCampaign, markCampaignAsDeleted } = useCampaignStore();
   const { getAuthToken } = useAuthStore();
   
   const { data: campaignsResponse, isLoading, error } = useQuery<{data: Campaign[]}>({
@@ -189,24 +189,31 @@ export default function Campaigns() {
     },
     onSuccess: (result) => {
       // Сбрасываем состояние
+      const deletedCampaignId = campaignToDelete?.id || result?.id;
       setCampaignToDelete(null);
       setDeleteWithData(false);
       setRelatedData(null);
       setConfirmDialogOpen(false);
       
-      if (result && result.id) {
-        // Вместо инвалидации запроса, обновляем кэш напрямую, удаляя кампанию из списка
+      if (deletedCampaignId) {
+        // Удаляем кампанию из кэша запросов напрямую
         queryClient.setQueryData(["/api/campaigns", userId], (oldData: any) => {
           if (!oldData || !oldData.data) return oldData;
-          
+          console.log(`Удаляем кампанию ${deletedCampaignId} из кэша React Query`);
           return {
             ...oldData,
-            data: oldData.data.filter((campaign: any) => campaign.id !== result.id)
+            data: oldData.data.filter((campaign: any) => campaign.id !== deletedCampaignId)
           };
         });
-      } else {
-        // Если по какой-то причине ID не получен, используем полное обновление
-        queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+        
+        // Также обновляем альтернативный ключ запроса без userId
+        queryClient.setQueryData(["/api/campaigns"], (oldData: any) => {
+          if (!oldData || !oldData.data) return oldData;
+          return {
+            ...oldData,
+            data: oldData.data.filter((campaign: any) => campaign.id !== deletedCampaignId)
+          };
+        });
       }
       
       // Показываем уведомление об успешном удалении
