@@ -700,120 +700,235 @@ export default function Analytics() {
             </Card>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Card className="overflow-hidden min-h-[380px]">
-              <CardHeader className="pb-0 pt-2">
-                <CardTitle className="text-sm">Распределение просмотров</CardTitle>
-                <CardDescription className="text-xs">Просмотры по платформам</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0 pb-2 px-2 h-[320px]">
-                <NivoAnalyticsPieChart
-                  data={getPieChartData()}
-                  isLoading={isLoadingPlatformsStats}
-                  height={300}
-                  centerText="Просмотры"
-                />
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
+              <div className="p-3 pb-0">
+                <h3 className="font-medium text-sm">Распределение просмотров</h3>
+                <p className="text-xs text-muted-foreground">Просмотры по платформам</p>
+              </div>
+              <div className="p-2 h-[300px]">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ResponsivePie
+                    data={getPieChartData()}
+                    margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                    innerRadius={0.5}
+                    padAngle={0.7}
+                    cornerRadius={3}
+                    activeOuterRadiusOffset={8}
+                    colors={{ scheme: 'set3' }}
+                    borderWidth={1}
+                    borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                    arcLinkLabelsSkipAngle={10}
+                    arcLinkLabelsTextColor="#333333"
+                    arcLinkLabelsThickness={2}
+                    arcLinkLabelsColor={{ from: 'color' }}
+                    arcLabelsSkipAngle={10}
+                    arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                  />
+                )}
+              </div>
+            </div>
             
-            <Card className="overflow-hidden min-h-[380px]">
-              <CardHeader className="pb-0 pt-2">
-                <CardTitle className="text-sm">Активность по платформам</CardTitle>
-                <CardDescription className="text-xs">Сравнение взаимодействий</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0 pb-2 px-2 h-[320px]">
-                <NivoAnalyticsBarChart
-                  data={getEngagementChartData().map(item => ({
-                    id: item.id,
-                    [item.id]: item.value,
-                    value: item.value,
-                    label: item.label,
-                    color: item.id === 'likes' ? '#e74c3c' : 
-                           item.id === 'comments' ? '#2ecc71' : 
-                           item.id === 'shares' ? '#f39c12' : '#3498db'
-                  }))}
-                  keys={['value']}
-                  indexBy="label"
-                  title="Типы вовлеченности"
-                  description="Распределение по типам взаимодействий"
-                  isLoading={isLoadingPlatformsStats}
-                  height={300}
-                  colorMapping={(d) => d.data.color || '#3498db'}
-                />
-              </CardContent>
-            </Card>
+            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
+              <div className="p-3 pb-0">
+                <h3 className="font-medium text-sm">Активность по платформам</h3>
+                <p className="text-xs text-muted-foreground">Сравнение взаимодействий</p>
+              </div>
+              <div className="p-2 h-[300px]">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ResponsiveBar
+                    data={getEngagementChartData().map(item => ({
+                      id: item.id,
+                      [item.id]: item.value,
+                      value: item.value,
+                      label: item.label,
+                      color: item.id === 'likes' ? '#e74c3c' : 
+                             item.id === 'comments' ? '#2ecc71' : 
+                             item.id === 'shares' ? '#f39c12' : '#3498db'
+                    }))}
+                    keys={['value']}
+                    indexBy="label"
+                    margin={{ top: 20, right: 30, bottom: 60, left: 40 }}
+                    padding={0.3}
+                    colors={(d) => d.data.color || '#3498db'}
+                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    axisTop={null}
+                    axisRight={null}
+                    axisBottom={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Тип',
+                      legendPosition: 'middle',
+                      legendOffset: 40
+                    }}
+                    axisLeft={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Количество',
+                      legendPosition: 'middle',
+                      legendOffset: -35
+                    }}
+                    labelSkipWidth={12}
+                    labelSkipHeight={12}
+                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                  />
+                )}
+              </div>
+            </div>
             
-            <Card className="overflow-hidden min-h-[380px]">
-              <CardHeader className="pb-0 pt-2">
-                <CardTitle className="text-sm">Показатели по платформам</CardTitle>
-                <CardDescription className="text-xs">Сравнение метрик</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0 pb-2 px-2 h-[320px]">
-                <NivoAnalyticsLineChart
-                  data={[
-                    {
-                      id: 'views',
-                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                        x: platform,
-                        y: data.views
-                      }))
-                    },
-                    {
-                      id: 'likes',
-                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                        x: platform,
-                        y: data.likes
-                      }))
-                    },
-                    {
-                      id: 'comments',
-                      data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                        x: platform,
-                        y: data.comments
-                      }))
-                    }
-                  ]}
-                  isLoading={isLoadingPlatformsStats}
-                  height={300}
-                  yAxisLegend="Количество"
-                  xAxisLegend="Платформа"
-                  lineColors={{
-                    views: '#3498db',
-                    likes: '#e74c3c',
-                    comments: '#2ecc71'
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
+              <div className="p-3 pb-0">
+                <h3 className="font-medium text-sm">Показатели по платформам</h3>
+                <p className="text-xs text-muted-foreground">Сравнение метрик</p>
+              </div>
+              <div className="p-2 h-[300px]">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ResponsiveLine
+                    data={[
+                      {
+                        id: 'Просмотры',
+                        color: '#3498db',
+                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                          x: platform,
+                          y: data.views
+                        }))
+                      },
+                      {
+                        id: 'Лайки',
+                        color: '#e74c3c',
+                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                          x: platform,
+                          y: data.likes
+                        }))
+                      },
+                      {
+                        id: 'Комментарии',
+                        color: '#2ecc71',
+                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                          x: platform,
+                          y: data.comments
+                        }))
+                      }
+                    ]}
+                    colors={(d) => d.color}
+                    margin={{ top: 20, right: 60, bottom: 50, left: 50 }}
+                    xScale={{ type: 'point' }}
+                    yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
+                    yFormat=" >-.0f"
+                    curve="cardinal"
+                    axisTop={null}
+                    axisRight={null}
+                    axisBottom={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Платформа',
+                      legendOffset: 40,
+                      legendPosition: 'middle'
+                    }}
+                    axisLeft={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Количество',
+                      legendOffset: -40,
+                      legendPosition: 'middle'
+                    }}
+                    pointSize={10}
+                    pointColor={{ theme: 'background' }}
+                    pointBorderWidth={2}
+                    pointBorderColor={{ from: 'serieColor' }}
+                    pointLabelYOffset={-12}
+                    useMesh={true}
+                    legends={[
+                      {
+                        anchor: 'bottom-right',
+                        direction: 'column',
+                        justify: false,
+                        translateX: 50,
+                        translateY: 0,
+                        itemsSpacing: 0,
+                        itemDirection: 'left-to-right',
+                        itemWidth: 80,
+                        itemHeight: 20,
+                        itemOpacity: 0.75,
+                        symbolSize: 12,
+                        symbolShape: 'circle',
+                        symbolBorderColor: 'rgba(0, 0, 0, .5)',
+                      }
+                    ]}
+                  />
+                )}
+              </div>
+            </div>
             
-            <Card className="overflow-hidden min-h-[380px]">
-              <CardHeader className="pb-0 pt-2">
-                <CardTitle className="text-sm">Рейтинг вовлеченности</CardTitle>
-                <CardDescription className="text-xs">Эффективность платформ</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0 pb-2 px-2 h-[320px]">
-                <NivoAnalyticsBarChart
-                  data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                    platform,
-                    engagementRate: Number((data.engagementRate || 0).toFixed(2)),
-                    color: platform === 'vk' ? '#0077FF' : 
-                           platform === 'instagram' ? '#E1306C' : 
-                           platform === 'telegram' ? '#0088CC' : '#6366F1'
-                  }))}
-                  keys={['engagementRate']}
-                  indexBy="platform"
-                  isLoading={isLoadingPlatformsStats}
-                  height={300}
-                  layout="horizontal"
-                  colorMapping={(d) => {
-                    const platform = d.data.indexValue;
-                    return platform === 'vk' ? '#0077FF' : 
-                           platform === 'instagram' ? '#E1306C' : 
-                           platform === 'telegram' ? '#0088CC' : '#6366F1';
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
+              <div className="p-3 pb-0">
+                <h3 className="font-medium text-sm">Рейтинг вовлеченности</h3>
+                <p className="text-xs text-muted-foreground">Эффективность платформ</p>
+              </div>
+              <div className="p-2 h-[300px]">
+                {isLoadingPlatformsStats ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ResponsiveBar
+                    data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
+                      platform,
+                      engagementRate: Number((data.engagementRate || 0).toFixed(2)),
+                      color: platform === 'vk' ? '#0077FF' : 
+                             platform === 'instagram' ? '#E1306C' : 
+                             platform === 'telegram' ? '#0088CC' : '#6366F1'
+                    }))}
+                    keys={['engagementRate']}
+                    indexBy="platform"
+                    margin={{ top: 20, right: 30, bottom: 50, left: 80 }}
+                    padding={0.3}
+                    layout="horizontal"
+                    colors={(d) => {
+                      const platform = d.data.indexValue;
+                      return platform === 'vk' ? '#0077FF' : 
+                             platform === 'instagram' ? '#E1306C' : 
+                             platform === 'telegram' ? '#0088CC' : '#6366F1';
+                    }}
+                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    axisTop={null}
+                    axisRight={null}
+                    axisBottom={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Рейтинг вовлеченности, %',
+                      legendPosition: 'middle',
+                      legendOffset: 40
+                    }}
+                    axisLeft={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                    }}
+                    labelSkipWidth={12}
+                    labelSkipHeight={12}
+                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </TabsContent>
         
