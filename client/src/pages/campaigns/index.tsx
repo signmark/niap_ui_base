@@ -163,9 +163,40 @@ export default function Campaigns() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        // Получаем данные ошибки
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // Если ошибка не в формате JSON, используем текст ошибки
+          throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+        }
+
+        // Ошибка 500 или сообщение об ограничении внешнего ключа (foreign key constraint)
+        if (response.status === 500 || 
+            errorData.error?.includes("foreign key constraint") ||
+            errorData.details?.includes("foreign key constraint")) {
+          console.log("Обнаружено нарушение внешнего ключа или ошибка 500");
+          
+          // Создаем объект с данными о связанных записях
+          // Если у нас нет точных данных, предполагаем что есть связанные записи
+          const estimatedRelatedData: RelatedDataInfo = {
+            hasContent: true,
+            hasKeywords: true,
+            hasTrends: true,
+            totalItems: {
+              content: 0, // Точное количество неизвестно
+              keywords: 0,
+              trends: 0
+            }
+          };
+          
+          setRelatedData(estimatedRelatedData);
+          setConfirmDialogOpen(true);
+          throw new Error("confirmation_required");
+        }
         
-        // Проверяем, требуется ли подтверждение удаления (кампания с данными)
+        // Проверяем явное требование подтверждения
         if (errorData.requireConfirmation) {
           const typedError = errorData as DeleteErrorResponse;
           setRelatedData(typedError.relatedData);
@@ -404,13 +435,13 @@ export default function Campaigns() {
                   </p>
                   <ul className="list-disc pl-5 space-y-1">
                     {relatedData.hasContent && (
-                      <li>Контент: {relatedData.totalItems.content} шт.</li>
+                      <li>Контент{relatedData.totalItems.content > 0 ? `: ${relatedData.totalItems.content} шт.` : ""}</li>
                     )}
                     {relatedData.hasKeywords && (
-                      <li>Ключевые слова: {relatedData.totalItems.keywords} шт.</li>
+                      <li>Ключевые слова{relatedData.totalItems.keywords > 0 ? `: ${relatedData.totalItems.keywords} шт.` : ""}</li>
                     )}
                     {relatedData.hasTrends && (
-                      <li>Темы трендов: {relatedData.totalItems.trends} шт.</li>
+                      <li>Темы трендов{relatedData.totalItems.trends > 0 ? `: ${relatedData.totalItems.trends} шт.` : ""}</li>
                     )}
                   </ul>
                   <p className="text-amber-600 font-medium">
