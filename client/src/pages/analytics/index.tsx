@@ -665,9 +665,7 @@ export default function Analytics() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-green-500">
-                      {selectedCampaign?.id === 'b2c43094-01b6-4e33-834f-abcdcffcd101' 
-                        ? 2 // Для кампании "Профориентация" явно указываем 2 
-                        : formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
+                      {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       По {Object.keys(platformsStatsData?.data?.platforms || {}).length || 0} платформам
