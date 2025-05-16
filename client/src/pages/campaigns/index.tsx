@@ -264,98 +264,22 @@ export default function Campaigns() {
             };
           }
           
-          // Если пользователь подтвердил удаление или нет связанных данных, продолжаем
-          if (hasRelatedData) {
-            console.log('[УДАЛЕНИЕ] Шаг 1: Удаляем ключевые слова');
-            const keywordsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            console.log('[УДАЛЕНИЕ] Результат удаления ключевых слов:', keywordsResponse.status);
-            
-            console.log('[УДАЛЕНИЕ] Шаг 2: Удаляем темы трендов');
-            const trendsResponse = await fetch(`https://directus.nplanner.ru/items/campaign_trend_topics?filter[campaign_id][_eq]=${id}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            console.log('[УДАЛЕНИЕ] Результат удаления тем трендов:', trendsResponse.status);
-            
-            console.log('[УДАЛЕНИЕ] Шаг 3: Удаляем контент');
-            const contentResponse = await fetch(`https://directus.nplanner.ru/items/campaign_content?filter[campaign_id][_eq]=${id}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            console.log('[УДАЛЕНИЕ] Результат удаления контента:', contentResponse.status);
-          }
+          // Проверили связанные данные, теперь удаляем через наш новый серверный API,
+          // который последовательно удалит все связанные данные, а затем кампанию
+          console.log('[УДАЛЕНИЕ] Используем серверный API для удаления кампании и связанных данных');
         } catch (relatedError) {
-          console.warn('[УДАЛЕНИЕ] Ошибка при проверке/удалении связанных данных:', relatedError);
+          console.warn('[УДАЛЕНИЕ] Ошибка при проверке связанных данных:', relatedError);
         }
         
-        // Шаг 2: Удаление самой кампании
-        console.log('[УДАЛЕНИЕ] Шаг 4: Удаляем саму кампанию');
-        const response = await fetch(`https://directus.nplanner.ru/items/user_campaigns/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        // Теперь используем напрямую серверный API, чтобы удалить кампанию вместе с связанными данными
+        console.log('[УДАЛЕНИЕ] Отправляем запрос на удаление в серверный API');
         
-        if (response.status === 204) {
-          console.log('[УДАЛЕНИЕ] Кампания успешно удалена напрямую');
-          return { success: true, id };
-        }
+        // Собираем URL с параметром forceDelete, если пользователь подтвердил удаление с данными
+        const url = `/api/campaigns/${id}${deleteWithData ? '?forceDelete=true' : ''}`;
+        console.log(`[УДАЛЕНИЕ] URL запроса: ${url}, forceDelete=${deleteWithData}`);
         
-        // Получаем текст ошибки если возможно
-        let errorText = '';
-        if (response.status !== 204) {
-          try {
-            const errorData = await response.text();
-            console.error('[УДАЛЕНИЕ] Ошибка при удалении кампании:', response.status, errorData);
-            errorText = errorData;
-          } catch (e) {
-            console.error('[УДАЛЕНИЕ] Не удалось получить текст ошибки:', e);
-          }
-        }
-        
-        // Если простое удаление не сработало, пробуем с параметром force=true
-        console.log('[УДАЛЕНИЕ] Простое удаление не сработало, пробуем принудительное удаление');
-        const forceResponse = await fetch(`https://directus.nplanner.ru/items/user_campaigns/${id}?force=true`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (forceResponse.status === 204) {
-          console.log('[УДАЛЕНИЕ] Кампания успешно удалена через принудительное удаление');
-          return { success: true, id };
-        }
-        
-        // Получаем текст ошибки принудительного удаления если возможно
-        let forceErrorText = '';
         try {
-          const forceErrorData = await forceResponse.text();
-          console.error('[УДАЛЕНИЕ] Ошибка при принудительном удалении кампании:', forceResponse.status, forceErrorData);
-          forceErrorText = forceErrorData;
-        } catch (e) {
-          console.error('[УДАЛЕНИЕ] Не удалось получить текст ошибки принудительного удаления:', e);
-        }
-        
-        // Если оба метода не сработали, пробуем через API сервера
-        console.log('[УДАЛЕНИЕ] Оба метода прямого удаления не сработали, пробуем через API сервера');
-        try {
-          const serverResponse = await fetch(`/api/campaigns/${id}`, {
+          const serverResponse = await fetch(url, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -367,15 +291,39 @@ export default function Campaigns() {
             console.log('[УДАЛЕНИЕ] Кампания успешно удалена через серверный API');
             return { success: true, id };
           }
-          
+            // Если запрос неуспешен, получаем текст ошибки и логируем
           const serverErrorText = await serverResponse.text();
           console.error('[УДАЛЕНИЕ] Ошибка при удалении через API сервера:', serverResponse.status, serverErrorText);
+          
+          // Проверяем ответ на наличие информации о связанных данных
+          try {
+            const errorData = JSON.parse(serverErrorText);
+            if (errorData.requireConfirmation && errorData.relatedData) {
+              console.log('[УДАЛЕНИЕ] Сервер сообщил о наличии связанных данных:', errorData.relatedData);
+              setRelatedData(errorData.relatedData);
+              setConfirmDialogOpen(true);
+              return { 
+                success: false, 
+                requireConfirmation: true,
+                relatedData: errorData.relatedData 
+              };
+            }
+          } catch (parseError) {
+            console.warn('[УДАЛЕНИЕ] Не удалось разобрать ответ сервера как JSON:', parseError);
+          }
+          
+          // Если это не ошибка с требованием подтверждения, возвращаем общую ошибку
+          return { 
+            success: false, 
+            error: `Ошибка при удалении: ${serverResponse.status} ${serverErrorText}` 
+          };
         } catch (serverError) {
           console.error('[УДАЛЕНИЕ] Ошибка при обращении к API сервера:', serverError);
+          return { 
+            success: false, 
+            error: serverError instanceof Error ? serverError.message : 'Неизвестная ошибка сервера' 
+          };
         }
-        
-        // Если все методы не сработали, выбрасываем ошибку
-        throw new Error(`Ошибка при удалении кампании. Код статуса: ${response.status}, подробности: ${errorText || forceErrorText || 'нет дополнительной информации'}`);
       } catch (error: any) {
         console.error('[УДАЛЕНИЕ] Критическая ошибка при удалении кампании:', error);
         
