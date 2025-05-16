@@ -174,17 +174,29 @@ export default function Campaigns() {
         throw new Error(errorData.error || "Не удалось удалить кампанию");
       }
       
-      return await response.json();
+      return { success: true, id, data: await response.json() };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       // Сбрасываем состояние
       setCampaignToDelete(null);
       setDeleteWithData(false);
       setRelatedData(null);
       setConfirmDialogOpen(false);
       
-      // Обновляем список кампаний
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+      if (result && result.id) {
+        // Вместо инвалидации запроса, обновляем кэш напрямую, удаляя кампанию из списка
+        queryClient.setQueryData(["/api/campaigns", userId], (oldData: any) => {
+          if (!oldData || !oldData.data) return oldData;
+          
+          return {
+            ...oldData,
+            data: oldData.data.filter((campaign: any) => campaign.id !== result.id)
+          };
+        });
+      } else {
+        // Если по какой-то причине ID не получен, используем полное обновление
+        queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+      }
       
       // Показываем уведомление об успешном удалении
       toast({
@@ -360,13 +372,13 @@ export default function Campaigns() {
 
       {/* Диалог подтверждения удаления кампании с данными */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-background border border-border">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               Подтверждение удаления
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-foreground/80">
               {relatedData && (
                 <div className="space-y-4">
                   <p>
@@ -392,6 +404,7 @@ export default function Campaigns() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
+              className="bg-muted hover:bg-muted/80"
               onClick={() => {
                 setCampaignToDelete(null);
                 setDeleteWithData(false);
@@ -401,7 +414,7 @@ export default function Campaigns() {
               Отмена
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => {
                 if (campaignToDelete) {
                   setDeleteWithData(true);
