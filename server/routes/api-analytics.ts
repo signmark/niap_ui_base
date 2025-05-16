@@ -241,7 +241,7 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
       
       // Используем улучшенный сервис аналитики, который корректно учитывает публикации без аналитики
       log.info(`[api-analytics] Используем улучшенный сервис подсчета статистики`);
-      let stats = await getImprovedPlatformsStats(userId, campaignId, period);
+      const stats = await getImprovedPlatformsStats(userId, campaignId, period);
       
       res.json({
         success: true,

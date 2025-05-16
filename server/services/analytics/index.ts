@@ -16,3 +16,6 @@ export * from './fallback-data';
 
 // Экспортируем основной сервис аналитики
 export * from './analytics-service';
+
+// Экспортируем улучшенный сервис аналитики
+export * from './analytics-service-fixed';
