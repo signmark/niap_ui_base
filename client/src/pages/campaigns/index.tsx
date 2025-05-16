@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search, Pencil, AlertTriangle, Trash } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -13,6 +13,37 @@ import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// Интерфейс для информации о связанных данных кампании
+interface RelatedDataInfo {
+  hasContent: boolean;
+  hasKeywords: boolean;
+  hasTrends: boolean;
+  totalItems: {
+    content: number;
+    keywords: number;
+    trends: number;
+  };
+}
+
+// Интерфейс для ответа API при попытке удаления кампании с данными
+interface DeleteErrorResponse {
+  success: false;
+  error: string;
+  message: string;
+  relatedData: RelatedDataInfo;
+  requireConfirmation: boolean;
+}
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +52,12 @@ export default function Campaigns() {
   const { userId } = useAuthStore();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  
+  // Состояния для диалога подтверждения удаления кампании
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<{id: string, name: string} | null>(null);
+  const [deleteWithData, setDeleteWithData] = useState(false);
+  const [relatedData, setRelatedData] = useState<RelatedDataInfo | null>(null);
   
   // Получаем функцию для установки выбранной кампании
   const { setSelectedCampaign } = useCampaignStore();
@@ -112,8 +149,11 @@ export default function Campaigns() {
         throw new Error("Отсутствует токен авторизации");
       }
       
+      // Добавляем параметр принудительного удаления при необходимости
+      const forceDelete = deleteWithData ? '?forceDelete=true' : '';
+      
       // Используем REST API вместо прямого обращения к Directus
-      const response = await fetch(`/api/campaigns/${id}`, {
+      const response = await fetch(`/api/campaigns/${id}${forceDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -122,19 +162,44 @@ export default function Campaigns() {
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Проверяем, требуется ли подтверждение удаления (кампания с данными)
+        if (errorData.requireConfirmation) {
+          const typedError = errorData as DeleteErrorResponse;
+          setRelatedData(typedError.relatedData);
+          setConfirmDialogOpen(true);
+          throw new Error("confirmation_required");
+        }
+        
         throw new Error(errorData.error || "Не удалось удалить кампанию");
       }
       
       return await response.json();
     },
     onSuccess: () => {
+      // Сбрасываем состояние
+      setCampaignToDelete(null);
+      setDeleteWithData(false);
+      setRelatedData(null);
+      setConfirmDialogOpen(false);
+      
+      // Обновляем список кампаний
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+      
+      // Показываем уведомление об успешном удалении
       toast({
         title: "Успешно",
-        description: "Кампания удалена"
+        description: deleteWithData 
+          ? "Кампания и все связанные данные успешно удалены" 
+          : "Кампания успешно удалена"
       });
     },
     onError: (error: Error) => {
+      // Не показываем ошибку, если это запрос на подтверждение
+      if (error.message === "confirmation_required") {
+        return;
+      }
+      
       toast({
         title: "Ошибка",
         description: error.message,
@@ -271,7 +336,14 @@ export default function Campaigns() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteCampaign(campaign.id)}
+                    onClick={() => {
+                      // Устанавливаем информацию о кампании для удаления
+                      setCampaignToDelete({id: campaign.id, name: campaign.name});
+                      // Сбрасываем состояние принудительного удаления
+                      setDeleteWithData(false);
+                      // Запускаем процесс удаления
+                      deleteCampaign(campaign.id);
+                    }}
                   >
                     Удалить
                   </Button>
@@ -285,6 +357,64 @@ export default function Campaigns() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <CampaignForm onClose={() => setIsOpen(false)} />
       </Dialog>
+
+      {/* Диалог подтверждения удаления кампании с данными */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Подтверждение удаления
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {relatedData && (
+                <div className="space-y-4">
+                  <p>
+                    Кампания "{campaignToDelete?.name}" содержит связанные данные, которые также будут удалены:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {relatedData.hasContent && (
+                      <li>Контент: {relatedData.totalItems.content} шт.</li>
+                    )}
+                    {relatedData.hasKeywords && (
+                      <li>Ключевые слова: {relatedData.totalItems.keywords} шт.</li>
+                    )}
+                    {relatedData.hasTrends && (
+                      <li>Темы трендов: {relatedData.totalItems.trends} шт.</li>
+                    )}
+                  </ul>
+                  <p className="text-amber-600 font-medium">
+                    Это действие невозможно отменить. Удаленные данные будут потеряны безвозвратно.
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setCampaignToDelete(null);
+                setDeleteWithData(false);
+                setRelatedData(null);
+              }}
+            >
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (campaignToDelete) {
+                  setDeleteWithData(true);
+                  deleteCampaign(campaignToDelete.id);
+                }
+              }}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Удалить со всеми данными
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

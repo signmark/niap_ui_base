@@ -6424,6 +6424,144 @@ https://t.me/channelname/ - description`;
   });
 
   // Маршрут для получения кампаний пользователя
+  
+  // Маршрут для удаления кампании с проверкой наличия связанных данных
+  app.delete("/api/campaigns/:campaignId", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const campaignId = req.params.campaignId;
+      const forceDelete = req.query.forceDelete === 'true';
+      const userId = req.user?.id;
+      
+      if (!campaignId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Идентификатор кампании не указан" 
+        });
+      }
+      
+      // Получаем токен авторизации из запроса
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Отсутствует токен авторизации" 
+        });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Проверяем, принадлежит ли кампания текущему пользователю
+      try {
+        const response = await directusApi.get(`/items/campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': formatAuthToken(token)
+          }
+        });
+        
+        const campaign = response.data.data;
+        if (!campaign) {
+          return res.status(404).json({ 
+            success: false, 
+            error: "Кампания не найдена" 
+          });
+        }
+        
+        if (campaign.user_id !== userId) {
+          return res.status(403).json({ 
+            success: false, 
+            error: "Нет прав на удаление этой кампании" 
+          });
+        }
+        
+        // Проверяем наличие связанных данных, если не указан forceDelete
+        if (!forceDelete) {
+          // Проверяем наличие контента, ключевых слов и трендов
+          const relatedDataInfo = await checkCampaignRelatedData(campaignId, token);
+          
+          // Если есть связанные данные, возвращаем информацию о них и требуем подтверждения
+          if (relatedDataInfo.hasContent || relatedDataInfo.hasKeywords || relatedDataInfo.hasTrends) {
+            return res.status(409).json({
+              success: false,
+              error: "Кампания содержит связанные данные",
+              message: "Кампания содержит связанные данные, которые также будут удалены. Подтвердите удаление.",
+              relatedData: relatedDataInfo,
+              requireConfirmation: true
+            });
+          }
+        }
+        
+        // Удаляем кампанию через API Directus
+        await directusApi.delete(`/items/campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': formatAuthToken(token)
+          }
+        });
+        
+        return res.json({ 
+          success: true, 
+          message: forceDelete
+            ? "Кампания и все связанные данные удалены"
+            : "Кампания удалена"
+        });
+        
+      } catch (error) {
+        console.error('Ошибка при удалении кампании:', error);
+        return res.status(500).json({ 
+          success: false, 
+          error: "Ошибка при удалении кампании" 
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка обработки запроса:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: "Внутренняя ошибка сервера" 
+      });
+    }
+  });
+  
+  /**
+   * Проверяет наличие связанных данных для кампании
+   * @param campaignId ID кампании
+   * @param token Токен авторизации
+   * @returns Информация о связанных данных
+   */
+  async function checkCampaignRelatedData(campaignId: string, token: string): Promise<RelatedDataInfo> {
+    // Инициализируем объект с информацией о связанных данных
+    const relatedDataInfo: RelatedDataInfo = {
+      hasContent: false,
+      hasKeywords: false,
+      hasTrends: false,
+      totalItems: {
+        content: 0,
+        keywords: 0,
+        trends: 0
+      }
+    };
+    
+    try {
+      // Проверяем наличие контента
+      const contentCount = await countItems('campaign_content', campaignId, token);
+      relatedDataInfo.hasContent = contentCount > 0;
+      relatedDataInfo.totalItems.content = contentCount;
+      
+      // Проверяем наличие ключевых слов
+      const keywordsCount = await countItems('campaign_keywords', campaignId, token);
+      relatedDataInfo.hasKeywords = keywordsCount > 0;
+      relatedDataInfo.totalItems.keywords = keywordsCount;
+      
+      // Проверяем наличие трендов
+      const trendsCount = await countItems('campaign_trend_topics', campaignId, token);
+      relatedDataInfo.hasTrends = trendsCount > 0;
+      relatedDataInfo.totalItems.trends = trendsCount;
+      
+      return relatedDataInfo;
+    } catch (error) {
+      console.error('Ошибка при проверке связанных данных:', error);
+      return relatedDataInfo;
+    }
+  }
+  
   // Эндпоинты для проверки API ключей социальных сетей
   
   // Проверка Telegram бота
