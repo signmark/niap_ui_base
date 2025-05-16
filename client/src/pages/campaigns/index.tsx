@@ -287,19 +287,54 @@ export default function Campaigns() {
             }
           });
           
+          // Проверяем статус ответа
           if (serverResponse.ok) {
             console.log('[УДАЛЕНИЕ] Кампания успешно удалена через серверный API');
             return { success: true, id };
           }
-            // Если запрос неуспешен, получаем текст ошибки и логируем
+          
+          // Специальная обработка для статуса 409 Conflict (конфликт из-за связанных данных)
+          if (serverResponse.status === 409) {
+            console.log('[УДАЛЕНИЕ] Обнаружены связанные данные, получен статус 409 Conflict');
+          }
+          
+          // Получаем текст ошибки и логируем
           const serverErrorText = await serverResponse.text();
-          console.error('[УДАЛЕНИЕ] Ошибка при удалении через API сервера:', serverResponse.status, serverErrorText);
+          console.error('[УДАЛЕНИЕ] Ответ сервера:', serverResponse.status, serverErrorText);
           
           // Проверяем ответ на наличие информации о связанных данных
           try {
-            const errorData = JSON.parse(serverErrorText);
-            if (errorData.requireConfirmation && errorData.relatedData) {
+            // При статусе 409 всегда открываем диалог подтверждения
+            if (serverResponse.status === 409) {
+              const errorData = JSON.parse(serverErrorText);
               console.log('[УДАЛЕНИЕ] Сервер сообщил о наличии связанных данных:', errorData.relatedData);
+              
+              // Устанавливаем данные и открываем диалог подтверждения
+              if (errorData.relatedData) {
+                setRelatedData(errorData.relatedData);
+              } else {
+                // Для безопасности: если данных нет, создаем минимальный набор
+                setRelatedData({
+                  hasContent: true,
+                  hasKeywords: true,
+                  hasTrends: true,
+                  totalItems: {
+                    content: 1,
+                    keywords: 1,
+                    trends: 1
+                  }
+                });
+              }
+              
+              setConfirmDialogOpen(true);
+              return { 
+                success: false, 
+                requireConfirmation: true,
+                relatedData: errorData.relatedData || { hasContent: true, hasKeywords: true, hasTrends: true }
+              };
+            } else if (serverResponse.status !== 409 && errorData.requireConfirmation && errorData.relatedData) {
+              // Дополнительная проверка для других статусов с требованием подтверждения
+              console.log('[УДАЛЕНИЕ] Сервер запросил подтверждение:', errorData.relatedData);
               setRelatedData(errorData.relatedData);
               setConfirmDialogOpen(true);
               return { 
@@ -310,6 +345,35 @@ export default function Campaigns() {
             }
           } catch (parseError) {
             console.warn('[УДАЛЕНИЕ] Не удалось разобрать ответ сервера как JSON:', parseError);
+            
+            // Если не удалось разобрать JSON, но получен статус 409, все равно показываем диалог
+            if (serverResponse.status === 409) {
+              setRelatedData({
+                hasContent: true,
+                hasKeywords: true,
+                hasTrends: true,
+                totalItems: {
+                  content: 1, 
+                  keywords: 1,
+                  trends: 1
+                }
+              });
+              setConfirmDialogOpen(true);
+              return { 
+                success: false, 
+                requireConfirmation: true,
+                relatedData: {
+                  hasContent: true,
+                  hasKeywords: true,
+                  hasTrends: true,
+                  totalItems: {
+                    content: 1,
+                    keywords: 1,
+                    trends: 1
+                  }
+                }
+              };
+            }
           }
           
           // Если это не ошибка с требованием подтверждения, возвращаем общую ошибку
