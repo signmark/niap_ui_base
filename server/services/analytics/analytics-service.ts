@@ -573,6 +573,28 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       posts.forEach((post, index) => {
         log.info(`[analytics-service] Пост ${index + 1}: ID=${post.id}, created_at=${post.created_at}`);
       });
+      
+      // Фильтруем посты по дате publishedAt из social_platforms
+      if (period > 0) {
+        const periodStartDate = new Date();
+        periodStartDate.setDate(periodStartDate.getDate() - period);
+        
+        // Создаем новый массив с фильтрацией по дате публикации
+        const filteredPosts = posts.filter(post => {
+          if (!post.social_platforms) return false;
+          
+          // Проверяем, что хотя бы одна платформа опубликована в указанный период
+          return Object.values(post.social_platforms).some((platformData: any) => {
+            if (platformData.status !== 'published' || !platformData.publishedAt) return false;
+            
+            const publishedAt = new Date(platformData.publishedAt);
+            return publishedAt >= periodStartDate;
+          });
+        });
+        
+        log.info(`[analytics-service] Отфильтровано по publishedAt: ${filteredPosts.length} постов из ${posts.length}`);
+        posts = filteredPosts;
+      }
     } catch (error) {
       log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
       // В случае ошибки возвращаем пустой массив
