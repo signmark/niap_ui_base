@@ -390,14 +390,19 @@ export function SocialMediaSettings({
             name="telegram.chatId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ID Чата</FormLabel>
+                <FormLabel>ID Чата или @username канала</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Введите ID чата" 
+                    placeholder="Например: -1001234567890 или @channel_name" 
                     {...field} 
                     value={field.value || ''}
+                    className={field.value?.startsWith('@') ? "border-green-500" : ""}
                   />
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  <span className="font-medium text-orange-600">Важно!</span> Для корректной работы аналитики рекомендуется указывать @username канала, а не его ID. 
+                  Если вы укажете только числовой ID канала (например, -100...), вы не сможете собирать аналитику из-за ограничений Telegram API.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -451,11 +456,14 @@ export function SocialMediaSettings({
                 <FormLabel>ID Группы</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Введите ID группы" 
+                    placeholder="Например: 228626989 (без знака минус)" 
                     {...field} 
                     value={field.value || ''}
                   />
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  ID группы ВКонтакте можно найти в адресной строке: vk.com/club<span className="font-semibold">123456789</span> или в настройках группы. Вводите только числовой ID без знака минус.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -527,11 +535,16 @@ export function SocialMediaSettings({
                 <FormLabel>ID бизнес-аккаунта</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Введите ID бизнес-аккаунта Instagram" 
+                    placeholder="Например: 17841409299499997" 
                     {...field} 
                     value={field.value || ''}
                   />
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Для публикации в Instagram требуется ID бизнес-аккаунта. Его можно получить через 
+                  <a href="https://developers.facebook.com/tools/explorer/" target="_blank" className="text-blue-500 ml-1 hover:underline">Graph API Explorer</a>. 
+                  Подключите Instagram к Facebook Business Suite для корректной работы публикаций.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -585,11 +598,15 @@ export function SocialMediaSettings({
                 <FormLabel>Page ID</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Введите ID страницы"
+                    placeholder="Например: 102938475647382"
                     {...field}
                     value={field.value || ''}
                   />
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  ID Facebook страницы можно найти в настройках страницы или в URL-адресе: facebook.com/<span className="font-semibold">yourpagename</span>. 
+                  Если используете числовой ID, убедитесь, что он соответствует бизнес-странице, связанной с вашим Instagram-аккаунтом.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
