@@ -174,7 +174,18 @@ export default function Campaigns() {
         throw new Error(errorData.error || "Не удалось удалить кампанию");
       }
       
-      return { success: true, id, data: await response.json() };
+      const responseData = await response.json();
+      console.log("Ответ сервера на удаление кампании:", responseData);
+      
+      // Извлекаем ID из ответа сервера, если есть, иначе используем ID из запроса
+      const resultId = responseData.id || responseData.campaignId || id;
+      
+      return { 
+        success: true, 
+        id: resultId, 
+        data: responseData,
+        forceDelete: responseData.forceDelete
+      };
     },
     onSuccess: (result) => {
       // Сбрасываем состояние
