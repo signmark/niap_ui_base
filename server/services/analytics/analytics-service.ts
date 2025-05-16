@@ -606,8 +606,14 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         log.info(`[analytics-service] Пост ${index + 1}: ID=${post.id}, created_at=${post.created_at}`);
       });
       
-      // Фильтруем посты по дате publishedAt из social_platforms
-      if (period > 0) {
+      // Для кампании "Профориентация" (ID: b2c43094-01b6-4e33-834f-abcdcffcd101)
+      // временно отключаем фильтрацию по дате, чтобы отобразить все посты
+      if (campaignId === 'b2c43094-01b6-4e33-834f-abcdcffcd101') {
+        log.info(`[analytics-service] Для кампании "Профориентация" отключена фильтрация по дате`);
+        log.info(`[analytics-service] Все ${posts.length} постов будут отображены в аналитике`);
+      } 
+      // Для остальных кампаний фильтруем посты по дате publishedAt как обычно
+      else if (period > 0) {
         const periodStartDate = new Date();
         periodStartDate.setDate(periodStartDate.getDate() - period);
         
