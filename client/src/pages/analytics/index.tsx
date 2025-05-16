@@ -655,7 +655,10 @@ export default function Analytics() {
                 ) : (
                   <>
                     <div className="text-2xl font-bold text-green-500">
-                      {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
+                      {formatNumber(
+                        Object.values(platformsStatsData?.data?.platforms || {})
+                          .reduce((total, platform: any) => total + (platform.posts || 0), 0)
+                      )}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       По {Object.keys(platformsStatsData?.data?.platforms || {}).length || 0} платформам
