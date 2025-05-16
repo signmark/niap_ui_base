@@ -8412,47 +8412,70 @@ https://t.me/channelname/ - description`;
       }
       
       const token = authHeader.replace('Bearer ', '');
+      const headers = { 'Authorization': `Bearer ${token}` };
       
-      console.log(`[CRITICAL] Прямой запрос на удаление кампании ${campaignId}`);
+      console.log(`[CRITICAL] Подготовка к удалению кампании ${campaignId}`);
+      console.log(`[CRITICAL] Сначала удаляем все связанные данные`);
       
-      // Максимально прямолинейное удаление, идентично Postman-запросу
       try {
-        const url = `https://directus.nplanner.ru/items/user_campaigns/${campaignId}`;
-        console.log(`[CRITICAL] Отправляем DELETE запрос по URL: ${url}`);
-        console.log(`[CRITICAL] Токен для авторизации: ${token.substring(0, 20)}...`);
+        // Шаг 1: Удаляем связанные ключевые слова
+        console.log(`[CRITICAL] Удаление связанных ключевых слов для кампании ${campaignId}`);
+        try {
+          await directusApi.delete(`/items/campaign_keywords`, {
+            params: { filter: { campaign_id: { _eq: campaignId } } },
+            headers
+          });
+          console.log(`[CRITICAL] Связанные ключевые слова удалены`);
+        } catch (keywordsError) {
+          console.error(`[CRITICAL] Ошибка при удалении ключевых слов:`, keywordsError.message);
+        }
         
-        const config = {
-          method: 'DELETE',
-          url: url,
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        };
+        // Шаг 2: Удаляем связанные темы трендов
+        console.log(`[CRITICAL] Удаление связанных тем трендов для кампании ${campaignId}`);
+        try {
+          await directusApi.delete(`/items/campaign_trend_topics`, {
+            params: { filter: { campaign_id: { _eq: campaignId } } },
+            headers
+          });
+          console.log(`[CRITICAL] Связанные темы трендов удалены`);
+        } catch (trendsError) {
+          console.error(`[CRITICAL] Ошибка при удалении тем трендов:`, trendsError.message);
+        }
         
-        console.log(`[CRITICAL] Конфигурация запроса:`, JSON.stringify(config, null, 2));
-        const result = await axios(config);
+        // Шаг 3: Удаляем связанный контент
+        console.log(`[CRITICAL] Удаление связанного контента для кампании ${campaignId}`);
+        try {
+          await directusApi.delete(`/items/campaign_content`, {
+            params: { filter: { campaign_id: { _eq: campaignId } } },
+            headers
+          });
+          console.log(`[CRITICAL] Связанный контент удален`);
+        } catch (contentError) {
+          console.error(`[CRITICAL] Ошибка при удалении контента:`, contentError.message);
+        }
         
-        console.log(`[CRITICAL] Успешно удалена кампания ${campaignId}, статус: ${result.status}`);
-        console.log(`[CRITICAL] Ответ сервера:`, result.data);
+        // Шаг 4: Теперь удаляем саму кампанию
+        console.log(`[CRITICAL] Удаление кампании ${campaignId}`);
+        const result = await directusApi.delete(`/items/user_campaigns/${campaignId}`, { headers });
         
-        return res.status(200).json({ 
-          success: true, 
-          message: "Кампания успешно удалена",
-          directusResponse: result.data
+        console.log(`[CRITICAL] Кампания ${campaignId} успешно удалена, статус: ${result.status}`);
+        
+        return res.status(200).json({
+          success: true,
+          message: "Кампания и все связанные данные успешно удалены"
         });
       } catch (error) {
-        console.error(`[CRITICAL] Ошибка при удалении кампании ${campaignId}:`, error.message);
+        console.error(`[CRITICAL] Ошибка при удалении кампании:`, error.message);
         if (error.response) {
-          console.error(`[CRITICAL] Статус ошибки: ${error.response.status}`);
           console.error(`[CRITICAL] Данные ошибки:`, error.response.data);
         }
         
-        return res.status(500).json({ 
+        // Ясное сообщение об ошибке
+        return res.status(500).json({
           success: false,
-          error: "Не удалось удалить кампанию",
-          directusError: error.response?.data || error.message
+          error: "Не удалось удалить кампанию из-за нарушения ссылочной целостности",
+          message: "Возможно, с кампанией связаны данные, которые не могут быть автоматически удалены. Пожалуйста, сначала удалите зависимые данные вручную.",
+          details: error.response?.data || error.message
         });
       }
     } catch (error) {
