@@ -6550,17 +6550,40 @@ https://t.me/channelname/ - description`;
         
       } catch (apiError) {
         console.error(`Ошибка API при удалении кампании ${campaignId}:`, apiError);
+        
+        // Расширенное логирование для отладки
         if (axios.isAxiosError(apiError)) {
-          console.error('Детали ошибки Directus API:', {
-            status: apiError.response?.status,
-            data: apiError.response?.data
+          const status = apiError.response?.status;
+          const responseData = apiError.response?.data;
+          const responseHeaders = apiError.response?.headers;
+          const config = apiError.config;
+          
+          console.error('Детали ошибки Directus API при удалении кампании:', {
+            status,
+            data: responseData,
+            method: config?.method,
+            url: config?.url,
+            headers: config?.headers,
+            responseHeaders
+          });
+          
+          // Добавляем детальную информацию в ответ для облегчения отладки
+          return res.status(500).json({ 
+            success: false, 
+            error: "Ошибка при удалении кампании",
+            details: apiError.message,
+            status,
+            apiErrorData: responseData,
+            apiErrorCode: status
+          });
+        } else {
+          console.error('Неизвестная ошибка при удалении кампании:', apiError);
+          return res.status(500).json({ 
+            success: false, 
+            error: "Ошибка при удалении кампании",
+            details: apiError instanceof Error ? apiError.message : 'Неизвестная ошибка'
           });
         }
-        return res.status(500).json({ 
-          success: false, 
-          error: "Ошибка при удалении кампании",
-          details: apiError.message
-        });
       }
     } catch (error) {
       console.error('Ошибка обработки запроса на удаление кампании:', error);
