@@ -28,6 +28,7 @@ import { directusApi } from "./directus";
 import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { log } from "./utils/logger";
+import { directusApiManager } from "./directus";
 import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
 import { 
@@ -1146,6 +1147,59 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 };
+
+// Функция для получения админского токена из Directus
+async function getDirectusAdminToken(): Promise<string | null> {
+  try {
+    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+    const directusToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    
+    // Если указан готовый токен - используем его
+    if (directusToken) {
+      console.log('Используем готовый DIRECTUS_ADMIN_TOKEN из env');
+      return directusToken;
+    }
+    
+    // Если указаны учетные данные администратора
+    if (adminEmail && adminPassword) {
+      console.log(`Авторизация администратора ${adminEmail} через API Directus`);
+      try {
+        const authResponse = await directusApi.post('/auth/login', {
+          email: adminEmail,
+          password: adminPassword
+        });
+        
+        if (authResponse.data && authResponse.data.data && authResponse.data.data.access_token) {
+          console.log('Успешно получен токен администратора через API');
+          return authResponse.data.data.access_token;
+        }
+      } catch (authError) {
+        console.error('Ошибка авторизации администратора:', authError);
+      }
+    }
+    
+    // Проверим, есть ли кэшированный токен администратора
+    try {
+      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID;
+      if (adminUserId) {
+        const cachedToken = directusApiManager.getCachedToken(adminUserId);
+        if (cachedToken) {
+          console.log(`Используем кэшированный токен администратора (ID: ${adminUserId})`);
+          return cachedToken;
+        }
+      }
+    } catch (cacheError) {
+      console.error('Ошибка при получении кэшированного токена:', cacheError);
+    }
+    
+    console.error('Не удалось получить токен администратора');
+    return null;
+  } catch (error) {
+    console.error('Ошибка при получении токена администратора:', error);
+    return null;
+  }
+}
 
 // Функция для глубокого извлечения контента с сайта для улучшенного анализа
 async function extractFullSiteContent(url: string): Promise<string> {
@@ -8472,30 +8526,35 @@ https://t.me/channelname/ - description`;
           }
         }
         
-        // Удаляем саму кампанию из обеих таблиц: user_campaigns и campaigns
+        // Удаляем кампанию напрямую из таблицы user_campaigns через API администратора
         console.log(`Удаление кампании ${campaignId} из таблицы user_campaigns`);
         
         try {
+          // Получаем административный токен
+          const adminToken = await getDirectusAdminToken();
+          
+          // Удаляем с административным токеном
           await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${adminToken || token}`
             }
           });
-          console.log(`Кампания ${campaignId} успешно удалена из user_campaigns`);
-        } catch (userCampaignError) {
-          console.error(`Ошибка при удалении из user_campaigns:`, userCampaignError.message);
-        }
-        
-        // Дополнительно попробуем удалить из оригинальной таблицы campaigns если она существует
-        try {
-          await directusApi.delete(`/items/campaigns/${campaignId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          console.log(`Кампания ${campaignId} успешно удалена из campaigns`);
-        } catch (campaignsError) {
-          console.log(`Таблица campaigns не найдена или запись уже удалена:`, campaignsError.message);
+          console.log(`Кампания ${campaignId} успешно удалена из user_campaigns с админским токеном`);
+        } catch (adminError) {
+          console.error(`Ошибка при удалении через админа:`, adminError.message);
+          
+          // Если не удалось через админа, пробуем с токеном пользователя
+          try {
+            await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            console.log(`Кампания ${campaignId} успешно удалена из user_campaigns с пользовательским токеном`);
+          } catch (userError) {
+            console.error(`Ошибка при удалении с пользовательским токеном:`, userError.message);
+            throw userError; // Пробрасываем ошибку дальше
+          }
         }
         
         // Возвращаем результат
