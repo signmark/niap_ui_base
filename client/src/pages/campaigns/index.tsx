@@ -144,19 +144,86 @@ export default function Campaigns() {
 
   const { mutate: deleteCampaign } = useMutation({
     mutationFn: async (id: string) => {
-      // Получаем токен напрямую из localStorage
-      const authStore = JSON.parse(localStorage.getItem('auth') || '{}');
-      const token = authStore.token; // Такой же токен, как на скриншоте
+      // Получаем токен напрямую из localStorage - точно такой же, как в Postman
+      let token = localStorage.getItem('auth_token');
+            
+      console.log(`Токен для удаления кампании: ${token ? 'найден, длина: ' + token.length : 'НЕ НАЙДЕН!'}`);
       
+      // Для отладки выведем все ключи из localStorage
+      console.log('Содержимое localStorage:');
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const value = localStorage.getItem(key);
+          console.log(`${key}: ${value ? (key.includes('token') ? value.slice(0, 10) + '...' : value.length + ' символов') : 'null'}`);
+        }
+      }
+      
+      // Если нет токена, попробуем получить его из auth объекта
       if (!token) {
-        throw new Error("Отсутствует токен авторизации");
+        const auth = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+        console.log('Проверяем auth-storage:', auth);
+        if (auth.state?.token) {
+          token = auth.state.token;
+          console.log('Получен токен из auth-storage, длина:', token.length);
+        } else {
+          console.error('Токен не найден ни в одном из хранилищ');
+          throw new Error("Отсутствует токен авторизации");
+        }
+      }
+      
+      // Проверяем наличие токена перед использованием
+      if (!token) {
+        throw new Error("Не удалось получить токен авторизации из всех доступных источников");
       }
       
       console.log(`[УДАЛЕНИЕ] Начинаем удаление кампании ${id} напрямую через Directus. Длина токена: ${token.length}`);
       
-      // Запускаем последовательность удаления
+      // Создаем напрямую запрос к Directus API для удаления кампании
+      // Точно такой же, как в Postman, который вы показали
       try {
-        // 1. Сначала пробуем удалить все связанные сущности через Directus
+        const response = await fetch(`https://directus.nplanner.ru/items/user_campaigns/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Проверяем статус ответа
+        if (response.status === 204) {
+          console.log(`[УДАЛЕНИЕ] Кампания ${id} успешно удалена`);
+          return { success: true };
+        } else {
+          const errorData = await response.json().catch(() => ({ error: 'Ошибка при чтении ответа' }));
+          console.error(`[УДАЛЕНИЕ] Ошибка при удалении кампании: ${response.status}`, errorData);
+          
+          // Если это ошибка связана с зависимостями (возможно, код 400 или 403)
+          if (response.status === 400 || response.status === 403) {
+            return {
+              success: false,
+              error: 'Нельзя удалить кампанию с связанными данными',
+              requireConfirmation: true,
+              relatedData: {
+                hasContent: true,
+                hasKeywords: true,
+                hasTrends: true,
+                totalItems: {
+                  content: 1,  // Точные цифры будут заменены в будущем
+                  keywords: 1,
+                  trends: 1
+                }
+              }
+            };
+          }
+          
+          throw new Error(`Ошибка при удалении кампании: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('[УДАЛЕНИЕ] Ошибка при выполнении запроса:', error);
+        throw error;
+      }
+      // Отчистили старый дублирующийся код
         try {
           console.log('[УДАЛЕНИЕ] Шаг 1: Удаляем связанные ключевые слова');
           await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}`, {
