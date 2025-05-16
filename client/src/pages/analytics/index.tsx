@@ -724,7 +724,13 @@ export default function Analytics() {
                     padAngle={0.7}
                     cornerRadius={3}
                     activeOuterRadiusOffset={8}
-                    colors={{ scheme: 'set3' }}
+                    colors={(d) => {
+                      const platform = d.id;
+                      return platform === 'vk' ? '#0077FF' : 
+                             platform === 'instagram' ? '#E1306C' : 
+                             platform === 'telegram' ? '#0088CC' : 
+                             platform === 'facebook' ? '#1877F2' : '#6366F1';
+                    }}
                     borderWidth={1}
                     borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
                     arcLinkLabelsSkipAngle={10}
@@ -732,7 +738,7 @@ export default function Analytics() {
                     arcLinkLabelsThickness={2}
                     arcLinkLabelsColor={{ from: 'color' }}
                     arcLabelsSkipAngle={10}
-                    arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                    arcLabelsTextColor="#ffffff"
                   />
                 )}
               </div>
