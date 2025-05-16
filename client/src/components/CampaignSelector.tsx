@@ -154,6 +154,11 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
   // Определяем значение для отображения в селекторе
   const displayValue = persistSelection && initiallySelectedId ? initiallySelectedId : selectedCampaignId;
 
+  // Получаем имя активной кампании для отображения статичного текста
+  const activeCampaignName = campaignsResponse?.data?.find(
+    (c: Campaign) => c.id === selectedCampaignId
+  )?.name || selectedCampaignName;
+
   return (
     <div className="flex items-center py-2">
       <span className="mr-2 text-sm font-medium">Кампания:</span>
@@ -163,7 +168,13 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm text-muted-foreground">Загрузка кампаний...</span>
           </div>
+        ) : campaignsResponse?.data?.length === 1 ? (
+          // Если есть только одна кампания - показываем статичную надпись
+          <div className="px-3 py-2 border rounded-md text-sm">
+            {activeCampaignName || "Нет активной кампании"}
+          </div>
         ) : (
+          // Если есть более одной кампании - показываем селектор
           <Select
             value={displayValue || undefined}
             onValueChange={handleCampaignChange}
@@ -172,7 +183,9 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
               <SelectValue placeholder="Выберите кампанию" />
             </SelectTrigger>
             <SelectContent>
-              {campaignsResponse?.data?.map((campaign: Campaign) => (
+              {campaignsResponse?.data
+                ?.sort((a: Campaign, b: Campaign) => a.name.localeCompare(b.name)) // Сортировка кампаний по алфавиту
+                .map((campaign: Campaign) => (
                 <SelectItem key={campaign.id} value={campaign.id}>
                   {campaign.name}
                 </SelectItem>
