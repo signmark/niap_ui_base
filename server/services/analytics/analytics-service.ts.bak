@@ -10,6 +10,8 @@ import { getVkAnalytics } from './vk-analytics';
 import { getInstagramAnalytics } from './instagram-analytics';
 import { getFacebookAnalytics } from './facebook-analytics';
 import { extractTelegramIds, extractVkIds, extractInstagramId, extractFacebookId } from './url-extractor';
+import axios from 'axios';
+import { directusAuthManager } from '../directus-auth-manager';
 
 // Статус обработки аналитики 
 interface AnalyticsCollectionStatus {
@@ -123,13 +125,29 @@ function initializeAnalyticsStructure(post: any): any {
  */
 async function getCampaignSocialSettings(campaignId: string): Promise<any> {
   try {
-    // Получаем информацию о кампании, включая настройки социальных сетей
-    const campaigns = await directusCrud.searchItems('campaigns', {
-      filter: {
-        id: { _eq: campaignId }
+    // Используем прямой axios запрос вместо directusCrud
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    // Пытаемся получить токен администратора
+    const adminSession = await directusAuthManager.getAdminSession();
+    
+    if (!adminSession || !adminSession.token) {
+      log.warn('[analytics-service] Не удалось получить токен администратора');
+      return getDefaultSocialSettings();
+    }
+    
+    // Запрашиваем информацию о кампании напрямую через axios
+    const response = await axios.get(`${directusUrl}/items/campaigns`, {
+      params: {
+        filter: { id: { _eq: campaignId } },
+        fields: ['id', 'social_media_settings']
       },
-      fields: ['id', 'social_media_settings']
+      headers: {
+        'Authorization': `Bearer ${adminSession.token}`
+      }
     });
+    
+    const campaigns = response.data?.data || [];
     
     if (!campaigns || campaigns.length === 0) {
       log.warn(`[analytics-service] Не найдена кампания с ID ${campaignId}`);
@@ -207,15 +225,31 @@ export async function collectAnalytics(campaignId: string, authToken?: string): 
     // Используем правильное имя поля campaign_id
     filter.campaign_id = { _eq: campaignId };
     
-    // Получаем все опубликованные посты
+    // Получаем все опубликованные посты с использованием прямого axios запроса
     let posts = [];
     try {
-      posts = await directusCrud.searchItems('campaign_content', {
-        filter,
-        fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at'],
-        // Используем токен административного пользователя, если он передан
-        ...(authToken ? { authToken } : {})
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = authToken || (adminSession ? adminSession.token : null);
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      
+      posts = response.data?.data || [];
       
       log.info(`[analytics-service] Найдено ${posts.length} постов для обработки`);
     } catch (postsError: any) {
@@ -312,11 +346,25 @@ export async function collectAnalytics(campaignId: string, authToken?: string): 
         }
       }
       
-      // Сохраняем обновленный пост в Directus
+      // Сохраняем обновленный пост в Directus с использованием прямого axios запроса
       try {
-        await directusCrud.updateItem('campaign_content', post.id, {
-          social_platforms: updatedPost.social_platforms
-        });
+        // Получаем токен администратора для обновления
+        const adminSession = await directusAuthManager.getAdminSession();
+        const token = authToken || (adminSession ? adminSession.token : null);
+        
+        if (!token) {
+          throw new Error('Не удалось получить токен для обновления поста');
+        }
+        
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        
+        // Отправляем PATCH запрос для обновления данных
+        await axios.patch(
+          `${directusUrl}/items/campaign_content/${post.id}`, 
+          { social_platforms: updatedPost.social_platforms },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        
         log.info(`[analytics-service] Обновлены данные аналитики для поста ${post.id}`);
       } catch (updateError: any) {
         log.error(`[analytics-service] Ошибка обновления поста ${post.id}: ${updateError.message}`);
@@ -357,11 +405,8 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
     
     // Добавляем фильтр по кампании, если он указан
     if (campaignId) {
-      // Проверяем оба возможных имени поля (campaign_id или campaign)
-      filter._or = [
-        { campaign_id: { _eq: campaignId } },
-        { campaign: { _eq: campaignId } }
-      ];
+      // Используем только поле campaign_id
+      filter.campaign_id = { _eq: campaignId };
     }
     
     // Если указан период, добавляем фильтр по дате публикации
@@ -374,11 +419,36 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
       };
     }
     
-    // Получаем все опубликованные посты
-    const posts = await directusCrud.searchItems('campaign_content', {
-      filter,
-      fields: ['id', 'title', 'content', 'campaign_id', 'campaign', 'social_platforms', 'created_at']
-    });
+    // Получаем все опубликованные посты с использованием прямого axios запроса
+    let posts = [];
+    try {
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = adminSession ? adminSession.token : null;
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      posts = response.data?.data || [];
+    } catch (error) {
+      log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
+      // В случае ошибки возвращаем пустой массив
+      posts = [];
+    }
     
     // Обрабатываем посты для вычисления общего количества просмотров и вовлеченности
     const processedPosts = posts.map(post => {
@@ -414,7 +484,7 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
         content: post.content,
         imageUrl: post.image_url,
         createdAt: post.created_at,
-        campaignId: post.campaign_id || post.campaign,
+        campaignId: post.campaign_id,
         totalViews,
         totalEngagement,
         engagementRate,
@@ -458,11 +528,8 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     
     // Добавляем фильтр по кампании, если он указан
     if (campaignId) {
-      // Проверяем оба возможных имени поля (campaign_id или campaign)
-      filter._or = [
-        { campaign_id: { _eq: campaignId } },
-        { campaign: { _eq: campaignId } }
-      ];
+      // Используем только поле campaign_id
+      filter.campaign_id = { _eq: campaignId };
     }
     
     // Если указан период, добавляем фильтр по дате публикации
@@ -475,31 +542,68 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       };
     }
     
-    // Получаем все опубликованные посты
-    const posts = await directusCrud.searchItems('campaign_content', {
-      filter,
-      fields: ['id', 'social_platforms', 'created_at']
-    });
+    // Получаем все опубликованные посты с использованием прямого axios запроса
+    let posts = [];
+    try {
+      // Получаем токен администратора
+      const adminSession = await directusAuthManager.getAdminSession();
+      const token = adminSession ? adminSession.token : null;
+      
+      if (!token) {
+        throw new Error('Не удалось получить токен для запроса постов');
+      }
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Делаем запрос через axios
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'campaign_id', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      posts = response.data?.data || [];
+      log.info(`[analytics-service] Получено ${posts.length} постов для статистики. Кампания: ${campaignId}, период: ${period} дней`);
+      
+      // Добавляем детальное логирование для отладки
+      posts.forEach((post, index) => {
+        log.info(`[analytics-service] Пост ${index + 1}: ID=${post.id}, created_at=${post.created_at}`);
+      });
+      
+      // Фильтруем посты по дате publishedAt из social_platforms
+      if (period > 0) {
+        const periodStartDate = new Date();
+        periodStartDate.setDate(periodStartDate.getDate() - period);
+        
+        // Создаем новый массив с фильтрацией по дате публикации
+        const filteredPosts = posts.filter(post => {
+          if (!post.social_platforms) return false;
+          
+          // Проверяем, что хотя бы одна платформа опубликована в указанный период
+          return Object.values(post.social_platforms).some((platformData: any) => {
+            if (platformData.status !== 'published' || !platformData.publishedAt) return false;
+            
+            const publishedAt = new Date(platformData.publishedAt);
+            return publishedAt >= periodStartDate;
+          });
+        });
+        
+        log.info(`[analytics-service] Отфильтровано по publishedAt: ${filteredPosts.length} постов из ${posts.length}`);
+        posts = filteredPosts;
+      }
+    } catch (error) {
+      log.error(`[analytics-service] Ошибка при получении постов: ${error.message}`);
+      // В случае ошибки возвращаем пустой массив
+      posts = [];
+    }
     
-    // Инициализируем структуру для хранения метрик по платформам
-    const platforms: Record<string, {
-      posts: number,
-      views: number,
-      likes: number,
-      comments: number,
-      shares: number,
-      engagement: number,
-      engagementRate: number
-    }> = {
-      telegram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      vk: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      instagram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
-      facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 }
-    };
-    
-    // Агрегированные метрики по всем платформам
+    // Начальные значения для агрегированных метрик
     const aggregated: AggregatedMetrics = {
-      totalPosts: 0,
+      totalPosts: 0, // Будем считать количество публикаций как сумму публикаций на всех платформах
       totalViews: 0,
       totalLikes: 0,
       totalComments: 0,
@@ -509,10 +613,47 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       platformDistribution: {}
     };
     
-    // Обрабатываем посты для агрегации метрик по платформам
+    // Статистика по каждой платформе
+    const platformStats: Record<string, any> = {
+      telegram: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      vk: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      instagram: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      },
+      facebook: {
+        posts: 0,
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        engagement: 0
+      }
+    };
+    
+    // Обрабатываем каждый пост
     posts.forEach(post => {
       if (!post.social_platforms) return;
       
+      // Обрабатываем каждую платформу
       Object.keys(post.social_platforms).forEach(platform => {
         const platformData = post.social_platforms[platform];
         
@@ -522,22 +663,22 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         }
         
         // Увеличиваем счетчик постов для платформы
-        platforms[platform].posts += 1;
-        aggregated.totalPosts += 1;
+        platformStats[platform].posts++;
         
-        // Добавляем метрики
+        // Суммируем метрики
         const views = platformData.analytics.views || 0;
         const likes = platformData.analytics.likes || 0;
         const comments = platformData.analytics.comments || 0;
         const shares = platformData.analytics.shares || 0;
         const engagement = likes + comments + shares;
         
-        platforms[platform].views += views;
-        platforms[platform].likes += likes;
-        platforms[platform].comments += comments;
-        platforms[platform].shares += shares;
-        platforms[platform].engagement += engagement;
+        platformStats[platform].views += views;
+        platformStats[platform].likes += likes;
+        platformStats[platform].comments += comments;
+        platformStats[platform].shares += shares;
+        platformStats[platform].engagement += engagement;
         
+        // Добавляем к общим метрикам
         aggregated.totalViews += views;
         aggregated.totalLikes += likes;
         aggregated.totalComments += comments;
@@ -546,26 +687,37 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       });
     });
     
-    // Вычисляем коэффициенты вовлеченности для каждой платформы
-    Object.keys(platforms).forEach(platform => {
-      if (platforms[platform].views > 0) {
-        platforms[platform].engagementRate = (platforms[platform].engagement / platforms[platform].views) * 100;
-      }
+    // Подсчитываем общее количество публикаций и вычисляем коэффициенты вовлеченности
+    let totalPlatformPosts = 0;
+    
+    Object.keys(platformStats).forEach(platform => {
+      const stats = platformStats[platform];
+      // Суммируем количество публикаций на всех платформах
+      totalPlatformPosts += stats.posts;
+      // Вычисляем коэффициент вовлеченности для каждой платформы
+      stats.engagementRate = stats.views > 0 ? (stats.engagement / stats.views) * 100 : 0;
     });
     
+    // Обновляем общее количество публикаций (важно - это сумма всех публикаций на платформах)
+    aggregated.totalPosts = totalPlatformPosts;
+    
     // Вычисляем средний коэффициент вовлеченности
-    if (aggregated.totalViews > 0) {
-      aggregated.averageEngagementRate = (aggregated.totalEngagement / aggregated.totalViews) * 100;
-    }
+    aggregated.averageEngagementRate = aggregated.totalViews > 0 ? 
+      (aggregated.totalEngagement / aggregated.totalViews) * 100 : 0;
     
-    // Формируем распределение по платформам для возврата
-    aggregated.platformDistribution = platforms;
+    // Заполняем распределение по платформам
+    aggregated.platformDistribution = platformStats;
     
-    return { platforms, aggregated };
+    log.info(`[analytics-service] Итоговое количество публикаций: ${totalPlatformPosts} (сумма по всем платформам)`);
+    
+    return {
+      platforms: platformStats,
+      aggregated
+    };
   } catch (error: any) {
     log.error(`[analytics-service] Ошибка получения статистики платформ: ${error.message}`);
-    return { 
-      platforms: {}, 
+    return {
+      platforms: {},
       aggregated: {
         totalPosts: 0,
         totalViews: 0,
@@ -575,7 +727,7 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         totalEngagement: 0,
         averageEngagementRate: 0,
         platformDistribution: {}
-      } 
+      }
     };
   }
 }

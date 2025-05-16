@@ -409,15 +409,8 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
       filter.campaign_id = { _eq: campaignId };
     }
     
-    // Если указан период, добавляем фильтр по дате публикации
-    if (period > 0) {
-      const periodStartDate = new Date();
-      periodStartDate.setDate(periodStartDate.getDate() - period);
-      
-      filter.created_at = {
-        _gte: periodStartDate.toISOString()
-      };
-    }
+    // ВАЖНО: Не используем фильтр по created_at, так как нам нужно получить ВСЕ опубликованные посты 
+    // для последующей фильтрации по полю publishedAt внутри social_platforms
     
     // Получаем все опубликованные посты с использованием прямого axios запроса
     let posts = [];
@@ -450,61 +443,107 @@ export async function getTopPosts(userId: string, campaignId?: string, period: n
       posts = [];
     }
     
+    // Если указан период, фильтруем посты по дате публикации (publishedAt)
+    if (period > 0 && posts.length > 0) {
+      const periodStartDate = new Date();
+      periodStartDate.setDate(periodStartDate.getDate() - period);
+      
+      // Фильтруем посты по дате в поле publishedAt внутри social_platforms
+      posts = posts.filter(post => {
+        if (!post.social_platforms) return false;
+        
+        // Проверяем, что хотя бы одна платформа опубликована в указанный период
+        return Object.values(post.social_platforms).some((platformData: any) => {
+          if (platformData.status !== 'published' || !platformData.publishedAt) return false;
+          
+          const publishedAt = new Date(platformData.publishedAt);
+          return publishedAt >= periodStartDate;
+        });
+      });
+    }
+    
     // Обрабатываем посты для вычисления общего количества просмотров и вовлеченности
     const processedPosts = posts.map(post => {
-      let totalViews = 0;
-      let totalLikes = 0;
-      let totalComments = 0;
-      let totalShares = 0;
-      
-      // Если есть данные о социальных платформах, суммируем метрики
-      if (post.social_platforms) {
-        Object.keys(post.social_platforms).forEach(platform => {
-          const platformData = post.social_platforms[platform];
-          
-          // Пропускаем, если платформа не опубликована или нет аналитики
-          if (platformData.status !== 'published' || !platformData.analytics) {
-            return;
-          }
-          
-          totalViews += platformData.analytics.views || 0;
-          totalLikes += platformData.analytics.likes || 0;
-          totalComments += platformData.analytics.comments || 0;
-          totalShares += platformData.analytics.shares || 0;
-        });
-      }
-      
-      // Вычисляем общее вовлечение и коэффициент вовлеченности
-      const totalEngagement = totalLikes + totalComments + totalShares;
-      const engagementRate = totalViews > 0 ? (totalEngagement / totalViews) * 100 : 0;
-      
-      return {
+      const postData = {
         id: post.id,
         title: post.title,
         content: post.content,
-        imageUrl: post.image_url,
+        campaign_id: post.campaign_id,
         createdAt: post.created_at,
-        campaignId: post.campaign_id,
-        totalViews,
-        totalEngagement,
-        engagementRate,
-        platforms: post.social_platforms
+        totalViews: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        totalShares: 0,
+        totalEngagement: 0,
+        engagementRate: 0,
+        platforms: []
       };
+      
+      // Если нет данных о социальных платформах, возвращаем базовую информацию
+      if (!post.social_platforms) {
+        return postData;
+      }
+      
+      // Обрабатываем каждую платформу отдельно
+      Object.keys(post.social_platforms).forEach(platform => {
+        const platformData = post.social_platforms[platform];
+        
+        // Пропускаем, если платформа не опубликована или нет аналитики
+        if (platformData.status !== 'published' || !platformData.analytics) {
+          return;
+        }
+        
+        // Добавляем данные о платформе
+        postData.platforms.push({
+          platform,
+          postUrl: platformData.postUrl,
+          publishedAt: platformData.publishedAt,
+          analytics: platformData.analytics
+        });
+        
+        // Суммируем метрики
+        const views = platformData.analytics.views || 0;
+        const likes = platformData.analytics.likes || 0;
+        const comments = platformData.analytics.comments || 0;
+        const shares = platformData.analytics.shares || 0;
+        
+        postData.totalViews += views;
+        postData.totalLikes += likes;
+        postData.totalComments += comments;
+        postData.totalShares += shares;
+        
+        // Рассчитываем общую вовлеченность
+        postData.totalEngagement += likes + comments + shares;
+      });
+      
+      // Рассчитываем коэффициент вовлеченности
+      postData.engagementRate = postData.totalViews > 0 ? (postData.totalEngagement / postData.totalViews) * 100 : 0;
+      
+      return postData;
     });
     
-    // Сортируем и выбираем топ-4 поста по просмотрам и вовлеченности
+    // Сортируем посты по просмотрам (по убыванию)
     const topByViews = [...processedPosts]
+      .filter(post => post.totalViews > 0)
       .sort((a, b) => b.totalViews - a.totalViews)
-      .slice(0, 4);
-      
-    const topByEngagement = [...processedPosts]
-      .sort((a, b) => b.engagementRate - a.engagementRate)
-      .slice(0, 4);
+      .slice(0, 5);
     
-    return { topByViews, topByEngagement };
+    // Сортируем посты по вовлеченности (по убыванию)
+    const topByEngagement = [...processedPosts]
+      .filter(post => post.totalEngagement > 0)
+      .sort((a, b) => b.engagementRate - a.engagementRate)
+      .slice(0, 5);
+    
+    return {
+      topByViews,
+      topByEngagement
+    };
   } catch (error: any) {
-    log.error(`[analytics-service] Ошибка получения топ постов: ${error.message}`);
-    return { topByViews: [], topByEngagement: [] };
+    log.error(`[analytics-service] Ошибка получения топовых постов: ${error.message}`);
+    return {
+      topByViews: [],
+      topByEngagement: []
+    };
   }
 }
 
@@ -532,15 +571,8 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       filter.campaign_id = { _eq: campaignId };
     }
     
-    // Если указан период, добавляем фильтр по дате публикации
-    if (period > 0) {
-      const periodStartDate = new Date();
-      periodStartDate.setDate(periodStartDate.getDate() - period);
-      
-      filter.created_at = {
-        _gte: periodStartDate.toISOString()
-      };
-    }
+    // ВАЖНО: Не используем фильтр по created_at, так как нам нужны все публикации
+    // для последующей фильтрации по publishedAt в social_platforms
     
     // Получаем все опубликованные посты с использованием прямого axios запроса
     let posts = [];
@@ -729,5 +761,35 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
         platformDistribution: {}
       }
     };
+  }
+}
+
+/**
+ * Обновляет аналитику для кампании через внешний API
+ * @param campaignId ID кампании
+ * @param period Период в днях, за который нужно обновить данные
+ * @returns Промис с результатом обновления
+ */
+export async function updateCampaignAnalytics(campaignId: string, period: number = 7): Promise<boolean> {
+  try {
+    const webhookUrl = process.env.N8N_ANALYTICS_WEBHOOK_URL;
+    
+    // Если URL вебхука не указан, возвращаем ошибку
+    if (!webhookUrl) {
+      log.error('[analytics-service] URL вебхука для обновления аналитики не указан в переменных окружения');
+      return false;
+    }
+    
+    // Отправляем запрос на обновление аналитики
+    await axios.post(webhookUrl, {
+      campaignId,
+      days: period
+    });
+    
+    log.info(`[analytics-service] Запрос на обновление аналитики отправлен: campaignId=${campaignId}, period=${period}`);
+    return true;
+  } catch (error: any) {
+    log.error(`[analytics-service] Ошибка при обновлении аналитики: ${error.message}`);
+    return false;
   }
 }
