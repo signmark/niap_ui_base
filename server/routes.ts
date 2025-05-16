@@ -8961,42 +8961,52 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      // Получаем API ключ DeepSeek из настроек пользователя
+      // Получаем API ключ DeepSeek через централизованный сервис API ключей
       try {
-        const userId = req.userId;
+        // Инициализируем DeepSeek сервис с ключом из apiKeyService
+        console.log(`Инициализация DeepSeek сервиса для пользователя: ${userId}`);
+        const initialized = await deepseekService.initialize(userId, token);
         
-        // Получение API ключей пользователя из Directus
-        const userKeysResponse = await directusApi.get('/items/user_api_keys', {
-          params: {
-            filter: {
-              user_id: { _eq: userId },
-              service_name: { _eq: 'deepseek' }
-            },
-            fields: ['api_key']
-          },
-          headers: {
-            Authorization: `Bearer ${token}`
+        if (!initialized || !deepseekService.hasApiKey()) {
+          // Пробуем получить ключ напрямую
+          const deepseekKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+          
+          if (!deepseekKey) {
+            return res.status(400).json({
+              success: false,
+              error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
+            });
           }
-        });
-        
-        const userKeys = userKeysResponse.data?.data || [];
-        const deepseekKey = userKeys.length > 0 ? userKeys[0].api_key : '';
-        
-        if (!deepseekKey) {
-          return res.status(400).json({
-            success: false,
-            error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
-          });
+          
+          // Обновляем API ключ в сервисе напрямую
+          deepseekService.updateApiKey(deepseekKey);
         }
         
-        // Обновляем API ключ в сервисе
-        deepseekService.updateApiKey(deepseekKey);
+        console.log('DeepSeek сервис инициализирован успешно для анализа сайта');
       } catch (error) {
-        console.error("Ошибка при получении API ключа DeepSeek:", error);
-        return res.status(500).json({
-          success: false,
-          error: "Не удалось получить API ключ для анализа сайта"
-        });
+        console.error("Ошибка при инициализации DeepSeek API:", error);
+        
+        // Проверим, можно ли использовать глобальный ключ
+        try {
+          const globalKeys = await apiKeyService.getGlobalKeys();
+          const deepseekKey = globalKeys?.deepseek;
+          
+          if (deepseekKey) {
+            console.log('Используем глобальный ключ DeepSeek для анализа сайта');
+            deepseekService.updateApiKey(deepseekKey);
+          } else {
+            return res.status(500).json({
+              success: false,
+              error: "Не удалось получить API ключ для анализа сайта"
+            });
+          }
+        } catch (keyError) {
+          console.error("Ошибка при получении глобального ключа DeepSeek:", keyError);
+          return res.status(500).json({
+            success: false,
+            error: "Не удалось получить API ключ для анализа сайта"
+          });
+        }
       }
       
       // Системное сообщение с инструкциями для анализа
