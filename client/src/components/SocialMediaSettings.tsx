@@ -648,6 +648,11 @@ export function SocialMediaSettings({
                     Проверить
                   </Button>
                 </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Для получения API ключа YouTube необходимо создать проект в 
+                  <a href="https://console.developers.google.com/" target="_blank" className="text-blue-500 ml-1 hover:underline">Google Cloud Console</a>, 
+                  активировать YouTube Data API v3 и создать ключ API. Убедитесь, что для API ключа нет ограничений по IP или URL.
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -660,11 +665,15 @@ export function SocialMediaSettings({
                 <FormLabel>ID Канала</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Введите ID канала" 
+                    placeholder="Например: UC_x5XG1OV2P6uZZ5FSM9Ttw" 
                     {...field} 
                     value={field.value || ''}
                   />
                 </FormControl>
+                <div className="text-xs text-muted-foreground mt-1">
+                  ID YouTube канала начинается с "UC" и содержит 24 символа. Его можно найти в настройках канала YouTube Studio или 
+                  извлечь из URL-адреса вашего канала. Не путайте с именем пользователя канала (@username).
+                </div>
                 <FormMessage />
               </FormItem>
             )}
