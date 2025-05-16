@@ -27,6 +27,27 @@ export const apiKeys = pgTable('api_keys', {
   updatedAt: timestamp('updated_at')
 });
 
+// Таблица для бизнес-анкеты
+export const businessQuestionnaires = pgTable('business_questionnaires', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaignId: uuid('campaign_id').notNull(),
+  companyName: varchar('company_name', { length: 255 }).notNull(),
+  contactInfo: varchar('contact_info', { length: 255 }),
+  businessDescription: text('business_description').notNull(),
+  mainDirections: text('main_directions'),
+  brandImage: text('brand_image'),
+  productsServices: text('products_services'),
+  targetAudience: text('target_audience'),
+  customerResults: text('customer_results'),
+  companyFeatures: text('company_features'),
+  businessValues: text('business_values'),
+  productBeliefs: text('product_beliefs'),
+  competitiveAdvantages: text('competitive_advantages'),
+  marketingExpectations: text('marketing_expectations'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
 // Схемы для вставки с валидацией
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -40,9 +61,18 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
   updatedAt: true
 });
 
+export const insertBusinessQuestionnaireSchema = createInsertSchema(businessQuestionnaires).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Типы для работы с данными
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+
+export type BusinessQuestionnaire = typeof businessQuestionnaires.$inferSelect;
+export type InsertBusinessQuestionnaire = z.infer<typeof insertBusinessQuestionnaireSchema>;
