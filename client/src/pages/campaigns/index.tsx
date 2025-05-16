@@ -176,68 +176,102 @@ export default function Campaigns() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {campaignsResponse?.data?.map((campaign) => (
-          <Card key={campaign.id}>
-            <CardHeader>
-              {editingId === campaign.id ? (
-                <Input
-                  value={editedName}
-                  onChange={(e) => setEditedName(e.target.value)}
-                  onBlur={handleSave}
-                  onKeyDown={handleKeyDown}
-                  className="font-semibold"
-                  autoFocus
-                />
-              ) : (
-                <CardTitle className="flex items-center gap-2">
-                  <span 
-                    className="cursor-pointer flex-grow"
-                    onClick={() => startEditing(campaign)}
-                  >
-                    {campaign.name}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => startEditing(campaign)}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                </CardTitle>
-              )}
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500">{campaign.description}</p>
-              <div className="mt-4 flex gap-2">
-                {/* Обновлено: устанавливаем выбранную кампанию при нажатии на "Управлять" */}
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => {
-                    // Устанавливаем кампанию как выбранную
-                    setSelectedCampaign(campaign.id, campaign.name);
-                    console.log(`Выбрана кампания: ${campaign.name} (${campaign.id})`);
-                    // Перенаправляем на страницу кампании
-                    navigate(`/campaigns/${campaign.id}`);
-                  }}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Управлять
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => deleteCampaign(campaign.id)}
-                >
-                  Удалить
-                </Button>
+      {!campaignsResponse?.data?.length ? (
+        <div className="flex flex-col items-center justify-center py-12 px-6 bg-muted/30 rounded-lg border border-dashed border-muted">
+          <div className="text-center max-w-lg">
+            <h2 className="text-xl font-semibold mb-3">Добро пожаловать в SMM Manager!</h2>
+            <p className="text-muted-foreground mb-6">
+              Для начала работы необходимо создать кампанию и заполнить данные. 
+              Кампания - это базовая единица организации вашего контента и аналитики.
+            </p>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-start">
+                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">1</div>
+                <p className="text-sm text-left">Создайте кампанию, нажав на кнопку "Добавить кампанию" выше</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <div className="flex items-start">
+                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">2</div>
+                <p className="text-sm text-left">Добавьте данные о социальных сетях, с которыми хотите работать</p>
+              </div>
+              <div className="flex items-start">
+                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">3</div>
+                <p className="text-sm text-left">Создавайте и публикуйте контент через систему, отслеживайте результаты</p>
+              </div>
+            </div>
+            <Button 
+              size="lg" 
+              onClick={() => setIsOpen(true)}
+              className="w-full md:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Создать первую кампанию
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {campaignsResponse.data.map((campaign) => (
+            <Card key={campaign.id}>
+              <CardHeader>
+                {editingId === campaign.id ? (
+                  <Input
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyDown}
+                    className="font-semibold"
+                    autoFocus
+                  />
+                ) : (
+                  <CardTitle className="flex items-center gap-2">
+                    <span 
+                      className="cursor-pointer flex-grow"
+                      onClick={() => startEditing(campaign)}
+                    >
+                      {campaign.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => startEditing(campaign)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </CardTitle>
+                )}
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-500">{campaign.description}</p>
+                <div className="mt-4 flex gap-2">
+                  {/* Обновлено: устанавливаем выбранную кампанию при нажатии на "Управлять" */}
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => {
+                      // Устанавливаем кампанию как выбранную
+                      setSelectedCampaign(campaign.id, campaign.name);
+                      console.log(`Выбрана кампания: ${campaign.name} (${campaign.id})`);
+                      // Перенаправляем на страницу кампании
+                      navigate(`/campaigns/${campaign.id}`);
+                    }}
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Управлять
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteCampaign(campaign.id)}
+                  >
+                    Удалить
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <CampaignForm onClose={() => setIsOpen(false)} />
