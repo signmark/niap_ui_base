@@ -8,12 +8,14 @@ import { directusApiManager } from '../directus';
 import { 
   collectAnalytics, 
   getAnalyticsStatus, 
-  getPlatformsStats, 
   getTopPosts,
   getFallbackAnalyticsStatus,
   getFallbackPlatformsStats,
   getFallbackTopPosts
 } from '../services/analytics';
+
+// Импортируем улучшенный сервис аналитики
+import { getPlatformsStats as getImprovedPlatformsStats } from '../services/analytics/analytics-service-fixed';
 import { directusApi } from '../directus';
 import { analyticsService } from '../services/analytics-service';
 
@@ -237,27 +239,9 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
     try {
       log.info(`[api-analytics] Запрос статистики платформ: userId=${userId}, campaignId=${campaignId}, period=${period}`);
       
-      // Получаем обычную статистику
-      let stats = await getPlatformsStats(userId, campaignId, period);
-      
-      // Специальная обработка для кампании "Профориентация"
-      if (campaignId === 'b2c43094-01b6-4e33-834f-abcdcffcd101') {
-        log.info(`[api-analytics] Специальная обработка для кампании "Профориентация"`);
-        
-        // Исправляем количество публикаций
-        if (stats.aggregated && stats.aggregated.totalPosts === 1) {
-          log.info(`[api-analytics] Исправляем количество публикаций с ${stats.aggregated.totalPosts} на 2`);
-          stats.aggregated.totalPosts = 2;
-          
-          // Если в платформах есть telegram, увеличиваем количество публикаций
-          if (stats.platforms && stats.platforms.telegram) {
-            if (stats.platforms.telegram.posts === 1) {
-              log.info(`[api-analytics] Исправляем количество публикаций Telegram с ${stats.platforms.telegram.posts} на 2`);
-              stats.platforms.telegram.posts = 2;
-            }
-          }
-        }
-      }
+      // Используем улучшенный сервис аналитики, который корректно учитывает публикации без аналитики
+      log.info(`[api-analytics] Используем улучшенный сервис подсчета статистики`);
+      let stats = await getImprovedPlatformsStats(userId, campaignId, period);
       
       res.json({
         success: true,
