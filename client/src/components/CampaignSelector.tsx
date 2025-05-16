@@ -113,12 +113,32 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
-      console.log(`Manually selected campaign: "${campaign.name}"`);
+      console.log(`Выбрана кампания: "${campaign.name}" (id: ${campaign.id})`);
       setSelectedCampaign(campaign.id, campaign.name);
       
       // Если используется режим сохранения выбора, обновляем сохраненный ID
       if (persistSelection) {
         setInitiallySelectedId(campaign.id);
+      }
+      
+      // Перенаправляем на страницу кампании, если мы находимся на странице кампаний
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('/campaigns/')) {
+        // Извлекаем текущий ID кампании из URL
+        const urlParts = currentPath.split('/');
+        const campaignIndexInUrl = urlParts.findIndex(part => part === 'campaigns');
+        
+        if (campaignIndexInUrl !== -1 && urlParts[campaignIndexInUrl + 1]) {
+          // Заменяем ID кампании в URL
+          urlParts[campaignIndexInUrl + 1] = campaign.id;
+          const newPath = urlParts.join('/');
+          
+          // Используем history API для изменения URL без перезагрузки страницы
+          window.history.pushState({}, '', newPath);
+          
+          // Вызываем событие изменения URL, чтобы компоненты могли среагировать
+          window.dispatchEvent(new Event('popstate'));
+        }
       }
     }
   };
