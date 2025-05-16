@@ -8130,6 +8130,7 @@ https://t.me/channelname/ - description`;
       const campaignId = req.params.id;
       const userId = (req as any).userId;
       const authHeader = req.headers['authorization'];
+      const forceDelete = req.query.forceDelete === 'true'; // Параметр для принудительного удаления
       
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании обязателен" });
@@ -8160,7 +8161,99 @@ https://t.me/channelname/ - description`;
           return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
         }
         
-        // Удаляем кампанию через Directus API
+        // Проверяем наличие связанного контента, только если не указан forceDelete
+        if (!forceDelete) {
+          console.log(`Проверяем связанный контент перед удалением кампании ${campaignId}`);
+          
+          // Проверка контента кампании
+          const contentResponse = await directusApi.get(`/items/campaign_content`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            params: {
+              filter: { campaign_id: { _eq: campaignId } },
+              limit: 1 // Достаточно знать, есть ли хотя бы один элемент
+            }
+          });
+          
+          // Проверка ключевых слов кампании
+          const keywordsResponse = await directusApi.get(`/items/campaign_keywords`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            params: {
+              filter: { campaign_id: { _eq: campaignId } },
+              limit: 1
+            }
+          });
+          
+          // Проверка трендов кампании
+          const trendsResponse = await directusApi.get(`/items/campaign_trend_topics`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            params: {
+              filter: { campaign_id: { _eq: campaignId } },
+              limit: 1
+            }
+          });
+          
+          // Если есть связанные данные, предупреждаем пользователя
+          const hasContent = contentResponse.data?.data?.length > 0;
+          const hasKeywords = keywordsResponse.data?.data?.length > 0;
+          const hasTrends = trendsResponse.data?.data?.length > 0;
+          
+          if (hasContent || hasKeywords || hasTrends) {
+            const relatedDataInfo = {
+              hasContent,
+              hasKeywords, 
+              hasTrends,
+              totalItems: {
+                content: hasContent ? await countItems('campaign_content', campaignId, token) : 0,
+                keywords: hasKeywords ? await countItems('campaign_keywords', campaignId, token) : 0,
+                trends: hasTrends ? await countItems('campaign_trend_topics', campaignId, token) : 0
+              }
+            };
+            
+            return res.status(400).json({
+              success: false,
+              error: "Кампания содержит данные",
+              message: "Кампания содержит связанные данные (контент, ключевые слова или темы трендов). Для удаления необходимо дополнительное подтверждение.",
+              relatedData: relatedDataInfo,
+              requireConfirmation: true
+            });
+          }
+        }
+        
+        // Если forceDelete=true или кампания пуста, удаляем её
+        console.log(`Удаляем кампанию ${campaignId} (режим принудительного удаления: ${forceDelete})`);
+        
+        // Если указан принудительный режим, удаляем всё связанное с кампанией
+        if (forceDelete) {
+          console.log(`Полное удаление кампании ${campaignId} со всеми связанными данными`);
+          
+          // Удаляем все связанные данные
+          try {
+            // Удаляем контент
+            await directusApi.delete(`/items/campaign_content`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              params: { filter: { campaign_id: { _eq: campaignId } } }
+            });
+            
+            // Удаляем ключевые слова
+            await directusApi.delete(`/items/campaign_keywords`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              params: { filter: { campaign_id: { _eq: campaignId } } }
+            });
+            
+            // Удаляем темы трендов
+            await directusApi.delete(`/items/campaign_trend_topics`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              params: { filter: { campaign_id: { _eq: campaignId } } }
+            });
+            
+            console.log(`Успешно удалены все связанные данные для кампании ${campaignId}`);
+          } catch (relatedDeleteError) {
+            console.error(`Ошибка при удалении связанных данных:`, relatedDeleteError);
+            // Продолжаем попытку удаления самой кампании
+          }
+        }
+        
+        // Удаляем саму кампанию
         await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -8170,7 +8263,9 @@ https://t.me/channelname/ - description`;
         // Возвращаем результат
         return res.status(200).json({ 
           success: true,
-          message: "Кампания успешно удалена"
+          message: forceDelete 
+            ? "Кампания успешно удалена со всеми связанными данными" 
+            : "Кампания успешно удалена"
         });
       } catch (deleteError) {
         console.error(`Error deleting campaign ${campaignId}:`, deleteError);
@@ -8187,6 +8282,24 @@ https://t.me/channelname/ - description`;
       res.status(500).json({ error: "Failed to delete campaign" });
     }
   });
+  
+  // Вспомогательная функция для подсчета элементов в коллекции
+  async function countItems(collection: string, campaignId: string, token: string): Promise<number> {
+    try {
+      const response = await directusApi.get(`/items/${collection}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        params: {
+          filter: { campaign_id: { _eq: campaignId } },
+          aggregate: { count: '*' }
+        }
+      });
+      
+      return response.data?.data?.[0]?.count || 0;
+    } catch (error) {
+      console.error(`Ошибка при подсчете элементов в коллекции ${collection}:`, error);
+      return 0;
+    }
+  }
   
   // Добавляем маршрут для обновления кампаний
   app.patch("/api/campaigns/:id", authenticateUser, async (req, res) => {
