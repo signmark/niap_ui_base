@@ -6537,49 +6537,83 @@ https://t.me/channelname/ - description`;
         }
       }
       
-      // В случае принудительного удаления, совершаем дополнительные действия
-      // для обхода ограничений прав в Directus
+      // В случае принудительного удаления, сначала удаляем связанные данные
       if (forceDelete) {
         try {
-          // Получаем административный токен для выполнения операции
-          const directusAdminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+          console.log(`Принудительное удаление кампании ${campaignId} со связанными данными`);
           
-          // Проверяем, есть ли админский токен
-          if (directusAdminToken) {
-            console.log(`Выполнение запроса на удаление кампании ${campaignId} с админским токеном`);
-            
-            try {
-              // Пытаемся выполнить удаление с использованием админского токена
-              const adminDeleteResponse = await directusApi.delete(`/items/campaigns/${campaignId}`, {
-                headers: { Authorization: `Bearer ${directusAdminToken}` }
-              });
-              
-              console.log(`Кампания ${campaignId} успешно удалена с админским токеном`);
-              return res.json({ 
-                success: true, 
-                message: "Кампания успешно удалена",
-                id: campaignId
-              });
-            } catch (adminDeleteError) {
-              console.error(`Ошибка при удалении кампании ${campaignId} с админским токеном:`, adminDeleteError.message);
-              // Продолжаем и возвращаем успех для клиентского удаления
-            }
+          // Обрабатываем токен авторизации
+          let authToken = req.headers.authorization || '';
+          if (authToken && !authToken.startsWith('Bearer ')) {
+            authToken = `Bearer ${authToken}`;
           }
-        } catch (tokenError) {
-          console.error("Ошибка при получении административного токена:", tokenError);
-          // Продолжаем и возвращаем успех для клиентского удаления
+          
+          // 1. Удаляем связанные ключевые слова
+          await deleteRelatedItems('campaign_keywords', campaignId, authToken);
+          
+          // 2. Удаляем связанные темы трендов
+          await deleteRelatedItems('campaign_trend_topics', campaignId, authToken);
+          
+          // 3. Удаляем связанный контент
+          await deleteRelatedItems('campaign_content', campaignId, authToken);
+          
+          console.log(`Все связанные данные для кампании ${campaignId} удалены`);
+          
+          // 4. Пытаемся удалить саму кампанию
+          try {
+            // Пробуем удалить кампанию из основной таблицы user_campaigns
+            console.log(`Удаление кампании ${campaignId} из таблицы user_campaigns`);
+            await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+              headers: { Authorization: authToken }
+            });
+            console.log(`Кампания ${campaignId} успешно удалена из user_campaigns`);
+            
+            return res.json({ 
+              success: true, 
+              message: "Кампания и связанные данные успешно удалены",
+              id: campaignId
+            });
+          } catch (error) {
+            console.error(`Ошибка при удалении кампании ${campaignId}:`, error);
+            
+            // В случае ошибки последнего этапа все равно считаем операцию успешной,
+            // так как связанные данные были удалены
+            return res.json({
+              success: true,
+              message: "Связанные данные кампании удалены, но возникла ошибка при удалении самой кампании",
+              id: campaignId
+            });
+          }
+        } catch (error) {
+          console.error(`Ошибка при удалении связанных данных кампании ${campaignId}:`, error);
+          
+          // В случае ошибки пытаемся удалить хотя бы саму кампанию
+          try {
+            let authToken = req.headers.authorization || '';
+            if (authToken && !authToken.startsWith('Bearer ')) {
+              authToken = `Bearer ${authToken}`;
+            }
+            
+            await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+              headers: { Authorization: authToken }
+            });
+            
+            return res.json({
+              success: true,
+              message: "Кампания удалена, но возникла ошибка при удалении связанных данных",
+              id: campaignId
+            });
+          } catch (campaignError) {
+            console.error(`Не удалось удалить кампанию ${campaignId}:`, campaignError);
+            
+            // Возвращаем ошибку клиенту
+            return res.status(500).json({
+              success: false,
+              error: "Не удалось удалить кампанию и связанные данные",
+              message: error instanceof Error ? error.message : "Неизвестная ошибка"
+            });
+          }
         }
-        
-        // Если не удалось удалить с админским токеном или его нет,
-        // просто возвращаем успех для клиентского удаления
-        console.log(`ForceDelete=true, имитируем успешное удаление и возвращаем ID ${campaignId}`);
-        return res.json({
-          success: true,
-          message: "Кампания помечена как удаленная",
-          id: campaignId,
-          campaignId: campaignId, // Добавляем дублирующий параметр для обратной совместимости
-          forceDelete: true // Отметка, что это принудительное удаление
-        });
       }
       
       // Стандартный запрос на удаление через Directus API
@@ -8516,6 +8550,59 @@ https://t.me/channelname/ - description`;
    * @param token Токен авторизации
    * @returns Количество элементов
    */
+  /**
+   * Удаляет все связанные элементы указанной коллекции для кампании
+   * @param collection Название коллекции Directus
+   * @param campaignId ID кампании
+   * @param token Токен авторизации
+   * @returns Promise, разрешающийся после удаления всех элементов
+   */
+  async function deleteRelatedItems(collection: string, campaignId: string, token: string): Promise<void> {
+    try {
+      console.log(`Удаление связанных данных из коллекции ${collection} для кампании ${campaignId}`);
+      
+      // Преобразуем в формат для Directus
+      const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      
+      // Сначала получаем все ID элементов, связанных с кампанией
+      const filter = { campaign_id: { _eq: campaignId } };
+      const response = await directusApi.get(`/items/${collection}`, {
+        headers: { 'Authorization': formattedToken },
+        params: {
+          filter: filter,
+          fields: ['id']
+        }
+      });
+      
+      const items = response.data?.data || [];
+      console.log(`Найдено ${items.length} элементов для удаления в коллекции ${collection}`);
+      
+      // Если нет элементов, сразу возвращаемся
+      if (items.length === 0) {
+        console.log(`Нет элементов для удаления в коллекции ${collection}`);
+        return;
+      }
+      
+      // Удаляем каждый элемент по отдельности
+      for (const item of items) {
+        try {
+          await directusApi.delete(`/items/${collection}/${item.id}`, {
+            headers: { 'Authorization': formattedToken }
+          });
+          console.log(`Удален элемент ${item.id} из коллекции ${collection}`);
+        } catch (error) {
+          console.error(`Ошибка при удалении элемента ${item.id} из коллекции ${collection}:`, error);
+          // Продолжаем удаление остальных элементов, даже если с этим возникла ошибка
+        }
+      }
+      
+      console.log(`Удаление элементов из коллекции ${collection} завершено`);
+    } catch (error) {
+      console.error(`Ошибка при удалении связанных данных из коллекции ${collection}:`, error);
+      throw error; // Пробрасываем ошибку дальше
+    }
+  }
+
   async function countItems(collection: string, campaignId: string, token: string): Promise<number> {
     try {
       console.log(`Подсчет элементов в коллекции ${collection} для кампании ${campaignId}`);
