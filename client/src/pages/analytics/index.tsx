@@ -456,11 +456,15 @@ export default function Analytics() {
     }
 
     try {
-      // Отправляем запрос в n8n webhook для обновления аналитики
-      const response = await fetch('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+      // Получаем токен авторизации
+      const token = await getToken();
+
+      // Отправляем запрос через наш API на обновление аналитики
+      const response = await fetch('/api/analytics/update', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           campaignId: campaignId,
@@ -468,7 +472,9 @@ export default function Analytics() {
         })
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (data.success) {
         toast({
           title: "Обновление данных",
           description: "Запрос на обновление аналитики отправлен успешно"
@@ -481,10 +487,9 @@ export default function Analytics() {
           refetchStatus();
         }, 2000);
       } else {
-        const errorData = await response.json().catch(() => ({}));
         toast({
           title: "Ошибка",
-          description: errorData.message || "Не удалось отправить запрос на обновление аналитики",
+          description: data.message || "Не удалось отправить запрос на обновление аналитики",
           variant: "destructive"
         });
       }
