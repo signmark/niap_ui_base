@@ -7,44 +7,12 @@ import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
 import { useCampaignStore } from "@/lib/campaignStore";
-import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { DeleteCampaignConfirmDialog } from "@/components/DeleteCampaignConfirmDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-// Интерфейс для информации о связанных данных кампании
-interface RelatedDataInfo {
-  hasContent: boolean;
-  hasKeywords: boolean;
-  hasTrends: boolean;
-  totalItems: {
-    content: number;
-    keywords: number;
-    trends: number;
-  };
-}
-
-// Интерфейс для ответа API при попытке удаления кампании с данными
-interface DeleteErrorResponse {
-  success: false;
-  error: string;
-  message: string;
-  relatedData: RelatedDataInfo;
-  requireConfirmation: boolean;
-}
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,26 +22,21 @@ export default function Campaigns() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   
-  // Состояния для диалога подтверждения удаления кампании
+  // Состояние для диалога подтверждения удаления кампании
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<{id: string, name: string} | null>(null);
-  const [deleteWithData, setDeleteWithData] = useState(false);
-  const [relatedData, setRelatedData] = useState<RelatedDataInfo | null>(null);
   
   // Получаем функции для управления кампаниями
-  const { setSelectedCampaign, markCampaignAsDeleted } = useCampaignStore();
-  const { getAuthToken } = useAuthStore();
+  const { setSelectedCampaign } = useCampaignStore();
   
+  // Запрос на получение списка кампаний
   const { data: campaignsResponse, isLoading, error } = useQuery<{data: Campaign[]}>({
     queryKey: ["/api/campaigns", userId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
       const storedUserId = localStorage.getItem('user_id');
       
-      console.log('Fetching campaigns with:',
-        'token:', token ? `${token.substring(0, 10)}...` : 'none',
-        'userId:', storedUserId || userId
-      );
+      console.log(`Авторизован с токеном, длина: ${token ? token.length : 'токен отсутствует'}`);
       
       if (!token) {
         throw new Error("Отсутствует токен авторизации");
@@ -102,14 +65,14 @@ export default function Campaigns() {
     enabled: !!(userId || localStorage.getItem('user_id')), // Запрос выполняется только при наличии userId
   });
 
+  // Мутация для обновления названия кампании
   const { mutate: updateCampaign } = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const token = getAuthToken();
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error("Отсутствует токен авторизации");
       }
       
-      // Используем REST API вместо прямого обращения к Directus
       const response = await fetch(`/api/campaigns/${id}`, {
         method: 'PATCH',
         headers: {
@@ -128,11 +91,11 @@ export default function Campaigns() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+      setEditingId(null);
       toast({
         title: "Успешно",
         description: "Название кампании обновлено"
       });
-      setEditingId(null);
     },
     onError: (error: Error) => {
       toast({
@@ -152,324 +115,8 @@ export default function Campaigns() {
       return campaign;
     }
   });
-        let hasRelatedData = false;
-        let relatedDataCounts = {
-          keywords: 0,
-          trends: 0, 
-          content: 0
-        };
-        
-        try {
-          // Сначала проверяем наличие связанных данных
-          console.log('[УДАЛЕНИЕ] Проверка наличия ключевых слов');
-          const keywordsCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_keywords?filter[campaign_id][_eq]=${id}&limit=1`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (keywordsCheckResponse.ok) {
-            const keywordsData = await keywordsCheckResponse.json();
-            relatedDataCounts.keywords = keywordsData.data?.length || 0;
-            if (relatedDataCounts.keywords > 0) hasRelatedData = true;
-            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.keywords} ключевых слов для кампании`);
-          }
-          
-          console.log('[УДАЛЕНИЕ] Проверка наличия тем трендов');
-          const trendsCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_trend_topics?filter[campaign_id][_eq]=${id}&limit=1`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (trendsCheckResponse.ok) {
-            const trendsData = await trendsCheckResponse.json();
-            relatedDataCounts.trends = trendsData.data?.length || 0;
-            if (relatedDataCounts.trends > 0) hasRelatedData = true;
-            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.trends} тем трендов для кампании`);
-          }
-          
-          console.log('[УДАЛЕНИЕ] Проверка наличия контента');
-          const contentCheckResponse = await fetch(`https://directus.nplanner.ru/items/campaign_content?filter[campaign_id][_eq]=${id}&limit=1`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (contentCheckResponse.ok) {
-            const contentData = await contentCheckResponse.json();
-            relatedDataCounts.content = contentData.data?.length || 0;
-            if (relatedDataCounts.content > 0) hasRelatedData = true;
-            console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.content} контента для кампании`);
-          }
-          
-          // Если обнаружены связанные данные, показываем диалог подтверждения
-          if (hasRelatedData && !deleteWithData) {
-            console.log('[УДАЛЕНИЕ] Обнаружены связанные данные, требуется подтверждение');
-            return {
-              success: false,
-              error: 'Нельзя удалить кампанию со связанными данными',
-              requireConfirmation: true,
-              relatedData: {
-                hasContent: relatedDataCounts.content > 0,
-                hasKeywords: relatedDataCounts.keywords > 0,
-                hasTrends: relatedDataCounts.trends > 0,
-                totalItems: {
-                  content: relatedDataCounts.content,
-                  keywords: relatedDataCounts.keywords,
-                  trends: relatedDataCounts.trends
-                }
-              }
-            };
-          }
-          
-          // Проверили связанные данные, теперь удаляем через наш новый серверный API,
-          // который последовательно удалит все связанные данные, а затем кампанию
-          console.log('[УДАЛЕНИЕ] Используем серверный API для удаления кампании и связанных данных');
-        } catch (relatedError) {
-          console.warn('[УДАЛЕНИЕ] Ошибка при проверке связанных данных:', relatedError);
-        }
-        
-        // Теперь используем напрямую серверный API, чтобы удалить кампанию вместе с связанными данными
-        console.log('[УДАЛЕНИЕ] Отправляем запрос на удаление в серверный API');
-        
-        // Собираем URL с параметром forceDelete, если пользователь подтвердил удаление с данными
-        const url = `/api/campaigns/${id}${deleteWithData ? '?forceDelete=true' : ''}`;
-        console.log(`[УДАЛЕНИЕ] URL запроса: ${url}, forceDelete=${deleteWithData}`);
-        
-        try {
-          const serverResponse = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          // Проверяем статус ответа
-          if (serverResponse.ok) {
-            console.log('[УДАЛЕНИЕ] Кампания успешно удалена через серверный API');
-            return { success: true, id };
-          }
-          
-          // Специальная обработка для статуса 409 Conflict (конфликт из-за связанных данных)
-          if (serverResponse.status === 409) {
-            console.log('[УДАЛЕНИЕ] Обнаружены связанные данные, получен статус 409 Conflict');
-          }
-          
-          // Получаем текст ошибки и логируем
-          const serverErrorText = await serverResponse.text();
-          console.error('[УДАЛЕНИЕ] Ответ сервера:', serverResponse.status, serverErrorText);
-          
-          // Проверяем ответ на наличие информации о связанных данных
-          try {
-            // При статусе 409 всегда открываем диалог подтверждения
-            if (serverResponse.status === 409) {
-              try {
-                const errorData = JSON.parse(serverErrorText);
-                console.log('[УДАЛЕНИЕ] Сервер сообщил о наличии связанных данных:', errorData.relatedData);
-                
-                // Устанавливаем данные и открываем диалог подтверждения
-                if (errorData.relatedData) {
-                  setRelatedData(errorData.relatedData);
-                } else {
-                  // Для безопасности: если данных нет, создаем минимальный набор
-                  setRelatedData({
-                    hasContent: true,
-                    hasKeywords: true,
-                    hasTrends: true,
-                    totalItems: {
-                      content: 1,
-                      keywords: 1,
-                      trends: 1
-                    }
-                  });
-                }
-                
-                setConfirmDialogOpen(true);
-                return { 
-                  success: false, 
-                  requireConfirmation: true,
-                  relatedData: errorData.relatedData || { hasContent: true, hasKeywords: true, hasTrends: true }
-                };
-              } catch (jsonError) {
-                console.error('[УДАЛЕНИЕ] Ошибка при разборе JSON:', jsonError);
-                
-                // Создаем базовый набор данных в случае ошибки
-                const defaultRelatedData = {
-                  hasContent: true,
-                  hasKeywords: true,
-                  hasTrends: true,
-                  totalItems: {
-                    content: 1,
-                    keywords: 1,
-                    trends: 1
-                  }
-                };
-                
-                setRelatedData(defaultRelatedData);
-                setConfirmDialogOpen(true);
-                return { 
-                  success: false, 
-                  requireConfirmation: true,
-                  relatedData: defaultRelatedData
-                };
-              }
-            } else {
-              try {
-                const parsedData = JSON.parse(serverErrorText);
-                // Проверка для других статусов, где может требоваться подтверждение
-                if (parsedData.requireConfirmation && parsedData.relatedData) {
-                  console.log('[УДАЛЕНИЕ] Сервер запросил подтверждение:', parsedData.relatedData);
-                  setRelatedData(parsedData.relatedData);
-                  setConfirmDialogOpen(true);
-                  return { 
-                    success: false, 
-                    requireConfirmation: true,
-                    relatedData: parsedData.relatedData 
-                  };
-                }
-              } catch (parseError) {
-                console.warn('[УДАЛЕНИЕ] Не удалось разобрать другие данные как JSON:', parseError);
-              }
-            }
-          } catch (parseError) {
-            console.warn('[УДАЛЕНИЕ] Не удалось разобрать ответ сервера как JSON:', parseError);
-            
-            // Если не удалось разобрать JSON, но получен статус 409, все равно показываем диалог
-            if (serverResponse.status === 409) {
-              setRelatedData({
-                hasContent: true,
-                hasKeywords: true,
-                hasTrends: true,
-                totalItems: {
-                  content: 1, 
-                  keywords: 1,
-                  trends: 1
-                }
-              });
-              setConfirmDialogOpen(true);
-              return { 
-                success: false, 
-                requireConfirmation: true,
-                relatedData: {
-                  hasContent: true,
-                  hasKeywords: true,
-                  hasTrends: true,
-                  totalItems: {
-                    content: 1,
-                    keywords: 1,
-                    trends: 1
-                  }
-                }
-              };
-            }
-          }
-          
-          // Если это не ошибка с требованием подтверждения, возвращаем общую ошибку
-          return { 
-            success: false, 
-            error: `Ошибка при удалении: ${serverResponse.status} ${serverErrorText}` 
-          };
-        } catch (serverError) {
-          console.error('[УДАЛЕНИЕ] Ошибка при обращении к API сервера:', serverError);
-          return { 
-            success: false, 
-            error: serverError instanceof Error ? serverError.message : 'Неизвестная ошибка сервера' 
-          };
-        }
-      } catch (error: any) {
-        console.error('[УДАЛЕНИЕ] Критическая ошибка при удалении кампании:', error);
-        
-        // Проверяем ошибку на наличие ограничений внешнего ключа
-        if (error.message && (
-            error.message.includes('Constraint violation') || 
-            error.message.includes('Foreign key constraint failed') ||
-            error.message.includes('foreign key'))) {
-          
-          // Проверяем наличие связанных данных и возвращаем соответствующий результат
-          return {
-            success: false,
-            error: 'Нельзя удалить кампанию со связанными данными. Сначала удалите все связанные данные.',
-            requireConfirmation: true,
-            relatedData: {
-              hasContent: true,
-              hasKeywords: true,
-              hasTrends: true,
-              totalItems: {
-                content: 1, // Предполагаем минимум 1 элемент каждого типа
-                keywords: 1,
-                trends: 1
-              }
-            }
-          };
-        }
-        
-        // Иначе просто перебрасываем ошибку дальше
-        throw error;
-      }
-    },
-    onSuccess: (result: any) => {
-      // Сбрасываем состояние
-      const deletedCampaignId = campaignToDelete?.id || result?.id;
-      setCampaignToDelete(null);
-      setDeleteWithData(false);
-      setRelatedData(null);
-      setConfirmDialogOpen(false);
-      
-      if (deletedCampaignId) {
-        // Удаляем кампанию из кэша запросов напрямую
-        queryClient.setQueryData(["/api/campaigns", userId], (oldData: any) => {
-          if (!oldData || !oldData.data) return oldData;
-          console.log(`Удаляем кампанию ${deletedCampaignId} из кэша React Query`);
-          return {
-            ...oldData,
-            data: oldData.data.filter((campaign: any) => campaign.id !== deletedCampaignId)
-          };
-        });
-        
-        // Также обновляем альтернативный ключ запроса без userId
-        try {
-          queryClient.setQueryData(["/api/campaigns"], (oldData: any) => {
-            if (!oldData || !oldData.data) return oldData;
-            return {
-              ...oldData,
-              data: oldData.data.filter((campaign: any) => campaign.id !== deletedCampaignId)
-            };
-          });
-        } catch (err) {
-          console.warn('Ошибка при обновлении кэша без userId:', err);
-        }
-      }
-      
-      // Показываем уведомление об успешном удалении
-      toast({
-        title: "Успешно",
-        description: deleteWithData 
-          ? "Кампания и все связанные данные успешно удалены" 
-          : "Кампания успешно удалена"
-      });
-    },
-    onError: (error: Error) => {
-      // Не показываем ошибку, если это запрос на подтверждение
-      if (error.message === "confirmation_required") {
-        return;
-      }
-      
-      toast({
-        title: "Ошибка",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
+  // Вспомогательные функции для управления состоянием
   const startEditing = (campaign: Campaign) => {
     setEditingId(campaign.id);
     setEditedName(campaign.name);
@@ -489,6 +136,7 @@ export default function Campaigns() {
     }
   };
 
+  // Показываем индикатор загрузки, если данные еще не получены
   if (isLoading) {
     return <div>Загрузка...</div>;
   }
@@ -503,73 +151,46 @@ export default function Campaigns() {
         </Button>
       </div>
 
-      {!campaignsResponse?.data?.length ? (
-        <div className="flex flex-col items-center justify-center py-12 px-6 bg-muted/30 rounded-lg border border-dashed border-muted">
-          <div className="text-center max-w-lg">
-            <h2 className="text-xl font-semibold mb-3">Добро пожаловать в SMM Manager!</h2>
-            <p className="text-muted-foreground mb-6">
-              Для начала работы необходимо создать кампанию и заполнить данные. 
-              Кампания - это базовая единица организации вашего контента и аналитики.
-            </p>
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start">
-                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">1</div>
-                <p className="text-sm text-left">Создайте кампанию, нажав на кнопку "Добавить кампанию" выше</p>
-              </div>
-              <div className="flex items-start">
-                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">2</div>
-                <p className="text-sm text-left">Добавьте данные о социальных сетях, с которыми хотите работать</p>
-              </div>
-              <div className="flex items-start">
-                <div className="bg-primary/10 text-primary h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">3</div>
-                <p className="text-sm text-left">Создавайте и публикуйте контент через систему, отслеживайте результаты</p>
-              </div>
-            </div>
-            <Button 
-              size="lg" 
-              onClick={() => setIsOpen(true)}
-              className="w-full md:w-auto"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Создать первую кампанию
-            </Button>
-          </div>
+      {error ? (
+        <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
+          Ошибка загрузки: {(error as Error).message}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Сортируем кампании: сначала новые, потом старые */}
-          {campaignsResponse.data
-            .sort((a, b) => {
-              // При отсутствии дат у одной из кампаний, считаем что она старее
-              if (!a.createdAt) return 1;
-              if (!b.createdAt) return -1;
-              // Сортируем по убыванию даты (новые сначала)
-              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            })
-            .map((campaign) => (
-            <Card key={campaign.id}>
-              <CardHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {campaignsResponse?.data?.map((campaign) => (
+            <Card key={campaign.id} className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 {editingId === campaign.id ? (
-                  <Input
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyDown}
-                    className="font-semibold"
-                    autoFocus
-                  />
-                ) : (
-                  <CardTitle className="flex items-center gap-2">
-                    <span 
-                      className="cursor-pointer flex-grow"
-                      onClick={() => startEditing(campaign)}
+                  <div className="flex space-x-2 w-full">
+                    <Input 
+                      className="flex-1"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      autoFocus
+                    />
+                    <Button 
+                      className="px-2 h-8"
+                      variant="ghost" 
+                      onClick={handleSave}
                     >
-                      {campaign.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
+                      Сохранить
+                    </Button>
+                    <Button 
+                      className="px-2 h-8"
+                      variant="ghost" 
+                      onClick={() => setEditingId(null)}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                ) : (
+                  <CardTitle className="flex items-center text-lg font-medium">
+                    {campaign.name}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="ml-2 h-7 w-7"
                       onClick={() => startEditing(campaign)}
                     >
                       <Pencil className="h-3 w-3" />
@@ -580,7 +201,6 @@ export default function Campaigns() {
               <CardContent>
                 <p className="text-sm text-gray-500">{campaign.description}</p>
                 <div className="mt-4 flex gap-2">
-                  {/* Обновлено: устанавливаем выбранную кампанию при нажатии на "Управлять" */}
                   <Button 
                     variant="secondary" 
                     size="sm"
@@ -599,14 +219,8 @@ export default function Campaigns() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // Устанавливаем информацию о кампании для удаления
-                      setCampaignToDelete({id: campaign.id, name: campaign.name});
-                      // Сбрасываем флаг принудительного удаления - сначала покажем диалог
-                      setDeleteWithData(false);
-                      // Добавляем подробное логирование
-                      console.log(`Инициировано удаление кампании ${campaign.name} (${campaign.id})`);
-                      // Запускаем процесс удаления, который сначала проверит наличие связанных данных
-                      deleteCampaign(campaign.id);
+                      // Инициируем процесс удаления кампании через новую функцию
+                      initiateDeleteCampaign({id: campaign.id, name: campaign.name});
                     }}
                   >
                     <Trash className="mr-2 h-4 w-4" />
@@ -619,6 +233,7 @@ export default function Campaigns() {
         </div>
       )}
 
+      {/* Диалог для добавления новой кампании */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <CampaignForm onClose={() => setIsOpen(false)} />
       </Dialog>
@@ -629,10 +244,10 @@ export default function Campaigns() {
         onOpenChange={setConfirmDialogOpen}
         campaign={campaignToDelete}
         onDelete={() => {
-          // После успешного удаления
+          // После успешного удаления обновляем список кампаний
+          queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+          // Сбрасываем состояние
           setCampaignToDelete(null);
-          setRelatedData(null);
-          setDeleteWithData(false);
         }}
       />
     </div>
