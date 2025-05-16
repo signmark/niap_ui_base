@@ -603,7 +603,7 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     
     // Начальные значения для агрегированных метрик
     const aggregated: AggregatedMetrics = {
-      totalPosts: posts.length,
+      totalPosts: 0, // Будем считать количество публикаций как сумму публикаций на всех платформах
       totalViews: 0,
       totalLikes: 0,
       totalComments: 0,
