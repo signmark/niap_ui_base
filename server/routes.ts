@@ -6440,6 +6440,7 @@ https://t.me/channelname/ - description`;
   // Маршрут для удаления кампании с проверкой наличия связанных данных
   app.delete("/api/campaigns/:campaignId", authenticateUser, async (req: Request, res: Response) => {
     try {
+      const { directusAuthManager } = await import('./services/directus-auth-manager');
       const campaignId = req.params.campaignId;
       const forceDelete = req.query.forceDelete === 'true';
       const userId = req.user?.id;
@@ -6453,24 +6454,34 @@ https://t.me/channelname/ - description`;
         });
       }
       
-      // Получаем токен авторизации из запроса
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
+      if (!userId) {
         return res.status(401).json({ 
           success: false, 
-          error: "Отсутствует токен авторизации" 
+          error: "Пользователь не авторизован" 
         });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      // Получаем административный токен для безопасного выполнения операций
+      console.log(`Получение административного токена для операции удаления`);
+      const adminSession = await directusAuthManager.getAdminSession();
       
-      // Проверяем, принадлежит ли кампания текущему пользователю
+      if (!adminSession || !adminSession.token) {
+        console.error('Не удалось получить административный токен');
+        return res.status(500).json({ 
+          success: false, 
+          error: "Ошибка авторизации при удалении кампании" 
+        });
+      }
+      
+      const adminToken = adminSession.token;
+      console.log(`Получен административный токен для операции удаления`);
+      
       try {
-        // Получаем данные кампании
+        // Получаем данные кампании с административным токеном
         console.log(`Получение данных кампании ${campaignId}`);
         const response = await directusApi.get(`/items/campaigns/${campaignId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${adminToken}`
           }
         });
         
@@ -6495,8 +6506,8 @@ https://t.me/channelname/ - description`;
         if (!forceDelete) {
           console.log(`Проверка наличия связанных данных для кампании ${campaignId}`);
           try {
-            // Проверяем наличие контента, ключевых слов и трендов
-            const relatedDataInfo = await checkCampaignRelatedData(campaignId, token);
+            // Проверяем наличие контента, ключевых слов и трендов через административный токен
+            const relatedDataInfo = await checkCampaignRelatedData(campaignId, adminToken);
             
             // Если есть связанные данные, возвращаем информацию о них и требуем подтверждения
             if (relatedDataInfo.hasContent || relatedDataInfo.hasKeywords || relatedDataInfo.hasTrends) {
@@ -6521,11 +6532,11 @@ https://t.me/channelname/ - description`;
           }
         }
         
-        // Удаляем кампанию через API Directus
-        console.log(`Удаление кампании ${campaignId}`);
+        // Удаляем кампанию через API Directus с административным токеном
+        console.log(`Удаление кампании ${campaignId} с административными правами`);
         await directusApi.delete(`/items/campaigns/${campaignId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${adminToken}`
           }
         });
         
@@ -8487,19 +8498,56 @@ https://t.me/channelname/ - description`;
       const filter = { campaign_id: { _eq: campaignId } };
       console.log(`Используем фильтр:`, JSON.stringify(filter));
       
-      const response = await directusApi.get(`/items/${collection}`, {
-        headers: { 'Authorization': formattedToken },
-        params: {
-          filter: filter,
-          limit: 1,
-          aggregate: { count: '*' }
+      // Делаем запрос с указанным токеном
+      try {
+        const response = await directusApi.get(`/items/${collection}`, {
+          headers: { 'Authorization': formattedToken },
+          params: {
+            filter: filter,
+            limit: 1,
+            aggregate: { count: '*' }
+          }
+        });
+        
+        const count = response.data?.data?.[0]?.count || 0;
+        console.log(`Найдено ${count} элементов в коллекции ${collection} для кампании ${campaignId}`);
+        
+        return count;
+      } catch (apiError) {
+        // Если получили ошибку авторизации, пробуем с административным токеном
+        if (axios.isAxiosError(apiError) && (apiError.response?.status === 401 || apiError.response?.status === 403)) {
+          console.log(`Ошибка авторизации при подсчете элементов: ${apiError.response?.status}. Пробуем с административным токеном.`);
+          
+          // Получаем административный токен
+          const { directusAuthManager } = await import('./services/directus-auth-manager');
+          const adminSession = await directusAuthManager.getAdminSession();
+          
+          if (!adminSession || !adminSession.token) {
+            console.error('Не удалось получить административный токен');
+            return 0;
+          }
+          
+          const adminToken = `Bearer ${adminSession.token}`;
+          console.log(`Получен административный токен для подсчета элементов в ${collection}`);
+          
+          // Повторяем запрос с административным токеном
+          const adminResponse = await directusApi.get(`/items/${collection}`, {
+            headers: { 'Authorization': adminToken },
+            params: {
+              filter: filter,
+              limit: 1,
+              aggregate: { count: '*' }
+            }
+          });
+          
+          const adminCount = adminResponse.data?.data?.[0]?.count || 0;
+          console.log(`Найдено ${adminCount} элементов в коллекции ${collection} для кампании ${campaignId} (admin token)`);
+          
+          return adminCount;
+        } else {
+          throw apiError; // Пробрасываем ошибку дальше для обработки в блоке catch
         }
-      });
-      
-      const count = response.data?.data?.[0]?.count || 0;
-      console.log(`Найдено ${count} элементов в коллекции ${collection} для кампании ${campaignId}`);
-      
-      return count;
+      }
     } catch (error) {
       console.error(`Ошибка при подсчете элементов в коллекции ${collection} для кампании ${campaignId}:`, error);
       
