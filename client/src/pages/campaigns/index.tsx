@@ -149,10 +149,13 @@ export default function Campaigns() {
         throw new Error("Отсутствует токен авторизации");
       }
       
-      console.log(`Отправляем запрос на удаление кампании: ${id}, принудительное удаление: ${deleteWithData}`);
+      // Для более ясного логирования
+      const isConfirmationDialog = confirmDialogOpen;
+      console.log(`Отправляем запрос на удаление кампании: ${id}, принудительное удаление: ${isConfirmationDialog || deleteWithData}, из диалога: ${isConfirmationDialog}`);
       
-      // Принудительное удаление всегда включено
-      const forceDelete = '?forceDelete=true';
+      // Только если мы удаляем из диалога подтверждения или явно указано deleteWithData,
+      // используем принудительное удаление
+      const forceDelete = (isConfirmationDialog || deleteWithData) ? '?forceDelete=true' : '';
       
       // Используем REST API вместо прямого обращения к Directus
       const response = await fetch(`/api/campaigns/${id}${forceDelete}`, {
@@ -172,11 +175,18 @@ export default function Campaigns() {
           throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
         }
 
+        // Проверяем, не находимся ли мы уже в процессе подтверждения удаления
+        if (isConfirmationDialog) {
+          // Если мы уже в диалоге подтверждения, но всё ещё получаем ошибку - это критическая ошибка
+          console.error("Ошибка при принудительном удалении:", errorData);
+          throw new Error(errorData.error || "Не удалось удалить кампанию даже в принудительном режиме");
+        }
+
         // Ошибка 500 или сообщение об ограничении внешнего ключа (foreign key constraint)
         if (response.status === 500 || 
-            errorData.error?.includes("foreign key constraint") ||
-            errorData.details?.includes("foreign key constraint")) {
-          console.log("Обнаружено нарушение внешнего ключа или ошибка 500");
+            (errorData.error && typeof errorData.error === 'string' && errorData.error.includes("foreign key constraint")) ||
+            (errorData.details && typeof errorData.details === 'string' && errorData.details.includes("foreign key constraint"))) {
+          console.log("Обнаружено нарушение внешнего ключа или ошибка 500:", JSON.stringify(errorData));
           
           // Создаем объект с данными о связанных записях
           // Если у нас нет точных данных, предполагаем что есть связанные записи
@@ -468,8 +478,12 @@ export default function Campaigns() {
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
               onClick={() => {
                 if (campaignToDelete) {
+                  console.log("Подтверждаем удаление кампании со всеми данными:", campaignToDelete.id);
+                  // Устанавливаем флаг принудительного удаления
                   setDeleteWithData(true);
+                  // Запускаем процесс удаления
                   deleteCampaign(campaignToDelete.id);
+                  // Закрываем диалог (не требуется, так как он закроется в обработчике успешного удаления)
                 }
               }}
             >
