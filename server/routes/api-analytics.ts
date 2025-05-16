@@ -235,6 +235,8 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
     const period = parseInt(req.query.period as string) || 7;
     
     try {
+      log.info(`[api-analytics] Запрос статистики платформ: userId=${userId}, campaignId=${campaignId}, period=${period}`);
+      
       // Получаем обычную статистику
       let stats = await getPlatformsStats(userId, campaignId, period);
       
