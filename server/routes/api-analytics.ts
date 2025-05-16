@@ -15,6 +15,7 @@ import {
   getFallbackTopPosts
 } from '../services/analytics';
 import { directusApi } from '../directus';
+import { analyticsService } from '../services/analytics-service';
 
 // Создаем роутер для маршрутов аналитики
 export const analyticsRouter = express.Router();

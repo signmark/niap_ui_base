@@ -329,11 +329,24 @@ class DirectusApiManager {
   /**
    * Получает токен из кэша для заданного пользователя
    * @param userId ID пользователя
-   * @returns Объект с токеном и датой истечения, или null если токен не найден
+   * @returns Объект с токеном, refreshToken и датой истечения, или null если токен не найден
    */
-  getCachedToken(userId: string): { token: string; expiresAt: number } | null {
-    if (this.authTokenCache[userId] && this.authTokenCache[userId].expiresAt > Date.now()) {
-      return this.authTokenCache[userId];
+  getCachedToken(userId: string): { token: string; refreshToken?: string; expiresAt: number } | null {
+    if (this.authTokenCache[userId]) {
+      // Если токен еще действителен, возвращаем его
+      if (this.authTokenCache[userId].expiresAt > Date.now()) {
+        return this.authTokenCache[userId];
+      } 
+      // Даже если токен истек, но у нас есть refreshToken, возвращаем все данные
+      // Это позволит вызывающему коду решить, обновлять токен или нет
+      else if (this.authTokenCache[userId].refreshToken) {
+        return this.authTokenCache[userId];
+      }
+      // Если токен истек и нет refreshToken, удаляем его из кэша
+      else {
+        log(`Токен для пользователя ${userId} истек и не имеет refreshToken, удаляем из кэша`, 'directus');
+        delete this.authTokenCache[userId];
+      }
     }
     return null;
   }

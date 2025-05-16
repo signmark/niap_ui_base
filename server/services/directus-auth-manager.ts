@@ -414,19 +414,38 @@ export class DirectusAuthManager {
     try {
       cachedToken = directusApiManager.getCachedToken(userId);
       
-      if (cachedToken && cachedToken.expiresAt > Date.now()) {
-        log(`Found valid token in directusApiManager cache for user ${userId}`, this.logPrefix);
-        
-        // Кэшируем его локально для будущих вызовов
-        this.sessionCache[userId] = {
-          userId,
-          token: cachedToken.token,
-          refreshToken: cachedToken.refreshToken || '', // Добавляем refreshToken если он есть
-          expiresAt: cachedToken.expiresAt,
-          user: undefined
-        };
-        
-        return cachedToken.token;
+      if (cachedToken) {
+        // Если токен все еще действителен
+        if (cachedToken.expiresAt > Date.now()) {
+          log(`Found valid token in directusApiManager cache for user ${userId}`, this.logPrefix);
+          
+          // Кэшируем его локально для будущих вызовов
+          this.sessionCache[userId] = {
+            userId,
+            token: cachedToken.token,
+            refreshToken: cachedToken.refreshToken || '', // Добавляем refreshToken если он есть
+            expiresAt: cachedToken.expiresAt,
+            user: undefined
+          };
+          
+          return cachedToken.token;
+        }
+        // Если токен истек, но есть refresh token - возможно потребуется обновление
+        else if (cachedToken.refreshToken) {
+          log(`Found expired token with refresh token in directusApiManager cache for user ${userId}`, this.logPrefix);
+          
+          // Кэшируем его локально для будущих вызовов и обновления
+          this.sessionCache[userId] = {
+            userId,
+            token: cachedToken.token,
+            refreshToken: cachedToken.refreshToken,
+            expiresAt: cachedToken.expiresAt,
+            user: undefined
+          };
+          
+          // Здесь мы не возвращаем токен, а продолжаем выполнение,
+          // чтобы запустить процесс обновления если autoRefresh=true
+        }
       }
     } catch (error) {
       log(`Error when trying to get token from directusApiManager: ${error}`, this.logPrefix);
