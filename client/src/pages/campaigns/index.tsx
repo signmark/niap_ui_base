@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -64,6 +64,20 @@ export default function Campaigns() {
     },
     enabled: !!(userId || localStorage.getItem('user_id')), // Запрос выполняется только при наличии userId
   });
+  
+  // Сортировка кампаний по дате создания (сначала новые)
+  const sortedCampaigns = useMemo(() => {
+    if (!campaignsResponse?.data) return [];
+    
+    return [...campaignsResponse.data].sort((a, b) => {
+      // Сначала проверяем, есть ли поле createdAt у кампаний
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      
+      // Сортируем по убыванию даты (новые сначала)
+      return dateB - dateA;
+    });
+  }, [campaignsResponse?.data]);
 
   // Мутация для обновления названия кампании
   const { mutate: updateCampaign } = useMutation({
@@ -157,7 +171,7 @@ export default function Campaigns() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaignsResponse?.data?.map((campaign) => (
+          {sortedCampaigns.map((campaign) => (
             <Card key={campaign.id} className="overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 {editingId === campaign.id ? (
