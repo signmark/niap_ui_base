@@ -6425,6 +6425,18 @@ https://t.me/channelname/ - description`;
 
   // Маршрут для получения кампаний пользователя
   
+  // Интерфейс для информации о связанных данных кампании
+  interface RelatedDataInfo {
+    hasContent: boolean;
+    hasKeywords: boolean;
+    hasTrends: boolean;
+    totalItems: {
+      content: number;
+      keywords: number;
+      trends: number;
+    };
+  }
+
   // Маршрут для удаления кампании с проверкой наличия связанных данных
   app.delete("/api/campaigns/:campaignId", authenticateUser, async (req: Request, res: Response) => {
     try {
@@ -6540,20 +6552,26 @@ https://t.me/channelname/ - description`;
     };
     
     try {
-      // Проверяем наличие контента
-      const contentCount = await countItems('campaign_content', campaignId, token);
+      // Выполняем параллельные запросы для ускорения проверки
+      const [contentCount, keywordsCount, trendsCount] = await Promise.all([
+        countItems('campaign_content', campaignId, token),
+        countItems('campaign_keywords', campaignId, token),
+        countItems('campaign_trend_topics', campaignId, token)
+      ]);
+      
+      // Заполняем информацию о наличии контента
       relatedDataInfo.hasContent = contentCount > 0;
       relatedDataInfo.totalItems.content = contentCount;
       
-      // Проверяем наличие ключевых слов
-      const keywordsCount = await countItems('campaign_keywords', campaignId, token);
+      // Заполняем информацию о наличии ключевых слов
       relatedDataInfo.hasKeywords = keywordsCount > 0;
       relatedDataInfo.totalItems.keywords = keywordsCount;
       
-      // Проверяем наличие трендов
-      const trendsCount = await countItems('campaign_trend_topics', campaignId, token);
+      // Заполняем информацию о наличии трендов
       relatedDataInfo.hasTrends = trendsCount > 0;
       relatedDataInfo.totalItems.trends = trendsCount;
+      
+      console.log(`Проверка связанных данных для кампании ${campaignId}:`, relatedDataInfo);
       
       return relatedDataInfo;
     } catch (error) {
@@ -8422,6 +8440,13 @@ https://t.me/channelname/ - description`;
   });
   
   // Вспомогательная функция для подсчета элементов в коллекции
+  /**
+   * Подсчитывает количество элементов в коллекции для указанной кампании
+   * @param collection Название коллекции в Directus
+   * @param campaignId ID кампании
+   * @param token Токен авторизации
+   * @returns Количество элементов
+   */
   async function countItems(collection: string, campaignId: string, token: string): Promise<number> {
     try {
       const response = await directusApi.get(`/items/${collection}`, {
