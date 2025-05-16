@@ -410,8 +410,10 @@ export default function Campaigns() {
                     onClick={() => {
                       // Устанавливаем информацию о кампании для удаления
                       setCampaignToDelete({id: campaign.id, name: campaign.name});
-                      // Сбрасываем состояние принудительного удаления
-                      setDeleteWithData(true); // Всегда используем принудительное удаление
+                      // Устанавливаем флаг принудительного удаления
+                      setDeleteWithData(true);
+                      // Добавляем подробное логирование
+                      console.log(`Инициировано удаление кампании ${campaign.name} (${campaign.id})`);
                       // Запускаем процесс удаления
                       deleteCampaign(campaign.id);
                     }}
