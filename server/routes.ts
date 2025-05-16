@@ -6444,6 +6444,8 @@ https://t.me/channelname/ - description`;
       const forceDelete = req.query.forceDelete === 'true';
       const userId = req.user?.id;
       
+      console.log(`Запрос на удаление кампании ${campaignId}. ForceDelete: ${forceDelete}, UserId: ${userId}`);
+      
       if (!campaignId) {
         return res.status(400).json({ 
           success: false, 
@@ -6464,20 +6466,24 @@ https://t.me/channelname/ - description`;
       
       // Проверяем, принадлежит ли кампания текущему пользователю
       try {
+        // Получаем данные кампании
+        console.log(`Получение данных кампании ${campaignId}`);
         const response = await directusApi.get(`/items/campaigns/${campaignId}`, {
           headers: {
-            'Authorization': formatAuthToken(token)
+            'Authorization': `Bearer ${token}`
           }
         });
         
-        const campaign = response.data.data;
+        const campaign = response.data?.data;
         if (!campaign) {
+          console.log(`Кампания ${campaignId} не найдена`);
           return res.status(404).json({ 
             success: false, 
             error: "Кампания не найдена" 
           });
         }
         
+        console.log(`Проверка прав на удаление кампании. UserId: ${userId}, Campaign user_id: ${campaign.user_id}`);
         if (campaign.user_id !== userId) {
           return res.status(403).json({ 
             success: false, 
@@ -6487,28 +6493,43 @@ https://t.me/channelname/ - description`;
         
         // Проверяем наличие связанных данных, если не указан forceDelete
         if (!forceDelete) {
-          // Проверяем наличие контента, ключевых слов и трендов
-          const relatedDataInfo = await checkCampaignRelatedData(campaignId, token);
-          
-          // Если есть связанные данные, возвращаем информацию о них и требуем подтверждения
-          if (relatedDataInfo.hasContent || relatedDataInfo.hasKeywords || relatedDataInfo.hasTrends) {
-            return res.status(409).json({
-              success: false,
-              error: "Кампания содержит связанные данные",
-              message: "Кампания содержит связанные данные, которые также будут удалены. Подтвердите удаление.",
-              relatedData: relatedDataInfo,
-              requireConfirmation: true
-            });
+          console.log(`Проверка наличия связанных данных для кампании ${campaignId}`);
+          try {
+            // Проверяем наличие контента, ключевых слов и трендов
+            const relatedDataInfo = await checkCampaignRelatedData(campaignId, token);
+            
+            // Если есть связанные данные, возвращаем информацию о них и требуем подтверждения
+            if (relatedDataInfo.hasContent || relatedDataInfo.hasKeywords || relatedDataInfo.hasTrends) {
+              console.log(`Кампания ${campaignId} содержит связанные данные:`, relatedDataInfo);
+              return res.status(409).json({
+                success: false,
+                error: "Кампания содержит связанные данные",
+                message: "Кампания содержит связанные данные, которые также будут удалены. Подтвердите удаление.",
+                relatedData: relatedDataInfo,
+                requireConfirmation: true
+              });
+            }
+          } catch (checkError) {
+            console.error(`Ошибка при проверке связанных данных для кампании ${campaignId}:`, checkError);
+            // В случае ошибки проверки связанных данных, продолжаем удаление только при forceDelete
+            if (!forceDelete) {
+              return res.status(500).json({ 
+                success: false, 
+                error: "Ошибка при проверке связанных данных" 
+              });
+            }
           }
         }
         
         // Удаляем кампанию через API Directus
+        console.log(`Удаление кампании ${campaignId}`);
         await directusApi.delete(`/items/campaigns/${campaignId}`, {
           headers: {
-            'Authorization': formatAuthToken(token)
+            'Authorization': `Bearer ${token}`
           }
         });
         
+        console.log(`Кампания ${campaignId} успешно удалена`);
         return res.json({ 
           success: true, 
           message: forceDelete
@@ -6516,18 +6537,26 @@ https://t.me/channelname/ - description`;
             : "Кампания удалена"
         });
         
-      } catch (error) {
-        console.error('Ошибка при удалении кампании:', error);
+      } catch (apiError) {
+        console.error(`Ошибка API при удалении кампании ${campaignId}:`, apiError);
+        if (axios.isAxiosError(apiError)) {
+          console.error('Детали ошибки Directus API:', {
+            status: apiError.response?.status,
+            data: apiError.response?.data
+          });
+        }
         return res.status(500).json({ 
           success: false, 
-          error: "Ошибка при удалении кампании" 
+          error: "Ошибка при удалении кампании",
+          details: apiError.message
         });
       }
     } catch (error) {
-      console.error('Ошибка обработки запроса:', error);
+      console.error('Ошибка обработки запроса на удаление кампании:', error);
       return res.status(500).json({ 
         success: false, 
-        error: "Внутренняя ошибка сервера" 
+        error: "Внутренняя ошибка сервера",
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
       });
     }
   });
@@ -8449,17 +8478,38 @@ https://t.me/channelname/ - description`;
    */
   async function countItems(collection: string, campaignId: string, token: string): Promise<number> {
     try {
+      console.log(`Подсчет элементов в коллекции ${collection} для кампании ${campaignId}`);
+      
+      // Преобразуем в формат для Directus
+      const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      
+      // Проверяем наличие фильтрации по campaign_id
+      const filter = { campaign_id: { _eq: campaignId } };
+      console.log(`Используем фильтр:`, JSON.stringify(filter));
+      
       const response = await directusApi.get(`/items/${collection}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': formattedToken },
         params: {
-          filter: { campaign_id: { _eq: campaignId } },
+          filter: filter,
+          limit: 1,
           aggregate: { count: '*' }
         }
       });
       
-      return response.data?.data?.[0]?.count || 0;
+      const count = response.data?.data?.[0]?.count || 0;
+      console.log(`Найдено ${count} элементов в коллекции ${collection} для кампании ${campaignId}`);
+      
+      return count;
     } catch (error) {
-      console.error(`Ошибка при подсчете элементов в коллекции ${collection}:`, error);
+      console.error(`Ошибка при подсчете элементов в коллекции ${collection} для кампании ${campaignId}:`, error);
+      
+      if (axios.isAxiosError(error)) {
+        console.error('Детали ошибки Directus API:', {
+          status: error.response?.status,
+          data: error.response?.data
+        });
+      }
+      
       return 0;
     }
   }
