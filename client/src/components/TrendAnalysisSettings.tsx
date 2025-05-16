@@ -118,10 +118,6 @@ export function TrendAnalysisSettings({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Настройте параметры для сбора трендовых тем из социальных сетей. Эти настройки определяют, какие аккаунты будут анализироваться и какие тренды будут учитываться.
-        </p>
-        
         <div className="space-y-6">
           <div className="bg-muted/50 p-4 rounded-lg border">
             <h4 className="text-base font-medium mb-3">Минимальное количество подписчиков по платформам</h4>
