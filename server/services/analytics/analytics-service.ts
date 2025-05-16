@@ -687,11 +687,19 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       });
     });
     
-    // Вычисляем коэффициенты вовлеченности для каждой платформы
+    // Подсчитываем общее количество публикаций и вычисляем коэффициенты вовлеченности
+    let totalPlatformPosts = 0;
+    
     Object.keys(platformStats).forEach(platform => {
       const stats = platformStats[platform];
+      // Суммируем количество публикаций на всех платформах
+      totalPlatformPosts += stats.posts;
+      // Вычисляем коэффициент вовлеченности для каждой платформы
       stats.engagementRate = stats.views > 0 ? (stats.engagement / stats.views) * 100 : 0;
     });
+    
+    // Обновляем общее количество публикаций (важно - это сумма всех публикаций на платформах)
+    aggregated.totalPosts = totalPlatformPosts;
     
     // Вычисляем средний коэффициент вовлеченности
     aggregated.averageEngagementRate = aggregated.totalViews > 0 ? 
@@ -699,6 +707,8 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     
     // Заполняем распределение по платформам
     aggregated.platformDistribution = platformStats;
+    
+    log.info(`[analytics-service] Итоговое количество публикаций: ${totalPlatformPosts} (сумма по всем платформам)`);
     
     return {
       platforms: platformStats,
