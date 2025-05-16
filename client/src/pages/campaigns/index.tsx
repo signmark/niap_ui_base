@@ -593,14 +593,15 @@ export default function Campaigns() {
                     onClick={() => {
                       // Устанавливаем информацию о кампании для удаления
                       setCampaignToDelete({id: campaign.id, name: campaign.name});
-                      // Устанавливаем флаг принудительного удаления
-                      setDeleteWithData(true);
+                      // Сбрасываем флаг принудительного удаления - сначала покажем диалог
+                      setDeleteWithData(false);
                       // Добавляем подробное логирование
                       console.log(`Инициировано удаление кампании ${campaign.name} (${campaign.id})`);
-                      // Запускаем процесс удаления
+                      // Запускаем процесс удаления, который сначала проверит наличие связанных данных
                       deleteCampaign(campaign.id);
                     }}
                   >
+                    <Trash className="mr-2 h-4 w-4" />
                     Удалить
                   </Button>
                 </div>
