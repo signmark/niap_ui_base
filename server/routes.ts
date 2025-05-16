@@ -8472,12 +8472,31 @@ https://t.me/channelname/ - description`;
           }
         }
         
-        // Удаляем саму кампанию
-        await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Удаляем саму кампанию из обеих таблиц: user_campaigns и campaigns
+        console.log(`Удаление кампании ${campaignId} из таблицы user_campaigns`);
+        
+        try {
+          await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          console.log(`Кампания ${campaignId} успешно удалена из user_campaigns`);
+        } catch (userCampaignError) {
+          console.error(`Ошибка при удалении из user_campaigns:`, userCampaignError.message);
+        }
+        
+        // Дополнительно попробуем удалить из оригинальной таблицы campaigns если она существует
+        try {
+          await directusApi.delete(`/items/campaigns/${campaignId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          console.log(`Кампания ${campaignId} успешно удалена из campaigns`);
+        } catch (campaignsError) {
+          console.log(`Таблица campaigns не найдена или запись уже удалена:`, campaignsError.message);
+        }
         
         // Возвращаем результат
         return res.status(200).json({ 
