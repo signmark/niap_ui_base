@@ -2,6 +2,7 @@ import { directusCrud } from './directus-crud';
 import { directusApiManager } from '../directus';
 import { DirectusAuthResult, DirectusUser } from './directus-types';
 import { log } from '../utils/logger';
+import { EventEmitter } from 'events';
 
 /**
  * Информация о токене и пользователе
@@ -14,6 +15,14 @@ interface SessionInfo {
   user?: DirectusUser;
 }
 
+// Создаем глобальный эмиттер событий для коммуникации между компонентами
+if (!global.directusEventEmitter) {
+  global.directusEventEmitter = new EventEmitter();
+  // Увеличиваем лимит слушателей, так как у нас может быть много компонентов,
+  // подписанных на события авторизации
+  global.directusEventEmitter.setMaxListeners(50);
+}
+
 /**
  * Менеджер авторизации и сессий пользователей для Directus
  */
@@ -22,10 +31,168 @@ export class DirectusAuthManager {
   private sessionCache: Record<string, SessionInfo> = {};
   private sessionRefreshIntervalMs: number = 5 * 60 * 1000; // 5 минут
   private sessionRefreshIntervalId?: NodeJS.Timeout;
+  private refreshingTokens: Set<string> = new Set(); // Отслеживание активных обновлений токенов
+  private maxRefreshAttempts: number = 3; // Максимальное количество попыток обновления
+  private refreshAttempts: Record<string, number> = {}; // Счетчики попыток по пользователям
   
   constructor() {
     log('DirectusAuthManager initialized', this.logPrefix);
     this.startSessionRefreshInterval();
+    this.setupEventListeners();
+  }
+  
+  /**
+   * Настраивает слушатели событий для взаимодействия с другими компонентами
+   */
+  private setupEventListeners(): void {
+    // Обработка запросов на обновление токена от directusApiManager
+    global.directusEventEmitter.on('refresh-token-needed', async (userId: string) => {
+      log(`Получено событие refresh-token-needed для пользователя ${userId}`, this.logPrefix);
+      
+      // Проверяем, не обрабатывается ли уже запрос на обновление токена для этого пользователя
+      if (this.refreshingTokens.has(userId)) {
+        log(`Обновление токена для пользователя ${userId} уже в процессе`, this.logPrefix);
+        return;
+      }
+      
+      // Проверяем, не превышено ли количество попыток обновления
+      if (this.refreshAttempts[userId] && this.refreshAttempts[userId] >= this.maxRefreshAttempts) {
+        log(`Превышено максимальное количество попыток обновления токена для пользователя ${userId}`, this.logPrefix);
+        
+        // Уведомляем систему о неудачном обновлении токена
+        directusApiManager.handleTokenRefreshFailed(userId, new Error('Превышено максимальное количество попыток обновления токена'));
+        
+        // Сбрасываем кэш токена
+        delete this.sessionCache[userId];
+        directusApiManager.clearAuthTokenCache(userId);
+        
+        // Сбрасываем счетчик попыток
+        delete this.refreshAttempts[userId];
+        return;
+      }
+      
+      // Отмечаем, что начали обрабатывать запрос на обновление токена
+      this.refreshingTokens.add(userId);
+      
+      try {
+        // Получаем текущую сессию
+        const sessionInfo = this.sessionCache[userId];
+        
+        if (!sessionInfo) {
+          log(`Нет сохраненной сессии для пользователя ${userId}`, this.logPrefix);
+          throw new Error('Нет сохраненной сессии');
+        }
+        
+        // Если сессия не имеет refreshToken, пробуем выполнить полную аутентификацию
+        if (!sessionInfo.refreshToken) {
+          log(`Отсутствует refresh token для пользователя ${userId}, попытка повторной авторизации`, this.logPrefix);
+          
+          // Пробуем получить токен админа, если userId совпадает с админским
+          if (process.env.DIRECTUS_ADMIN_EMAIL && this.isAdminId(userId)) {
+            log(`Попытка получить токен администратора для пользователя ${userId}`, this.logPrefix);
+            const adminSession = await this.getAdminSession();
+            
+            if (adminSession) {
+              // Уведомляем систему об успешном обновлении токена
+              directusApiManager.handleTokenRefreshed(
+                userId,
+                adminSession.token,
+                '', // Нет refresh token для админа
+                24 * 60 * 60 // 24 часа
+              );
+              
+              // Удаляем пользователя из списка обрабатываемых
+              this.refreshingTokens.delete(userId);
+              
+              // Сбрасываем счетчик попыток
+              delete this.refreshAttempts[userId];
+              
+              return;
+            }
+          }
+          
+          // Если не удалось получить токен админа или это не админский userId,
+          // сообщаем о неудаче
+          directusApiManager.handleTokenRefreshFailed(userId, new Error('Отсутствует refresh token'));
+          
+          // Удаляем пользователя из списка обрабатываемых
+          this.refreshingTokens.delete(userId);
+          
+          // Увеличиваем счетчик попыток
+          this.refreshAttempts[userId] = (this.refreshAttempts[userId] || 0) + 1;
+          
+          return;
+        }
+        
+        // Обновляем токен с помощью refresh token
+        log(`Обновление токена для пользователя ${userId} с помощью refresh token`, this.logPrefix);
+        const refreshResult = await directusCrud.refreshToken(sessionInfo.refreshToken);
+        
+        // Обновляем информацию о сессии
+        this.sessionCache[userId] = {
+          ...sessionInfo,
+          token: refreshResult.access_token,
+          refreshToken: refreshResult.refresh_token,
+          expiresAt: Date.now() + (refreshResult.expires * 1000)
+        };
+        
+        // Обновляем кэш в Directus API Manager
+        directusApiManager.cacheAuthToken(
+          userId, 
+          refreshResult.access_token, 
+          refreshResult.expires, 
+          refreshResult.refresh_token
+        );
+        
+        // Уведомляем систему об успешном обновлении токена
+        directusApiManager.handleTokenRefreshed(
+          userId,
+          refreshResult.access_token,
+          refreshResult.refresh_token,
+          refreshResult.expires
+        );
+        
+        // Сбрасываем счетчик попыток
+        delete this.refreshAttempts[userId];
+        
+        log(`Токен для пользователя ${userId} успешно обновлен`, this.logPrefix);
+      } catch (error) {
+        log(`Ошибка при обновлении токена для пользователя ${userId}: ${error}`, this.logPrefix);
+        
+        // Увеличиваем счетчик попыток
+        this.refreshAttempts[userId] = (this.refreshAttempts[userId] || 0) + 1;
+        
+        // Уведомляем систему о неудачном обновлении токена
+        directusApiManager.handleTokenRefreshFailed(userId, error);
+        
+        // Если превышено максимальное количество попыток, сбрасываем кэш
+        if (this.refreshAttempts[userId] >= this.maxRefreshAttempts) {
+          log(`Превышено максимальное количество попыток обновления токена для пользователя ${userId}`, this.logPrefix);
+          delete this.sessionCache[userId];
+          directusApiManager.clearAuthTokenCache(userId);
+          delete this.refreshAttempts[userId];
+        }
+      } finally {
+        // В любом случае удаляем пользователя из списка обрабатываемых
+        this.refreshingTokens.delete(userId);
+      }
+    });
+  }
+  
+  /**
+   * Проверяет, является ли указанный userId идентификатором администратора
+   * @param userId ID пользователя для проверки
+   * @returns true, если это ID администратора
+   */
+  private isAdminId(userId: string): boolean {
+    // Если в кэше сессий есть пользователь с таким ID и он помечен как администратор
+    if (this.sessionCache[userId]?.user?.role === 'admin') {
+      return true;
+    }
+    
+    // Проверяем, совпадает ли ID с полученным ранее ID администратора
+    // (в зависимости от логики вашего приложения этот метод может быть расширен)
+    return false;
   }
 
   /**
@@ -82,11 +249,76 @@ export class DirectusAuthManager {
    * @returns Обновленная информация о токене
    */
   async refreshSession(userId: string): Promise<{ token: string; expiresAt: number } | null> {
+    // Проверяем, не обрабатывается ли уже запрос на обновление токена для этого пользователя
+    if (this.refreshingTokens.has(userId)) {
+      log(`Обновление токена для пользователя ${userId} уже в процессе`, this.logPrefix);
+      return null;
+    }
+    
+    // Проверяем, не превышено ли количество попыток обновления
+    if (this.refreshAttempts[userId] && this.refreshAttempts[userId] >= this.maxRefreshAttempts) {
+      log(`Превышено максимальное количество попыток обновления токена для пользователя ${userId}`, this.logPrefix);
+      
+      // В случае превышения лимита попыток, удаляем сессию и очищаем счетчик
+      delete this.sessionCache[userId];
+      directusApiManager.clearAuthTokenCache(userId);
+      delete this.refreshAttempts[userId];
+      
+      return null;
+    }
+    
+    // Отмечаем, что начали обрабатывать запрос на обновление токена
+    this.refreshingTokens.add(userId);
+    
     try {
       const sessionInfo = this.sessionCache[userId];
       
       if (!sessionInfo || !sessionInfo.refreshToken) {
         log(`No refresh token available for user ${userId}`, this.logPrefix);
+        
+        // Если это админский ID, пробуем получить сессию администратора
+        if (this.isAdminId(userId)) {
+          log(`Попытка получить токен администратора для пользователя ${userId}`, this.logPrefix);
+          const adminSession = await this.getAdminSession();
+          
+          if (adminSession) {
+            // Уведомляем систему об успешном обновлении токена
+            directusApiManager.handleTokenRefreshed(
+              userId,
+              adminSession.token,
+              '', // Нет refresh token для админа
+              24 * 60 * 60 // 24 часа
+            );
+            
+            // Создаем новую сессию в кэше
+            this.sessionCache[userId] = {
+              userId,
+              token: adminSession.token,
+              refreshToken: '',
+              expiresAt: Date.now() + (24 * 60 * 60 * 1000),
+              user: {
+                id: userId,
+                email: process.env.DIRECTUS_ADMIN_EMAIL || 'admin@example.com',
+                first_name: 'Admin',
+                last_name: 'User',
+                role: 'admin'
+              }
+            };
+            
+            // Сбрасываем счетчик попыток
+            delete this.refreshAttempts[userId];
+            
+            return {
+              token: adminSession.token,
+              expiresAt: Date.now() + (24 * 60 * 60 * 1000)
+            };
+          }
+        }
+        
+        // Если не удалось получить токен админа или это не админский userId,
+        // увеличиваем счетчик неудачных попыток
+        this.refreshAttempts[userId] = (this.refreshAttempts[userId] || 0) + 1;
+        
         return null;
       }
       
@@ -102,8 +334,16 @@ export class DirectusAuthManager {
         expiresAt: Date.now() + (authResult.expires * 1000)
       };
       
-      // Обновляем кэш в Directus API Manager для обратной совместимости
-      directusApiManager.cacheAuthToken(userId, authResult.access_token, authResult.expires);
+      // Обновляем кэш в Directus API Manager с обновленным refresh token
+      directusApiManager.cacheAuthToken(
+        userId, 
+        authResult.access_token, 
+        authResult.expires, 
+        authResult.refresh_token
+      );
+      
+      // Сбрасываем счетчик попыток
+      delete this.refreshAttempts[userId];
       
       log(`Session for user ${userId} successfully refreshed`, this.logPrefix);
       
@@ -114,11 +354,21 @@ export class DirectusAuthManager {
     } catch (error) {
       log(`Error refreshing session for user ${userId}: ${(error as Error).message}`, this.logPrefix);
       
-      // В случае ошибки удаляем сессию
-      delete this.sessionCache[userId];
-      directusApiManager.clearAuthTokenCache(userId);
+      // Увеличиваем счетчик неудачных попыток
+      this.refreshAttempts[userId] = (this.refreshAttempts[userId] || 0) + 1;
+      
+      // Если превышено максимальное количество попыток, удаляем сессию
+      if (this.refreshAttempts[userId] >= this.maxRefreshAttempts) {
+        log(`Превышено максимальное количество попыток обновления токена для пользователя ${userId}. Очищаем кэш.`, this.logPrefix);
+        delete this.sessionCache[userId];
+        directusApiManager.clearAuthTokenCache(userId);
+        delete this.refreshAttempts[userId];
+      }
       
       return null;
+    } finally {
+      // В любом случае удаляем пользователя из списка обрабатываемых
+      this.refreshingTokens.delete(userId);
     }
   }
 
@@ -150,6 +400,7 @@ export class DirectusAuthManager {
    * @returns Токен авторизации или null, если токен не найден
    */
   async getAuthToken(userId: string, autoRefresh: boolean = true): Promise<string | null> {
+    // Проверяем, есть ли действующая сессия в кэше
     const session = this.getSession(userId);
     
     if (session) {
@@ -157,37 +408,89 @@ export class DirectusAuthManager {
       return session.token;
     }
     
-    // Проверим токен у других компонентов, которые могут его кэшировать
+    // Проверяем, есть ли токен в directusApiManager
+    let cachedToken = null;
+    
     try {
-      // Импортировать directusApiManager здесь нельзя из-за циклических зависимостей
-      // Проверим, есть ли переменная в global пространстве имен
-      if (global['directusApiManager'] && global['directusApiManager'].getCachedToken) {
-        const cachedToken = global['directusApiManager'].getCachedToken(userId);
-        if (cachedToken) {
-          log(`Found token in directusApiManager cache for user ${userId}`, this.logPrefix);
-          
-          // Кэшируем его локально для будущих вызовов
-          this.sessionCache[userId] = {
-            userId,
-            token: cachedToken.token,
-            refreshToken: '', // У нас нет refresh token из кэша API Manager
-            expiresAt: cachedToken.expiresAt || (Date.now() + 3600 * 1000),
-            user: undefined
-          };
-          
-          return cachedToken.token;
-        }
+      cachedToken = directusApiManager.getCachedToken(userId);
+      
+      if (cachedToken && cachedToken.expiresAt > Date.now()) {
+        log(`Found valid token in directusApiManager cache for user ${userId}`, this.logPrefix);
+        
+        // Кэшируем его локально для будущих вызовов
+        this.sessionCache[userId] = {
+          userId,
+          token: cachedToken.token,
+          refreshToken: cachedToken.refreshToken || '', // Добавляем refreshToken если он есть
+          expiresAt: cachedToken.expiresAt,
+          user: undefined
+        };
+        
+        return cachedToken.token;
       }
     } catch (error) {
       log(`Error when trying to get token from directusApiManager: ${error}`, this.logPrefix);
     }
     
+    // Если требуется автоматическое обновление и у нас есть кэш, который можно обновить
     if (autoRefresh) {
+      // Проверяем, не запущен ли уже процесс обновления токена
+      if (this.refreshingTokens.has(userId)) {
+        log(`Token refresh for user ${userId} is already in progress, waiting...`, this.logPrefix);
+        
+        // Создаем промис, который разрешится, когда обновление завершится
+        const refreshPromise = new Promise<string | null>((resolve) => {
+          // Создаем обработчик события обновления токена
+          const refreshHandler = (refreshedUserId: string, success: boolean, token: string) => {
+            if (refreshedUserId === userId) {
+              // Удаляем обработчик, чтобы избежать утечек памяти
+              global.directusEventEmitter.off('token-refreshed', refreshHandler);
+              
+              if (success) {
+                resolve(token);
+              } else {
+                resolve(null);
+              }
+            }
+          };
+          
+          // Устанавливаем таймаут для предотвращения бесконечного ожидания
+          const timeoutId = setTimeout(() => {
+            global.directusEventEmitter.off('token-refreshed', refreshHandler);
+            log(`Token refresh timeout for user ${userId}`, this.logPrefix);
+            resolve(null);
+          }, 10000); // 10 секунд таймаут
+          
+          // Подписываемся на событие обновления токена
+          global.directusEventEmitter.once('token-refreshed', refreshHandler);
+        });
+        
+        return refreshPromise;
+      }
+      
       log(`No valid session found, attempting to refresh for user ${userId}`, this.logPrefix);
+      
+      // Инициируем процесс обновления токена
       const refreshedSession = await this.refreshSession(userId);
       
       if (refreshedSession) {
+        // Оповещаем о успешном обновлении токена
+        global.directusEventEmitter.emit('token-refreshed', userId, true, refreshedSession.token);
         return refreshedSession.token;
+      } else {
+        // Если у нас есть пользователь админ, пробуем получить новую сессию для него
+        if (process.env.DIRECTUS_ADMIN_EMAIL && this.isAdminId(userId)) {
+          log(`Attempting to get a new admin session for user ${userId}`, this.logPrefix);
+          const adminSession = await this.getAdminSession();
+          
+          if (adminSession) {
+            global.directusEventEmitter.emit('token-refreshed', userId, true, adminSession.token);
+            return adminSession.token;
+          }
+        }
+        
+        // Оповещаем о неудачном обновлении токена
+        global.directusEventEmitter.emit('token-refreshed', userId, false, '');
       }
     }
     
