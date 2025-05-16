@@ -701,27 +701,27 @@ export default function Analytics() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="overflow-hidden h-[450px]">
-              <CardHeader className="pb-2">
+            <Card className="overflow-hidden h-[520px]">
+              <CardHeader className="pb-1">
                 <CardTitle>Распределение просмотров</CardTitle>
                 <CardDescription>Просмотры по платформам</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <NivoAnalyticsPieChart
                   data={getPieChartData()}
                   isLoading={isLoadingPlatformsStats}
-                  height={360}
+                  height={420}
                   centerText="Просмотры"
                 />
               </CardContent>
             </Card>
             
-            <Card className="overflow-hidden h-[450px]">
-              <CardHeader className="pb-2">
+            <Card className="overflow-hidden h-[520px]">
+              <CardHeader className="pb-1">
                 <CardTitle>Активность по платформам</CardTitle>
                 <CardDescription>Сравнение взаимодействий</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <NivoAnalyticsBarChart
                   data={getEngagementChartData().map(item => ({
                     id: item.id,
@@ -737,18 +737,18 @@ export default function Analytics() {
                   title="Типы вовлеченности"
                   description="Распределение по типам взаимодействий"
                   isLoading={isLoadingPlatformsStats}
-                  height={360}
+                  height={420}
                   colorMapping={(d) => d.data.color || '#3498db'}
                 />
               </CardContent>
             </Card>
             
-            <Card className="overflow-hidden h-[450px]">
-              <CardHeader className="pb-2">
+            <Card className="overflow-hidden h-[520px]">
+              <CardHeader className="pb-1">
                 <CardTitle>Показатели по платформам</CardTitle>
                 <CardDescription>Сравнение различных метрик по социальным сетям</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <NivoAnalyticsLineChart
                   data={[
                     {
@@ -774,7 +774,7 @@ export default function Analytics() {
                     }
                   ]}
                   isLoading={isLoadingPlatformsStats}
-                  height={360}
+                  height={420}
                   yAxisLegend="Количество"
                   xAxisLegend="Платформа"
                   lineColors={{
@@ -786,12 +786,12 @@ export default function Analytics() {
               </CardContent>
             </Card>
             
-            <Card className="overflow-hidden h-[450px]">
-              <CardHeader className="pb-2">
+            <Card className="overflow-hidden h-[520px]">
+              <CardHeader className="pb-1">
                 <CardTitle>Рейтинг вовлеченности по платформам</CardTitle>
                 <CardDescription>Сравнение эффективности различных социальных сетей</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <NivoAnalyticsBarChart
                   data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
                     platform,
