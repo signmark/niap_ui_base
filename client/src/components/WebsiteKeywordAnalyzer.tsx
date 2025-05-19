@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Link, Globe, Search } from "lucide-react";
+import { Loader2, Link, Globe, Search, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -26,10 +26,12 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [keywords, setKeywords] = useState<any[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
+  const [urlStatus, setUrlStatus] = useState<"idle" | "valid" | "invalid">("idle");
   const { toast } = useToast();
 
   // Фильтр для URL
   const isValidUrl = (text: string) => {
+    if (!text.trim()) return false;
     try {
       // Проверяем, что URL содержит домен
       const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/;
@@ -38,6 +40,22 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
       return false;
     }
   };
+
+  // Проверяем URL при каждом изменении
+  useEffect(() => {
+    // Добавляем небольшую задержку, чтобы не запускать проверку при каждом нажатии клавиши
+    const timer = setTimeout(() => {
+      if (!url.trim()) {
+        setUrlStatus("idle");
+      } else if (isValidUrl(url)) {
+        setUrlStatus("valid");
+      } else {
+        setUrlStatus("invalid");
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [url]);
 
   const handleAnalyze = async () => {
     if (!url.trim()) {
@@ -197,11 +215,21 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
               placeholder="Введите URL сайта для анализа"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleAnalyze()}
-              className="pl-9"
+              onKeyPress={(e) => e.key === "Enter" && urlStatus === "valid" && handleAnalyze()}
+              className={`pl-9 ${urlStatus === "valid" ? "border-green-500" : urlStatus === "invalid" ? "border-red-500" : ""}`}
             />
+            {urlStatus === "valid" && (
+              <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-500" />
+            )}
+            {urlStatus === "invalid" && (
+              <XCircle className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+            )}
           </div>
-          <Button onClick={handleAnalyze} disabled={isAnalyzing || !url.trim()}>
+          <Button 
+            onClick={handleAnalyze} 
+            disabled={isAnalyzing || urlStatus !== "valid"}
+            className={urlStatus === "valid" ? "bg-green-500 hover:bg-green-600" : ""}
+          >
             {isAnalyzing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -210,11 +238,17 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
             ) : (
               <>
                 <Search className="mr-2 h-4 w-4" />
-                Анализировать
+                Найти ключевые слова
               </>
             )}
           </Button>
         </div>
+        {urlStatus === "invalid" && url.trim() !== "" && (
+          <p className="text-red-500 text-sm mt-1">Некорректный URL. Введите действительный адрес сайта.</p>
+        )}
+        {urlStatus === "valid" && (
+          <p className="text-green-500 text-sm mt-1">URL корректный. Нажмите кнопку для анализа.</p>
+        )}
 
         {keywords.length > 0 && (
           <div className="mt-4">
