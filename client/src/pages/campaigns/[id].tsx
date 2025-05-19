@@ -373,7 +373,13 @@ export default function CampaignDetails() {
         }
       }
       
-      // Возвращаем информативный результат
+      // Проверяем, есть ли серьезные ошибки, при которых мы должны вообще отменить операцию
+      if (errorCount > 0 && addedCount === 0) {
+        // Если не добавлено ни одного ключевого слова, сообщаем об ошибке
+        throw new Error(`Не удалось добавить ни одного ключевого слова. Пропущено дубликатов: ${skippedCount}, ошибок: ${errorCount}`);
+      }
+      
+      // Возвращаем информативный результат даже если были некоторые ошибки, но хотя бы одно ключевое слово добавлено
       return { 
         added: addedCount, 
         skipped: skippedCount,
@@ -500,11 +506,30 @@ export default function CampaignDetails() {
         queryClient.setQueryData(["/api/keywords", id], context.previousKeywords);
       }
       
+      // Проверяем, есть ли частичные результаты
+      // Это позволит более информативно сообщать о проблемах
+      let errorMessage = "Не удалось добавить ключевые слова";
+      
+      // Пытаемся извлечь более конкретное сообщение об ошибке
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      } else if (typeof error === 'object' && error !== null) {
+        const errorObj = error as any;
+        if (errorObj.response?.data?.errors?.[0]?.message) {
+          errorMessage = errorObj.response.data.errors[0].message;
+        } else if (errorObj.message) {
+          errorMessage = errorObj.message;
+        }
+      }
+      
       toast({
         variant: "destructive",
         title: "Ошибка",
-        description: "Не удалось добавить ключевые слова"
+        description: errorMessage
       });
+      
+      // Принудительно обновляем данные, чтобы показать актуальное состояние
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", id] });
     }
   });
   
