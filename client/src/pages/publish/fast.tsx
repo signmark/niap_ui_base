@@ -32,7 +32,7 @@ import {
 import { Send, AlertTriangle, Loader2, CheckCircle2, XCircle, ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ImageUploader } from '@/components/ImageUploader';
+import { SimpleImageUploader } from '@/components/SimpleImageUploader';
 
 export default function FastPublish() {
   const { toast } = useToast();
@@ -366,7 +366,7 @@ export default function FastPublish() {
                 
                 <div className="border rounded-md p-4">
                   <Label className="mb-2 block">Или загрузите изображение</Label>
-                  <ImageUploader 
+                  <SimpleImageUploader 
                     onImageUploaded={handleImageUpload}
                     multiple={false}
                     className="w-full"

@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,6 +14,7 @@ import Content from "@/pages/content";
 import Tasks from "@/pages/tasks";
 import ScheduledPublications from "@/pages/publish/scheduled";
 import CalendarView from "@/pages/publish/calendar";
+import FastPublish from "@/pages/publish/fast";
 import TestPublish from "@/pages/publish/test-publish";
 import ImageGenerationTest from "@/pages/test/image-generation";
 import TransparentDialogTest from "@/pages/test/transparent-dialog-test";
@@ -53,6 +54,7 @@ const LayoutAnalytics = React.memo(() => <WithLayout Component={Analytics} />);
 const LayoutTasks = React.memo(() => <WithLayout Component={Tasks} />);
 const LayoutScheduledPublications = React.memo(() => <WithLayout Component={ScheduledPublications} />);
 const LayoutCalendarView = React.memo(() => <WithLayout Component={CalendarView} />);
+const LayoutFastPublish = React.memo(() => <WithLayout Component={FastPublish} />);
 const LayoutTestPublish = React.memo(() => <WithLayout Component={TestPublish} />);
 const LayoutImageGenerationTest = React.memo(() => <WithLayout Component={ImageGenerationTest} />);
 const LayoutTransparentDialogTest = React.memo(() => <WithLayout Component={TransparentDialogTest} />);
@@ -82,7 +84,11 @@ function Router() {
       <Route path="/tasks" component={LayoutTasks} />
       <Route path="/publish/scheduled" component={LayoutScheduledPublications} />
       <Route path="/publish/calendar" component={LayoutCalendarView} />
-      <Route path="/publish/test" component={LayoutTestPublish} />
+      <Route path="/publish/fast" component={LayoutFastPublish} />
+      {/* Перенаправление старого маршрута на новый */}
+      <Route path="/publish/test">
+        {() => <Redirect to="/publish/fast" />}
+      </Route>
       <Route path="/test/image-generation" component={LayoutImageGenerationTest} />
       <Route path="/test/transparent-dialog" component={LayoutTransparentDialogTest} />
       <Route path="/test/auth-bypass" component={AuthBypass} />
