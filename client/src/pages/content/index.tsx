@@ -9,7 +9,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, Search, X
 } from "lucide-react";
 import {
   AlertDialog,
@@ -869,6 +869,7 @@ export default function ContentPage() {
       from: undefined,
       to: undefined
     });
+    setCurrentPage(1); // Сбрасываем пагинацию при сбросе фильтра дат
   };
 
   // Фильтрация и сортировка контента
@@ -1137,8 +1138,10 @@ export default function ContentPage() {
                                 from: range.from,
                                 to: range.to,
                               });
+                              setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтра дат
                             } else {
                               resetDateFilter();
+                              setCurrentPage(1); // Сбрасываем на первую страницу при сбросе фильтра дат
                             }
                           }}
                           numberOfMonths={2}
@@ -1150,7 +1153,10 @@ export default function ContentPage() {
                 </Popover>
               </div>
             </div>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+            <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => {
+                setActiveTab(value);
+                setCurrentPage(1); // Сбрасываем на первую страницу при смене вкладки
+              }}>
               <TabsList>
                 <TabsTrigger value="all">Все</TabsTrigger>
                 <TabsTrigger value="draft">Черновики</TabsTrigger>
