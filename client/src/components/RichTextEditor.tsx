@@ -10,7 +10,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,7 +36,8 @@ import {
   Wand2,
   Quote, // Иконка для цитаты
   Code, // Иконка для кода
-  FileCode // Иконка для блока кода
+  FileCode, // Иконка для блока кода
+  CornerRightDown // Иконка для индикатора ресайза
 } from 'lucide-react'
 
 interface RichTextEditorProps {
@@ -45,6 +46,7 @@ interface RichTextEditorProps {
   placeholder?: string
   className?: string
   minHeight?: string
+  editorId?: string // Уникальный идентификатор для сохранения размеров в localStorage
 }
 
 export default function RichTextEditor({
@@ -52,7 +54,8 @@ export default function RichTextEditor({
   onChange,
   placeholder = 'Введите текст...',
   className,
-  minHeight = '200px'
+  minHeight = '200px',
+  editorId = 'default-editor' // Идентификатор по умолчанию
 }: RichTextEditorProps) {
   const [linkUrl, setLinkUrl] = useState('')
   const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false)
@@ -61,6 +64,57 @@ export default function RichTextEditor({
   const [colorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedColor, setSelectedColor] = useState('#000000')
   const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [editorSize, setEditorSize] = useState({ height: parseInt(minHeight) || 200 })
+  const resizeStartPosition = useRef({ y: 0 })
+  const editorContainerRef = useRef<HTMLDivElement>(null)
+  
+  // Загрузка сохраненных размеров из localStorage при первом рендере
+  useEffect(() => {
+    const savedSize = localStorage.getItem(`editor-size-${editorId}`);
+    if (savedSize) {
+      try {
+        const parsedSize = JSON.parse(savedSize);
+        setEditorSize(parsedSize);
+      } catch (e) {
+        console.error('Ошибка при загрузке сохраненных размеров редактора:', e);
+      }
+    }
+  }, [editorId]);
+  
+  // Обработчик начала ресайза
+  const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartPosition.current = { y: e.clientY };
+    
+    // Добавляем обработчики событий для отслеживания движения мыши и отпускания кнопки
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+  };
+  
+  // Обработчик движения мыши при ресайзе
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const deltaY = e.clientY - resizeStartPosition.current.y;
+    const newHeight = Math.max(parseInt(minHeight) || 200, editorSize.height + deltaY);
+    
+    setEditorSize(prev => ({ ...prev, height: newHeight }));
+    resizeStartPosition.current = { y: e.clientY };
+  };
+  
+  // Обработчик завершения ресайза
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    
+    // Сохраняем размеры в localStorage
+    localStorage.setItem(`editor-size-${editorId}`, JSON.stringify(editorSize));
+    
+    // Удаляем обработчики событий
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
+  };
 
   const editor = useEditor({
     extensions: [
@@ -542,11 +596,30 @@ export default function RichTextEditor({
         </TooltipProvider>
       </div>
       
-      <EditorContent 
-        editor={editor} 
-        className={cn("prose max-w-none p-4", className)}
-        style={{ minHeight }}
-      />
+      <div 
+        ref={editorContainerRef} 
+        className={cn("relative", className)}
+        style={{ cursor: isResizing ? 'ns-resize' : 'auto' }}
+      >
+        <EditorContent 
+          editor={editor} 
+          className={cn("prose max-w-none p-4", className)}
+          style={{ 
+            minHeight, 
+            height: `${editorSize.height}px`,
+            transition: isResizing ? 'none' : 'height 0.1s ease-out'
+          }}
+        />
+        
+        {/* Индикатор возможности ресайза */}
+        <div 
+          className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-se-resize opacity-50 hover:opacity-100"
+          onMouseDown={handleResizeStart}
+          title="Потяните, чтобы изменить размер"
+        >
+          <CornerRightDown className="w-4 h-4 text-gray-500" />
+        </div>
+      </div>
 
       {/* Text Enhancement Dialog */}
       <TextEnhancementDialog
