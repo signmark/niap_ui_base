@@ -126,7 +126,7 @@ export class GeminiProxyService {
    */
   async testApiKey(): Promise<boolean> {
     try {
-      // URL для запроса к API Gemini
+      // URL для запроса к API Gemini (обновлено на v1)
       const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
       
       // Тестовый промпт
@@ -163,8 +163,8 @@ export class GeminiProxyService {
       
       logger.log(`[gemini-proxy] Improving text with model: ${model}`, 'gemini');
       
-      // URL для запроса к Gemini API
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+      // URL для запроса к Gemini API (обновлено на v1)
+      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${this.apiKey}`;
       
       // Формируем запрос
       const requestData = {
@@ -223,8 +223,8 @@ export class GeminiProxyService {
       
       logger.log(`[gemini-proxy] Generating text with model: ${model}`, 'gemini');
       
-      // URL для запроса к Gemini API
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+      // URL для запроса к Gemini API (обновлено на v1)
+      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${this.apiKey}`;
       
       // Формируем запрос
       const requestData = {
