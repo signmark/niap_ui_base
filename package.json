@@ -28,6 +28,7 @@
     "@nivo/core": "^0.96.0",
     "@nivo/line": "^0.96.0",
     "@nivo/pie": "^0.96.0",
+    "@nivo/scales": "^0.98.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
