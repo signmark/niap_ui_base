@@ -1,182 +1,190 @@
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import TextStyle from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
-import Placeholder from '@tiptap/extension-placeholder'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
-import { Button } from '@/components/ui/button'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useState, useRef, useEffect } from 'react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
-import { TextEnhancementDialog } from './TextEnhancementDialog'
-import { EmojiPicker } from './EmojiPicker'
+import { useEffect, useRef, useState } from 'react';
+import { Editor, EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import TextStyle from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Placeholder from '@tiptap/extension-placeholder';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   Italic,
-  Underline as UnderlineIcon,
   Link as LinkIcon,
-  Image as ImageIcon,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  List,
-  ListOrdered,
-  Heading1,
-  Heading2,
-  Heading3,
-  Palette,
-  Wand2,
-  Quote, // Иконка для цитаты
-  Code, // Иконка для кода
-  FileCode, // Иконка для блока кода
-  CornerRightDown // Иконка для индикатора ресайза
-} from 'lucide-react'
+  Image as ImageIcon
+} from 'lucide-react';
+import { Smile } from 'lucide-react';
+import { Check, ChevronRight, Wand2 } from 'lucide-react';
+import { UnderlineIcon } from 'lucide-react';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider
+} from '@/components/ui/tooltip';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@/components/ui/toggle-group';
+import { Label } from '@/components/ui/label';
+import EmojiPicker from './EmojiPicker';
+import TextEnhancementDialog from './TextEnhancementDialog';
+
+// Добавляем стили прямо в компонент
+const editorStyles = `
+  .resizable-editor {
+    resize: both;
+    overflow: hidden;
+    min-height: 200px;
+    border: 1px solid hsl(var(--input));
+    border-radius: 0.375rem;
+  }
+  
+  .resizable-editor .ProseMirror {
+    min-height: 150px;
+    height: 100%;
+    outline: none;
+  }
+  
+  .resizable-editor .editor-content {
+    height: calc(100% - 50px);
+    overflow: auto;
+    padding: 1rem;
+  }
+`;
 
 interface RichTextEditorProps {
-  content: string
-  onChange: (html: string) => void
-  placeholder?: string
-  className?: string
-  minHeight?: string
-  editorId?: string // Уникальный идентификатор для сохранения размеров в localStorage
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  minHeight?: number;
+  className?: string;
 }
 
 export default function RichTextEditor({
-  content,
+  value,
   onChange,
-  placeholder = 'Введите текст...',
+  placeholder = 'Начните вводить текст...',
+  minHeight = 150,
   className,
-  minHeight = '200px',
-  editorId = 'default-editor' // Идентификатор по умолчанию
 }: RichTextEditorProps) {
-  const [linkUrl, setLinkUrl] = useState('')
-  const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false)
-  const [imageUrl, setImageUrl] = useState('')
-  const [isImagePopoverOpen, setIsImagePopoverOpen] = useState(false)
-  const [colorPickerOpen, setColorPickerOpen] = useState(false)
-  const [selectedColor, setSelectedColor] = useState('#000000')
-  const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
-  const [editorSize, setEditorSize] = useState({ height: parseInt(minHeight) || 200 })
-  const resizeStartPosition = useRef({ y: 0 })
-  const editorContainerRef = useRef<HTMLDivElement>(null)
-  
-  // Загрузка сохраненных размеров из localStorage при первом рендере
+  const [selectedColor, setSelectedColor] = useState<string>('#000000');
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [isTextEnhancementOpen, setIsTextEnhancementOpen] = useState(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  // Добавляем стили в DOM при монтировании компонента
   useEffect(() => {
-    const savedSize = localStorage.getItem(`editor-size-${editorId}`);
-    if (savedSize) {
-      try {
-        const parsedSize = JSON.parse(savedSize);
-        setEditorSize(parsedSize);
-      } catch (e) {
-        console.error('Ошибка при загрузке сохраненных размеров редактора:', e);
-      }
-    }
-  }, [editorId]);
-  
-  // Обработчик начала ресайза
-  const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeStartPosition.current = { y: e.clientY };
-    
-    // Добавляем обработчики событий для отслеживания движения мыши и отпускания кнопки
-    document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', handleResizeEnd);
-  };
-  
-  // Обработчик движения мыши при ресайзе
-  const handleResizeMove = (e: MouseEvent) => {
-    if (!isResizing) return;
-    
-    const deltaY = e.clientY - resizeStartPosition.current.y;
-    const newHeight = Math.max(parseInt(minHeight) || 200, editorSize.height + deltaY);
-    
-    setEditorSize(prev => ({ ...prev, height: newHeight }));
-    resizeStartPosition.current = { y: e.clientY };
-  };
-  
-  // Обработчик завершения ресайза
-  const handleResizeEnd = () => {
-    setIsResizing(false);
-    
-    // Сохраняем размеры в localStorage
-    localStorage.setItem(`editor-size-${editorId}`, JSON.stringify(editorSize));
-    
-    // Удаляем обработчики событий
-    document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', handleResizeEnd);
-  };
+    const styleElement = document.createElement('style');
+    styleElement.textContent = editorStyles;
+    document.head.appendChild(styleElement);
+
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Link.configure({
-        openOnClick: false,
-        linkOnPaste: true,
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
       }),
-      Image,
       TextStyle,
       Color,
-      Underline,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Image,
       Placeholder.configure({
         placeholder,
       }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
     ],
-    content,
+    content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      onChange(editor.getHTML());
     },
-  })
+  });
+
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      // Только если значение действительно изменилось
+      editor.commands.setContent(value);
+    }
+  }, [editor, value]);
 
   if (!editor) {
-    return null
+    return null;
   }
 
-  const addLink = () => {
-    if (linkUrl) {
-      editor.chain()
-        .focus()
-        .extendMarkRange('link')
-        .setLink({ href: linkUrl })
-        .run()
-      setLinkUrl('')
-      setIsLinkPopoverOpen(false)
-    }
-  }
-
+  // Функция для вставки изображения
   const addImage = () => {
-    if (imageUrl) {
-      editor.chain()
-        .focus()
-        .setImage({ src: imageUrl })
-        .run()
-      setImageUrl('')
-      setIsImagePopoverOpen(false)
+    const url = window.prompt('URL изображения');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
     }
-  }
+  };
 
-  // Функция для добавления нового параграфа после блочных элементов
-  const ensureNewParagraphAfterBlock = () => {
-    if (editor.isActive('blockquote') || editor.isActive('codeBlock')) {
-      // Сначала деактивируем текущий блок
-      if (editor.isActive('blockquote')) {
-        editor.chain().focus().toggleBlockquote().run();
-      } else if (editor.isActive('codeBlock')) {
-        editor.chain().focus().toggleCodeBlock().run();
-      }
+  // Добавление/редактирование ссылки
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    // Отменить при пустом URL
+    if (url === null) {
+      return;
+    }
+
+    // Удалить ссылку при пустой строке
+    if (url === '') {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    // Если ничего не выбрано, но есть ссылка под курсором
+    if (editor.view.state.selection.empty && previousUrl) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
       
+      if (url) {
+        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      }
+      return;
+    }
+
+    // Если текст не выбран, спросить текст ссылки
+    if (editor.view.state.selection.empty) {
+      const text = window.prompt('Текст ссылки');
+      if (text) {
+        editor
+          .chain()
+          .focus()
+          .insertContent(`<a href="${url}">${text}</a>`)
+          .run();
+      }
+      return;
+    }
+
+    // Если текст выбран, просто добавить ссылку
+    editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  // Функция для обработки нажатия Enter
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       // Добавляем новый параграф
       editor.commands.createParagraphNear();
     }
@@ -189,7 +197,8 @@ export default function RichTextEditor({
   ]
 
   return (
-    <div className={cn('border border-input rounded-md', className)} style={{ resize: 'both', overflow: 'hidden' }}>
+    <div className={cn("resizable-editor", className)} ref={editorContainerRef}
+         style={{ minHeight: `${minHeight + 50}px` }}>
       <div className="border-b p-2 bg-muted/20 flex flex-wrap gap-1 justify-start items-center">
         <TooltipProvider>
           <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
@@ -305,248 +314,56 @@ export default function RichTextEditor({
 
           <div className="mx-1 h-full w-px bg-border" />
 
-          <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h1" 
-                  size="sm"
-                  aria-label="Заголовок 1" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                  data-state={editor.isActive('heading', { level: 1 }) ? 'on' : 'off'}
-                >
-                  <Heading1 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 1</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h2" 
-                  size="sm"
-                  aria-label="Заголовок 2" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                  data-state={editor.isActive('heading', { level: 2 }) ? 'on' : 'off'}
-                >
-                  <Heading2 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 2</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="h3" 
-                  size="sm"
-                  aria-label="Заголовок 3" 
-                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                  data-state={editor.isActive('heading', { level: 3 }) ? 'on' : 'off'}
-                >
-                  <Heading3 className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Заголовок 3</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-        
-          <div className="mx-1 h-full w-px bg-border" />
-
-          <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="bulletList" 
-                  size="sm"
-                  aria-label="Маркированный список" 
-                  onClick={() => editor.chain().focus().toggleBulletList().run()}
-                  data-state={editor.isActive('bulletList') ? 'on' : 'off'}
-                >
-                  <List className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Маркированный список</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="orderedList" 
-                  size="sm"
-                  aria-label="Нумерованный список" 
-                  onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                  data-state={editor.isActive('orderedList') ? 'on' : 'off'}
-                >
-                  <ListOrdered className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Нумерованный список</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="blockquote" 
-                  size="sm"
-                  aria-label="Цитата" 
-                  onClick={() => {
-                    // Если активны другие блоки, сначала отключим их
-                    if (editor.isActive('codeBlock')) {
-                      editor.chain().focus().toggleCodeBlock().run();
-                    }
-                    // Затем включим цитату
-                    editor.chain().focus().toggleBlockquote().run();
-                    
-                    // Добавляем новый параграф после блока при необходимости
-                    if (!editor.isActive('blockquote')) {
-                      ensureNewParagraphAfterBlock();
-                    }
-                  }}
-                  data-state={editor.isActive('blockquote') ? 'on' : 'off'}
-                >
-                  <Quote className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Цитата</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="code" 
-                  size="sm"
-                  aria-label="Форматированный код" 
-                  onClick={() => {
-                    // Включаем/выключаем инлайн код
-                    editor.chain().focus().toggleCode().run();
-                    // Добавляем новый параграф после блока при необходимости
-                    if (!editor.isActive('code')) {
-                      ensureNewParagraphAfterBlock();
-                    }
-                  }}
-                  data-state={editor.isActive('code') ? 'on' : 'off'}
-                >
-                  <Code className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Форматированный код</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem 
-                  value="codeBlock" 
-                  size="sm"
-                  aria-label="Блок кода" 
-                  onClick={() => {
-                    // Если активна цитата, сначала отключим её
-                    if (editor.isActive('blockquote')) {
-                      editor.chain().focus().toggleBlockquote().run();
-                    }
-                    // Затем включим блок кода
-                    editor.chain().focus().toggleCodeBlock().run();
-                    
-                    // Добавляем новый параграф после блока при необходимости
-                    if (!editor.isActive('codeBlock')) {
-                      ensureNewParagraphAfterBlock();
-                    }
-                  }}
-                  data-state={editor.isActive('codeBlock') ? 'on' : 'off'}
-                >
-                  <FileCode className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Блок кода</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-
-          <div className="mx-1 h-full w-px bg-border" />
+          {/* Image Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="h-8 px-2"
+                onClick={addImage}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Вставить изображение</TooltipContent>
+          </Tooltip>
 
           {/* Link Button */}
-          <Popover open={isLinkPopoverOpen} onOpenChange={setIsLinkPopoverOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-8 px-2"
-                    data-state={editor.isActive('link') ? 'on' : 'off'}
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Ссылка</TooltipContent>
-            </Tooltip>
-            <PopoverContent className="w-80">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="link-url">URL ссылки</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="link-url"
-                    value={linkUrl} 
-                    onChange={(e) => setLinkUrl(e.target.value)} 
-                    placeholder="https://example.com" 
-                  />
-                  <Button onClick={addLink} type="submit">Добавить</Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="h-8 px-2"
+                onClick={setLink}
+                data-state={editor.isActive('link') ? 'on' : 'off'}
+              >
+                <LinkIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Вставить ссылку</TooltipContent>
+          </Tooltip>
 
-          {/* Image Button */}
-          <Popover open={isImagePopoverOpen} onOpenChange={setIsImagePopoverOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-8 px-2"
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Изображение</TooltipContent>
-            </Tooltip>
-            <PopoverContent className="w-80">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="image-url">URL изображения</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="image-url"
-                    value={imageUrl} 
-                    onChange={(e) => setImageUrl(e.target.value)} 
-                    placeholder="https://example.com/image.jpg" 
-                  />
-                  <Button onClick={addImage} type="submit">Добавить</Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <div className="mx-1 h-full w-px bg-border" />
 
-          {/* Color Button */}
+          {/* Color Picker */}
           <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-8 px-2"
-                  >
-                    <Palette className="h-4 w-4" style={{ color: selectedColor }} />
-                  </Button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Цвет текста</TooltipContent>
-            </Tooltip>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 flex items-center gap-1"
+              >
+                <div
+                  className="h-4 w-4 rounded-sm border border-input"
+                  style={{ backgroundColor: selectedColor }}
+                />
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
             <PopoverContent className="w-64">
-              <div className="flex flex-col gap-2">
+              <div className="space-y-2">
                 <Label>Выберите цвет</Label>
                 <div className="grid grid-cols-6 gap-2">
                   {colors.map((color) => (
@@ -596,21 +413,10 @@ export default function RichTextEditor({
         </TooltipProvider>
       </div>
       
-      <div 
-        ref={editorContainerRef} 
-        className={cn("relative", className)}
-      >
+      <div className="editor-content">
         <EditorContent 
           editor={editor} 
-          className={cn("prose max-w-none p-4", className)}
-          style={{ 
-            minHeight, 
-            height: `${editorSize.height}px`,
-            transition: isResizing ? 'none' : 'height 0.1s ease-out',
-            overflow: 'auto',
-            width: '100%',
-            boxSizing: 'border-box'
-          }}
+          className={cn("prose max-w-none", className)}
         />
       </div>
 
