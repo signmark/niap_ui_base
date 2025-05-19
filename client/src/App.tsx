@@ -28,6 +28,7 @@ import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
 import TelegramTestPage from "@/pages/telegram-test";
+import EditorDemoPage from "@/pages/editor-demo";
 import AiImageTester from "@/pages/AiImageTester";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
@@ -64,6 +65,7 @@ const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsT
 const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
 const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
+const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
 
 function Router() {
   return (
@@ -87,6 +89,7 @@ function Router() {
       <Route path="/test/fal-ai-test" component={LayoutFalAiTest} />
       <Route path="/test/api-key-priority" component={LayoutApiKeyPriorityTest} />
       <Route path="/test/api-keys" component={LayoutApiKeysTest} />
+      <Route path="/editor-demo" component={LayoutEditorDemo} />
       <Route path="/test/universal-image-gen" component={LayoutUniversalImageGenTest} />
       <Route path="/test/imgur" component={LayoutTestImgur} />
       <Route path="/test/html-tags" component={LayoutHtmlTagsTestPage} />
