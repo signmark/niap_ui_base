@@ -292,6 +292,7 @@ export default function Keywords() {
       const now = new Date().toISOString();
       let addedCount = 0;
       let skippedCount = 0;
+      let errorCount = 0;
 
       // Получаем существующие ключевые слова для проверки дубликатов
       const existingKeywordsResponse = await directusApi.get('/items/campaign_keywords', {
@@ -337,35 +338,81 @@ export default function Keywords() {
           const errorMessage = err.response?.data?.errors?.[0]?.message || '';
           if (errorMessage.includes('Дубликат ключевого слова') || 
               errorMessage.includes('duplicate') || 
-              errorMessage.includes('unique')) {
+              errorMessage.includes('unique') || 
+              errorMessage.includes('already exists')) {
             console.log(`Ключевое слово "${keyword}" вызвало ошибку дубликата - пропускаем`);
             skippedCount++;
           } else {
-            // Если это другая ошибка, пробрасываем её выше
-            throw err;
+            // Если это другая ошибка, логируем ее и продолжаем с остальными ключевыми словами
+            console.error(`Ошибка при добавлении ключевого слова "${keyword}":`, err);
+            errorCount++;
           }
         }
       }
 
+      // Обновляем данные в кэше
       queryClient.invalidateQueries({ queryKey: ["campaign_keywords", campaignId] });
       
-      // Показываем более информативное сообщение
-      let description = `Добавлено ${addedCount} ключевых слов`;
-      if (skippedCount > 0) {
-        description += `, пропущено ${skippedCount} дубликатов`;
+      // Создаем информативное сообщение 
+      let message = "";
+      let description = "";
+      let variant: "default" | "destructive" | "secondary" = "default";
+      
+      if (addedCount > 0) {
+        message = "Успешно";
+        description = `Добавлено ${addedCount} ключевых слов`;
+        
+        if (skippedCount > 0) {
+          description += `, пропущено ${skippedCount} дубликатов`;
+        }
+        
+        if (errorCount > 0) {
+          description += `. Не удалось добавить ${errorCount} ключевых слов`;
+          variant = "secondary";
+        }
+      } else if (skippedCount > 0 && errorCount === 0) {
+        message = "Информация";
+        description = `Все ключевые слова (${skippedCount}) уже существуют в кампании`;
+        variant = "secondary";
+      } else if (errorCount > 0) {
+        if (skippedCount > 0) {
+          message = "Частичная ошибка";
+          description = `Пропущено ${skippedCount} дубликатов. Не удалось добавить ${errorCount} ключевых слов`;
+        } else {
+          message = "Ошибка";
+          description = `Не удалось добавить ключевые слова (${errorCount})`;
+        }
+        variant = "destructive";
       }
       
       toast({ 
-        title: "Успешно",
-        description: description
+        title: message,
+        description: description,
+        variant: variant
       });
     } catch (error) {
       console.error('Error saving website keywords:', error);
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось сохранить некоторые ключевые слова"
-      });
+      
+      // Проверяем, есть ли в ошибке информация о дубликатах
+      const errorMessage = typeof error === 'object' && error !== null 
+        ? (error.message || error.toString()) 
+        : String(error);
+      
+      if (errorMessage.toLowerCase().includes('дубликат') || 
+          errorMessage.toLowerCase().includes('duplicate') || 
+          errorMessage.toLowerCase().includes('already exists')) {
+        toast({
+          variant: "secondary",
+          title: "Дублирующиеся ключевые слова",
+          description: "Некоторые ключевые слова уже существуют в кампании и были пропущены"
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Ошибка",
+          description: "Не удалось сохранить ключевые слова"
+        });
+      }
     }
   };
 
