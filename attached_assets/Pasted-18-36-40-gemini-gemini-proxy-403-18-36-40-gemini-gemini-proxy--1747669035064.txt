@@ -1,0 +1,49 @@
+18:36:40 [gemini] [gemini-proxy] Получен ответ со статусом: 403
+18:36:40 [gemini] [gemini-proxy] Попытка 1 из 3 не удалась. Повтор через 1000ms. Ошибка: HTTP error 403: {
+  "error": {
+    "code": 403,
+    "message": "Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+
+18:36:41 [gemini] [gemini-proxy] Отправка запроса к: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=
+18:36:42 [gemini] [gemini-proxy] Получен ответ со статусом: 403
+18:36:42 [gemini] [gemini-proxy] Попытка 2 из 3 не удалась. Повтор через 2000ms. Ошибка: HTTP error 403: {
+  "error": {
+    "code": 403,
+    "message": "Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+
+Fetching keywords for campaign: fde4ae82-e492-4c94-965d-902bfe721d97
+18:36:44 [gemini] [gemini-proxy] Отправка запроса к: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=
+Directus keywords API response: {
+  status: 200,
+  dataLength: 9,
+  firstKeyword: {
+    id: '0e554d25-306f-4b87-947e-c30af03099d3',
+    keyword: 'диагностика состояния здоровья',
+    trend_score: 4500,
+    mentions_count: 58,
+    campaign_id: 'fde4ae82-e492-4c94-965d-902bfe721d97',
+    last_checked: '2025-04-07T15:49:14.615Z',
+    date_created: '2025-04-07T15:49:14.615Z'
+  }
+}
+18:36:44 [express] GET /api/keywords 304 in 115ms :: {"data":[{"id":"0e554d25-306f-4b87-947e-c30af…
+Fetching content for campaign ID: fde4ae82-e492-4c94-965d-902bfe721d97
+Found 5 content items for campaign fde4ae82-e492-4c94-965d-902bfe721d97
+Sample keywords being sent to client: array length: 3 ["соленое сало","грудинка","сало соленое"]
+18:36:44 [express] GET /api/campaign-content 304 in 120ms :: {"data":[{"id":"941aa210-bb43-48cc-93…
+18:36:45 [gemini] [gemini-proxy] Получен ответ со статусом: 403
+18:36:45 [express] [gemini-proxy] Ошибка при тестировании API ключа: [gemini-proxy] Максимальное количество попыток исчерпано. Последняя ошибка: HTTP error 403: {
+  "error": {
+    "code": 403,
+    "message": "Method doesn't allow unregistered callers (callers without established identity). Please use API Key or other form of API consumer identity to call this API.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+ gemini
+API ключ Gemini недействителен

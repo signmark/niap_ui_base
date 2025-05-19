@@ -275,5 +275,9 @@ export class GeminiProxyService {
 
 // Создаем глобальный экземпляр сервиса с использованием API ключа из переменных окружения
 export const geminiProxyService = new GeminiProxyService({ 
-  apiKey: process.env.GEMINI_API_KEY || ''
+  apiKey: process.env.GEMINI_API_KEY || 'AIzaSyDaYtWfHwI9vq3kTatny217HnbKauAvdxE'
 });
+
+// Выводим информацию об инициализации сервиса с API ключом (скрываем полный ключ для безопасности)
+const apiKeyPrefix = (process.env.GEMINI_API_KEY || 'AIzaSyDaYtWfHwI9vq3kTatny217HnbKauAvdxE').substring(0, 10);
+logger.log(`[gemini-proxy] Инициализирован с API ключом: ${apiKeyPrefix}...`, 'gemini');

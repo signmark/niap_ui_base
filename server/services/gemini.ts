@@ -89,4 +89,4 @@ export class GeminiService {
 }
 
 // Экспортируем экземпляр сервиса по умолчанию
-export const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+export const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || 'AIzaSyDaYtWfHwI9vq3kTatny217HnbKauAvdxE' });
