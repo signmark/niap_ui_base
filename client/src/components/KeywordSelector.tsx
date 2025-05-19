@@ -185,11 +185,12 @@ export function KeywordSelector({
   const handleSelect = (keyword: string) => {
     // Проверяем, существует ли уже это ключевое слово
     if (existingKeywords.includes(keyword)) {
-      // Если ключевое слово уже существует в кампании, показываем сообщение
+      // Если ключевое слово уже существует в кампании, просто показываем информационное сообщение
       toast({
-        variant: "destructive",
-        description: `Ключевое слово "${keyword}" уже добавлено в кампанию`
+        variant: "default",
+        description: `Ключевое слово "${keyword}" уже добавлено, но вы можете выбрать другие`
       });
+      // Возвращаемся без ошибки, но не даем выбрать это слово снова
       return;
     }
     
@@ -212,38 +213,63 @@ export function KeywordSelector({
   // Функция для сохранения всех выбранных ключевых слов с их метриками
   const handleSaveSelected = () => {
     if (keywords.length > 0) {
-      // Получаем только выбранные ключевые слова с полными данными о частоте и конкуренции
-      const selectedKeywordsWithMetrics = keywords
-        .filter(item => selectedItems.includes(item.keyword))
-        .filter(item => !existingKeywords.includes(item.keyword)); // Фильтруем, чтобы не добавлять дубликаты
+      // Получаем все выбранные ключевые слова с метриками
+      const allSelectedKeywords = keywords
+        .filter(item => selectedItems.includes(item.keyword));
+      
+      // Разделяем на новые и существующие
+      const newKeywords = allSelectedKeywords
+        .filter(item => !existingKeywords.includes(item.keyword)); 
+      
+      const duplicateKeywords = allSelectedKeywords
+        .filter(item => existingKeywords.includes(item.keyword));
       
       // Получаем только строковые значения ключевых слов для обновления UI
-      const selectedKeywordStrings = selectedKeywordsWithMetrics.map(item => item.keyword);
+      const newKeywordStrings = newKeywords.map(item => item.keyword);
       
-      console.log("Выбранные ключевые слова с метриками для сохранения:", selectedKeywordsWithMetrics);
+      console.log("Выбранные ключевые слова для сохранения:", allSelectedKeywords);
+      console.log("Новые ключевые слова:", newKeywords);
+      console.log("Дубликаты ключевых слов:", duplicateKeywords);
       
-      if (selectedKeywordsWithMetrics.length > 0) {
-        // Оптимистично обновляем локальные состояния
-        setExistingKeywords(prev => [...prev, ...selectedKeywordStrings]);
+      // Формируем информативное сообщение
+      let message = '';
+      if (newKeywords.length > 0) {
+        message += `Добавлено ${newKeywords.length} новых ключевых слов. `;
+      }
+      if (duplicateKeywords.length > 0) {
+        message += `Пропущено ${duplicateKeywords.length} дубликатов. `;
+      }
+      
+      // Оптимистично обновляем локальные состояния
+      if (newKeywords.length > 0) {
+        setExistingKeywords(prev => [...prev, ...newKeywordStrings]);
         
         // Отправляем полные данные родительскому компоненту
         // Передаем объекты с метриками вместо простых строк
-        onSelect(selectedKeywordsWithMetrics);
+        onSelect(newKeywords);
         
-        // Очищаем результаты после сохранения
-        setKeywords([]);
-        setSearchTerm('');
-      } else {
-        // Все выбранные ключевые слова уже существуют
+        // Показываем сообщение о результате
         toast({
-          description: "Выбранные ключевые слова уже добавлены",
+          title: newKeywords.length > 0 ? "Успешно" : "Информация",
+          description: message || `Обработано ${allSelectedKeywords.length} ключевых слов`,
           variant: "default"
         });
-        
-        // Очищаем результаты
-        setKeywords([]);
-        setSearchTerm('');
+      } else if (duplicateKeywords.length > 0) {
+        // Все выбранные ключевые слова уже существуют
+        toast({
+          description: "Все выбранные ключевые слова уже добавлены",
+          variant: "default"
+        });
+      } else {
+        toast({
+          description: "Не выбрано ни одного ключевого слова",
+          variant: "default"
+        });
       }
+      
+      // Очищаем результаты после сохранения
+      setKeywords([]);
+      setSearchTerm('');
     }
   };
   
