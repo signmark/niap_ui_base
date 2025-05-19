@@ -1396,12 +1396,13 @@ export default function ContentPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="content">Контент</Label>
-              <div className="max-h-[200px] overflow-y-auto">
-                <RichTextEditor
-                  content={newContent.content || ''}
-                  onChange={(html: string) => setNewContent({...newContent, content: html})}
-                  minHeight="150px"
-                  className="tiptap"
+              <div>
+                <TextareaWithResize
+                  value={newContent.content || ''}
+                  onChange={(text: string) => setNewContent({...newContent, content: text})}
+                  minHeight={150}
+                  className="resize-both min-h-[150px]"
+                  placeholder="Введите текст контента..."
                 />
               </div>
             </div>
@@ -1674,15 +1675,16 @@ export default function ContentPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="content">Контент</Label>
-                <div className="max-h-[200px] overflow-y-auto">
-                  <RichTextEditor
-                    content={currentContent.content || ''}
-                    onChange={(html: string) => {
-                      const updatedContent = {...currentContent, content: html};
+                <div>
+                  <TextareaWithResize
+                    value={currentContent.content || ''}
+                    onChange={(text: string) => {
+                      const updatedContent = {...currentContent, content: text};
                       setCurrentContentSafe(updatedContent);
                     }}
-                    minHeight="150px"
-                    className="tiptap"
+                    minHeight={150}
+                    className="resize-both min-h-[150px]"
+                    placeholder="Введите текст контента..."
                   />
                 </div>
               </div>
