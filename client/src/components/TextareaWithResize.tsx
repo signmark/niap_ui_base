@@ -31,10 +31,11 @@ export function TextareaWithResize({
   minHeight = 150,
   className,
 }: TextareaWithResizeProps) {
-  const [text, setText] = useState(value);
+  const [text, setText] = useState(value || '');
 
   useEffect(() => {
-    setText(value);
+    // Проверяем значение на null или undefined и устанавливаем пустую строку в этом случае
+    setText(value || '');
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

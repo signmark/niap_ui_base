@@ -16,11 +16,12 @@ export function SimpleRichTextEditor({
   minHeight = 150,
   className,
 }: SimpleRichTextEditorProps) {
-  const [text, setText] = useState(value);
+  const [text, setText] = useState(value || '');
 
   // Синхронизация внешнего значения с внутренним состоянием
   useEffect(() => {
-    setText(value);
+    // Проверяем значение на null или undefined и устанавливаем пустую строку в этом случае
+    setText(value || '');
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
