@@ -598,7 +598,7 @@ export default function RichTextEditor({
       
       <div 
         ref={editorContainerRef} 
-        className={cn("relative", className)}
+        className={cn("relative border border-input rounded-md overflow-hidden", className)}
         style={{ cursor: isResizing ? 'ns-resize' : 'auto' }}
       >
         <EditorContent 
@@ -607,18 +607,25 @@ export default function RichTextEditor({
           style={{ 
             minHeight, 
             height: `${editorSize.height}px`,
-            transition: isResizing ? 'none' : 'height 0.1s ease-out'
+            transition: isResizing ? 'none' : 'height 0.1s ease-out',
+            resize: 'vertical',
+            overflow: 'auto'
           }}
         />
         
-        {/* Индикатор возможности ресайза - сделал более заметным и увеличил размер */}
+        {/* Индикатор возможности ресайза в стиле текстового поля */}
         <div 
-          className="absolute bottom-0 right-0 w-8 h-8 flex items-center justify-center cursor-se-resize opacity-70 hover:opacity-100 bg-muted/40 rounded-tl-md z-10"
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-300/70 hover:bg-gray-400/90 z-10"
           onMouseDown={handleResizeStart}
           title="Потяните, чтобы изменить размер"
-        >
-          <CornerRightDown className="w-5 h-5 text-primary/80" />
-        </div>
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, transparent 50%, #94a3b8 50%)',
+            pointerEvents: 'all'
+          }}
+        />
       </div>
 
       {/* Text Enhancement Dialog */}
