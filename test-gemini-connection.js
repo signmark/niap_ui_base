@@ -4,9 +4,9 @@
  * Запуск: node test-gemini-connection.js ВАША_API_КЛЮЧ
  */
 
-const fetch = require('node-fetch');
-const { SocksProxyAgent } = require('socks-proxy-agent');
-const { HttpsProxyAgent } = require('https-proxy-agent');
+import fetch from 'node-fetch';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 // Получаем API ключ из аргументов командной строки
 const apiKey = process.argv[2];
@@ -256,4 +256,5 @@ async function runAllTests() {
 // Запускаем все тесты
 runAllTests().catch(error => {
   console.error('Произошла непредвиденная ошибка:', error);
+  console.error(error.stack);
 });
