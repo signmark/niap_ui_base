@@ -189,7 +189,7 @@ export default function RichTextEditor({
   ]
 
   return (
-    <div className={cn('border border-input rounded-md', className)}>
+    <div className={cn('border border-input rounded-md', className)} style={{ resize: 'both', overflow: 'hidden' }}>
       <div className="border-b p-2 bg-muted/20 flex flex-wrap gap-1 justify-start items-center">
         <TooltipProvider>
           <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
@@ -598,7 +598,7 @@ export default function RichTextEditor({
       
       <div 
         ref={editorContainerRef} 
-        className={cn("relative border border-input rounded-md", className)}
+        className={cn("relative", className)}
       >
         <EditorContent 
           editor={editor} 
@@ -608,10 +608,8 @@ export default function RichTextEditor({
             height: `${editorSize.height}px`,
             transition: isResizing ? 'none' : 'height 0.1s ease-out',
             overflow: 'auto',
-            resize: 'both',
             width: '100%',
-            boxSizing: 'border-box',
-            cursor: isResizing ? 'se-resize' : 'auto'
+            boxSizing: 'border-box'
           }}
         />
       </div>
