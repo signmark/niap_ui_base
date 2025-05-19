@@ -1,0 +1,35 @@
+17:53:45 [gemini] [gemini-proxy] Попытка 1 из 3 не удалась. Повтор через 1000ms. Ошибка: request to https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key= failed, reason: connect ECONNREFUSED 131.108.17.21:9271
+Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+17:53:46 [gemini] [gemini-proxy] Отправка запроса к: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=
+Found 100 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Sample keywords being sent to client: array length: 2 ["рацион питания","план питания"]
+17:53:47 [express] GET /api/campaign-content 304 in 1334ms :: {"data":[{"id":"ebc6fe37-89f1-4a00-b…
+17:53:48 [gemini] [gemini-proxy] Попытка 2 из 3 не удалась. Повтор через 2000ms. Ошибка: request to https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key= failed, reason: connect ECONNREFUSED 131.108.17.21:9271
+17:53:49 [status-checker] Проверка статусов публикаций
+17:53:50 [directus-auth] Found 0 active sessions
+17:53:50 [directus-auth] Attempting to login as admin (admin@example.com)
+17:53:50 [directus-crud] Попытка авторизации пользователя admin@example.com
+17:53:50 [scheduler] Проверка запланированных публикаций
+17:53:50 [scheduler] Принудительное обновление токена администратора
+17:53:50 [scheduler] Запуск проверки статусов контента
+17:53:50 [scheduler] Попытка авторизации администратора с учетными данными из env
+17:53:50 [scheduler] Попытка авторизации администратора с учетными данными из env
+17:53:50 [gemini] [gemini-proxy] Отправка запроса к: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=
+17:53:50 [directus-crud] Ошибка при авторизации пользователя admin@example.com: Request failed with status code 401
+17:53:50 [directus-crud] Детали ошибки: {"errors":[{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]}
+17:53:50 [directus-auth] Error getting admin session: Ошибка авторизации: Invalid user credentials.
+17:53:50 [status-checker] Попытка авторизации администратора с учетными данными из env
+17:53:51 [status-checker] Ошибка при авторизации администратора: Request failed with status code 401
+17:53:51 [status-checker] Не удалось получить токен администратора для проверки статусов
+17:53:51 [scheduler] Ошибка при прямой авторизации администратора: Request failed with status code 401
+17:53:51 [scheduler] Детали ошибки: [{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]
+17:53:51 [directus-auth] Attempting to log in user: admin@example.com
+17:53:51 [directus-crud] Попытка авторизации пользователя admin@example.com
+17:53:51 [scheduler] Ошибка при прямой авторизации администратора: Request failed with status code 401
+17:53:51 [scheduler] Детали ошибки: [{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]
+17:53:51 [directus-auth] Attempting to log in user: admin@example.com
+17:53:51 [directus-crud] Попытка авторизации пользователя admin@example.com
+17:53:52 [directus-crud] Ошибка при авторизации пользователя admin@example.com: Request failed with status code 401
+17:53:52 [directus-crud] Детали ошибки: {"errors":[{"message":"Invalid user credentials.","extensions":{"code":"INVALID_CREDENTIALS"}}]}
+17:53:52 [directus-auth] Error during login for user admin@example.com: Ошибка авторизации: Invalid user credentials.
+17:53:52 [scheduler] Ошибка при авторизации через вспомогательные сервисы: Failed to login: Ошибка авторизации: Invalid user credentials.
