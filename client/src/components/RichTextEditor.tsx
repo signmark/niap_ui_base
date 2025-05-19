@@ -599,38 +599,19 @@ export default function RichTextEditor({
       <div 
         ref={editorContainerRef} 
         className={cn("relative border border-input rounded-md", className)}
-        style={{ 
-          position: 'relative',
-          cursor: isResizing ? 'ns-resize' : 'auto'
-        }}
       >
-        {/* Добавляем еще один внешний контейнер для скролла, чтобы индикатор был привязан к нижнему правому углу */}
-        <div className="relative">
-          <EditorContent 
-            editor={editor} 
-            className={cn("prose max-w-none p-4", className)}
-            style={{ 
-              minHeight, 
-              height: `${editorSize.height}px`,
-              transition: isResizing ? 'none' : 'height 0.1s ease-out',
-              overflow: 'auto'
-            }}
-          />
-        </div>
-        
-        {/* Индикатор возможности ресайза в стиле текстового поля - фиксированный в углу */}
-        <div 
-          className="absolute bottom-0 right-0 cursor-se-resize z-10"
-          onMouseDown={handleResizeStart}
-          title="Потяните, чтобы изменить размер"
-          style={{
-            position: 'absolute',
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(135deg, transparent 50%, #94a3b8 50%)',
-            width: '14px',
-            height: '14px',
-            pointerEvents: 'all'
+        <EditorContent 
+          editor={editor} 
+          className={cn("prose max-w-none p-4", className)}
+          style={{ 
+            minHeight, 
+            height: `${editorSize.height}px`,
+            transition: isResizing ? 'none' : 'height 0.1s ease-out',
+            overflow: 'auto',
+            resize: 'both',
+            width: '100%',
+            boxSizing: 'border-box',
+            cursor: isResizing ? 'se-resize' : 'auto'
           }}
         />
       </div>
