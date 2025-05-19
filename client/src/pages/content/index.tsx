@@ -920,6 +920,13 @@ export default function ContentPage() {
   
   // Состояние для модального окна предпросмотра контента
   const [previewContent, setPreviewContent] = useState<CampaignContent | null>(null);
+  
+  // Определяем, активен ли поиск или фильтрация
+  const isSearchOrFilterActive = searchQuery.trim() !== '' || 
+    selectedStatus !== 'all' || 
+    Object.values(selectedPlatforms).some(value => value) || 
+    dateRange.from !== undefined || 
+    dateRange.to !== undefined;
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Получаем иконку для типа контента
@@ -1365,6 +1372,19 @@ export default function ContentPage() {
                   ))}
                 </Accordion>
               </div>
+            )}
+            
+            {/* Компонент пагинации */}
+            {!isSearchOrFilterActive && filteredContent.length > 0 && (
+              <ContentPagination 
+                currentPage={currentPage}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onPageChange={(page) => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
             )}
           </CardContent>
         </Card>
