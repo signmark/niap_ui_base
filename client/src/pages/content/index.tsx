@@ -894,6 +894,35 @@ export default function ContentPage() {
         }
       }
       
+      // Фильтр по поисковому запросу
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase().trim();
+        const matchesTitle = content.title?.toLowerCase().includes(query);
+        const matchesContent = content.content?.toLowerCase().includes(query);
+        const matchesKeywords = Array.isArray(content.keywords) && 
+          content.keywords.some(keyword => 
+            typeof keyword === 'string' && keyword.toLowerCase().includes(query)
+          );
+        
+        if (!matchesTitle && !matchesContent && !matchesKeywords) {
+          return false;
+        }
+      }
+      
+      // Фильтр по выбранным платформам
+      const selectedPlatformsArr = Object.entries(selectedPlatforms)
+        .filter(([_, selected]) => selected)
+        .map(([platform]) => platform);
+      
+      if (selectedPlatformsArr.length > 0) {
+        const contentPlatforms = content.social_platforms ? 
+          Object.keys(content.social_platforms) : [];
+        
+        if (!selectedPlatformsArr.some(platform => contentPlatforms.includes(platform))) {
+          return false;
+        }
+      }
+      
       return true;
     })
     // Сортировка контента по дате (новые сверху)
@@ -1031,6 +1060,34 @@ export default function ContentPage() {
             <div className="flex justify-between items-center mb-4">
               <CardTitle>Контент кампании</CardTitle>
               <div className="flex items-center gap-2">
+                {/* Поисковая строка */}
+                <div className="relative w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Поиск по контенту..."
+                    className="pl-8 h-9"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1); // Сбрасываем пагинацию при поиске
+                    }}
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-7 w-7 p-0"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setCurrentPage(1); // Сбрасываем пагинацию при сбросе поиска
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Очистить</span>
+                    </Button>
+                  )}
+                </div>
+                
                 <Popover open={isDateFilterOpen} onOpenChange={setIsDateFilterOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -1038,6 +1095,9 @@ export default function ContentPage() {
                       variant={dateRange.from || dateRange.to ? "default" : "outline"}
                       size="sm"
                       className={dateRange.from || dateRange.to ? "bg-blue-500 hover:bg-blue-600" : ""}
+                      onClick={() => {
+                        // При открытии/закрытии фильтра дат не сбрасываем страницу
+                      }}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange.from || dateRange.to ? (
