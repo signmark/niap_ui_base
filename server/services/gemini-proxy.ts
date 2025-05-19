@@ -29,10 +29,10 @@ export class GeminiProxyService {
     this.apiKey = options.apiKey;
     
     // Настройки прокси по умолчанию
-    const proxyHost = options.proxyHost || '131.108.17.21';
-    const proxyPort = options.proxyPort || 9271;
-    const proxyUsername = options.proxyUsername || 'vf8Fe7';
-    const proxyPassword = options.proxyPassword || 'yk5xt2';
+    const proxyHost = options.proxyHost || '138.219.123.68';
+    const proxyPort = options.proxyPort || 9710;
+    const proxyUsername = options.proxyUsername || 'PGjuJV';
+    const proxyPassword = options.proxyPassword || 'cwZmJ3';
     
     // Формируем URL прокси с учетными данными
     this.proxyUrl = `socks5://${proxyUsername}:${proxyPassword}@${proxyHost}:${proxyPort}`;

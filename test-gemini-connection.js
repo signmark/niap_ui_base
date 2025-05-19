@@ -18,10 +18,10 @@ if (!apiKey) {
 
 // Настройки прокси
 const socksProxy = {
-  host: '131.108.17.21',
-  port: 9271,
-  username: 'vf8Fe7',
-  password: 'yk5xt2'
+  host: '138.219.123.68',
+  port: 9710,
+  username: 'PGjuJV',
+  password: 'cwZmJ3'
 };
 
 // Функция для тестирования прямого подключения
