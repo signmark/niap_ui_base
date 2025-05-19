@@ -42,6 +42,7 @@ import { ContentPlanGenerator } from "@/components/ContentPlanGenerator";
 import { useCampaignStore } from "@/lib/campaignStore";
 import RichTextEditor from "@/components/RichTextEditor";
 import { TextareaWithResize } from "@/components/TextareaWithResize";
+import { ContentPagination } from "@/components/ContentPagination";
 import SocialMediaFilter from "@/components/SocialMediaFilter";
 import SocialMediaIcon from "@/components/SocialMediaIcon";
 import PlatformSelector from "@/components/PlatformSelector";
