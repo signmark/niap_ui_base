@@ -382,21 +382,34 @@ export function KeywordSelector({
                 </tr>
               </thead>
               <tbody className="bg-background divide-y divide-border">
-                {keywords.map((item, index) => (
-                  <tr key={index} className={selectedItems.includes(item.keyword) ? 'bg-primary/10' : ''}>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm">{item.keyword}</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.frequency || 0)}</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm">
-                      <div className="flex items-center justify-center">
-                        <Checkbox 
-                          checked={selectedItems.includes(item.keyword)}
-                          onCheckedChange={() => handleSelect(item.keyword)}
-                          id={`keyword-${index}`}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {keywords.map((item, index) => {
+                  // Проверяем, является ли ключевое слово существующим
+                  const isExisting = existingKeywords.includes(item.keyword);
+                  // Определяем, отмечен ли чекбокс (выбрано или уже добавлено)
+                  const isChecked = selectedItems.includes(item.keyword) || isExisting;
+                  
+                  return (
+                    <tr key={index} className={isChecked ? 'bg-primary/10' : ''}>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm">
+                        {item.keyword}
+                        {isExisting && (
+                          <span className="ml-2 text-xs text-muted-foreground">(добавлено)</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm">{formatNumber(item.frequency || 0)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm">
+                        <div className="flex items-center justify-center">
+                          <Checkbox 
+                            checked={isChecked}
+                            onCheckedChange={() => handleSelect(item.keyword)}
+                            id={`keyword-${index}`}
+                            disabled={isExisting} // Блокируем чекбокс для уже добавленных ключевых слов
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
