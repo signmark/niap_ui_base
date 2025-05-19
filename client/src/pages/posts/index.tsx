@@ -26,8 +26,7 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Состояние для хранения статуса фильтра (показывать только с socialPlatforms)
-  const [showOnlyWithSocialPlatforms, setShowOnlyWithSocialPlatforms] = useState<boolean>(false);
+  // Состояние для фильтрации (зарезервировано для будущих фильтров)
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent } = useQuery({
@@ -92,16 +91,8 @@ export default function Posts() {
   // Получение точек для календаря (публикации на каждый день)
   // Функция для фильтрации контента на основе настроек
   const getFilteredContent = () => {
-    if (!showOnlyWithSocialPlatforms) {
-      return campaignContent;
-    }
-    
-    // Фильтруем только те посты, которые имеют поле socialPlatforms
-    return campaignContent.filter(post => {
-      return post.socialPlatforms && 
-             typeof post.socialPlatforms === 'object' && 
-             Object.keys(post.socialPlatforms).length > 0;
-    });
+    // Возвращаем весь контент без дополнительной фильтрации
+    return campaignContent;
   };
 
   // Вспомогательная функция для определения уникальных постов на день
@@ -233,23 +224,7 @@ export default function Posts() {
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <label htmlFor="showOnlyWithSocialPlatforms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Только публикации в соцсетях
-                      </label>
-                      <input
-                        type="checkbox"
-                        id="showOnlyWithSocialPlatforms"
-                        checked={showOnlyWithSocialPlatforms}
-                        onChange={(e) => setShowOnlyWithSocialPlatforms(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Показывать только посты, опубликованные в социальных сетях
-                    </p>
-                  </div>
+
                 </div>
                 
                 <div className="mt-4 space-y-2">
