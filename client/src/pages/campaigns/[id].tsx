@@ -473,13 +473,24 @@ export default function CampaignDetails() {
       setIsSearchingKeywords(false);
       setSuggestedKeywords([]);
       
-      // Показываем сообщение о результате
-      if (result && result.added > 0) {
-        toast({
-          title: "Успешно",
-          description: `Добавлено ${result.added} новых ключевых слов`
-        });
+      // Формируем информативное сообщение о результате
+      let message = '';
+      if (result.added > 0) {
+        message += `Добавлено ${result.added} ключевых слов. `;
       }
+      if (result.skipped > 0) {
+        message += `Пропущено ${result.skipped} дубликатов. `;
+      }
+      if (result.errors > 0) {
+        message += `Не удалось добавить ${result.errors} ключевых слов. `;
+      }
+      
+      // Показываем сообщение о результате
+      toast({
+        title: result.added > 0 ? "Успешно" : "Информация",
+        description: message || `Обработано ${result.total} ключевых слов`,
+        variant: result.errors > 0 ? "destructive" : "default"
+      });
     },
     onError: (error, variables, context) => {
       console.error("Ошибка при добавлении ключевых слов:", error);
