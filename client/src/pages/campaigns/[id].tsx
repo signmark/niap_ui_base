@@ -319,32 +319,69 @@ export default function CampaignDetails() {
       
       console.log("Добавление ключевых слов с метриками:", newKeywords);
       
-      // Сразу добавляем ключевые слова с имеющимися данными о частоте
-      // Больше не нужно обогащать данные через XMLRiver API
-      const promises = newKeywords.map(item => 
-        directusApi.post('/items/campaign_keywords', {
-          campaign_id: id,
-          keyword: item.keyword,
-          trend_score: item.frequency || 3500, // Используем существующую частоту или значение по умолчанию
-          mentions_count: item.competition || 75, // Используем существующую конкуренцию или значение по умолчанию
-          last_checked: new Date().toISOString()
-        })
-      );
+      // Сначала получаем список существующих ключевых слов для проверки на дубликаты
+      const existingKeywordsResponse = await directusApi.get('/items/campaign_keywords', {
+        params: {
+          filter: {
+            campaign_id: { _eq: id }
+          },
+          fields: ['keyword']
+        }
+      });
       
-      try {
-        // Отправляем запросы на добавление ключевых слов в Directus
-        const results = await Promise.all(promises);
+      const existingKeywords = existingKeywordsResponse.data?.data || [];
+      const existingKeywordsLower = existingKeywords.map((k: any) => k.keyword.toLowerCase());
+      
+      let addedCount = 0;
+      let skippedCount = 0;
+      let errorCount = 0;
+      let results: any[] = [];
+      
+      // Обрабатываем каждое ключевое слово по-отдельности для корректной работы с дубликатами
+      for (const item of newKeywords) {
+        // Проверяем, существует ли уже такое ключевое слово (независимо от регистра)
+        if (existingKeywordsLower.includes(item.keyword.toLowerCase())) {
+          console.log(`Ключевое слово "${item.keyword}" уже существует - пропускаем`);
+          skippedCount++;
+          continue;
+        }
         
-        // Возвращаем результат немедленно
-        return { 
-          added: newKeywords.length, 
-          newKeywords: newKeywords.map(k => k.keyword), 
-          results
-        };
-      } catch (error) {
-        console.error("Ошибка при добавлении ключевых слов:", error);
-        throw error; // Пробрасываем ошибку для обработки в onError
+        try {
+          const result = await directusApi.post('/items/campaign_keywords', {
+            campaign_id: id,
+            keyword: item.keyword,
+            trend_score: item.frequency || 3500, // Используем существующую частоту или значение по умолчанию
+            mentions_count: item.competition || 75, // Используем существующую конкуренцию или значение по умолчанию
+            last_checked: new Date().toISOString()
+          });
+          
+          results.push(result);
+          addedCount++;
+        } catch (err: any) {
+          // Проверяем, связана ли ошибка с дубликатом
+          const errorMessage = err.response?.data?.errors?.[0]?.message || '';
+          if (errorMessage.includes('Дубликат ключевого слова') || 
+              errorMessage.includes('duplicate') || 
+              errorMessage.includes('unique') || 
+              errorMessage.includes('already exists')) {
+            console.log(`Ключевое слово "${item.keyword}" вызвало ошибку дубликата - пропускаем`);
+            skippedCount++;
+          } else {
+            console.error(`Ошибка при добавлении ключевого слова "${item.keyword}":`, err);
+            errorCount++;
+          }
+        }
       }
+      
+      // Возвращаем информативный результат
+      return { 
+        added: addedCount, 
+        skipped: skippedCount,
+        errors: errorCount,
+        total: newKeywords.length,
+        newKeywords: newKeywords.map(k => k.keyword), 
+        results
+      };
     },
     // Оптимистичное обновление UI
     onMutate: async (keywordsInput: string[] | { keyword: string; frequency?: number; competition?: number }[]) => {
