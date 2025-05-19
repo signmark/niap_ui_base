@@ -611,13 +611,13 @@ export default function RichTextEditor({
           }}
         />
         
-        {/* Индикатор возможности ресайза */}
+        {/* Индикатор возможности ресайза - сделал более заметным и увеличил размер */}
         <div 
-          className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-se-resize opacity-50 hover:opacity-100"
+          className="absolute bottom-0 right-0 w-8 h-8 flex items-center justify-center cursor-se-resize opacity-70 hover:opacity-100 bg-muted/40 rounded-tl-md z-10"
           onMouseDown={handleResizeStart}
           title="Потяните, чтобы изменить размер"
         >
-          <CornerRightDown className="w-4 h-4 text-gray-500" />
+          <CornerRightDown className="w-5 h-5 text-primary/80" />
         </div>
       </div>
 
