@@ -38,6 +38,13 @@ RUN npm install --save --no-audit \
     && npm ls @aws-sdk/client-s3 \
     && echo "AWS SDK установлен успешно"
 
+# Устанавливаем библиотеки Nivo для визуализации аналитики
+RUN npm install --save --no-audit \
+    @nivo/pie @nivo/bar @nivo/line \
+    @nivo/core @nivo/colors @nivo/scales \
+    d3-scale d3-shape d3-time-format \
+    && echo "Nivo библиотеки установлены успешно"
+
 # Проверяем наличие библиотек
 RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls socks-proxy-agent && npm ls @aws-sdk/client-s3 && npm ls emoji-picker-react
 
