@@ -171,19 +171,53 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
       }
       // В противном случае сохраняем ключевые слова сами
       else {
+        // Сначала получаем список существующих ключевых слов для проверки дубликатов
+        const existingKeywordsResponse = await api.get(`/campaign-keywords/${campaignId}`);
+        const existingKeywords = existingKeywordsResponse.data?.data || [];
+        const existingKeywordsLower = existingKeywords.map(k => k.keyword.toLowerCase());
+        
+        let addedCount = 0;
+        let skippedCount = 0;
+        
         // Отправляем каждое ключевое слово отдельно
         for (const keyword of selectedKeywordObjects) {
-          await api.post("/user-keywords", {
-            keyword: keyword.keyword,
-            trendScore: keyword.trend,
-            mentionsCount: keyword.competition,
-            campaignId,
-          });
+          // Проверяем, существует ли уже такое ключевое слово (независимо от регистра)
+          if (existingKeywordsLower.includes(keyword.keyword.toLowerCase())) {
+            console.log(`Ключевое слово "${keyword.keyword}" уже существует - пропускаем`);
+            skippedCount++;
+            continue;
+          }
+          
+          try {
+            await api.post("/user-keywords", {
+              keyword: keyword.keyword,
+              trendScore: keyword.trend,
+              mentionsCount: keyword.competition,
+              campaignId,
+            });
+            addedCount++;
+          } catch (err) {
+            // Если ошибка связана с дубликатом, просто пропускаем это ключевое слово
+            console.log(`Ошибка при добавлении ключевого слова "${keyword.keyword}":`, err);
+            skippedCount++;
+          }
+        }
+
+        // Формируем информативное сообщение о результате
+        let description = "";
+        if (addedCount > 0) {
+          description = `Добавлено ${addedCount} ключевых слов`;
+          if (skippedCount > 0) {
+            description += `, пропущено ${skippedCount} дубликатов`;
+          }
+        } else if (skippedCount > 0) {
+          description = `Все ${skippedCount} ключевых слов уже существуют в кампании`;
         }
 
         toast({
-          title: "Успешно сохранено",
-          description: `${selectedKeywords.size} ключевых слов добавлено в кампанию`,
+          title: addedCount > 0 ? "Успешно сохранено" : "Информация",
+          description,
+          variant: addedCount > 0 ? "default" : "secondary",
         });
         
         // Сбрасываем выбранные ключевые слова
@@ -191,11 +225,24 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
       }
     } catch (error) {
       console.error("Ошибка при сохранении ключевых слов:", error);
-      toast({
-        title: "Ошибка сохранения",
-        description: "Не удалось сохранить ключевые слова",
-        variant: "destructive",
-      });
+      
+      // Проверяем, есть ли в ошибке информация о дубликатах
+      const errorMessage = error.response?.data?.message || error.message || "";
+      if (errorMessage.toLowerCase().includes("дубликат") || 
+          errorMessage.toLowerCase().includes("duplicate") || 
+          errorMessage.toLowerCase().includes("already exists")) {
+        toast({
+          title: "Дублирующиеся ключевые слова",
+          description: "Некоторые ключевые слова уже добавлены в кампанию и были пропущены",
+          variant: "secondary",
+        });
+      } else {
+        toast({
+          title: "Ошибка сохранения",
+          description: "Не удалось сохранить ключевые слова",
+          variant: "destructive",
+        });
+      }
     }
   };
 
