@@ -39,8 +39,8 @@ import {
   ToggleGroupItem,
 } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
-import EmojiPicker from './EmojiPicker';
-import TextEnhancementDialog from './TextEnhancementDialog';
+import { EmojiPicker } from './EmojiPicker';
+import { TextEnhancementDialog } from './TextEnhancementDialog';
 
 // Добавляем стили прямо в компонент
 const editorStyles = `
