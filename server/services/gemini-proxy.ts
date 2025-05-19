@@ -28,7 +28,7 @@ export class GeminiProxyService {
   constructor(options: GeminiProxyOptions) {
     this.apiKey = options.apiKey;
     
-    // Настройки прокси по умолчанию
+    // Настройки прокси по умолчанию (канадский прокси)
     const proxyHost = options.proxyHost || '138.219.123.68';
     const proxyPort = options.proxyPort || 9710;
     const proxyUsername = options.proxyUsername || 'PGjuJV';
@@ -127,7 +127,7 @@ export class GeminiProxyService {
   async testApiKey(): Promise<boolean> {
     try {
       // URL для запроса к API Gemini
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
       
       // Тестовый промпт
       const requestData = {
