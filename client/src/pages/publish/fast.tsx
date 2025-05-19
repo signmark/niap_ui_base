@@ -54,7 +54,7 @@ export default function FastPublish() {
   const [isResultOpen, setIsResultOpen] = useState<boolean>(false);
   
   // Используем глобальное состояние
-  const { selectedCampaign } = useCampaignStore();
+  const { selectedCampaign, setSelectedCampaign } = useCampaignStore();
   const userId = useAuthStore((state) => state.userId);
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   
@@ -63,6 +63,15 @@ export default function FastPublish() {
     queryKey: ['/api/campaigns'],
     enabled: !!userId,
   });
+  
+  // Обработчик выбора кампании
+  const handleCampaignChange = (campaignId: string) => {
+    const campaign = campaigns.find(camp => camp.id === campaignId);
+    if (campaign) {
+      setSelectedCampaign(campaign);
+      console.log("Выбрана кампания:", campaign.name);
+    }
+  };
   
   // Обработчик для загрузки изображения
   const handleImageUpload = (url: string) => {
@@ -309,6 +318,25 @@ export default function FastPublish() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
+            <div>
+              <Label htmlFor="campaign">Кампания</Label>
+              <Select
+                value={selectedCampaign?.id || ""}
+                onValueChange={handleCampaignChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Выберите кампанию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div>
               <Label htmlFor="title">Заголовок</Label>
               <Input
