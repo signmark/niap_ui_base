@@ -258,6 +258,9 @@ export default function ContentPage() {
   // Состояние для отображения фильтра по датам
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   
+  // Состояние для поиска
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // Состояния для пагинации
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -923,7 +926,7 @@ export default function ContentPage() {
   
   // Определяем, активен ли поиск или фильтрация
   const isSearchOrFilterActive = searchQuery.trim() !== '' || 
-    selectedStatus !== 'all' || 
+    activeTab !== 'all' || 
     Object.values(selectedPlatforms).some(value => value) || 
     dateRange.from !== undefined || 
     dateRange.to !== undefined;
