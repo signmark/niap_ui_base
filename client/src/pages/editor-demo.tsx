@@ -6,9 +6,11 @@ import { TextareaWithResize } from '@/components/TextareaWithResize';
 import { Button } from '@/components/ui/button';
 
 export default function EditorDemoPage() {
-  const [text1, setText1] = useState('Это текст в SimpleRichTextEditor. Попробуйте изменить его размер.');
-  const [text2, setText2] = useState('Это текст в TextareaWithResize. Попробуйте изменить его размер, потянув за правый нижний угол.');
+  const initialText1 = 'Это текст в SimpleRichTextEditor. Попробуйте изменить его размер.';
+  const initialText2 = 'Это текст в TextareaWithResize. Попробуйте изменить его размер, потянув за правый нижний угол.';
   
+  const [text1, setText1] = useState(initialText1);
+  const [text2, setText2] = useState(initialText2);
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Демо редакторов текста</h1>
