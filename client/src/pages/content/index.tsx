@@ -257,6 +257,11 @@ export default function ContentPage() {
   // Состояние для отображения фильтра по датам
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   
+  // Состояния для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -274,15 +279,15 @@ export default function ContentPage() {
   
   const campaigns = campaignsResponse?.data || [];
 
-  // Запрос списка контента для выбранной кампании
+  // Запрос списка контента для выбранной кампании с пагинацией
   const { data: campaignContent = [], isLoading: isLoadingContent } = useQuery<CampaignContent[]>({
-    queryKey: ["/api/campaign-content", selectedCampaignId],
+    queryKey: ["/api/campaign-content", selectedCampaignId, currentPage, pageSize],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log('Загрузка контента для кампании:', selectedCampaignId);
+      console.log('Загрузка контента для кампании:', selectedCampaignId, 'страница:', currentPage, 'размер страницы:', pageSize);
 
-      const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}`, {
+      const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}&page=${currentPage}&pageSize=${pageSize}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -293,7 +298,11 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
-      console.log('Загружено контента:', (data.data || []).length);
+      console.log('Загружено контента:', (data.data || []).length, 'из', data.total || 0);
+      
+      // Обновляем общее количество элементов для корректной пагинации
+      setTotalItems(data.total || 0);
+      
       return data.data || [];
     },
     enabled: !!selectedCampaignId,
