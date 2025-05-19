@@ -50,6 +50,7 @@ const editorStyles = `
     min-height: 200px;
     border: 1px solid hsl(var(--input));
     border-radius: 0.375rem;
+    position: relative;
   }
   
   .resizable-editor .ProseMirror {
@@ -63,6 +64,18 @@ const editorStyles = `
     overflow: auto;
     padding: 1rem;
   }
+  
+  .resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+    cursor: se-resize;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(150, 150, 150, 0.8)' viewBox='0 0 24 24'%3E%3Cpath d='M22 22H20V20H22V22ZM22 18H18V16H20V14H22V18ZM16 22H14V20H16V22ZM18 12H20V14H18V12ZM12 22H10V20H12V22ZM8 22H6V20H8V22Z'/%3E%3C/svg%3E");
+    background-position: bottom right;
+    background-repeat: no-repeat;
+  }
 `;
 
 interface RichTextEditorProps {
@@ -71,6 +84,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   minHeight?: number;
   className?: string;
+  enableResize?: boolean;
 }
 
 export default function RichTextEditor({
@@ -79,6 +93,7 @@ export default function RichTextEditor({
   placeholder = 'Начните вводить текст...',
   minHeight = 150,
   className,
+  enableResize = true,
 }: RichTextEditorProps) {
   const [selectedColor, setSelectedColor] = useState<string>('#000000');
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -197,8 +212,10 @@ export default function RichTextEditor({
   ]
 
   return (
-    <div className={cn("resizable-editor", className)} ref={editorContainerRef}
-         style={{ minHeight: `${minHeight + 50}px` }}>
+    <div 
+      className={cn("resizable-editor", className, { "resize-both": enableResize })} 
+      ref={editorContainerRef}
+      style={{ minHeight: `${minHeight + 50}px` }}>
       <div className="border-b p-2 bg-muted/20 flex flex-wrap gap-1 justify-start items-center">
         <TooltipProvider>
           <ToggleGroup type="multiple" variant="outline" className="flex flex-wrap gap-1">
@@ -418,6 +435,7 @@ export default function RichTextEditor({
           editor={editor} 
           className={cn("prose max-w-none", className)}
         />
+        {enableResize && <div className="resize-handle" />}
       </div>
 
       {/* Text Enhancement Dialog */}
