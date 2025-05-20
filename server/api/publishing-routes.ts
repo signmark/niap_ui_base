@@ -349,7 +349,162 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
 
-  // Публикация контента по ID, с указанием платформ
+  // Новый маршрут для упрощенной публикации контента
+  app.post('/api/publish-simple/:contentId', async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      const { platforms, userId, immediate = true } = req.body;
+      const token = req.headers.authorization?.replace('Bearer ', '') || 
+                    req.body.token || 
+                    req.query.token as string || 
+                    (req.cookies?.auth_token as string);
+      
+      log(`Запрос на публикацию контента ${contentId} через простой API`, 'api');
+      
+      // Проверяем наличие необходимых параметров
+      if (!contentId) {
+        return res.status(400).json({ error: 'Не указан ID контента' });
+      }
+      
+      if (!token) {
+        return res.status(401).json({ error: 'Не предоставлен токен авторизации' });
+      }
+      
+      // Получаем контент напрямую через DirectusStorageAdapter
+      const directusCrud = await import('../services/directus-crud').then(m => m.directusCrud);
+      const content = await directusCrud.readItem('campaign_content', contentId, token);
+      
+      if (!content) {
+        log(`Контент ${contentId} не найден при попытке публикации`, 'api');
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+      
+      // Получаем настройки кампании
+      const campaign = await directusCrud.readItem('campaigns', content.campaign, token);
+      if (!campaign) {
+        log(`Кампания ${content.campaign} не найдена при попытке публикации контента`, 'api');
+        return res.status(404).json({ error: `Кампания не найдена` });
+      }
+      
+      // Обрабатываем платформы для публикации
+      let platformsArray: string[] = [];
+      if (Array.isArray(platforms)) {
+        platformsArray = platforms;
+      } else if (platforms && typeof platforms === 'object') {
+        platformsArray = Object.entries(platforms)
+          .filter(([_, selected]) => selected === true)
+          .map(([name]) => name);
+      }
+      
+      if (!platformsArray.length) {
+        return res.status(400).json({ error: 'Не указаны платформы для публикации' });
+      }
+      
+      // Результаты публикации
+      const results: Record<string, any> = {};
+      let hasSuccess = false;
+      
+      // Поочередно публикуем контент на каждую платформу
+      for (const platformName of platformsArray) {
+        const platform = platformName as SocialPlatform;
+        
+        try {
+          log(`Публикация контента ${contentId} в ${platform}`, 'api');
+          
+          // Обновляем статус на pending только для выбранной платформы
+          const socialPlatforms = content.social_platforms || {};
+          socialPlatforms[platform] = {
+            ...(socialPlatforms[platform] || {}),
+            status: 'pending',
+            error: null
+          };
+          
+          // Сохраняем обновленный статус
+          await directusCrud.updateItem('campaign_content', contentId, {
+            social_platforms: socialPlatforms
+          }, token);
+          
+          // Публикуем контент в выбранную платформу
+          const result = await socialPublishingService.publishToPlatform(platform, content, campaign, token);
+          
+          results[platform] = {
+            success: true,
+            result,
+            contentId
+          };
+          
+          hasSuccess = true;
+          
+          // Обновляем статус после публикации
+          if (result) {
+            const updatedPlatforms = { ...socialPlatforms };
+            updatedPlatforms[platform] = {
+              ...(updatedPlatforms[platform] || {}),
+              status: 'published',
+              postId: result.messageId || null,
+              postUrl: result.url || null,
+              publishedAt: new Date().toISOString(),
+              userId
+            };
+            
+            await directusCrud.updateItem('campaign_content', contentId, {
+              social_platforms: updatedPlatforms,
+              status: immediate ? 'published' : content.status,
+              published_at: immediate ? new Date().toISOString() : content.published_at
+            }, token);
+            
+            log(`Публикация ${contentId} в ${platform} успешна`, 'api');
+          }
+        } catch (error: any) {
+          results[platform] = {
+            success: false,
+            error: error.message || 'Неизвестная ошибка',
+            contentId
+          };
+          
+          log(`Ошибка публикации в ${platform}: ${error.message}`, 'api');
+          
+          // Обновляем статус на failed
+          try {
+            const socialPlatforms = content.social_platforms || {};
+            socialPlatforms[platform] = {
+              ...(socialPlatforms[platform] || {}),
+              status: 'failed',
+              error: error.message || 'Неизвестная ошибка'
+            };
+            
+            await directusCrud.updateItem('campaign_content', contentId, {
+              social_platforms: socialPlatforms
+            }, token);
+          } catch (updateError: any) {
+            log(`Ошибка при обновлении статуса публикации: ${updateError.message}`, 'api');
+          }
+        }
+      }
+      
+      // Возвращаем результат
+      if (hasSuccess) {
+        return res.status(200).json({
+          success: true,
+          results
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось опубликовать контент ни на одной платформе',
+          results
+        });
+      }
+    } catch (error: any) {
+      log(`Ошибка при публикации контента: ${error.message}`, 'api');
+      return res.status(500).json({ 
+        error: 'Ошибка при публикации контента', 
+        message: error.message 
+      });
+    }
+  });
+  
+  // Основной маршрут публикации контента по ID, с указанием платформ
   app.post('/api/publish/:contentId', async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;

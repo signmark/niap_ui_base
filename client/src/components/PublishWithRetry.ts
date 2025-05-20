@@ -77,8 +77,8 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       
       console.log(`Попытка ${attempt}: Отправка запроса на публикацию контента ${contentId}...`);
       
-      // Публикуем контент, передавая все необходимые данные и заголовки
-      const result = await apiRequest(`/api/publish/${contentId}`, {
+      // Публикуем контент через новый упрощенный API, передавая все необходимые данные и заголовки
+      const result = await apiRequest(`/api/publish-simple/${contentId}`, {
         method: 'POST',
         data: {
           platforms,
