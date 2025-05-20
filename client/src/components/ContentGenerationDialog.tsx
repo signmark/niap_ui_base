@@ -363,6 +363,28 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 )}
               </div>
             </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button variant="outline" onClick={onClose} className="w-[120px]">
+                Отмена
+              </Button>
+              <Button 
+                onClick={() => generateContent()} 
+                className="w-[150px]"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Генерация...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Сгенерировать
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col h-full space-y-4">
