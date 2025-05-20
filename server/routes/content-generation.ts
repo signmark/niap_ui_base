@@ -74,9 +74,29 @@ router.post('/generate-content', async (req, res) => {
       logger.info(`Контент успешно сгенерирован для кампании ${campaignId}`);
       
       // Форматируем ответ в формат, ожидаемый клиентом
-      const content = response.data.content || response.data.text || response.data.data?.content || '';
+      console.log('Ответ от Directus API:', response.data);
+      
+      // Извлекаем контент из ответа, учитывая разные возможные структуры
+      let content = '';
+      if (response.data.content) {
+        content = response.data.content;
+      } else if (response.data.text) {
+        content = response.data.text;
+      } else if (response.data.data?.content) {
+        content = response.data.data.content;
+      } else if (response.data.data?.text) {
+        content = response.data.data.text;
+      } else if (typeof response.data === 'string') {
+        content = response.data;
+      } else if (response.data.data && typeof response.data.data === 'string') {
+        content = response.data.data;
+      }
+      
+      console.log('Извлеченный контент для отправки клиенту:', content);
+      
+      // Отправляем ответ в формате, ожидаемом клиентом
       return res.status(200).json({
-        content: content,
+        content: content || 'Не удалось извлечь контент из ответа API',
         service: service // Возвращаем выбранный сервис
       });
       

@@ -92,7 +92,14 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
       const data = await response.json();
       
-      // Добавляем информацию о используемом сервисе
+      console.log('Получен ответ от API генерации контента:', data);
+      
+      // Проверяем наличие контента и добавляем информацию о используемом сервисе
+      if (!data.content) {
+        console.error('API вернул данные без поля content:', data);
+        throw new Error('Сервер вернул некорректный формат данных');
+      }
+      
       return {
         content: data.content,
         service: data.service || selectedService
