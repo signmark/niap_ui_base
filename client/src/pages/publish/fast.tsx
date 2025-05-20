@@ -351,22 +351,15 @@ export default function FastPublish() {
         <CardContent>
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="campaign">Кампания</Label>
-              <Select
-                value={selectedCampaign?.id || ""}
-                onValueChange={handleCampaignChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Выберите кампанию" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns.map((campaign) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="campaign-info">Кампания</Label>
+              <div className="flex items-center px-3 py-2 mt-1 rounded-md border bg-muted/20">
+                <span className="font-medium text-primary">
+                  {selectedCampaign?.name || "Не выбрана кампания"}
+                </span>
+                <span className="ml-auto text-xs opacity-70">
+                  Выберите кампанию в верхнем селекторе
+                </span>
+              </div>
             </div>
             
             <div>
