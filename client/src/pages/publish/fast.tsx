@@ -59,10 +59,13 @@ export default function FastPublish() {
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   
   // Получение списка кампаний для выбора
-  const { data: campaigns = [] } = useQuery<Campaign[]>({
+  const { data: campaignData } = useQuery({
     queryKey: ['/api/campaigns'],
     enabled: !!userId,
   });
+  
+  // Проверяем и форматируем данные кампаний
+  const campaigns = Array.isArray(campaignData) ? campaignData : [];
   
   // Обработчик выбора кампании
   const handleCampaignChange = (campaignId: string) => {
