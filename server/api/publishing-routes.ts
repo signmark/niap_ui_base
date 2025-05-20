@@ -393,7 +393,7 @@ export function registerPublishingRoutes(app: Express): void {
       log(`Попытка получения контента ${contentId} с токенами. User ID: ${userId}`, 'api');
       
       // Получение системного токена для запросов к Directus
-      const systemAuthToken = await socialPublishingService.getSystemToken();
+      let systemAuthToken = await socialPublishingService.getSystemToken();
       
       // Получаем контент, пробуя разные токены
       let content = null;
@@ -463,7 +463,7 @@ export function registerPublishingRoutes(app: Express): void {
         // В случае, если systemAuthToken ещё не был получен
         systemAuthToken = await socialPublishingService.getSystemToken();
       }
-      if (!systemToken) {
+      if (!systemAuthToken) {
         log(`Не удалось получить системный токен для публикации контента ${contentId}`, 'api');
       } else {
         log(`Системный токен для публикации контента ${contentId} получен успешно`, 'api');

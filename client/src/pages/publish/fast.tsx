@@ -288,37 +288,47 @@ export default function FastPublish() {
           description: "Контент успешно создан и готов к публикации"
         });
         
-        // Даем серверу больше времени для обработки созданного контента и гарантированного сохранения
-        console.log("Ожидаем 4 секунды перед публикацией для полной обработки и сохранения контента...");
-        await new Promise(resolve => setTimeout(resolve, 4000));
+        // Даем серверу время для обработки созданного контента
+        console.log("Ожидаем 3 секунды перед публикацией для обработки и сохранения контента...");
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Повторно убедимся, что контент существует, перед публикацией
+        // Импортируем функцию для надежной публикации с повторными попытками
+        const { publishWithRetry } = await import('@/components/PublishWithRetry');
+        
         try {
-          const checkResult = await apiRequest(`/api/campaign-content/${contentId}`, {
-            method: 'GET'
+          // Используем функцию с повторными попытками для надежной публикации
+          const result = await publishWithRetry({
+            contentId,
+            platforms: Object.keys(selectedPlatforms).filter(
+              platform => selectedPlatforms[platform as SocialPlatform]
+            ) as SocialPlatform[],
+            userId: String(userId),
+            immediate: true
           });
           
-          if (checkResult && (checkResult.id || checkResult.data?.id)) {
-            console.log("Контент успешно проверен перед публикацией:", checkResult);
-            // Публикуем созданный контент
-            await publishContent(contentId);
-          } else {
-            console.error("Контент не найден при проверке перед публикацией:", checkResult);
-            toast({
-              title: "Ошибка", 
-              description: "Созданный контент не найден. Пожалуйста, попробуйте ещё раз через несколько секунд.",
-              variant: "destructive"
-            });
-            setIsPublishing(false);
+          console.log("Результат публикации с повторными попытками:", result);
+          
+          if (result && result.error) {
+            throw new Error(result.error);
           }
-        } catch (checkError) {
-          console.error("Ошибка при проверке контента перед публикацией:", checkError);
-          toast({
-            title: "Предупреждение", 
-            description: "Не удалось проверить созданный контент. Пробуем опубликовать напрямую.",
-            variant: "destructive"
+          
+          // Обновляем данные в кэше
+          queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
+          
+          // Показываем результат
+          setPublishResult(result);
+          setIsResultOpen(true);
+          
+        } catch (error: any) {
+          console.error("Не удалось опубликовать контент после всех попыток:", error);
+          
+          setPublishResult({
+            error: true,
+            message: error.message || "Не удалось опубликовать контент после нескольких попыток"
           });
-          await publishContent(contentId);
+          setIsResultOpen(true);
+        } finally {
+          setIsPublishing(false);
         }
       } else {
         console.error("Неверный ответ от API при создании контента:", result);
