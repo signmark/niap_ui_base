@@ -378,15 +378,15 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 />
               </div>
 
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="generatedContent" className="text-right pt-2">
-                  Результат
+              <div className="grid grid-cols-1 items-start gap-4">
+                <Label htmlFor="generatedContent" className="text-left pt-2 font-bold text-lg">
+                  Результат генерации:
                 </Label>
-                <div className="col-span-3 h-[500px] overflow-y-auto">
+                <div className="w-full h-[600px] overflow-y-auto p-2">
                   <RichTextEditor
                     value={generationResult || ''}
                     onChange={(html: string) => setGenerationResult(html)}
-                    minHeight={450}
+                    minHeight={550}
                     className="tiptap w-full h-full"
                     enableResize={true}
                   />
