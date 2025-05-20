@@ -107,27 +107,65 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
     },
     onSuccess: (data) => {
       // Преобразуем контент в формат, подходящий для редактора
-      // Заменяем обычные переносы строки на HTML-параграфы
-      const content = data.content;
-      const service = data.service;
+      console.log('Получены данные для форматирования:', data);
       
-      let formattedContent = content
-        .split('\n\n').map((paragraph: string) => paragraph.trim()) // Разбиваем на параграфы
-        .filter((p: string) => p) // Убираем пустые параграфы
-        .map((paragraph: string) => {
-          // Обрабатываем маркдаун-форматирование
-          return paragraph
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
-            .replace(/\*(.*?)\*/g, '<em>$1</em>') // Курсив
-            .replace(/^#+ (.*)$/, (match: string, text: string) => { // Заголовки
-              const level = (match.match(/^#+/) || ['#'])[0].length;
-              return `<h${level}>${text}</h${level}>`;
-            });
-        })
-        .map((p: string) => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
-        .join('');
+      const content = data.content || '';
+      const service = data.service || 'AI';
       
-      setGenerationResult(formattedContent);
+      console.log('Начинаем форматирование контента:', content);
+      
+      // Простая проверка на наличие HTML-тегов
+      if (content.includes('<p>') || content.includes('<div>') || content.includes('<h1>')) {
+        console.log('Контент уже содержит HTML-теги, используем как есть');
+        setGenerationResult(content);
+      } else {
+        // Форматируем обычный текст в HTML
+        try {
+          let formattedContent = '';
+          
+          // Разбиваем текст на параграфы по двойному переносу строки
+          const paragraphs = content.split('\n\n')
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+          
+          console.log('Разбито на параграфы:', paragraphs.length);
+          
+          if (paragraphs.length > 0) {
+            formattedContent = paragraphs
+              .map((paragraph: string) => {
+                // Обрабатываем маркдаун-форматирование
+                let processed = paragraph
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Курсив
+                
+                // Обрабатываем заголовки
+                if (/^#+ /.test(processed)) {
+                  const match = processed.match(/^(#+) (.*)/);
+                  if (match) {
+                    const level = Math.min(match[1].length, 6); // ограничиваем h1-h6
+                    return `<h${level}>${match[2]}</h${level}>`;
+                  }
+                }
+                
+                // Оборачиваем в параграф, если это не заголовок
+                return `<p>${processed}</p>`;
+              })
+              .join('');
+          } else {
+            // Если разбивка на параграфы не сработала, оборачиваем весь текст в один параграф
+            formattedContent = `<p>${content
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\*(.*?)\*/g, '<em>$1</em>')}</p>`;
+          }
+          
+          console.log('Отформатированный контент:', formattedContent);
+          setGenerationResult(formattedContent);
+        } catch (error) {
+          console.error('Ошибка при форматировании контента:', error);
+          // В случае ошибки форматирования просто используем текст как есть, обернутый в параграф
+          setGenerationResult(`<p>${content}</p>`);
+        }
+      }
       
       setIsGenerating(false);
       toast({
@@ -347,7 +385,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 <div className="col-span-3">
                   <div className="max-h-[300px] overflow-y-auto">
                     <RichTextEditor
-                      content={generationResult || ''}
+                      value={generationResult || ''}
                       onChange={(html: string) => setGenerationResult(html)}
                       minHeight={200}
                       className="tiptap"
