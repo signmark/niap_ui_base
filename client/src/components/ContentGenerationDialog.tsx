@@ -422,25 +422,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
         <DialogFooter>
           {!generationResult ? (
             <>
-              <Button variant="outline" onClick={onClose}>
-                Отмена
-              </Button>
-              <Button 
-                onClick={() => generateContent()} 
-                disabled={isPending || !prompt || selectedKeywords.length === 0}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Генерация...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Сгенерировать
-                  </>
-                )}
-              </Button>
+
             </>
           ) : (
             <>
