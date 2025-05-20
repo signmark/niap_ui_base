@@ -92,10 +92,31 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
       const data = await response.json();
       
-      // Добавляем информацию о используемом сервисе
+      console.log('Получен ответ от API генерации контента:', data);
+      
+      // Проверяем структуру ответа, чтобы поддерживать обе возможные формы
+      // Сервер может вернуть либо { content: "..." } либо { data: { content: "..." } }
+      let content = '';
+      let service = selectedService;
+      
+      if (data.data && data.data.content) {
+        // Новый формат ответа в виде { data: { content: "..." } }
+        content = data.data.content;
+        service = data.data.service || data.service || selectedService;
+      } else if (data.content) {
+        // Старый формат ответа в виде { content: "..." }
+        content = data.content;
+        service = data.service || selectedService;
+      } else {
+        // Неизвестный формат - логируем это и вызываем ошибку
+        console.error('Неожиданный формат ответа от API генерации контента:', data);
+        throw new Error('Сервер вернул данные в неожиданном формате. Пожалуйста, попробуйте другой сервис AI.');
+      }
+      
+      // Возвращаем структурированные данные
       return {
-        content: data.content,
-        service: data.service || selectedService
+        content,
+        service
       };
     },
     onSuccess: (data) => {
