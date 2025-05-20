@@ -3686,10 +3686,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 Твой ответ должен содержать ТОЛЬКО HTML-формат текста поста без вводных фраз, пояснений и без кодовых блоков.`;
             
             // Используем Gemini для генерации контента
+            // Используем модель 2.0 Flash вместо экспериментальных моделей для стабильной работы
+            const model = service === 'gemini-2.0-pro-exp' ? 'gemini-2.0-flash' : geminiModel;
+            console.log(`Используем модель Gemini для генерации: ${model} (исходная: ${geminiModel})`);
+            
             generatedContent = await geminiInstance.improveText({
               text: '',
               prompt: contentPrompt,
-              model: geminiModel
+              model: model
             });
             
             usedService = 'gemini';
