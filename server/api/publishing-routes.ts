@@ -349,7 +349,123 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
 
-  // Новый маршрут для упрощенной публикации контента
+  // Новый маршрут для прямой публикации контента без промежуточной проверки
+  app.post('/api/publish-direct/:contentId', async (req: Request, res: Response) => {
+    try {
+      const { contentId } = req.params;
+      const { platforms, userId } = req.body;
+      
+      // Получаем токен из заголовка авторизации
+      const token = req.headers.authorization?.replace('Bearer ', '') || '';
+      
+      log(`Запрос на прямую публикацию контента ${contentId}`, 'api');
+      
+      // Проверяем наличие необходимых параметров
+      if (!contentId) {
+        return res.status(400).json({ error: 'Не указан ID контента' });
+      }
+      
+      if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+        return res.status(400).json({ error: 'Не выбраны платформы для публикации' });
+      }
+      
+      // Импортируем необходимые службы
+      const { directusCrud } = await import('../services/directus-crud');
+      const { directusAuthManager } = await import('../services/directus-auth-manager');
+      const { SocialPublishingService } = await import('../services/social-publishing');
+      
+      // Получаем админский токен для надежной публикации
+      let adminToken;
+      try {
+        adminToken = await directusAuthManager.getAdminToken();
+        log(`Получен токен администратора для публикации`, 'api');
+      } catch (error: any) {
+        log(`Не удалось получить токен администратора: ${error.message}`, 'api');
+      }
+      
+      // Используем токен администратора или пользовательский токен
+      const authToken = adminToken || token;
+      
+      if (!authToken) {
+        return res.status(401).json({ error: 'Не удалось получить токен авторизации' });
+      }
+      
+      // Получаем контент
+      try {
+        // Получаем контент через DirectusCrud
+        log(`Получаем контент ${contentId}`, 'api');
+        const content = await directusCrud.read('campaign_content', contentId, { authToken });
+        
+        if (!content) {
+          log(`Контент ${contentId} не найден при публикации`, 'api', 'error');
+          return res.status(404).json({ error: 'Контент не найден' });
+        }
+        
+        log(`Контент ${contentId} успешно получен: ${content.title || '(без названия)'}`, 'api');
+        
+        // Получаем настройки кампании
+        const campaignId = content.campaign || content.campaign_id;
+        if (!campaignId) {
+          log(`ID кампании не найден в контенте ${contentId}`, 'api', 'error');
+          return res.status(400).json({ error: 'ID кампании не найден в контенте' });
+        }
+        
+        const campaign = await directusCrud.read('campaigns', campaignId, { authToken });
+        if (!campaign) {
+          log(`Кампания ${campaignId} не найдена при публикации`, 'api', 'error');
+          return res.status(404).json({ error: 'Кампания не найдена' });
+        }
+        
+        // Получаем настройки социальных сетей
+        const settings = campaign.socialMediaSettings || {};
+        
+        // Создаем экземпляр сервиса для публикации
+        const publishingService = new SocialPublishingService(authService);
+        
+        // Выполняем публикацию на каждую платформу
+        const results: Record<string, any> = {};
+        
+        for (const platform of platforms) {
+          try {
+            log(`Начинаем публикацию на платформу ${platform}`, 'api');
+            
+            // Публикуем на выбранную платформу напрямую
+            const result = await publishingService.publishToPlatform(
+              platform, 
+              content, 
+              campaign
+            );
+            
+            results[platform] = { success: true, data: result };
+            log(`Успешная публикация на ${platform}`, 'api');
+          } catch (platformError: any) {
+            log(`Ошибка при публикации на ${platform}: ${platformError.message}`, 'api', 'error');
+            results[platform] = { 
+              success: false, 
+              error: platformError.message 
+            };
+          }
+        }
+        
+        // Возвращаем результаты публикации
+        return res.status(200).json({
+          contentId,
+          results,
+          message: 'Публикация обработана'
+        });
+        
+      } catch (contentError: any) {
+        log(`Ошибка при публикации контента: ${contentError.message}`, 'api', 'error');
+        return res.status(500).json({ error: contentError.message });
+      }
+      
+    } catch (error: any) {
+      log(`Ошибка при обработке запроса на публикацию: ${error.message}`, 'api', 'error');
+      return res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Маршрут для упрощенной публикации контента
   app.post('/api/publish-simple/:contentId', async (req: Request, res: Response) => {
     try {
       const { contentId } = req.params;
