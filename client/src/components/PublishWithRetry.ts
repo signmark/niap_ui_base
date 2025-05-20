@@ -97,9 +97,7 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
             'User-ID': userId || '',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          },
-          // Увеличиваем время ожидания до 30 секунд для надежности
-          timeout: 30000
+          }
         });
         
         // Проверяем ответ на наличие ошибок
@@ -129,8 +127,25 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
           throw new Error('Ошибка авторизации: проверьте, что вы вошли в систему');
         }
         
-        if (publishError.response?.status === 404) {
-          throw new Error(`Контент ${contentId} не найден на сервере`);
+        if (publishError.response?.status === 404 || publishError.message?.includes('404') || publishError.message?.includes('не найден')) {
+          console.error(`Ошибка 404 при публикации контента ${contentId}. Возможно, контент был удален или не завершил процесс создания.`);
+          
+          // Пробуем получить дополнительную информацию
+          try {
+            const checkResponse = await apiRequest(`/api/campaign-content/${contentId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (!checkResponse) {
+              throw new Error(`Контент с ID ${contentId} не найден на сервере. Возможно, он был удален или не успел быть создан.`);
+            }
+          } catch (checkError) {
+            // Если при проверке тоже возникла ошибка 404, то контент действительно не существует
+            throw new Error(`Контент с ID ${contentId} не найден. Пожалуйста, создайте новый контент или попробуйте снова.`);
+          }
         }
         
         throw publishError;
