@@ -485,7 +485,7 @@ export default function FastPublish() {
         <CardFooter>
           <Button 
             onClick={createTestContent}
-            disabled={isPublishing || !title || !content || !selectedCampaign}
+            disabled={isPublishing || !title || !content || !selectedCampaign?.id}
             className="w-full"
           >
             {isPublishing ? (
