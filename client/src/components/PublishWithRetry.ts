@@ -62,18 +62,50 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       // Выводим информацию о попытке в консоль
       console.log(`Попытка публикации ${attempt}/${MAX_PUBLISH_ATTEMPTS}...`);
       
-      // Проверяем существование контента
-      const contentExists = await checkContentExists(contentId);
+      // Проверяем существование контента с более глубокой проверкой
+      console.log(`Проверка существования контента ${contentId} перед публикацией...`);
       
-      if (!contentExists) {
-        console.warn(`Попытка ${attempt}: Контент ${contentId} не найден, ожидаем ${RETRY_DELAY_MS}мс...`);
+      try {
+        // Непосредственная проверка через API запрос
+        const contentCheckResponse = await apiRequest(`/api/campaign-content/${contentId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        // Если это последняя попытка - сообщаем об ошибке
+        if (!contentCheckResponse || !contentCheckResponse.data) {
+          console.warn(`Попытка ${attempt}: Контент ${contentId} не найден через прямой запрос API`);
+          
+          // Дополнительная проверка через стандартную функцию
+          const contentExists = await checkContentExists(contentId);
+          
+          if (!contentExists) {
+            console.warn(`Попытка ${attempt}: Контент ${contentId} не найден также через проверку существования`);
+            
+            // Если это последняя попытка - сообщаем об ошибке
+            if (attempt === MAX_PUBLISH_ATTEMPTS) {
+              throw new Error(`Контент с ID ${contentId} не найден после ${MAX_PUBLISH_ATTEMPTS} попыток. Возможно, он был удален или не был полностью создан.`);
+            }
+            
+            // Увеличиваем задержку для каждой последующей попытки
+            const adjustedDelay = RETRY_DELAY_MS * attempt;
+            console.log(`Ожидание ${adjustedDelay}мс перед следующей попыткой...`);
+            await new Promise(resolve => setTimeout(resolve, adjustedDelay));
+            continue;
+          }
+        } else {
+          console.log(`Контент ${contentId} найден и доступен для публикации:`, contentCheckResponse.data);
+        }
+      } catch (checkError) {
+        console.error(`Ошибка при проверке контента ${contentId}:`, checkError);
+        
+        // Если это последняя попытка и до сих пор были ошибки
         if (attempt === MAX_PUBLISH_ATTEMPTS) {
-          throw new Error(`Контент с ID ${contentId} не найден после ${MAX_PUBLISH_ATTEMPTS} попыток`);
+          throw new Error(`Не удалось проверить существование контента ${contentId} после ${MAX_PUBLISH_ATTEMPTS} попыток`);
         }
         
-        // Иначе ждем и продолжаем
+        // Ждем и продолжаем
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
         continue;
       }
