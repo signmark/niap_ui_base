@@ -73,8 +73,29 @@ export default function FastPublish() {
     if (campaign) {
       setSelectedCampaign(campaign);
       console.log("Выбрана кампания:", campaign.name);
+      
+      // Сохраняем выбранную кампанию в localStorage для сохранения между сессиями
+      localStorage.setItem('selectedCampaignId', campaignId);
     }
   };
+  
+  // При загрузке компонента проверяем, есть ли сохраненная кампания
+  useEffect(() => {
+    if (campaigns.length > 0 && !selectedCampaign) {
+      const savedCampaignId = localStorage.getItem('selectedCampaignId');
+      if (savedCampaignId) {
+        const savedCampaign = campaigns.find(c => c.id === savedCampaignId);
+        if (savedCampaign) {
+          setSelectedCampaign(savedCampaign);
+          console.log("Восстановлена сохраненная кампания:", savedCampaign.name);
+        }
+      } else if (campaigns.length > 0) {
+        // Если нет сохраненной кампании, выбираем первую из списка
+        setSelectedCampaign(campaigns[0]);
+        console.log("Автоматически выбрана первая кампания:", campaigns[0].name);
+      }
+    }
+  }, [campaigns, selectedCampaign]);
   
   // Обработчик для загрузки изображения
   const handleImageUpload = (url: string) => {
