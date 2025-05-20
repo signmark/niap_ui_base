@@ -399,45 +399,76 @@ export default function FastPublish() {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Результаты публикации:</h3>
-        {Object.keys(publishResult.results || {}).map((platform) => {
-          const result = publishResult.results[platform];
-          const isSuccess = result.status === 'published';
-          
-          return (
-            <div key={platform} className="p-3 border rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                {isSuccess ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-500" />
-                )}
-                <h4 className="font-medium capitalize">{platform}</h4>
-              </div>
-              
-              {isSuccess ? (
-                <div className="text-sm">
-                  <p>Статус: Опубликовано</p>
-                  {result.postUrl && (
-                    <p>
-                      <a 
-                        href={result.postUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        Ссылка на публикацию
-                      </a>
-                    </p>
+        {publishResult.message && (
+          <Alert className="bg-blue-50 dark:bg-blue-900 border-blue-500">
+            <AlertTitle className="text-blue-800 dark:text-blue-300">Информация о публикации</AlertTitle>
+            <AlertDescription className="text-blue-700 dark:text-blue-400">
+              {publishResult.message}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Проверяем, есть ли результаты в объекте */}
+        {Object.keys(publishResult.results || {}).length > 0 ? (
+          Object.keys(publishResult.results || {}).map((platform) => {
+            const result = publishResult.results[platform];
+            // Проверяем статус публикации различными способами
+            const isSuccess = result.status === 'published' || result.success === true || (
+              typeof result === 'object' && result?.postUrl && result?.publishedAt
+            );
+            
+            return (
+              <div key={platform} className="p-3 border rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  {isSuccess ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-500" />
                   )}
+                  <h4 className="font-medium capitalize">{platform}</h4>
                 </div>
-              ) : (
-                <p className="text-sm text-red-500">
-                  Ошибка: {result.error || 'Неизвестная ошибка'}
-                </p>
-              )}
-            </div>
-          );
-        })}
+                
+                {isSuccess ? (
+                  <div className="text-sm">
+                    <p>Статус: Опубликовано</p>
+                    {(result.postUrl || result.postId) && (
+                      <p>
+                        <a 
+                          href={result.postUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          Ссылка на публикацию {result.postId ? `(ID: ${result.postId})` : ''}
+                        </a>
+                      </p>
+                    )}
+                    {result.publishedAt && (
+                      <p className="text-gray-600 text-xs mt-1">
+                        Опубликовано: {new Date(result.publishedAt).toLocaleString('ru-RU')}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-red-500">
+                    Ошибка: {result.error || 'Неизвестная ошибка при публикации'}
+                  </p>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          // Если результаты для платформ отсутствуют, но есть общее сообщение об успехе
+          publishResult.success && (
+            <Alert className="bg-green-50 dark:bg-green-900 border-green-500">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertTitle className="text-green-800 dark:text-green-300">Успешная публикация</AlertTitle>
+              <AlertDescription className="text-green-700 dark:text-green-400">
+                Контент успешно отправлен на публикацию. Результаты публикации будут доступны позже.
+              </AlertDescription>
+            </Alert>
+          )
+        )}
         
         <Button onClick={resetForm} className="w-full mt-4">
           Создать новую публикацию
