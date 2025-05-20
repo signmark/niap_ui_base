@@ -234,7 +234,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto resize-handle dialog-content">
+      <DialogContent className={`sm:max-w-[600px] ${generationResult ? 'sm:max-w-[900px] w-[900px]' : ''} max-h-[90vh] overflow-y-auto resize-handle dialog-content`}>
         <DialogHeader>
           <DialogTitle>Генерация контента</DialogTitle>
           <DialogDescription>
