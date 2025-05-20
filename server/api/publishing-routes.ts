@@ -370,9 +370,22 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(401).json({ error: 'Не предоставлен токен авторизации' });
       }
       
-      // Получаем контент напрямую через DirectusStorageAdapter
+      // Получаем системный токен для публикации
+      let systemToken = null;
+      try {
+        // Получаем системный токен напрямую из сервиса публикации
+        systemToken = await socialPublishingService.getSystemToken();
+        log(`Системный токен для публикации получен: ${systemToken ? 'успешно' : 'не удалось получить'}`, 'api');
+      } catch (tokenError) {
+        log(`Ошибка при получении системного токена: ${tokenError.message}`, 'api');
+      }
+      
+      // Если не получили системный токен, используем пользовательский
+      const authToken = systemToken || token;
+      
+      // Получаем контент напрямую через DirectusCrud
       const directusCrud = await import('../services/directus-crud').then(m => m.directusCrud);
-      const content = await directusCrud.read('campaign_content', contentId, { authToken: token });
+      const content = await directusCrud.read('campaign_content', contentId, { authToken });
       
       if (!content) {
         log(`Контент ${contentId} не найден при попытке публикации`, 'api');
@@ -380,7 +393,7 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Получаем настройки кампании
-      const campaign = await directusCrud.read('campaigns', content.campaign, { authToken: token });
+      const campaign = await directusCrud.read('campaigns', content.campaign, { authToken });
       if (!campaign) {
         log(`Кампания ${content.campaign} не найдена при попытке публикации контента`, 'api');
         return res.status(404).json({ error: `Кампания не найдена` });

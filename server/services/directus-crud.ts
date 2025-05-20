@@ -111,6 +111,17 @@ export class DirectusCrud {
       }
     });
   }
+  
+  /**
+   * Синоним метода getById для совместимости с другими частями кода
+   * @param collection Название коллекции
+   * @param id ID записи
+   * @param options Дополнительные опции запроса
+   * @returns Запись или null, если запись не найдена
+   */
+  async read<T>(collection: string, id: string | number, options: DirectusRequestOptions = {}): Promise<T | null> {
+    return this.getById<T>(collection, id, options);
+  }
 
   /**
    * Обновляет запись в коллекции Directus
