@@ -1,6 +1,5 @@
 import { apiRequest } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store';
-import { useToast } from '@/hooks/use-toast';
 
 // Максимальное число попыток публикации
 const MAX_PUBLISH_ATTEMPTS = 3;
@@ -53,8 +52,6 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
   const getAuthToken = useAuthStore.getState().getAuthToken;
   const token = getAuthToken() || '';
   
-  // Для индикации процесса будем использовать консоль
-  
   while (attempt < MAX_PUBLISH_ATTEMPTS) {
     attempt++;
     
@@ -96,16 +93,6 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
         }
       });
       
-      // Закрываем индикатор публикации
-      if (publishingToast) {
-        toast({
-          id: publishingToast,
-          title: 'Публикация выполнена',
-          description: 'Контент успешно опубликован',
-          duration: 3000,
-        });
-      }
-      
       console.log('Публикация успешно выполнена:', result);
       return result;
       
@@ -118,17 +105,9 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
         break;
       }
       
-      // Если это последняя попытка, показываем финальную ошибку
+      // Если это последняя попытка, выбрасываем ошибку
       if (attempt === MAX_PUBLISH_ATTEMPTS) {
-        if (publishingToast) {
-          toast({
-            id: publishingToast,
-            title: 'Ошибка публикации',
-            description: `Не удалось опубликовать контент после ${MAX_PUBLISH_ATTEMPTS} попыток`,
-            variant: 'destructive',
-            duration: 5000,
-          });
-        }
+        console.error(`Все ${MAX_PUBLISH_ATTEMPTS} попытки публикации не удались`);
         throw error;
       }
       
