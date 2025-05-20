@@ -261,15 +261,6 @@ export default function Posts() {
                     <PenLine className="mr-2 h-4 w-4" />
                     Управление контентом
                   </Button>
-                  
-                  <Button 
-                    onClick={() => setLocation('/publish/test')} 
-                    className="w-full"
-                    variant="secondary"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Быстрая публикация
-                  </Button>
                 </div>
               </div>
               
