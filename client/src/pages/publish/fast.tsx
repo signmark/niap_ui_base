@@ -141,14 +141,22 @@ export default function FastPublish() {
       `);
       
       // Публикуем контент с полным набором данных
-      console.log("Отправляем запрос на публикацию...");
+      console.log("Получаем токен для публикации...");
+      const token = getAuthToken() || '';
+      
+      console.log("Отправляем запрос на публикацию с токеном...");
       const result = await apiRequest(`/api/publish/${contentId}`, {
         method: 'POST',
         data: { 
           platforms, 
           immediate: true,
           userId: userId,
-          contentId: contentId
+          contentId: contentId,
+          token: token // Передаем токен в теле запроса дополнительно
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`, // Передаем токен и в заголовке
+          'User-ID': userId || '' // Передаем ID пользователя в заголовке
         }
       });
       

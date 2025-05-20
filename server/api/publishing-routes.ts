@@ -5,7 +5,8 @@ import { socialPublishingService } from '../services/social/index';
 
 // Не используем старый сервис, заменив его на новый модульный
 import { publishScheduler } from '../services/publish-scheduler';
-import { SocialPlatform } from '@shared/schema';
+// Используем тип как строку, так как его нет в shared/schema
+type SocialPlatform = 'telegram' | 'vk' | 'instagram' | 'facebook';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
 import { directusStorageAdapter } from '../services/directus';
@@ -383,11 +384,70 @@ export function registerPublishingRoutes(app: Express): void {
       // Заменяем оригинальные platforms на преобразованный массив, чтобы не менять остальной код
       const platformsArray = selectedPlatforms;
 
-      // Получаем контент
-      const content = await storage.getCampaignContentById(contentId);
+      // Получаем пользовательский и системный токены для надежного получения контента
+      const userId = req.body.userId || req.query.userId || (req.headers['user-id'] as string);
+      const userToken = req.headers.authorization?.replace('Bearer ', '') || 
+                       (req.query.token as string) || 
+                       (req.cookies?.auth_token as string);
+      
+      log(`Попытка получения контента ${contentId} с токенами. User ID: ${userId}`, 'api');
+      
+      // Получение системного токена для запросов к Directus
+      const systemAuthToken = await socialPublishingService.getSystemToken();
+      
+      // Получаем контент, пробуя разные токены
+      let content = null;
+      let errors = [];
+      
+      // Попытка 1: С пользовательским токеном
+      try {
+        if (userToken) {
+          log(`Получение контента ${contentId} с пользовательским токеном`, 'api');
+          content = await storage.getCampaignContentById(contentId, userToken);
+          if (content) {
+            log(`Контент ${contentId} успешно получен с пользовательским токеном`, 'api');
+          }
+        }
+      } catch (error: any) {
+        errors.push(`Ошибка при получении контента с пользовательским токеном: ${error.message}`);
+        log(`Ошибка при получении контента ${contentId} с пользовательским токеном: ${error.message}`, 'api');
+      }
+      
+      // Попытка 2: С системным токеном
+      if (!content && systemAuthToken) {
+        try {
+          log(`Получение контента ${contentId} с системным токеном`, 'api');
+          content = await storage.getCampaignContentById(contentId, systemAuthToken);
+          if (content) {
+            log(`Контент ${contentId} успешно получен с системным токеном`, 'api');
+          }
+        } catch (error: any) {
+          errors.push(`Ошибка при получении контента с системным токеном: ${error.message}`);
+          log(`Ошибка при получении контента ${contentId} с системным токеном: ${error.message}`, 'api');
+        }
+      }
+      
+      // Попытка 3: Без токена (последний вариант)
       if (!content) {
-        log(`Контент ${contentId} не найден при попытке публикации`, 'api');
-        return res.status(404).json({ error: 'Контент не найден' });
+        try {
+          log(`Получение контента ${contentId} без токена`, 'api');
+          content = await storage.getCampaignContentById(contentId);
+          if (content) {
+            log(`Контент ${contentId} успешно получен без токена`, 'api');
+          }
+        } catch (error: any) {
+          errors.push(`Ошибка при получении контента без токена: ${error.message}`);
+          log(`Ошибка при получении контента ${contentId} без токена: ${error.message}`, 'api');
+        }
+      }
+      
+      // Проверяем наличие контента после всех попыток
+      if (!content) {
+        log(`Контент ${contentId} не найден при попытке публикации после всех попыток`, 'api');
+        return res.status(404).json({ 
+          error: 'Контент не найден',
+          details: errors.length > 0 ? errors : undefined 
+        });
       }
 
       // Получаем кампанию
@@ -397,8 +457,12 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(404).json({ error: `Кампания ${content.campaignId} не найдена` });
       }
 
-      // Получаем админский токен для обновления статуса публикации
-      const systemToken = await socialPublishingService.getSystemToken();
+      // Используем ранее полученный системный токен, либо получаем новый
+      if (!systemAuthToken) {
+        log(`Системный токен не был получен ранее, получаем новый`, 'api');
+        // В случае, если systemAuthToken ещё не был получен
+        systemAuthToken = await socialPublishingService.getSystemToken();
+      }
       if (!systemToken) {
         log(`Не удалось получить системный токен для публикации контента ${contentId}`, 'api');
       } else {
