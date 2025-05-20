@@ -113,10 +113,19 @@ export default function FastPublish() {
 
   // Создание временного контента для публикации
   const createTestContent = async () => {
-    if (!title || !content || !selectedCampaign) {
+    if (!title || !content) {
       toast({
         title: "Ошибка",
-        description: "Заполните обязательные поля: заголовок, содержание и выберите кампанию",
+        description: "Заполните обязательные поля: заголовок и содержание",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!selectedCampaign || !selectedCampaign.id) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите кампанию в верхнем селекторе",
         variant: "destructive"
       });
       return;
@@ -124,24 +133,28 @@ export default function FastPublish() {
     
     try {
       console.log("Начинаем создание контента для публикации...");
+      console.log("Выбранная кампания:", selectedCampaign);
       setIsPublishing(true);
       
       // Создаем данные для публикации
       const finalImageUrl = isImage ? (uploadedImage || imageUrl) : undefined;
       console.log("Используемый URL изображения:", finalImageUrl);
       
+      // Проверяем, что ID кампании действительно строка
+      const campaignId = String(selectedCampaign.id);
+      
       const contentData = {
         title,
         content,
         userId,
-        campaignId: selectedCampaign.id,
+        campaignId,
         contentType: isImage ? 'text-image' : 'text',
         status: 'draft',
         imageUrl: finalImageUrl,
         hashtags: ['test', 'demo']
       };
       
-      console.log("Отправляем данные:", contentData);
+      console.log("Отправляем данные:", JSON.stringify(contentData));
       
       // Создаем временный контент
       const result = await apiRequest('/api/campaign-content', {
@@ -174,9 +187,10 @@ export default function FastPublish() {
       }
     } catch (error: any) {
       console.error("Ошибка при создании контента:", error);
+      console.error("Детали ошибки:", error.response?.data || error.message);
       toast({
         title: "Ошибка",
-        description: `Не удалось создать контент: ${error.message || "Неизвестная ошибка"}`,
+        description: `Не удалось создать контент: ${error.response?.data?.message || error.message || "Неизвестная ошибка"}`,
         variant: "destructive"
       });
       setIsPublishing(false);
@@ -197,9 +211,8 @@ export default function FastPublish() {
       
       if (platforms.length === 0) {
         toast({
-          title: "Ошибка",
-          description: "Выберите хотя бы одну платформу для публикации",
-          variant: "destructive"
+          title: "Внимание",
+          description: "Выберите хотя бы одну платформу для публикации"
         });
         setIsPublishing(false);
         return;
@@ -213,7 +226,7 @@ export default function FastPublish() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAuthToken()}`
         },
-        data: { platforms }
+        data: { platforms, immediate: true }
       });
       
       console.log("Ответ от API публикации:", result);
