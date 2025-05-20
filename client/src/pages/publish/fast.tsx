@@ -232,19 +232,23 @@ export default function FastPublish() {
       
       console.log("Получен ответ от API:", result);
       
-      if (result && result.id) {
+      // Проверяем наличие ID в ответе, учитывая возможность вложенности в объекте data
+      const contentId = result?.id || result?.data?.id;
+      
+      if (contentId) {
+        console.log("Успешно получен ID контента:", contentId);
         toast({
           title: "Контент создан",
           description: "Контент успешно создан и готов к публикации"
         });
         
         // Публикуем созданный контент
-        await publishContent(result.id);
+        await publishContent(contentId);
       } else {
         console.error("Неверный ответ от API при создании контента:", result);
         toast({
-          title: "Ошибка",
-          description: "Сервер вернул неверный ответ при создании контента",
+          title: "Ошибка", 
+          description: "Сервер вернул неверный ответ при создании контента. Проверьте консоль для деталей.",
           variant: "destructive"
         });
         setIsPublishing(false);
