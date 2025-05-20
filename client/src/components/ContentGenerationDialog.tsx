@@ -234,7 +234,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()} modal={true}>
-      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[95vh] overflow-y-auto" : "sm:max-w-[90%] w-[90%] max-h-[90vh] h-[90vh]"}>
+      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[95vh] overflow-y-auto" : "sm:max-w-[80%] w-[80%] max-h-[80vh] h-[80vh]"}>
         <DialogHeader className="mb-0 pb-1">
           <DialogTitle>{generationResult ? "Результат генерации контента" : "Генерация контента"}</DialogTitle>
           {!generationResult && (
@@ -388,8 +388,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
             </div>
           </div>
         ) : (
-          <div className="flex flex-col h-full space-y-4">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col h-[70vh] space-y-2">
+            <div className="flex items-center space-x-4 mb-2">
               <Label htmlFor="title" className="whitespace-nowrap">
                 Название:
               </Label>
@@ -406,11 +406,11 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               <Label htmlFor="generatedContent" className="text-left mb-2 font-bold text-lg">
                 Результат генерации:
               </Label>
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 border rounded">
                 <RichTextEditor
                   value={generationResult || ''}
                   onChange={(html: string) => setGenerationResult(html)}
-                  minHeight={500}
+                  minHeight={300}
                   className="tiptap w-full h-full"
                   enableResize={true}
                 />
