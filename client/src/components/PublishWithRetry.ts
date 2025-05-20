@@ -80,15 +80,14 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       
       console.log(`Попытка ${attempt}: Отправка запроса на публикацию контента ${contentId}...`);
       
-      // Используем простой метод публикации с улучшенной обработкой ошибок
       try {
         console.log(`Отправляем запрос на публикацию контента ${contentId} на платформы:`, platforms);
         
-        // Отправляем запрос на публикацию напрямую без дополнительных проверок
-        const result = await apiRequest(`/api/publish-direct/${contentId}`, {
+        // Используем стандартный маршрут API, который уже работает
+        const result = await apiRequest(`/api/publish/${contentId}`, {
           method: 'POST',
           data: {
-            platforms,
+            platforms: platforms.reduce((obj, platform) => ({ ...obj, [platform]: true }), {}),
             immediate,
             userId,
             contentId
@@ -98,7 +97,9 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
             'User-ID': userId || '',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          }
+          },
+          // Увеличиваем время ожидания до 30 секунд для надежности
+          timeout: 30000
         });
         
         // Проверяем ответ на наличие ошибок
@@ -112,10 +113,24 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       } catch (publishError: any) {
         console.error(`Ошибка при публикации через API:`, publishError);
         
-        // Если ошибка связана с парсингом JSON, добавляем более понятное сообщение
+        // Более подробная обработка ошибок
         if (publishError.message?.includes('JSON') || publishError.message?.includes('Unexpected token')) {
-          console.error('Получен невалидный ответ от сервера. Возможно, проблема с авторизацией.');
-          throw new Error('Ошибка при публикации: сервер вернул неверный формат данных. Проверьте авторизацию.');
+          console.error('Получен невалидный ответ от сервера. Возможно, проблема с авторизацией или сервер не готов.');
+          
+          // Создаем временный элемент для отображения HTML
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = publishError.response?.data || '';
+          const errorText = tempDiv.textContent || publishError.message;
+          
+          throw new Error(`Ошибка при публикации: сервер вернул неверный формат. ${errorText.substring(0, 100)}`);
+        }
+        
+        if (publishError.response?.status === 401) {
+          throw new Error('Ошибка авторизации: проверьте, что вы вошли в систему');
+        }
+        
+        if (publishError.response?.status === 404) {
+          throw new Error(`Контент ${contentId} не найден на сервере`);
         }
         
         throw publishError;
