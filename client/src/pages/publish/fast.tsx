@@ -111,6 +111,64 @@ export default function FastPublish() {
     setImageUrl(url);
   };
 
+  // Публикация контента
+  const publishContent = async (contentId: string) => {
+    try {
+      console.log("Начинаем публикацию контента с ID:", contentId);
+      
+      // Получаем выбранные платформы
+      const platforms = Object.keys(selectedPlatforms).filter(
+        platform => selectedPlatforms[platform as SocialPlatform]
+      ) as SocialPlatform[];
+      
+      console.log("Выбранные платформы:", platforms);
+      
+      if (platforms.length === 0) {
+        toast({
+          title: "Внимание",
+          description: "Выберите хотя бы одну платформу для публикации"
+        });
+        setIsPublishing(false);
+        return;
+      }
+      
+      // Публикуем контент
+      console.log("Отправляем запрос на публикацию...");
+      const result = await apiRequest(`/api/publish/${contentId}`, {
+        method: 'POST',
+        data: { platforms, immediate: true }
+      });
+      
+      console.log("Ответ от API публикации:", result);
+      
+      setPublishResult(result);
+      setIsResultOpen(true);
+      
+      // Обновляем данные в кэше
+      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
+      
+      toast({
+        title: "Публикация отправлена",
+        description: "Результаты публикации отображены в диалоге"
+      });
+    } catch (error: any) {
+      console.error("Ошибка при публикации:", error);
+      toast({
+        title: "Ошибка",
+        description: `Не удалось опубликовать контент: ${error.message || "Неизвестная ошибка"}`,
+        variant: "destructive"
+      });
+      
+      setPublishResult({
+        error: true,
+        message: error.message || "Произошла неизвестная ошибка при публикации"
+      });
+      setIsResultOpen(true);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   // Создание временного контента для публикации
   const createTestContent = async () => {
     if (!title || !content) {
@@ -169,10 +227,6 @@ export default function FastPublish() {
       // Создаем временный контент
       const result = await apiRequest('/api/campaign-content', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getAuthToken()}`
-        },
         data: contentData
       });
       
@@ -203,68 +257,6 @@ export default function FastPublish() {
         description: `Не удалось создать контент: ${error.response?.data?.message || error.message || "Неизвестная ошибка"}`,
         variant: "destructive"
       });
-      setIsPublishing(false);
-    }
-  };
-  
-  // Публикация контента
-  const publishContent = async (contentId: string) => {
-    try {
-      console.log("Начинаем публикацию контента с ID:", contentId);
-      
-      // Получаем выбранные платформы
-      const platforms = Object.keys(selectedPlatforms).filter(
-        platform => selectedPlatforms[platform as SocialPlatform]
-      ) as SocialPlatform[];
-      
-      console.log("Выбранные платформы:", platforms);
-      
-      if (platforms.length === 0) {
-        toast({
-          title: "Внимание",
-          description: "Выберите хотя бы одну платформу для публикации"
-        });
-        setIsPublishing(false);
-        return;
-      }
-      
-      // Публикуем контент
-      console.log("Отправляем запрос на публикацию...");
-      const result = await apiRequest(`/api/publish/${contentId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getAuthToken()}`
-        },
-        data: { platforms, immediate: true }
-      });
-      
-      console.log("Ответ от API публикации:", result);
-      
-      setPublishResult(result);
-      setIsResultOpen(true);
-      
-      // Обновляем данные в кэше
-      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
-      
-      toast({
-        title: "Публикация отправлена",
-        description: "Результаты публикации отображены в диалоге"
-      });
-    } catch (error: any) {
-      console.error("Ошибка при публикации:", error);
-      toast({
-        title: "Ошибка",
-        description: `Не удалось опубликовать контент: ${error.message || "Неизвестная ошибка"}`,
-        variant: "destructive"
-      });
-      
-      setPublishResult({
-        error: true,
-        message: error.message || "Произошла неизвестная ошибка при публикации"
-      });
-      setIsResultOpen(true);
-    } finally {
       setIsPublishing(false);
     }
   };
@@ -480,7 +472,7 @@ export default function FastPublish() {
                     onClick={() => {
                       // Переключаем статус платформы при клике на всю область
                       setSelectedPlatforms({
-                        ...selectedPlatforms, 
+                        ...selectedPlatforms,
                         [platform.id]: !selectedPlatforms[platform.id as SocialPlatform]
                       });
                     }}
@@ -488,9 +480,12 @@ export default function FastPublish() {
                     <Checkbox
                       id={platform.id}
                       checked={selectedPlatforms[platform.id as SocialPlatform]}
-                      onCheckedChange={(checked) => 
-                        setSelectedPlatforms({...selectedPlatforms, [platform.id]: !!checked})
-                      }
+                      onCheckedChange={(checked) => {
+                        setSelectedPlatforms({
+                          ...selectedPlatforms,
+                          [platform.id]: !!checked
+                        });
+                      }}
                       className="mr-2"
                     />
                     <Label 
