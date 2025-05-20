@@ -234,11 +234,11 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()} modal={true}>
-      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[90vh]" : "sm:max-w-[90%] w-[90%] max-h-[90vh] h-[90vh]"}>
-        <DialogHeader className="mb-2">
+      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[95vh] overflow-y-auto" : "sm:max-w-[90%] w-[90%] max-h-[90vh] h-[90vh]"}>
+        <DialogHeader className="mb-0 pb-1">
           <DialogTitle>{generationResult ? "Результат генерации контента" : "Генерация контента"}</DialogTitle>
           {!generationResult && (
-            <DialogDescription>
+            <DialogDescription className="text-xs">
               Используйте AI для генерации контента на основе ключевых слов и промта
             </DialogDescription>
           )}
@@ -331,13 +331,13 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               />
             </div>
 
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">
+            <div className="grid grid-cols-4 items-start gap-3">
+              <Label className="text-right pt-2 text-sm">
                 Ключевые слова
               </Label>
-              <div className="col-span-3 grid grid-cols-2 gap-2">
+              <div className="col-span-3 grid grid-cols-2 gap-1 max-h-[150px] overflow-y-auto border rounded p-1">
                 {keywords.length === 0 ? (
-                  <p className="text-sm text-muted-foreground col-span-2">
+                  <p className="text-xs text-muted-foreground col-span-2">
                     Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
                   </p>
                 ) : (
@@ -345,16 +345,16 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   keywords
                     .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
                     .map((kw) => (
-                      <div key={kw.id} className="flex items-start space-x-2">
+                      <div key={kw.id} className="flex items-start space-x-1">
                         <Checkbox 
                           id={`keyword-${kw.id}`}
                           checked={selectedKeywords.includes(kw.keyword)}
                           onCheckedChange={() => handleKeywordToggle(kw.keyword)}
-                          className="mt-1"
+                          className="mt-0.5"
                         />
                         <Label 
                           htmlFor={`keyword-${kw.id}`}
-                          className="cursor-pointer text-sm"
+                          className="cursor-pointer text-xs"
                         >
                           {kw.keyword} ({kw.trendScore})
                         </Label>
@@ -363,23 +363,24 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 )}
               </div>
             </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button variant="outline" onClick={onClose} className="w-[120px]">
+            <div className="flex justify-end space-x-2 mt-2">
+              <Button variant="outline" onClick={onClose} size="sm" className="w-[100px]">
                 Отмена
               </Button>
               <Button 
                 onClick={() => generateContent()} 
+                size="sm"
                 className="w-[150px]"
                 disabled={isPending}
               >
                 {isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                     Генерация...
                   </>
                 ) : (
                   <>
-                    <Wand2 className="mr-2 h-4 w-4" />
+                    <Wand2 className="mr-1 h-3 w-3" />
                     Сгенерировать
                   </>
                 )}
