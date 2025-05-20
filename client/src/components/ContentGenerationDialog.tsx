@@ -234,7 +234,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()} modal={true}>
-      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[95vh] overflow-y-auto" : "sm:max-w-[80%] w-[80%] max-h-[80vh] h-[80vh]"}>
+      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[95vh] overflow-y-auto" : "sm:max-w-[70%] w-[70%] max-h-[70vh] h-[70vh]"}>
         <DialogHeader className="mb-0 pb-1">
           <DialogTitle>{generationResult ? "Результат генерации контента" : "Генерация контента"}</DialogTitle>
           {!generationResult && (
@@ -388,7 +388,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
             </div>
           </div>
         ) : (
-          <div className="flex flex-col h-[70vh] space-y-2">
+          <div className="flex flex-col h-[60vh] space-y-2">
             <div className="flex items-center space-x-4 mb-2">
               <Label htmlFor="title" className="whitespace-nowrap">
                 Название:
@@ -406,26 +406,26 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               <Label htmlFor="generatedContent" className="text-left mb-2 font-bold text-lg">
                 Результат генерации:
               </Label>
-              <div className="flex-1 min-h-0 border rounded">
+              <div className="flex-1 min-h-0 border rounded max-h-[350px]">
                 <RichTextEditor
                   value={generationResult || ''}
                   onChange={(html: string) => setGenerationResult(html)}
-                  minHeight={300}
+                  minHeight={200}
                   className="tiptap w-full h-full"
-                  enableResize={true}
+                  enableResize={false}
                 />
               </div>
             </div>
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="mt-2 pt-2 border-t flex-shrink-0">
           {!generationResult ? (
             <>
 
             </>
           ) : (
-            <>
+            <div className="flex w-full justify-between space-x-4">
               <Button 
                 variant="outline" 
                 onClick={() => setGenerationResult(null)}
@@ -445,7 +445,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   "Сохранить"
                 )}
               </Button>
-            </>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
