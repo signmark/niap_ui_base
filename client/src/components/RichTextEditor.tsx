@@ -47,14 +47,14 @@ const editorStyles = `
   .resizable-editor {
     resize: both;
     overflow: hidden;
-    min-height: 200px;
+    min-height: 400px;
     border: 1px solid hsl(var(--input));
     border-radius: 0.375rem;
     position: relative;
   }
   
   .resizable-editor .ProseMirror {
-    min-height: 150px;
+    min-height: 300px;
     height: 100%;
     outline: none;
   }
