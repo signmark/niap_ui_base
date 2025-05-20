@@ -372,7 +372,7 @@ export function registerPublishingRoutes(app: Express): void {
       
       // Получаем контент напрямую через DirectusStorageAdapter
       const directusCrud = await import('../services/directus-crud').then(m => m.directusCrud);
-      const content = await directusCrud.readItem('campaign_content', contentId, token);
+      const content = await directusCrud.read('campaign_content', contentId, { authToken: token });
       
       if (!content) {
         log(`Контент ${contentId} не найден при попытке публикации`, 'api');
@@ -380,7 +380,7 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Получаем настройки кампании
-      const campaign = await directusCrud.readItem('campaigns', content.campaign, token);
+      const campaign = await directusCrud.read('campaigns', content.campaign, { authToken: token });
       if (!campaign) {
         log(`Кампания ${content.campaign} не найдена при попытке публикации контента`, 'api');
         return res.status(404).json({ error: `Кампания не найдена` });
@@ -422,7 +422,7 @@ export function registerPublishingRoutes(app: Express): void {
           // Сохраняем обновленный статус
           await directusCrud.updateItem('campaign_content', contentId, {
             social_platforms: socialPlatforms
-          }, token);
+          }, { authToken: token });
           
           // Публикуем контент в выбранную платформу
           const result = await socialPublishingService.publishToPlatform(platform, content, campaign, token);
