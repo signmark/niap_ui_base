@@ -130,10 +130,20 @@ export default function FastPublish() {
       });
       return;
     }
+
+    if (!userId) {
+      toast({
+        title: "Ошибка авторизации",
+        description: "Не удалось определить идентификатор пользователя. Пожалуйста, выполните вход снова.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       console.log("Начинаем создание контента для публикации...");
       console.log("Выбранная кампания:", selectedCampaign);
+      console.log("ID пользователя:", userId);
       setIsPublishing(true);
       
       // Создаем данные для публикации
@@ -146,7 +156,7 @@ export default function FastPublish() {
       const contentData = {
         title,
         content,
-        userId,
+        userId: String(userId), // Убедимся, что userId передается как строка
         campaignId,
         contentType: isImage ? 'text-image' : 'text',
         status: 'draft',
