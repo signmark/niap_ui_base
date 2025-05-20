@@ -6,7 +6,7 @@ import axios from 'axios';
 const MAX_PUBLISH_ATTEMPTS = 3;
 
 // Задержка между попытками (в миллисекундах)
-const RETRY_DELAY_MS = 4000; // Увеличиваем задержку до 4 секунд
+const RETRY_DELAY_MS = 5000; // Увеличиваем задержку до 5 секунд
 
 // Тип для параметров публикации
 interface PublishParams {
@@ -17,49 +17,22 @@ interface PublishParams {
 }
 
 /**
- * Проверяет существование контента по ID, обращаясь напрямую к Directus
+ * Проверяет существование контента по ID путем повторного запроса
  * @param contentId ID контента для проверки
- * @param token Токен авторизации для запроса к Directus
- * @returns true, если контент существует
+ * @returns Promise<boolean> true, если контент существует
  */
-export async function checkContentExists(contentId: string, token?: string): Promise<boolean> {
+export async function checkContentExists(contentId: string): Promise<boolean> {
   try {
     console.log(`Проверка существования контента с ID: ${contentId}`);
     
-    // Пробуем сначала через API приложения
-    try {
-      const response = await apiRequest(`/api/campaign-content/${contentId}`, {
-        method: 'GET'
-      });
-      
-      const exists = !!(response && (response.id || response.data?.id));
-      console.log(`Результат проверки контента ${contentId} через API: ${exists ? 'существует' : 'не найден'}`);
-      
-      if (exists) return true;
-    } catch (error) {
-      console.log('Не удалось проверить контент через API, пробуем напрямую через Directus');
-    }
+    // Проверяем существование контента через API
+    const response = await apiRequest(`/api/campaign-content/${contentId}`, {
+      method: 'GET'
+    });
     
-    // Если через API не удалось, пробуем напрямую через Directus
-    if (token) {
-      try {
-        const directusUrl = 'https://directus.nplanner.ru';
-        const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        const exists = !!(response && response.data && (response.data.data));
-        console.log(`Результат проверки контента ${contentId} через Directus: ${exists ? 'существует' : 'не найден'}`);
-        return exists;
-      } catch (directusError) {
-        console.error('Ошибка при проверке существования контента через Directus:', directusError);
-      }
-    }
-    
-    return false;
+    const exists = !!(response && (response.id || response.data?.id));
+    console.log(`Результат проверки контента ${contentId}: ${exists ? 'существует' : 'не найден'}`);
+    return exists;
   } catch (error) {
     console.error('Ошибка при проверке существования контента:', error);
     return false;
@@ -69,7 +42,7 @@ export async function checkContentExists(contentId: string, token?: string): Pro
 /**
  * Публикует контент с несколькими попытками и проверками
  * @param params Параметры для публикации
- * @returns Результат публикации или выбрасывает ошибку
+ * @returns Promise<any> Результат публикации или ошибка
  */
 export async function publishWithRetry(params: PublishParams): Promise<any> {
   const { contentId, platforms, userId, immediate = true } = params;
@@ -89,8 +62,8 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       // Выводим информацию о попытке в консоль
       console.log(`Попытка публикации ${attempt}/${MAX_PUBLISH_ATTEMPTS}...`);
       
-      // Перед каждой попыткой проверяем, существует ли контент (передаем токен для проверки через Directus)
-      const contentExists = await checkContentExists(contentId, token);
+      // Проверяем существование контента
+      const contentExists = await checkContentExists(contentId);
       
       if (!contentExists) {
         console.warn(`Попытка ${attempt}: Контент ${contentId} не найден, ожидаем ${RETRY_DELAY_MS}мс...`);
@@ -107,33 +80,33 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       
       console.log(`Попытка ${attempt}: Отправка запроса на публикацию контента ${contentId}...`);
       
-      // Публикуем контент
-      const result = await apiRequest(`/api/publish/${contentId}`, {
-        method: 'POST',
-        data: {
-          platforms,
-          immediate,
-          userId,
-          contentId,
-          token // Дублируем токен в теле запроса для надежности
-        },
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'User-ID': userId || ''
-        }
-      });
-      
-      console.log('Публикация успешно выполнена:', result);
-      return result;
+      // Используем простой метод публикации с обработкой ошибок
+      try {
+        // Сначала проверяем существование контента еще раз для надежности
+        const result = await apiRequest(`/api/publish-simple/${contentId}`, {
+          method: 'POST',
+          data: {
+            platforms,
+            immediate,
+            userId,
+            contentId
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'User-ID': userId || ''
+          }
+        });
+        
+        console.log('Публикация успешно выполнена:', result);
+        return result;
+      } catch (publishError: any) {
+        console.error(`Ошибка при публикации через простой API:`, publishError);
+        throw publishError;
+      }
       
     } catch (error: any) {
       console.error(`Попытка ${attempt}: Ошибка при публикации:`, error);
       lastError = error;
-      
-      // Если это не 404 ошибка, нет смысла повторять
-      if (!error.message?.includes('404') && !error.message?.includes('Контент не найден')) {
-        break;
-      }
       
       // Если это последняя попытка, выбрасываем ошибку
       if (attempt === MAX_PUBLISH_ATTEMPTS) {

@@ -376,8 +376,8 @@ export function registerPublishingRoutes(app: Express): void {
         // Получаем системный токен напрямую из сервиса публикации
         systemToken = await socialPublishingService.getSystemToken();
         log(`Системный токен для публикации получен: ${systemToken ? 'успешно' : 'не удалось получить'}`, 'api');
-      } catch (tokenError) {
-        log(`Ошибка при получении системного токена: ${tokenError.message}`, 'api');
+      } catch (error: any) {
+        log(`Ошибка при получении системного токена: ${error.message}`, 'api');
       }
       
       // Если не получили системный токен, используем пользовательский
@@ -385,7 +385,7 @@ export function registerPublishingRoutes(app: Express): void {
       
       // Получаем контент напрямую через DirectusCrud
       const directusCrud = await import('../services/directus-crud').then(m => m.directusCrud);
-      const content = await directusCrud.read('campaign_content', contentId, { authToken });
+      const content: any = await directusCrud.read('campaign_content', contentId, { authToken });
       
       if (!content) {
         log(`Контент ${contentId} не найден при попытке публикации`, 'api');
@@ -393,9 +393,15 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Получаем настройки кампании
-      const campaign = await directusCrud.read('campaigns', content.campaign, { authToken });
+      const campaignId = content.campaign || content.campaign_id;
+      if (!campaignId) {
+        log(`ID кампании не найден в контенте ${contentId}`, 'api');
+        return res.status(400).json({ error: 'ID кампании не найден в контенте' });
+      }
+      
+      const campaign: any = await directusCrud.read('campaigns', campaignId, { authToken });
       if (!campaign) {
-        log(`Кампания ${content.campaign} не найдена при попытке публикации контента`, 'api');
+        log(`Кампания ${campaignId} не найдена при попытке публикации контента`, 'api');
         return res.status(404).json({ error: `Кампания не найдена` });
       }
       
@@ -557,6 +563,16 @@ export function registerPublishingRoutes(app: Express): void {
       const userToken = req.headers.authorization?.replace('Bearer ', '') || 
                        (req.query.token as string) || 
                        (req.cookies?.auth_token as string);
+                       
+      // Получаем системный токен для публикации
+      let systemToken = null;
+      try {
+        // Получаем системный токен напрямую из сервиса публикации
+        systemToken = await socialPublishingService.getSystemToken();
+        log(`Системный токен для публикации получен: ${systemToken ? 'успешно' : 'не удалось получить'}`, 'api');
+      } catch (error: any) {
+        log(`Ошибка при получении системного токена: ${error.message}`, 'api');
+      }
       
       log(`Попытка получения контента ${contentId} с токенами. User ID: ${userId}`, 'api');
       
@@ -625,16 +641,14 @@ export function registerPublishingRoutes(app: Express): void {
         return res.status(404).json({ error: `Кампания ${content.campaignId} не найдена` });
       }
 
-      // Используем ранее полученный системный токен, либо получаем новый
-      if (!systemAuthToken) {
-        log(`Системный токен не был получен ранее, получаем новый`, 'api');
-        // В случае, если systemAuthToken ещё не был получен
-        systemAuthToken = await socialPublishingService.getSystemToken();
-      }
-      if (!systemAuthToken) {
-        log(`Не удалось получить системный токен для публикации контента ${contentId}`, 'api');
+      // Используем системный токен, полученный ранее
+      const authToken = systemToken || userToken;
+      
+      if (!authToken) {
+        log(`Не удалось получить токен для публикации контента ${contentId}`, 'api');
+        return res.status(401).json({ error: 'Ошибка авторизации: не удалось получить действительный токен' });
       } else {
-        log(`Системный токен для публикации контента ${contentId} получен успешно`, 'api');
+        log(`Токен для публикации контента ${contentId} получен успешно`, 'api');
       }
 
       // Публикуем контент во все указанные платформы
@@ -663,7 +677,7 @@ export function registerPublishingRoutes(app: Express): void {
             ...socialPlatforms,
             ...updatedPlatforms
           }
-        }, systemToken || undefined);
+        }, authToken);
         
         log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
         
