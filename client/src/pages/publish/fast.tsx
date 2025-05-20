@@ -296,17 +296,37 @@ export default function FastPublish() {
         const { publishWithRetry } = await import('@/components/PublishWithRetry');
         
         try {
-          // Используем функцию с повторными попытками для надежной публикации
-          const result = await publishWithRetry({
+          // Используем прямую публикацию через альтернативный API-маршрут
+          console.log("Используем прямую публикацию без повторных попыток через /api/publish/now");
+          
+          const platformsArray = Object.keys(selectedPlatforms).filter(
+            platform => selectedPlatforms[platform as SocialPlatform]
+          ) as SocialPlatform[];
+          
+          const publishPayload = {
             contentId,
-            platforms: Object.keys(selectedPlatforms).filter(
-              platform => selectedPlatforms[platform as SocialPlatform]
-            ) as SocialPlatform[],
+            platforms: platformsArray,
             userId: String(userId),
             immediate: true
+          };
+          
+          console.log("Данные для публикации:", publishPayload);
+          
+          const result = await apiRequest('/api/publish/now', {
+            method: 'POST',
+            data: {
+              contentId,
+              platforms: platformsArray.reduce((obj, platform) => ({ ...obj, [platform]: true }), {}),
+              immediate: true,
+              userId: String(userId)
+            },
+            headers: {
+              'Authorization': `Bearer ${getAuthToken() || ''}`,
+              'User-ID': String(userId)
+            }
           });
           
-          console.log("Результат публикации с повторными попытками:", result);
+          console.log("Результат прямой публикации через /api/publish/now:", result);
           
           if (result && result.error) {
             throw new Error(result.error);
