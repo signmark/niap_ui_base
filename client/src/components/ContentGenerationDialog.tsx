@@ -125,21 +125,39 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       const content = data.content;
       const service = data.service;
       
-      let formattedContent = content
-        .split('\n\n').map((paragraph: string) => paragraph.trim()) // Разбиваем на параграфы
-        .filter((p: string) => p) // Убираем пустые параграфы
-        .map((paragraph: string) => {
-          // Обрабатываем маркдаун-форматирование
-          return paragraph
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
-            .replace(/\*(.*?)\*/g, '<em>$1</em>') // Курсив
-            .replace(/^#+ (.*)$/, (match: string, text: string) => { // Заголовки
-              const level = (match.match(/^#+/) || ['#'])[0].length;
-              return `<h${level}>${text}</h${level}>`;
-            });
-        })
-        .map((p: string) => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
-        .join('');
+      // Проверяем, содержит ли контент уже HTML-теги
+      let formattedContent = '';
+      
+      console.log('Полученный контент для форматирования:', content);
+      
+      // Если контент уже в HTML формате (содержит теги), используем его как есть
+      if (content && (content.includes('<p>') || content.includes('<h1>') || content.includes('<h2>'))) {
+        console.log('Контент уже в HTML формате, используем без изменений');
+        formattedContent = content;
+      } else if (content) {
+        // Если это обычный текст, форматируем его в HTML
+        console.log('Форматирование текста в HTML');
+        formattedContent = content
+          .split('\n\n').map((paragraph: string) => paragraph.trim()) // Разбиваем на параграфы
+          .filter((p: string) => p) // Убираем пустые параграфы
+          .map((paragraph: string) => {
+            // Обрабатываем маркдаун-форматирование
+            return paragraph
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Полужирный
+              .replace(/\*(.*?)\*/g, '<em>$1</em>') // Курсив
+              .replace(/^#+ (.*)$/, (match: string, text: string) => { // Заголовки
+                const level = (match.match(/^#+/) || ['#'])[0].length;
+                return `<h${level}>${text}</h${level}>`;
+              });
+          })
+          .map((p: string) => p.startsWith('<h') ? p : `<p>${p}</p>`) // Оборачиваем в <p>, если не заголовок
+          .join('');
+      } else {
+        console.error('Получен пустой контент от сервера');
+        formattedContent = '<p>Сгенерированный контент пуст. Пожалуйста, попробуйте снова с другим запросом.</p>';
+      }
+      
+      console.log('Отформатированный контент для редактора:', formattedContent.substring(0, 200) + '...');
       
       setGenerationResult(formattedContent);
       
