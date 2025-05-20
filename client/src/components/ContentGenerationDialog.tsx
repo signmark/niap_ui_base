@@ -233,168 +233,168 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   };
 
   return (
-    <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className={`sm:max-w-[600px] ${generationResult ? 'sm:max-w-[900px] w-[900px]' : ''} max-h-[90vh] overflow-y-auto resize-handle dialog-content`}>
-        <DialogHeader>
-          <DialogTitle>Генерация контента</DialogTitle>
-          <DialogDescription>
-            Используйте AI для генерации контента на основе ключевых слов и промта
-          </DialogDescription>
+    <Dialog open={true} onOpenChange={() => onClose()} modal={true}>
+      <DialogContent className={!generationResult ? "sm:max-w-[600px] max-h-[90vh]" : "sm:max-w-[90%] w-[90%] max-h-[90vh] h-[90vh]"}>
+        <DialogHeader className="mb-2">
+          <DialogTitle>{generationResult ? "Результат генерации контента" : "Генерация контента"}</DialogTitle>
+          {!generationResult && (
+            <DialogDescription>
+              Используйте AI для генерации контента на основе ключевых слов и промта
+            </DialogDescription>
+          )}
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {!generationResult ? (
-            <>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="selectedService" className="text-right">
-                  API Сервис
-                </Label>
-                <div className="col-span-3">
-                  <Select
-                    value={selectedService}
-                    onValueChange={(value) => setSelectedService(value as ApiService)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Выберите API Сервис" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="qwen">Qwen</SelectItem>
-                      <SelectItem value="claude">Claude</SelectItem>
-                      <SelectItem value="gemini">Gemini</SelectItem>
-                      <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
-                      <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
-                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-                      <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
-                      <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</SelectItem>
-                      <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Experimental</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService.includes('gemini')) && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="platform" className="text-right">
-                    Платформа
-                  </Label>
-                  <Select
-                    value={platform}
-                    onValueChange={setPlatform}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Выберите платформу" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="facebook">Facebook</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="telegram">Telegram</SelectItem>
-                      <SelectItem value="vk">ВКонтакте</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tone" className="text-right">
-                  Тон контента
-                </Label>
+        {!generationResult ? (
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="selectedService" className="text-right">
+                API Сервис
+              </Label>
+              <div className="col-span-3">
                 <Select
-                  value={tone}
-                  onValueChange={setTone}
+                  value={selectedService}
+                  onValueChange={(value) => setSelectedService(value as ApiService)}
                 >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Выберите тон контента" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Выберите API Сервис" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="informative">Информативный</SelectItem>
-                    <SelectItem value="friendly">Дружелюбный</SelectItem>
-                    <SelectItem value="professional">Профессиональный</SelectItem>
-                    <SelectItem value="casual">Повседневный</SelectItem>
-                    <SelectItem value="humorous">С юмором</SelectItem>
+                    <SelectItem value="deepseek">DeepSeek</SelectItem>
+                    <SelectItem value="qwen">Qwen</SelectItem>
+                    <SelectItem value="claude">Claude</SelectItem>
+                    <SelectItem value="gemini">Gemini</SelectItem>
+                    <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                    <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                    <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                    <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
+                    <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</SelectItem>
+                    <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Experimental</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
+            </div>
+            
+            {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService.includes('gemini')) && (
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="prompt" className="text-right">
-                  Промт
+                <Label htmlFor="platform" className="text-right">
+                  Платформа
                 </Label>
-                <Textarea
-                  id="prompt"
-                  placeholder="Опишите, какой контент вы хотите сгенерировать"
-                  className="col-span-3"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={3}
+                <Select
+                  value={platform}
+                  onValueChange={setPlatform}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Выберите платформу" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="telegram">Telegram</SelectItem>
+                    <SelectItem value="vk">ВКонтакте</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tone" className="text-right">
+                Тон контента
+              </Label>
+              <Select
+                value={tone}
+                onValueChange={setTone}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Выберите тон контента" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="informative">Информативный</SelectItem>
+                  <SelectItem value="friendly">Дружелюбный</SelectItem>
+                  <SelectItem value="professional">Профессиональный</SelectItem>
+                  <SelectItem value="casual">Повседневный</SelectItem>
+                  <SelectItem value="humorous">С юмором</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="prompt" className="text-right">
+                Промт
+              </Label>
+              <Textarea
+                id="prompt"
+                placeholder="Опишите, какой контент вы хотите сгенерировать"
+                className="col-span-3"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Ключевые слова
+              </Label>
+              <div className="col-span-3 grid grid-cols-2 gap-2">
+                {keywords.length === 0 ? (
+                  <p className="text-sm text-muted-foreground col-span-2">
+                    Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
+                  </p>
+                ) : (
+                  // Отфильтруем ключевые слова, оставив только с положительным трендом
+                  keywords
+                    .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
+                    .map((kw) => (
+                      <div key={kw.id} className="flex items-start space-x-2">
+                        <Checkbox 
+                          id={`keyword-${kw.id}`}
+                          checked={selectedKeywords.includes(kw.keyword)}
+                          onCheckedChange={() => handleKeywordToggle(kw.keyword)}
+                          className="mt-1"
+                        />
+                        <Label 
+                          htmlFor={`keyword-${kw.id}`}
+                          className="cursor-pointer text-sm"
+                        >
+                          {kw.keyword} ({kw.trendScore})
+                        </Label>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col h-full space-y-4">
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="title" className="whitespace-nowrap">
+                Название:
+              </Label>
+              <Input
+                id="title"
+                placeholder="Введите название для контента"
+                className="flex-grow"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <Label htmlFor="generatedContent" className="text-left mb-2 font-bold text-lg">
+                Результат генерации:
+              </Label>
+              <div className="flex-1 min-h-0">
+                <RichTextEditor
+                  value={generationResult || ''}
+                  onChange={(html: string) => setGenerationResult(html)}
+                  minHeight={500}
+                  className="tiptap w-full h-full"
+                  enableResize={true}
                 />
               </div>
-
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">
-                  Ключевые слова
-                </Label>
-                <div className="col-span-3 grid grid-cols-2 gap-2">
-                  {keywords.length === 0 ? (
-                    <p className="text-sm text-muted-foreground col-span-2">
-                      Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
-                    </p>
-                  ) : (
-                    // Отфильтруем ключевые слова, оставив только с положительным трендом
-                    keywords
-                      .filter(kw => kw.keyword && kw.keyword.trim() !== '' && kw.trendScore > 0)
-                      .map((kw) => (
-                        <div key={kw.id} className="flex items-start space-x-2">
-                          <Checkbox 
-                            id={`keyword-${kw.id}`}
-                            checked={selectedKeywords.includes(kw.keyword)}
-                            onCheckedChange={() => handleKeywordToggle(kw.keyword)}
-                            className="mt-1"
-                          />
-                          <Label 
-                            htmlFor={`keyword-${kw.id}`}
-                            className="cursor-pointer text-sm"
-                          >
-                            {kw.keyword} ({kw.trendScore})
-                          </Label>
-                        </div>
-                      ))
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">
-                  Название
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Введите название для контента"
-                  className="col-span-3"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 items-start gap-4">
-                <Label htmlFor="generatedContent" className="text-left pt-2 font-bold text-lg">
-                  Результат генерации:
-                </Label>
-                <div className="w-full h-[600px] overflow-y-auto p-2">
-                  <RichTextEditor
-                    value={generationResult || ''}
-                    onChange={(html: string) => setGenerationResult(html)}
-                    minHeight={550}
-                    className="tiptap w-full h-full"
-                    enableResize={true}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           {!generationResult ? (
