@@ -242,6 +242,10 @@ export default function FastPublish() {
           description: "Контент успешно создан и готов к публикации"
         });
         
+        // Даем серверу немного времени для обработки созданного контента
+        console.log("Ожидаем 2 секунды перед публикацией...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         // Публикуем созданный контент
         await publishContent(contentId);
       } else {
