@@ -72,9 +72,12 @@ router.post('/generate-content', async (req, res) => {
       
       // Если запрос успешный, возвращаем результат клиенту
       logger.info(`Контент успешно сгенерирован для кампании ${campaignId}`);
+      
+      // Форматируем ответ в формат, ожидаемый клиентом
+      const content = response.data.content || response.data.text || response.data.data?.content || '';
       return res.status(200).json({
-        success: true,
-        data: response.data
+        content: content,
+        service: service // Возвращаем выбранный сервис
       });
       
     } catch (directusError: any) {
