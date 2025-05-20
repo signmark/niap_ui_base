@@ -377,13 +377,29 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   Результат
                 </Label>
                 <div className="col-span-3">
-                  <div className="max-h-[300px] overflow-y-auto">
-                    <RichTextEditor
-                      value={generationResult || ''}
-                      onChange={(html: string) => setGenerationResult(html)}
-                      minHeight={200}
-                      className="tiptap"
-                    />
+                  <div className="max-h-[300px] overflow-y-auto border border-border p-4 rounded-md bg-white">
+                    {generationResult ? (
+                      <div 
+                        className="prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: generationResult }}
+                      />
+                    ) : (
+                      <div className="text-muted-foreground text-center py-10">
+                        Контент не был сгенерирован
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        console.log("Редактирование контента:", generationResult);
+                        // Здесь можно добавить открытие редактора в отдельном окне при необходимости
+                      }}
+                    >
+                      Редактировать
+                    </Button>
                   </div>
                 </div>
               </div>
