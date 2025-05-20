@@ -132,36 +132,74 @@ export default function FastPublish() {
         return;
       }
       
-      // Публикуем контент
+      // Добавляем больше информации в логи для отладки
+      console.log(`Детальная информация о запросе публикации:
+        - Content ID: ${contentId}
+        - User ID: ${userId}
+        - Платформы: ${platforms.join(', ')}
+        - Немедленная публикация: true
+      `);
+      
+      // Публикуем контент с полным набором данных
       console.log("Отправляем запрос на публикацию...");
       const result = await apiRequest(`/api/publish/${contentId}`, {
         method: 'POST',
-        data: { platforms, immediate: true }
+        data: { 
+          platforms, 
+          immediate: true,
+          userId: userId,
+          contentId: contentId
+        }
       });
       
       console.log("Ответ от API публикации:", result);
       
-      setPublishResult(result);
+      if (result && result.error) {
+        console.error("Ошибка в ответе API:", result.error);
+        toast({
+          title: "Ошибка",
+          description: `Ошибка публикации: ${result.message || "Неизвестная ошибка"}`,
+          variant: "destructive"
+        });
+        
+        setPublishResult({
+          error: true,
+          message: result.message || "Ошибка в процессе публикации"
+        });
+      } else {
+        toast({
+          title: "Публикация отправлена",
+          description: "Результаты публикации отображены в диалоге"
+        });
+        
+        setPublishResult(result);
+        // Обновляем данные в кэше
+        queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
+      }
+      
       setIsResultOpen(true);
-      
-      // Обновляем данные в кэше
-      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
-      
-      toast({
-        title: "Публикация отправлена",
-        description: "Результаты публикации отображены в диалоге"
-      });
     } catch (error: any) {
       console.error("Ошибка при публикации:", error);
+      // Добавляем подробную информацию об ошибке в консоль для отладки
+      if (error.response) {
+        console.error("Данные ответа:", error.response.data);
+        console.error("Статус:", error.response.status);
+        console.error("Заголовки:", error.response.headers);
+      } else if (error.request) {
+        console.error("Запрос был сделан, но ответ не получен", error.request);
+      } else {
+        console.error("Ошибка при настройке запроса:", error.message);
+      }
+      
       toast({
         title: "Ошибка",
-        description: `Не удалось опубликовать контент: ${error.message || "Неизвестная ошибка"}`,
+        description: `Не удалось опубликовать контент: ${error.response?.data?.error || error.message || "Неизвестная ошибка"}`,
         variant: "destructive"
       });
       
       setPublishResult({
         error: true,
-        message: error.message || "Произошла неизвестная ошибка при публикации"
+        message: error.response?.data?.error || error.message || "Произошла неизвестная ошибка при публикации"
       });
       setIsResultOpen(true);
     } finally {
