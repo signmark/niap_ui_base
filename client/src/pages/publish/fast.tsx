@@ -67,6 +67,14 @@ export default function FastPublish() {
   // Проверяем и форматируем данные кампаний
   const campaigns = Array.isArray(campaignData) ? campaignData : [];
   
+  // Получаем поддерживаемые платформы
+  const supportedPlatforms = [
+    { id: 'telegram', name: 'Telegram', color: '#0088CC', isDefault: true },
+    { id: 'vk', name: 'ВКонтакте', color: '#0077FF', isDefault: true },
+    { id: 'instagram', name: 'Instagram', color: '#E1306C', isDefault: false },
+    { id: 'facebook', name: 'Facebook', color: '#1877F2', isDefault: false }
+  ];
+  
   // Обработчик выбора кампании
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaigns.find(camp => camp.id === campaignId);
@@ -442,47 +450,41 @@ export default function FastPublish() {
             
             <div>
               <Label>Выберите платформы для публикации</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="telegram"
-                    checked={selectedPlatforms.telegram}
-                    onCheckedChange={(checked) => 
-                      setSelectedPlatforms({...selectedPlatforms, telegram: !!checked})
-                    }
-                  />
-                  <Label htmlFor="telegram">Telegram</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="vk"
-                    checked={selectedPlatforms.vk}
-                    onCheckedChange={(checked) => 
-                      setSelectedPlatforms({...selectedPlatforms, vk: !!checked})
-                    }
-                  />
-                  <Label htmlFor="vk">ВКонтакте</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="instagram"
-                    checked={selectedPlatforms.instagram}
-                    onCheckedChange={(checked) => 
-                      setSelectedPlatforms({...selectedPlatforms, instagram: !!checked})
-                    }
-                  />
-                  <Label htmlFor="instagram">Instagram</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="facebook"
-                    checked={selectedPlatforms.facebook}
-                    onCheckedChange={(checked) => 
-                      setSelectedPlatforms({...selectedPlatforms, facebook: !!checked})
-                    }
-                  />
-                  <Label htmlFor="facebook">Facebook</Label>
-                </div>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                {supportedPlatforms.map((platform) => (
+                  <div 
+                    key={platform.id}
+                    className={`flex items-center p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                      selectedPlatforms[platform.id as SocialPlatform] ? 'border-primary' : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                    style={{
+                      borderLeftWidth: selectedPlatforms[platform.id as SocialPlatform] ? '4px' : '1px',
+                      borderLeftColor: selectedPlatforms[platform.id as SocialPlatform] ? platform.color : undefined
+                    }}
+                    onClick={() => {
+                      // Переключаем статус платформы при клике на всю область
+                      setSelectedPlatforms({
+                        ...selectedPlatforms, 
+                        [platform.id]: !selectedPlatforms[platform.id as SocialPlatform]
+                      });
+                    }}
+                  >
+                    <Checkbox
+                      id={platform.id}
+                      checked={selectedPlatforms[platform.id as SocialPlatform]}
+                      onCheckedChange={(checked) => 
+                        setSelectedPlatforms({...selectedPlatforms, [platform.id]: !!checked})
+                      }
+                      className="mr-2"
+                    />
+                    <Label 
+                      htmlFor={platform.id} 
+                      className="flex-1 cursor-pointer"
+                    >
+                      {platform.name}
+                    </Label>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
