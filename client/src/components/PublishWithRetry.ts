@@ -80,10 +80,12 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
       
       console.log(`Попытка ${attempt}: Отправка запроса на публикацию контента ${contentId}...`);
       
-      // Используем простой метод публикации с обработкой ошибок
+      // Используем простой метод публикации с улучшенной обработкой ошибок
       try {
-        // Сначала проверяем существование контента еще раз для надежности
-        const result = await apiRequest(`/api/publish-simple/${contentId}`, {
+        console.log(`Отправляем запрос на публикацию контента ${contentId} на платформы:`, platforms);
+        
+        // Отправляем запрос на публикацию напрямую без дополнительных проверок
+        const result = await apiRequest(`/api/publish-direct/${contentId}`, {
           method: 'POST',
           data: {
             platforms,
@@ -93,14 +95,29 @@ export async function publishWithRetry(params: PublishParams): Promise<any> {
           },
           headers: {
             'Authorization': `Bearer ${token}`,
-            'User-ID': userId || ''
+            'User-ID': userId || '',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
         });
+        
+        // Проверяем ответ на наличие ошибок
+        if (result?.error) {
+          console.error(`Ошибка API публикации: ${result.error}`);
+          throw new Error(result.error);
+        }
         
         console.log('Публикация успешно выполнена:', result);
         return result;
       } catch (publishError: any) {
-        console.error(`Ошибка при публикации через простой API:`, publishError);
+        console.error(`Ошибка при публикации через API:`, publishError);
+        
+        // Если ошибка связана с парсингом JSON, добавляем более понятное сообщение
+        if (publishError.message?.includes('JSON') || publishError.message?.includes('Unexpected token')) {
+          console.error('Получен невалидный ответ от сервера. Возможно, проблема с авторизацией.');
+          throw new Error('Ошибка при публикации: сервер вернул неверный формат данных. Проверьте авторизацию.');
+        }
+        
         throw publishError;
       }
       
