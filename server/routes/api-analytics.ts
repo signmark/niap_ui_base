@@ -243,9 +243,22 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
       log.info(`[api-analytics] Используем улучшенный сервис подсчета статистики`);
       const stats = await getImprovedPlatformsStats(userId, campaignId, period);
       
+      // Добавляем заголовки, запрещающие кэширование
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      
+      // Выводим дополнительные логи для отладки
+      log.info(`[api-analytics] Возвращаем статистику платформ: ${JSON.stringify({
+        totalPosts: stats.aggregated.totalPosts,
+        platforms: Object.keys(stats.platforms).map(p => `${p}: ${stats.platforms[p].posts}`)
+      })}`);
+      
       res.json({
         success: true,
-        data: stats
+        data: stats,
+        timestamp: Date.now() // Добавляем временную метку, чтобы запросы всегда отличались
       });
     } catch (statsError: any) {
       // Если не удалось получить статистику, используем fallback-данные

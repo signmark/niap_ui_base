@@ -300,22 +300,30 @@ export default function Analytics() {
     isLoading: isLoadingPlatformsStats,
     refetch: refetchPlatformsStats
   } = useQuery<PlatformsStatsResponse>({
-    queryKey: ["platforms_stats", campaignId, period],
+    queryKey: ["platforms_stats", campaignId, period, Date.now()], // Добавляем текущее время для обновления кэша
     queryFn: async () => {
       if (!campaignId) throw new Error('Не выбрана кампания');
       
       const token = await getToken();
-      const response = await fetch(`/api/analytics/platforms-stats?campaignId=${campaignId}&period=${period}`, {
+      const response = await fetch(`/api/analytics/platforms-stats?campaignId=${campaignId}&period=${period}&_=${Date.now()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       if (!response.ok) {
         throw new Error('Не удалось получить статистику по платформам');
       }
-      return await response.json();
+      const data = await response.json();
+      console.log("Полученные данные статистики:", data); // Логируем полученные данные
+      return data;
     },
-    enabled: !!campaignId
+    enabled: !!campaignId,
+    staleTime: 0, // Данные всегда считаются устаревшими
+    cacheTime: 0, // Не кэшируем данные
+    refetchOnWindowFocus: true // Обновляем при фокусе окна
   });
 
   // Получаем топовые публикации
