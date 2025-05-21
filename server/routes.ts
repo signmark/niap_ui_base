@@ -4976,8 +4976,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (xmlriverError) {
-          console.error('XMLRiver API error:', xmlriverError);
-          // Если XMLRiver тоже не сработал, возвращаем пустой массив
+          console.error(`[${requestId}] XMLRiver API error:`, xmlriverError);
+          
+          // Проверяем, есть ли информация об ошибке
+          if (xmlriverError.response) {
+            if (xmlriverError.response.status === 400) {
+              return res.status(400).json({
+                error: "Ошибка при поиске ключевых слов",
+                message: `Поиск по запросу "${originalKeyword}" не удалось выполнить: ${xmlriverError.response.data?.message || "Некорректный запрос"}`
+              });
+            }
+          }
+          
+          // Если это не ошибка 400 или нет ответа, продолжаем с пустым массивом
           finalKeywords = [];
         }
       }
