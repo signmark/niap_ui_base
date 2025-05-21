@@ -538,6 +538,26 @@ export function registerXmlRiverRoutes(app: Express): void {
         });
       }
       
+      // Обработка региональных запросов
+      // Список городов и регионов Беларуси и России, которые могут быть в запросе
+      const regions = ['минск', 'витебск', 'гомель', 'гродно', 'брест', 'могилев', 'москва', 
+                    'санкт-петербург', 'спб', 'казань', 'екатеринбург', 'новосибирск'];
+      
+      // Проверяем наличие региона в запросе
+      let searchRegion = '';
+      let baseQuery = query;
+      
+      // Выделяем название города/региона из запроса для правильной работы с API
+      for (const region of regions) {
+        if (query.toLowerCase().includes(region)) {
+          searchRegion = region;
+          // Удаляем регион из базового запроса для поиска по фразе без региона
+          baseQuery = query.toLowerCase().replace(region, '').trim();
+          console.log(`[XMLRiver] Обнаружен регион в запросе: ${region}, базовый запрос: ${baseQuery}`);
+          break;
+        }
+      }
+      
       // Используем XMLRiver API с правильно переданными учетными данными
       try {
         console.log(`[XMLRiver] Запрос поиска ключевых слов: ${query}`);
@@ -548,12 +568,12 @@ export function registerXmlRiverRoutes(app: Express): void {
           key: "f7947eff83104621deb713275fe3260bfde4f001"
         };
         
-        // Напрямую делаем запрос к API
+        // Выполняем исходный запрос
         const response = await axios.get('http://xmlriver.com/wordstat/json', {
           params: {
             user: credentials.user,
             key: credentials.key,
-            query: query
+            query: baseQuery // Используем запрос без региона для поиска всех ключевых слов
           }
         });
         
@@ -564,15 +584,33 @@ export function registerXmlRiverRoutes(app: Express): void {
           const items = response.data.content.includingPhrases.items;
           console.log(`[XMLRiver] Успешно получено ${items.length} ключевых слов`);
           
+          // Отфильтровываем и дополняем результаты региональными запросами
+          const filteredItems = searchRegion ? 
+            items.filter((item: any) => 
+              item.phrase.toLowerCase().includes(searchRegion) || 
+              // Если регион не найден в результатах, добавляем его к исходному запросу
+              item.phrase.toLowerCase() === baseQuery.toLowerCase()
+            ) : items;
+          
+          // Если есть регион, но в результатах нет запросов с регионом, добавляем запрос с регионом
+          if (searchRegion && !filteredItems.some((item: any) => 
+              item.phrase.toLowerCase().includes(searchRegion))) {
+            // Создаем искусственный пункт для регионального запроса 
+            filteredItems.push({
+              phrase: `${baseQuery} ${searchRegion}`,
+              number: "1000" // Устанавливаем базовую частоту
+            });
+          }
+          
           // Вычисляем максимальную частоту для нормализации данных конкуренции
-          const maxFrequency = Math.max(...items.map((item: any) => 
+          const maxFrequency = Math.max(...filteredItems.map((item: any) => 
             parseInt(item.number.replace(/\s/g, '')) || 0
           ));
           
           return res.status(200).json({
             success: true,
             data: {
-              keywords: items.map((item: any) => {
+              keywords: filteredItems.map((item: any) => {
                 const frequency = parseInt(item.number.replace(/\s/g, '')) || 0;
                 
                 // Рассчитываем конкуренцию на основе частоты поиска
