@@ -4811,12 +4811,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Для XMLRiver требуется POST запрос с JSON в теле
           console.log(`[${requestId}] Отправляем запрос в XMLRiver API: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
             
+          // Обработка региональных запросов с выделением базового ключевого слова и региона
+          let originalKeyword = isUrl ? "контент для сайта" : req.params.keyword;
+          let queryKeyword = originalKeyword;
+          let region = '';
+          
+          // Определяем, является ли запрос региональным (содержит название города/региона)
+          const words = originalKeyword.split(' ');
+          if (words.length >= 2) {
+            // Проверяем на типичные региональные запросы (город в конце)
+            const russianCities = ['москва', 'санкт-петербург', 'казань', 'новосибирск', 'екатеринбург', 
+                                 'нижний новгород', 'самара', 'омск', 'краснодар', 'ростов-на-дону', 
+                                 'челябинск', 'уфа', 'волгоград', 'пермь', 'красноярск', 'воронеж',
+                                 'саратов', 'тюмень', 'тольятти', 'барнаул', 'ульяновск', 'иркутск',
+                                 'хабаровск', 'ярославль', 'владивосток', 'томск', 'оренбург', 'кемерово',
+                                 'минск', 'витебск', 'могилев', 'гомель', 'брест', 'гродно'];
+                                 
+            // Проверяем на наличие города/региона в конце или начале запроса
+            for (const city of russianCities) {
+              if (originalKeyword.toLowerCase().endsWith(` ${city}`) || 
+                  originalKeyword.toLowerCase().startsWith(`${city} `)) {
+                // Если нашли город, используем базовый запрос без региона
+                region = city;
+                queryKeyword = originalKeyword.toLowerCase().replace(city, '').trim();
+                console.log(`[${requestId}] Обнаружен региональный запрос: "${originalKeyword}", базовый запрос: "${queryKeyword}", регион: "${region}"`);
+                break;
+              }
+            }
+          }
+          
           // Используем правильный URL и GET запрос для XMLRiver API
           const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
             params: {
               user: xmlRiverUserId,
               key: xmlRiverApiKey,
-              query: isUrl ? "контент для сайта" : req.params.keyword
+              query: queryKeyword
             }
           });
           
