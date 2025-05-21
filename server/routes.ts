@@ -4869,11 +4869,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Используем правильный URL и GET запрос для XMLRiver API
+          // Добавляем необходимые параметры для Wordstat
           const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
             params: {
               user: xmlRiverUserId,
               key: xmlRiverApiKey,
-              query: queryKeyword
+              query: queryKeyword,
+              period: 12,   // Период поиска - последние 12 месяцев
+              regions: 0,   // Все регионы
+              device: 0     // Все устройства
             }
           });
           
