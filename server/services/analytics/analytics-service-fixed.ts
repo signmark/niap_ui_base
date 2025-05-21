@@ -72,16 +72,11 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
   aggregated: AggregatedMetrics
 }> {
   try {
-    // Формируем запрос на получение опубликованных постов
+    // Формируем запрос на получение опубликованных постов и постов с настроенными платформами
     const filter: any = {
       user_id: { _eq: userId },
-      // Обратите внимание: нам нужны все посты с платформами,
-      // но исходный фильтр ограничивал выборку только постами со статусом published
-      // Это могло ограничивать посты с отдельными платформами в статусе published
-      _or: [
-        { status: { _eq: 'published' } },
-        { social_platforms: { _nnull: true } }
-      ]
+      // Мы хотим получить ВСЕ посты, у которых есть платформы в статусе published
+      social_platforms: { _nnull: true }
     };
     
     log.info(`[analytics-service-fixed] Применяем улучшенный фильтр для включения постов с установленными платформами`);
