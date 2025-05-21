@@ -211,16 +211,34 @@ export default function Analytics() {
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/campaigns');
+        const token = await getToken();
+        console.log("Запрос кампаний с токеном:", token ? "Токен получен (длина: " + token.length + ")" : "Токен отсутствует");
+        
+        const response = await fetch('/api/campaigns', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Ошибка загрузки кампаний: ${response.status}`, errorText);
           throw new Error('Не удалось загрузить кампании');
         }
-        return await response.json();
+        
+        const data = await response.json();
+        console.log("Получены данные кампаний:", data);
+        return data;
       } catch (error) {
         console.error("Error loading campaigns:", error);
         throw error;
       }
-    }
+    },
+    staleTime: 60000, // Кэш актуален в течение 1 минуты
+    retry: 3 // Повторяем запрос до 3 раз при ошибке
   });
   
   // Получаем список кампаний из ответа API
@@ -228,48 +246,84 @@ export default function Analytics() {
   
   // Получаем количество ключевых слов для выбранной кампании
   const { data: totalKeywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["total_keywords", campaignId],
+    queryKey: ["total_keywords", campaignId, Date.now()],
     queryFn: async () => {
       if (!campaignId) return 0;
       
-      const response = await directusApi.get('/items/campaign_keywords', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
+      try {
+        const token = await getToken();
+        
+        // Обновляем заголовки авторизации
+        directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await directusApi.get('/items/campaign_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
+            },
+            aggregate: {
+              count: "*"
             }
           },
-          aggregate: {
-            count: "*"
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
-        }
-      });
-      return response.data?.data?.[0]?.count || 0;
+        });
+        
+        console.log("Получены ключевые слова:", response.data?.data);
+        return response.data?.data?.[0]?.count || 0;
+      } catch (error) {
+        console.error("Ошибка при загрузке ключевых слов:", error);
+        return 0;
+      }
     },
-    enabled: !!campaignId
+    enabled: !!campaignId,
+    staleTime: 60000
   });
   
   // Получаем количество сгенерированного контента для выбранной кампании
   const { data: totalContent, isLoading: isLoadingContent } = useQuery({
-    queryKey: ["total_content", campaignId],
+    queryKey: ["total_content", campaignId, Date.now()],
     queryFn: async () => {
       if (!campaignId) return 0;
       
-      const response = await directusApi.get('/items/campaign_content', {
-        params: {
-          filter: {
-            campaign_id: {
-              _eq: campaignId
+      try {
+        const token = await getToken();
+        
+        // Обновляем заголовки авторизации
+        directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        const response = await directusApi.get('/items/campaign_content', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
+            },
+            aggregate: {
+              count: "*"
             }
           },
-          aggregate: {
-            count: "*"
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
-        }
-      });
-      return response.data?.data?.[0]?.count || 0;
+        });
+        
+        console.log("Получен контент:", response.data?.data);
+        return response.data?.data?.[0]?.count || 0;
+      } catch (error) {
+        console.error("Ошибка при загрузке контента:", error);
+        return 0;
+      }
     },
-    enabled: !!campaignId
+    enabled: !!campaignId,
+    staleTime: 60000
   });
 
   // Получаем статус сбора аналитики
@@ -278,20 +332,39 @@ export default function Analytics() {
     isLoading: isLoadingStatus,
     refetch: refetchStatus
   } = useQuery<AnalyticsStatusResponse>({
-    queryKey: ["analytics_status"],
+    queryKey: ["analytics_status", Date.now()],
     queryFn: async () => {
-      const token = await getToken();
-      const response = await fetch('/api/analytics/status', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      try {
+        const token = await getToken();
+        console.log("Запрос статуса аналитики с токеном:", token ? "Токен получен" : "Токен отсутствует");
+        
+        const response = await fetch(`/api/analytics/status?_=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Ошибка получения статуса аналитики: ${response.status}`, errorText);
+          throw new Error('Не удалось получить статус аналитики');
         }
-      });
-      if (!response.ok) {
-        throw new Error('Не удалось получить статус аналитики');
+        
+        const data = await response.json();
+        console.log("Получен статус аналитики:", data);
+        return data;
+      } catch (error) {
+        console.error("Ошибка при загрузке статуса аналитики:", error);
+        throw error;
       }
-      return await response.json();
     },
-    refetchInterval: isCollectingAnalytics ? 2000 : false // Обновляем каждые 2 секунды, если идет сбор
+    staleTime: 0, // Данные всегда считаются устаревшими
+    refetchInterval: isCollectingAnalytics ? 2000 : false, // Обновляем каждые 2 секунды, если идет сбор
+    refetchOnWindowFocus: true,
+    retry: 3
   });
 
   // Получаем статистику по платформам
