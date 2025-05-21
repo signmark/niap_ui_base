@@ -103,7 +103,8 @@ export function KeywordSelector({
       
       // Добавляем случайный параметр для предотвращения кеширования
       const nocache = Date.now();
-      const response = await fetch(`/api/wordstat/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`, {
+      // Используем тот же API-маршрут, что и в разделе "Ключевые слова"
+      const response = await fetch(`/api/xmlriver/keywords/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`, {
         headers: {
           'Authorization': authToken ? `Bearer ${authToken}` : ''
         }
@@ -132,8 +133,8 @@ export function KeywordSelector({
       // Форматируем результаты и преобразуем данные
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        frequency: parseInt(kw.trend) || 0,
-        competition: parseInt(kw.competition) || 0,
+        frequency: kw.frequency || parseInt(kw.trend) || 0, // Поддерживаем оба формата
+        competition: kw.competition || parseInt(kw.competition) || 0,
       }));
 
       // Удаляем дубликаты по ключевому слову, оставляя версию с наибольшей частотой
