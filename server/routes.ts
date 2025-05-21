@@ -4309,15 +4309,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
-      console.log(`[${requestId}] Processing keyword search for: ${keyword}`);
+      console.log(`[${requestId}] Processing keyword search for: ${originalKeyword}`);
 
       // Добавляем случайный параметр чтобы избежать кеширования на клиенте
       const nocache = Date.now();
       
+      // Проверяем, является ли запрос региональным (содержит название города)
+      let queryKeyword = originalKeyword;
+      let region = '';
+      
+      // Определяем, является ли запрос региональным (содержит название города/региона)
+      const words = originalKeyword.split(' ');
+      if (words.length >= 2) {
+        // Проверяем на типичные региональные запросы (город в конце или начале)
+        const russianCities = ['москва', 'санкт-петербург', 'казань', 'новосибирск', 'екатеринбург', 
+                           'нижний новгород', 'самара', 'омск', 'краснодар', 'ростов-на-дону', 
+                           'челябинск', 'уфа', 'волгоград', 'пермь', 'красноярск', 'воронеж',
+                           'саратов', 'тюмень', 'тольятти', 'барнаул', 'ульяновск', 'иркутск',
+                           'хабаровск', 'ярославль', 'владивосток', 'томск', 'оренбург', 'кемерово',
+                           'минск', 'витебск', 'могилев', 'гомель', 'брест', 'гродно'];
+                           
+        // Проверяем на наличие города/региона в конце или начале запроса
+        for (const city of russianCities) {
+          if (originalKeyword.toLowerCase().endsWith(` ${city}`) || 
+              originalKeyword.toLowerCase().startsWith(`${city} `)) {
+            // Если нашли город, используем базовый запрос без региона
+            region = city;
+            queryKeyword = originalKeyword.toLowerCase().replace(city, '').trim();
+            console.log(`[${requestId}] Обнаружен региональный запрос: "${originalKeyword}", базовый запрос: "${queryKeyword}", регион: "${region}"`);
+            break;
+          }
+        }
+      }
+      
       // Проверяем, является ли введенное значение URL сайта
       let isUrl = false;
       try {
-        const url = new URL(keyword.startsWith('http') ? keyword : `https://${keyword}`);
+        const url = new URL(originalKeyword.startsWith('http') ? originalKeyword : `https://${originalKeyword}`);
         isUrl = url.hostname.includes('.');
       } catch (e) {
         isUrl = false;
@@ -4940,7 +4968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Сохраняем результаты в кеш для обычных ключевых слов
             if (!isUrl && finalKeywords.length > 0) {
-              searchCache.set(keyword.toLowerCase().trim(), {
+              searchCache.set(originalKeyword.toLowerCase().trim(), {
                 timestamp: Date.now(),
                 results: finalKeywords
               });
