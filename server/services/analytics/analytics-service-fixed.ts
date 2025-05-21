@@ -72,10 +72,10 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
   aggregated: AggregatedMetrics
 }> {
   try {
-    // Формируем запрос на получение опубликованных постов
+    // Формируем запрос на получение всех постов (не только опубликованных)
     const filter: any = {
-      user_id: { _eq: userId },
-      status: { _eq: 'published' }
+      user_id: { _eq: userId }
+      // Убираем фильтр по статусу 'published', чтобы получать все посты
     };
     
     // Добавляем фильтр по кампании, если он указан
