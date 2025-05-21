@@ -114,26 +114,15 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       posts = [];
     }
     
-    // Если указан период, фильтруем посты по дате публикации (publishedAt)
+    // Мы убираем фильтрацию по периоду, чтобы показывать все опубликованные посты
+    // Это позволит отображать корректную статистику в соответствии с публикациями, показанными в календаре
     if (period > 0 && posts.length > 0) {
+      log.info(`[analytics-service-fixed] Найдено ${posts.length} опубликованных постов. Фильтрация по периоду отключена.`);
+      
+      // Сохраняем информацию о периоде для логов, но не фильтруем посты
       const periodStartDate = new Date();
       periodStartDate.setDate(periodStartDate.getDate() - period);
-      
-      // Создаем новый массив с фильтрацией по дате публикации
-      const filteredPosts = posts.filter(post => {
-        if (!post.social_platforms) return false;
-        
-        // Проверяем, что хотя бы одна платформа опубликована в указанный период
-        return Object.values(post.social_platforms).some((platformData: any) => {
-          if (platformData.status !== 'published' || !platformData.publishedAt) return false;
-          
-          const publishedAt = new Date(platformData.publishedAt);
-          return publishedAt >= periodStartDate;
-        });
-      });
-      
-      log.info(`[analytics-service-fixed] Отфильтровано по publishedAt: ${filteredPosts.length} постов из ${posts.length}`);
-      posts = filteredPosts;
+      log.debug(`[analytics-service-fixed] Период для справки: с ${periodStartDate.toISOString()} по ${new Date().toISOString()}`);
     }
     
     // Начальные значения для агрегированных метрик
