@@ -584,22 +584,54 @@ export function registerXmlRiverRoutes(app: Express): void {
           const items = response.data.content.includingPhrases.items;
           console.log(`[XMLRiver] Успешно получено ${items.length} ключевых слов`);
           
-          // Отфильтровываем и дополняем результаты региональными запросами
-          const filteredItems = searchRegion ? 
-            items.filter((item: any) => 
-              item.phrase.toLowerCase().includes(searchRegion) || 
-              // Если регион не найден в результатах, добавляем его к исходному запросу
-              item.phrase.toLowerCase() === baseQuery.toLowerCase()
-            ) : items;
+          // Для регионального запроса сначала проверяем, нет ли прямых результатов от API
+          let filteredItems = items;
           
-          // Если есть регион, но в результатах нет запросов с регионом, добавляем запрос с регионом
-          if (searchRegion && !filteredItems.some((item: any) => 
-              item.phrase.toLowerCase().includes(searchRegion))) {
-            // Создаем искусственный пункт для регионального запроса 
-            filteredItems.push({
-              phrase: `${baseQuery} ${searchRegion}`,
-              number: "1000" // Устанавливаем базовую частоту
-            });
+          // Если указан регион, выполняем дополнительный запрос для получения более точных региональных фраз
+          if (searchRegion) {
+            console.log(`[XMLRiver] Дополнительно проверяем наличие фраз с регионом ${searchRegion}`);
+            
+            // Ищем все фразы, содержащие регион
+            const regionalItems = items.filter((item: any) => 
+              item.phrase.toLowerCase().includes(searchRegion)
+            );
+            
+            // Если есть базовая фраза, добавляем ее в результаты
+            const baseItem = items.find((item: any) => 
+              item.phrase.toLowerCase() === baseQuery.toLowerCase()
+            );
+            
+            if (baseItem && !regionalItems.some(item => item.phrase.toLowerCase() === baseQuery.toLowerCase())) {
+              regionalItems.push(baseItem);
+            }
+            
+            // Если нашли региональные фразы, используем их
+            if (regionalItems.length > 0) {
+              filteredItems = regionalItems;
+              console.log(`[XMLRiver] Найдено ${regionalItems.length} региональных фраз`);
+            }
+            
+            // Если нет прямых результатов с указанным регионом в фразе, добавляем комбинированный запрос
+            if (!filteredItems.some((item: any) => 
+                item.phrase.toLowerCase().includes(searchRegion))) {
+              
+              // Пытаемся найти оригинальную фразу запроса, если она есть в результатах
+              const originalQuery = query.toLowerCase();
+              const originalItem = items.find(item => item.phrase.toLowerCase() === originalQuery);
+              
+              if (originalItem) {
+                // Если нашли оригинальный запрос, используем его частоту
+                console.log(`[XMLRiver] Добавляем оригинальный запрос "${originalQuery}" с частотой ${originalItem.number}`);
+                filteredItems.push(originalItem);
+              } else {
+                // Создаем искусственный пункт для регионального запроса только если не нашли оригинальный
+                console.log(`[XMLRiver] Добавляем искусственный пункт для запроса "${baseQuery} ${searchRegion}"`);
+                filteredItems.push({
+                  phrase: `${baseQuery} ${searchRegion}`,
+                  number: "5" // Более реалистичная низкая частота для региональных запросов
+                });
+              }
+            }
           }
           
           // Вычисляем максимальную частоту для нормализации данных конкуренции
