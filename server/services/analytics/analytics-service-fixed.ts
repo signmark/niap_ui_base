@@ -114,15 +114,44 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       posts = [];
     }
     
-    // Мы не будем фильтровать посты по дате для показа в аналитике
-    // Это позволит отображать все опубликованные посты, как показано в календаре
+    // Фильтруем посты в зависимости от выбранного периода
     if (period > 0 && posts.length > 0) {
-      log.info(`[analytics-service-fixed] Найдено ${posts.length} опубликованных постов. Все посты будут включены в аналитику.`);
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - period);
       
-      // Сохраняем информацию о периоде для логов, но не фильтруем посты
-      const periodStartDate = new Date();
-      periodStartDate.setDate(periodStartDate.getDate() - period);
-      log.debug(`[analytics-service-fixed] Выбранный период: с ${periodStartDate.toISOString()} по ${new Date().toISOString()}`);
+      log.info(`[analytics-service-fixed] Выбранный период: с ${startDate.toISOString()} по ${endDate.toISOString()}`);
+      
+      // Теперь мы фильтруем данные publishedAt для платформ
+      posts = posts.map(post => {
+        if (post.social_platforms) {
+          const filteredPlatforms = {};
+          
+          Object.keys(post.social_platforms).forEach(platform => {
+            const platformData = post.social_platforms[platform];
+            
+            // Проверяем, есть ли дата публикации и соответствует ли она выбранному периоду
+            if (platformData.status === 'published' && platformData.publishedAt) {
+              const pubDate = new Date(platformData.publishedAt);
+              if (pubDate >= startDate && pubDate <= endDate) {
+                filteredPlatforms[platform] = platformData;
+              }
+            }
+          });
+          
+          // Возвращаем пост с отфильтрованными платформами
+          return {
+            ...post,
+            social_platforms: filteredPlatforms
+          };
+        }
+        return post;
+      });
+      
+      // Фильтруем посты, у которых остались платформы после фильтрации по дате
+      posts = posts.filter(post => post.social_platforms && Object.keys(post.social_platforms).length > 0);
+      
+      log.info(`[analytics-service-fixed] После фильтрации по периоду осталось ${posts.length} постов`);
     }
     
     // Начальные значения для агрегированных метрик
