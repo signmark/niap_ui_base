@@ -620,7 +620,7 @@ export function ContentPlanGenerator({
                 htmlFor="include-image" 
                 className={`cursor-pointer ${selectedType === "text" ? "text-muted-foreground" : ""}`}
               >
-                Генерировать изображения для контента
+                Генерировать промт генерации для картинки
               </Label>
             </div>
             
