@@ -130,10 +130,17 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
           Object.keys(post.social_platforms).forEach(platform => {
             const platformData = post.social_platforms[platform];
             
-            // Проверяем, есть ли дата публикации и соответствует ли она выбранному периоду
-            if (platformData.status === 'published' && platformData.publishedAt) {
-              const pubDate = new Date(platformData.publishedAt);
-              if (pubDate >= startDate && pubDate <= endDate) {
+            // Проверяем статус публикации и дату публикации
+            if (platformData.status === 'published') {
+              // Если есть дата публикации, проверяем, попадает ли она в заданный период
+              if (platformData.publishedAt) {
+                const pubDate = new Date(platformData.publishedAt);
+                if (pubDate >= startDate && pubDate <= endDate) {
+                  filteredPlatforms[platform] = platformData;
+                }
+              } else {
+                // Если даты публикации нет, но статус published - это свежая публикация, всегда включаем ее
+                log.info(`[analytics-service-fixed] Учитываем новую публикацию без даты публикации: ${post.id} на платформе ${platform}`);
                 filteredPlatforms[platform] = platformData;
               }
             }
