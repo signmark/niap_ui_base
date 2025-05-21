@@ -4972,7 +4972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 timestamp: Date.now(),
                 results: finalKeywords
               });
-              console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for "${keyword}"`);
+              console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for "${originalKeyword}"`);
             }
           }
         } catch (xmlriverError) {
