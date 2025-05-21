@@ -4293,11 +4293,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Фильтр нецензурной лексики в качестве входных данных
       const offensiveWords = ['бля', 'хуй', 'пизд', 'ебан', 'еб', 'пидор', 'пидар', 'хуя', 'нахуй', 'дебил'];
-      const keyword = req.params.keyword.toLowerCase();
+      const originalKeyword = req.params.keyword.toLowerCase();
       
       // Проверяем, содержит ли ключевое слово нецензурную лексику
-      if (offensiveWords.some(word => keyword.includes(word)) || 
-          (keyword === 'сука' && !keyword.includes('порода') && !keyword.includes('собак'))) {
+      if (offensiveWords.some(word => originalKeyword.includes(word)) || 
+          (originalKeyword === 'сука' && !originalKeyword.includes('порода') && !originalKeyword.includes('собак'))) {
         return res.status(400).json({
           error: "Запрос содержит недопустимое содержание",
           message: "Пожалуйста, используйте корректные ключевые слова для поиска"
