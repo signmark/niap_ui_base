@@ -4358,7 +4358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[${requestId}] Using AI for URL-based keyword search`);
         
         // Нормализуем URL
-        const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
+        const normalizedUrl = originalKeyword.startsWith('http') ? originalKeyword : `https://${originalKeyword}`;
         
         // Проверяем кеш для URL
         const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
@@ -4986,7 +4986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Сохраняем результаты в кеш, если это URL и результаты получены
       if (isUrl && finalKeywords.length > 0) {
-        const normalizedUrl = keyword.startsWith('http') ? keyword : `https://${keyword}`;
+        const normalizedUrl = originalKeyword.startsWith('http') ? originalKeyword : `https://${originalKeyword}`;
         urlKeywordsCache.set(normalizedUrl.toLowerCase(), {
           timestamp: Date.now(),
           results: finalKeywords
