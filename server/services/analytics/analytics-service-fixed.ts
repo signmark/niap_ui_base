@@ -114,21 +114,26 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       posts = [];
     }
     
-    // Если указан период, фильтруем посты по дате публикации (created_at)
+    // Если указан период, фильтруем посты по дате публикации (publishedAt в social_platforms)
     if (period > 0 && posts.length > 0) {
       const periodStartDate = new Date();
       periodStartDate.setDate(periodStartDate.getDate() - period);
       
-      // Используем поле created_at для фильтрации постов по периоду
+      // Фильтруем посты, у которых есть платформы с publishedAt в указанный период
       const filteredPosts = posts.filter(post => {
-        // Проверяем, есть ли дата создания
-        if (!post.created_at) return false;
+        // Проверяем, есть ли social_platforms
+        if (!post.social_platforms) return false;
         
-        const createdAt = new Date(post.created_at);
-        return createdAt >= periodStartDate;
+        // Проверяем, есть ли хотя бы одна платформа с publishedAt в указанный период
+        return Object.values(post.social_platforms).some((platformData: any) => {
+          if (platformData.status !== 'published' || !platformData.publishedAt) return false;
+          
+          const publishedAt = new Date(platformData.publishedAt);
+          return publishedAt >= periodStartDate;
+        });
       });
       
-      log.info(`[analytics-service-fixed] Отфильтровано по created_at: ${filteredPosts.length} постов из ${posts.length} за последние ${period} дней`);
+      log.info(`[analytics-service-fixed] Отфильтровано по publishedAt: ${filteredPosts.length} постов из ${posts.length} за последние ${period} дней`);
       posts = filteredPosts;
     }
     
