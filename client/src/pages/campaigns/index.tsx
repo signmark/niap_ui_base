@@ -169,6 +169,58 @@ export default function Campaigns() {
         <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
           Ошибка загрузки: {(error as Error).message}
         </div>
+      ) : sortedCampaigns.length === 0 ? (
+        // Отображаем инструкцию для новых пользователей
+        <Card className="p-6 border-2 border-dashed border-gray-300">
+          <div className="text-center space-y-6">
+            <div className="mx-auto bg-gray-50 rounded-full w-20 h-20 flex items-center justify-center">
+              <Plus className="h-10 w-10 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Добро пожаловать в SMM Manager!</h2>
+              <p className="text-gray-600 mb-4">
+                У вас пока нет ни одной кампании. Создайте первую кампанию, чтобы начать работу.
+              </p>
+              <div className="space-y-4 max-w-lg mx-auto text-left">
+                <div className="flex items-start">
+                  <div className="bg-primary/10 rounded-full p-2 mr-3 mt-1">
+                    <span className="text-primary font-bold">1</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Создайте кампанию</h3>
+                    <p className="text-sm text-gray-500">Нажмите на кнопку "Добавить кампанию" и укажите название вашего проекта или бренда.</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="bg-primary/10 rounded-full p-2 mr-3 mt-1">
+                    <span className="text-primary font-bold">2</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Заполните информацию о бизнесе</h3>
+                    <p className="text-sm text-gray-500">После создания кампании заполните анкету с информацией о вашем бизнесе для качественной генерации контента.</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="bg-primary/10 rounded-full p-2 mr-3 mt-1">
+                    <span className="text-primary font-bold">3</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Подключите социальные сети</h3>
+                    <p className="text-sm text-gray-500">В настройках кампании подключите ваши социальные сети для возможности публикации контента.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Button 
+              size="lg"
+              onClick={() => setIsOpen(true)}
+              className="px-8"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Создать первую кампанию
+            </Button>
+          </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedCampaigns.map((campaign) => (
