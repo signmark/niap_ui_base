@@ -34,16 +34,16 @@ export default function Login() {
     try {
       console.log('Attempting login with:', values.email);
 
-      // Прямой запрос к Directus API вместо использования клиента
-      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+      // Используем наш локальный API прокси для аутентификации
+      console.log('Sending login request to local API proxy');
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: values.email,
-          password: values.password,
-          mode: 'json'
+          password: values.password
         })
       });
 
@@ -55,33 +55,16 @@ export default function Login() {
 
       const authData = await response.json();
       
-      if (!authData?.data?.access_token) {
+      if (!authData?.token) {
         throw new Error("Неверный формат ответа от сервера");
       }
 
-      const { access_token, refresh_token, expires } = authData.data;
+      const access_token = authData.token;
+      const refresh_token = authData.refresh_token;
+      const expires = authData.expires || 900000; // Если не указан, используем 15 минут по умолчанию
+      const userId = authData.user?.id;
+      
       console.log('Received auth tokens, access token length:', access_token.length);
-
-      // Получаем информацию о пользователе
-      const userResponse = await fetch('https://directus.nplanner.ru/users/me', {
-        headers: {
-          'Authorization': `Bearer ${access_token}`
-        }
-      });
-
-      if (!userResponse.ok) {
-        const errorText = await userResponse.text();
-        console.error('User data fetch error:', errorText);
-        throw new Error("Не удалось получить информацию о пользователе");
-      }
-
-      const userData = await userResponse.json();
-
-      if (!userData?.data?.id) {
-        throw new Error("Не удалось получить ID пользователя");
-      }
-
-      const userId = userData.data.id;
       console.log('Login successful, user ID:', userId);
       
       // Сохраняем в localStorage и в state

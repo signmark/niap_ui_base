@@ -14,35 +14,42 @@ interface AuthResponse {
 
 let refreshTimeout: NodeJS.Timeout | null = null;
 
+/**
+ * Настраивает автоматическое обновление токена доступа перед его истечением
+ * @param expires Время до истечения токена в миллисекундах или секундах
+ */
 export const setupTokenRefresh = (expires: number) => {
   if (typeof window === 'undefined') return;
 
-  // Clear any existing refresh timeout
+  // Очищаем существующий таймер
   if (refreshTimeout) {
     clearTimeout(refreshTimeout);
   }
 
-  // Convert to milliseconds if it looks like seconds
+  // Конвертируем в миллисекунды, если указано в секундах
   let expiresMs = expires;
-  if (expires < 10000) { // If less than 10 seconds, it's probably in seconds format
-    console.log('Expires value appears to be in seconds, converting to milliseconds');
+  if (expires < 10000) { // Если меньше 10 секунд, скорее всего это секунды
+    console.log('Значение expires в секундах, конвертируем в миллисекунды');
     expiresMs = expires * 1000;
   }
 
-  // Schedule refresh to happen at 80% of the token lifetime
-  // This ensures we refresh well before expiration
-  const refreshIn = Math.max(Math.floor(expiresMs * 0.8), 1000); // Minimum 1 second
+  // Планируем обновление на 80% от времени жизни токена
+  const refreshIn = Math.max(Math.floor(expiresMs * 0.8), 1000); // Минимум 1 секунда
   
-  console.log(`Token will expire in ${expiresMs/1000} seconds, scheduling refresh in ${refreshIn/1000} seconds`);
+  console.log(`Токен истечет через ${expiresMs/1000} секунд, обновление запланировано через ${refreshIn/1000} секунд`);
   
   refreshTimeout = setTimeout(() => {
-    console.log('Refresh timeout triggered, refreshing token');
+    console.log('Запущено обновление токена по расписанию');
     refreshAccessToken().catch(error => {
-      console.error('Failed to refresh token in scheduled refresh:', error);
+      console.error('Ошибка при плановом обновлении токена:', error);
     });
   }, refreshIn);
 };
 
+/**
+ * Обновляет токен доступа с использованием refresh_token
+ * @returns Промис с новым токеном доступа
+ */
 export const refreshAccessToken = async () => {
   const refreshToken = localStorage.getItem('refresh_token');
   const userId = localStorage.getItem('user_id');
@@ -53,170 +60,166 @@ export const refreshAccessToken = async () => {
   }
 
   try {
-    console.log('Attempting to refresh token');
-    // First try our API endpoint
-    try {
-      console.log('Trying our API endpoint for token refresh');
-      const apiResponse = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          refresh_token: refreshToken,
-          user_id: userId 
-        })
-      });
-      
-      if (apiResponse.ok) {
-        const data = await apiResponse.json();
-        if (data.token) {
-          console.log('API endpoint refresh successful');
-          localStorage.setItem('auth_token', data.token);
-          if (data.refresh_token) {
-            localStorage.setItem('refresh_token', data.refresh_token);
-          }
-          
-          // Update auth store
-          const auth = useAuthStore.getState();
-          auth.setAuth(data.token, data.user_id || userId);
-          
-          // Setup next refresh
-          if (data.expires) {
-            setupTokenRefresh(data.expires);
-          }
-          
-          return data.token;
-        }
-      } else {
-        console.warn('API endpoint refresh failed, trying Directus directly');
-      }
-    } catch (error) {
-      console.warn('Error with API endpoint refresh, falling back to Directus:', error);
-    }
+    console.log('Начинаем обновление токена');
     
-    // Fall back to direct Directus API
-    // Предварительно проверяем, что база URL верная
-    const baseUrl = directusApi.defaults.baseURL;
-    const directusAuthUrl = baseUrl ? `${baseUrl}/auth/refresh` : 'https://directus.nplanner.ru/auth/refresh';
-    
-    const response = await fetch(directusAuthUrl, {
+    // Используем только локальный API endpoint для обновления токена
+    console.log('Используем локальный API для обновления токена');
+    const apiResponse = await fetch('/api/auth/refresh', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',  // Предотвращаем кэширование
+        'Pragma': 'no-cache'
       },
-      body: JSON.stringify({
+      body: JSON.stringify({ 
         refresh_token: refreshToken,
-        mode: 'json'
+        user_id: userId 
       })
     });
     
-    if (!response.ok) {
-      console.error(`Directus auth refresh failed with status: ${response.status}`);
-      throw new Error(`Token refresh failed: ${response.statusText}`);
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      console.error(`Ошибка обновления токена: ${apiResponse.status}`, errorText);
+      throw new Error(`Ошибка обновления токена: ${apiResponse.statusText}`);
     }
     
-    const responseData = await response.json();
+    const data = await apiResponse.json();
     
-    if (!responseData?.data?.access_token) {
-      console.error('Неверный формат ответа при обновлении токена:', responseData);
-      throw new Error('Invalid response format during token refresh');
+    if (!data.token) {
+      console.error('Неверный формат ответа при обновлении токена:', data);
+      throw new Error('Неверный формат ответа при обновлении токена');
     }
-
-    const { access_token, refresh_token: new_refresh_token, expires } = responseData.data;
-    console.log('Token refresh successful, new token length:', access_token.length);
-
-    // Update tokens
-    localStorage.setItem('auth_token', access_token);
-    localStorage.setItem('refresh_token', new_refresh_token);
-
-    // Update auth store
-    const auth = useAuthStore.getState();
-    auth.setAuth(access_token, userId || auth.userId);
-
-    // Setup next refresh - schedule it for 80% of token lifetime
+    
+    console.log('Токен успешно обновлен через API');
+    
+    // Обновляем токены в localStorage
+    localStorage.setItem('auth_token', data.token);
+    if (data.refresh_token) {
+      localStorage.setItem('refresh_token', data.refresh_token);
+    }
+    
+    // Обновляем store
+    const authStore = useAuthStore.getState();
+    authStore.setAuth(data.token, data.user_id || userId);
+    
+    // Настраиваем следующее обновление
+    const expires = data.expires || 900000; // 15 минут по умолчанию
     setupTokenRefresh(expires);
-
-    return access_token;
-  } catch (error) {
-    console.error('Error refreshing access token:', error);
     
-    // Clear tokens on refresh failure
+    console.log('Токен успешно обновлен, длина нового токена:', data.token.length);
+    
+    return data.token;
+  } catch (error) {
+    console.error('Ошибка при обновлении токена доступа:', error);
+    
+    // Очищаем токены при ошибке
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_id');
     
-    // Clear auth store
-    const auth = useAuthStore.getState();
-    auth.clearAuth();
+    // Очищаем store
+    const authStore = useAuthStore.getState();
+    authStore.clearAuth();
     
     throw error;
   }
 };
 
+/**
+ * Выполняет вход через Directus API
+ * @param email Email пользователя
+ * @param password Пароль пользователя
+ * @returns Промис с токеном и данными пользователя
+ */
 export const loginWithDirectus = async (email: string, password: string) => {
   try {
-    const response = await directusApi.post<AuthResponse>('/auth/login', {
-      email,
-      password,
+    // Используем локальный API вместо прямого запроса к Directus
+    console.log('Выполняем вход через локальный API');
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
     });
-
-    const { access_token, refresh_token, expires, user } = response.data.data;
-
-    // Save tokens and user ID
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Ошибка входа:', errorText);
+      throw new Error(`Ошибка входа: ${response.statusText}`);
+    }
+    
+    const authData = await response.json();
+    
+    if (!authData.token) {
+      throw new Error('Неверный формат ответа от сервера');
+    }
+    
+    const access_token = authData.token;
+    const refresh_token = authData.refresh_token;
+    const expires = authData.expires || 900000;
+    const userId = authData.user.id;
+    
+    // Сохраняем токены и ID пользователя
     localStorage.setItem('auth_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
-    localStorage.setItem('user_id', user.id);
-
-    // Update auth store with user ID
-    const auth = useAuthStore.getState();
-    auth.setAuth(access_token, user.id);
-
-    // Setup token refresh
+    localStorage.setItem('user_id', userId);
+    
+    // Обновляем store
+    const authStore = useAuthStore.getState();
+    authStore.setAuth(access_token, userId);
+    
+    // Настраиваем обновление токена
     setupTokenRefresh(expires);
-
-    return { access_token, user };
+    
+    return { access_token, user: authData.user };
   } catch (error: any) {
-    console.error('Login error:', error);
-    throw new Error(error.response?.data?.errors?.[0]?.message || error.message);
+    console.error('Ошибка входа:', error);
+    throw new Error(error.message || 'Ошибка при входе в систему');
   }
 };
 
+/**
+ * Выполняет выход из системы
+ */
 export const logout = async () => {
   try {
-    // Clear refresh timeout
+    // Очищаем таймер обновления
     if (refreshTimeout) {
       clearTimeout(refreshTimeout);
+      refreshTimeout = null;
     }
-
-    // Clear tokens
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_id');
-
-    // Clear auth store
-    const auth = useAuthStore.getState();
-    auth.clearAuth();
-
-    // Try to logout via our API first
+    
+    // Пробуем выполнить выход через API
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
+      console.log('Выход через API выполнен успешно');
     } catch (error) {
-      console.warn('Error during API logout:', error);
-      
-      // Fall back to direct Directus logout
-      try {
-        await directusApi.post('/auth/logout');
-      } catch (directusError) {
-        console.warn('Error during Directus logout:', directusError);
-      }
+      console.warn('Ошибка при выходе через API:', error);
     }
+    
+    // Очищаем токены из localStorage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('is_admin');
+    
+    // Очищаем store
+    const authStore = useAuthStore.getState();
+    authStore.clearAuth();
+    
+    console.log('Выход выполнен, данные аутентификации очищены');
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Ошибка при выходе:', error);
     throw error;
   }
 };
