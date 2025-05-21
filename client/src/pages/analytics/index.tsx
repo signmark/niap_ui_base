@@ -405,22 +405,42 @@ export default function Analytics() {
     isLoading: isLoadingTopPosts,
     refetch: refetchTopPosts
   } = useQuery<TopPostsResponse>({
-    queryKey: ["top_posts", campaignId, period],
+    queryKey: ["top_posts", campaignId, period, Date.now()],
     queryFn: async () => {
       if (!campaignId) throw new Error('Не выбрана кампания');
       
-      const token = await getToken();
-      const response = await fetch(`/api/analytics/top-posts?campaignId=${campaignId}&period=${period}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      try {
+        const token = await getToken();
+        console.log("Запрос топовых публикаций с токеном:", token ? "Токен получен" : "Токен отсутствует");
+        
+        const response = await fetch(`/api/analytics/top-posts?campaignId=${campaignId}&period=${period}&_=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Ошибка получения топовых публикаций: ${response.status}`, errorText);
+          throw new Error('Не удалось получить топовые публикации');
         }
-      });
-      if (!response.ok) {
-        throw new Error('Не удалось получить топовые публикации');
+        
+        const data = await response.json();
+        console.log("Получены топовые публикации:", data);
+        return data;
+      } catch (error) {
+        console.error("Ошибка при загрузке топовых публикаций:", error);
+        throw error;
       }
-      return await response.json();
     },
-    enabled: !!campaignId
+    enabled: !!campaignId,
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnWindowFocus: true,
+    retry: 3
   });
 
   // Форматирование данных для круговой диаграммы
