@@ -654,7 +654,7 @@ export default function Analytics() {
                   <FileText className="h-4 w-4 text-green-500 mr-2" />
                   Публикации
                 </CardTitle>
-                <CardDescription className="text-xs">Опубликованные посты</CardDescription>
+                <CardDescription className="text-xs">Всего публикаций на всех платформах</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col pt-1">
                 {isLoadingPlatformsStats ? (
@@ -668,7 +668,7 @@ export default function Analytics() {
                       {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      По {Object.keys(platformsStatsData?.data?.platforms || {}).length || 0} платформам
+                      Общее количество публикаций на всех платформах
                     </div>
                   </>
                 )}
