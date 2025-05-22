@@ -135,20 +135,40 @@ router.get('/campaign-data', async (req: Request, res: Response) => {
 
     log.info(`[analytics] Получение данных для кампании: ${campaignId}`);
     
-    // Получаем контент кампании с полем social_platforms из Directus
-    const { directus } = await import('../services/directus');
+    // Получаем токен пользователя для авторизации
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     
-    const response = await directus.items('campaign_content').readByQuery({
-      filter: { campaign_id: { _eq: campaignId } },
-      fields: ['id', 'title', 'social_platforms', 'status']
+    const { directusApiManager } = await import('../services/directus-api-manager');
+    const authToken = await directusApiManager.getAuthToken(userId);
+    
+    if (!authToken) {
+      return res.status(401).json({ error: 'No auth token available' });
+    }
+    
+    // Получаем контент кампании с полем social_platforms из Directus
+    const axios = (await import('axios')).default;
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    
+    const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+      params: {
+        'filter[campaign_id][_eq]': campaignId,
+        'fields': 'id,title,social_platforms,status'
+      },
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
     });
 
-    if (!response.data || response.data.length === 0) {
+    if (!response.data?.data || response.data.data.length === 0) {
       log.info('[analytics] Нет контента для кампании');
       return res.json({ platforms: [], totalViews: 0, totalLikes: 0, totalShares: 0, totalComments: 0 });
     }
 
-    log.info(`[analytics] Найдено ${response.data.length} постов`);
+    const posts = response.data.data;
+    log.info(`[analytics] Найдено ${posts.length} постов`);
 
     let totalViews = 0;
     let totalLikes = 0;
@@ -161,7 +181,7 @@ router.get('/campaign-data', async (req: Request, res: Response) => {
     };
 
     // Обрабатываем каждый пост и собираем данные только из опубликованных
-    response.data.forEach((post: any) => {
+    posts.forEach((post: any) => {
       if (post.social_platforms && typeof post.social_platforms === 'object') {
         log.info(`[analytics] Обработка поста: ${post.title || post.id}`);
         
