@@ -4,6 +4,7 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { log } from '../utils/logger';
+import axios from 'axios';
 import { directusApiManager } from '../directus';
 import { 
   collectAnalytics, 
@@ -21,6 +22,77 @@ import { analyticsService } from '../services/analytics-service';
 
 // Создаем роутер для маршрутов аналитики
 export const analyticsRouter = express.Router();
+
+// Функция для подсчета реальной статистики из данных публикаций
+function calculateRealAnalyticsStats(posts: any[], period: number) {
+  const platforms = {
+    telegram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
+    vk: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
+    instagram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 },
+    facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, engagement: 0, engagementRate: 0 }
+  };
+
+  let totalPosts = 0;
+  let totalViews = 0;
+  let totalLikes = 0;
+  let totalComments = 0;
+  let totalShares = 0;
+
+  // Обрабатываем каждый пост
+  posts.forEach(post => {
+    if (!post.social_platforms) return;
+
+    Object.keys(post.social_platforms).forEach(platform => {
+      const platformData = post.social_platforms[platform];
+      
+      if (platformData.status !== 'published') return;
+      
+      // Увеличиваем счетчик постов
+      if (platforms[platform]) {
+        platforms[platform].posts++;
+        totalPosts++;
+
+        // Добавляем аналитику, если есть
+        if (platformData.analytics) {
+          const views = platformData.analytics.views || 0;
+          const likes = platformData.analytics.likes || 0;
+          const comments = platformData.analytics.comments || 0;
+          const shares = platformData.analytics.shares || 0;
+
+          platforms[platform].views += views;
+          platforms[platform].likes += likes;
+          platforms[platform].comments += comments;
+          platforms[platform].shares += shares;
+          platforms[platform].engagement += likes + comments + shares;
+
+          totalViews += views;
+          totalLikes += likes;
+          totalComments += comments;
+          totalShares += shares;
+        }
+      }
+    });
+  });
+
+  // Вычисляем коэффициенты вовлеченности
+  Object.keys(platforms).forEach(platform => {
+    const stats = platforms[platform];
+    stats.engagementRate = stats.views > 0 ? (stats.engagement / stats.views) * 100 : 0;
+  });
+
+  const aggregated = {
+    totalPosts,
+    totalViews,
+    totalLikes,
+    totalComments,
+    totalShares,
+    totalEngagement: totalLikes + totalComments + totalShares,
+    averageEngagementRate: totalViews > 0 ? ((totalLikes + totalComments + totalShares) / totalViews) * 100 : 0,
+    platformDistribution: platforms
+  };
+
+  return { platforms, aggregated };
+}
 
 /**
  * Промежуточное ПО для аутентификации и авторизации пользователей
@@ -264,7 +336,7 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
       log.info(`[api-analytics] Получено ${posts.length} постов с реальными данными`);
       
       // Подсчитываем статистику из реальных данных
-      const stats = calculateStatsFromRealData(posts, period);
+      const stats = calculateRealAnalyticsStats(posts, period);
       log.info(`[api-analytics] Обработано реальных публикаций: ${stats.aggregated.totalPosts}`);
       
       // Добавляем заголовки, запрещающие кэширование
