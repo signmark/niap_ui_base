@@ -151,10 +151,22 @@ body {
 }
 
 .gradient-text {
+    /* Fallback color for browsers that don't support background-clip */
+    color: #fbbf24;
     background: linear-gradient(135deg, #fbbf24, #f59e0b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    display: inline-block;
+    font-weight: inherit;
+}
+
+/* Для старых браузеров без поддержки background-clip */
+@supports not (-webkit-background-clip: text) {
+    .gradient-text {
+        color: #fbbf24 !important;
+        background: none !important;
+    }
 }
 
 .hero-description {
