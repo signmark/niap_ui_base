@@ -40,7 +40,11 @@ export default function Register() {
       console.log('Attempting registration with:', values.email);
 
       // Отправляем запрос на регистрацию через наш API
-      const response = await fetch('/api/auth/register', {
+      const apiUrl = window.location.hostname === 'smm.nplanner.ru' 
+        ? 'https://smm.nplanner.ru/api/auth/register'
+        : '/api/auth/register';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

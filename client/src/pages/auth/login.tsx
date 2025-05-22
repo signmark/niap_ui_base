@@ -34,9 +34,13 @@ export default function Login() {
     try {
       console.log('Attempting login with:', values.email);
 
-      // Используем наш локальный API прокси для аутентификации
-      console.log('Sending login request to local API proxy');
-      const response = await fetch('/api/auth/login', {
+      // Используем наш API для аутентификации
+      const apiUrl = window.location.hostname === 'smm.nplanner.ru' 
+        ? 'https://smm.nplanner.ru/api/auth/login'
+        : '/api/auth/login';
+      
+      console.log('Sending login request to:', apiUrl);
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
