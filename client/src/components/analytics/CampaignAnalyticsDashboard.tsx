@@ -78,8 +78,35 @@ export default function CampaignAnalyticsDashboard() {
   // Мутация для вызова n8n webhook обновления аналитики
   const updateAnalyticsMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.post('/analytics/update', { campaignId });
-      return response.data;
+      console.log('[Analytics] Отправляем запрос к n8n webhook для campaignId:', campaignId);
+      
+      // Отправляем запрос напрямую к n8n webhook
+      const webhookUrl = 'https://n8n.nplanner.ru/webhook/posts-to-analytics';
+      const payload = {
+        campaignId: campaignId,
+        days: 7,
+        timestamp: Date.now(),
+        source: "smm-manager-api"
+      };
+      
+      console.log('[Analytics] Payload для n8n:', payload);
+      console.log('[Analytics] URL webhook:', webhookUrl);
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('[Analytics] Ответ от n8n:', result);
+      return result;
     },
     onSuccess: () => {
       toast({
