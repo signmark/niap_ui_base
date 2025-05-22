@@ -125,4 +125,88 @@ router.post('/update', authenticateUser, async (req: Request, res: Response) => 
   }
 });
 
+// Простой endpoint для получения данных из social_platforms опубликованных постов
+router.get('/campaign-data', async (req: Request, res: Response) => {
+  try {
+    const campaignId = req.query.campaignId as string;
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID required' });
+    }
+
+    log.info(`[analytics] Получение данных для кампании: ${campaignId}`);
+    
+    // Получаем контент кампании с полем social_platforms из Directus
+    const { directus } = await import('../services/directus');
+    
+    const response = await directus.items('campaign_content').readByQuery({
+      filter: { campaign_id: { _eq: campaignId } },
+      fields: ['id', 'title', 'social_platforms', 'status']
+    });
+
+    if (!response.data || response.data.length === 0) {
+      log.info('[analytics] Нет контента для кампании');
+      return res.json({ platforms: [], totalViews: 0, totalLikes: 0, totalShares: 0, totalComments: 0 });
+    }
+
+    log.info(`[analytics] Найдено ${response.data.length} постов`);
+
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalShares = 0;
+    let totalComments = 0;
+    const platformStats = {
+      telegram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
+      instagram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
+      vk: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 }
+    };
+
+    // Обрабатываем каждый пост и собираем данные только из опубликованных
+    response.data.forEach((post: any) => {
+      if (post.social_platforms && typeof post.social_platforms === 'object') {
+        log.info(`[analytics] Обработка поста: ${post.title || post.id}`);
+        
+        Object.entries(post.social_platforms).forEach(([platform, data]: [string, any]) => {
+          if (data && data.analytics && data.status === 'published') {
+            const stats = data.analytics;
+            log.info(`[analytics] ${platform}: views=${stats.views}, likes=${stats.likes}`);
+            
+            if (platformStats[platform as keyof typeof platformStats]) {
+              platformStats[platform as keyof typeof platformStats].views += stats.views || 0;
+              platformStats[platform as keyof typeof platformStats].likes += stats.likes || 0;
+              platformStats[platform as keyof typeof platformStats].shares += stats.shares || 0;
+              platformStats[platform as keyof typeof platformStats].comments += stats.comments || 0;
+              platformStats[platform as keyof typeof platformStats].posts += 1;
+              
+              totalViews += stats.views || 0;
+              totalLikes += stats.likes || 0;
+              totalShares += stats.shares || 0;
+              totalComments += stats.comments || 0;
+            }
+          }
+        });
+      }
+    });
+
+    log.info(`[analytics] Итого: views=${totalViews}, likes=${totalLikes}, shares=${totalShares}, comments=${totalComments}`);
+
+    const result = {
+      platforms: Object.entries(platformStats).map(([name, stats]) => ({
+        name,
+        ...stats
+      })).filter(p => p.posts > 0),
+      totalViews,
+      totalLikes,
+      totalShares,
+      totalComments
+    };
+
+    log.info(`[analytics] Результат для отправки:`, result);
+    res.json(result);
+
+  } catch (error: any) {
+    log.error('[analytics] Ошибка:', error.message);
+    res.status(500).json({ error: 'Ошибка получения аналитики' });
+  }
+});
+
 export { router as analyticsRouter };
