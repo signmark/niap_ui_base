@@ -110,19 +110,19 @@ export default function CampaignAnalyticsDashboard() {
     },
     onSuccess: () => {
       toast({
-        title: "Запрос отправлен",
-        description: "Обновление аналитики запущено через n8n. Данные будут обновлены в течение нескольких минут.",
+        title: "Обновление запущено",
+        description: "Аналитика обновляется. Свежие данные появятся в течение нескольких минут.",
       });
-      // Обновляем данные через 5 секунд
+      // Обновляем данные через 10 секунд
       setTimeout(() => {
         refetchPlatforms();
         refetchTopPosts();
-      }, 5000);
+      }, 10000);
     },
     onError: (error: any) => {
       toast({
-        title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось запустить обновление аналитики",
+        title: "Ошибка обновления",
+        description: "Не удалось запустить обновление. Проверьте подключение и попробуйте снова.",
         variant: "destructive",
       });
     },
