@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2 } from "lucide-react";
 import { SiTelegram, SiVk, SiInstagram } from "react-icons/si";
 import { useCampaignStore } from "@/lib/campaignStore";
+import { useToast } from "@/hooks/use-toast";
 
 const AnalyticsPage = () => {
   const { selectedCampaign } = useCampaignStore();
   const [updateKey, setUpdateKey] = useState(0);
+  const { toast } = useToast();
 
   // Получаем данные из social_platforms опубликованных постов
   const { data: campaignData, isLoading, refetch } = useQuery({
@@ -16,9 +18,55 @@ const AnalyticsPage = () => {
     enabled: !!selectedCampaign?.id,
   });
 
+  // Мутация для обновления аналитики через n8n
+  const updateAnalyticsMutation = useMutation({
+    mutationFn: async () => {
+      console.log('[Analytics] Отправляем запрос к n8n webhook для кампании:', selectedCampaign?.id);
+      
+      const response = await fetch('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaign?.id,
+          days: 30,
+          timestamp: new Date().toISOString(),
+          source: 'analytics-page'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[Analytics] Ответ от n8n:', result);
+      return result;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Обновление запущено",
+        description: "Аналитика обновляется. Свежие данные появятся в течение нескольких минут.",
+      });
+      // Обновляем данные через 10 секунд
+      setTimeout(() => {
+        refetch();
+      }, 10000);
+    },
+    onError: (error: any) => {
+      console.error('[Analytics] Ошибка при запуске обновления:', error);
+      toast({
+        title: "Ошибка обновления",
+        description: "Не удалось запустить обновление. Проверьте подключение и попробуйте снова.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleUpdate = () => {
-    setUpdateKey(prev => prev + 1);
-    refetch();
+    console.log('[Analytics] Кнопка "Обновить" нажата');
+    updateAnalyticsMutation.mutate();
   };
 
   const getPlatformIcon = (platform: string) => {
