@@ -382,9 +382,9 @@ export default function Analytics() {
       return data.data || data;
     },
     enabled: !!campaignId,
-    staleTime: 0, // Данные всегда считаются устаревшими
-    cacheTime: 0, // Не кэшируем данные
-    refetchOnWindowFocus: true // Обновляем при фокусе окна
+    staleTime: 30000, // Данные актуальны 30 секунд
+    refetchOnWindowFocus: false, // Не обновляем при фокусе окна
+    refetchInterval: false // Отключаем автообновление
   });
 
   // Получаем топовые публикации
