@@ -254,21 +254,13 @@ export default function Analytics() {
       try {
         const token = await getToken();
         
-        // Обновляем заголовки авторизации
-        directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        const response = await directusApi.get('/items/campaign_keywords', {
+        // Используем наш API endpoint вместо прямого обращения к Directus
+        const response = await axios.get('/api/analytics/keywords-count', {
           params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              }
-            },
-            aggregate: {
-              count: "*"
-            }
+            campaignId: campaignId
           },
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0'
@@ -276,7 +268,7 @@ export default function Analytics() {
         });
         
         console.log("Получены ключевые слова:", response.data?.data);
-        return response.data?.data?.[0]?.count || 0;
+        return response.data?.data?.count || 0;
       } catch (error) {
         console.error("Ошибка при загрузке ключевых слов:", error);
         return 0;
