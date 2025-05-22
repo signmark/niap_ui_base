@@ -18,6 +18,13 @@ export default function CampaignAnalyticsDashboard() {
   const campaignName = selectedCampaign?.name || "";
   const { toast } = useToast();
 
+  console.log('[Analytics] Dashboard рендер:', { 
+    selectedCampaign, 
+    campaignId, 
+    campaignName,
+    hasSelectedCampaign: !!selectedCampaign
+  });
+
   // Получение статистики по платформам из реальных данных
   const {
     data: platformsStatsData,
