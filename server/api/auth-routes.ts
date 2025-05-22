@@ -50,9 +50,11 @@ export function registerAuthRoutes(app: Express): void {
   // Маршрут для регистрации
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const { email, password, first_name, last_name } = req.body;
+      console.log('Registration request body:', req.body);
+      const { email, password, firstName, lastName } = req.body;
+      console.log('Extracted fields:', { email, password: '***', firstName, lastName });
 
-      if (!email || !password || !first_name || !last_name) {
+      if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ 
           error: 'Неверные данные',
           message: 'Требуется указать email, пароль, имя и фамилию'
@@ -96,8 +98,8 @@ export function registerAuthRoutes(app: Express): void {
       const userResponse = await directusApiManager.post('/users', {
         email,
         password,
-        first_name,
-        last_name,
+        first_name: firstName,
+        last_name: lastName,
         role: smmUserRole.id,
         status: 'active'
       }, {

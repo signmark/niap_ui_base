@@ -48,8 +48,8 @@ export default function Register() {
         body: JSON.stringify({
           email: values.email,
           password: values.password,
-          first_name: values.firstName,
-          last_name: values.lastName,
+          firstName: values.firstName,
+          lastName: values.lastName,
         })
       });
 
