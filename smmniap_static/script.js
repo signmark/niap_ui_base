@@ -94,8 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const ctaButtons = document.querySelectorAll('.btn-primary, .nav-cta, .pricing-btn');
     ctaButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Переход к главному приложению (страница входа)
-            window.location.href = '/';
+            // Переход к главному приложению SMM Manager
+            window.open('https://smm.nplanner.ru/', '_blank');
         });
     });
 
