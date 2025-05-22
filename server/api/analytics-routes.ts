@@ -162,8 +162,10 @@ router.post('/update', async (req: Request, res: Response) => {
 // Простой endpoint для получения данных из social_platforms опубликованных постов
 router.get('/campaign-data', async (req: Request, res: Response) => {
   try {
+    log.info(`[analytics] Запрос campaign-data с параметрами:`, req.query);
     const campaignId = req.query.campaignId as string;
     if (!campaignId) {
+      log.error(`[analytics] Campaign ID отсутствует в запросе`);
       return res.status(400).json({ error: 'Campaign ID required' });
     }
 
