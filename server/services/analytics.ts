@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios';
-import { directusApiManager } from '../directus';
+import { directusAuthManager } from './directus-auth-manager';
 import { log } from '../utils/logger';
 import type { 
   CampaignPost, 
@@ -229,7 +229,7 @@ export async function triggerAnalyticsUpdate(campaignId: string, days: 7 | 30): 
  */
 async function fetchCampaignPosts(userId: string, campaignId: string, days: number): Promise<CampaignPost[]> {
   try {
-    const adminSession = await directusApiManager.getAdminSession();
+    const adminSession = await directusAuthManager.getAdminSession();
     if (!adminSession?.token) {
       throw new Error('Не удалось получить токен для запроса к Directus');
     }
