@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 import { 
   Table, TableBody, TableCaption, TableCell, TableHead, 
   TableHeader, TableRow 
@@ -297,16 +298,10 @@ export default function Analytics() {
         // Обновляем заголовки авторизации
         directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
-        const response = await directusApi.get('/items/campaign_content', {
+        // Используем наш API endpoint вместо прямого обращения к Directus
+        const response = await axios.get('/api/analytics/content-count', {
           params: {
-            filter: {
-              campaign_id: {
-                _eq: campaignId
-              }
-            },
-            aggregate: {
-              count: "*"
-            }
+            campaignId: campaignId
           },
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',

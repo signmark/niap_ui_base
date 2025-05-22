@@ -243,6 +243,37 @@ analyticsRouter.post('/collect', authenticateUser, async (req, res) => {
 });
 
 /**
+ * GET /api/analytics/content-count
+ * Получение количества контента в кампании
+ */
+analyticsRouter.get('/content-count', authenticateUser, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { campaignId } = req.query;
+    const userId = req.user.id;
+    
+    log.info(`[api-analytics] Запрос подсчета контента: userId=${userId}, campaignId=${campaignId}`);
+
+    // Получаем статистику и извлекаем количество постов
+    const stats = await getImprovedPlatformsStats(userId, campaignId as string, 7);
+    
+    res.json({
+      success: true,
+      data: {
+        count: stats.aggregated.totalPosts
+      }
+    });
+  } catch (error) {
+    log.error(`[api-analytics] Ошибка получения подсчета контента: ${error}`);
+    res.json({
+      success: true,
+      data: {
+        count: 0
+      }
+    });
+  }
+});
+
+/**
  * GET /api/analytics/top-posts
  * Получение топовых публикаций для указанной кампании
  */
