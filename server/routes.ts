@@ -11413,3 +11413,86 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
   return contentPlan;
 }
+
+// === ПРОСТОЙ API ДЛЯ АНАЛИТИКИ ИЗ SOCIAL_PLATFORMS ===
+app.get('/api/analytics/campaign-data', async (req, res) => {
+  try {
+    const campaignId = req.query.campaignId as string;
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID required' });
+    }
+
+    console.log(`[analytics] Получение данных для кампании: ${campaignId}`);
+    
+    // Получаем контент кампании с полем social_platforms
+    const response = await directusService.readItems('campaign_content', {
+      filter: { campaign_id: { _eq: campaignId } },
+      fields: ['id', 'title', 'social_platforms', 'status']
+    });
+
+    if (!response || !response.data) {
+      console.log('[analytics] Нет контента для кампании');
+      return res.json({ platforms: [], totalViews: 0, totalLikes: 0 });
+    }
+
+    console.log(`[analytics] Найдено ${response.data.length} постов`);
+
+    let totalViews = 0;
+    let totalLikes = 0;
+    let totalShares = 0;
+    let totalComments = 0;
+    const platformStats = {
+      telegram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
+      instagram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
+      vk: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 }
+    };
+
+    // Обрабатываем каждый пост
+    response.data.forEach(post => {
+      if (post.social_platforms && typeof post.social_platforms === 'object') {
+        console.log(`[analytics] Обработка поста: ${post.title}`);
+        console.log(`[analytics] Social platforms:`, JSON.stringify(post.social_platforms, null, 2));
+        
+        Object.entries(post.social_platforms).forEach(([platform, data]: [string, any]) => {
+          if (data && data.analytics) {
+            const stats = data.analytics;
+            console.log(`[analytics] ${platform}: views=${stats.views}, likes=${stats.likes}`);
+            
+            if (platformStats[platform as keyof typeof platformStats]) {
+              platformStats[platform as keyof typeof platformStats].views += stats.views || 0;
+              platformStats[platform as keyof typeof platformStats].likes += stats.likes || 0;
+              platformStats[platform as keyof typeof platformStats].shares += stats.shares || 0;
+              platformStats[platform as keyof typeof platformStats].comments += stats.comments || 0;
+              platformStats[platform as keyof typeof platformStats].posts += 1;
+              
+              totalViews += stats.views || 0;
+              totalLikes += stats.likes || 0;
+              totalShares += stats.shares || 0;
+              totalComments += stats.comments || 0;
+            }
+          }
+        });
+      }
+    });
+
+    console.log(`[analytics] Итого: views=${totalViews}, likes=${totalLikes}`);
+
+    const result = {
+      platforms: Object.entries(platformStats).map(([name, stats]) => ({
+        name,
+        ...stats
+      })).filter(p => p.posts > 0),
+      totalViews,
+      totalLikes,
+      totalShares,
+      totalComments
+    };
+
+    console.log(`[analytics] Результат:`, result);
+    res.json(result);
+
+  } catch (error: any) {
+    console.error('[analytics] Ошибка:', error.message);
+    res.status(500).json({ error: 'Ошибка получения аналитики' });
+  }
+});
