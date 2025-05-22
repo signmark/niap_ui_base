@@ -26,11 +26,13 @@ export function AuthGuard({ children }: Props) {
     const storedRefreshToken = localStorage.getItem('refresh_token');
     
     const isLoginPage = location === '/auth/login' || location === '/login';
+    const isRegisterPage = location === '/auth/register';
     
     console.log('AuthGuard: Checking auth state', { 
       hasToken: !!token, 
       hasStoredToken: !!storedToken, 
       isLoginPage,
+      isRegisterPage,
       userId
     });
 
@@ -125,7 +127,7 @@ export function AuthGuard({ children }: Props) {
           clearAuth();
           
           // Если обновление не удалось, перенаправляем на страницу входа
-          if (!isLoginPage) {
+          if (!isLoginPage && !isRegisterPage) {
             navigate('/auth/login');
           }
           setIsSessionChecked(true);
@@ -135,7 +137,7 @@ export function AuthGuard({ children }: Props) {
       
       // Если нет ни токена, ни возможности обновить, перенаправляем на логин
       console.log('AuthGuard: No valid authentication found');
-      if (!isLoginPage) {
+      if (!isLoginPage && !isRegisterPage) {
         console.log('AuthGuard: No token found, redirecting to login');
         navigate('/auth/login');
       }
