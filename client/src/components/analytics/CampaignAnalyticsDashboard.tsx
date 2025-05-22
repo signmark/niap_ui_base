@@ -32,18 +32,7 @@ export default function CampaignAnalyticsDashboard() {
     error: platformsError,
     refetch: refetchPlatforms,
   } = useQuery({
-    queryKey: ["/api/analytics/campaign-data", campaignId],
-    queryFn: async () => {
-      console.log('[Analytics] campaignId для запроса:', campaignId);
-      if (!campaignId) {
-        console.log('[Analytics] campaignId отсутствует, выбрасываем ошибку');
-        throw new Error("Кампания не выбрана");
-      }
-      console.log('[Analytics] Отправляем запрос:', `/api/analytics/campaign-data?campaignId=${campaignId}`);
-      const response = await api.get(`/api/analytics/campaign-data?campaignId=${campaignId}`);
-      console.log('[Analytics] Получен ответ:', response.data);
-      return response.data;
-    },
+    queryKey: [`/api/analytics/campaign-data?campaignId=${campaignId}`],
     enabled: !!campaignId,
   });
   
