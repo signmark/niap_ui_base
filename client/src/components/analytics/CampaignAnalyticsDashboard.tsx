@@ -164,8 +164,9 @@ export default function CampaignAnalyticsDashboard() {
     refetchTopPosts();
   };
 
-  // Запуск обновления аналитики через n8n
+  // Запуск обновления аналитики
   const handleUpdateAnalytics = () => {
+    console.log('[Analytics] Кнопка нажата! Запускаем обновление для кампании:', campaignId);
     updateAnalyticsMutation.mutate();
   };
 
