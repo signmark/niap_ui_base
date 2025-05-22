@@ -135,18 +135,30 @@ router.get('/campaign-data', async (req: Request, res: Response) => {
 
     log.info(`[analytics] Получение данных для кампании: ${campaignId}`);
     
-    // Получаем токен пользователя для авторизации
-    const userId = (req as any).user?.id;
+    // Получаем токен пользователя из заголовка
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authorization token required' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    // Декодируем токен для получения userId
+    const jwt = (await import('jsonwebtoken')).default;
+    let decoded: any;
+    try {
+      decoded = jwt.decode(token);
+    } catch (error) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    const userId = decoded?.id;
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      return res.status(401).json({ error: 'User ID not found in token' });
     }
     
-    const { directusApiManager } = await import('../services/directus-api-manager');
-    const authToken = await directusApiManager.getAuthToken(userId);
-    
-    if (!authToken) {
-      return res.status(401).json({ error: 'No auth token available' });
-    }
+    // Используем токен напрямую для запроса к Directus
+    const authToken = token;
     
     // Получаем контент кампании с полем social_platforms из Directus
     const axios = (await import('axios')).default;
