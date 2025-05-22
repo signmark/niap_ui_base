@@ -14,8 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 export default function CampaignAnalyticsDashboard() {
   // Глобальное состояние выбранной кампании
   const { selectedCampaign } = useCampaignStore();
-  const campaignId = selectedCampaign?.id || "";
-  const campaignName = selectedCampaign?.name || "";
+  const campaignId = selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e"; // hardcode для отладки
+  const campaignName = selectedCampaign?.name || "Правильное питание";
   const { toast } = useToast();
 
   console.log('[Analytics] Dashboard рендер:', { 
