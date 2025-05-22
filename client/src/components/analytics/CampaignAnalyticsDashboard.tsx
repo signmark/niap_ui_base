@@ -16,6 +16,7 @@ export default function CampaignAnalyticsDashboard() {
   const { selectedCampaign } = useCampaignStore();
   const campaignId = selectedCampaign?.id || "";
   const campaignName = selectedCampaign?.name || "";
+  const { toast } = useToast();
 
   // Получение статистики по платформам
   const {
@@ -51,6 +52,32 @@ export default function CampaignAnalyticsDashboard() {
       return response.data;
     },
     enabled: !!campaignId,
+  });
+
+  // Мутация для вызова n8n webhook обновления аналитики
+  const updateAnalyticsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/analytics/update', { campaignId });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Запрос отправлен",
+        description: "Обновление аналитики запущено через n8n. Данные будут обновлены в течение нескольких минут.",
+      });
+      // Обновляем данные через 5 секунд
+      setTimeout(() => {
+        refetchPlatforms();
+        refetchTopPosts();
+      }, 5000);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка",
+        description: error.response?.data?.error || "Не удалось запустить обновление аналитики",
+        variant: "destructive",
+      });
+    },
   });
 
   // Обновляем данные при смене кампании
@@ -89,6 +116,11 @@ export default function CampaignAnalyticsDashboard() {
     refetchTopPosts();
   };
 
+  // Запуск обновления аналитики через n8n
+  const handleUpdateAnalytics = () => {
+    updateAnalyticsMutation.mutate();
+  };
+
   return (
     <div className="space-y-6">
       {!campaignId ? (
@@ -106,14 +138,25 @@ export default function CampaignAnalyticsDashboard() {
               <h1 className="text-2xl font-bold">Аналитика кампании</h1>
               <p className="text-muted-foreground">{campaignName}</p>
             </div>
-            <button
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={isPlatformsLoading || isTopPostsLoading}
-            >
-              <RefreshCw className="h-4 w-4" />
-              Обновить данные
-            </button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUpdateAnalytics}
+                disabled={updateAnalyticsMutation.isPending || !campaignId}
+                variant="outline"
+                size="sm"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                {updateAnalyticsMutation.isPending ? "Запуск..." : "Обновить аналитику"}
+              </Button>
+              <Button
+                onClick={handleRefresh}
+                disabled={isPlatformsLoading || isTopPostsLoading}
+                size="sm"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Обновить данные
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
