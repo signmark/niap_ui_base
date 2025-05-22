@@ -1,1821 +1,329 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useCampaignStore } from "@/lib/campaignStore";
-import { directusApi } from "@/lib/directus";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Zap, FileText,
-  TrendingUp, AlertTriangle, Lightbulb, Users, Percent, Activity, ExternalLink
-} from "lucide-react";
-import {
-  SiTelegram, SiVk, SiInstagram, SiFacebook
-} from "react-icons/si";
+import { Loader2, RefreshCw, Eye, ThumbsUp, MessageSquare, Share2, Activity } from "lucide-react";
+import { SiTelegram, SiVk, SiInstagram, SiFacebook } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
-import { getToken } from "@/lib/auth";
-import { cn } from "@/lib/utils";
-import axios from "axios";
-import { 
-  Table, TableBody, TableCaption, TableCell, TableHead, 
-  TableHeader, TableRow 
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import AnalyticsPieChart from "@/components/analytics/AnalyticsPieChart";
-import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
-import NivoAnalyticsPieChart from "@/components/analytics/NivoAnalyticsPieChart";
-import NivoAnalyticsBarChart from "@/components/analytics/NivoAnalyticsBarChart";
-import NivoAnalyticsLineChart from "@/components/analytics/NivoAnalyticsLineChart";
+import { useCampaignStore } from "@/lib/campaignStore";
+import type { 
+  PlatformsStatsResponse, 
+  TopPostsResponse,
+  AnalyticsUpdateRequest 
+} from "@shared/analytics-types";
 
-// Добавляем прямые импорты компонентов Nivo
-import { ResponsivePie } from '@nivo/pie';
-import { ResponsiveBar } from '@nivo/bar';
-import { ResponsiveLine } from '@nivo/line';
-
-// Типы для аналитики
-interface AnalyticsStatusResponse {
-  success: boolean;
-  status: {
-    isCollecting: boolean;
-    lastCollectionTime: string | null;
-    progress: number;
-    error: string | null;
-  };
-}
-
-interface PlatformMetrics {
-  posts: number;
-  views: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  engagement: number;
-  engagementRate: number;
-}
-
-interface AggregatedMetrics {
-  totalPosts: number;
-  totalViews: number;
-  totalLikes: number;
-  totalComments: number;
-  totalShares: number;
-  totalEngagement: number;
-  averageEngagementRate: number;
-  platformDistribution: {
-    [platform: string]: PlatformMetrics;
-  };
-}
-
-interface PlatformsStatsResponse {
-  success: boolean;
-  data: {
-    platforms: Record<string, PlatformMetrics>;
-    aggregated: AggregatedMetrics;
-  };
-}
-
-interface TopPostsResponse {
-  success: boolean;
-  data: {
-    topByViews: any[];
-    topByEngagement: any[];
-  };
-}
-
-// Цвета для платформ
-const PLATFORM_COLORS = {
-  telegram: "#2AABEE",
-  vk: "#4C75A3",
-  facebook: "#3b5998",
-  instagram: "#E4405F"
-};
-
-// Цвета для типов взаимодействия
-const ENGAGEMENT_COLORS = {
-  likes: "#FF6384",
-  comments: "#36A2EB",
-  shares: "#FFCE56"
-};
-
-export default function Analytics() {
+const AnalyticsPage = () => {
   const { toast } = useToast();
-  const [period, setPeriod] = useState(7); // период в днях
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isCollectingAnalytics, setIsCollectingAnalytics] = useState(false);
-  const [publicationsSortType, setPublicationsSortType] = useState("views"); // Сортировка публикаций
-
-  // Используем глобальный стор для выбранной кампании
+  const queryClient = useQueryClient();
   const { selectedCampaign } = useCampaignStore();
-  const campaignId = selectedCampaign?.id || "";
+  const [period, setPeriod] = useState<7 | 30>(7);
 
-  // Функция для форматирования числа с разделителями тысяч
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('ru-RU').format(num);
-  };
-  
-  // Тип для рекомендаций по контенту
-  interface ContentRecommendation {
-    title: string;
-    description: string;
-    type: 'success' | 'warning' | 'info';
-  }
-  
-  // Получаем рекомендации по контенту на основе аналитических данных
-  const getContentRecommendations = (): ContentRecommendation[] => {
-    if (!platformsStatsData?.data) return [];
-    
-    const recommendations: ContentRecommendation[] = [];
-    const { aggregated, platforms } = platformsStatsData.data;
-    
-    // Рекомендации на основе общей статистики
-    if ((aggregated?.totalViews || 0) > 100) {
-      recommendations.push({
-        title: "Хорошее количество просмотров",
-        description: "У вашего контента хорошие показатели просмотров. Продолжайте публиковать похожий контент.",
-        type: "success"
-      });
-    }
-    
-    // Рекомендации на основе средней вовлеченности
-    if ((aggregated?.averageEngagementRate || 0) < 2) {
-      recommendations.push({
-        title: "Низкий уровень вовлеченности",
-        description: "Попробуйте добавить призывы к действию и вопросы в ваш контент, чтобы повысить вовлеченность аудитории.",
-        type: "warning"
-      });
-    } else if ((aggregated?.averageEngagementRate || 0) > 5) {
-      recommendations.push({
-        title: "Высокая вовлеченность",
-        description: "Ваш контент вызывает значительный отклик. Продолжайте использовать успешные форматы.",
-        type: "success"
-      });
-    }
-    
-    // Рекомендации по платформам
-    if (platforms && Object.keys(platforms).length > 0) {
-      const platformEntries = Object.entries(platforms);
-      
-      // Находим лучшую платформу по просмотрам
-      const bestPlatformByViews = platformEntries.reduce((best, [platform, metrics]) => {
-        if (metrics.views > (best?.metrics?.views || 0)) {
-          return { platform, metrics };
-        }
-        return best;
-      }, { platform: '', metrics: null as any });
-      
-      if (bestPlatformByViews.platform) {
-        recommendations.push({
-          title: `${bestPlatformByViews.platform.charAt(0).toUpperCase() + bestPlatformByViews.platform.slice(1)} - лучшая платформа по просмотрам`,
-          description: `Эта платформа показывает наилучшие результаты по просмотрам. Рассмотрите возможность увеличения активности на ней.`,
-          type: "info"
-        });
-      }
-      
-      // Находим лучшую платформу по вовлеченности
-      const bestPlatformByEngagement = platformEntries.reduce((best, [platform, metrics]) => {
-        if ((metrics.engagementRate || 0) > (best?.metrics?.engagementRate || 0)) {
-          return { platform, metrics };
-        }
-        return best;
-      }, { platform: '', metrics: null as any });
-      
-      if (bestPlatformByEngagement.platform && bestPlatformByEngagement.platform !== bestPlatformByViews.platform) {
-        recommendations.push({
-          title: `${bestPlatformByEngagement.platform.charAt(0).toUpperCase() + bestPlatformByEngagement.platform.slice(1)} - лучшая по вовлеченности`,
-          description: `Эта платформа показывает наилучший коэффициент вовлеченности. Возможно, ваша целевая аудитория более активна здесь.`,
-          type: "info"
-        });
-      }
-    }
-    
-    // Если нет метрик - добавляем рекомендацию по сбору данных
-    if ((aggregated?.totalViews || 0) === 0 && (aggregated?.totalPosts || 0) === 0) {
-      recommendations.push({
-        title: "Недостаточно данных для анализа",
-        description: "Опубликуйте больше контента или обновите аналитику, чтобы получить персонализированные рекомендации.",
-        type: "info"
-      });
-    }
-    
-    return recommendations;
-  };
-
-  // Получаем список всех кампаний
-  const { data: campaignsResponse } = useQuery({
-    queryKey: ["/api/campaigns"],
-    queryFn: async () => {
-      try {
-        const token = await getToken();
-        console.log("Запрос кампаний с токеном:", token ? "Токен получен (длина: " + token.length + ")" : "Токен отсутствует");
-        
-        const response = await fetch('/api/campaigns', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Ошибка загрузки кампаний: ${response.status}`, errorText);
-          throw new Error('Не удалось загрузить кампании');
-        }
-        
-        const data = await response.json();
-        console.log("Получены данные кампаний:", data);
-        return data;
-      } catch (error) {
-        console.error("Error loading campaigns:", error);
-        throw error;
-      }
-    },
-    staleTime: 60000, // Кэш актуален в течение 1 минуты
-    retry: 3 // Повторяем запрос до 3 раз при ошибке
-  });
-  
-  // Получаем список кампаний из ответа API
-  const campaigns = campaignsResponse?.data || [];
-  
-  // Получаем количество ключевых слов для выбранной кампании
-  const { data: totalKeywords, isLoading: isLoadingKeywords } = useQuery({
-    queryKey: ["total_keywords", campaignId, Date.now()],
-    queryFn: async () => {
-      if (!campaignId) return 0;
-      
-      try {
-        const token = await getToken();
-        
-        // Используем наш API endpoint вместо прямого обращения к Directus
-        const response = await axios.get('/api/analytics/keywords-count', {
-          params: {
-            campaignId: campaignId
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        console.log("Получены ключевые слова:", response.data?.data);
-        return response.data?.data?.count || 0;
-      } catch (error) {
-        console.error("Ошибка при загрузке ключевых слов:", error);
-        return 0;
-      }
-    },
-    enabled: !!campaignId,
-    staleTime: 60000
-  });
-  
-  // Получаем количество сгенерированного контента для выбранной кампании
-  const { data: totalContent, isLoading: isLoadingContent } = useQuery({
-    queryKey: ["total_content", campaignId, Date.now()],
-    queryFn: async () => {
-      if (!campaignId) return 0;
-      
-      try {
-        const token = await getToken();
-        
-        // Обновляем заголовки авторизации
-        directusApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        // Используем наш API endpoint вместо прямого обращения к Directus
-        const response = await axios.get('/api/analytics/content-count', {
-          params: {
-            campaignId: campaignId
-          },
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        console.log("Получен контент:", response.data?.data);
-        return response.data?.data?.[0]?.count || 0;
-      } catch (error) {
-        console.error("Ошибка при загрузке контента:", error);
-        return 0;
-      }
-    },
-    enabled: !!campaignId,
-    staleTime: 60000
+  // Загрузка статистики по платформам
+  const { data: platformsData, isLoading: platformsLoading } = useQuery<PlatformsStatsResponse>({
+    queryKey: ['/api/analytics/platforms', selectedCampaign?.id, period],
+    enabled: !!selectedCampaign?.id,
+    refetchInterval: 30000, // Обновляем каждые 30 секунд
   });
 
-  // Получаем статус сбора аналитики
-  const { 
-    data: analyticsStatusData,
-    isLoading: isLoadingStatus,
-    refetch: refetchStatus
-  } = useQuery<AnalyticsStatusResponse>({
-    queryKey: ["analytics_status", Date.now()],
-    queryFn: async () => {
-      try {
-        const token = await getToken();
-        console.log("Запрос статуса аналитики с токеном:", token ? "Токен получен" : "Токен отсутствует");
-        
-        const response = await fetch(`/api/analytics/status?_=${Date.now()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Ошибка получения статуса аналитики: ${response.status}`, errorText);
-          throw new Error('Не удалось получить статус аналитики');
-        }
-        
-        const data = await response.json();
-        console.log("Получен статус аналитики:", data);
-        return data;
-      } catch (error) {
-        console.error("Ошибка при загрузке статуса аналитики:", error);
-        throw error;
-      }
-    },
-    staleTime: 0, // Данные всегда считаются устаревшими
-    refetchInterval: isCollectingAnalytics ? 2000 : false, // Обновляем каждые 2 секунды, если идет сбор
-    refetchOnWindowFocus: true,
-    retry: 3
+  // Загрузка топ-постов
+  const { data: topPostsData, isLoading: topPostsLoading } = useQuery<TopPostsResponse>({
+    queryKey: ['/api/analytics/top-posts', selectedCampaign?.id, period],
+    enabled: !!selectedCampaign?.id,
+    refetchInterval: 30000,
   });
 
-  // Получаем статистику по платформам
-  const {
-    data: platformsStatsData,
-    isLoading: isLoadingPlatformsStats,
-    refetch: refetchPlatformsStats
-  } = useQuery<PlatformsStatsResponse>({
-    queryKey: ["platforms_stats", campaignId, period, Date.now()], // Добавляем текущее время для обновления кэша
-    queryFn: async () => {
-      if (!campaignId) throw new Error('Не выбрана кампания');
-      
-      const token = await getToken();
-      const response = await fetch(`/api/analytics/platforms-stats?campaignId=${campaignId}&period=${period}&_=${Date.now()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Не удалось получить статистику по платформам');
-      }
-      const data = await response.json();
-      console.log("Полученные данные статистики:", data); // Логируем полученные данные
-      return data.data || data;
-    },
-    enabled: !!campaignId,
-    staleTime: 30000, // Данные актуальны 30 секунд
-    refetchOnWindowFocus: false, // Не обновляем при фокусе окна
-    refetchInterval: false // Отключаем автообновление
-  });
-
-  // Получаем топовые публикации
-  const {
-    data: topPostsData,
-    isLoading: isLoadingTopPosts,
-    refetch: refetchTopPosts
-  } = useQuery<TopPostsResponse>({
-    queryKey: ["top_posts", campaignId, period, Date.now()],
-    queryFn: async () => {
-      if (!campaignId) throw new Error('Не выбрана кампания');
-      
-      try {
-        const token = await getToken();
-        console.log("Запрос топовых публикаций с токеном:", token ? "Токен получен" : "Токен отсутствует");
-        
-        const response = await fetch(`/api/analytics/top-posts?campaignId=${campaignId}&period=${period}&_=${Date.now()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Ошибка получения топовых публикаций: ${response.status}`, errorText);
-          throw new Error('Не удалось получить топовые публикации');
-        }
-        
-        const data = await response.json();
-        console.log("Получены топовые публикации:", data);
-        return data.data || data;
-      } catch (error) {
-        console.error("Ошибка при загрузке топовых публикаций:", error);
-        throw error;
-      }
-    },
-    enabled: !!campaignId,
-    staleTime: 0,
-    cacheTime: 0,
-    refetchOnWindowFocus: true,
-    retry: 3
-  });
-
-  // Форматирование данных для круговой диаграммы
-  const getPieChartData = () => {
-    if (!platformsStatsData?.data?.platforms) return [];
-    
-    return Object.entries(platformsStatsData.data.platforms)
-      .filter(([_, metrics]) => metrics.views > 0)
-      .map(([platform, metrics]) => ({
-        id: platform,
-        label: platform.charAt(0).toUpperCase() + platform.slice(1),
-        value: metrics.views,
-        color: PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS] || '#888'
-      }));
-  };
-  
-  // Форматирование данных для графика типов вовлеченности
-  const getEngagementChartData = () => {
-    if (!platformsStatsData?.data?.aggregated) return [];
-    
-    return [
-      {
-        id: 'likes',
-        label: 'Лайки',
-        value: platformsStatsData.data.aggregated.totalLikes || 0,
-        color: ENGAGEMENT_COLORS.likes
-      },
-      {
-        id: 'comments',
-        label: 'Комментарии',
-        value: platformsStatsData.data.aggregated.totalComments || 0,
-        color: ENGAGEMENT_COLORS.comments
-      },
-      {
-        id: 'shares',
-        label: 'Репосты',
-        value: platformsStatsData.data.aggregated.totalShares || 0,
-        color: ENGAGEMENT_COLORS.shares
-      }
-    ];
-  };
-
-  // Обновляем данные при изменении выбранной кампании или периода
-  useEffect(() => {
-    if (campaignId) {
-      refetchPlatformsStats();
-      refetchTopPosts();
-    }
-  }, [campaignId, period, refetchPlatformsStats, refetchTopPosts]);
-
-  // Обновляем статус аналитики и состояние isCollectingAnalytics
-  useEffect(() => {
-    if (analyticsStatusData?.status?.isCollecting !== undefined) {
-      setIsCollectingAnalytics(analyticsStatusData.status.isCollecting);
-    }
-  }, [analyticsStatusData]);
-
-  // Запускаем сбор аналитики
-  const startCollectingAnalytics = async () => {
-    if (!campaignId) {
-      toast({
-        title: "Ошибка",
-        description: "Не выбрана кампания",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const token = await getToken();
-      const response = await fetch('/api/analytics/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ campaignId })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        toast({
-          title: "Сбор аналитики запущен",
-          description: "Процесс может занять некоторое время"
-        });
-        setIsCollectingAnalytics(true);
-        refetchStatus();
-      } else {
-        toast({
-          title: "Ошибка",
-          description: data.message || "Не удалось запустить сбор аналитики",
-          variant: "destructive"
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось запустить сбор аналитики",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Обновляем данные аналитики
-  const refreshAnalytics = async () => {
-    if (!campaignId) {
-      toast({
-        title: "Ошибка",
-        description: "Не выбрана кампания",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Получаем токен авторизации
-      const token = await getToken();
-
-      // Отправляем запрос через наш API на обновление аналитики
+  // Мутация для обновления аналитики
+  const updateAnalyticsMutation = useMutation({
+    mutationFn: async (data: AnalyticsUpdateRequest) => {
       const response = await fetch('/api/analytics/update', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          campaignId: campaignId,
-          days: period // Используем выбранный период (7 или 30 дней)
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
+      if (!response.ok) throw new Error('Failed to update analytics');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Аналитика обновляется", description: "Данные будут обновлены в течение нескольких минут" });
+      // Инвалидируем все запросы аналитики для текущей кампании
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
+    },
+    onError: () => {
+      toast({ title: "Ошибка", description: "Не удалось запустить обновление аналитики", variant: "destructive" });
+    },
+  });
 
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Обновление данных",
-          description: "Запрос на обновление аналитики отправлен успешно"
-        });
-        
-        // Обновляем данные после небольшой задержки
-        setTimeout(() => {
-          refetchPlatformsStats();
-          refetchTopPosts();
-          refetchStatus();
-        }, 2000);
-      } else {
-        toast({
-          title: "Ошибка",
-          description: data.message || "Не удалось отправить запрос на обновление аналитики",
-          variant: "destructive"
-        });
-      }
-    } catch (error: any) {
-      console.error("Ошибка при обновлении аналитики:", error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось отправить запрос на обновление аналитики",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Обработчик изменения периода
-  const handlePeriodChange = (newPeriod: number) => {
-    setPeriod(newPeriod);
-  };
-
-  const formatDateFromString = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const handleUpdateAnalytics = () => {
+    if (!selectedCampaign?.id) return;
+    updateAnalyticsMutation.mutate({
+      campaignId: selectedCampaign.id,
+      days: period,
     });
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <h1 className="text-2xl font-bold">Аналитика публикаций</h1>
-
-        <Button 
-          className="flex items-center gap-2"
-          onClick={refreshAnalytics}
-          disabled={isCollectingAnalytics}
-          size="sm"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Обновить данные
-        </Button>
+  if (!selectedCampaign) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              Выберите кампанию для просмотра аналитики
+            </p>
+          </CardContent>
+        </Card>
       </div>
+    );
+  }
 
-      <div className="bg-muted/20 rounded-lg p-4 border flex justify-between items-center">
-        {analyticsStatusData?.status?.lastCollectionTime && !isCollectingAnalytics ? (
-          <div className="text-sm">
-            Последнее обновление: {formatDateFromString(analyticsStatusData.status.lastCollectionTime)}
-          </div>
-        ) : (
-          <div className="text-sm">
-            {isCollectingAnalytics ? "Сбор аналитики..." : "Нет данных о последнем обновлении"}
-          </div>
-        )}
+  const platformIcons = {
+    telegram: SiTelegram,
+    vk: SiVk,
+    facebook: SiFacebook,
+    instagram: SiInstagram,
+  };
 
+  const isLoading = platformsLoading || topPostsLoading;
+  const isUpdating = updateAnalyticsMutation.isPending;
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Заголовок и кнопки управления */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Аналитика кампании</h1>
+          <p className="text-muted-foreground">{selectedCampaign.title}</p>
+        </div>
+        
         <div className="flex items-center gap-2">
-          <Button 
-            variant={period === 7 ? "default" : "outline"} 
+          <Button
+            variant="outline"
             size="sm"
-            onClick={() => handlePeriodChange(7)}
+            onClick={() => setPeriod(7)}
+            className={period === 7 ? "bg-primary text-primary-foreground" : ""}
           >
-            За 7 дней
+            7 дней
           </Button>
-          <Button 
-            variant={period === 30 ? "default" : "outline"} 
+          <Button
+            variant="outline"
             size="sm"
-            onClick={() => handlePeriodChange(30)}
+            onClick={() => setPeriod(30)}
+            className={period === 30 ? "bg-primary text-primary-foreground" : ""}
           >
-            За 30 дней
+            30 дней
+          </Button>
+          <Button
+            onClick={handleUpdateAnalytics}
+            disabled={isUpdating}
+            className="gap-2"
+          >
+            {isUpdating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Обновить
           </Button>
         </div>
       </div>
 
-      {analyticsStatusData?.status?.isCollecting && (
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">Сбор аналитики...</div>
-            <div className="text-sm font-medium">{analyticsStatusData.status.progress}%</div>
-          </div>
-          <Progress value={analyticsStatusData.status.progress} className="w-full" />
+      {/* Общая статистика */}
+      {platformsData?.data?.aggregated && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Всего постов</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{platformsData.data.aggregated.totalPosts}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Просмотры</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{platformsData.data.aggregated.totalViews.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Лайки</CardTitle>
+              <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{platformsData.data.aggregated.totalLikes.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Вовлеченность</CardTitle>
+              <Share2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {(platformsData.data.aggregated.averageEngagementRate * 100).toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      <Tabs defaultValue="overview" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Обзор</TabsTrigger>
-          <TabsTrigger value="publications">Публикации</TabsTrigger>
-          <TabsTrigger value="insights">Аналитические выводы</TabsTrigger>
+      <Tabs defaultValue="platforms" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="platforms">Платформы</TabsTrigger>
+          <TabsTrigger value="posts">Топ постов</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="flex flex-col border-l-4 border-l-blue-500 h-[140px]">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Eye className="h-4 w-4 text-blue-500 mr-2" />
-                  Просмотры
-                </CardTitle>
-                <CardDescription className="text-xs">Общее количество просмотров</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col pt-1">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Загрузка...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold text-blue-500">
-                        {formatNumber(platformsStatsData?.data?.aggregated?.totalViews || 0)}
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Среднее на пост: {formatNumber(Math.round((platformsStatsData?.data?.aggregated?.totalViews || 0) / 
-                      (platformsStatsData?.data?.aggregated?.totalPosts || 1)))}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
 
-            <Card className="flex flex-col border-l-4 border-l-yellow-500 h-[140px]">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Zap className="h-4 w-4 text-yellow-500 mr-2" />
-                  Вовлеченность
-                </CardTitle>
-                <CardDescription className="text-xs">Средний показатель вовлеченности</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col pt-1">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Загрузка...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold text-yellow-500">
-                        {(platformsStatsData?.data?.aggregated?.averageEngagementRate || 0).toFixed(2)}%
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
-                        <span className="text-green-600">Высокая вовлеченность</span>
-                      ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
-                        <span className="text-yellow-600">Средняя вовлеченность</span>
-                      ) : (
-                        <span className="text-red-600">Низкая вовлеченность</span>
-                      )}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="flex flex-col border-l-4 border-l-green-500 h-[140px]">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <FileText className="h-4 w-4 text-green-500 mr-2" />
-                  Публикации
-                </CardTitle>
-                <CardDescription className="text-xs">Всего публикаций на всех платформах</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col pt-1">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Загрузка...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold text-green-500">
-                      {formatNumber(platformsStatsData?.data?.aggregated?.totalPosts || 0)}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Общее количество публикаций на всех платформах
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="flex flex-col border-l-4 border-l-purple-500 h-[140px]">
-              <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <MessageSquare className="h-4 w-4 text-purple-500 mr-2" />
-                  Взаимодействия
-                </CardTitle>
-                <CardDescription className="text-xs">Все взаимодействия с постами</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col pt-1">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Загрузка...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold text-purple-500">
-                      {formatNumber(
-                        (platformsStatsData?.data?.aggregated?.totalLikes || 0) +
-                        (platformsStatsData?.data?.aggregated?.totalComments || 0) +
-                        (platformsStatsData?.data?.aggregated?.totalShares || 0)
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Лайки, комментарии и репосты
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
-              <div className="p-3 pb-0">
-                <h3 className="font-medium text-sm">Распределение просмотров</h3>
-                <p className="text-xs text-muted-foreground">Просмотры по платформам</p>
-              </div>
-              <div className="p-2 h-[300px]">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsivePie
-                    data={getPieChartData()}
-                    margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                    innerRadius={0.5}
-                    padAngle={0.7}
-                    cornerRadius={3}
-                    activeOuterRadiusOffset={8}
-                    colors={(d) => {
-                      const platform = d.id;
-                      return platform === 'vk' ? '#0077FF' : 
-                             platform === 'instagram' ? '#E1306C' : 
-                             platform === 'telegram' ? '#0088CC' : 
-                             platform === 'facebook' ? '#1877F2' : '#6366F1';
-                    }}
-                    borderWidth={1}
-                    borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                    arcLinkLabelsSkipAngle={10}
-                    arcLinkLabelsTextColor="#333333"
-                    arcLinkLabelsThickness={2}
-                    arcLinkLabelsColor={{ from: 'color' }}
-                    arcLabelsSkipAngle={10}
-                    arcLabelsTextColor="#ffffff"
-                  />
-                )}
-              </div>
-            </div>
-            
-            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
-              <div className="p-3 pb-0">
-                <h3 className="font-medium text-sm">Активность по платформам</h3>
-                <p className="text-xs text-muted-foreground">Сравнение взаимодействий</p>
-              </div>
-              <div className="p-2 h-[300px]">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveBar
-                    data={getEngagementChartData().map(item => ({
-                      id: item.id,
-                      [item.id]: item.value,
-                      value: item.value,
-                      label: item.label,
-                      color: item.id === 'likes' ? '#e74c3c' : 
-                             item.id === 'comments' ? '#2ecc71' : 
-                             item.id === 'shares' ? '#f39c12' : '#3498db'
-                    }))}
-                    keys={['value']}
-                    indexBy="label"
-                    margin={{ top: 20, right: 30, bottom: 60, left: 40 }}
-                    padding={0.3}
-                    colors={(d) => d.data.color || '#3498db'}
-                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                    axisTop={null}
-                    axisRight={null}
-                    axisBottom={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Тип',
-                      legendPosition: 'middle',
-                      legendOffset: 40
-                    }}
-                    axisLeft={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Количество',
-                      legendPosition: 'middle',
-                      legendOffset: -35
-                    }}
-                    labelSkipWidth={12}
-                    labelSkipHeight={12}
-                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                  />
-                )}
-              </div>
-            </div>
-            
-            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
-              <div className="p-3 pb-0">
-                <h3 className="font-medium text-sm">Показатели по платформам</h3>
-                <p className="text-xs text-muted-foreground">Сравнение метрик</p>
-              </div>
-              <div className="p-2 h-[300px]">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveLine
-                    data={[
-                      {
-                        id: 'Просмотры',
-                        color: '#3498db',
-                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                          x: platform,
-                          y: data.views
-                        }))
-                      },
-                      {
-                        id: 'Лайки',
-                        color: '#e74c3c',
-                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                          x: platform,
-                          y: data.likes
-                        }))
-                      },
-                      {
-                        id: 'Комментарии',
-                        color: '#2ecc71',
-                        data: Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                          x: platform,
-                          y: data.comments
-                        }))
-                      }
-                    ]}
-                    colors={(d) => d.color}
-                    margin={{ top: 20, right: 60, bottom: 50, left: 50 }}
-                    xScale={{ type: 'point' }}
-                    yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
-                    yFormat=" >-.0f"
-                    curve="cardinal"
-                    axisTop={null}
-                    axisRight={null}
-                    axisBottom={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Платформа',
-                      legendOffset: 40,
-                      legendPosition: 'middle'
-                    }}
-                    axisLeft={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Количество',
-                      legendOffset: -40,
-                      legendPosition: 'middle'
-                    }}
-                    pointSize={10}
-                    pointColor={{ theme: 'background' }}
-                    pointBorderWidth={2}
-                    pointBorderColor={{ from: 'serieColor' }}
-                    pointLabelYOffset={-12}
-                    useMesh={true}
-                    legends={[
-                      {
-                        anchor: 'bottom-right',
-                        direction: 'column',
-                        justify: false,
-                        translateX: 50,
-                        translateY: 0,
-                        itemsSpacing: 0,
-                        itemDirection: 'left-to-right',
-                        itemWidth: 80,
-                        itemHeight: 20,
-                        itemOpacity: 0.75,
-                        symbolSize: 12,
-                        symbolShape: 'circle',
-                        symbolBorderColor: 'rgba(0, 0, 0, .5)',
-                      }
-                    ]}
-                  />
-                )}
-              </div>
-            </div>
-            
-            <div className="h-[350px] overflow-hidden rounded-md border bg-card text-card-foreground shadow">
-              <div className="p-3 pb-0">
-                <h3 className="font-medium text-sm">Рейтинг вовлеченности</h3>
-                <p className="text-xs text-muted-foreground">Эффективность платформ</p>
-              </div>
-              <div className="p-2 h-[300px]">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveBar
-                    data={Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, data]) => ({
-                      platform,
-                      engagementRate: Number((data.engagementRate || 0).toFixed(2)),
-                      color: platform === 'vk' ? '#0077FF' : 
-                             platform === 'instagram' ? '#E1306C' : 
-                             platform === 'telegram' ? '#0088CC' : '#6366F1'
-                    }))}
-                    keys={['engagementRate']}
-                    indexBy="platform"
-                    margin={{ top: 20, right: 30, bottom: 50, left: 80 }}
-                    padding={0.3}
-                    layout="horizontal"
-                    colors={(d) => {
-                      const platform = d.data.indexValue;
-                      return platform === 'vk' ? '#0077FF' : 
-                             platform === 'instagram' ? '#E1306C' : 
-                             platform === 'telegram' ? '#0088CC' : '#6366F1';
-                    }}
-                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                    axisTop={null}
-                    axisRight={null}
-                    axisBottom={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Рейтинг вовлеченности, %',
-                      legendPosition: 'middle',
-                      legendOffset: 40
-                    }}
-                    axisLeft={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                    }}
-                    labelSkipWidth={12}
-                    labelSkipHeight={12}
-                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="publications" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle>Публикации</CardTitle>
-                <div className="flex gap-2">
-                  <Select 
-                    value={publicationsSortType} 
-                    onValueChange={setPublicationsSortType}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Сортировка" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="views">По просмотрам</SelectItem>
-                      <SelectItem value="engagement">По вовлеченности</SelectItem>
-                      <SelectItem value="likes">По лайкам</SelectItem>
-                      <SelectItem value="comments">По комментариям</SelectItem>
-                      <SelectItem value="shares">По репостам</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <CardDescription>Статистика публикаций с возможностью фильтрации</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingTopPosts ? (
-                <div className="flex justify-center items-center h-40">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="overflow-hidden rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead>Название</TableHead>
-                          <TableHead 
-                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "views" && "text-primary")}
-                            onClick={() => setPublicationsSortType("views")}
-                          >
-                            <div className="flex flex-col items-center">
-                              <Eye className="h-4 w-4 mx-auto" />
-                              <span className="text-xs font-normal mt-1">Просмотры</span>
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "likes" && "text-primary")}
-                            onClick={() => setPublicationsSortType("likes")}
-                          >
-                            <div className="flex flex-col items-center">
-                              <ThumbsUp className="h-4 w-4 mx-auto" />
-                              <span className="text-xs font-normal mt-1">Лайки</span>
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "comments" && "text-primary")}
-                            onClick={() => setPublicationsSortType("comments")}
-                          >
-                            <div className="flex flex-col items-center">
-                              <MessageSquare className="h-4 w-4 mx-auto" />
-                              <span className="text-xs font-normal mt-1">Комм.</span>
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "shares" && "text-primary")}
-                            onClick={() => setPublicationsSortType("shares")}
-                          >
-                            <div className="flex flex-col items-center">
-                              <Share2 className="h-4 w-4 mx-auto" />
-                              <span className="text-xs font-normal mt-1">Репосты</span>
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className={cn("w-[90px] text-center cursor-pointer", publicationsSortType === "engagement" && "text-primary")}
-                            onClick={() => setPublicationsSortType("engagement")}
-                          >
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-4 w-4 mx-auto" />
-                              <span className="text-xs font-normal mt-1">Вовл.</span>
-                            </div>
-                          </TableHead>
-                          <TableHead className="w-[80px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {topPostsData?.data ? (
-                          (() => {
-                            // Определение данных для отображения на основе типа сортировки
-                            let postsToShow = [];
-                            
-                            if (publicationsSortType === 'engagement' && topPostsData.data.topByEngagement) {
-                              postsToShow = [...topPostsData.data.topByEngagement];
-                            } else if (publicationsSortType === 'views' && topPostsData.data.topByViews) {
-                              postsToShow = [...topPostsData.data.topByViews];
-                            } else if (topPostsData.data.topByViews) {
-                              // Для остальных типов сортировки (likes, comments, shares) берем исходные данные
-                              postsToShow = [...topPostsData.data.topByViews];
-                              
-                              // И сортируем по выбранному параметру
-                              postsToShow.sort((a, b) => {
-                                const getTotal = (post: any, field: string) => {
-                                  return post.platforms 
-                                    ? Object.values(post.platforms).reduce((acc: number, platform: any) => 
-                                        acc + (platform.analytics?.[field] || 0), 0) 
-                                    : 0;
-                                };
-                                
-                                return getTotal(b, publicationsSortType) - getTotal(a, publicationsSortType);
-                              });
-                            }
-                            
-                            if (postsToShow.length === 0) {
-                              return (
-                                <TableRow>
-                                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
-                                    Нет данных о публикациях
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            }
-                            
-                            return postsToShow.map((post, index) => {
-                              const totalLikes = post.platforms 
-                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.likes || 0), 0) 
-                                : 0;
-                              const totalComments = post.platforms 
-                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.comments || 0), 0) 
-                                : 0;
-                              const totalShares = post.platforms 
-                                ? Object.values(post.platforms).reduce((acc: number, platform: any) => acc + (platform.analytics?.shares || 0), 0) 
-                                : 0;
-                              
-                              // Функция для получения URL первой платформы с постом (для превью)
-                              const getPostUrl = (post: any) => {
-                                if (!post.platforms) return null;
-                                const platforms = Object.values(post.platforms);
-                                for (const platform of platforms) {
-                                  if ((platform as any).postUrl && (platform as any).postUrl !== "#" && (platform as any).postUrl !== '') 
-                                    return (platform as any).postUrl;
-                                }
-                                return null;
-                              };
-                              
-                              return (
-                                <TableRow key={post.id}>
-                                  <TableCell className="font-medium">{index + 1}</TableCell>
-                                  <TableCell>
-                                    <div className="flex flex-col">
-                                      <span className="font-medium truncate max-w-[300px]">{post.title}</span>
-                                      <span className="text-xs text-muted-foreground truncate max-w-[300px]">
-                                        {post.content && post.content.length > 60 
-                                          ? `${post.content.substring(0, 60)}...` 
-                                          : post.content}
-                                      </span>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="text-center font-medium">{formatNumber(post.totalViews || 0)}</TableCell>
-                                  <TableCell className="text-center">{formatNumber(totalLikes)}</TableCell>
-                                  <TableCell className="text-center">{formatNumber(totalComments)}</TableCell>
-                                  <TableCell className="text-center">{formatNumber(totalShares)}</TableCell>
-                                  <TableCell className="text-center font-medium">
-                                    <span className={cn(
-                                      "px-2 py-1 rounded-full text-xs",
-                                      post.engagementRate > 5 ? "bg-green-100 text-green-700" :
-                                      post.engagementRate > 1 ? "bg-amber-100 text-amber-700" :
-                                      "bg-red-100 text-red-700"
-                                    )}>
-                                      {post.engagementRate.toFixed(2)}%
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {getPostUrl(post) ? (
-                                      <a href={getPostUrl(post)} target="_blank" rel="noopener noreferrer">
-                                        <Button variant="ghost" size="icon" title="Открыть публикацию">
-                                          <ExternalLink className="h-4 w-4" />
-                                          <span className="sr-only">Открыть публикацию</span>
-                                        </Button>
-                                      </a>
-                                    ) : (
-                                      <a href={`/content/${post.id}`}>
-                                        <Button variant="ghost" size="icon" title="Просмотр контента">
-                                          <FileText className="h-4 w-4" />
-                                          <span className="sr-only">Просмотр контента</span>
-                                        </Button>
-                                      </a>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            });
-                          })()
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
-                              Нет данных о публикациях
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  
-                  {/* Дополнительная информация внизу таблицы */}
-                  <div className="text-sm text-muted-foreground mt-4">
-                    <p>Показано top-10 публикаций по выбранному критерию</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
         <TabsContent value="platforms" className="space-y-4">
-          {/* Компонент сравнения эффективности платформ (перенесен из "Аналитические выводы") */}
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle>Сравнение эффективности платформ</CardTitle>
-              <CardDescription>
-                Визуализация ключевых метрик по социальным сетям
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingPlatformsStats ? (
-                <div className="flex justify-center items-center h-40">
-                  <Loader2 className="h-8 w-8 animate-spin" />
+          {isLoading ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  Загрузка данных...
                 </div>
-              ) : (
-                <div className="h-auto">
-                  {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {Object.entries(platformsStatsData?.data?.platforms || {})
-                        .filter(([_, metrics]) => metrics.posts > 0)
-                        .map(([platform, metrics]) => {
-                          // Определяем цвет для платформы
-                          const platformColors = {
-                            telegram: '#2AABEE',
-                            vk: '#4C75A3',
-                            facebook: '#3b5998',
-                            instagram: '#E4405F'
-                          };
-                          const color = platformColors[platform] || '#888888';
-                          
-                          // Определяем иконку для платформы
-                          const getPlatformIcon = () => {
-                            if (platform === 'telegram') {
-                              return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={color}><path d="M22.17,3.32c-0.15,0.07-0.3,0.14-0.45,0.2c-1.3,0.55-2.6,1.11-3.9,1.66c-1.8,0.77-3.61,1.52-5.41,2.28 c-1.87,0.79-3.73,1.58-5.6,2.37c-0.12,0.05-0.16,0.12-0.16,0.25c0.03,0.63,0.02,1.27,0.01,1.9c0,0.9-0.01,1.8,0,2.7 c0,0.96,0,1.92,0.01,2.89c0.01,0.03,0.01,0.05,0.02,0.08c0.01,0.07,0.04,0.09,0.12,0.05c0.34-0.17,0.68-0.33,1.02-0.49 c0.67-0.33,1.34-0.66,2.02-0.98c0.39-0.19,0.78-0.37,1.16-0.56c0.8-0.39,1.61-0.79,2.41-1.18c0.57-0.28,1.15-0.56,1.72-0.84 c0.35-0.17,0.71-0.34,1.06-0.52c0.52-0.25,1.04-0.51,1.55-0.76c0.63-0.31,1.26-0.62,1.89-0.92c0.06-0.03,0.09-0.05,0.15-0.02 c0.02,0.01,0.06,0.02,0.08,0.01c0.02-0.01,0.04-0.05,0.04-0.08c0-0.04-0.03-0.06-0.05-0.07c-0.03-0.03-0.07-0.05-0.11-0.07 c-0.01,0-0.02-0.01-0.03-0.01c-0.19-0.15-0.38-0.29-0.57-0.44c-0.34-0.26-0.69-0.53-1.03-0.79c-0.71-0.55-1.43-1.1-2.14-1.65 c-0.59-0.45-1.18-0.91-1.77-1.36c-0.63-0.49-1.26-0.97-1.89-1.46c-0.67-0.51-1.35-1.03-2.02-1.55c-0.02-0.01-0.04-0.04-0.06-0.06 c-0.01-0.01-0.02-0.03-0.05-0.02c-0.03,0.02,0,0.05,0,0.07c0.03,0.16,0.05,0.32,0.08,0.49c0.16,0.92,0.32,1.85,0.48,2.77 c0.16,0.95,0.33,1.9,0.49,2.85c0.13,0.75,0.26,1.5,0.39,2.25c0.15,0.88,0.3,1.77,0.45,2.65c0.17,0.97,0.33,1.94,0.5,2.91 c0.16,0.92,0.32,1.84,0.48,2.76c0.01,0.08,0.04,0.11,0.12,0.08c0.09-0.03,0.19-0.06,0.28-0.09c0.92-0.31,1.84-0.61,2.76-0.92 c0.04-0.01,0.07-0.03,0.09-0.07c0.08-0.17,0.16-0.34,0.24-0.5c0.15-0.31,0.3-0.62,0.45-0.93c0.08-0.17,0.17-0.33,0.25-0.5 c0.05-0.09,0.1-0.18,0.15-0.28c0.01-0.02,0.02-0.04,0.03-0.07c0.02-0.04,0-0.08-0.04-0.1c-0.03-0.02-0.06-0.02-0.09,0 c-0.1,0.06-0.21,0.11-0.31,0.17c-0.42,0.23-0.84,0.45-1.26,0.68c-0.29,0.16-0.58,0.31-0.87,0.47c-0.46,0.25-0.93,0.5-1.39,0.75 c-0.33,0.18-0.66,0.36-0.99,0.53c-0.13,0.07-0.21,0.05-0.25-0.09c-0.08-0.29-0.16-0.58-0.23-0.87c-0.12-0.47-0.24-0.94-0.36-1.41 c-0.18-0.72-0.37-1.44-0.55-2.16c-0.16-0.65-0.33-1.29-0.49-1.94c-0.15-0.58-0.3-1.16-0.44-1.74c-0.2-0.8-0.4-1.6-0.6-2.39 c-0.16-0.64-0.32-1.28-0.48-1.92c-0.17-0.66-0.33-1.32-0.5-1.98c-0.02-0.1-0.05-0.19-0.07-0.29c-0.01-0.04-0.03-0.06-0.08-0.07 c-0.03,0-0.06,0-0.09,0c-0.05,0-0.06,0.03-0.06,0.07c0,0.09,0,0.18,0,0.28c0,1.01,0,2.02,0,3.02c0,0.88,0,1.77,0,2.65 c0,0.96,0,1.92,0,2.89c0,0.74,0,1.49,0,2.23c0,0.74,0,1.47,0,2.21c0,0.58,0,1.16,0,1.74c0,0.04,0,0.09,0,0.13 c0,0.05,0.02,0.07,0.06,0.07c0.01,0,0.03,0,0.04,0c0.07-0.02,0.12-0.07,0.16-0.13c0.15-0.22,0.29-0.44,0.44-0.66 c0.19-0.28,0.38-0.56,0.57-0.85c0.25-0.37,0.5-0.75,0.75-1.12c0.27-0.4,0.54-0.79,0.8-1.19c0.27-0.4,0.54-0.8,0.8-1.21 c0.27-0.41,0.54-0.83,0.82-1.24c0.25-0.38,0.5-0.76,0.75-1.14c0.25-0.38,0.5-0.77,0.75-1.15c0.24-0.37,0.49-0.74,0.73-1.11 c0.16-0.24,0.31-0.48,0.47-0.72c0.03-0.05,0.04-0.1,0.01-0.15c-0.15-0.31-0.29-0.62-0.44-0.93c-0.16-0.33-0.31-0.66-0.47-0.98 c-0.08-0.16-0.15-0.32-0.23-0.48c-0.07-0.15-0.14-0.29-0.22-0.44c-0.09-0.19-0.18-0.38-0.27-0.57c-0.16-0.32-0.31-0.65-0.47-0.97 c-0.16-0.33-0.32-0.67-0.48-1c-0.1-0.21-0.21-0.42-0.31-0.64c-0.12-0.25-0.24-0.5-0.37-0.74c-0.13-0.27-0.26-0.53-0.39-0.8 c-0.06-0.11-0.11-0.22-0.17-0.32c-0.02-0.04-0.05-0.06-0.1-0.04c-0.09,0.03-0.18,0.06-0.27,0.09c-0.01,0-0.02,0.01-0.03,0.01 c-0.57,0.19-1.13,0.38-1.7,0.57c-0.23,0.08-0.46,0.15-0.69,0.23c-0.91,0.3-1.81,0.61-2.72,0.91c-0.48,0.16-0.95,0.32-1.43,0.48 c-0.74,0.25-1.48,0.5-2.22,0.74c-0.1,0.03-0.11,0.05-0.1,0.16c0.02,0.32,0.06,0.64,0.09,0.96c0.01,0.03,0.02,0.05,0.04,0.06 c0.08,0.04,0.16,0.09,0.24,0.13c0.46,0.23,0.91,0.47,1.37,0.7c0.61,0.31,1.22,0.63,1.84,0.94c0.3,0.15,0.6,0.31,0.9,0.46 c0.5,0.26,1,0.51,1.5,0.77c0.28,0.14,0.56,0.29,0.84,0.43c0.42,0.22,0.85,0.43,1.27,0.65c0.24,0.12,0.48,0.25,0.72,0.37 c0.25,0.13,0.49,0.25,0.74,0.38c0.22,0.11,0.44,0.23,0.66,0.34c0.25,0.13,0.5,0.26,0.75,0.38c0.18,0.09,0.36,0.19,0.54,0.28 c0.27,0.14,0.54,0.28,0.81,0.42c0.16,0.08,0.32,0.16,0.48,0.25c0.26,0.13,0.51,0.26,0.77,0.39c0.11,0.06,0.21,0.11,0.32,0.17 c0.24,0.12,0.49,0.25,0.73,0.37c0.12,0.06,0.24,0.13,0.36,0.19c0.06,0.03,0.08,0.03,0.14,0c0.19-0.09,0.38-0.18,0.57-0.27 c0.94-0.44,1.88-0.88,2.82-1.33c0.5-0.24,1-0.47,1.49-0.71c0.2-0.09,0.4-0.19,0.6-0.28c0.2-0.09,0.4-0.19,0.6-0.28 c0.19-0.09,0.38-0.18,0.57-0.27c0.95-0.45,1.91-0.9,2.86-1.35c0.82-0.39,1.65-0.78,2.47-1.17c0.91-0.43,1.83-0.86,2.74-1.3 c0.93-0.44,1.86-0.88,2.79-1.32c0.88-0.41,1.75-0.83,2.63-1.24c0.35-0.17,0.7-0.33,1.05-0.5c0.07-0.03,0.09-0.07,0.08-0.14 c-0.01-0.16-0.01-0.32,0-0.48c0.01-0.12-0.02-0.25-0.04-0.37c-0.01-0.06-0.04-0.09-0.1-0.09c-0.1,0-0.19,0-0.29,0 c-2.02,0-4.04,0-6.06,0C22.17,3.32,22.17,3.32,22.17,3.32z"></path></svg>;
-                            }
-                            if (platform === 'vk') {
-                              return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={color}><path d="M21.547,7h-0.03c-0.65,0-1.147,0.433-1.317,1.026c-0.6,1.94-2.035,4.194-3.952,4.344 c0.129-2.772,0.73-6.555,3.566-7.163C20.435,5.068,20.999,5.5,21.547,5.5c0.828,0,1.5-0.672,1.5-1.5S22.375,2.5,21.547,2.5 c-1.572,0-2.945,1.016-3.43,2.487c-3.757,1.233-4.366,7.029-4.369,10.899C13.69,16.048,13.5,16.169,13.5,16.5v3 c0,1.103,0.897,2,2,2h5c1.103,0,2-0.897,2-2v-3c0-0.304-0.068-0.59-0.188-0.847c2.03-1.44,2.959-4.048,3.039-4.25 c0.168-0.602,0.684-0.916,1.196-0.916h0.03c0.828,0,1.5-0.672,1.5-1.5S22.375,7,21.547,7z"></path><path d="M7.5,13.5h-1V19h1c0.553,0,1-0.447,1-1v-3.5C8.5,13.947,8.053,13.5,7.5,13.5z"></path><path d="M10.47,2.049c0.331,0.142,0.514,0.5,0.514,0.914V8.5c0,0.276,0.224,0.5,0.5,0.5s0.5-0.224,0.5-0.5V2.963 c0-0.75-0.356-1.442-0.949-1.862C10.752,0.87,10.424,0.71,10.094,0.57C9.376,0.244,8.5,0.75,8.5,1.5v1.463 C8.5,3.602,9.262,4.31,10.47,2.049z"></path><path d="M5,9.5h1c0.553,0,1-0.447,1-1v-1c0-0.553-0.447-1-1-1H5c-0.553,0-1,0.447-1,1v1C4,9.053,4.447,9.5,5,9.5z"></path><path d="M5.5,11.5c-1.103,0-2,0.897-2,2V18c0,0.553,0.447,1,1,1h1c0.553,0,1-0.447,1-1v-4.5C6.5,12.397,6.103,11.5,5.5,11.5z"></path></svg>;
-                            }
-                            if (platform === 'facebook') {
-                              return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={color}><path d="M20,3H4C3.447,3,3,3.448,3,4v16c0,0.552,0.447,1,1,1h8.615v-6.96h-2.338v-2.725h2.338v-2c0-2.325,1.42-3.592,3.5-3.592 c0.699-0.002,1.399,0.034,2.095,0.107v2.42h-1.435c-1.128,0-1.348,0.538-1.348,1.325v1.735h2.697l-0.35,2.725h-2.348V21H20 c0.553,0,1-0.448,1-1V4C21,3.448,20.553,3,20,3z"></path></svg>;
-                            }
-                            if (platform === 'instagram') {
-                              return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={color}><path d="M 12 3 C 7.041 3 3 7.041 3 12 C 3 16.959 7.041 21 12 21 C 16.959 21 21 16.959 21 12 C 21 7.041 16.959 3 12 3 z M 12 5 C 16.004 5 19 7.998 19 12 C 19 16.002 16.004 19 12 19 C 7.996 19 5 16.002 5 12 C 5 7.998 7.996 5 12 5 z M 18 6 C 18 7.104 17.104 8 16 8 C 14.896 8 14 7.104 14 6 C 14 4.896 14.896 4 16 4 C 17.104 4 18 4.896 18 6 z M 12 7 C 9.255 7 7 9.255 7 12 C 7 14.745 9.255 17 12 17 C 14.745 17 17 14.745 17 12 C 17 9.255 14.745 7 12 7 z M 12 9 C 13.675 9 15 10.325 15 12 C 15 13.675 13.675 15 12 15 C 10.325 15 9 13.675 9 12 C 9 10.325 10.325 9 12 9 z"></path></svg>;
-                            }
-                            return null;
-                          };
-
-                          return (
-                            <div key={platform} className="p-3 border rounded-md shadow-sm" style={{ borderLeft: `4px solid ${color}` }}>
-                              <div className="flex items-center gap-1 text-sm font-medium mb-3">
-                                {getPlatformIcon()}
-                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Публикации</div>
-                                  <div className="text-lg font-bold">{metrics.posts}</div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Просмотры</div>
-                                  <div className="text-lg font-bold">{formatNumber(metrics.views)}</div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Лайки</div>
-                                  <div className="text-lg font-bold">{formatNumber(metrics.likes)}</div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Комментарии</div>
-                                  <div className="text-lg font-bold">{formatNumber(metrics.comments)}</div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Репосты</div>
-                                  <div className="text-lg font-bold">{formatNumber(metrics.shares)}</div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center">
-                                  <div className="text-xs text-muted-foreground">Вовлеченность</div>
-                                  <div className="text-lg font-bold">{metrics.engagementRate.toFixed(2)}%</div>
-                                </div>
-                              </div>
-                              
-                              {metrics.engagementRate > 0 && (
-                                <div className="w-full h-1 bg-gray-200 mt-3 rounded-full overflow-hidden">
-                                  <div 
-                                    className={cn(
-                                      "h-full",
-                                      metrics.engagementRate > 5 ? "bg-green-500" : 
-                                      metrics.engagementRate > 1 ? "bg-amber-500" : 
-                                      "bg-red-500"
-                                    )}
-                                    style={{ width: `${Math.min(metrics.engagementRate * 5, 100)}%` }} 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                    </div>
-                  ) : (
-                    <div className="flex justify-center items-center h-40 text-muted-foreground">
-                      Нет данных о платформах
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Сравнение показателей в диаграммах */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* График распределения вовлеченности */}
-            <Card className="h-[550px] overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle>Вовлеченность по платформам</CardTitle>
-                <CardDescription>Сравнение коэффициента вовлеченности</CardDescription>
-              </CardHeader>
-              <CardContent className="pb-6">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="h-[450px]">
-                    {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
-                      <NivoAnalyticsPieChart
-                        data={Object.entries(platformsStatsData?.data?.platforms || {})
-                          .filter(([_, metrics]) => metrics.posts > 0)
-                          .map(([platform, metrics]) => ({
-                            id: platform.charAt(0).toUpperCase() + platform.slice(1),
-                            label: platform.charAt(0).toUpperCase() + platform.slice(1),
-                            value: parseFloat(metrics.engagementRate.toFixed(2))
-                          }))}
-                        height={400}
-                        centerText="Вовлеченность"
-                        colorMapping={(item) => {
-                          const colors = {
-                            Telegram: '#2AABEE',
-                            Vk: '#4C75A3',
-                            Facebook: '#3b5998',
-                            Instagram: '#E4405F'
-                          };
-                          return colors[item.id] || '#888888';
-                        }}
-                      />
-                    ) : (
-                      <div className="flex justify-center items-center h-full text-muted-foreground">
-                        Недостаточно данных
-                      </div>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
-
-            {/* График просмотров по платформам */}
-            <Card className="h-[550px] overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle>Просмотры по платформам</CardTitle>
-                <CardDescription>Сравнение охвата контента</CardDescription>
-              </CardHeader>
-              <CardContent className="pb-10">
-                {isLoadingPlatformsStats ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="h-[450px]">
-                    {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
-                      <NivoAnalyticsBarChart
-                        data={Object.entries(platformsStatsData?.data?.platforms || {})
-                          .filter(([_, metrics]) => metrics.posts > 0)
-                          .map(([platform, metrics]) => ({
-                            platform: platform.charAt(0).toUpperCase() + platform.slice(1),
-                            views: metrics.views
-                          }))}
-                        keys={['views']}
-                        indexBy="platform"
-                        height={400}
-                        colorMapping={(bar) => {
-                          const colors = {
-                            Telegram: '#2AABEE',
-                            Vk: '#4C75A3',
-                            Facebook: '#3b5998',
-                            Instagram: '#E4405F'
-                          };
-                          return '#3b82f6';
-                        }}
-                      />
-                    ) : (
-                      <div className="flex justify-center items-center h-full text-muted-foreground">
-                        Недостаточно данных
+          ) : platformsData?.data?.platforms ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Object.entries(platformsData.data.platforms).map(([platform, stats]) => {
+                const IconComponent = platformIcons[platform as keyof typeof platformIcons];
+                return (
+                  <Card key={platform}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        {IconComponent && <IconComponent className="h-5 w-5" />}
+                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Постов</p>
+                          <p className="font-semibold">{stats.posts}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Просмотры</p>
+                          <p className="font-semibold">{stats.views.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Лайки</p>
+                          <p className="font-semibold">{stats.likes.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Вовлеченность</p>
+                          <p className="font-semibold">{(stats.engagementRate * 100).toFixed(1)}%</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Нет данных для отображения. Нажмите "Обновить" для загрузки аналитики.
+                </p>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Детальная информация по платформам */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isLoadingPlatformsStats ? (
-              <div className="col-span-2 flex justify-center items-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <>
-                {platformsStatsData?.data?.platforms ? (
-                  Object.entries(platformsStatsData.data.platforms)
-                    .filter(([_, metrics]) => metrics.posts > 0)
-                    .map(([platform, metrics]) => {
-                      // Определяем цвет для платформы
-                      const platformColors = {
-                        telegram: '#2AABEE',
-                        vk: '#4C75A3',
-                        facebook: '#3b5998',
-                        instagram: '#E4405F'
-                      };
-                      const color = platformColors[platform] || '#888888';
-                      
-                      return (
-                        <Card key={platform} className={`overflow-hidden border-l-4`} style={{ borderLeftColor: color }}>
-                          <CardHeader>
-                            <CardTitle className="capitalize flex items-center gap-2">
-                              {platform === 'telegram' && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#2AABEE"><path d="M22.17,3.32c-0.15,0.07-0.3,0.14-0.45,0.2c-1.3,0.55-2.6,1.11-3.9,1.66c-1.8,0.77-3.61,1.52-5.41,2.28 c-1.87,0.79-3.73,1.58-5.6,2.37c-0.12,0.05-0.16,0.12-0.16,0.25c0.03,0.63,0.02,1.27,0.01,1.9c0,0.9-0.01,1.8,0,2.7 c0,0.96,0,1.92,0.01,2.89c0.01,0.03,0.01,0.05,0.02,0.08c0.01,0.07,0.04,0.09,0.12,0.05c0.34-0.17,0.68-0.33,1.02-0.49 c0.67-0.33,1.34-0.66,2.02-0.98c0.39-0.19,0.78-0.37,1.16-0.56c0.8-0.39,1.61-0.79,2.41-1.18c0.57-0.28,1.15-0.56,1.72-0.84 c0.35-0.17,0.71-0.34,1.06-0.52c0.52-0.25,1.04-0.51,1.55-0.76c0.63-0.31,1.26-0.62,1.89-0.92c0.06-0.03,0.09-0.05,0.15-0.02 c0.02,0.01,0.06,0.02,0.08,0.01c0.02-0.01,0.04-0.05,0.04-0.08c0-0.04-0.03-0.06-0.05-0.07c-0.03-0.03-0.07-0.05-0.11-0.07 c-0.01,0-0.02-0.01-0.03-0.01c-0.19-0.15-0.38-0.29-0.57-0.44c-0.34-0.26-0.69-0.53-1.03-0.79c-0.71-0.55-1.43-1.1-2.14-1.65 c-0.59-0.45-1.18-0.91-1.77-1.36c-0.63-0.49-1.26-0.97-1.89-1.46c-0.67-0.51-1.35-1.03-2.02-1.55c-0.02-0.01-0.04-0.04-0.06-0.06 c-0.01-0.01-0.02-0.03-0.05-0.02c-0.03,0.02,0,0.05,0,0.07c0.03,0.16,0.05,0.32,0.08,0.49c0.16,0.92,0.32,1.85,0.48,2.77 c0.16,0.95,0.33,1.9,0.49,2.85c0.13,0.75,0.26,1.5,0.39,2.25c0.15,0.88,0.3,1.77,0.45,2.65c0.17,0.97,0.33,1.94,0.5,2.91 c0.16,0.92,0.32,1.84,0.48,2.76c0.01,0.08,0.04,0.11,0.12,0.08c0.09-0.03,0.19-0.06,0.28-0.09c0.92-0.31,1.84-0.61,2.76-0.92 c0.04-0.01,0.07-0.03,0.09-0.07c0.08-0.17,0.16-0.34,0.24-0.5c0.15-0.31,0.3-0.62,0.45-0.93c0.08-0.17,0.17-0.33,0.25-0.5 c0.05-0.09,0.1-0.18,0.15-0.28c0.01-0.02,0.02-0.04,0.03-0.07c0.02-0.04,0-0.08-0.04-0.1c-0.03-0.02-0.06-0.02-0.09,0 c-0.1,0.06-0.21,0.11-0.31,0.17c-0.42,0.23-0.84,0.45-1.26,0.68c-0.29,0.16-0.58,0.31-0.87,0.47c-0.46,0.25-0.93,0.5-1.39,0.75 c-0.33,0.18-0.66,0.36-0.99,0.53c-0.13,0.07-0.21,0.05-0.25-0.09c-0.08-0.29-0.16-0.58-0.23-0.87c-0.12-0.47-0.24-0.94-0.36-1.41 c-0.18-0.72-0.37-1.44-0.55-2.16c-0.16-0.65-0.33-1.29-0.49-1.94c-0.15-0.58-0.3-1.16-0.44-1.74c-0.2-0.8-0.4-1.6-0.6-2.39 c-0.16-0.64-0.32-1.28-0.48-1.92c-0.17-0.66-0.33-1.32-0.5-1.98c-0.02-0.1-0.05-0.19-0.07-0.29c-0.01-0.04-0.03-0.06-0.08-0.07 c-0.03,0-0.06,0-0.09,0c-0.05,0-0.06,0.03-0.06,0.07c0,0.09,0,0.18,0,0.28c0,1.01,0,2.02,0,3.02c0,0.88,0,1.77,0,2.65 c0,0.96,0,1.92,0,2.89c0,0.74,0,1.49,0,2.23c0,0.74,0,1.47,0,2.21c0,0.58,0,1.16,0,1.74c0,0.04,0,0.09,0,0.13 c0,0.05,0.02,0.07,0.06,0.07c0.01,0,0.03,0,0.04,0c0.07-0.02,0.12-0.07,0.16-0.13c0.15-0.22,0.29-0.44,0.44-0.66 c0.19-0.28,0.38-0.56,0.57-0.85c0.25-0.37,0.5-0.75,0.75-1.12c0.27-0.4,0.54-0.79,0.8-1.19c0.27-0.4,0.54-0.8,0.8-1.21 c0.27-0.41,0.54-0.83,0.82-1.24c0.25-0.38,0.5-0.76,0.75-1.14c0.25-0.38,0.5-0.77,0.75-1.15c0.24-0.37,0.49-0.74,0.73-1.11 c0.16-0.24,0.31-0.48,0.47-0.72c0.03-0.05,0.04-0.1,0.01-0.15c-0.15-0.31-0.29-0.62-0.44-0.93c-0.16-0.33-0.31-0.66-0.47-0.98 c-0.08-0.16-0.15-0.32-0.23-0.48c-0.07-0.15-0.14-0.29-0.22-0.44c-0.09-0.19-0.18-0.38-0.27-0.57c-0.16-0.32-0.31-0.65-0.47-0.97 c-0.16-0.33-0.32-0.67-0.48-1c-0.1-0.21-0.21-0.42-0.31-0.64c-0.12-0.25-0.24-0.5-0.37-0.74c-0.13-0.27-0.26-0.53-0.39-0.8 c-0.06-0.11-0.11-0.22-0.17-0.32c-0.02-0.04-0.05-0.06-0.1-0.04c-0.09,0.03-0.18,0.06-0.27,0.09c-0.01,0-0.02,0.01-0.03,0.01 c-0.57,0.19-1.13,0.38-1.7,0.57c-0.23,0.08-0.46,0.15-0.69,0.23c-0.91,0.3-1.81,0.61-2.72,0.91c-0.48,0.16-0.95,0.32-1.43,0.48 c-0.74,0.25-1.48,0.5-2.22,0.74c-0.1,0.03-0.11,0.05-0.1,0.16c0.02,0.32,0.06,0.64,0.09,0.96c0.01,0.03,0.02,0.05,0.04,0.06 c0.08,0.04,0.16,0.09,0.24,0.13c0.46,0.23,0.91,0.47,1.37,0.7c0.61,0.31,1.22,0.63,1.84,0.94c0.3,0.15,0.6,0.31,0.9,0.46 c0.5,0.26,1,0.51,1.5,0.77c0.28,0.14,0.56,0.29,0.84,0.43c0.42,0.22,0.85,0.43,1.27,0.65c0.24,0.12,0.48,0.25,0.72,0.37 c0.25,0.13,0.49,0.25,0.74,0.38c0.22,0.11,0.44,0.23,0.66,0.34c0.25,0.13,0.5,0.26,0.75,0.38c0.18,0.09,0.36,0.19,0.54,0.28 c0.27,0.14,0.54,0.28,0.81,0.42c0.16,0.08,0.32,0.16,0.48,0.25c0.26,0.13,0.51,0.26,0.77,0.39c0.11,0.06,0.21,0.11,0.32,0.17 c0.24,0.12,0.49,0.25,0.73,0.37c0.12,0.06,0.24,0.13,0.36,0.19c0.06,0.03,0.08,0.03,0.14,0c0.19-0.09,0.38-0.18,0.57-0.27 c0.94-0.44,1.88-0.88,2.82-1.33c0.5-0.24,1-0.47,1.49-0.71c0.2-0.09,0.4-0.19,0.6-0.28c0.2-0.09,0.4-0.19,0.6-0.28 c0.19-0.09,0.38-0.18,0.57-0.27c0.95-0.45,1.91-0.9,2.86-1.35c0.82-0.39,1.65-0.78,2.47-1.17c0.91-0.43,1.83-0.86,2.74-1.3 c0.93-0.44,1.86-0.88,2.79-1.32c0.88-0.41,1.75-0.83,2.63-1.24c0.35-0.17,0.7-0.33,1.05-0.5c0.07-0.03,0.09-0.07,0.08-0.14 c-0.01-0.16-0.01-0.32,0-0.48c0.01-0.12-0.02-0.25-0.04-0.37c-0.01-0.06-0.04-0.09-0.1-0.09c-0.1,0-0.19,0-0.29,0 c-2.02,0-4.04,0-6.06,0C22.17,3.32,22.17,3.32,22.17,3.32z"></path></svg>
-                              )}
-                              {platform === 'vk' && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#4C75A3"><path d="M21.547,7h-0.03c-0.65,0-1.147,0.433-1.317,1.026c-0.6,1.94-2.035,4.194-3.952,4.344 c0.129-2.772,0.73-6.555,3.566-7.163C20.435,5.068,20.999,5.5,21.547,5.5c0.828,0,1.5-0.672,1.5-1.5S22.375,2.5,21.547,2.5 c-1.572,0-2.945,1.016-3.43,2.487c-3.757,1.233-4.366,7.029-4.369,10.899C13.69,16.048,13.5,16.169,13.5,16.5v3 c0,1.103,0.897,2,2,2h5c1.103,0,2-0.897,2-2v-3c0-0.304-0.068-0.59-0.188-0.847c2.03-1.44,2.959-4.048,3.039-4.25 c0.168-0.602,0.684-0.916,1.196-0.916h0.03c0.828,0,1.5-0.672,1.5-1.5S22.375,7,21.547,7z"></path><path d="M7.5,13.5h-1V19h1c0.553,0,1-0.447,1-1v-3.5C8.5,13.947,8.053,13.5,7.5,13.5z"></path><path d="M10.47,2.049c0.331,0.142,0.514,0.5,0.514,0.914V8.5c0,0.276,0.224,0.5,0.5,0.5s0.5-0.224,0.5-0.5V2.963 c0-0.75-0.356-1.442-0.949-1.862C10.752,0.87,10.424,0.71,10.094,0.57C9.376,0.244,8.5,0.75,8.5,1.5v1.463 C8.5,3.602,9.262,4.31,10.47,2.049z"></path><path d="M5,9.5h1c0.553,0,1-0.447,1-1v-1c0-0.553-0.447-1-1-1H5c-0.553,0-1,0.447-1,1v1C4,9.053,4.447,9.5,5,9.5z"></path><path d="M5.5,11.5c-1.103,0-2,0.897-2,2V18c0,0.553,0.447,1,1,1h1c0.553,0,1-0.447,1-1v-4.5C6.5,12.397,6.103,11.5,5.5,11.5z"></path></svg>
-                              )}
-                              {platform === 'facebook' && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3b5998"><path d="M20,3H4C3.447,3,3,3.448,3,4v16c0,0.552,0.447,1,1,1h8.615v-6.96h-2.338v-2.725h2.338v-2c0-2.325,1.42-3.592,3.5-3.592 c0.699-0.002,1.399,0.034,2.095,0.107v2.42h-1.435c-1.128,0-1.348,0.538-1.348,1.325v1.735h2.697l-0.35,2.725h-2.348V21H20 c0.553,0,1-0.448,1-1V4C21,3.448,20.553,3,20,3z"></path></svg>
-                              )}
-                              {platform === 'instagram' && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M 12 3 C 7.041 3 3 7.041 3 12 C 3 16.959 7.041 21 12 21 C 16.959 21 21 16.959 21 12 C 21 7.041 16.959 3 12 3 z M 12 5 C 16.004 5 19 7.998 19 12 C 19 16.002 16.004 19 12 19 C 7.996 19 5 16.002 5 12 C 5 7.998 7.996 5 12 5 z M 18 6 C 18 7.104 17.104 8 16 8 C 14.896 8 14 7.104 14 6 C 14 4.896 14.896 4 16 4 C 17.104 4 18 4.896 18 6 z M 12 7 C 9.255 7 7 9.255 7 12 C 7 14.745 9.255 17 12 17 C 14.745 17 17 14.745 17 12 C 17 9.255 14.745 7 12 7 z M 12 9 C 13.675 9 15 10.325 15 12 C 15 13.675 13.675 15 12 15 C 10.325 15 9 13.675 9 12 C 9 10.325 10.325 9 12 9 z"></path></svg>
-                              )}
-                              {platform}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Публикации</div>
-                                <div className="text-2xl font-bold">{metrics.posts}</div>
-                              </div>
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Просмотры</div>
-                                <div className="text-2xl font-bold">{formatNumber(metrics.views)}</div>
-                              </div>
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Лайки</div>
-                                <div className="text-2xl font-bold">{formatNumber(metrics.likes)}</div>
-                              </div>
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Комментарии</div>
-                                <div className="text-2xl font-bold">{formatNumber(metrics.comments)}</div>
-                              </div>
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Репосты</div>
-                                <div className="text-2xl font-bold">{formatNumber(metrics.shares)}</div>
-                              </div>
-                              <div className="flex flex-col space-y-1 items-center p-3 bg-muted/30 rounded-lg">
-                                <div className="text-sm text-muted-foreground">Вовлеченность</div>
-                                <div className="text-2xl font-bold">{metrics.engagementRate.toFixed(2)}%</div>
-                              </div>
-                            </div>
-                            <div className="mt-3">
-                              <Progress 
-                                value={metrics.engagementRate * 10} 
-                                max={100} 
-                                className="h-2" 
-                                style={{ 
-                                  background: `${color}20`,
-                                  "--tw-progress-bar": color
-                                } as React.CSSProperties}
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
-                ) : (
-                  <div className="col-span-2 text-center text-muted-foreground">
-                    Нет данных о платформах
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="insights" className="space-y-4">
-          <div className="mt-0 mb-4">
+        <TabsContent value="posts" className="space-y-4">
+          {isLoading ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Рекомендации по контенту</CardTitle>
-                <CardDescription>На основе анализа эффективности контента</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingPlatformsStats ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {getContentRecommendations().length > 0 ? (
-                      getContentRecommendations().map((recommendation, index) => (
-                        <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border">
-                          <div className={cn(
-                            "rounded-full p-2 flex-shrink-0", 
-                            recommendation.type === 'success' ? "bg-green-100 text-green-600" : 
-                            recommendation.type === 'warning' ? "bg-amber-100 text-amber-600" :
-                            "bg-blue-100 text-blue-600"
-                          )}>
-                            {recommendation.type === 'success' ? <TrendingUp className="h-5 w-5" /> : 
-                             recommendation.type === 'warning' ? <AlertTriangle className="h-5 w-5" /> :
-                             <Lightbulb className="h-5 w-5" />}
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  Загрузка топ постов...
+                </div>
+              </CardContent>
+            </Card>
+          ) : topPostsData?.data ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Топ по просмотрам */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Топ по просмотрам
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {topPostsData.data.topByViews.length > 0 ? (
+                      topPostsData.data.topByViews.map((post, index) => (
+                        <div key={post.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium truncate">{post.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {post.totalViews.toLocaleString()} просмотров
+                            </p>
                           </div>
-                          <div>
-                            <h4 className="font-medium">{recommendation.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{recommendation.description}</p>
-                          </div>
+                          <div className="text-lg font-bold text-primary">#{index + 1}</div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-6 text-muted-foreground">
-                        Недостаточно данных для формирования рекомендаций
-                      </div>
+                      <p className="text-center text-muted-foreground py-4">
+                        Нет данных по просмотрам
+                      </p>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Эффективность кампании */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <span className="mr-2">Эффективность кампании</span>
-                  {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
-                    <span className="text-green-500 text-lg">●</span>
-                  ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
-                    <span className="text-yellow-500 text-lg">●</span>
-                  ) : (
-                    <span className="text-red-500 text-lg">●</span>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  Анализ эффективности кампании на основе вовлеченности и охвата
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingPlatformsStats ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Оценка эффективности:</h3>
-                      <div className="p-4 rounded-md border bg-background">
-                        {platformsStatsData?.data?.aggregated?.averageEngagementRate > 2 ? (
-                          <div className="text-green-600 font-medium">
-                            Высокая эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
-                          </div>
-                        ) : platformsStatsData?.data?.aggregated?.averageEngagementRate > 1 ? (
-                          <div className="text-yellow-600 font-medium">
-                            Средняя эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
-                          </div>
-                        ) : (
-                          <div className="text-red-600 font-medium">
-                            Низкая эффективность (Рейтинг вовлеченности: {platformsStatsData?.data?.aggregated?.averageEngagementRate.toFixed(2)}%)
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="font-medium mb-2">Рекомендации по улучшению:</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {platformsStatsData?.data?.aggregated?.totalViews < 100 && (
-                          <li>Увеличьте охват публикаций для большего количества просмотров</li>
-                        )}
-                        {platformsStatsData?.data?.aggregated?.totalLikes / platformsStatsData?.data?.aggregated?.totalViews < 0.05 && (
-                          <li>Улучшите вовлеченность пользователей через более интерактивный контент</li>
-                        )}
-                        {platformsStatsData?.data?.aggregated?.totalComments / platformsStatsData?.data?.aggregated?.totalPosts < 1 && (
-                          <li>Стимулируйте обсуждение в комментариях через вопросы и опросы</li>
-                        )}
-                        <li>Проанализируйте наиболее успешные публикации для создания похожего контента</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Лучшие социальные сети */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Эффективность социальных сетей</CardTitle>
-                <CardDescription>
-                  Сравнительный анализ эффективности различных платформ
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingPlatformsStats ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Рейтинг платформ:</h3>
-                      <div className="space-y-3">
-                        {Object.entries(platformsStatsData?.data?.platforms || {})
-                          .sort((a, b) => b[1].engagementRate - a[1].engagementRate)
-                          .map(([platform, metrics], index) => (
-                            <div key={platform} className="flex items-center justify-between p-2 border rounded-md">
-                              <div className="flex items-center">
-                                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground font-medium mr-2">
-                                  {index + 1}
-                                </div>
-                                <div className="capitalize">{platform}</div>
-                              </div>
-                              <div>
-                                <span className="font-medium">{metrics.engagementRate.toFixed(2)}%</span> вовлеченность
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium mb-2">Лучшая платформа для:</h3>
-                      <div className="space-y-2">
-                        {/* Определяем лучшую платформу для просмотров */}
-                        {(() => {
-                          const entries = Object.entries(platformsStatsData?.data?.platforms || {});
-                          if (entries.length === 0) return null;
-                          
-                          const bestForViews = entries.reduce((a, b) => a[1].views > b[1].views ? a : b);
-                          const bestForEngagement = entries.reduce((a, b) => a[1].engagementRate > b[1].engagementRate ? a : b);
-                          const bestForComments = entries.reduce((a, b) => a[1].comments > b[1].comments ? a : b);
-                          
-                          return (
-                            <>
-                              <div className="p-2 border rounded-md">
-                                <span className="font-medium">Охвата:</span> {bestForViews[0]} ({bestForViews[1].views} просмотров)
-                              </div>
-                              <div className="p-2 border rounded-md">
-                                <span className="font-medium">Вовлеченности:</span> {bestForEngagement[0]} ({bestForEngagement[1].engagementRate.toFixed(2)}%)
-                              </div>
-                              <div className="p-2 border rounded-md">
-                                <span className="font-medium">Общения:</span> {bestForComments[0]} ({bestForComments[1].comments} комментариев)
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* График сравнения вовлеченности */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Сравнение эффективности платформ</CardTitle>
-                <CardDescription>
-                  Визуализация ключевых метрик по социальным сетям
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingPlatformsStats ? (
-                  <div className="flex justify-center items-center h-40">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="h-80">
-                    {Object.keys(platformsStatsData?.data?.platforms || {}).length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                        {Object.entries(platformsStatsData?.data?.platforms || {}).map(([platform, metrics]) => {
-                          // Определяем цвет для платформы
-                          const platformColors = {
-                            telegram: '#2AABEE',
-                            vk: '#4C75A3',  
-                            facebook: '#3b5998',
-                            instagram: '#E4405F'
-                          };
-                          const color = platformColors[platform] || '#888888';
-                          const platformName = {
-                            telegram: 'Telegram',
-                            vk: 'ВКонтакте',
-                            facebook: 'Facebook',
-                            instagram: 'Instagram'
-                          }[platform] || platform.charAt(0).toUpperCase() + platform.slice(1);
-                          
-                          return (
-                            <div key={platform} className="border rounded-md shadow-sm overflow-hidden">
-                              <div className="p-2 font-medium" style={{ backgroundColor: color, color: 'white' }}>
-                                {platformName}
-                              </div>
-                              
-                              <div className="p-2 border-b flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Публикации</span>
-                                <span className="font-bold text-right">{metrics.posts}</span>
-                              </div>
-                              
-                              <div className="p-2 border-b flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Просмотры</span>
-                                <span className="font-bold text-right">{formatNumber(metrics.views)}</span>
-                              </div>
-                              
-                              <div className="p-2 border-b flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Лайки</span>
-                                <span className="font-bold text-right">{formatNumber(metrics.likes)}</span>
-                              </div>
-                              
-                              <div className="p-2 border-b flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Комментарии</span>
-                                <span className="font-bold text-right">{formatNumber(metrics.comments)}</span>
-                              </div>
-                              
-                              <div className="p-2 border-b flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Репосты</span>
-                                <span className="font-bold text-right">{formatNumber(metrics.shares)}</span>
-                              </div>
-                              
-                              <div className="p-2 flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Вовлеченность</span>
-                                <span className="font-bold text-right">{metrics.engagementRate ? `${metrics.engagementRate.toFixed(2)}%` : '0%'}</span>
-                              </div>
-                              
-                              {metrics.engagementRate > 0 && (
-                                <div className="w-full h-1.5 overflow-hidden">
-                                  <div 
-                                    className="h-full"
-                                    style={{ 
-                                      width: `${Math.min(metrics.engagementRate * 5, 100)}%`,
-                                      backgroundColor: color
-                                    }} 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+              {/* Топ по вовлеченности */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Share2 className="h-5 w-5" />
+                    Топ по вовлеченности
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {topPostsData.data.topByEngagement.length > 0 ? (
+                      topPostsData.data.topByEngagement.map((post, index) => (
+                        <div key={post.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium truncate">{post.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {(post.engagementRate * 100).toFixed(1)}% вовлеченность
+                            </p>
+                          </div>
+                          <div className="text-lg font-bold text-primary">#{index + 1}</div>
+                        </div>
+                      ))
                     ) : (
-                      <div className="flex justify-center items-center h-full text-muted-foreground">
-                        Нет данных о платформах
-                      </div>
+                      <p className="text-center text-muted-foreground py-4">
+                        Нет данных по вовлеченности
+                      </p>
                     )}
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Нет данных для отображения. Нажмите "Обновить" для загрузки аналитики.
+                </p>
               </CardContent>
             </Card>
-          </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
   );
-}
+};
+
+export default AnalyticsPage;
