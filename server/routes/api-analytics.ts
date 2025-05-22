@@ -22,6 +22,9 @@ import { analyticsService } from '../services/analytics-service';
 // Создаем роутер для маршрутов аналитики
 export const analyticsRouter = express.Router();
 
+// Импортируем новый analytics router согласно ТЗ
+import analyticsRoutesFromTZ from '../api/analytics-routes';
+
 /**
  * Промежуточное ПО для аутентификации и авторизации пользователей
  * Проверяет токен доступа и устанавливает информацию о пользователе в req.user
