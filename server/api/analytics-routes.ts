@@ -19,22 +19,6 @@ async function authenticateUser(req: Request, res: Response, next: Function) {
   }
 }
 
-    // Добавляем пользователя в запрос (заглушка)
-    req.user = { 
-      id: 'user_id', // В реальном проекте извлекается из токена
-      token: token 
-    };
-
-    next();
-  } catch (error: any) {
-    log.error(`[analytics-api] Ошибка авторизации: ${error.message}`);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Ошибка сервера при проверке авторизации' 
-    });
-  }
-}
-
 /**
  * GET /api/analytics/platforms
  * Получение статистики по платформам
@@ -59,7 +43,7 @@ router.get('/platforms', authenticateUser, async (req: Request, res: Response) =
       });
     }
 
-    const result = await getPlatformsStats(userId, campaignId, days as 7 | 30);
+    const result = await getPlatformsStats(campaignId, days as 7 | 30);
     res.json(result);
 
   } catch (error: any) {
