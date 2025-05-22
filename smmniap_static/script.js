@@ -94,9 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const ctaButtons = document.querySelectorAll('.btn-primary, .nav-cta, .pricing-btn');
     ctaButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Здесь можно добавить логику для перехода к приложению
-            alert('Переход к регистрации в SMM Manager!');
-            // window.location.href = '/register'; // Раскомментировать для реального перехода
+            // Переход к главному приложению (страница входа)
+            window.location.href = '/';
         });
     });
 

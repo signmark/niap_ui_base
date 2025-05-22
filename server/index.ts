@@ -106,13 +106,13 @@ app.get('/health', (req, res) => {
   return res.status(200).send('OK');
 });
 
+// Статические файлы для лендинга (должно быть ДО маршрута)
+app.use('/landing', express.static('smmniap_static'));
+
 // Маршрут для лендинга
 app.get('/landing', (req, res) => {
   res.sendFile(process.cwd() + '/smmniap_static/index.html');
 });
-
-// Статические файлы для лендинга
-app.use('/landing', express.static('smmniap_static'));
 
 // Специальный маршрут для проверки доступности сервера с интерфейсом
 app.get('/server-health', (req, res) => {
