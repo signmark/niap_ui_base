@@ -59,9 +59,21 @@ export function registerAuthRoutes(app: Express): void {
         });
       }
 
-      // Получаем ID роли "SMM Manager User"
-      const adminToken = await directusAuthManager.getAdminToken();
-      if (!adminToken) {
+      // Получаем токен администратора для создания пользователя
+      let adminToken: string;
+      
+      try {
+        // Пробуем авторизоваться как администратор
+        const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+        const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+        
+        if (!adminEmail || !adminPassword) {
+          throw new Error('Учетные данные администратора не настроены');
+        }
+        
+        const adminAuth = await directusAuthManager.login(adminEmail, adminPassword);
+        adminToken = adminAuth.token;
+      } catch (error) {
         throw new Error('Не удалось получить токен администратора для создания пользователя');
       }
 
