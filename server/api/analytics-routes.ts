@@ -93,34 +93,70 @@ router.get('/top-posts', authenticateUser, async (req: Request, res: Response) =
 
 /**
  * POST /api/analytics/update
- * Запуск обновления аналитики через n8n
+ * Запуск обновления аналитики через n8n webhook
  */
-router.post('/update', authenticateUser, async (req: Request, res: Response) => {
+router.post('/update', async (req: Request, res: Response) => {
   try {
-    const { campaignId, days } = req.body;
-
+    const { campaignId } = req.body;
+    
     if (!campaignId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указан ID кампании'
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Campaign ID required' 
       });
     }
 
-    if (days !== 7 && days !== 30) {
-      return res.status(400).json({
-        success: false,
-        message: 'Период должен быть 7 или 30 дней'
+    log.info(`[analytics] Запуск обновления аналитики для кампании: ${campaignId}`);
+    
+    // Получаем API ключ n8n из переменных окружения
+    const n8nApiKey = process.env.N8N_API_KEY;
+    const n8nAnalyticsUrl = process.env.N8N_ANALYTICS_WEBHOOK_URL;
+    
+    if (!n8nApiKey || !n8nAnalyticsUrl) {
+      log.error('[analytics] N8N API key или webhook URL не настроены');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'N8N analytics webhook not configured' 
       });
     }
-
-    const result = await triggerAnalyticsUpdate(campaignId, days);
-    res.json(result);
+    
+    // Отправляем запрос на n8n webhook для обновления аналитики
+    const axios = (await import('axios')).default;
+    
+    const webhookPayload = {
+      campaignId,
+      action: 'update_analytics',
+      timestamp: new Date().toISOString()
+    };
+    
+    log.info(`[analytics] Отправка запроса на n8n webhook: ${n8nAnalyticsUrl}`);
+    
+    const response = await axios.post(n8nAnalyticsUrl, webhookPayload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${n8nApiKey}`
+      },
+      timeout: 30000 // 30 секунд таймаут
+    });
+    
+    log.info(`[analytics] N8N webhook ответил: ${response.status}`);
+    
+    res.json({
+      success: true,
+      message: 'Запрос на обновление аналитики отправлен в n8n',
+      data: {
+        campaignId,
+        requestId: response.data?.id || null,
+        status: 'processing'
+      }
+    });
 
   } catch (error: any) {
-    log.error(`[analytics-api] Ошибка запуска обновления аналитики: ${error.message}`);
+    log.error(`[analytics] Ошибка при запуске обновления аналитики: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Ошибка сервера при запуске обновления'
+      error: 'Ошибка при отправке запроса на обновление аналитики',
+      details: error.message
     });
   }
 });

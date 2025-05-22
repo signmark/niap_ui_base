@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle, BarChart3 } from "lucide-react";
 import AnalyticsStatus from "./AnalyticsStatus";
 import SocialPlatformStats, { PlatformAnalytics } from "./SocialPlatformStats";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CampaignAnalyticsDashboard() {
   // Глобальное состояние выбранной кампании
