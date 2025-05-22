@@ -19,17 +19,16 @@ const AnalyticsPage = () => {
   const { selectedCampaign } = useCampaignStore();
   const [period, setPeriod] = useState<7 | 30>(7);
 
-  // Загрузка статистики по платформам
+  // Загрузка статистики по платформам (используем рабочий API)
   const { data: platformsData, isLoading: platformsLoading } = useQuery<PlatformsStatsResponse>({
     queryKey: ['/api/analytics/platforms-stats', selectedCampaign?.id, period],
     enabled: !!selectedCampaign?.id,
-    refetchInterval: 30000, // Обновляем каждые 30 секунд
+    refetchInterval: 30000,
   });
 
-  // Загрузка топ-постов
+  // Загрузка топ-постов (используем рабочий API)
   const { data: topPostsData, isLoading: topPostsLoading } = useQuery<TopPostsResponse>({
     queryKey: ['/api/analytics/top-posts', selectedCampaign?.id, period],
-    queryFn: () => fetch(`/api/analytics/top-posts?campaignId=${selectedCampaign?.id}&days=${period}`).then(r => r.json()),
     enabled: !!selectedCampaign?.id,
     refetchInterval: 30000,
   });
