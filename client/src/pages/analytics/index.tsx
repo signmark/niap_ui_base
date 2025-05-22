@@ -29,6 +29,7 @@ const AnalyticsPage = () => {
   // Загрузка топ-постов
   const { data: topPostsData, isLoading: topPostsLoading } = useQuery<TopPostsResponse>({
     queryKey: ['/api/analytics/top-posts', selectedCampaign?.id, period],
+    queryFn: () => fetch(`/api/analytics/top-posts?campaignId=${selectedCampaign?.id}&days=${period}`).then(r => r.json()),
     enabled: !!selectedCampaign?.id,
     refetchInterval: 30000,
   });
@@ -36,9 +37,13 @@ const AnalyticsPage = () => {
   // Мутация для обновления аналитики
   const updateAnalyticsMutation = useMutation({
     mutationFn: async (data: AnalyticsUpdateRequest) => {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/analytics/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('Failed to update analytics');
