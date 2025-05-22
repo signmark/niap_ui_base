@@ -18,19 +18,19 @@ export default function CampaignAnalyticsDashboard() {
   const campaignName = selectedCampaign?.name || "";
   const { toast } = useToast();
 
-  // Получение статистики по платформам
+  // Получение статистики по платформам из реальных данных
   const {
     data: platformsStatsData,
     isLoading: isPlatformsLoading,
     error: platformsError,
     refetch: refetchPlatforms,
   } = useQuery({
-    queryKey: ["/api/analytics/platforms-stats", campaignId],
+    queryKey: ["/api/analytics/campaign-data", campaignId],
     queryFn: async () => {
       if (!campaignId) {
         throw new Error("Кампания не выбрана");
       }
-      const response = await api.get(`/analytics/platforms-stats?campaignId=${campaignId}&period=30`);
+      const response = await api.get(`/analytics/campaign-data?campaignId=${campaignId}`);
       return response.data;
     },
     enabled: !!campaignId,

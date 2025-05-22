@@ -108,12 +108,11 @@ router.post('/update', async (req: Request, res: Response) => {
 
     log.info(`[analytics] Запуск обновления аналитики для кампании: ${campaignId}`);
     
-    // Получаем API ключ n8n из переменных окружения
-    const n8nApiKey = process.env.N8N_API_KEY;
+    // Получаем URL webhook n8n из переменных окружения
     const n8nAnalyticsUrl = process.env.N8N_ANALYTICS_WEBHOOK_URL;
     
-    if (!n8nApiKey || !n8nAnalyticsUrl) {
-      log.error('[analytics] N8N API key или webhook URL не настроены');
+    if (!n8nAnalyticsUrl) {
+      log.error('[analytics] N8N webhook URL не настроен');
       return res.status(500).json({ 
         success: false, 
         error: 'N8N analytics webhook not configured' 
@@ -133,8 +132,7 @@ router.post('/update', async (req: Request, res: Response) => {
     
     const response = await axios.post(n8nAnalyticsUrl, webhookPayload, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${n8nApiKey}`
+        'Content-Type': 'application/json'
       },
       timeout: 30000 // 30 секунд таймаут
     });
