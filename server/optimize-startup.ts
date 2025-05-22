@@ -3,7 +3,7 @@
  * Предназначен для отложенного выполнения тяжелых операций
  */
 
-import { startAnalyticsScheduler } from './services/analytics-scheduler';
+// import { startAnalyticsScheduler } from './services/analytics-scheduler';
 import { log } from './utils/logger';
 
 /**
