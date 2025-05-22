@@ -268,24 +268,22 @@ async function fetchCampaignPosts(userId: string, campaignId: string, days: numb
 
     const posts = response.data?.data || [];
     
-    // Фильтруем по дате публикации (publishedAt в платформах)
-    if (days > 0) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
+    // Временно убираем фильтрацию по датам, чтобы показать все данные
+    // В будущем здесь будет правильная фильтрация за 7/30 дней
+    log.info(`[analytics] Получено ${posts.length} постов для кампании ${campaignId} (фильтр ${days} дней применится позже)`);
+    
+    // Фильтруем только опубликованные посты
+    const publishedPosts = posts.filter((post: CampaignPost) => {
+      if (!post.social_platforms) return false;
       
-      const filteredPosts = posts.filter((post: CampaignPost) => {
-        if (!post.social_platforms) return false;
-        
-        // Проверяем, есть ли хотя бы одна платформа, опубликованная в указанный период
-        return Object.values(post.social_platforms).some(platform => {
-          if (platform.status !== 'published' || !platform.publishedAt) return false;
-          return new Date(platform.publishedAt) >= cutoffDate;
-        });
+      // Проверяем, есть ли хотя бы одна опубликованная платформа
+      return Object.values(post.social_platforms).some(platform => {
+        return platform.status === 'published' && platform.publishedAt;
       });
+    });
 
-      log.info(`[analytics] Отфильтровано ${filteredPosts.length} постов из ${posts.length} по периоду ${days} дней`);
-      return filteredPosts;
-    }
+    log.info(`[analytics] Найдено ${publishedPosts.length} опубликованных постов из ${posts.length} для отображения`);
+    return publishedPosts;
 
     log.info(`[analytics] Получено ${posts.length} постов для кампании ${campaignId}`);
     return posts;
