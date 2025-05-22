@@ -239,9 +239,33 @@ analyticsRouter.get('/platforms-stats', authenticateUser, async (req, res) => {
     try {
       log.info(`[api-analytics] Запрос статистики платформ: userId=${userId}, campaignId=${campaignId}, period=${period}`);
       
-      // Используем улучшенный сервис аналитики, который корректно учитывает публикации без аналитики
-      log.info(`[api-analytics] Используем улучшенный сервис подсчета статистики`);
-      const stats = await getImprovedPlatformsStats(userId, campaignId, period);
+      // Получаем данные прямо через Directus API с пользовательским токеном
+      log.info(`[api-analytics] Получаем статистику напрямую через Directus API`);
+      
+      // Прямой запрос к Directus для получения реальных данных публикаций
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const filter: any = { social_platforms: { _nnull: true } };
+      
+      if (campaignId) {
+        filter.campaign_id = { _eq: campaignId };
+      }
+      
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        params: {
+          filter,
+          fields: ['id', 'title', 'social_platforms', 'created_at']
+        },
+        headers: {
+          'Authorization': `Bearer ${req.user.token}`
+        }
+      });
+      
+      const posts = response.data?.data || [];
+      log.info(`[api-analytics] Получено ${posts.length} постов с реальными данными`);
+      
+      // Подсчитываем статистику из реальных данных
+      const stats = calculateStatsFromRealData(posts, period);
+      log.info(`[api-analytics] Обработано реальных публикаций: ${stats.aggregated.totalPosts}`);
       
       // Добавляем заголовки, запрещающие кэширование
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
