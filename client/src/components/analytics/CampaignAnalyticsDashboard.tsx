@@ -34,12 +34,27 @@ export default function CampaignAnalyticsDashboard() {
   } = useQuery({
     queryKey: ["/api/analytics/campaign-data", campaignId],
     queryFn: async () => {
-      console.log('[Analytics] Отправляем запрос с campaignId:', campaignId);
-      const response = await api.get(`/api/analytics/campaign-data?campaignId=${campaignId}`);
-      console.log('[Analytics] Получен ответ:', response.data);
-      return response.data;
+      console.log('[Analytics] *** queryFn ВЫЗВАНА! campaignId:', campaignId);
+      console.log('[Analytics] Формируем URL:', `/api/analytics/campaign-data?campaignId=${campaignId}`);
+      
+      try {
+        const response = await api.get(`/api/analytics/campaign-data?campaignId=${campaignId}`);
+        console.log('[Analytics] ✓ Успешный ответ:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('[Analytics] ✗ Ошибка запроса:', error);
+        throw error;
+      }
     },
     enabled: true,
+    retry: false, // отключаем повторы для отладки
+  });
+
+  console.log('[Analytics] Состояние запроса:', {
+    isLoading: isPlatformsLoading,
+    hasData: !!platformsStatsData,
+    hasError: !!platformsError,
+    error: platformsError
   });
   
   // Получение топовых публикаций
