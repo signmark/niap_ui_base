@@ -71,7 +71,18 @@ export const getQueryFn: <T>(options: {
     const token = useAuthStore.getState().token;
     const userId = useAuthStore.getState().userId;
 
-    const res = await fetch(queryKey[0] as string, {
+    // Берем первый элемент как базовый URL
+    let url = queryKey[0] as string;
+    
+    // Если есть второй элемент (campaignId), добавляем его как параметр
+    if (queryKey.length > 1 && queryKey[1]) {
+      const separator = url.includes('?') ? '&' : '?';
+      url = `${url}${separator}campaignId=${queryKey[1]}`;
+    }
+
+    console.log('[QueryClient] Выполняем запрос к URL:', url);
+
+    const res = await fetch(url, {
       credentials: "include",
       headers: {
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
