@@ -379,7 +379,7 @@ export default function Analytics() {
       }
       const data = await response.json();
       console.log("Полученные данные статистики:", data); // Логируем полученные данные
-      return data;
+      return data.data || data;
     },
     enabled: !!campaignId,
     staleTime: 0, // Данные всегда считаются устаревшими
@@ -418,7 +418,7 @@ export default function Analytics() {
         
         const data = await response.json();
         console.log("Получены топовые публикации:", data);
-        return data;
+        return data.data || data;
       } catch (error) {
         console.error("Ошибка при загрузке топовых публикаций:", error);
         throw error;
