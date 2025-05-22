@@ -150,6 +150,20 @@ export default function Login() {
               </Button>
             </form>
           </Form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600 mb-3">
+              Нет аккаунта?
+            </p>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate("/auth/register")}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Создать аккаунт
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

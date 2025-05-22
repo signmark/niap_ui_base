@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Login from "@/pages/auth/login";
+import Register from "@/pages/auth/register";
 import Campaigns from "@/pages/campaigns";
 import CampaignDetails from "@/pages/campaigns/[id]";
 import Keywords from "@/pages/keywords";
@@ -71,6 +72,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth/login" component={Login} />
+      <Route path="/auth/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />

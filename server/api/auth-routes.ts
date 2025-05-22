@@ -47,6 +47,86 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
+  // Маршрут для регистрации
+  app.post('/api/auth/register', async (req: Request, res: Response) => {
+    try {
+      const { email, password, first_name, last_name } = req.body;
+
+      if (!email || !password || !first_name || !last_name) {
+        return res.status(400).json({ 
+          error: 'Неверные данные',
+          message: 'Требуется указать email, пароль, имя и фамилию'
+        });
+      }
+
+      // Получаем ID роли "SMM Manager User"
+      const adminToken = await directusAuthManager.getAdminToken();
+      if (!adminToken) {
+        throw new Error('Не удалось получить токен администратора для создания пользователя');
+      }
+
+      // Ищем роль "SMM Manager User"
+      const rolesResponse = await directusApiManager.get('/roles', {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        },
+        params: {
+          'filter[name][_eq]': 'SMM Manager User'
+        }
+      });
+
+      const smmUserRole = rolesResponse.data.data[0];
+      if (!smmUserRole) {
+        throw new Error('Роль "SMM Manager User" не найдена в системе');
+      }
+
+      // Создаем пользователя
+      const userResponse = await directusApiManager.post('/users', {
+        email,
+        password,
+        first_name,
+        last_name,
+        role: smmUserRole.id,
+        status: 'active'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+
+      const newUser = userResponse.data.data;
+      log(`Создан новый пользователь: ${newUser.email} (${newUser.id}) с ролью SMM Manager User`, 'auth');
+
+      res.status(201).json({ 
+        success: true,
+        message: 'Пользователь успешно создан',
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          first_name: newUser.first_name,
+          last_name: newUser.last_name,
+          role: smmUserRole.name
+        }
+      });
+    } catch (error) {
+      console.error('Error during registration:', error);
+      
+      // Обрабатываем ошибку регистрации
+      if (error.response && error.response.status === 400) {
+        const errorMessage = error.response.data?.errors?.[0]?.message || 'Ошибка валидации данных';
+        return res.status(400).json({ 
+          error: 'Ошибка регистрации',
+          message: errorMessage
+        });
+      }
+
+      res.status(500).json({ 
+        error: 'Ошибка сервера',
+        message: 'Произошла ошибка при регистрации пользователя'
+      });
+    }
+  });
+
   // Маршрут для авторизации
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
