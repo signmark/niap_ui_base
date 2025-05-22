@@ -21,7 +21,7 @@ const AnalyticsPage = () => {
 
   // Загрузка статистики по платформам
   const { data: platformsData, isLoading: platformsLoading } = useQuery<PlatformsStatsResponse>({
-    queryKey: ['/api/analytics/platforms', selectedCampaign?.id, period],
+    queryKey: ['/api/analytics/platforms-stats', selectedCampaign?.id, period],
     enabled: !!selectedCampaign?.id,
     refetchInterval: 30000, // Обновляем каждые 30 секунд
   });

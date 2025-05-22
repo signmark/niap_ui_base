@@ -229,13 +229,26 @@ export async function triggerAnalyticsUpdate(campaignId: string, days: 7 | 30): 
  */
 async function fetchCampaignPosts(userId: string, campaignId: string, days: number): Promise<CampaignPost[]> {
   try {
-    const adminSession = await directusAuthManager.getAdminSession();
-    if (!adminSession?.token) {
+    // Используем простой способ получения токена администратора
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+    
+    if (!adminEmail || !adminPassword) {
+      throw new Error('Отсутствуют учетные данные администратора');
+    }
+
+    // Авторизуемся в Directus
+    const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
+      email: adminEmail,
+      password: adminPassword
+    });
+
+    const adminToken = loginResponse.data?.data?.access_token;
+    if (!adminToken) {
       throw new Error('Не удалось получить токен для запроса к Directus');
     }
 
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-    
     // Формируем фильтр для запроса
     const filter = {
       user_id: { _eq: userId },
@@ -249,7 +262,7 @@ async function fetchCampaignPosts(userId: string, campaignId: string, days: numb
         fields: ['id', 'title', 'content', 'campaign_id', 'social_platforms', 'created_at']
       },
       headers: {
-        'Authorization': `Bearer ${adminSession.token}`
+        'Authorization': `Bearer ${adminToken}`
       }
     });
 
