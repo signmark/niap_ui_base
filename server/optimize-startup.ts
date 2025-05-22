@@ -16,7 +16,7 @@ export function initializeHeavyServices() {
   setTimeout(() => {
     log.info('Запуск планировщика аналитики...');
     try {
-      startAnalyticsScheduler();
+      // startAnalyticsScheduler();
       log.info('Планировщик аналитики успешно запущен');
     } catch (error) {
       log.error(`Ошибка при запуске планировщика аналитики: ${error.message}`);

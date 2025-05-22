@@ -229,7 +229,7 @@ export async function triggerAnalyticsUpdate(campaignId: string, days: 7 | 30): 
  */
 async function fetchCampaignPosts(userId: string, campaignId: string, days: number): Promise<CampaignPost[]> {
   try {
-    const adminSession = await directusAuthManager.getAdminSession();
+    const adminSession = await directusApiManager.getAdminSession();
     if (!adminSession?.token) {
       throw new Error('Не удалось получить токен для запроса к Directus');
     }
