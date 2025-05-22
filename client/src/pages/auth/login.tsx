@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/lib/store";
 import { useLocation } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { setupTokenRefresh } from "@/lib/auth";
 
