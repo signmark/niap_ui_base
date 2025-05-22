@@ -35,9 +35,8 @@ export default function Login() {
       console.log('Attempting login with:', values.email);
 
       // Используем наш API для аутентификации
-      const apiUrl = window.location.hostname === 'smm.nplanner.ru' 
-        ? 'https://smm.nplanner.ru/api/auth/login'
-        : '/api/auth/login';
+      const { getFullApiUrl } = await import('@/lib/api-config');
+      const apiUrl = getFullApiUrl('LOGIN');
       
       console.log('Sending login request to:', apiUrl);
       const response = await fetch(apiUrl, {

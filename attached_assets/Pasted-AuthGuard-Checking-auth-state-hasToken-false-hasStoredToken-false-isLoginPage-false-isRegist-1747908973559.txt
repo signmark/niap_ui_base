@@ -1,0 +1,49 @@
+AuthGuard: Checking auth state {hasToken: false, hasStoredToken: false, isLoginPage: false, isRegisterPage: true, userId: null}
+AuthGuard.tsx:139 AuthGuard: No valid authentication found
+queryClient.ts:74 
+            
+            
+           GET https://smm.nplanner.ru/api/auth/me 401 (Unauthorized)
+(anonymous) @ queryClient.ts:74
+fetchFn @ @tanstack_react-query.js?v=d658e62b:840
+run @ @tanstack_react-query.js?v=d658e62b:494
+start @ @tanstack_react-query.js?v=d658e62b:536
+fetch @ @tanstack_react-query.js?v=d658e62b:926
+executeFetch_fn @ @tanstack_react-query.js?v=d658e62b:2211
+onSubscribe @ @tanstack_react-query.js?v=d658e62b:1898
+subscribe @ @tanstack_react-query.js?v=d658e62b:24
+(anonymous) @ @tanstack_react-query.js?v=d658e62b:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=5bcd77d5:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=5bcd77d5:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=5bcd77d5:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=5bcd77d5:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=5bcd77d5:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=5bcd77d5:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=5bcd77d5:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=5bcd77d5:19447
+(anonymous) @ chunk-RPCDYKBN.js?v=5bcd77d5:19328
+workLoop @ chunk-RPCDYKBN.js?v=5bcd77d5:197
+flushWork @ chunk-RPCDYKBN.js?v=5bcd77d5:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=5bcd77d5:384Understand this error
+register.tsx:40 Attempting registration with: sign.mark@gmail.com
+register.tsx:78 Registration error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+overrideMethod @ hook.js:608
+onSubmit @ register.tsx:78
+await in onSubmit
+(anonymous) @ chunk-YABUFNLM.js?v=5bcd77d5:1675
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=5bcd77d5:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=5bcd77d5:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=5bcd77d5:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=5bcd77d5:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=5bcd77d5:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=5bcd77d5:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=5bcd77d5:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=5bcd77d5:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=5bcd77d5:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=5bcd77d5:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=5bcd77d5:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=5bcd77d5:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=5bcd77d5:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=5bcd77d5:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=5bcd77d5:5449Understand this error
