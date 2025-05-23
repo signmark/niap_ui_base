@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Eye, Heart, Share, MessageCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getToken } from '@/lib/auth';
+import { useCampaignStore } from '@/lib/campaignStore';
 
 // Типы данных согласно ТЗ
 interface AnalyticsData {
@@ -117,9 +118,12 @@ function AnalyticsStatus({ campaignId }: { campaignId: string }) {
 }
 
 export default function AnalyticsPage() {
-  // Используем правильную кампанию с данными согласно логам планировщика
-  const [selectedCampaign, setSelectedCampaign] = useState('46868c44-c6a4-4bed-accf-9ad07bba790e');
+  // Используем текущую выбранную кампанию из глобального состояния
+  const { selectedCampaignId, selectedCampaignName } = useCampaignStore();
   const [period, setPeriod] = useState<'7days' | '30days'>('7days');
+  
+  // Если нет выбранной кампании, используем кампанию с данными как fallback
+  const campaignId = selectedCampaignId || '46868c44-c6a4-4bed-accf-9ad07bba790e';
 
   // Получаем список кампаний
   const { data: campaigns } = useQuery({
@@ -146,10 +150,10 @@ export default function AnalyticsPage() {
 
   // Получаем данные аналитики согласно ТЗ
   const { data: analyticsData, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/analytics', selectedCampaign, period],
+    queryKey: ['/api/analytics', campaignId, period],
     queryFn: async () => {
       const token = getToken();
-      const response = await fetch(`/api/analytics?campaignId=${selectedCampaign}&period=${period}`, {
+      const response = await fetch(`/api/analytics?campaignId=${campaignId}&period=${period}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -160,7 +164,7 @@ export default function AnalyticsPage() {
       console.log('[analytics] Получены данные:', result);
       return result;
     },
-    enabled: !!selectedCampaign,
+    enabled: !!campaignId,
     staleTime: 5 * 60 * 1000, // 5 минут кэш
   });
 
@@ -177,28 +181,22 @@ export default function AnalyticsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Аналитика кампаний</h1>
-          <AnalyticsStatus campaignId={selectedCampaign} />
+          <AnalyticsStatus campaignId={campaignId} />
         </div>
 
-        {/* Селекторы */}
+        {/* Отображение информации о текущей кампании и селектор периода */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle>Выбор кампании</CardTitle>
+              <CardTitle>Текущая кампания</CardTitle>
             </CardHeader>
             <CardContent>
-              <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите кампанию" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaignsList.map((campaign: any) => (
-                    <SelectItem key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <p className="text-lg font-semibold">
+                {selectedCampaignName || 'Кампания с данными аналитики'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Выберите другую кампанию в верхнем меню для изменения
+              </p>
             </CardContent>
           </Card>
 
