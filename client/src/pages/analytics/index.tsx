@@ -29,8 +29,14 @@ export default function AnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7days');
 
   const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
-    queryKey: ['/server-api/analytics', selectedCampaign, selectedPeriod],
-    queryFn: () => apiRequest(`/server-api/analytics?campaignId=${selectedCampaign}&period=${selectedPeriod}`),
+    queryKey: ['analytics', selectedCampaign, selectedPeriod],
+    queryFn: async () => {
+      const response = await fetch(`http://localhost:5001/analytics?campaignId=${selectedCampaign}&period=${selectedPeriod}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
+      return response.json();
+    },
     enabled: !!selectedCampaign,
   });
 
