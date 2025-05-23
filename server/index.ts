@@ -44,8 +44,8 @@ app.get('/api/status-check', (req, res) => {
 import { isUserAdmin } from './routes-global-api-keys';
 import { registerAuthRoutes } from './api/auth-routes';
 
-// Регистрируем API аналитики с уникальным путем
-app.get('/api/analytics-data', async (req, res) => {
+// Регистрируем API аналитики с уникальным путем  
+app.get('/test-analytics', async (req, res) => {
   try {
     const { campaignId, period = '7days' } = req.query;
     
