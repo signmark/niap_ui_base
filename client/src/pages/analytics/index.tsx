@@ -126,7 +126,8 @@ export default function AnalyticsPage() {
         'filter[campaign_id][_eq]': selectedCampaign,
         'filter[status][_eq]': 'published',
         'filter[published_at][_gte]': dateFilter,
-        'fields': 'id,title,content,social_platforms,published_at,status'
+        'fields': 'id,title,content,social_platforms,published_at,status',
+        'limit': '-1'  // Получаем ВСЕ записи, а не только первые 100
       });
 
       // Получаем токен текущего пользователя из localStorage
