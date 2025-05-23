@@ -210,8 +210,15 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       let actualTotalPosts = 0;
       try {
         const userToken = req.headers.authorization;
+        log(`[api-analytics] Токен пользователя: ${userToken ? 'присутствует' : 'отсутствует'}`);
+        
         const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
-          headers: { 'Authorization': userToken }
+          headers: userToken ? { 
+            'Authorization': userToken,
+            'Content-Type': 'application/json'
+          } : {
+            'Content-Type': 'application/json'
+          }
         });
         
         if (contentResponse.ok) {
@@ -246,8 +253,15 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       // Пытаемся получить реальное количество постов из campaign-content API
       try {
         const userToken = req.headers.authorization;
+        log(`[api-analytics] Fallback: Токен пользователя: ${userToken ? 'присутствует' : 'отсутствует'}`);
+        
         const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
-          headers: userToken ? { 'Authorization': userToken } : {}
+          headers: userToken ? { 
+            'Authorization': userToken,
+            'Content-Type': 'application/json'
+          } : {
+            'Content-Type': 'application/json'
+          }
         });
         
         if (contentResponse.ok) {
