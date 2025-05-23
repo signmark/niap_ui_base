@@ -98,58 +98,78 @@ function processAnalyticsData(contentItems: any[], period: string) {
   // Динамически собираем статистику по всем платформам
   const platformStats: Record<string, any> = {};
 
-  let processedPosts = 0;
+  // Фильтруем посты по дате published_at
+  const filteredPosts = contentItems.filter(post => {
+    if (!post.published_at) return false;
+    const postDate = new Date(post.published_at);
+    return postDate >= startDate && postDate <= currentDate;
+  });
 
-  // Обрабатываем каждый элемент контента
-  contentItems.forEach(item => {
-    if (!item.social_platforms) return;
+  console.log(`[analytics] После фильтрации по периоду осталось ${filteredPosts.length} постов`);
+
+  let totalPosts = 0;
+
+  // Обрабатываем каждый отфильтрованный пост
+  filteredPosts.forEach(post => {
+    if (!post.social_platforms) return;
 
     // Парсим social_platforms если это строка
-    let platforms = item.social_platforms;
+    let platforms = post.social_platforms;
     if (typeof platforms === 'string') {
       try {
         platforms = JSON.parse(platforms);
       } catch (e) {
-        console.warn(`Ошибка парсинга social_platforms для контента ${item.id}:`, e);
+        console.warn(`Ошибка парсинга social_platforms для поста ${post.id}:`, e);
         return;
       }
     }
 
-    // Обрабатываем каждую платформу
+    // Обрабатываем каждую платформу в посте
     Object.entries(platforms).forEach(([platformName, platformData]: [string, any]) => {
-      if (platformData?.status === 'published' && platformData?.analytics) {
-        // Проверяем дату публикации
-        const publishedDate = new Date(platformData.publishedAt);
-        if (publishedDate >= cutoffDate) {
-          const stats = platformStats[platformName as keyof typeof platformStats];
-          if (stats) {
-            stats.views += platformData.analytics.views || 0;
-            stats.likes += platformData.analytics.likes || 0;
-            stats.shares += platformData.analytics.shares || 0;
-            stats.comments += platformData.analytics.comments || 0;
-            stats.posts += 1;
-            
-            processedPosts++;
-            console.log(`[analytics] ${platformName}: +${platformData.analytics.views || 0} просмотров`);
-          }
+      if (platformData?.status === 'published') {
+        // Инициализируем платформу если её ещё нет
+        if (!platformStats[platformName]) {
+          platformStats[platformName] = { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 };
         }
+
+        // Добавляем аналитику если есть
+        if (platformData.analytics) {
+          platformStats[platformName].views += platformData.analytics.views || 0;
+          platformStats[platformName].likes += platformData.analytics.likes || 0;
+          platformStats[platformName].shares += platformData.analytics.shares || 0;
+          platformStats[platformName].comments += platformData.analytics.comments || 0;
+        }
+        
+        // Увеличиваем счетчик постов для платформы
+        platformStats[platformName].posts += 1;
+        totalPosts += 1;
       }
     });
   });
 
-  console.log(`[analytics] Обработано ${processedPosts} публикаций`);
+  console.log(`[analytics] Обработано ${totalPosts} публикаций на ${Object.keys(platformStats).length} платформах`);
 
-  // Формируем итоговый результат точно по ТЗ
+  // Формируем итоговый результат динамически по всем найденным платформам
+  const platformsArray = Object.entries(platformStats).map(([name, stats]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1), // Первая буква заглавная
+    ...stats
+  })).filter(platform => platform.posts > 0); // Показываем только платформы с постами
+
+  const totals = Object.values(platformStats).reduce((acc: any, stats: any) => ({
+    views: acc.views + stats.views,
+    likes: acc.likes + stats.likes,
+    shares: acc.shares + stats.shares,
+    comments: acc.comments + stats.comments,
+    posts: acc.posts + stats.posts
+  }), { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 });
+
   return {
-    platforms: [
-      { name: 'Telegram', ...platformStats.telegram },
-      { name: 'VK', ...platformStats.vk },
-      { name: 'Instagram', ...platformStats.instagram }
-    ].filter(platform => platform.posts > 0), // Показываем только платформы с постами
-    totalViews: Object.values(platformStats).reduce((sum, p) => sum + p.views, 0),
-    totalLikes: Object.values(platformStats).reduce((sum, p) => sum + p.likes, 0),
-    totalShares: Object.values(platformStats).reduce((sum, p) => sum + p.shares, 0),
-    totalComments: Object.values(platformStats).reduce((sum, p) => sum + p.comments, 0)
+    platforms: platformsArray,
+    totalViews: totals.views,
+    totalLikes: totals.likes,
+    totalShares: totals.shares,
+    totalComments: totals.comments,
+    totalPosts: totals.posts
   };
 }
 
