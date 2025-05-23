@@ -2964,7 +2964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { campaignId, period = '7days' } = req.query;
       
-      console.log(`[analytics-FIXED] Запрос: campaignId=${campaignId}, period=${period}`);
+      console.log(`🎯 [analytics-FIXED] НАШ НОВЫЙ РОУТ РАБОТАЕТ! campaignId=${campaignId}, period=${period}`);
       
       if (!campaignId || typeof campaignId !== 'string') {
         return res.status(400).json({ 
