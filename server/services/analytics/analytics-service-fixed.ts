@@ -117,60 +117,36 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
       posts = [];
     }
     
-    // Фильтруем посты в зависимости от выбранного периода
+    // Фильтруем посты по published_at поля, как в Directus: $NOW(-7 days)
     if (period > 0 && posts.length > 0) {
-      const endDate = new Date();
-      // Добавляем один день к концу периода, чтобы включить посты за сегодня
-      endDate.setHours(23, 59, 59, 999);
+      const currentDate = new Date();
+      currentDate.setHours(23, 59, 59, 999);
       
       const startDate = new Date();
-      startDate.setDate(endDate.getDate() - period);
+      startDate.setDate(currentDate.getDate() - period);
       startDate.setHours(0, 0, 0, 0);
       
-      log.info(`[analytics-service-fixed] Выбранный период: с ${startDate.toISOString()} по ${endDate.toISOString()}`);
+      log.info(`[analytics-service-fixed] Фильтрация по published_at за последние ${period} дней: с ${startDate.toISOString()} по ${currentDate.toISOString()}`);
       
-      // Теперь мы фильтруем данные publishedAt для платформ
-      posts = posts.map(post => {
-        if (post.social_platforms) {
-          const filteredPlatforms = {};
-          
-          Object.keys(post.social_platforms).forEach(platform => {
+      // Фильтруем посты по полю published_at (основная дата публикации поста)
+      posts = posts.filter((post: any) => {
+        if (!post.published_at) {
+          // Если нет published_at - проверяем платформы
+          return post.social_platforms && Object.keys(post.social_platforms).some((platform: string) => {
             const platformData = post.social_platforms[platform];
-            
-            // Проверяем статус публикации и дату публикации
-            if (platformData.status === 'published') {
-              // Если есть дата публикации, проверяем, попадает ли она в заданный период
-              if (platformData.publishedAt) {
-                const pubDate = new Date(platformData.publishedAt);
-                log.debug(`[analytics-service-fixed] Проверяем дату публикации: ${pubDate.toISOString()}, период: ${startDate.toISOString()} - ${endDate.toISOString()}`);
-                
-                if (pubDate >= startDate && pubDate <= endDate) {
-                  filteredPlatforms[platform] = platformData;
-                  log.info(`[analytics-service-fixed] ✓ Включаем пост ${post.id} на платформе ${platform} (дата: ${pubDate.toISOString()})`);
-                } else {
-                  log.debug(`[analytics-service-fixed] ✗ Пост ${post.id} на платформе ${platform} не попал в период (дата: ${pubDate.toISOString()})`);
-                }
-              } else {
-                // Если даты публикации нет, но статус published - это свежая публикация, всегда включаем ее
-                log.info(`[analytics-service-fixed] Учитываем новую публикацию без даты публикации: ${post.id} на платформе ${platform}`);
-                filteredPlatforms[platform] = platformData;
-              }
-            }
+            return platformData.status === 'published';
           });
-          
-          // Возвращаем пост с отфильтрованными платформами
-          return {
-            ...post,
-            social_platforms: filteredPlatforms
-          };
         }
-        return post;
+        
+        const postPublishedDate = new Date(post.published_at);
+        const isInPeriod = postPublishedDate >= startDate && postPublishedDate <= currentDate;
+        
+        log.debug(`[analytics-service-fixed] Пост ${post.id}: published_at=${post.published_at}, в периоде=${isInPeriod}`);
+        
+        return isInPeriod;
       });
       
-      // Фильтруем посты, у которых остались платформы после фильтрации по дате
-      posts = posts.filter(post => post.social_platforms && Object.keys(post.social_platforms).length > 0);
-      
-      log.info(`[analytics-service-fixed] После фильтрации по периоду осталось ${posts.length} постов`);
+      log.info(`[analytics-service-fixed] После фильтрации по published_at осталось ${posts.length} постов за последние ${period} дней`);
     }
     
     // Начальные значения для агрегированных метрик

@@ -253,9 +253,14 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         if (contentResponse.ok) {
           const contentData = await contentResponse.json();
           let totalRealPosts = 0;
-          const currentDate = new Date();
           const periodDays = period === '30days' ? 30 : 7;
-          const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
+          
+          // Используем тот же подход что и Directus: $NOW(-7 days)
+          const currentDate = new Date();
+          const startDate = new Date();
+          startDate.setDate(currentDate.getDate() - periodDays);
+          startDate.setHours(0, 0, 0, 0);
+          currentDate.setHours(23, 59, 59, 999);
           
           // Подсчет постов за период по платформам
           const platformCounts: Record<string, number> = {
