@@ -3,7 +3,6 @@
  * Предназначен для отложенного выполнения тяжелых операций
  */
 
-import { startAnalyticsScheduler } from './services/analytics-scheduler';
 import { log } from './utils/logger';
 
 /**
@@ -14,13 +13,8 @@ export function initializeHeavyServices() {
   log.info('Начало инициализации тяжелых сервисов после успешного запуска сервера...');
   
   setTimeout(() => {
-    log.info('Запуск планировщика аналитики...');
-    try {
-      startAnalyticsScheduler();
-      log.info('Планировщик аналитики успешно запущен');
-    } catch (error) {
-      log.error(`Ошибка при запуске планировщика аналитики: ${error.message}`);
-    }
+    // Планировщик аналитики временно отключен
+    log.info('Планировщик аналитики отключен');
     
     // Здесь можно добавить другие тяжелые сервисы, которые нужно запустить отложенно
     log.info('Все тяжелые сервисы успешно инициализированы');
