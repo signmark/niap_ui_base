@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, Heart, Share2, MessageCircle, BarChart3 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 
+
 interface AnalyticsData {
   totalPosts: number;
   totalViews: number;
@@ -45,9 +46,13 @@ export default function AnalyticsPage() {
         'fields': 'id,title,content,social_platforms,published_at,status'
       });
 
+      // Получаем токен текущего пользователя из localStorage
+      const userToken = localStorage.getItem('auth_token');
+      console.log('🔑 Используем токен пользователя для запроса к Directus:', userToken ? 'токен найден' : 'токен отсутствует');
+      
       const response = await fetch(`${directusUrl}?${params}`, {
         headers: {
-          'Authorization': 'Bearer TmWM9gUU8RxLwRGe8kcMI-oopnvqYjF6'
+          'Authorization': `Bearer ${userToken}`
         }
       });
 

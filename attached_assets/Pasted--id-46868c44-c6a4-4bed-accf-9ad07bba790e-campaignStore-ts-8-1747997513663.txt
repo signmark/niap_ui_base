@@ -1,0 +1,35 @@
+Выбрана кампания: "Правильное питание" (id: 46868c44-c6a4-4bed-accf-9ad07bba790e)
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=Правильное питание
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Правильное питание
+index.tsx:34 🎯 Загружаем аналитику для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e период: 30days
+index.tsx:48 
+            
+            
+           GET https://directus.nplanner.ru/items/campaign_content?filter%5Bcampaign_id%5D%5B_eq%5D=46868c44-c6a4-4bed-accf-9ad07bba790e&filter%5Bstatus%5D%5B_eq%5D=published&filter%5Bpublished_at%5D%5B_gte%5D=2025-04-23T10%3A51%3A46.384Z&fields=id%2Ctitle%2Ccontent%2Csocial_platforms%2Cpublished_at%2Cstatus 401 (Unauthorized)
+queryFn @ index.tsx:48
+fetchFn @ @tanstack_react-query.js?v=33ace766:840
+run @ @tanstack_react-query.js?v=33ace766:494
+start @ @tanstack_react-query.js?v=33ace766:536
+fetch @ @tanstack_react-query.js?v=33ace766:926
+executeFetch_fn @ @tanstack_react-query.js?v=33ace766:2211
+setOptions @ @tanstack_react-query.js?v=33ace766:1955
+(anonymous) @ @tanstack_react-query.js?v=33ace766:3032
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=33ace766:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=33ace766:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=33ace766:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=33ace766:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=33ace766:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=33ace766:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=33ace766:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=33ace766:19416
+commitRoot @ chunk-RPCDYKBN.js?v=33ace766:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=33ace766:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=33ace766:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=33ace766:18627Understand this error
+index.tsx:34 🎯 Загружаем аналитику для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e период: 7days
+index.tsx:48 
+            
+            
+           GET https://directus.nplanner.ru/items/campaign_content?filter%5Bcampaign_id%5D%5B_eq%5D=46868c44-c6a4-4bed-accf-9ad07bba790e&filter%5Bstatus%5D%5B_eq%5D=published&filter%5Bpublished_at%5D%5B_gte%5D=2025-05-16T10%3A51%3A47.570Z&fields=id%2Ctitle%2Ccontent%2Csocial_platforms%2Cpublished_at%2Cstatus 401 (Unauthorized)
