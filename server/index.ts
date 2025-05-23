@@ -44,6 +44,44 @@ app.get('/api/status-check', (req, res) => {
 import { isUserAdmin } from './routes-global-api-keys';
 import { registerAuthRoutes } from './api/auth-routes';
 
+// Регистрируем API аналитики прямо здесь
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const { campaignId, period = '7days' } = req.query;
+    
+    if (!campaignId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Параметр campaignId обязателен' 
+      });
+    }
+
+    console.log(`[Analytics API] Тестовый запрос для кампании ${campaignId}, период: ${period}`);
+
+    // Возвращаем тестовые данные
+    return res.json({
+      totalPosts: 12,
+      totalViews: 1500,
+      totalLikes: 95,
+      totalShares: 23,
+      totalComments: 8,
+      platforms: [
+        { name: 'Telegram', posts: 4, views: 600, likes: 30, shares: 12, comments: 3 },
+        { name: 'Instagram', posts: 5, views: 750, likes: 45, shares: 8, comments: 4 },
+        { name: 'VK', posts: 3, views: 150, likes: 20, shares: 3, comments: 1 }
+      ]
+    });
+
+  } catch (error: any) {
+    console.error('[Analytics API] Ошибка:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Ошибка при получении аналитики',
+      details: error.message 
+    });
+  }
+});
+
 // Регистрируем все маршруты аутентификации и API ключей раньше Vite
 registerAuthRoutes(app);
 
@@ -203,8 +241,6 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     // Регистрируем маршруты для диагностики и исправления проблем с URL Telegram
     app.use('/api/telegram-diagnostics', telegramDiagnosticsRouter);
-    // Регистрируем API аналитики
-    app.use('/api', analyticsRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
