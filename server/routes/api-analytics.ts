@@ -89,42 +89,46 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       });
     }
 
-    // Если это кампания с реальными данными, возвращаем их
-    if (campaignId === '46868c44-c6a4-4bed-accf-9ad07bba790e') {
+    // Получаем реальные данные из Directus для любой кампании
+    try {
+      // Используем фиксированный user ID для демонстрации
+      const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      const periodDays = period === '30days' ? 30 : 7;
+      
+      log(`[api-analytics] Получаем реальные данные из Directus для campaignId=${campaignId}, period=${periodDays} дней`);
+      
+      // Используем улучшенный сервис аналитики
+      const stats = await getImprovedPlatformsStats(userId, campaignId, periodDays);
+      
+      // Преобразуем данные в формат, ожидаемый фронтендом
+      const platforms = Object.keys(stats.platforms).map(platformKey => ({
+        name: platformKey.charAt(0).toUpperCase() + platformKey.slice(1), // Telegram, Instagram, etc.
+        views: stats.platforms[platformKey].views || 0,
+        likes: stats.platforms[platformKey].likes || 0,
+        shares: stats.platforms[platformKey].shares || 0,
+        comments: stats.platforms[platformKey].comments || 0,
+        posts: stats.platforms[platformKey].posts || 0
+      })).filter(platform => platform.posts > 0); // Показываем только платформы с постами
+      
       const analyticsData = {
-        platforms: [
-          {
-            name: 'Telegram',
-            views: 10,
-            likes: 0,
-            shares: 0,
-            comments: 0,
-            posts: 1
-          },
-          {
-            name: 'Instagram', 
-            views: 13,
-            likes: 1,
-            shares: 0,
-            comments: 0,
-            posts: 1
-          }
-        ],
-        totalViews: 23,
-        totalLikes: 1,
-        totalShares: 0,
-        totalComments: 0,
-        totalPosts: 2
+        platforms,
+        totalViews: stats.aggregated.totalViews,
+        totalLikes: stats.aggregated.totalLikes,
+        totalShares: stats.aggregated.totalShares,
+        totalComments: stats.aggregated.totalComments,
+        totalPosts: stats.aggregated.totalPosts
       };
 
-      log(`[api-analytics] Возвращаем реальные данные аналитики: ${JSON.stringify(analyticsData)}`);
+      log(`[api-analytics] Возвращаем реальные данные аналитики: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
 
       res.json({
         success: true,
         data: analyticsData
       });
-    } else {
-      // Для других кампаний возвращаем пустые данные
+    } catch (directusError: any) {
+      log.error(`[api-analytics] Ошибка получения данных из Directus: ${directusError.message}`);
+      
+      // В случае ошибки возвращаем пустые данные
       res.json({
         success: true,
         data: {
