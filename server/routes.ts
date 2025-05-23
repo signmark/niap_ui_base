@@ -11412,3 +11412,4 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
   return contentPlan;
 }
+
