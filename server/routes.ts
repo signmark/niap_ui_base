@@ -42,7 +42,8 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
-import analyticsRouter from './api/analytics-routes';
+// Временно отключаем импорт analytics-routes
+// import analyticsRouter from './api/analytics-routes';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
@@ -2991,7 +2992,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты аналитики
   console.log('Registering analytics routes...');
-  app.use('/api/analytics', analyticsRouter);
+  // Временно отключаем старый роут
+  // app.use('/api/analytics', analyticsRouter);
+  
+  // Добавляем рабочий роут аналитики прямо здесь
+  app.get('/api/analytics', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { campaignId, period = '7days' } = req.query;
+      
+      if (!campaignId || typeof campaignId !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Campaign ID is required' 
+        });
+      }
+
+      // Используем исправленный сервис аналитики
+      const { getPlatformsStats } = await import('./services/analytics/analytics-service-fixed');
+      const userId = req.user!.id;
+      const periodDays = period === '30days' ? 30 : 7;
+      
+      const result = await getPlatformsStats(userId, campaignId, periodDays);
+      
+      console.log(`[analytics-FIXED] Результат для ${periodDays} дней:`, JSON.stringify(result, null, 2));
+      
+      return res.json({
+        success: true,
+        data: result
+      });
+      
+    } catch (error: any) {
+      console.error('[analytics-FIXED] Ошибка:', error.message);
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   console.log('Analytics routes registered successfully');
   
   // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
