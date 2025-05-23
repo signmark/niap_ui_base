@@ -120,8 +120,12 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
     // Фильтруем посты в зависимости от выбранного периода
     if (period > 0 && posts.length > 0) {
       const endDate = new Date();
+      // Добавляем один день к концу периода, чтобы включить посты за сегодня
+      endDate.setHours(23, 59, 59, 999);
+      
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - period);
+      startDate.setHours(0, 0, 0, 0);
       
       log.info(`[analytics-service-fixed] Выбранный период: с ${startDate.toISOString()} по ${endDate.toISOString()}`);
       
@@ -138,8 +142,13 @@ export async function getPlatformsStats(userId: string, campaignId?: string, per
               // Если есть дата публикации, проверяем, попадает ли она в заданный период
               if (platformData.publishedAt) {
                 const pubDate = new Date(platformData.publishedAt);
+                log.debug(`[analytics-service-fixed] Проверяем дату публикации: ${pubDate.toISOString()}, период: ${startDate.toISOString()} - ${endDate.toISOString()}`);
+                
                 if (pubDate >= startDate && pubDate <= endDate) {
                   filteredPlatforms[platform] = platformData;
+                  log.info(`[analytics-service-fixed] ✓ Включаем пост ${post.id} на платформе ${platform} (дата: ${pubDate.toISOString()})`);
+                } else {
+                  log.debug(`[analytics-service-fixed] ✗ Пост ${post.id} на платформе ${platform} не попал в период (дата: ${pubDate.toISOString()})`);
                 }
               } else {
                 // Если даты публикации нет, но статус published - это свежая публикация, всегда включаем ее
