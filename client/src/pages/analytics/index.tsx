@@ -31,11 +31,99 @@ export default function AnalyticsPage() {
   const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
     queryKey: ['analytics', selectedCampaign, selectedPeriod],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:5001/analytics?campaignId=${selectedCampaign}&period=${selectedPeriod}`);
+      console.log('🎯 Загружаем аналитику для кампании:', selectedCampaign, 'период:', selectedPeriod);
+      
+      // Прямой запрос к Directus API
+      const daysBack = selectedPeriod === '30days' ? 30 : 7;
+      const dateFilter = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
+      
+      const directusUrl = `https://directus.nplanner.ru/items/campaign_content`;
+      const params = new URLSearchParams({
+        'filter[campaign_id][_eq]': selectedCampaign,
+        'filter[status][_eq]': 'published',
+        'filter[published_at][_gte]': dateFilter,
+        'fields': 'id,title,content,social_platforms,published_at,status'
+      });
+
+      const response = await fetch(`${directusUrl}?${params}`, {
+        headers: {
+          'Authorization': 'Bearer TmWM9gUU8RxLwRGe8kcMI-oopnvqYjF6'
+        }
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to fetch analytics data');
+        throw new Error('Failed to fetch data from Directus');
       }
-      return response.json();
+
+      const result = await response.json();
+      const content = result.data || [];
+      
+      console.log('📄 Получено контента из Directus:', content.length);
+
+      // Подсчет постов по платформам
+      let totalPosts = 0;
+      const platformStats = {
+        telegram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
+        instagram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
+        vk: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
+        facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 }
+      };
+
+      content.forEach(item => {
+        if (item.social_platforms) {
+          const platforms = typeof item.social_platforms === 'string' 
+            ? JSON.parse(item.social_platforms) 
+            : item.social_platforms;
+
+          Object.keys(platforms).forEach(platformKey => {
+            const platform = platforms[platformKey];
+            if (platform.status === 'published') {
+              totalPosts++;
+              
+              const platformName = platform.platform || platformKey;
+              if (platformStats[platformName]) {
+                platformStats[platformName].posts++;
+                
+                if (platform.analytics) {
+                  platformStats[platformName].views += platform.analytics.views || 0;
+                  platformStats[platformName].likes += platform.analytics.likes || 0;
+                  platformStats[platformName].comments += platform.analytics.comments || 0;
+                  platformStats[platformName].shares += platform.analytics.shares || 0;
+                }
+              }
+            }
+          });
+        }
+      });
+
+      // Агрегированная статистика
+      const totalViews = Object.values(platformStats).reduce((sum, p) => sum + p.views, 0);
+      const totalLikes = Object.values(platformStats).reduce((sum, p) => sum + p.likes, 0);
+      const totalComments = Object.values(platformStats).reduce((sum, p) => sum + p.comments, 0);
+      const totalShares = Object.values(platformStats).reduce((sum, p) => sum + p.shares, 0);
+      
+      const engagementRate = totalViews > 0 
+        ? Math.round(((totalLikes + totalComments + totalShares) / totalViews) * 100)
+        : 0;
+
+      return {
+        success: true,
+        period: selectedPeriod,
+        totalPosts,
+        totalViews,
+        totalLikes,
+        totalComments,
+        totalShares,
+        engagementRate,
+        platforms: Object.entries(platformStats).map(([name, stats]) => ({
+          name,
+          posts: stats.posts,
+          views: stats.views,
+          likes: stats.likes,
+          comments: stats.comments,
+          shares: stats.shares
+        })).filter(p => p.posts > 0)
+      };
     },
     enabled: !!selectedCampaign,
   });
