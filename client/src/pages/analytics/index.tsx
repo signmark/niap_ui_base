@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, Heart, Share2, MessageCircle, BarChart3, RefreshCw } from 'lucide-react';
+import { Eye, Heart, Share2, MessageCircle, BarChart3, RefreshCw, Database } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,33 @@ export default function AnalyticsPage() {
     }
   });
 
-  const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
+  // Функция для пересборки данных из Directus
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleRefreshData = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    console.log('🔄 Пересобираем данные из Directus...');
+    
+    try {
+      await refetch();
+      toast({
+        title: "🔄 Данные обновлены",
+        description: "Аналитика успешно пересобрана из базы данных",
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Ошибка обновления", 
+        description: "Не удалось пересобрать данные. Попробуйте позже.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const { data: analyticsData, isLoading, error, refetch } = useQuery<AnalyticsData>({
     queryKey: ['analytics', selectedCampaign, selectedPeriod],
     queryFn: async () => {
       console.log('🎯 Загружаем аналитику для кампании:', selectedCampaign, 'период:', selectedPeriod);
