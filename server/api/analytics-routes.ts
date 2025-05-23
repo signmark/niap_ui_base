@@ -17,7 +17,8 @@ function requireAuth(req: any, res: any, next: any) {
 }
 
 // Главный API endpoint для аналитики согласно ТЗ
-router.get('/api/analytics', requireAuth, async (req: any, res: any) => {
+// ВРЕМЕННО ОТКЛЮЧЕН - используется новый роут в routes.ts
+// router.get('/api/analytics', requireAuth, async (req: any, res: any) => {
   try {
     const { campaignId, period = '7days' } = req.query;
     
