@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, Heart, Share2, MessageCircle, BarChart3, RefreshCw, Database } from 'lucide-react';
+import { Eye, Heart, Share2, MessageCircle, BarChart3, RefreshCw, Database, TrendingUp, TrendingDown, Target, Award } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { Button } from '@/components/ui/button';
