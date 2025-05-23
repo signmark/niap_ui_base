@@ -44,11 +44,13 @@ app.get('/api/status-check', (req, res) => {
 import { isUserAdmin } from './routes-global-api-keys';
 import { registerAuthRoutes } from './api/auth-routes';
 
-// Регистрируем API аналитики прямо здесь
-app.get('/api/analytics', async (req, res) => {
+// Регистрируем API аналитики с уникальным путем
+app.get('/api/analytics-data', async (req, res) => {
   try {
     const { campaignId, period = '7days' } = req.query;
     
+    console.log(`[Analytics API] Запрос получен! campaignId=${campaignId}, period=${period}`);
+
     if (!campaignId) {
       return res.status(400).json({ 
         success: false, 
@@ -56,10 +58,8 @@ app.get('/api/analytics', async (req, res) => {
       });
     }
 
-    console.log(`[Analytics API] Тестовый запрос для кампании ${campaignId}, период: ${period}`);
-
     // Возвращаем тестовые данные
-    return res.json({
+    const result = {
       totalPosts: 12,
       totalViews: 1500,
       totalLikes: 95,
@@ -70,7 +70,10 @@ app.get('/api/analytics', async (req, res) => {
         { name: 'Instagram', posts: 5, views: 750, likes: 45, shares: 8, comments: 4 },
         { name: 'VK', posts: 3, views: 150, likes: 20, shares: 3, comments: 1 }
       ]
-    });
+    };
+
+    console.log(`[Analytics API] Возвращаем данные:`, result);
+    return res.json(result);
 
   } catch (error: any) {
     console.error('[Analytics API] Ошибка:', error);
