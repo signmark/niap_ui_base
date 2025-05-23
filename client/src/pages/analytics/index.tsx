@@ -175,6 +175,8 @@ export default function AnalyticsPage() {
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const result = await response.json();
       console.log('[analytics] Получены данные:', result);
+      console.log('[analytics] Период:', period, 'Кампания:', campaignId);
+      console.log('[analytics] Полный ответ API:', JSON.stringify(result, null, 2));
       return result;
     },
     enabled: !!campaignId,
