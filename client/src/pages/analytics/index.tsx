@@ -29,8 +29,8 @@ export default function AnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7days');
 
   const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
-    queryKey: ['/analytics-data', selectedCampaign, selectedPeriod],
-    queryFn: () => apiRequest(`/analytics-data?campaignId=${selectedCampaign}&period=${selectedPeriod}`),
+    queryKey: ['/server-api/analytics', selectedCampaign, selectedPeriod],
+    queryFn: () => apiRequest(`/server-api/analytics?campaignId=${selectedCampaign}&period=${selectedPeriod}`),
     enabled: !!selectedCampaign,
   });
 

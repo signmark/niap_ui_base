@@ -2,11 +2,15 @@ import { Express, Request, Response } from 'express';
 import axios from 'axios';
 
 export function registerSimpleAnalyticsAPI(app: Express) {
-  app.get('/analytics-data', async (req: Request, res: Response) => {
+  console.log('[Simple Analytics] 🚀 Регистрируем API эндпоинт /server-api/analytics');
+  
+  app.get('/server-api/analytics', async (req: Request, res: Response) => {
+    console.log('[Simple Analytics] 🎯 МАРШРУТ СРАБОТАЛ! Получен запрос на /server-api/analytics');
+    
     try {
       const { campaignId, period = '7days' } = req.query;
       
-      console.log(`[Simple Analytics] Запрос: campaignId=${campaignId}, period=${period}`);
+      console.log(`[Simple Analytics] 📋 Параметры: campaignId=${campaignId}, period=${period}`);
 
       if (!campaignId) {
         return res.status(400).json({ 
