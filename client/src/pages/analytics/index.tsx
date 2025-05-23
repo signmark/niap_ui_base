@@ -165,7 +165,7 @@ export default function AnalyticsPage() {
   const { data: analyticsData, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/analytics', campaignId, period],
     queryFn: async () => {
-      const token = getToken();
+      const token = await getToken(); // Ждем получения токена!
       const response = await fetch(`/api/analytics?campaignId=${campaignId}&period=${period}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
