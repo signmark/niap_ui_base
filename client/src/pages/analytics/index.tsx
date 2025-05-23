@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, Heart, Share2, MessageCircle, BarChart3 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { useCampaignStore } from '@/lib/campaignStore';
 
 
 interface AnalyticsData {
@@ -26,8 +27,17 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const [selectedCampaign, setSelectedCampaign] = useState<string>('46868c44-c6a4-4bed-accf-9ad07bba790e');
+  const { activeCampaign, campaigns } = useCampaignStore();
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(activeCampaign?.id || '46868c44-c6a4-4bed-accf-9ad07bba790e');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7days');
+
+  // Обновляем выбранную кампанию при изменении активной кампании
+  useEffect(() => {
+    if (activeCampaign?.id && activeCampaign.id !== selectedCampaign) {
+      setSelectedCampaign(activeCampaign.id);
+      console.log('🔄 Переключение на активную кампанию:', activeCampaign.name, activeCampaign.id);
+    }
+  }, [activeCampaign?.id]);
 
   const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
     queryKey: ['analytics', selectedCampaign, selectedPeriod],
