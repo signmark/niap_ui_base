@@ -20,6 +20,8 @@ import { initializeHeavyServices } from './optimize-startup';
 import testRouter from './api/test-routes';
 // Импортируем маршруты для диагностики и исправления URL в Telegram
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
+// Импортируем API аналитики
+import analyticsRouter from './analytics-api';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -201,6 +203,8 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     // Регистрируем маршруты для диагностики и исправления проблем с URL Telegram
     app.use('/api/telegram-diagnostics', telegramDiagnosticsRouter);
+    // Регистрируем API аналитики
+    app.use('/api', analyticsRouter);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
