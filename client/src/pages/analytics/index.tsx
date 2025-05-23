@@ -5,9 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, Heart, Share2, MessageCircle, BarChart3 } from 'lucide-react';
+import { Eye, Heart, Share2, MessageCircle, BarChart3, RefreshCw } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useCampaignStore } from '@/lib/campaignStore';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 
 
 interface AnalyticsData {
@@ -27,17 +31,58 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const { activeCampaign, campaigns } = useCampaignStore();
-  const [selectedCampaign, setSelectedCampaign] = useState<string>(activeCampaign?.id || '46868c44-c6a4-4bed-accf-9ad07bba790e');
+  const { selectedCampaignId } = useCampaignStore();
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(selectedCampaignId || '46868c44-c6a4-4bed-accf-9ad07bba790e');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7days');
+  const { toast } = useToast();
 
   // Обновляем выбранную кампанию при изменении активной кампании
   useEffect(() => {
-    if (activeCampaign?.id && activeCampaign.id !== selectedCampaign) {
-      setSelectedCampaign(activeCampaign.id);
-      console.log('🔄 Переключение на активную кампанию:', activeCampaign.name, activeCampaign.id);
+    if (selectedCampaignId && selectedCampaignId !== selectedCampaign) {
+      setSelectedCampaign(selectedCampaignId);
+      console.log('🔄 Переключение на активную кампанию:', selectedCampaignId);
     }
-  }, [activeCampaign?.id]);
+  }, [selectedCampaignId]);
+
+  // Мутация для обновления данных аналитики
+  const updateAnalyticsMutation = useMutation({
+    mutationFn: async () => {
+      const days = selectedPeriod === '30days' ? 30 : 7;
+      
+      const response = await fetch('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaign,
+          days: days
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Не удалось обновить данные');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Инвалидируем кэш аналитики для повторной загрузки
+      queryClient.invalidateQueries({ queryKey: ['analytics', selectedCampaign, selectedPeriod] });
+      
+      toast({
+        title: "✅ Данные обновлены",
+        description: "Аналитика успешно обновлена из последних данных",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Ошибка обновления", 
+        description: "Не удалось обновить данные. Попробуйте позже.",
+        variant: "destructive"
+      });
+    }
+  });
 
   const { data: analyticsData, isLoading, error } = useQuery<AnalyticsData>({
     queryKey: ['analytics', selectedCampaign, selectedPeriod],
@@ -212,6 +257,17 @@ export default function AnalyticsPage() {
                   <SelectItem value="30days">30 дней</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <Button 
+                onClick={() => updateAnalyticsMutation.mutate()}
+                disabled={updateAnalyticsMutation.isPending || !selectedCampaign}
+                variant="outline"
+                size="default"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${updateAnalyticsMutation.isPending ? 'animate-spin' : ''}`} />
+                {updateAnalyticsMutation.isPending ? 'Обновление...' : 'Обновить данные'}
+              </Button>
             </div>
           </div>
 
