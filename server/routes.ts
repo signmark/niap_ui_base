@@ -11592,3 +11592,12 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
     }
   });
 
+  // Возвращаем сервер Express для завершения функции registerRoutes
+  const PORT = process.env.PORT || 5000;
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Analytics API] Сервер запущен на порту ${PORT} с новым эндпоинтом /api/analytics`);
+  });
+  
+  return server;
+}
+
