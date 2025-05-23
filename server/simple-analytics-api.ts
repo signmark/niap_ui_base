@@ -2,7 +2,7 @@ import { Express, Request, Response } from 'express';
 import axios from 'axios';
 
 export function registerSimpleAnalyticsAPI(app: Express) {
-  app.get('/api/analytics', async (req: Request, res: Response) => {
+  app.get('/analytics-data', async (req: Request, res: Response) => {
     try {
       const { campaignId, period = '7days' } = req.query;
       
