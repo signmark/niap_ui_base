@@ -43,9 +43,10 @@ app.get('/api/status-check', (req, res) => {
 // Регистрируем прямые маршруты аутентификации до инициализации Vite
 import { isUserAdmin } from './routes-global-api-keys';
 import { registerAuthRoutes } from './api/auth-routes';
+import { directusApiManager } from './directus';
 
-// Регистрируем API аналитики с уникальным путем  
-app.get('/test-analytics', async (req, res) => {
+// API аналитики - должен быть зарегистрирован ДО других маршрутов
+app.get('/api/analytics', async (req, res) => {
   try {
     const { campaignId, period = '7days' } = req.query;
     
@@ -58,25 +59,103 @@ app.get('/test-analytics', async (req, res) => {
       });
     }
 
-    // Возвращаем тестовые данные
-    const result = {
-      totalPosts: 12,
-      totalViews: 1500,
-      totalLikes: 95,
-      totalShares: 23,
-      totalComments: 8,
-      platforms: [
-        { name: 'Telegram', posts: 4, views: 600, likes: 30, shares: 12, comments: 3 },
-        { name: 'Instagram', posts: 5, views: 750, likes: 45, shares: 8, comments: 4 },
-        { name: 'VK', posts: 3, views: 150, likes: 20, shares: 3, comments: 1 }
-      ]
-    };
+    // Проверяем авторизацию
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      console.log(`[Analytics API] Нет токена авторизации`);
+      return res.status(401).json({ success: false, error: 'Требуется авторизация' });
+    }
 
-    console.log(`[Analytics API] Возвращаем данные:`, result);
-    return res.json(result);
+    const token = authHeader.replace('Bearer ', '');
+    const days = period === '30days' ? 30 : 7;
+
+    console.log(`[Analytics API] Запрос аналитики для кампании ${campaignId}, период: ${days} дней`);
+
+    try {
+      // Запрос к Directus
+      const directusResponse = await directusApiManager.get('/items/campaign_content', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          'filter[campaign_id][_eq]': campaignId,
+          'filter[status][_eq]': 'published',
+          'filter[published_at][_gte]': `$NOW(-${days} days)`,
+          'fields': ['id', 'title', 'social_platforms', 'published_at'],
+          'limit': 1000
+        }
+      });
+
+      console.log(`[Analytics API] Получен ответ от Directus:`, directusResponse.data.data?.length, 'записей');
+
+      const posts = directusResponse.data.data || [];
+      
+      // Подсчитываем статистику согласно ТЗ
+      let totalPosts = 0;
+      let totalViews = 0;
+      let totalLikes = 0;
+      let totalShares = 0;
+      let totalComments = 0;
+      
+      const platformStats = new Map<string, any>();
+      
+      posts.forEach((post: any) => {
+        if (post.social_platforms) {
+          Object.values(post.social_platforms).forEach((platform: any) => {
+            if (platform && platform.status === 'published') {
+              totalPosts++;
+              
+              const analytics = platform.analytics || {};
+              totalViews += analytics.views || 0;
+              totalLikes += analytics.likes || 0;
+              totalShares += analytics.shares || 0;
+              totalComments += analytics.comments || 0;
+              
+              const platformName = platform.platform || 'unknown';
+              if (!platformStats.has(platformName)) {
+                platformStats.set(platformName, {
+                  name: platformName,
+                  posts: 0,
+                  views: 0,
+                  likes: 0,
+                  shares: 0,
+                  comments: 0
+                });
+              }
+              
+              const stats = platformStats.get(platformName);
+              stats.posts++;
+              stats.views += analytics.views || 0;
+              stats.likes += analytics.likes || 0;
+              stats.shares += analytics.shares || 0;
+              stats.comments += analytics.comments || 0;
+            }
+          });
+        }
+      });
+
+      const analyticsData = {
+        totalPosts,
+        totalViews,
+        totalLikes,
+        totalShares,
+        totalComments,
+        platforms: Array.from(platformStats.values())
+      };
+
+      console.log(`[Analytics API] Статистика:`, analyticsData);
+      
+      return res.json(analyticsData);
+      
+    } catch (directusError: any) {
+      console.error(`[Analytics API] Ошибка Directus:`, directusError.message);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Ошибка при получении данных',
+        details: directusError.message 
+      });
+    }
 
   } catch (error: any) {
-    console.error('[Analytics API] Ошибка:', error);
+    console.error('[Analytics API] Общая ошибка:', error);
     return res.status(500).json({ 
       success: false, 
       error: 'Ошибка при получении аналитики',
