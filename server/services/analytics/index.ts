@@ -14,8 +14,6 @@ export * from './facebook-analytics';
 // Экспортируем данные fallback для случаев недоступности Directus
 export * from './fallback-data';
 
-// Экспортируем основной сервис аналитики
-export * from './analytics-service';
-
-// Экспортируем улучшенный сервис аналитики
-export * from './analytics-service-fixed';
+// СТАРЫЕ СЕРВИСЫ АНАЛИТИКИ ОТКЛЮЧЕНЫ - ИСПОЛЬЗУЕТСЯ ТОЛЬКО НОВЫЙ РОУТ В routes.ts
+// export * from './analytics-service';
+// export * from './analytics-service-fixed';
