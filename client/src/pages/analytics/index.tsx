@@ -296,6 +296,17 @@ export default function AnalyticsPage() {
                 <RefreshCw className={`h-4 w-4 ${updateAnalyticsMutation.isPending ? 'animate-spin' : ''}`} />
                 {updateAnalyticsMutation.isPending ? 'Обновление...' : 'Обновить данные'}
               </Button>
+              
+              <Button 
+                onClick={handleRefreshData}
+                disabled={isRefreshing || !selectedCampaign}
+                variant="outline"
+                size="default"
+                className="flex items-center gap-2"
+              >
+                <Database className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Пересборка...' : 'Пересобрать данные'}
+              </Button>
             </div>
           </div>
 
