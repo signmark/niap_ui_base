@@ -119,7 +119,8 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         totalPosts: stats.aggregated.totalPosts
       };
 
-      log(`[api-analytics] Возвращаем реальные данные аналитики: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
+      log(`[api-analytics] Получены данные из улучшенного сервиса: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
+      log(`[api-analytics] Возвращаем JSON данные: ${JSON.stringify(analyticsData)}`);
 
       res.json({
         success: true,
