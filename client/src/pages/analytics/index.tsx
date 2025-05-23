@@ -93,6 +93,8 @@ export default function AnalyticsPage() {
       const daysBack = selectedPeriod === '30days' ? 30 : 7;
       const dateFilter = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
       
+      console.log(`📅 Период: ${selectedPeriod}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
+      
       const directusUrl = `https://directus.nplanner.ru/items/campaign_content`;
       const params = new URLSearchParams({
         'filter[campaign_id][_eq]': selectedCampaign,
