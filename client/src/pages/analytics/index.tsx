@@ -22,7 +22,19 @@ interface AnalyticsData {
   totalLikes: number;
   totalShares: number;
   totalComments: number;
-  totalPosts: number; // Добавляем общее количество постов
+  totalPosts: number;
+  debugInfo?: {
+    period: string;
+    dateRange: string;
+    postsCount: number;
+    posts: Array<{
+      contentId: string;
+      title: string;
+      platform: string;
+      publishedAt: string;
+      contentPublishedAt: string;
+    }>;
+  };
 }
 
 interface MetricCardProps {
@@ -270,6 +282,36 @@ export default function AnalyticsPage() {
                 />
               </div>
             </div>
+
+            {/* Отладочная информация - список постов */}
+            {analytics.debugInfo && analytics.debugInfo.posts.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">
+                  Посты за {analytics.debugInfo.period} ({analytics.debugInfo.dateRange})
+                </h2>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-3">
+                      {analytics.debugInfo.posts.map((post, index) => (
+                        <div key={`${post.contentId}-${post.platform}`} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50">
+                          <p className="font-semibold">
+                            {index + 1}. {post.title}
+                          </p>
+                          <div className="text-sm text-gray-600 grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <span><strong>Платформа:</strong> {post.platform}</span>
+                            <span><strong>Дата платформы:</strong> {post.publishedAt}</span>
+                            <span><strong>Дата контента:</strong> {post.contentPublishedAt}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 text-sm text-gray-500">
+                      Всего найдено: {analytics.debugInfo.postsCount} постов
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Статистика по платформам */}
             <div>

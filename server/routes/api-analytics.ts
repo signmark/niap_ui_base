@@ -380,7 +380,13 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
               totalLikes: totalLikes || 1,
               totalShares: 0,
               totalComments: 0,
-              totalPosts: totalRealPosts
+              totalPosts: totalRealPosts,
+              debugInfo: {
+                period: `${periodDays} дней`,
+                dateRange: `с ${startDate.toISOString().split('T')[0]} по ${currentDate.toISOString().split('T')[0]}`,
+                postsCount: debugPosts.length,
+                posts: debugPosts
+              }
             }
           });
         } else {
