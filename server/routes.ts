@@ -11413,3 +11413,182 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   return contentPlan;
 }
 
+  // ============================================
+  // API ДЛЯ АНАЛИТИКИ SMM MANAGER
+  // ============================================
+  
+  /**
+   * API эндпоинт для получения аналитики кампании
+   * Использует правильный Directus запрос с токеном пользователя
+   */
+  app.get('/api/analytics', async (req, res) => {
+    try {
+      const { campaignId, period = '7days' } = req.query;
+
+      // Проверяем обязательный параметр campaignId
+      if (!campaignId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Параметр campaignId обязателен'
+        });
+      }
+
+      // Получаем токен пользователя из заголовков
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({
+          success: false,
+          error: 'Требуется авторизация'
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const days = period === '30days' ? 30 : 7;
+
+      console.log(`[Analytics API] Запрос аналитики для кампании ${campaignId}, период: ${days} дней`);
+
+      // Шаг 1: Вызываем n8n webhook для обновления данных (если нужно)
+      try {
+        await axios.post('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+          campaignId: campaignId as string,
+          days: days
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        });
+        console.log(`[Analytics API] n8n webhook успешно вызван`);
+      } catch (n8nError: any) {
+        console.warn(`[Analytics API] n8n webhook недоступен (${n8nError.message}), используем существующие данные`);
+      }
+
+      // Шаг 2: Получаем данные из Directus с правильным запросом
+      console.log(`[Analytics API] Получаем контент кампании из Directus...`);
+      
+      const directusResponse = await directusApi.get('/items/campaign_content', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          'filter[campaign_id][_eq]': campaignId,
+          'filter[status][_eq]': 'published',
+          'filter[published_at][_gte]': `$NOW(-${days} days)`,
+          'fields': ['id', 'title', 'social_platforms', 'published_at'],
+          'limit': 1000
+        }
+      });
+
+      const contentItems = directusResponse.data?.data || [];
+      console.log(`[Analytics API] Получено ${contentItems.length} элементов контента`);
+
+      // Шаг 3: Обрабатываем social_platforms и считаем посты
+      let totalPosts = 0;
+      let totalViews = 0;
+      let totalLikes = 0;
+      let totalShares = 0;
+      let totalComments = 0;
+      
+      const platformStats: Record<string, {
+        posts: number;
+        views: number;
+        likes: number;
+        shares: number;
+        comments: number;
+      }> = {};
+
+      contentItems.forEach((content: any) => {
+        if (!content.social_platforms) return;
+        
+        let socialPlatforms;
+        try {
+          socialPlatforms = typeof content.social_platforms === 'string' 
+            ? JSON.parse(content.social_platforms)
+            : content.social_platforms;
+        } catch (error) {
+          console.warn(`[Analytics API] Не удалось парсить social_platforms для контента ${content.id}`);
+          return;
+        }
+
+        // Проходим по каждой платформе в social_platforms - каждая запись = 1 пост
+        Object.entries(socialPlatforms).forEach(([platformKey, platformData]: [string, any]) => {
+          if (!platformData || platformData.status !== 'published') return;
+          
+          // Каждая платформа = 1 пост (правильная логика)
+          totalPosts++;
+          
+          // Получаем метрики из analytics
+          const analytics = platformData.analytics || {};
+          const views = analytics.views || 0;
+          const likes = analytics.likes || 0;
+          const shares = analytics.shares || 0;
+          const comments = analytics.comments || 0;
+
+          // Добавляем к общим метрикам
+          totalViews += views;
+          totalLikes += likes;
+          totalShares += shares;
+          totalComments += comments;
+
+          // Получаем название платформы
+          const platformName = platformData.platform || platformKey;
+          const normalizedPlatformName = platformName.charAt(0).toUpperCase() + platformName.slice(1);
+
+          // Добавляем к статистике платформы
+          if (!platformStats[normalizedPlatformName]) {
+            platformStats[normalizedPlatformName] = {
+              posts: 0,
+              views: 0,
+              likes: 0,
+              shares: 0,
+              comments: 0
+            };
+          }
+
+          platformStats[normalizedPlatformName].posts++;
+          platformStats[normalizedPlatformName].views += views;
+          platformStats[normalizedPlatformName].likes += likes;
+          platformStats[normalizedPlatformName].shares += shares;
+          platformStats[normalizedPlatformName].comments += comments;
+
+          console.log(`[Analytics API] Пост на ${normalizedPlatformName}: views=${views}, likes=${likes}`);
+        });
+      });
+
+      // Формируем массив платформ для ответа
+      const platforms = Object.entries(platformStats).map(([name, stats]) => ({
+        name,
+        ...stats
+      }));
+
+      console.log(`[Analytics API] Итого: ${totalPosts} постов на ${platforms.length} платформах`);
+
+      // Возвращаем данные в нужном формате
+      return res.json({
+        success: true,
+        data: {
+          totalPosts,
+          totalViews,
+          totalLikes,
+          totalShares,
+          totalComments,
+          platforms
+        },
+        meta: {
+          campaignId: campaignId as string,
+          period: period as string,
+          days: days,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    } catch (error: any) {
+      console.error('[Analytics API] Ошибка при получении аналитики:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при получении аналитики',
+        details: {
+          message: error.message,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+  });
+
