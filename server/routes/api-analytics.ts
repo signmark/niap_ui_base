@@ -271,6 +271,7 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
           };
           
           // Считаем посты за указанный период
+          const debugPosts = []; // Для отладки
           contentData.data.forEach((content: any) => {
             if (content.social_platforms) {
               Object.keys(content.social_platforms).forEach((platform: string) => {
@@ -298,14 +299,28 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
                     if (platformCounts[platform] !== undefined) {
                       platformCounts[platform]++;
                     }
+                    
+                    // Добавляем в отладочный список
+                    debugPosts.push({
+                      contentId: content.id,
+                      title: content.title || 'Без названия',
+                      platform: platform,
+                      publishedAt: platformData.publishedAt || content.published_at || 'нет даты',
+                      contentPublishedAt: content.published_at || 'нет даты'
+                    });
                   }
                 }
               });
             }
           });
           
+          log(`[api-analytics] Период: ${periodDays} дней (с ${startDate.toISOString()} по ${currentDate.toISOString()})`);
           log(`[api-analytics] Подсчитано реальных постов за ${periodDays} дней из ${contentData.data.length} записей: ${totalRealPosts}`);
           log(`[api-analytics] Распределение по платформам:`, platformCounts);
+          log(`[api-analytics] СПИСОК ПОСТОВ ЗА ПОСЛЕДНИЕ ${periodDays} ДНЕЙ:`);
+          debugPosts.forEach((post, index) => {
+            log(`[api-analytics] ${index + 1}. ${post.title} | Платформа: ${post.platform} | Дата платформы: ${post.publishedAt} | Дата контента: ${post.contentPublishedAt}`);
+          });
           
           const fallbackPlatforms = [];
           
