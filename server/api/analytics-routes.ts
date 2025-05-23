@@ -85,17 +85,18 @@ function processAnalyticsData(contentItems: any[], period: string) {
   console.log(`[analytics] Обработка ${contentItems.length} элементов контента за период ${period}`);
   
   // Определяем дату среза для периода
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - (period === '7days' ? 7 : 30));
+  const periodDays = period === '7days' ? 7 : 30;
+  const currentDate = new Date();
+  currentDate.setHours(23, 59, 59, 999);
   
-  console.log(`[analytics] Дата среза: ${cutoffDate.toISOString()}`);
+  const startDate = new Date();
+  startDate.setDate(currentDate.getDate() - periodDays);
+  startDate.setHours(0, 0, 0, 0);
+  
+  console.log(`[analytics] Фильтрация за последние ${periodDays} дней: с ${startDate.toISOString()} по ${currentDate.toISOString()}`);
 
-  // Инициализируем статистику по платформам
-  const platformStats = {
-    telegram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
-    vk: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 },
-    instagram: { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 }
-  };
+  // Динамически собираем статистику по всем платформам
+  const platformStats: Record<string, any> = {};
 
   let processedPosts = 0;
 
