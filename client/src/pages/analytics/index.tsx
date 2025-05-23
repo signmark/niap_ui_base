@@ -40,7 +40,7 @@ function MetricCard({ icon: Icon, label, value, className = "" }: MetricCardProp
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value.toLocaleString()}</div>
+        <div className="text-2xl font-bold">{(value || 0).toLocaleString()}</div>
       </CardContent>
     </Card>
   );
