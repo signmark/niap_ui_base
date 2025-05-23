@@ -2958,6 +2958,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   console.log('HTTP server created successfully');
   
+  // ПЕРВЫМ ДЕЛОМ регистрируем роут аналитики, чтобы он перехватывал запросы
+  console.log('Registering FIXED analytics route FIRST...');
+  app.get('/api/analytics', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { campaignId, period = '7days' } = req.query;
+      
+      console.log(`[analytics-FIXED] Запрос: campaignId=${campaignId}, period=${period}`);
+      
+      if (!campaignId || typeof campaignId !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Campaign ID is required' 
+        });
+      }
+
+      const periodDays = period === '30days' ? 30 : 7;
+      const currentDate = new Date();
+      const startDate = new Date(currentDate);
+      startDate.setDate(currentDate.getDate() - periodDays);
+
+      console.log(`[analytics-FIXED] Запрос к Directus: ${directusUrl}`);
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const userToken = (req as any).authToken || req.headers.authorization?.replace('Bearer ', '');
+      
+      const filter = {
+        _and: [
+          { campaign_id: { _eq: campaignId } },
+          { status: { _eq: 'published' } },
+          {
+            _or: [
+              { published_at: { _gte: startDate.toISOString() } },
+              { published_at: { _null: true } }
+            ]
+          }
+        ]
+      };
+
+      const { data } = await axios.get(`${directusUrl}/items/campaign_content`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        },
+        params: {
+          filter: JSON.stringify(filter),
+          limit: -1
+        }
+      });
+
+      console.log(`[analytics-FIXED] Найдено ${data.data.length} постов за ${periodDays} дней`);
+
+      const platforms = new Map();
+      let totalViews = 0;
+      let totalLikes = 0;
+      let totalShares = 0;
+      let totalComments = 0;
+      let totalPosts = 0;
+
+      data.data.forEach((content: any) => {
+        if (content.social_platforms) {
+          Object.values(content.social_platforms).forEach((platform: any) => {
+            if (platform.status === 'published') {
+              const platformName = platform.platform === 'vk' ? 'Vk' : 
+                                 platform.platform === 'telegram' ? 'Telegram' :
+                                 platform.platform === 'facebook' ? 'Facebook' :
+                                 platform.platform === 'instagram' ? 'Instagram' : platform.platform;
+
+              if (!platforms.has(platformName)) {
+                platforms.set(platformName, { views: 0, likes: 0, shares: 0, comments: 0, posts: 0 });
+              }
+
+              const stats = platforms.get(platformName);
+              const analytics = platform.analytics || {};
+              
+              stats.views += analytics.views || 0;
+              stats.likes += analytics.likes || 0;
+              stats.shares += analytics.shares || 0;
+              stats.comments += analytics.comments || 0;
+              stats.posts += 1;
+
+              totalViews += analytics.views || 0;
+              totalLikes += analytics.likes || 0;
+              totalShares += analytics.shares || 0;
+              totalComments += analytics.comments || 0;
+              totalPosts += 1;
+            }
+          });
+        }
+      });
+
+      const result = {
+        success: true,
+        data: {
+          platforms: Array.from(platforms.entries()).map(([name, stats]) => ({
+            name,
+            ...stats
+          })),
+          totalViews,
+          totalLikes,
+          totalShares,
+          totalComments,
+          totalPosts
+        }
+      };
+
+      console.log(`[analytics-FIXED] РЕЗУЛЬТАТ:`, JSON.stringify(result, null, 2));
+      
+      res.json(result);
+
+    } catch (error: any) {
+      console.error('[analytics-FIXED] Ошибка:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Internal server error'
+      });
+    }
+  });
+
   // Регистрируем маршруты валидации API ключей социальных сетей
   console.log('Registering validation routes...');
   registerValidationRoutes(app);
