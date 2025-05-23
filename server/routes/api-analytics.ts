@@ -258,7 +258,7 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
           const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
           
           // Подсчет постов за период по платформам
-          const platformCounts = {
+          const platformCounts: Record<string, number> = {
             telegram: 0,
             vk: 0,
             instagram: 0,
@@ -271,17 +271,24 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
               Object.keys(content.social_platforms).forEach((platform: string) => {
                 const platformData = content.social_platforms[platform];
                 if (platformData.status === 'published') {
+                  let shouldInclude = false;
+                  
                   // Проверяем дату публикации
                   if (platformData.publishedAt) {
                     const publishDate = new Date(platformData.publishedAt);
-                    if (publishDate >= startDate && publishDate <= currentDate) {
-                      totalRealPosts++;
-                      if (platformCounts[platform] !== undefined) {
-                        platformCounts[platform]++;
-                      }
+                    // Расширяем диапазон для включения сегодняшнего дня
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999);
+                    
+                    if (publishDate >= startDate && publishDate <= today) {
+                      shouldInclude = true;
                     }
                   } else {
-                    // Если нет даты - считаем как свежий пост
+                    // Если нет даты публикации - считаем как свежий пост (точно включаем)
+                    shouldInclude = true;
+                  }
+                  
+                  if (shouldInclude) {
                     totalRealPosts++;
                     if (platformCounts[platform] !== undefined) {
                       platformCounts[platform]++;
