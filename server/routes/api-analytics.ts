@@ -81,6 +81,7 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
     const period = req.query.period as string;
     
     log(`[api-analytics] Запрос аналитики для кампании: ${campaignId}, период: ${period}`);
+    log(`[api-analytics] Начинаем обработку запроса аналитики`);
 
     if (!campaignId) {
       return res.status(400).json({
@@ -124,21 +125,31 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
           const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
           
           // Считаем посты за период
+          let totalCheckedPosts = 0;
+          let postsInPeriod = 0;
+          
           actualTotalPosts = contentData.data.reduce((total: number, content: any) => {
             if (!content.social_platforms) return total;
             
             let contentPosts = 0;
             Object.values(content.social_platforms).forEach((platform: any) => {
               if (platform.status === 'published' && platform.publishedAt) {
+                totalCheckedPosts++;
                 const publishDate = new Date(platform.publishedAt);
+                log(`[api-analytics] Проверяем пост: ${platform.platform}, дата: ${platform.publishedAt}, в периоде: ${publishDate >= startDate && publishDate <= currentDate}`);
+                
                 if (publishDate >= startDate && publishDate <= currentDate) {
                   contentPosts++;
+                  postsInPeriod++;
+                  log(`[api-analytics] ✓ Пост попал в период: ${platform.platform} от ${platform.publishedAt}`);
                 }
               }
             });
             
             return total + contentPosts;
           }, 0);
+          
+          log(`[api-analytics] Итого проверено постов: ${totalCheckedPosts}, в периоде: ${postsInPeriod}`);
           
           log(`[api-analytics] Реальное количество постов за ${periodDays} дней: ${actualTotalPosts}`);
         }
@@ -165,6 +176,12 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       // Добавляем totalPosts перед возвратом данных
       if (!analyticsData.totalPosts && analyticsData.platforms) {
         analyticsData.totalPosts = analyticsData.platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
+      }
+
+      // Принудительно добавляем подсчет постов за период если его нет
+      if (!analyticsData.totalPosts && analyticsData.totalPosts !== 0) {
+        analyticsData.totalPosts = actualTotalPosts;
+        log(`[api-analytics] Принудительно установили totalPosts = ${actualTotalPosts}`);
       }
 
       log(`[api-analytics] Получены данные: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
