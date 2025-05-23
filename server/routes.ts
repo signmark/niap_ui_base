@@ -42,8 +42,7 @@ import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
 import { registerAuthRoutes } from './api/auth-routes';
 import { registerTokenRoutes } from './api/token-routes';
-// Временно отключаем импорт analytics-routes
-// import analyticsRouter from './api/analytics-routes';
+// Все старые импорты аналитики удалены
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
@@ -2958,13 +2957,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   console.log('HTTP server created successfully');
   
-  // ПЕРВЫМ ДЕЛОМ регистрируем роут аналитики, чтобы он перехватывал запросы
-  console.log('Registering FIXED analytics route FIRST...');
+  // 🔥 ПОЛНОСТЬЮ НОВЫЙ ПРОСТОЙ РОУТ АНАЛИТИКИ
+  console.log('🔥 Registering COMPLETELY NEW analytics route...');
   app.get('/api/analytics', authenticateUser, async (req: Request, res: Response) => {
     try {
       const { campaignId, period = '7days' } = req.query;
       
-      console.log(`🎯 [analytics-FIXED] НАШ НОВЫЙ РОУТ РАБОТАЕТ! campaignId=${campaignId}, period=${period}`);
+      console.log(`🔥 [SUPER-NEW] НОВЕЙШИЙ РОУТ РАБОТАЕТ! campaignId=${campaignId}, period=${period}`);
       
       if (!campaignId || typeof campaignId !== 'string') {
         return res.status(400).json({ 
