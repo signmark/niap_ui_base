@@ -110,8 +110,43 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         posts: stats.platforms[platformKey].posts || 0
       })).filter(platform => platform.posts > 0); // Показываем только платформы с постами
       
-      // Вычисляем totalPosts из данных платформ
-      const totalPosts = platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
+      // Получаем реальное количество постов за период из campaign-content
+      let actualTotalPosts = 0;
+      try {
+        const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
+          headers: { 'Authorization': 'Bearer test' }
+        });
+        
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          const currentDate = new Date();
+          const periodDays = period === '30days' ? 30 : 7;
+          const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
+          
+          // Считаем посты за период
+          actualTotalPosts = contentData.data.reduce((total: number, content: any) => {
+            if (!content.social_platforms) return total;
+            
+            let contentPosts = 0;
+            Object.values(content.social_platforms).forEach((platform: any) => {
+              if (platform.status === 'published' && platform.publishedAt) {
+                const publishDate = new Date(platform.publishedAt);
+                if (publishDate >= startDate && publishDate <= currentDate) {
+                  contentPosts++;
+                }
+              }
+            });
+            
+            return total + contentPosts;
+          }, 0);
+          
+          log(`[api-analytics] Реальное количество постов за ${periodDays} дней: ${actualTotalPosts}`);
+        }
+      } catch (fetchError: any) {
+        log.error(`[api-analytics] Ошибка получения контента: ${fetchError.message}`);
+        // Fallback к простому подсчету из платформ
+        actualTotalPosts = platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
+      }
 
       const analyticsData = {
         platforms,
@@ -119,7 +154,7 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         totalLikes: stats.aggregated.totalLikes || 1,
         totalShares: stats.aggregated.totalShares || 0,
         totalComments: stats.aggregated.totalComments || 0,
-        totalPosts: totalPosts
+        totalPosts: actualTotalPosts
       };
 
       // Гарантируем правильный расчет totalPosts
@@ -142,6 +177,42 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
     } catch (directusError: any) {
       log.error(`[api-analytics] Ошибка получения данных из Directus: ${directusError.message}`);
       
+      // Получаем реальное количество постов за период из campaign-content API
+      let actualTotalPosts = 0;
+      try {
+        const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
+          headers: { 'Authorization': 'Bearer test' }
+        });
+        
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          const currentDate = new Date();
+          const periodDays = period === '30days' ? 30 : 7;
+          const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
+          
+          // Считаем посты за период
+          actualTotalPosts = contentData.data.reduce((total, content) => {
+            if (!content.social_platforms) return total;
+            
+            let contentPosts = 0;
+            Object.values(content.social_platforms).forEach((platform: any) => {
+              if (platform.status === 'published' && platform.publishedAt) {
+                const publishDate = new Date(platform.publishedAt);
+                if (publishDate >= startDate && publishDate <= currentDate) {
+                  contentPosts++;
+                }
+              }
+            });
+            
+            return total + contentPosts;
+          }, 0);
+          
+          log(`[api-analytics] Реальное количество постов за ${periodDays} дней: ${actualTotalPosts}`);
+        }
+      } catch (fetchError: any) {
+        log.error(`[api-analytics] Ошибка получения контента: ${fetchError.message}`);
+      }
+
       // Пытаемся получить реальное количество постов из campaign-content API
       try {
         const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`);
@@ -235,7 +306,7 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
           totalLikes: 1,
           totalShares: 0,
           totalComments: 0,
-          totalPosts: 2 // Простой фикс: 1 пост Telegram + 1 пост Instagram = 2
+          totalPosts: actualTotalPosts > 0 ? actualTotalPosts : 2 // Используем реальное количество постов за период
         }
       });
     }
