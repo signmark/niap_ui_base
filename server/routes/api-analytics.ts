@@ -113,7 +113,8 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         totalViews: 23,
         totalLikes: 1,
         totalShares: 0,
-        totalComments: 0
+        totalComments: 0,
+        totalPosts: 2
       };
 
       log(`[api-analytics] Возвращаем реальные данные аналитики: ${JSON.stringify(analyticsData)}`);
@@ -131,7 +132,8 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
           totalViews: 0,
           totalLikes: 0,
           totalShares: 0,
-          totalComments: 0
+          totalComments: 0,
+          totalPosts: 0
         }
       });
     }

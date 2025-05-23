@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Heart, Share, MessageCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Eye, Heart, Share, MessageCircle, RefreshCw, Loader2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getToken } from '@/lib/auth';
 import { useCampaignStore } from '@/lib/campaignStore';
@@ -22,6 +22,7 @@ interface AnalyticsData {
   totalLikes: number;
   totalShares: number;
   totalComments: number;
+  totalPosts: number; // Добавляем общее количество постов
 }
 
 interface MetricCardProps {
@@ -173,7 +174,8 @@ export default function AnalyticsPage() {
     totalViews: 0,
     totalLikes: 0,
     totalShares: 0,
-    totalComments: 0
+    totalComments: 0,
+    totalPosts: 0
   };
 
   return (
@@ -240,7 +242,12 @@ export default function AnalyticsPage() {
             {/* Общие метрики */}
             <div>
               <h2 className="text-2xl font-semibold mb-4">Общая статистика</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <MetricCard 
+                  icon={FileText} 
+                  label="Посты" 
+                  value={analytics.totalPosts} 
+                />
                 <MetricCard 
                   icon={Eye} 
                   label="Просмотры" 
