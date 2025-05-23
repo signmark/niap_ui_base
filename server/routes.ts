@@ -2957,11 +2957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   console.log('HTTP server created successfully');
   
-  // 🔥 ПРОСТАЯ ЗАГЛУШКА ДЛЯ АНАЛИТИКИ
-  app.get('/api/analytics', (req: Request, res: Response) => {
-    console.log('🔥 [ЗАГЛУШКА] Простая заглушка аналитики работает!');
-    res.json({ message: "Привет" });
-  });
+  // 🔥 АНАЛИТИКА ПОЛНОСТЬЮ УДАЛЕНА!
 
   // Регистрируем маршруты валидации API ключей социальных сетей
   console.log('Registering validation routes...');
