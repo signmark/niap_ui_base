@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
                 <MetricCard 
                   icon={FileText} 
                   label="Посты" 
-                  value={analytics.totalPosts} 
+                  value={analytics.platforms?.reduce((sum, platform) => sum + (platform.posts || 0), 0) || 0} 
                 />
                 <MetricCard 
                   icon={Eye} 

@@ -127,6 +127,11 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         analyticsData.totalPosts = analyticsData.platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
       }
 
+      // Добавляем totalPosts перед возвратом данных
+      if (!analyticsData.totalPosts && analyticsData.platforms) {
+        analyticsData.totalPosts = analyticsData.platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
+      }
+
       log(`[api-analytics] Получены данные: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
       log(`[api-analytics] Возвращаем JSON: ${JSON.stringify(analyticsData)}`);
 
