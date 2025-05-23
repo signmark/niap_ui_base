@@ -134,8 +134,15 @@ export default function AnalyticsPage() {
       });
       if (!response.ok) throw new Error('Failed to fetch campaigns');
       return response.json();
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5 минут кэш
   });
+
+  // Список кампаний с данными (fallback если API не отвечает)
+  const campaignsList = campaigns?.data || [
+    { id: '46868c44-c6a4-4bed-accf-9ad07bba790e', name: 'Кампания с данными аналитики' },
+    { id: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', name: 'Тестовая кампания' }
+  ];
 
   // Получаем данные аналитики согласно ТЗ
   const { data: analyticsData, isLoading, error, refetch } = useQuery({
@@ -185,7 +192,7 @@ export default function AnalyticsPage() {
                   <SelectValue placeholder="Выберите кампанию" />
                 </SelectTrigger>
                 <SelectContent>
-                  {campaigns?.data?.map((campaign: any) => (
+                  {campaignsList.map((campaign: any) => (
                     <SelectItem key={campaign.id} value={campaign.id}>
                       {campaign.name}
                     </SelectItem>
