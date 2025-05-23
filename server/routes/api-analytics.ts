@@ -122,8 +122,13 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
         totalPosts: totalPosts
       };
 
-      log(`[api-analytics] Получены данные из улучшенного сервиса: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
-      log(`[api-analytics] Возвращаем JSON данные: ${JSON.stringify(analyticsData)}`);
+      // Гарантируем правильный расчет totalPosts
+      if (!analyticsData.totalPosts || analyticsData.totalPosts === null) {
+        analyticsData.totalPosts = analyticsData.platforms.reduce((sum, platform) => sum + (platform.posts || 0), 0);
+      }
+
+      log(`[api-analytics] Получены данные: totalPosts=${analyticsData.totalPosts}, platforms=${platforms.length}`);
+      log(`[api-analytics] Возвращаем JSON: ${JSON.stringify(analyticsData)}`);
 
       res.json({
         success: true,
