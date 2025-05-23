@@ -114,8 +114,9 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       // Получаем реальное количество постов за период из campaign-content
       let actualTotalPosts = 0;
       try {
+        const userToken = req.headers.authorization;
         const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
-          headers: { 'Authorization': 'Bearer test' }
+          headers: { 'Authorization': userToken }
         });
         
         if (contentResponse.ok) {
@@ -197,8 +198,9 @@ analyticsRouter.get('/', async (req: any, res: Response) => {
       // Получаем реальное количество постов за период из campaign-content API
       let actualTotalPosts = 0;
       try {
+        const userToken = req.headers.authorization;
         const contentResponse = await fetch(`http://localhost:5000/api/campaign-content?campaignId=${campaignId}`, {
-          headers: { 'Authorization': 'Bearer test' }
+          headers: { 'Authorization': userToken }
         });
         
         if (contentResponse.ok) {
