@@ -2995,10 +2995,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Временно отключаем старый роут
   // app.use('/api/analytics', analyticsRouter);
   
-  // Добавляем рабочий роут аналитики прямо здесь
+  // Добавляем рабочий роут аналитики с прямым запросом к Directus
   app.get('/api/analytics', authenticateUser, async (req: Request, res: Response) => {
     try {
       const { campaignId, period = '7days' } = req.query;
+      
+      console.log(`[analytics-FIXED] Запрос: campaignId=${campaignId}, period=${period}`);
       
       if (!campaignId || typeof campaignId !== 'string') {
         return res.status(400).json({ 
@@ -3007,14 +3009,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Используем исправленный сервис аналитики
-      const { getPlatformsStats } = await import('./services/analytics/analytics-service-fixed');
-      const userId = req.user!.id;
+      // Прямой запрос к Directus как в Postman
       const periodDays = period === '30days' ? 30 : 7;
+      const currentDate = new Date();
+      const startDate = new Date(currentDate.getTime() - (periodDays * 24 * 60 * 60 * 1000));
       
-      const result = await getPlatformsStats(userId, campaignId, periodDays);
+      const directusFilter = `filter[campaign_id][_eq]=${campaignId}&filter[status][_eq]=published&filter[published_at][_gte]=$NOW(-${periodDays} days)`;
+      const directusUrl = `https://directus.nplanner.ru/items/campaign_content?${directusFilter}`;
       
-      console.log(`[analytics-FIXED] Результат для ${periodDays} дней:`, JSON.stringify(result, null, 2));
+      console.log(`[analytics-FIXED] Запрос к Directus: ${directusUrl}`);
+      
+      // Получаем токен администратора из req.user
+      const userToken = req.user!.token;
+      
+      const response = await fetch(directusUrl, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Directus error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`[analytics-FIXED] Найдено ${data.data.length} постов за ${periodDays} дней`);
+      
+      // Подсчитываем реальную статистику
+      let totalPosts = 0;
+      let totalViews = 0;
+      let totalLikes = 0;
+      const platformStats = {
+        Telegram: { posts: 0, views: 0, likes: 0, shares: 0, comments: 0 },
+        Vk: { posts: 0, views: 0, likes: 0, shares: 0, comments: 0 },
+        Facebook: { posts: 0, views: 0, likes: 0, shares: 0, comments: 0 }
+      };
+      
+      data.data.forEach((content: any) => {
+        if (content.social_platforms) {
+          Object.values(content.social_platforms).forEach((platform: any) => {
+            if (platform.status === 'published') {
+              totalPosts++;
+              
+              const platformName = platform.platform === 'telegram' ? 'Telegram' 
+                                 : platform.platform === 'vk' ? 'Vk' 
+                                 : 'Facebook';
+              
+              if (platformStats[platformName]) {
+                platformStats[platformName].posts++;
+                
+                if (platform.analytics) {
+                  platformStats[platformName].views += platform.analytics.views || 0;
+                  platformStats[platformName].likes += platform.analytics.likes || 0;
+                  totalViews += platform.analytics.views || 0;
+                  totalLikes += platform.analytics.likes || 0;
+                }
+              }
+            }
+          });
+        }
+      });
+      
+      const result = {
+        platforms: Object.entries(platformStats).map(([name, stats]) => ({
+          name,
+          ...stats
+        })),
+        totalViews,
+        totalLikes,
+        totalShares: 0,
+        totalComments: 0,
+        totalPosts
+      };
+      
+      console.log(`[analytics-FIXED] РЕЗУЛЬТАТ:`, JSON.stringify(result, null, 2));
       
       return res.json({
         success: true,
