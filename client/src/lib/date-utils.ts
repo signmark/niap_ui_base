@@ -15,7 +15,7 @@ export function formatDateWithTimezone(
   
   try {
     // Конвертируем строку в объект Date если нужно
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    let date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     
     // Проверяем, что дата валидна
     if (isNaN(date.getTime())) {
@@ -23,8 +23,13 @@ export function formatDateWithTimezone(
       return 'Некорректная дата';
     }
     
-    // JavaScript автоматически преобразует UTC время в локальный часовой пояс пользователя
-    // Не нужно добавлять часы вручную - браузер сам определит правильное время
+    // Если дата передана как строка, то обычно это UTC время из базы данных
+    // Добавляем 3 часа для корректного отображения в московском времени
+    if (typeof dateString === 'string' && dateString.includes('T')) {
+      // Создаем новую дату с учетом смещения в 3 часа (Москва UTC+3)
+      date = new Date(date.getTime() + 3 * 60 * 60 * 1000);
+    }
+    
     // Форматируем дату с использованием locale ru для русских названий месяцев
     return format(date, formatStr, { locale: ru });
   } catch (error) {

@@ -997,6 +997,13 @@ export default function ContentPage() {
     return latestTime || content.publishedAt;
   };
 
+  // Получаем правильное время создания контента
+  const getCorrectCreatedTime = (content: any) => {
+    // Для времени создания пока используем основное поле createdAt
+    // В будущем можно добавить логику получения времени создания из других источников
+    return content.createdAt;
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -1365,7 +1372,7 @@ export default function ContentPage() {
                                   )}
                                   {!content.publishedAt && !content.scheduledAt && (
                                     <CreationTimeDisplay
-                                      createdAt={content.createdAt || new Date()}
+                                      createdAt={getCorrectCreatedTime(content) || new Date()}
                                       label="Создано:"
                                       showIcon={false}
                                       iconType="calendar"
@@ -2448,38 +2455,7 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (() => {
                   // Получаем самое позднее время публикации из платформ
                   const getLatestPublishedTime = () => {
-                    console.log('DEBUG: socialPlatforms =', previewContent.socialPlatforms);
-                    let latestTime = null;
-                    let foundPlatforms = [];
-                    
-                    if (previewContent.socialPlatforms && typeof previewContent.socialPlatforms === 'object') {
-                      // Ищем самое позднее время публикации среди всех платформ
-                      for (const [platformName, platform] of Object.entries(previewContent.socialPlatforms)) {
-                        console.log(`DEBUG: Платформа ${platformName}:`, platform);
-                        if (platform && 
-                            typeof platform === 'object' && 
-                            'status' in platform && 
-                            'publishedAt' in platform && 
-                            platform.status === 'published' && 
-                            platform.publishedAt) {
-                          const publishedTime = new Date(platform.publishedAt);
-                          console.log(`DEBUG: Время публикации ${platformName}:`, platform.publishedAt, publishedTime);
-                          foundPlatforms.push(`${platformName}: ${platform.publishedAt}`);
-                          if (!latestTime || publishedTime > new Date(latestTime)) {
-                            latestTime = platform.publishedAt;
-                          }
-                        }
-                      }
-                    }
-                    
-                    console.log('DEBUG: Найденные платформы:', foundPlatforms);
-                    console.log('DEBUG: Самое позднее время:', latestTime);
-                    console.log('DEBUG: Основное время publishedAt:', previewContent.publishedAt);
-                    
-                    // Если найдено время в платформах, используем его, иначе основное поле
-                    const finalTime = latestTime || previewContent.publishedAt;
-                    console.log('DEBUG: Итоговое время:', finalTime);
-                    return finalTime;
+                    return getCorrectPublishedTime(previewContent);
                   };
                   
                   return (
