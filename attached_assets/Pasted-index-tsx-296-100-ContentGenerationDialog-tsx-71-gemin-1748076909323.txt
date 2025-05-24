@@ -1,0 +1,105 @@
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:71 Генерация контента через gemini-2.0-flash API
+ContentGenerationDialog.tsx:72 Параметры запроса: {prompt: 'Учитывай данные кампании и в конце напиши сайт', keywords: Array(2), tone: 'professional', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platform: 'facebook', …}
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: {success: true, content: '\nОптимизируйте рацион питания ваших клиентов с наш…нутрициолога #планпитания #здоровье #велнес #зож\n', service: 'gemini'}
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: {content: '\nОптимизируйте рацион питания ваших клиентов с наш…нутрициолога #планпитания #здоровье #велнес #зож\n', service: 'gemini'}
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: 
+Оптимизируйте рацион питания ваших клиентов с нашим сервисом для нутрициологов!
+
+Уважаемые нутрициологи и диетологи! 👋 Хотите тратить меньше времени на рутинные задачи и больше – на индивидуальный подход к каждому клиенту? Наш сервис разработан специально для вас!
+
+Мы понимаем, насколько важен сбалансированный рацион питания для достижения здоровья и благополучия. Именно поэтому мы создали инструмент, который поможет вам:
+
+
+  ✅ Автоматически составлять персонализированные планы питания, учитывая индивидуальные потребности и цели ваших клиентов.
+  📊 Анализировать пищевую ценность продуктов и блюд, обеспечивая оптимальное соотношение макро- и микроэлементов.
+  📝 Вести учет пищевых дневников и отслеживать прогресс ваших клиентов в режиме реального времени.
+  📚 Получать доступ к обширной базе данных продуктов питания с подробной информацией о составе и калорийности.
+  🤝 Улучшить коммуникацию с клиентами благодаря удобной системе обмена сообщениями и файлами.
+
+
+С нашим сервисом вы сможете:
+
+  ✨ Повысить эффективность своей работы и увеличить количество довольных клиентов.
+  🚀 Сосредоточиться на разработке стратегий и мотивации, а не на утомительных расчетах.
+  📈 Развивать свой бизнес и привлекать новых клиентов, предлагая им современные и эффективные решения.
+
+
+Не упустите возможность вывести свою практику на новый уровень! Присоединяйтесь к сообществу успешных нутрициологов, использующих наш сервис.
+
+👉 Узнайте больше и получите бесплатную демо-версию на нашем сайте: www.example.com
+
+#нутрициолог #диетолог #рационпитания #здоровоепитание #сервиснутрициолога #планпитания #здоровье #велнес #зож
+
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 9
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>Оптимизируйте рацион питания ваших клиентов с нашим сервисом для нутрициологов!</p><p>Уважаемые нутрициологи и диетологи! 👋 Хотите тратить меньше времени на рутинные задачи и больше – на индивидуальный подход к каждому клиенту? Наш сервис разработан специально для вас!</p><p>Мы понимаем, насколько важен сбалансированный рацион питания для достижения здоровья и благополучия. Именно поэтому мы создали инструмент, который поможет вам:</p><p>✅ Автоматически составлять персонализированные планы питания, учитывая индивидуальные потребности и цели ваших клиентов.
+  📊 Анализировать пищевую ценность продуктов и блюд, обеспечивая оптимальное соотношение макро- и микроэлементов.
+  📝 Вести учет пищевых дневников и отслеживать прогресс ваших клиентов в режиме реального времени.
+  📚 Получать доступ к обширной базе данных продуктов питания с подробной информацией о составе и калорийности.
+  🤝 Улучшить коммуникацию с клиентами благодаря удобной системе обмена сообщениями и файлами.</p><p>С нашим сервисом вы сможете:</p><p>✨ Повысить эффективность своей работы и увеличить количество довольных клиентов.
+  🚀 Сосредоточиться на разработке стратегий и мотивации, а не на утомительных расчетах.
+  📈 Развивать свой бизнес и привлекать новых клиентов, предлагая им современные и эффективные решения.</p><p>Не упустите возможность вывести свою практику на новый уровень! Присоединяйтесь к сообществу успешных нутрициологов, использующих наш сервис.</p><p>👉 Узнайте больше и получите бесплатную демо-версию на нашем сайте: www.example.com</p><p>#нутрициолог #диетолог #рационпитания #здоровоепитание #сервиснутрициолога #планпитания #здоровье #велнес #зож</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 34
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 34
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
