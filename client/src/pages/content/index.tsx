@@ -2419,14 +2419,12 @@ export default function ContentPage() {
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {previewContent?.publishedAt && (() => {
-                  // Получаем правильное время публикации из платформ
-                  const getCorrectPublishedTime = () => {
-                    console.log('DEBUG: Отображение времени публикации');
-                    console.log('DEBUG: previewContent.publishedAt =', previewContent.publishedAt);
-                    console.log('DEBUG: previewContent.socialPlatforms =', previewContent.socialPlatforms);
+                  // Получаем самое позднее время публикации из платформ
+                  const getLatestPublishedTime = () => {
+                    let latestTime = null;
                     
                     if (previewContent.socialPlatforms && typeof previewContent.socialPlatforms === 'object') {
-                      // Ищем первую опубликованную платформу с временем публикации
+                      // Ищем самое позднее время публикации среди всех платформ
                       for (const [platformName, platform] of Object.entries(previewContent.socialPlatforms)) {
                         if (platform && 
                             typeof platform === 'object' && 
@@ -2434,19 +2432,21 @@ export default function ContentPage() {
                             'publishedAt' in platform && 
                             platform.status === 'published' && 
                             platform.publishedAt) {
-                          console.log(`DEBUG: Найдено время публикации для ${platformName}:`, platform.publishedAt);
-                          return platform.publishedAt;
+                          const publishedTime = new Date(platform.publishedAt);
+                          if (!latestTime || publishedTime > new Date(latestTime)) {
+                            latestTime = platform.publishedAt;
+                          }
                         }
                       }
                     }
-                    // Если не найдено время в платформах, используем основное поле
-                    console.log('DEBUG: Используем основное поле publishedAt');
-                    return previewContent.publishedAt;
+                    
+                    // Если найдено время в платформах, используем его, иначе основное поле
+                    return latestTime || previewContent.publishedAt;
                   };
                   
                   return (
                     <CreationTimeDisplay 
-                      createdAt={getCorrectPublishedTime()}
+                      createdAt={getLatestPublishedTime()}
                       label="Опубликовано:"
                       showIcon={true}
                       iconType="check"
