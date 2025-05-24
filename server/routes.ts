@@ -3023,13 +3023,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const token = authHeader.replace('Bearer ', '');
     
     let campaignWebsiteUrl = null;
-    let campaignQuestionnaire = null;
+    let questionnaireData = null;
+    const userId = req.userId;
     
     // Если включено использование данных кампании, получаем данные из Directus
     if (useCampaignData) {
       try {
         console.log(`[CONTENT-GEN] Получение данных кампании ${campaignId} с токеном пользователя`);
         
+        // 1. Получаем данные кампании (включая ссылку на сайт)
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -3042,16 +3044,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (campaignResponse.data?.data?.link) {
           campaignWebsiteUrl = campaignResponse.data.data.link;
           console.log(`[CONTENT-GEN] Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
-        } else {
-          console.warn('[CONTENT-GEN] Ссылка на сайт кампании не найдена в ответе Directus');
         }
 
-        // Получаем анкету
-        if (campaignResponse.data?.data?.questionnaire) {
-          campaignQuestionnaire = campaignResponse.data.data.questionnaire;
-          console.log(`[CONTENT-GEN] Получена анкета кампании, длина: ${campaignQuestionnaire.length} символов`);
+        // 2. Получаем анкету из отдельной коллекции business_questionnaire
+        const questionnaireResponse = await axios.get(
+          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${userId}&limit=1&sort=-date_created`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (questionnaireResponse.data?.data?.[0]) {
+          questionnaireData = questionnaireResponse.data.data[0];
+          console.log(`[CONTENT-GEN] Получена анкета пользователя:`, questionnaireData);
         } else {
-          console.warn('[CONTENT-GEN] Анкета кампании не найдена в ответе Directus');
+          console.warn('[CONTENT-GEN] Анкета пользователя не найдена');
         }
       } catch (error) {
         console.error('[CONTENT-GEN] Не удалось получить данные кампании из Directus:', error);
@@ -3064,15 +3074,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Создаем улучшенный промпт с данными кампании
       let enhancedPrompt = prompt;
-      if (useCampaignData && (campaignWebsiteUrl || campaignQuestionnaire)) {
-        enhancedPrompt = `${prompt}`;
+      
+      // Добавляем ключевые слова если они есть
+      if (keywords && keywords.length > 0) {
+        enhancedPrompt += `\n\nКлючевые слова: ${keywords.join(', ')}`;
+      }
+      
+      // Добавляем данные компании если включено использование данных кампании
+      if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
+        enhancedPrompt += '\n\nДополнительная информация о компании:';
         
         if (campaignWebsiteUrl) {
-          enhancedPrompt += `\n\nИспользуйте ссылку на сайт компании: ${campaignWebsiteUrl}`;
+          enhancedPrompt += `\nСайт компании: ${campaignWebsiteUrl}`;
         }
         
-        if (campaignQuestionnaire) {
-          enhancedPrompt += `\n\nДополнительная информация о компании: ${campaignQuestionnaire}`;
+        if (questionnaireData) {
+          if (questionnaireData.company_name) {
+            enhancedPrompt += `\nНазвание компании: ${questionnaireData.company_name}`;
+          }
+          if (questionnaireData.business_description) {
+            enhancedPrompt += `\nОписание бизнеса: ${questionnaireData.business_description}`;
+          }
+          if (questionnaireData.target_audience) {
+            enhancedPrompt += `\nЦелевая аудитория: ${questionnaireData.target_audience}`;
+          }
         }
       }
       
