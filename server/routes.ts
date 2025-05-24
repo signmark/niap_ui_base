@@ -3021,6 +3021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log(`[CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords?.length || 0} ключевыми словами`);
     console.log(`[CONTENT-GEN] useCampaignData: ${useCampaignData}`);
+    console.log(`[CONTENT-GEN-DEBUG] Запрос включает useCampaignData: ${useCampaignData}, campaignId: ${campaignId}`);
     
     // Получаем токен из заголовка авторизации
     const authHeader = req.headers.authorization || '';
@@ -3086,29 +3087,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Добавляем данные компании если включено использование данных кампании
       if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
-        enhancedPrompt += '\n\nОБЯЗАТЕЛЬНО используй ТОЛЬКО следующую информацию о компании (НЕ придумывай свои данные):';
+        enhancedPrompt += '\n\n=== СТРОГО ОБЯЗАТЕЛЬНЫЕ ДАННЫЕ КОМПАНИИ ===';
+        enhancedPrompt += '\n🚨 ВНИМАНИЕ: Используй ТОЛЬКО эти данные! НЕ придумывай ничего своего!';
         
         if (campaignWebsiteUrl) {
-          enhancedPrompt += `\nСайт компании: ${campaignWebsiteUrl}`;
-          enhancedPrompt += `\nВАЖНО: Используй ТОЧНО этот сайт - ${campaignWebsiteUrl} - НЕ придумывай другие ссылки!`;
+          enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${campaignWebsiteUrl}`;
+          enhancedPrompt += `\n🚫 ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${campaignWebsiteUrl}`;
+          enhancedPrompt += `\n⚠️ Если пишешь ссылку, используй ТОЛЬКО: ${campaignWebsiteUrl}`;
         }
         
         if (questionnaireData) {
           if (questionnaireData.company_name) {
-            enhancedPrompt += `\nНазвание компании: ${questionnaireData.company_name}`;
+            enhancedPrompt += `\n🏢 Название компании: ${questionnaireData.company_name}`;
           }
           if (questionnaireData.business_description) {
-            enhancedPrompt += `\nОписание бизнеса: ${questionnaireData.business_description}`;
+            enhancedPrompt += `\n📝 Описание бизнеса: ${questionnaireData.business_description}`;
           }
           if (questionnaireData.target_audience) {
-            enhancedPrompt += `\nЦелевая аудитория: ${questionnaireData.target_audience}`;
+            enhancedPrompt += `\n🎯 Целевая аудитория: ${questionnaireData.target_audience}`;
           }
         }
         
-        enhancedPrompt += '\n\nПравила: Используй ТОЛЬКО предоставленную выше информацию о компании. НЕ придумывай другие сайты, названия или данные!';
+        enhancedPrompt += '\n\n🚨 КРИТИЧЕСКИ ВАЖНО: НЕ СОЗДАВАЙ новые сайты, НЕ ИЗМЕНЯЙ предоставленную ссылку, НЕ ИСПОЛЬЗУЙ примеры типа diet-analysis.ru или подобные!';
+        enhancedPrompt += `\n✅ ИСПОЛЬЗУЙ ТОЛЬКО: ${campaignWebsiteUrl || 'данные выше'}`;
+        enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
       }
       
       console.log('[CONTENT-GEN] Отправка запроса к Directus API с улучшенным промптом');
+      console.log('[CONTENT-GEN-DEBUG] Итоговый промпт для AI:', enhancedPrompt);
+      console.log('[CONTENT-GEN-DEBUG] Данные кампании - URL:', campaignWebsiteUrl);
+      console.log('[CONTENT-GEN-DEBUG] Данные анкеты:', questionnaireData ? JSON.stringify(questionnaireData, null, 2) : 'НЕ НАЙДЕНО');
       
       const response = await axios.post(`${directusUrl}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
         prompt: enhancedPrompt,
