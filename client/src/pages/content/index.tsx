@@ -2421,11 +2421,14 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (() => {
                   // Получаем самое позднее время публикации из платформ
                   const getLatestPublishedTime = () => {
+                    console.log('DEBUG: socialPlatforms =', previewContent.socialPlatforms);
                     let latestTime = null;
+                    let foundPlatforms = [];
                     
                     if (previewContent.socialPlatforms && typeof previewContent.socialPlatforms === 'object') {
                       // Ищем самое позднее время публикации среди всех платформ
                       for (const [platformName, platform] of Object.entries(previewContent.socialPlatforms)) {
+                        console.log(`DEBUG: Платформа ${platformName}:`, platform);
                         if (platform && 
                             typeof platform === 'object' && 
                             'status' in platform && 
@@ -2433,6 +2436,8 @@ export default function ContentPage() {
                             platform.status === 'published' && 
                             platform.publishedAt) {
                           const publishedTime = new Date(platform.publishedAt);
+                          console.log(`DEBUG: Время публикации ${platformName}:`, platform.publishedAt, publishedTime);
+                          foundPlatforms.push(`${platformName}: ${platform.publishedAt}`);
                           if (!latestTime || publishedTime > new Date(latestTime)) {
                             latestTime = platform.publishedAt;
                           }
@@ -2440,8 +2445,14 @@ export default function ContentPage() {
                       }
                     }
                     
+                    console.log('DEBUG: Найденные платформы:', foundPlatforms);
+                    console.log('DEBUG: Самое позднее время:', latestTime);
+                    console.log('DEBUG: Основное время publishedAt:', previewContent.publishedAt);
+                    
                     // Если найдено время в платформах, используем его, иначе основное поле
-                    return latestTime || previewContent.publishedAt;
+                    const finalTime = latestTime || previewContent.publishedAt;
+                    console.log('DEBUG: Итоговое время:', finalTime);
+                    return finalTime;
                   };
                   
                   return (
