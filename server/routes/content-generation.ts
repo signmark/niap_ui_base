@@ -5,11 +5,10 @@
 
 import express from 'express';
 import axios from 'axios';
-import { DirectusAuthManager } from '../services/directus/directus-auth-manager';
-import logger from '../utils/logger';
+import { directusAuthManager } from '../services/directus/directus-auth-manager';
+import { log as logger } from '../utils/logger';
 
 const router = express.Router();
-const directusAuthManager = new DirectusAuthManager();
 
 // Основной маршрут для генерации контента
 router.post('/generate-content', async (req, res) => {
