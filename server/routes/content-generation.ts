@@ -44,8 +44,9 @@ router.post('/generate-content', async (req, res) => {
     logger.info(`Запрос на генерацию контента для кампании ${campaignId} с ${keywords.length} ключевыми словами`);
     
     let campaignWebsiteUrl = null;
+    let campaignQuestionnaire = null;
     
-    // Если включено использование данных кампании, получаем ссылку на сайт
+    // Если включено использование данных кампании, получаем ссылку на сайт и анкету
     if (useCampaignData) {
       try {
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
@@ -62,6 +63,14 @@ router.post('/generate-content', async (req, res) => {
           logger.info(`Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
         } else {
           logger.warn('Ссылка на сайт кампании не найдена в ответе Directus');
+        }
+
+        // Получаем анкету
+        if (campaignResponse.data?.data?.questionnaire) {
+          campaignQuestionnaire = campaignResponse.data.data.questionnaire;
+          logger.info(`Получена анкета кампании, длина: ${campaignQuestionnaire.length} символов`);
+        } else {
+          logger.warn('Анкета кампании не найдена в ответе Directus');
         }
       } catch (error) {
         logger.warn('Не удалось получить данные кампании для ссылки на сайт:', error);
@@ -94,7 +103,9 @@ router.post('/generate-content', async (req, res) => {
           keywords,
           platform,
           tone,
-          prompt: campaignWebsiteUrl ? `${prompt} Обязательно включи ссылку на наш сайт: ${campaignWebsiteUrl}` : prompt,
+          prompt: useCampaignData ? 
+            `${prompt}${campaignWebsiteUrl ? ` Обязательно включи ссылку на наш сайт: ${campaignWebsiteUrl}` : ''}${campaignQuestionnaire ? ` Используй информацию из анкеты: ${campaignQuestionnaire}` : ''}` : 
+            prompt,
           service,
           useCampaignData,
           campaignWebsiteUrl
