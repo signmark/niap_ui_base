@@ -3013,6 +3013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Маршрут для генерации контента с данными кампании
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+    console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
     // Добавляем детальное логирование для отладки
     console.log(`[CONTENT-GEN-DEBUG] Получен запрос на генерацию контента`);
     console.log(`[CONTENT-GEN-DEBUG] Тело запроса:`, JSON.stringify(req.body, null, 2));
