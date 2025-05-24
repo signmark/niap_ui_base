@@ -1451,7 +1451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       enhancedPrompt,
       platform || 'instagram',
       tone || 'дружелюбный',
-      keywords
+      keywords || []
     );
     
     console.log('[CONTENT-GEN] Контент успешно сгенерирован с данными кампании');
