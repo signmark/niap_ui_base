@@ -970,6 +970,33 @@ export default function ContentPage() {
     }
   };
 
+  // Получаем правильное время публикации из платформ или основного поля
+  const getCorrectPublishedTime = (content: any) => {
+    if (!content.socialPlatforms || typeof content.socialPlatforms !== 'object') {
+      return content.publishedAt;
+    }
+
+    let latestTime = null;
+    
+    // Ищем самое позднее время публикации среди всех платформ
+    for (const [platformName, platform] of Object.entries(content.socialPlatforms)) {
+      if (platform && 
+          typeof platform === 'object' && 
+          'status' in platform && 
+          'publishedAt' in platform && 
+          platform.status === 'published' && 
+          platform.publishedAt) {
+        const publishedTime = new Date(platform.publishedAt);
+        if (!latestTime || publishedTime > new Date(latestTime)) {
+          latestTime = platform.publishedAt;
+        }
+      }
+    }
+    
+    // Если найдено время в платформах, используем его, иначе основное поле
+    return latestTime || content.publishedAt;
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -1320,7 +1347,7 @@ export default function ContentPage() {
                                 <div className="mt-2 pt-1.5 border-t text-xs text-muted-foreground flex flex-wrap gap-x-3">
                                   {content.publishedAt && (
                                     <CreationTimeDisplay
-                                      createdAt={content.publishedAt}
+                                      createdAt={getCorrectPublishedTime(content)}
                                       label="Опубл.:"
                                       showIcon={false}
                                       iconType="check"
