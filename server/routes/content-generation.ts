@@ -65,7 +65,8 @@ router.post('/generate-content', async (req, res) => {
           platform,
           tone,
           prompt,
-          service
+          service,
+          useCampaignData
         },
         timeout: 60000 // 60 секунд таймаут для генерации
       });
