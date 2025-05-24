@@ -50,9 +50,13 @@ router.post('/generate-content', async (req, res) => {
           }
         });
         
+        logger.info('Ответ Directus для кампании:', JSON.stringify(campaignResponse.data, null, 2));
+        
         if (campaignResponse.data?.data?.link) {
           campaignWebsiteUrl = campaignResponse.data.data.link;
           logger.info(`Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
+        } else {
+          logger.warn('Ссылка на сайт кампании не найдена в ответе Directus');
         }
       } catch (error) {
         logger.warn('Не удалось получить данные кампании для ссылки на сайт:', error);
