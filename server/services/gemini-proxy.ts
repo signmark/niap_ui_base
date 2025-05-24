@@ -22,6 +22,26 @@ export class GeminiProxyService {
   private maxRetries: number = 3;
   
   /**
+   * Определяет правильную версию API и URL для модели
+   * @param model Название модели
+   * @returns Объект с версией API и базовым URL
+   */
+  private getApiVersionForModel(model: string): { version: string; baseUrl: string } {
+    // Модели Gemini 2.x требуют v1beta API
+    if (model.startsWith('gemini-2.')) {
+      return {
+        version: 'v1beta',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
+      };
+    }
+    // Модели Gemini 1.x используют v1 API
+    return {
+      version: 'v1',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1'
+    };
+  }
+  
+  /**
    * Создает новый экземпляр GeminiProxyService
    * @param options Опции для инициализации сервиса
    */
@@ -126,8 +146,8 @@ export class GeminiProxyService {
    */
   async testApiKey(): Promise<boolean> {
     try {
-      // URL для запроса к API Gemini (обновлено на v1)
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+      // URL для запроса к API Gemini (обновлено на v1beta для поддержки Gemini 2.5)
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${this.apiKey}`;
       
       // Тестовый промпт
       const requestData = {
@@ -163,8 +183,9 @@ export class GeminiProxyService {
       
       logger.log(`[gemini-proxy] Improving text with model: ${model}`, 'gemini');
       
-      // URL для запроса к Gemini API (обновлено на v1)
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${this.apiKey}`;
+      // Определяем правильную версию API для модели
+      const { baseUrl } = this.getApiVersionForModel(model);
+      const url = `${baseUrl}/models/${model}:generateContent?key=${this.apiKey}`;
       
       // Формируем запрос
       const requestData = {
@@ -223,8 +244,9 @@ export class GeminiProxyService {
       
       logger.log(`[gemini-proxy] Generating text with model: ${model}`, 'gemini');
       
-      // URL для запроса к Gemini API (обновлено на v1)
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${this.apiKey}`;
+      // Определяем правильную версию API для модели
+      const { baseUrl } = this.getApiVersionForModel(model);
+      const url = `${baseUrl}/models/${model}:generateContent?key=${this.apiKey}`;
       
       // Формируем запрос
       const requestData = {
