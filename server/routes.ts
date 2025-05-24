@@ -3032,7 +3032,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.userId;
     
     // Если включено использование данных кампании, получаем данные из Directus
+    console.log(`[CONTENT-GEN-DEBUG] Проверяем useCampaignData: ${useCampaignData}, тип: ${typeof useCampaignData}`);
     if (useCampaignData) {
+      console.log(`[CONTENT-GEN-DEBUG] Входим в блок загрузки данных кампании для ID: ${campaignId}`);
       try {
         console.log(`[CONTENT-GEN] Получение данных кампании ${campaignId} с токеном пользователя`);
         
