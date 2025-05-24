@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-1.5-flash' | 'gemini-2.0-flash' | 'gemini-2.0-pro-exp' | 'gemini-2.5-pro-preview-03-25' | 'gemini-2.5-pro-exp-03-25';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-1.5-pro' | 'gemini-1.5-flash' | 'gemini-2.0-flash' | 'gemini-2.0-pro-exp';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -267,8 +267,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
                     <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
                     <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
-                    <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</SelectItem>
-                    <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Experimental</SelectItem>
+
                   </SelectContent>
                 </Select>
               </div>
