@@ -1354,7 +1354,7 @@ function parseArrayField(value: any, itemId?: string): any[] {
 export async function registerRoutes(app: Express): Promise<Server> {
   // ВАЖНО: Регистрируем наш улучшенный маршрут ПЕРЕД старыми роутами Claude
   // Маршрут для генерации контента с данными кампании
-  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+  app.post("/api/generate-content", async (req: any, res) => {
     console.log(`🎯🎯🎯 [FIXED-HANDLER] ЗАПРОС ПОПАЛ В ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
     console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
     

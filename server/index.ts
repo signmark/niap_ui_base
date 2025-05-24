@@ -218,12 +218,9 @@ app.use((req, res, next) => {
     const server = await registerRoutes(app);
     console.log("✅ Main routes with campaign data handlers registered FIRST");
     
-    // Регистрируем маршруты для Claude AI
-    console.log("Registering Claude AI routes...");
-    log("Registering Claude AI routes...");
-    registerClaudeRoutes(app);
-    console.log("Claude AI routes registered");
-    log("Claude AI routes registered successfully");
+    // УДАЛЕН старый registerClaudeRoutes - теперь используется новый обработчик в routes.ts с данными кампании
+    console.log("Claude AI routes REMOVED - using new handler with campaign data");
+    log("Claude AI routes REMOVED - using new handler with campaign data");
     
     // Регистрируем маршруты для DeepSeek
     console.log("Registering DeepSeek routes...");
