@@ -75,8 +75,7 @@ export function PostCalendar({ campaignId }: { campaignId: string }) {
   // Format time for display
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    // Добавляем 3 часа для корректного отображения в UTC+3
-    date.setHours(date.getHours() + 3);
+    // JavaScript автоматически отображает время в локальном часовом поясе пользователя
     return date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
