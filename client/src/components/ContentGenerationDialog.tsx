@@ -41,6 +41,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
   const [selectedService, setSelectedService] = useState<ApiService>('gemini-2.0-flash');
+  const [useCampaignData, setUseCampaignData] = useState(false);
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -81,7 +82,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           tone,
           campaignId,
           platform: platform, // Используется для всех сервисов
-          service: selectedService // Указываем выбранный сервис
+          service: selectedService, // Указываем выбранный сервис
+          useCampaignData: useCampaignData // Использовать данные кампании
         })
       });
 
@@ -314,6 +316,22 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                   <SelectItem value="humorous">С юмором</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">
+                Данные кампании
+              </Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Checkbox
+                  id="useCampaignData"
+                  checked={useCampaignData}
+                  onCheckedChange={(checked) => setUseCampaignData(checked === true)}
+                />
+                <Label htmlFor="useCampaignData" className="text-sm cursor-pointer">
+                  Использовать данные кампании (сайт, анкета)
+                </Label>
+              </div>
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">

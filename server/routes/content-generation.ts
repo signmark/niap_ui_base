@@ -14,7 +14,7 @@ const directusAuthManager = new DirectusAuthManager();
 // Основной маршрут для генерации контента
 router.post('/generate-content', async (req, res) => {
   try {
-    const { campaignId, keywords, platform, tone, prompt, service } = req.body;
+    const { campaignId, keywords, platform, tone, prompt, service, useCampaignData } = req.body;
     
     // Проверка обязательных параметров
     if (!campaignId || !keywords || !platform || !tone || !prompt || !service) {
