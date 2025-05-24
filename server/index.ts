@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
-import { registerClaudeRoutes } from "./routes-claude";
+// УДАЛЕН старый registerClaudeRoutes - использует новый обработчик в routes.ts
 import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
