@@ -3015,8 +3015,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
     
-    console.log(`[CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords?.length || 0} ключевыми словами`);
-    console.log(`[CONTENT-GEN] useCampaignData: ${useCampaignData}`);
+    console.log(`8:${new Date().getMinutes()}:${new Date().getSeconds()} AM [CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords?.length || 0} ключевыми словами`);
+    console.log(`8:${new Date().getMinutes()}:${new Date().getSeconds()} AM [CONTENT-GEN] useCampaignData: ${useCampaignData}`);
     
     // Получаем токен из заголовка авторизации
     const authHeader = req.headers.authorization || '';
