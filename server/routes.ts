@@ -1352,6 +1352,107 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ВАЖНО: Регистрируем наш улучшенный маршрут ПЕРЕД старыми роутами Claude
+  // Маршрут для генерации контента с данными кампании
+  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+    console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
+    
+    const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    const userId = req.userId;
+    
+    let campaignWebsiteUrl = null;
+    let questionnaireData = null;
+    
+    // Если включено использование данных кампании, получаем данные из Directus
+    if (useCampaignData) {
+      try {
+        // 1. Получаем данные кампании (включая ссылку на сайт)
+        const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (campaignResponse.data?.data?.link) {
+          campaignWebsiteUrl = campaignResponse.data.data.link;
+        }
+
+        // 2. Получаем анкету из отдельной коллекции business_questionnaire
+        const questionnaireResponse = await axios.get(
+          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${userId}&limit=1&sort=-date_created`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (questionnaireResponse.data?.data?.[0]) {
+          questionnaireData = questionnaireResponse.data.data[0];
+        }
+        
+      } catch (error) {
+        console.error('[CONTENT-GEN] Ошибка при получении данных кампании:', error);
+      }
+    }
+    
+    // Формируем улучшенный промпт с учетом данных кампании
+    let enhancedPrompt = prompt;
+    
+    if (keywords && keywords.length > 0) {
+      enhancedPrompt += `\n\nКлючевые слова: ${keywords.join(', ')}`;
+    }
+    
+    // Добавляем данные компании если включено использование данных кампании
+    if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
+      enhancedPrompt += '\n\n=== СТРОГО ОБЯЗАТЕЛЬНЫЕ ДАННЫЕ КОМПАНИИ ===';
+      enhancedPrompt += '\n🚨 ВНИМАНИЕ: Используй ТОЛЬКО эти данные! НЕ придумывай ничего своего!';
+      
+      if (campaignWebsiteUrl) {
+        enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${campaignWebsiteUrl}`;
+        enhancedPrompt += `\n🚫 ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${campaignWebsiteUrl}`;
+        enhancedPrompt += `\n⚠️ Если пишешь ссылку, используй ТОЛЬКО: ${campaignWebsiteUrl}`;
+      }
+      
+      if (questionnaireData) {
+        if (questionnaireData.company_name) {
+          enhancedPrompt += `\n🏢 Название компании: ${questionnaireData.company_name}`;
+        }
+        if (questionnaireData.business_description) {
+          enhancedPrompt += `\n📝 Описание бизнеса: ${questionnaireData.business_description}`;
+        }
+        if (questionnaireData.target_audience) {
+          enhancedPrompt += `\n🎯 Целевая аудитория: ${questionnaireData.target_audience}`;
+        }
+      }
+      
+      enhancedPrompt += '\n\n🚨 КРИТИЧЕСКИ ВАЖНО: НЕ СОЗДАВАЙ новые сайты, НЕ ИЗМЕНЯЙ предоставленную ссылку, НЕ ИСПОЛЬЗУЙ примеры типа diet-analysis.ru или подобные!';
+      enhancedPrompt += `\n✅ ИСПОЛЬЗУЙ ТОЛЬКО: ${campaignWebsiteUrl || 'данные выше'}`;
+      enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
+    }
+    
+    const response = await axios.post(`${directusUrl}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
+      prompt: enhancedPrompt,
+      keywords,
+      tone,
+      campaignId,
+      platform,
+      service,
+      useCampaignData
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json(response.data);
+  });
+  
   // Регистрируем универсальный интерфейс для FAL.AI
   registerClaudeRoutes(app);
   registerFalAiImageRoutes(app);
