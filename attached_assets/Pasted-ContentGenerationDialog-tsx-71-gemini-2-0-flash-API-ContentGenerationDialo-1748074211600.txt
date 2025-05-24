@@ -1,0 +1,80 @@
+ContentGenerationDialog.tsx:71 Генерация контента через gemini-2.0-flash API
+ContentGenerationDialog.tsx:72 Параметры запроса: {prompt: 'Вставь ссылку на сайт', keywords: Array(2), tone: 'friendly', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platform: 'facebook', …}
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 34
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: {success: true, content: '\n🥗 Надоело думать, что приготовить на ужин? 🤔\n\nП…епитание #здоровье #красота #еда #вкусноиполезно\n', service: 'gemini'}
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: {content: '\n🥗 Надоело думать, что приготовить на ужин? 🤔\n\nП…епитание #здоровье #красота #еда #вкусноиполезно\n', service: 'gemini'}
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: 
+🥗 Надоело думать, что приготовить на ужин? 🤔
+
+Привет, друзья! 👋 Часто ловите себя на мысли, что здоровое питание – это сложно и отнимает кучу времени? Забудьте об этом! 😉
+
+Мы знаем, как сделать вашу жизнь проще и вкуснее! Представляем вам индивидуальные рационы питания, разработанные специально для вас! 🚀
+
+Что вас ждет?
+
+  Персональный подход: Учитываем ваши цели, предпочтения и особенности организма.
+  ПП питание на неделю с рецептами: Больше не нужно ломать голову над тем, что приготовить. Все уже продумано за вас! 📝
+  Вкусные и разнообразные блюда: Здоровое питание – это не только полезно, но и очень вкусно! 😋
+  Экономия времени и сил: Забудьте о бесконечных походах в магазин и часах, проведенных на кухне. ⏰
+
+
+Наши рационы – это не просто диета, это образ жизни! ✨ Вы почувствуете прилив энергии, улучшите свое самочувствие и получите фигуру мечты! 💃🕺
+
+Хотите узнать больше и заказать свой индивидуальный рацион питания? Переходите по ссылке! 👇
+
+👉 Заказать рацион питания 
+
+#пп #здоровоепитание #рационпитания #индивидуальныйрацион #рецепты #зож #фитнес #диета #правильноепитание #здоровье #красота #еда #вкусноиполезно
+
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 9
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>🥗 Надоело думать, что приготовить на ужин? 🤔</p><p>Привет, друзья! 👋 Часто ловите себя на мысли, что здоровое питание – это сложно и отнимает кучу времени? Забудьте об этом! 😉</p><p>Мы знаем, как сделать вашу жизнь проще и вкуснее! Представляем вам индивидуальные рационы питания, разработанные специально для вас! 🚀</p><p>Что вас ждет?</p><p>Персональный подход: Учитываем ваши цели, предпочтения и особенности организма.
+  ПП питание на неделю с рецептами: Больше не нужно ломать голову над тем, что приготовить. Все уже продумано за вас! 📝
+  Вкусные и разнообразные блюда: Здоровое питание – это не только полезно, но и очень вкусно! 😋
+  Экономия времени и сил: Забудьте о бесконечных походах в магазин и часах, проведенных на кухне. ⏰</p><p>Наши рационы – это не просто диета, это образ жизни! ✨ Вы почувствуете прилив энергии, улучшите свое самочувствие и получите фигуру мечты! 💃🕺</p><p>Хотите узнать больше и заказать свой индивидуальный рацион питания? Переходите по ссылке! 👇</p><p>👉 Заказать рацион питания</p><p>#пп #здоровоепитание #рационпитания #индивидуальныйрацион #рецепты #зож #фитнес #диета #правильноепитание #здоровье #красота #еда #вкусноиполезно</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:296 Загружено контента: 100
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 34
