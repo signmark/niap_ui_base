@@ -6,8 +6,6 @@
 import express from 'express';
 import axios from 'axios';
 
-const router = express.Router();
-
 // Простая функция логирования
 const logger = {
   info: (message: string, data?: any) => console.log(`INFO: ${message}`, data || ''),
@@ -180,6 +178,12 @@ router.post('/generate-content', async (req, res) => {
     });
   }
 });
+
+// Функция для регистрации маршрута
+export function registerContentGenerationRoute(app: any) {
+  // Эта функция пока пустая, но нужна для совместимости
+  logger.info('[CONTENT-GEN] Маршрут генерации контента зарегистрирован');
+}
 
 // Роут для прямого прокси к API Directus
 router.post('/direct-generate', async (req, res) => {

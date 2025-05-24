@@ -48,6 +48,7 @@ import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
+import { registerContentGenerationRoute } from './routes/content-generation';
 import { publicationStatusChecker } from './services/status-checker';
 import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
@@ -3010,6 +3011,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);
+  
+  // Маршрут для генерации контента с данными кампании
+  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+    const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
+    
+    console.log(`[CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords?.length || 0} ключевыми словами`);
+    console.log(`[CONTENT-GEN] useCampaignData: ${useCampaignData}`);
+    
+    // Получаем токен из заголовка авторизации
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    
+    let campaignWebsiteUrl = null;
+    let campaignQuestionnaire = null;
+    
+    // Если включено использование данных кампании, получаем данные из Directus
+    if (useCampaignData) {
+      try {
+        console.log(`[CONTENT-GEN] Получение данных кампании ${campaignId} с токеном пользователя`);
+        
+        const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('[CONTENT-GEN] Ответ Directus для кампании:', JSON.stringify(campaignResponse.data, null, 2));
+        
+        if (campaignResponse.data?.data?.link) {
+          campaignWebsiteUrl = campaignResponse.data.data.link;
+          console.log(`[CONTENT-GEN] Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
+        } else {
+          console.warn('[CONTENT-GEN] Ссылка на сайт кампании не найдена в ответе Directus');
+        }
+
+        // Получаем анкету
+        if (campaignResponse.data?.data?.questionnaire) {
+          campaignQuestionnaire = campaignResponse.data.data.questionnaire;
+          console.log(`[CONTENT-GEN] Получена анкета кампании, длина: ${campaignQuestionnaire.length} символов`);
+        } else {
+          console.warn('[CONTENT-GEN] Анкета кампании не найдена в ответе Directus');
+        }
+      } catch (error) {
+        console.error('[CONTENT-GEN] Не удалось получить данные кампании из Directus:', error);
+      }
+    }
+
+    // Пересылаем запрос к Directus API для генерации контента
+    try {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      // Создаем улучшенный промпт с данными кампании
+      let enhancedPrompt = prompt;
+      if (useCampaignData && (campaignWebsiteUrl || campaignQuestionnaire)) {
+        enhancedPrompt = `${prompt}`;
+        
+        if (campaignWebsiteUrl) {
+          enhancedPrompt += `\n\nИспользуйте ссылку на сайт компании: ${campaignWebsiteUrl}`;
+        }
+        
+        if (campaignQuestionnaire) {
+          enhancedPrompt += `\n\nДополнительная информация о компании: ${campaignQuestionnaire}`;
+        }
+      }
+      
+      console.log('[CONTENT-GEN] Отправка запроса к Directus API с улучшенным промптом');
+      
+      const response = await axios.post(`${directusUrl}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
+        prompt: enhancedPrompt,
+        keywords,
+        tone,
+        campaignId,
+        platform,
+        service
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('[CONTENT-GEN] Успешный ответ от Directus API');
+      return res.json(response.data);
+      
+    } catch (error: any) {
+      console.error('[CONTENT-GEN] Ошибка при генерации контента:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Ошибка при генерации контента'
+      });
+    }
+  });
   
   // Запускаем планировщик публикаций
   publishScheduler.start();
