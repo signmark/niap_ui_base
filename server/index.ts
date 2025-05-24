@@ -7,6 +7,7 @@ import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
 import { registerGeminiRoutes } from "./routes-gemini";
+import { registerVertexAIRoutes } from "./routes-vertex-ai";
 import { registerImgurRoutes } from "./routes-imgur";
 import { registerBegetS3Routes } from "./routes-beget-s3";
 import { registerUserApiKeysRoutes } from "./routes-user-api-keys";
@@ -242,6 +243,13 @@ app.use((req, res, next) => {
     registerGeminiRoutes(app);
     console.log("Gemini routes registered");
     log("Gemini routes registered successfully");
+    
+    // Регистрируем маршруты для Vertex AI Gemini 2.5
+    console.log("Registering Vertex AI Gemini 2.5 routes...");
+    log("Registering Vertex AI Gemini 2.5 routes...");
+    registerVertexAIRoutes(app);
+    console.log("Vertex AI Gemini 2.5 routes registered");
+    log("Vertex AI Gemini 2.5 routes registered successfully");
     
     // Регистрируем специальные маршруты для XMLRiver API
     log("Registering XMLRiver API routes...");
