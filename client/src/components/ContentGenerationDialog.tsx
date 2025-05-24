@@ -69,6 +69,15 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
       console.log(`Генерация контента через ${selectedService} API`);
+      console.log('Параметры запроса:', {
+        prompt: prompt,
+        keywords: selectedKeywords,
+        tone,
+        campaignId,
+        platform: platform,
+        service: selectedService,
+        useCampaignData: useCampaignData
+      });
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
