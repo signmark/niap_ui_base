@@ -38,6 +38,27 @@ router.post('/generate-content', async (req, res) => {
     // Логирование запроса
     logger.info(`Запрос на генерацию контента для кампании ${campaignId} с ${keywords.length} ключевыми словами`);
     
+    let campaignWebsiteUrl = null;
+    
+    // Если включено использование данных кампании, получаем ссылку на сайт
+    if (useCampaignData) {
+      try {
+        const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (campaignResponse.data?.data?.link) {
+          campaignWebsiteUrl = campaignResponse.data.data.link;
+          logger.info(`Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
+        }
+      } catch (error) {
+        logger.warn('Не удалось получить данные кампании для ссылки на сайт:', error);
+      }
+    }
+    
     try {
       // Используем Directus API для генерации контента
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -66,7 +87,8 @@ router.post('/generate-content', async (req, res) => {
           tone,
           prompt,
           service,
-          useCampaignData
+          useCampaignData,
+          campaignWebsiteUrl
         },
         timeout: 60000 // 60 секунд таймаут для генерации
       });
