@@ -23,7 +23,11 @@ import {
   Bold,
   Italic,
   Link as LinkIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Strikethrough,
+  Code,
+  Quote,
+  EyeOff
 } from 'lucide-react';
 import { Smile } from 'lucide-react';
 import { Check, ChevronRight, Wand2 } from 'lucide-react';
