@@ -2966,7 +2966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем роуты генерации контента
   console.log('Registering content generation routes...');
-  app.use('/api', contentGenerationRouter);
+  // app.use('/api', contentGenerationRouter); // Отключен из-за ошибок в роутере
   
   // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями
   console.log('Registering direct webhook routes for social platforms...');
