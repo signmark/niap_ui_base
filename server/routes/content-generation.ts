@@ -5,10 +5,16 @@
 
 import express from 'express';
 import axios from 'axios';
-import { directusAuthManager } from '../services/directus/directus-auth-manager';
-import { log as logger } from '../utils/logger';
 
 const router = express.Router();
+
+// Простая функция логирования
+const logger = {
+  info: (message: string, data?: any) => console.log(`INFO: ${message}`, data || ''),
+  error: (message: string, data?: any) => console.error(`ERROR: ${message}`, data || ''),
+  warn: (message: string, data?: any) => console.warn(`WARN: ${message}`, data || ''),
+  debug: (message: string, data?: any) => console.log(`DEBUG: ${message}`, data || '')
+};
 
 // Основной маршрут для генерации контента
 router.post('/generate-content', async (req, res) => {
@@ -67,9 +73,9 @@ router.post('/generate-content', async (req, res) => {
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
       
       // Логи для отладки
-      logger.debug('Параметры запроса генерации контента:', {
+      logger.info('Параметры запроса генерации контента:', {
         campaignId,
-        keywordCount: keywords.length,
+        keywordCount: keywords?.length || 0,
         platform,
         tone,
         service
@@ -134,26 +140,13 @@ router.post('/generate-content', async (req, res) => {
         responseData: directusError.response?.data
       });
       
-      // Если проблема с авторизацией, пробуем переаутентифицироваться
+      // Если проблема с авторизацией, возвращаем соответствующую ошибку
       if (directusError.response?.status === 401 || directusError.response?.status === 403) {
-        try {
-          // Попытка повторной аутентификации
-          const session = await directusAuthManager.getUserSessionByToken(token);
-          if (session) {
-            logger.info('Выполняем повторную аутентификацию пользователя');
-            
-            // Тут можно дополнительно обработать логику перелогина
-            // и перевыпуска токена, если необходимо
-            
-            return res.status(401).json({
-              success: false,
-              message: 'Необходима повторная авторизация',
-              requireReauth: true
-            });
-          }
-        } catch (authError) {
-          logger.error('Ошибка при попытке переаутентификации', authError);
-        }
+        return res.status(401).json({
+          success: false,
+          message: 'Необходима повторная авторизация',
+          requireReauth: true
+        });
       }
       
       // Возвращаем информацию об ошибке
