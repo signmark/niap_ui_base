@@ -3086,10 +3086,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Добавляем данные компании если включено использование данных кампании
       if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
-        enhancedPrompt += '\n\nДополнительная информация о компании:';
+        enhancedPrompt += '\n\nОБЯЗАТЕЛЬНО используй ТОЛЬКО следующую информацию о компании (НЕ придумывай свои данные):';
         
         if (campaignWebsiteUrl) {
           enhancedPrompt += `\nСайт компании: ${campaignWebsiteUrl}`;
+          enhancedPrompt += `\nВАЖНО: Используй ТОЧНО этот сайт - ${campaignWebsiteUrl} - НЕ придумывай другие ссылки!`;
         }
         
         if (questionnaireData) {
@@ -3103,6 +3104,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             enhancedPrompt += `\nЦелевая аудитория: ${questionnaireData.target_audience}`;
           }
         }
+        
+        enhancedPrompt += '\n\nПравила: Используй ТОЛЬКО предоставленную выше информацию о компании. НЕ придумывай другие сайты, названия или данные!';
       }
       
       console.log('[CONTENT-GEN] Отправка запроса к Directus API с улучшенным промптом');
