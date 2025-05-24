@@ -11,7 +11,7 @@ import { apiKeyService } from './services/api-keys';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { registerFalAiImageRoutes } from './routes-fal-ai-images';
-import { registerClaudeRoutes } from './routes-claude';
+// import { registerClaudeRoutes } from './routes-claude'; // УДАЛЕНО - используем новый обработчик с данными кампании
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
