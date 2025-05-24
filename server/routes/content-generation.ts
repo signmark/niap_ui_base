@@ -94,7 +94,7 @@ router.post('/generate-content', async (req, res) => {
           keywords,
           platform,
           tone,
-          prompt,
+          prompt: campaignWebsiteUrl ? `${prompt} Обязательно включи ссылку на наш сайт: ${campaignWebsiteUrl}` : prompt,
           service,
           useCampaignData,
           campaignWebsiteUrl
