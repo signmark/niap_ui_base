@@ -2418,15 +2418,36 @@ export default function ContentPage() {
               />
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                {previewContent?.publishedAt && (
-                  <CreationTimeDisplay 
-                    createdAt={previewContent.publishedAt}
-                    label="Опубликовано:"
-                    showIcon={true}
-                    iconType="check"
-                    className="flex items-center gap-1"
-                  />
-                )}
+                {previewContent?.publishedAt && (() => {
+                  // Получаем правильное время публикации из платформ
+                  const getCorrectPublishedTime = () => {
+                    if (previewContent.socialPlatforms && typeof previewContent.socialPlatforms === 'object') {
+                      // Ищем первую опубликованную платформу с временем публикации
+                      for (const platform of Object.values(previewContent.socialPlatforms)) {
+                        if (platform && 
+                            typeof platform === 'object' && 
+                            'status' in platform && 
+                            'publishedAt' in platform && 
+                            platform.status === 'published' && 
+                            platform.publishedAt) {
+                          return platform.publishedAt;
+                        }
+                      }
+                    }
+                    // Если не найдено время в платформах, используем основное поле
+                    return previewContent.publishedAt;
+                  };
+                  
+                  return (
+                    <CreationTimeDisplay 
+                      createdAt={getCorrectPublishedTime()}
+                      label="Опубликовано:"
+                      showIcon={true}
+                      iconType="check"
+                      className="flex items-center gap-1"
+                    />
+                  );
+                })()}
                 {previewContent?.scheduledAt && !previewContent?.publishedAt && (
                   <CreationTimeDisplay 
                     createdAt={previewContent.scheduledAt}
