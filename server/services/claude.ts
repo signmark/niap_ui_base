@@ -351,7 +351,7 @@ export class ClaudeService {
    * Создает промпт для генерации контента для социальных сетей
    */
   private createSocialPrompt(keywords: string[], userPrompt: string, platform: string, tone: string): string {
-    const keywordsText = keywords.join(", ");
+    const keywordsText = Array.isArray(keywords) ? keywords.join(", ") : (keywords || "");
     
     // Базовый шаблон промпта
     let prompt = `Ты - профессиональный SMM-копирайтер и специалист по созданию популярного контента.
