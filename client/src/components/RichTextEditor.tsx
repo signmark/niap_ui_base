@@ -267,6 +267,91 @@ export default function RichTextEditor({
               </TooltipTrigger>
               <TooltipContent>Подчеркнутый</TooltipContent>
             </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="strike" 
+                  size="sm"
+                  aria-label="Зачеркнутый" 
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  data-state={editor.isActive('strike') ? 'on' : 'off'}
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Зачеркнутый</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="code" 
+                  size="sm"
+                  aria-label="Код" 
+                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  data-state={editor.isActive('code') ? 'on' : 'off'}
+                >
+                  <Code className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Код</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="blockquote" 
+                  size="sm"
+                  aria-label="Цитата" 
+                  onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                  data-state={editor.isActive('blockquote') ? 'on' : 'off'}
+                >
+                  <Quote className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Цитата</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="codeblock" 
+                  size="sm"
+                  aria-label="Блок кода" 
+                  onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                  data-state={editor.isActive('codeBlock') ? 'on' : 'off'}
+                >
+                  <Code className="h-3 w-3" />
+                  <Code className="h-3 w-3 ml-[-2px]" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Блок кода</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem 
+                  value="spoiler" 
+                  size="sm"
+                  aria-label="Спойлер (Telegram)" 
+                  onClick={() => {
+                    const { from, to } = editor.state.selection;
+                    if (from === to) {
+                      // Если ничего не выбрано, просто вставляем теги
+                      editor.chain().focus().insertContent('<tg-spoiler></tg-spoiler>').run();
+                    } else {
+                      // Если текст выбран, оборачиваем его в теги
+                      const selectedText = editor.state.doc.textBetween(from, to);
+                      editor.chain().focus().deleteSelection().insertContent(`<tg-spoiler>${selectedText}</tg-spoiler>`).run();
+                    }
+                  }}
+                >
+                  <EyeOff className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Спойлер (Telegram)</TooltipContent>
+            </Tooltip>
           </ToggleGroup>
         
           <div className="mx-1 h-full w-px bg-border" />
