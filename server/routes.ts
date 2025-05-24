@@ -48,7 +48,6 @@ import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
-import { registerContentGenerationRoute } from './routes/content-generation';
 import { publicationStatusChecker } from './services/status-checker';
 import { geminiRouter } from './api/gemini-routes';
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
