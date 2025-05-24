@@ -2421,20 +2421,26 @@ export default function ContentPage() {
                 {previewContent?.publishedAt && (() => {
                   // Получаем правильное время публикации из платформ
                   const getCorrectPublishedTime = () => {
+                    console.log('DEBUG: Отображение времени публикации');
+                    console.log('DEBUG: previewContent.publishedAt =', previewContent.publishedAt);
+                    console.log('DEBUG: previewContent.socialPlatforms =', previewContent.socialPlatforms);
+                    
                     if (previewContent.socialPlatforms && typeof previewContent.socialPlatforms === 'object') {
                       // Ищем первую опубликованную платформу с временем публикации
-                      for (const platform of Object.values(previewContent.socialPlatforms)) {
+                      for (const [platformName, platform] of Object.entries(previewContent.socialPlatforms)) {
                         if (platform && 
                             typeof platform === 'object' && 
                             'status' in platform && 
                             'publishedAt' in platform && 
                             platform.status === 'published' && 
                             platform.publishedAt) {
+                          console.log(`DEBUG: Найдено время публикации для ${platformName}:`, platform.publishedAt);
                           return platform.publishedAt;
                         }
                       }
                     }
                     // Если не найдено время в платформах, используем основное поле
+                    console.log('DEBUG: Используем основное поле publishedAt');
                     return previewContent.publishedAt;
                   };
                   
