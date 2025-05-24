@@ -41,7 +41,8 @@ router.post('/generate-content', async (req, res) => {
     }
     
     // Логирование запроса
-    logger.info(`Запрос на генерацию контента для кампании ${campaignId} с ${keywords.length} ключевыми словами`);
+    logger.info(`[CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords.length} ключевыми словами`);
+    logger.info(`[CONTENT-GEN] useCampaignData: ${useCampaignData}`);
     
     let campaignWebsiteUrl = null;
     let campaignQuestionnaire = null;
