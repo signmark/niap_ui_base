@@ -1,0 +1,85 @@
+ContentGenerationDialog.tsx:71 Генерация контента через gemini-2.0-flash API
+ContentGenerationDialog.tsx:72 Параметры запроса: {prompt: 'Учитывай данные кампанни и в конце нашиши сайт', keywords: Array(2), tone: 'informative', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platform: 'facebook', …}
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: {success: true, content: '\n🥗 Анализ диеты: Первый шаг к здоровому питанию! …айте первый шаг к здоровому и счастливому "Я"! ✨\n', service: 'gemini'}
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: {content: '\n🥗 Анализ диеты: Первый шаг к здоровому питанию! …айте первый шаг к здоровому и счастливому "Я"! ✨\n', service: 'gemini'}
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: 
+🥗 Анализ диеты: Первый шаг к здоровому питанию! 💪
+
+Задумывались ли вы когда-нибудь, насколько сбалансирован ваш рацион? 🤔 Правильное питание – это не просто тренд, это фундамент вашего здоровья и энергии! Но как понять, что именно вам нужно?
+
+Анализ диеты – это мощный инструмент, который поможет вам:
+
+
+  ✅ Определить дефицит важных витаминов и минералов.
+  ⚖️ Оценить соотношение белков, жиров и углеводов в вашем рационе.
+  🎯 Выявить скрытые источники сахара и вредных жиров.
+  📈 Отследить динамику изменений в вашем питании.
+
+
+На основе анализа диеты можно составить индивидуальный план питания, который будет учитывать ваши потребности, цели и предпочтения. Это не просто список продуктов, это персональная стратегия достижения здоровья и отличного самочувствия! 🤩
+
+Что включает в себя план питания?
+
+
+  🍽️ Рекомендации по размеру порций и времени приема пищи.
+  🍎 Список полезных и вкусных продуктов.
+  📝 Примеры сбалансированных блюд и перекусов.
+  🤸 Советы по поддержанию мотивации и здоровых привычек.
+
+
+Не откладывайте заботу о себе на потом! ⏰ Начните свой путь к здоровому образу жизни с анализа диеты и персонального плана питания. Это инвестиция в ваше будущее! 💖
+
+Хотите узнать больше и получить индивидуальную консультацию? Переходите на наш сайт: https://example.com и сделайте первый шаг к здоровому и счастливому "Я"! ✨
+
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 9
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>🥗 Анализ диеты: Первый шаг к здоровому питанию! 💪</p><p>Задумывались ли вы когда-нибудь, насколько сбалансирован ваш рацион? 🤔 Правильное питание – это не просто тренд, это фундамент вашего здоровья и энергии! Но как понять, что именно вам нужно?</p><p>Анализ диеты – это мощный инструмент, который поможет вам:</p><p>✅ Определить дефицит важных витаминов и минералов.
+  ⚖️ Оценить соотношение белков, жиров и углеводов в вашем рационе.
+  🎯 Выявить скрытые источники сахара и вредных жиров.
+  📈 Отследить динамику изменений в вашем питании.</p><p>На основе анализа диеты можно составить индивидуальный план питания, который будет учитывать ваши потребности, цели и предпочтения. Это не просто список продуктов, это персональная стратегия достижения здоровья и отличного самочувствия! 🤩</p><p>Что включает в себя план питания?</p><p>🍽️ Рекомендации по размеру порций и времени приема пищи.
+  🍎 Список полезных и вкусных продуктов.
+  📝 Примеры сбалансированных блюд и перекусов.
+  🤸 Советы по поддержанию мотивации и здоровых привычек.</p><p>Не откладывайте заботу о себе на потом! ⏰ Начните свой путь к здоровому образу жизни с анализа диеты и персонального плана питания. Это инвестиция в ваше будущее! 💖</p><p>Хотите узнать больше и получить индивидуальную консультацию? Переходите на наш сайт: https://example.com и сделайте первый шаг к здоровому и счастливому "Я"! ✨</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 34
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:296 Загружено контента: 100
