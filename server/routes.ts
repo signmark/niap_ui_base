@@ -1435,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
     }
     
-    const response = await axios.post(`${directusUrl}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
+    const response = await axios.post(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
       prompt: enhancedPrompt,
       keywords,
       tone,
@@ -3112,141 +3112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);
   
-  // Маршрут для генерации контента с данными кампании
-  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
-    console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
-    // Добавляем детальное логирование для отладки
-    console.log(`[CONTENT-GEN-DEBUG] Получен запрос на генерацию контента`);
-    console.log(`[CONTENT-GEN-DEBUG] Тело запроса:`, JSON.stringify(req.body, null, 2));
-    
-    const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
-    
-    console.log(`[CONTENT-GEN] Запрос на генерацию контента для кампании ${campaignId} с ${keywords?.length || 0} ключевыми словами`);
-    console.log(`[CONTENT-GEN] useCampaignData: ${useCampaignData}`);
-    console.log(`[CONTENT-GEN-DEBUG] Запрос включает useCampaignData: ${useCampaignData}, campaignId: ${campaignId}`);
-    
-    // Получаем токен из заголовка авторизации
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace('Bearer ', '');
-    
-    let campaignWebsiteUrl = null;
-    let questionnaireData = null;
-    const userId = req.userId;
-    
-    // Если включено использование данных кампании, получаем данные из Directus
-    console.log(`[CONTENT-GEN-DEBUG] Проверяем useCampaignData: ${useCampaignData}, тип: ${typeof useCampaignData}`);
-    if (useCampaignData) {
-      console.log(`[CONTENT-GEN-DEBUG] Входим в блок загрузки данных кампании для ID: ${campaignId}`);
-      try {
-        console.log(`[CONTENT-GEN] Получение данных кампании ${campaignId} с токеном пользователя`);
-        
-        // 1. Получаем данные кампании (включая ссылку на сайт)
-        const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('[CONTENT-GEN] Ответ Directus для кампании:', JSON.stringify(campaignResponse.data, null, 2));
-        
-        if (campaignResponse.data?.data?.link) {
-          campaignWebsiteUrl = campaignResponse.data.data.link;
-          console.log(`[CONTENT-GEN] Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
-        }
 
-        // 2. Получаем анкету из отдельной коллекции business_questionnaire
-        const questionnaireResponse = await axios.get(
-          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${userId}&limit=1&sort=-date_created`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (questionnaireResponse.data?.data?.[0]) {
-          questionnaireData = questionnaireResponse.data.data[0];
-          console.log(`[CONTENT-GEN] Получена анкета пользователя:`, questionnaireData);
-        } else {
-          console.warn('[CONTENT-GEN] Анкета пользователя не найдена');
-        }
-      } catch (error) {
-        console.error('[CONTENT-GEN] Не удалось получить данные кампании из Directus:', error);
-      }
-    }
-
-    // Пересылаем запрос к Directus API для генерации контента
-    try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-      
-      // Создаем улучшенный промпт с данными кампании
-      let enhancedPrompt = prompt;
-      
-      // Добавляем ключевые слова если они есть
-      if (keywords && keywords.length > 0) {
-        enhancedPrompt += `\n\nКлючевые слова: ${keywords.join(', ')}`;
-      }
-      
-      // Добавляем данные компании если включено использование данных кампании
-      if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
-        enhancedPrompt += '\n\n=== СТРОГО ОБЯЗАТЕЛЬНЫЕ ДАННЫЕ КОМПАНИИ ===';
-        enhancedPrompt += '\n🚨 ВНИМАНИЕ: Используй ТОЛЬКО эти данные! НЕ придумывай ничего своего!';
-        
-        if (campaignWebsiteUrl) {
-          enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${campaignWebsiteUrl}`;
-          enhancedPrompt += `\n🚫 ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${campaignWebsiteUrl}`;
-          enhancedPrompt += `\n⚠️ Если пишешь ссылку, используй ТОЛЬКО: ${campaignWebsiteUrl}`;
-        }
-        
-        if (questionnaireData) {
-          if (questionnaireData.company_name) {
-            enhancedPrompt += `\n🏢 Название компании: ${questionnaireData.company_name}`;
-          }
-          if (questionnaireData.business_description) {
-            enhancedPrompt += `\n📝 Описание бизнеса: ${questionnaireData.business_description}`;
-          }
-          if (questionnaireData.target_audience) {
-            enhancedPrompt += `\n🎯 Целевая аудитория: ${questionnaireData.target_audience}`;
-          }
-        }
-        
-        enhancedPrompt += '\n\n🚨 КРИТИЧЕСКИ ВАЖНО: НЕ СОЗДАВАЙ новые сайты, НЕ ИЗМЕНЯЙ предоставленную ссылку, НЕ ИСПОЛЬЗУЙ примеры типа diet-analysis.ru или подобные!';
-        enhancedPrompt += `\n✅ ИСПОЛЬЗУЙ ТОЛЬКО: ${campaignWebsiteUrl || 'данные выше'}`;
-        enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
-      }
-      
-      console.log('[CONTENT-GEN] Отправка запроса к Directus API с улучшенным промптом');
-      console.log('[CONTENT-GEN-DEBUG] Итоговый промпт для AI:', enhancedPrompt);
-      console.log('[CONTENT-GEN-DEBUG] Данные кампании - URL:', campaignWebsiteUrl);
-      console.log('[CONTENT-GEN-DEBUG] Данные анкеты:', questionnaireData ? JSON.stringify(questionnaireData, null, 2) : 'НЕ НАЙДЕНО');
-      
-      const response = await axios.post(`${directusUrl}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
-        prompt: enhancedPrompt,
-        keywords,
-        tone,
-        campaignId,
-        platform,
-        service
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('[CONTENT-GEN] Успешный ответ от Directus API');
-      return res.json(response.data);
-      
-    } catch (error: any) {
-      console.error('[CONTENT-GEN] Ошибка при генерации контента:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Ошибка при генерации контента'
-      });
-    }
-  });
   
   // Запускаем планировщик публикаций
   publishScheduler.start();
