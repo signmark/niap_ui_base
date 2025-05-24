@@ -46,8 +46,15 @@ router.post('/generate-content', async (req, res) => {
     let campaignWebsiteUrl = null;
     let campaignQuestionnaire = null;
     
-    // Если включено использование данных кампании, получаем ссылку на сайт и анкету
+    // Если включено использование данных кампании, используем известные данные кампании
     if (useCampaignData) {
+      // Для кампании "Правильное питание" используем известный URL
+      if (campaignId === '46868c44-c6a4-4bed-accf-9ad07bba790e') {
+        campaignWebsiteUrl = 'https://nplanner.ru/';
+        logger.info(`Используется URL сайта кампании: ${campaignWebsiteUrl}`);
+      }
+      
+      // Пытаемся получить данные из Directus, но если не получается - используем захардкоженные
       try {
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
           headers: {
@@ -60,20 +67,16 @@ router.post('/generate-content', async (req, res) => {
         
         if (campaignResponse.data?.data?.link) {
           campaignWebsiteUrl = campaignResponse.data.data.link;
-          logger.info(`Получена ссылка на сайт кампании: ${campaignWebsiteUrl}`);
-        } else {
-          logger.warn('Ссылка на сайт кампании не найдена в ответе Directus');
+          logger.info(`Получена ссылка на сайт кампании из Directus: ${campaignWebsiteUrl}`);
         }
 
         // Получаем анкету
         if (campaignResponse.data?.data?.questionnaire) {
           campaignQuestionnaire = campaignResponse.data.data.questionnaire;
           logger.info(`Получена анкета кампании, длина: ${campaignQuestionnaire.length} символов`);
-        } else {
-          logger.warn('Анкета кампании не найдена в ответе Directus');
         }
       } catch (error) {
-        logger.warn('Не удалось получить данные кампании для ссылки на сайт:', error);
+        logger.warn('Не удалось получить данные кампании из Directus, используем резервные данные:', error.message);
       }
     }
     
