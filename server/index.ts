@@ -212,6 +212,12 @@ app.use((req, res, next) => {
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
+    // КРИТИЧЕСКИ ВАЖНО: Регистрируем основные маршруты ПЕРВЫМИ для правильной обработки!
+    log("🎯 Registering MAIN routes with campaign data handlers FIRST...");
+    console.log("🎯 PRIORITY: Starting route registration with campaign data support...");
+    const server = await registerRoutes(app);
+    console.log("✅ Main routes with campaign data handlers registered FIRST");
+    
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes...");
@@ -239,10 +245,6 @@ app.use((req, res, next) => {
     registerGeminiRoutes(app);
     console.log("Gemini routes registered");
     log("Gemini routes registered successfully");
-
-    log("Registering routes...");
-    console.log("Starting route registration...");
-    const server = await registerRoutes(app);
     
     // Регистрируем специальные маршруты для XMLRiver API
     log("Registering XMLRiver API routes...");

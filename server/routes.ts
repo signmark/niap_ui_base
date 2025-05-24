@@ -1463,8 +1463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // Регистрируем универсальный интерфейс для FAL.AI
-  registerClaudeRoutes(app);
+  // Удаляем дублирующий вызов registerClaudeRoutes - он уже зарегистрирован в index.ts
   registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
