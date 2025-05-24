@@ -8,6 +8,7 @@ interface CreationTimeDisplayProps {
   className?: string;
   showIcon?: boolean;
   iconType?: 'calendar' | 'clock' | 'check';
+  isFromPlatforms?: boolean;
 }
 
 /**
@@ -18,9 +19,10 @@ export const CreationTimeDisplay: React.FC<CreationTimeDisplayProps> = ({
   label = 'Создано:',
   className = '',
   showIcon = true,
-  iconType = 'calendar'
+  iconType = 'calendar',
+  isFromPlatforms = false
 }) => {
-  const formattedDateTime = formatDateWithTimezone(createdAt);
+  const formattedDateTime = formatDateWithTimezone(createdAt, 'dd MMMM yyyy, HH:mm', isFromPlatforms);
   
   // Выбор иконки в зависимости от типа
   const renderIcon = () => {

@@ -1359,6 +1359,7 @@ export default function ContentPage() {
                                       showIcon={false}
                                       iconType="check"
                                       className="text-xs"
+                                      isFromPlatforms={true}
                                     />
                                   )}
                                   {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
@@ -2465,6 +2466,7 @@ export default function ContentPage() {
                       showIcon={true}
                       iconType="check"
                       className="flex items-center gap-1"
+                      isFromPlatforms={true}
                     />
                   );
                 })()}

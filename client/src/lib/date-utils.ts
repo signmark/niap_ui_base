@@ -5,11 +5,13 @@ import { ru } from 'date-fns/locale';
  * Форматирует дату, правильно учитывая часовой пояс пользователя
  * @param dateString строка с датой или объект даты
  * @param formatStr формат вывода даты (по умолчанию 'dd MMMM yyyy, HH:mm')
+ * @param isFromPlatforms указывает, что время пришло из данных платформ (уже в правильном часовом поясе)
  * @returns отформатированная дата в локальном часовом поясе пользователя
  */
 export function formatDateWithTimezone(
   dateString: string | Date | null | undefined,
-  formatStr: string = 'dd MMMM yyyy, HH:mm'
+  formatStr: string = 'dd MMMM yyyy, HH:mm',
+  isFromPlatforms: boolean = false
 ): string {
   if (!dateString) return 'Дата не указана';
   
@@ -23,9 +25,9 @@ export function formatDateWithTimezone(
       return 'Некорректная дата';
     }
     
-    // Если дата передана как строка, то обычно это UTC время из базы данных
+    // Если дата не из платформ и передана как строка, то это UTC время из базы данных
     // Добавляем 3 часа для корректного отображения в московском времени
-    if (typeof dateString === 'string' && dateString.includes('T')) {
+    if (!isFromPlatforms && typeof dateString === 'string' && dateString.includes('T')) {
       // Создаем новую дату с учетом смещения в 3 часа (Москва UTC+3)
       date = new Date(date.getTime() + 3 * 60 * 60 * 1000);
     }
