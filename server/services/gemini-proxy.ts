@@ -27,8 +27,11 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string } {
-    // Модели Gemini 2.x требуют v1beta API
-    if (model.startsWith('gemini-2.')) {
+    // Модели Gemini 2.x и экспериментальные модели требуют v1beta API
+    if (model.startsWith('gemini-2.') || 
+        model.includes('2.5-pro') || 
+        model.includes('exp') || 
+        model.includes('preview')) {
       return {
         version: 'v1beta',
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
