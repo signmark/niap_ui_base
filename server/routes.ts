@@ -1355,6 +1355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ВАЖНО: Регистрируем наш улучшенный маршрут ПЕРЕД старыми роутами Claude
   // Маршрут для генерации контента с данными кампании
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+    console.log(`🎯🎯🎯 [FIXED-HANDLER] ЗАПРОС ПОПАЛ В ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
     console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
     
     const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
@@ -1435,22 +1436,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
     }
     
-    const response = await axios.post(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/flows/trigger/2d7e8b1d-c69a-4c9e-8b8e-3f5f65a8b8c8`, {
-      prompt: enhancedPrompt,
-      keywords,
-      tone,
-      campaignId,
-      platform,
-      service,
-      useCampaignData
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+    // Вместо вызова Directus flow, генерируем контент локально с данными кампании
+    console.log('[CONTENT-GEN] Генерируем контент локально с улучшенным промптом');
+    
+    // Импортируем Claude сервис
+    const { ClaudeService } = await import('./services/claude');
+    
+    // Инициализируем Claude сервис для пользователя
+    const claudeService = new ClaudeService();
+    await claudeService.initialize(userId);
+    
+    // Генерируем контент с улучшенным промптом
+    const generatedContent = await claudeService.generateSocialContent(
+      enhancedPrompt,
+      platform || 'instagram',
+      tone || 'дружелюбный',
+      keywords
+    );
+    
+    console.log('[CONTENT-GEN] Контент успешно сгенерирован с данными кампании');
+    
+    res.json({
+      success: true,
+      content: generatedContent,
+      service: 'claude'
     });
-
-    res.json(response.data);
   });
   
   // Регистрируем универсальный интерфейс для FAL.AI
