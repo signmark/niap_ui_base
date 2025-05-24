@@ -1500,8 +1500,19 @@ export class PublishScheduler {
             return false;
           }
           
-          // ИСПРАВЛЕНИЕ: Для платформ в статусе 'pending', всегда включаем 
-          // их в список для публикации независимо от времени
+          // КРИТИЧЕСКАЯ ЗАЩИТА #1: Проверяем признаки уже выполненной публикации
+          if (platformData.postUrl && platformData.postUrl.trim() !== '') {
+            log(`  - ${platform}: УЖЕ ОПУБЛИКОВАН, найден postUrl: ${platformData.postUrl}, ПРОПУСКАЕМ`, 'scheduler');
+            return false;
+          }
+          
+          // КРИТИЧЕСКАЯ ЗАЩИТА #2: Проверяем timestamp публикации
+          if (platformData.publishedAt) {
+            log(`  - ${platform}: УЖЕ ОПУБЛИКОВАН, найден publishedAt: ${platformData.publishedAt}, ПРОПУСКАЕМ`, 'scheduler');
+            return false;
+          }
+          
+          // ИСПРАВЛЕНИЕ: Для платформ в статусе 'pending', включаем только если нет признаков публикации
           if (platformData.status === 'pending') {
             log(`  - ${platform}: статус "pending", ГОТОВ К НЕМЕДЛЕННОЙ ПУБЛИКАЦИИ`, 'scheduler');
             return true;
