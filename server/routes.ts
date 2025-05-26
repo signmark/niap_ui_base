@@ -1424,9 +1424,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // 2. Получаем анкету из отдельной коллекции business_questionnaire
-        console.log(`[CONTENT-GEN-DEBUG] Запрашиваем анкету пользователя...`);
+        console.log(`[CONTENT-GEN-DEBUG] Запрашиваем анкету пользователя для finalUserId=${finalUserId}...`);
         const questionnaireResponse = await axios.get(
-          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${userId}&limit=1&sort=-date_created`,
+          `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${finalUserId}&limit=1&sort=-date_created`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
