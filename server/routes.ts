@@ -1436,30 +1436,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       enhancedPrompt += '\n=== КОНЕЦ ОБЯЗАТЕЛЬНЫХ ДАННЫХ ===\n';
     }
     
-    // Вместо вызова Directus flow, генерируем контент локально с данными кампании
-    console.log('[CONTENT-GEN] Генерируем контент локально с улучшенным промптом');
+    // Генерируем контент локально с данными кампании для выбранного сервиса
+    console.log(`[CONTENT-GEN] Генерируем контент с сервисом: ${service}`);
+    console.log(`[CONTENT-GEN] Используются данные кампании: ${useCampaignData ? 'ДА' : 'НЕТ'}`);
     
-    // Импортируем Claude сервис
-    const { ClaudeService } = await import('./services/claude');
+    let generatedContent;
+    let usedService = service;
     
-    // Инициализируем Claude сервис для пользователя
-    const claudeService = new ClaudeService();
-    await claudeService.initialize(userId);
+    if (service === 'claude') {
+      // Импортируем Claude сервис
+      const { ClaudeService } = await import('./services/claude');
+      
+      // Инициализируем Claude сервис для пользователя
+      const claudeService = new ClaudeService();
+      await claudeService.initialize(userId);
+      
+      // Генерируем контент с улучшенным промптом
+      generatedContent = await claudeService.generateSocialContent(
+        enhancedPrompt,
+        platform || 'instagram',
+        tone || 'дружелюбный',
+        keywords || []
+      );
+      
+    } else if (service && (service.includes('gemini') || service === 'gemini-1.5-pro' || service === 'gemini-1.5-flash' || service === 'gemini-2.0-flash' || service === 'gemini-2.0-pro-exp')) {
+      // Для Gemini моделей используем Google API
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        throw new Error('Google API ключ не настроен');
+      }
+      
+      const genAI = new GoogleGenerativeAI(apiKey);
+      
+      // Определяем правильную модель для Gemini
+      let modelName = 'gemini-1.5-flash';
+      if (service === 'gemini-1.5-pro' || service === 'gemini') {
+        modelName = 'gemini-1.5-pro';
+      } else if (service === 'gemini-2.0-flash') {
+        modelName = 'gemini-2.0-flash-exp';
+      } else if (service === 'gemini-2.0-pro-exp') {
+        modelName = 'gemini-2.0-flash-thinking-exp';
+      }
+      
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig: {
+          maxOutputTokens: 2400, // Увеличиваем для длинного контента
+          temperature: 0.7,
+        }
+      });
+      
+      // Создаем промпт специально для длинного контента
+      const longContentPrompt = `${enhancedPrompt}
+
+ТРЕБОВАНИЯ К ДЛИНЕ КОНТЕНТА:
+- Создай развернутый, подробный пост объемом НЕ МЕНЕЕ 800-1200 слов
+- Включи несколько абзацев с детальным описанием
+- Добавь практические советы и рекомендации
+- Используй структурированный подход с подзаголовками
+- Сделай контент максимально информативным и полезным`;
+      
+      const result = await model.generateContent(longContentPrompt);
+      const response = await result.response;
+      generatedContent = response.text();
+      
+    } else {
+      // Для других сервисов используем Claude по умолчанию
+      const { ClaudeService } = await import('./services/claude');
+      
+      const claudeService = new ClaudeService();
+      await claudeService.initialize(userId);
+      
+      generatedContent = await claudeService.generateSocialContent(
+        enhancedPrompt,
+        platform || 'instagram',
+        tone || 'дружелюбный',
+        keywords || []
+      );
+      usedService = 'claude';
+    }
     
-    // Генерируем контент с улучшенным промптом
-    const generatedContent = await claudeService.generateSocialContent(
-      enhancedPrompt,
-      platform || 'instagram',
-      tone || 'дружелюбный',
-      keywords || []
-    );
-    
-    console.log('[CONTENT-GEN] Контент успешно сгенерирован с данными кампании');
+    console.log(`[CONTENT-GEN] Контент успешно сгенерирован с сервисом ${usedService}, длина: ${generatedContent?.length || 0} символов`);
     
     res.json({
       success: true,
       content: generatedContent,
-      service: 'claude'
+      service: usedService
     });
   });
   
