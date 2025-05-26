@@ -1382,21 +1382,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`[CONTENT-GEN-DEBUG] token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
     
     // Если userId не извлечен из middleware, попробуем декодировать токен напрямую
-    if (!userId && token) {
+    let finalUserId = userId;
+    if (!finalUserId && token) {
       try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(Buffer.from(base64, 'base64').toString().split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        const jsonPayload = Buffer.from(base64, 'base64').toString();
         const decoded = JSON.parse(jsonPayload);
-        const fallbackUserId = decoded.id;
-        console.log(`[CONTENT-GEN-DEBUG] Декодированный токен, fallback userId = ${fallbackUserId}`);
-        
-        // Используем fallback userId если основной не работает
-        if (fallbackUserId) {
-          console.log(`[CONTENT-GEN-DEBUG] Используем fallback userId = ${fallbackUserId}`);
-        }
+        finalUserId = decoded.id;
+        console.log(`[CONTENT-GEN-DEBUG] Декодированный токен, fallback userId = ${finalUserId}`);
       } catch (decodeError) {
         console.log(`[CONTENT-GEN-DEBUG] Ошибка декодирования токена:`, decodeError);
       }
@@ -1406,9 +1400,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let questionnaireData = null;
     
     // Если включено использование данных кампании, получаем данные из Directus
-    if (useCampaignData) {
+    if (useCampaignData && finalUserId) {
       console.log(`[CONTENT-GEN-DEBUG] Флаг useCampaignData = true, загружаем данные кампании ${campaignId}`);
-      console.log(`[CONTENT-GEN-DEBUG] userId = ${userId}, token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
+      console.log(`[CONTENT-GEN-DEBUG] finalUserId = ${finalUserId}, token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
       
       try {
         // 1. Получаем данные кампании (включая ссылку на сайт)
