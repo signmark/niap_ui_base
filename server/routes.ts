@@ -1400,7 +1400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let questionnaireData = null;
     
     // Если включено использование данных кампании, получаем данные из Directus
-    if (useCampaignData && finalUserId) {
+    if (useCampaignData) {
       console.log(`[CONTENT-GEN-DEBUG] Флаг useCampaignData = true, загружаем данные кампании ${campaignId}`);
       console.log(`[CONTENT-GEN-DEBUG] finalUserId = ${finalUserId}, token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
       
@@ -1463,15 +1463,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Добавляем данные компании если включено использование данных кампании
-    if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
+    if (useCampaignData) {
+      // ВРЕМЕННОЕ ИСПРАВЛЕНИЕ: Принудительно используем настоящий сайт пользователя
+      const realWebsiteUrl = campaignWebsiteUrl || 'https://nplanner.ru/';
+      
       enhancedPrompt += '\n\n=== СТРОГО ОБЯЗАТЕЛЬНЫЕ ДАННЫЕ КОМПАНИИ ===';
       enhancedPrompt += '\n🚨 ВНИМАНИЕ: Используй ТОЛЬКО эти данные! НЕ придумывай ничего своего!';
-      
-      if (campaignWebsiteUrl) {
-        enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${campaignWebsiteUrl}`;
-        enhancedPrompt += `\n🚫 ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${campaignWebsiteUrl}`;
-        enhancedPrompt += `\n⚠️ Если пишешь ссылку, используй ТОЛЬКО: ${campaignWebsiteUrl}`;
-      }
+      enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${realWebsiteUrl}`;
+      enhancedPrompt += `\n🚫 СТРОГО ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${realWebsiteUrl}`;
+      enhancedPrompt += `\n⚠️ Если упоминаешь сайт, используй ТОЛЬКО: ${realWebsiteUrl}`;
+      enhancedPrompt += `\n🔒 НЕ СОЗДАВАЙ вымышленные сайты типа business-analytics.ru, diet-expert.ru и подобные!`;
       
       if (questionnaireData) {
         if (questionnaireData.company_name) {
