@@ -1367,7 +1367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+  app.post("/api/generate-content", (req: any, res, next) => {
+    console.log(`🚨🚨🚨 [MIDDLEWARE-CHECK] Запрос получен ПЕРЕД middleware! 🚨🚨🚨`);
+    console.log(`[MIDDLEWARE-CHECK] Метод: ${req.method}, URL: ${req.url}`);
+    console.log(`[MIDDLEWARE-CHECK] Headers авторизации:`, req.headers.authorization ? 'ЕСТЬ' : 'ОТСУТСТВУЕТ');
+    next();
+  }, authenticateUser, async (req: any, res) => {
     console.log(`🎯🎯🎯 [CRITICAL-FIXED-HANDLER] ЗАПРОС ПОПАЛ В КРИТИЧЕСКИ ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
     console.log(`[CONTENT-GEN-INDEX] Запрос получен в index.ts (ПЕРВЫЙ обработчик)`);
     console.log(`[CONTENT-GEN-DEBUG] Получен запрос на генерацию контента от пользователя ${req.user?.id}`);
