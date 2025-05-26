@@ -1540,6 +1540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
     } else if (service && (service.includes('gemini') || service === 'gemini-1.5-pro' || service === 'gemini-1.5-flash' || service === 'gemini-2.0-flash' || service === 'gemini-2.0-pro-exp')) {
+      console.log(`🚀🚀🚀 [GEMINI-WITH-CAMPAIGN-DATA] Gemini ${service} будет использовать данные кампании! 🚀🚀🚀`);
+      console.log(`🌐 САЙТ КОМПАНИИ В ПРОМПТЕ:`, enhancedPrompt.includes('https://nplanner.ru/') ? 'НАЙДЕН ✅' : 'НЕ НАЙДЕН ❌');
+      
       // Для Gemini моделей используем Google API
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       
@@ -1560,6 +1563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         modelName = 'gemini-2.0-flash-thinking-exp';
       }
       
+      console.log(`🔍 Используем Gemini модель: ${modelName}`);
+      usedService = service; // КРИТИЧЕСКИ ВАЖНО: Устанавливаем правильный сервис!
+      
       const model = genAI.getGenerativeModel({ 
         model: modelName,
         generationConfig: {
@@ -1578,6 +1584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 - Используй структурированный подход с подзаголовками
 - Сделай контент максимально информативным и полезным`;
       
+      console.log(`🔍 ПЕРЕДАЕМ Gemini enhancedPrompt длиной: ${enhancedPrompt.length} символов`);
       const result = await model.generateContent(longContentPrompt);
       const response = await result.response;
       generatedContent = response.text();
@@ -1585,7 +1592,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       console.log(`❌ НЕИЗВЕСТНЫЙ СЕРВИС: ${service}. Поддерживаемые: claude, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp`);
       throw new Error(`Неподдерживаемый сервис: ${service}. Поддерживаемые сервисы: claude, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp`);
-      usedService = 'claude';
     }
     
     console.log(`[CONTENT-GEN] Контент успешно сгенерирован с сервисом ${usedService}, длина: ${generatedContent?.length || 0} символов`);
