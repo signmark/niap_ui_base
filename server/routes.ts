@@ -1368,8 +1368,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Если включено использование данных кампании, получаем данные из Directus
     if (useCampaignData) {
+      console.log(`[CONTENT-GEN-DEBUG] Флаг useCampaignData = true, загружаем данные кампании ${campaignId}`);
+      console.log(`[CONTENT-GEN-DEBUG] userId = ${userId}, token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
+      
       try {
         // 1. Получаем данные кампании (включая ссылку на сайт)
+        console.log(`[CONTENT-GEN-DEBUG] Запрашиваем данные кампании из Directus...`);
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1377,11 +1381,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
+        console.log(`[CONTENT-GEN-DEBUG] Ответ кампании:`, campaignResponse.data?.data);
+        
         if (campaignResponse.data?.data?.link) {
           campaignWebsiteUrl = campaignResponse.data.data.link;
+          console.log(`[CONTENT-GEN-DEBUG] Найден URL кампании: ${campaignWebsiteUrl}`);
+        } else {
+          console.log(`[CONTENT-GEN-DEBUG] URL кампании не найден в данных`);
         }
 
         // 2. Получаем анкету из отдельной коллекции business_questionnaire
+        console.log(`[CONTENT-GEN-DEBUG] Запрашиваем анкету пользователя...`);
         const questionnaireResponse = await axios.get(
           `${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/business_questionnaire?filter[user_id][_eq]=${userId}&limit=1&sort=-date_created`,
           {
@@ -1392,13 +1402,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         );
         
+        console.log(`[CONTENT-GEN-DEBUG] Ответ анкеты:`, questionnaireResponse.data?.data);
+        
         if (questionnaireResponse.data?.data?.[0]) {
           questionnaireData = questionnaireResponse.data.data[0];
+          console.log(`[CONTENT-GEN-DEBUG] Найдена анкета:`, {
+            company_name: questionnaireData.company_name,
+            business_description: questionnaireData.business_description,
+            target_audience: questionnaireData.target_audience
+          });
+        } else {
+          console.log(`[CONTENT-GEN-DEBUG] Анкета не найдена`);
         }
         
       } catch (error) {
-        console.error('[CONTENT-GEN] Ошибка при получении данных кампании:', error);
+        console.error('[CONTENT-GEN-DEBUG] Ошибка при получении данных кампании:', error.response?.data || error.message);
       }
+    } else {
+      console.log(`[CONTENT-GEN-DEBUG] Флаг useCampaignData = false, данные кампании не используются`);
     }
     
     // Формируем улучшенный промпт с учетом данных кампании
@@ -1439,6 +1460,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Генерируем контент локально с данными кампании для выбранного сервиса
     console.log(`[CONTENT-GEN] Генерируем контент с сервисом: ${service}`);
     console.log(`[CONTENT-GEN] Используются данные кампании: ${useCampaignData ? 'ДА' : 'НЕТ'}`);
+    console.log(`[CONTENT-GEN-DEBUG] Финальный промпт для AI:`);
+    console.log(`[CONTENT-GEN-DEBUG] =====================================`);
+    console.log(enhancedPrompt);
+    console.log(`[CONTENT-GEN-DEBUG] =====================================`);
     
     let generatedContent;
     let usedService = service;
