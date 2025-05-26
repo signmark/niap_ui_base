@@ -1097,9 +1097,12 @@ function mergeSources(sources: any[]): any[] {
 // Middleware для проверки авторизации
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log(`🔐🔐🔐 [AUTH-MIDDLEWARE] Проверка авторизации для ${req.method} ${req.url} 🔐🔐🔐`);
     const authHeader = req.headers.authorization;
+    console.log(`[AUTH-MIDDLEWARE] Authorization header:`, authHeader ? 'ПРИСУТСТВУЕТ' : 'ОТСУТСТВУЕТ');
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No authorization header provided');
+      console.log('🚫 [AUTH-MIDDLEWARE] Отклонен: Нет заголовка авторизации');
       return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
     }
 
