@@ -1520,6 +1520,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let usedService = service;
     
     if (service === 'claude') {
+      console.log(`🎯🎯🎯 [CLAUDE-WITH-CAMPAIGN-DATA] Claude будет использовать данные кампании! 🎯🎯🎯`);
+      console.log(`🌐 САЙТ КОМПАНИИ В ПРОМПТЕ:`, enhancedPrompt.includes('https://nplanner.ru/') ? 'НАЙДЕН ✅' : 'НЕ НАЙДЕН ❌');
+      
       // Импортируем Claude сервис
       const { ClaudeService } = await import('./services/claude');
       
@@ -1527,9 +1530,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const claudeService = new ClaudeService();
       await claudeService.initialize(userId);
       
-      // Генерируем контент с улучшенным промптом
+      // КРИТИЧЕСКИ ВАЖНО: Генерируем контент с enhancedPrompt (содержит данные кампании)
+      console.log(`🔍 ПЕРЕДАЕМ Claude enhancedPrompt длиной: ${enhancedPrompt.length} символов`);
       generatedContent = await claudeService.generateSocialContent(
-        enhancedPrompt,
+        enhancedPrompt, // ИСПОЛЬЗУЕМ enhancedPrompt С ДАННЫМИ КАМПАНИИ!
         platform || 'instagram',
         tone || 'дружелюбный',
         keywords || []
