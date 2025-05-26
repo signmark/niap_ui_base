@@ -1,0 +1,579 @@
+ AuthGuard: Checking auth state Object
+ AuthGuard: No valid authentication found
+ AuthGuard: No token found, redirecting to login
+ AuthGuard: Checking auth state Object
+ AuthGuard: No valid authentication found
+api/auth/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ Attempting login with: lbrspb@gmail.com
+ Sending login request to: /api/auth/login
+ Received auth tokens, access token length: 321
+ Login successful, user ID: 53921f16-f51d-4591-80b9-8caa4fde4d13
+ Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+ AuthGuard: Checking auth state Object
+ AuthGuard: Validating token from store
+ Layout рендер: isAdmin = false isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+ Авторизован с токеном, длина: 321
+ Fetching user API keys using the API route
+ Авторизован с токеном, длина: 321
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ AuthGuard: Checking auth state Object
+ AuthGuard: Validating token from store
+ API Request: GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/user-api-keys undefined
+ AuthGuard: Token validation result: Object
+ AuthGuard: Token validation successful
+ Campaigns loaded: 8
+ Получены данные пользователя: Object
+ Проверка администратора: is_smm_admin = true итог: true
+ Пользователь является администратором по email: lbrspb@gmail.com
+ Layout рендер: isAdmin = false isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+ AuthGuard: Token validation result: Object
+ AuthGuard: Token validation successful
+ API Response: 200 GET /user-api-keys Object
+ Successfully fetched 8 API keys
+ Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+ Auto-selected campaign: "Нерудстрой"
+ Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+ 🔄 Сброс состояния ImageGenerationDialog при открытии Object
+ Создание нового контента - промт сброшен
+ Выбрана вкладка прямого промта (по умолчанию)
+ Авторизован с токеном, длина: 321
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ AuthGuard: Checking auth state Object
+ AuthGuard: Validating token from store
+ Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+ Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+ Используем глобально выбранную кампанию: "Нерудстрой"
+ Проверка принадлежности кампании пользователю: Object
+ API Request: GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/api/fal-ai-models?nocache=1748245795521 undefined
+ Загрузка контента для кампании: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+ Загрузка ключевых слов для кампании: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+api/campaigns:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ AuthGuard: Token validation result: Object
+ AuthGuard: Token validation successful
+ API Response: 200 GET /api/fal-ai-models?nocache=1748245795521 <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style data-vite-theme="" data-inject-first="">:root {
+      --background: 345 94% 98%;
+--foreground: 344 100% 3%;
+--muted: 344 86% 90%;
+--muted-foreground: 344 100% 3%;
+--popover: 345 94% 98%;
+--popover-foreground: 344 100% 3%;
+--card: 345 94% 98%;
+--card-foreground: 344 100% 3%;
+--border: 344 86% 90%;
+--input: 344 86% 90%;
+--primary: 345 0% 39%;
+--primary-foreground: 344 0% 98%;
+--secondary: 344 100% 95%;
+--secondary-foreground: 344 100% 3%;
+--accent: 344 100% 95%;
+--accent-foreground: 344 100% 3%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 345 0% 39%;
+--radius: 0.5rem;
+  }
+  .dark {
+      --background: 343 24% 9%;
+--foreground: 344 86% 90%;
+--muted: 338 50% 20%;
+--muted-foreground: 344 86% 90%;
+--popover: 343 24% 9%;
+--popover-foreground: 344 86% 90%;
+--card: 343 24% 9%;
+--card-foreground: 344 86% 90%;
+--border: 338 50% 20%;
+--input: 338 50% 20%;
+--primary: 336 0% 62%;
+--primary-foreground: 342 0% 99%;
+--secondary: 338 50% 20%;
+--secondary-foreground: 344 86% 90%;
+--accent: 338 50% 20%;
+--accent-foreground: 344 86% 90%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 336 0% 62%;
+--radius: 0.5rem;
+  }</style>
+
+    <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+    <script type="module">
+import RefreshRuntime from "/@react-refresh"
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$ = () => {}
+window.$RefreshSig$ = () => (type) => type
+window.__vite_plugin_react_preamble_installed__ = true
+</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SMM Manager</title>
+    <script type="module">"use strict";(()=>{var t={HIGHLIGHT_COLOR:"#8B5CF6",HIGHLIGHT_BG:"#8B5CF610",Z_INDEX:{BASE:1e4,OVERLAY:10001,TOOLTIP:10002,CONTENT:10003},HOVERED_ATTR:"data-replit-hovered",SELECTED_ATTR:"data-replit-selected",TOOLTIP_OFFSET:25,MAX_TOOLTIP_WIDTH:200,ALLOWED_DOMAIN:".replit.dev"},s=`
+  .replit-beacon-tooltip {
+    position: fixed;
+    z-index: ${t.Z_INDEX.TOOLTIP};
+    pointer-events: none;
+    background-color: ${t.HIGHLIGHT_COLOR};
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    white-space: nowrap;
+    display: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: opacity 0.2s ease-in-out;
+    margin: 0;
+  }
+
+  /* Base positioning for highlighted elements */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}] {
+    position: relative !important;
+    z-index: ${t.Z_INDEX.BASE} !important;
+  }
+
+  /* Common overlay styles */
+  [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}]::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: ${t.Z_INDEX.OVERLAY};
+    transition: none !important;
+    box-sizing: border-box;
+  }
+
+  /* Hover state */
+  [${t.HOVERED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+    border: 2px dashed ${t.HIGHLIGHT_COLOR};
+  }
+
+  /* Selected state - we can add dotted border, removed due to visual bugs and inconsistencies across different element types */
+  [${t.SELECTED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+  }
+
+  /* Preserve child element positioning */
+  [${t.HOVERED_ATTR}] > *,
+  [${t.SELECTED_ATTR}] > * {
+    position: relative;
+    z-index: ${t.Z_INDEX.CONTENT};
+  }
+
+  /* Special handling for images */
+  img[${t.HOVERED_ATTR}],
+  img[${t.SELECTED_ATTR}] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Prevent nested highlights */
+  [${t.HOVERED_ATTR}] [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.HOVERED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.HOVERED_ATTR}]::before {
+    display: none;
+  }
+
+  /* Fix for absolutely positioned elements */
+  [${t.HOVERED_ATTR}] [class*="absolute"],
+  [${t.SELECTED_ATTR}] [class*="absolute"] {
+    z-index: ${t.Z_INDEX.CONTENT} !important;
+  }
+
+  /* Fix for flex and grid layouts */
+  [${t.HOVERED_ATTR}].flex,
+  [${t.SELECTED_ATTR}].flex,
+  [${t.HOVERED_ATTR}].grid,
+  [${t.SELECTED_ATTR}].grid {
+    display: flex !important;
+  }
+
+  /* Prevent transition jumps */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}],
+  [${t.HOVERED_ATTR}] *,
+  [${t.SELECTED_ATTR}] * {
+    transition: none !important;
+    animation: none !im
+ Получены данные пользователя: Object
+ Проверка администратора: is_smm_admin = true итог: true
+ Пользователь является администратором по email: lbrspb@gmail.com
+ Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+ Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+ Загружено ключевых слов: 7
+ Загружено контента: 0
+ Выбрана кампания: "Правильное питание" (id: 46868c44-c6a4-4bed-accf-9ad07bba790e)
+ Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=Правильное питание
+ Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+ Проверка принадлежности кампании пользователю: Object
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+index.tsx:324 Загружено ключевых слов: 33
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Правильное питание
+index.tsx:296 Загружено контента: 100
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+hook.js:608 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`. Error Component Stack
+    at Badge (badge.tsx:32:18)
+    at chunk-UACHJROW.js?v=f2753103:52:11
+    at chunk-UACHJROW.js?v=f2753103:33:11
+    at chunk-RLTE5R7I.js?v=f2753103:41:13
+    at chunk-UACHJROW.js?v=f2753103:52:11
+    at chunk-UACHJROW.js?v=f2753103:33:11
+    at chunk-RLTE5R7I.js?v=f2753103:41:13
+    at chunk-EYZBUH3S.js?v=f2753103:1982:13
+    at @radix-ui_react-tooltip.js?v=f2753103:190:13
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at Provider (chunk-EYZBUH3S.js?v=f2753103:1917:15)
+    at Popper (chunk-EYZBUH3S.js?v=f2753103:1974:11)
+    at Tooltip (@radix-ui_react-tooltip.js?v=f2753103:108:5)
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=f2753103:64:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ScheduledPostInfo (ScheduledPostInfo.tsx:130:37)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=f2753103:41:13
+    at @radix-ui_react-accordion.js?v=f2753103:121:11
+    at Presence (chunk-67VZ6NIO.js?v=f2753103:24:11)
+    at @radix-ui_react-accordion.js?v=f2753103:114:13
+    at @radix-ui_react-accordion.js?v=f2753103:445:13
+    at _c7 (accordion.tsx:142:6)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=f2753103:41:13
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at @radix-ui_react-accordion.js?v=f2753103:55:7
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at @radix-ui_react-accordion.js?v=f2753103:363:13
+    at _c3 (accordion.tsx:39:6)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=f2753103:41:13
+    at chunk-UACHJROW.js?v=f2753103:52:11
+    at chunk-UACHJROW.js?v=f2753103:33:11
+    at chunk-MRB2OOEX.js?v=f2753103:98:15
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at @radix-ui_react-accordion.js?v=f2753103:267:13
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at Provider (chunk-7X6RRC7I.js?v=f2753103:38:15)
+    at @radix-ui_react-accordion.js?v=f2753103:234:12
+    at Provider (chunk-MRB2OOEX.js?v=f2753103:28:15)
+    at CollectionProvider (chunk-MRB2OOEX.js?v=f2753103:89:13)
+    at @radix-ui_react-accordion.js?v=f2753103:193:13
+    at _c (accordion.tsx:12:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c9 (card.tsx:62:6)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:112:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:23:26)
+    at WithLayout (App.tsx:40:23)
+    at _c8 (<anonymous>)
+    at Route (wouter.js?v=f2753103:323:16)
+    at Switch (wouter.js?v=f2753103:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=f2753103:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:71 Генерация контента через gemini-2.0-flash API
+ContentGenerationDialog.tsx:72 Параметры запроса: Object
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: Object
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: Object
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: Вы когда-нибудь задумывались, почему одна и та же диета помогает вашей подруге, но совершенно не работает для вас? 🤔
+
+Дело в том, что наш организм уникален, как отпечаток пальца! Генетика, метаболизм, образ жизни и даже состав микрофлоры кишечника – всё это влияет на то, как мы усваиваем пищу.
+
+Именно поэтому профессиональный анализ диеты – это не просто модный тренд, а необходимость для тех, кто заботится о своем здоровье и хочет достичь реальных результатов. ✅
+
+Наши специалисты проводят комплексную оценку ваших пищевых привычек, учитывают индивидуальные особенности организма и на основе этих данных разрабатывают персональные рационы питания, которые действительно работают.
+
+А самое удобное – весь процесс составления рационов происходит онлайн! Никаких поездок в офис, ожидания в очередях или неудобных встреч. Просто заполните анкету, пройдите онлайн-консультацию, и получите свой индивидуальный план питания прямо на почту. 💻
+
+Поделитесь в комментариях: какие диеты вы пробовали и почему, по вашему мнению, они сработали или не сработали? Возможно, ваш опыт поможет другим!
+
+Узнайте больше о том, как получить свой персональный рацион питания на нашем сайте: www.diet-expert.ru
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 7
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>Вы когда-нибудь задумывались, почему одна и та же диета помогает вашей подруге, но совершенно не работает для вас? 🤔</p><p>Дело в том, что наш организм уникален, как отпечаток пальца! Генетика, метаболизм, образ жизни и даже состав микрофлоры кишечника – всё это влияет на то, как мы усваиваем пищу.</p><p>Именно поэтому профессиональный анализ диеты – это не просто модный тренд, а необходимость для тех, кто заботится о своем здоровье и хочет достичь реальных результатов. ✅</p><p>Наши специалисты проводят комплексную оценку ваших пищевых привычек, учитывают индивидуальные особенности организма и на основе этих данных разрабатывают персональные рационы питания, которые действительно работают.</p><p>А самое удобное – весь процесс составления рационов происходит онлайн! Никаких поездок в офис, ожидания в очередях или неудобных встреч. Просто заполните анкету, пройдите онлайн-консультацию, и получите свой индивидуальный план питания прямо на почту. 💻</p><p>Поделитесь в комментариях: какие диеты вы пробовали и почему, по вашему мнению, они сработали или не сработали? Возможно, ваш опыт поможет другим!</p><p>Узнайте больше о том, как получить свой персональный рацион питания на нашем сайте: www.diet-expert.ru</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:296 Загружено контента: 100
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:71 Генерация контента через claude API
+ContentGenerationDialog.tsx:72 Параметры запроса: Object
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: Object
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: Object
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: Ваш рацион питания - это не просто набор продуктов, а настоящий фундамент здоровья и энергии! 💪
+
+Знаете ли вы, что 78% людей, пытающихся самостоятельно составить диету, допускают критические ошибки? Недостаток белка, избыток углеводов или полное исключение жиров – всё это может привести к дисбалансу в организме.
+
+Профессиональный анализ диеты помогает увидеть полную картину вашего питания. Мы не просто считаем калории, а изучаем, как именно ваш организм реагирует на определенные продукты. 🥑🥦🍗
+
+Наши специалисты создают индивидуальные рационы питания с учетом:
+• Ваших целей (снижение веса, набор мышечной массы, поддержание здоровья)
+• Образа жизни и графика дня
+• Пищевых предпочтений и непереносимостей
+• Хронических заболеваний, если они есть
+
+Теперь получить профессиональную консультацию можно не выходя из дома! Составление рационов онлайн экономит ваше время и дает возможность получать поддержку специалиста в любой точке мира. 🌍
+
+Поделитесь в комментариях, с какими трудностями вы сталкиваетесь при планировании своего питания? Возможно, у нас уже есть решение вашей проблемы!
+
+Узнайте больше и запишитесь на консультацию на нашем сайте: www.diet-expert.ru
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 7
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>Ваш рацион питания - это не просто набор продуктов, а настоящий фундамент здоровья и энергии! 💪</p><p>Знаете ли вы, что 78% людей, пытающихся самостоятельно составить диету, допускают критические ошибки? Недостаток белка, избыток углеводов или полное исключение жиров – всё это может привести к дисбалансу в организме.</p><p>Профессиональный анализ диеты помогает увидеть полную картину вашего питания. Мы не просто считаем калории, а изучаем, как именно ваш организм реагирует на определенные продукты. 🥑🥦🍗</p><p>Наши специалисты создают индивидуальные рационы питания с учетом:
+• Ваших целей (снижение веса, набор мышечной массы, поддержание здоровья)
+• Образа жизни и графика дня
+• Пищевых предпочтений и непереносимостей
+• Хронических заболеваний, если они есть</p><p>Теперь получить профессиональную консультацию можно не выходя из дома! Составление рационов онлайн экономит ваше время и дает возможность получать поддержку специалиста в любой точке мира. 🌍</p><p>Поделитесь в комментариях, с какими трудностями вы сталкиваетесь при планировании своего питания? Возможно, у нас уже есть решение вашей проблемы!</p><p>Узнайте больше и запишитесь на консультацию на нашем сайте: www.diet-expert.ru</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+ContentGenerationDialog.tsx:71 Генерация контента через claude API
+ContentGenerationDialog.tsx:72 Параметры запроса: Object
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+ContentGenerationDialog.tsx:106 Получен ответ от API генерации контента: Object
+ContentGenerationDialog.tsx:121 Получены данные для форматирования: Object
+ContentGenerationDialog.tsx:126 Начинаем форматирование контента: 🍎 Знаете ли вы, что 78% людей, пытающихся похудеть, делают это неправильно? 
+
+Часто мы слепо следуем модным диетам, не понимая, что организм каждого человека уникален. То, что работает для вашей подруги, может совершенно не подходить вам!
+
+Профессиональный анализ диеты — это не просто список разрешенных и запрещенных продуктов. Это комплексная оценка ваших потребностей, особенностей метаболизма и образа жизни.
+
+Индивидуальные рационы питания учитывают:
+• Ваш возраст и пол
+• Уровень физической активности
+• Хронические заболевания
+• Пищевые предпочтения
+• Режим дня
+
+Благодаря современным технологиям, составление рационов онлайн стало доступным каждому! Не нужно тратить время на поездки к диетологу — профессиональная консультация теперь в вашем смартфоне 📱
+
+Как это работает? Вы заполняете подробную анкету, наши специалисты анализируют данные и создают персональный план питания, который подходит именно вам.
+
+Поделитесь в комментариях: какие диеты вы пробовали и какие результаты получили? Возможно, ваш опыт поможет другим!
+
+Узнайте больше о персонализированном питании на нашем сайте: www.dietaonline.ru
+ContentGenerationDialog.tsx:142 Разбито на параграфы: 8
+ContentGenerationDialog.tsx:172 Отформатированный контент: <p>🍎 Знаете ли вы, что 78% людей, пытающихся похудеть, делают это неправильно?</p><p>Часто мы слепо следуем модным диетам, не понимая, что организм каждого человека уникален. То, что работает для вашей подруги, может совершенно не подходить вам!</p><p>Профессиональный анализ диеты — это не просто список разрешенных и запрещенных продуктов. Это комплексная оценка ваших потребностей, особенностей метаболизма и образа жизни.</p><p>Индивидуальные рационы питания учитывают:
+• Ваш возраст и пол
+• Уровень физической активности
+• Хронические заболевания
+• Пищевые предпочтения
+• Режим дня</p><p>Благодаря современным технологиям, составление рационов онлайн стало доступным каждому! Не нужно тратить время на поездки к диетологу — профессиональная консультация теперь в вашем смартфоне 📱</p><p>Как это работает? Вы заполняете подробную анкету, наши специалисты анализируют данные и создают персональный план питания, который подходит именно вам.</p><p>Поделитесь в комментариях: какие диеты вы пробовали и какие результаты получили? Возможно, ваш опыт поможет другим!</p><p>Узнайте больше о персонализированном питании на нашем сайте: www.dietaonline.ru</p>
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:222 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:223 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
