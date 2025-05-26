@@ -1370,6 +1370,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     console.log(`🎯🎯🎯 [CRITICAL-FIXED-HANDLER] ЗАПРОС ПОПАЛ В КРИТИЧЕСКИ ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
     console.log(`[CONTENT-GEN-INDEX] Запрос получен в index.ts (ПЕРВЫЙ обработчик)`);
+    console.log(`[CONTENT-GEN-DEBUG] Получен запрос на генерацию контента от пользователя ${req.user?.id}`);
+    console.log(`[CONTENT-GEN-DEBUG] Headers:`, req.headers.authorization ? 'Authorization ЕСТЬ' : 'Authorization ОТСУТСТВУЕТ');
     
     const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
     const authHeader = req.headers.authorization || '';
