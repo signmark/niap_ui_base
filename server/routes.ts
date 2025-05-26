@@ -1367,14 +1367,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/generate-content", async (req: any, res) => {
-    console.log(`🎯🎯🎯 [FIXED-HANDLER] ЗАПРОС ПОПАЛ В ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
-    console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
+  app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
+    console.log(`🎯🎯🎯 [CRITICAL-FIXED-HANDLER] ЗАПРОС ПОПАЛ В КРИТИЧЕСКИ ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
+    console.log(`[CONTENT-GEN-INDEX] Запрос получен в index.ts (ПЕРВЫЙ обработчик)`);
     
     const { prompt, keywords, tone, campaignId, platform, service, useCampaignData } = req.body;
     const authHeader = req.headers.authorization || '';
     const token = authHeader.replace('Bearer ', '');
-    const userId = req.userId;
+    const userId = req.user?.id;
+    
+    console.log(`[CONTENT-GEN-DEBUG] ПРОВЕРКА АУТЕНТИФИКАЦИИ:`);
+    console.log(`[CONTENT-GEN-DEBUG] req.user =`, req.user);
+    console.log(`[CONTENT-GEN-DEBUG] userId = ${userId}`);
+    console.log(`[CONTENT-GEN-DEBUG] token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
+    
+    // Если userId не извлечен из middleware, попробуем декодировать токен напрямую
+    if (!userId && token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(Buffer.from(base64, 'base64').toString().split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const decoded = JSON.parse(jsonPayload);
+        const fallbackUserId = decoded.id;
+        console.log(`[CONTENT-GEN-DEBUG] Декодированный токен, fallback userId = ${fallbackUserId}`);
+        
+        // Используем fallback userId если основной не работает
+        if (fallbackUserId) {
+          console.log(`[CONTENT-GEN-DEBUG] Используем fallback userId = ${fallbackUserId}`);
+        }
+      } catch (decodeError) {
+        console.log(`[CONTENT-GEN-DEBUG] Ошибка декодирования токена:`, decodeError);
+      }
+    }
     
     let campaignWebsiteUrl = null;
     let questionnaireData = null;
