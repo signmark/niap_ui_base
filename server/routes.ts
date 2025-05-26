@@ -1407,9 +1407,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // 1. Получаем данные кампании (включая ссылку на сайт)
         console.log(`[CONTENT-GEN-DEBUG] Запрашиваем данные кампании из Directus...`);
+        
+        // Используем админский токен если пользовательский не работает
+        let authToken = token;
+        if (!authToken) {
+          const adminToken = await getDirectusAdminToken();
+          if (adminToken) {
+            authToken = adminToken;
+            console.log(`[CONTENT-GEN-DEBUG] Используем админский токен для загрузки данных кампании`);
+          }
+        }
+        
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           }
         });
@@ -1463,16 +1474,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Добавляем данные компании если включено использование данных кампании
-    if (useCampaignData) {
-      // ВРЕМЕННОЕ ИСПРАВЛЕНИЕ: Принудительно используем настоящий сайт пользователя
-      const realWebsiteUrl = campaignWebsiteUrl || 'https://nplanner.ru/';
-      
+    if (useCampaignData && (campaignWebsiteUrl || questionnaireData)) {
       enhancedPrompt += '\n\n=== СТРОГО ОБЯЗАТЕЛЬНЫЕ ДАННЫЕ КОМПАНИИ ===';
       enhancedPrompt += '\n🚨 ВНИМАНИЕ: Используй ТОЛЬКО эти данные! НЕ придумывай ничего своего!';
-      enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${realWebsiteUrl}`;
-      enhancedPrompt += `\n🚫 СТРОГО ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${realWebsiteUrl}`;
-      enhancedPrompt += `\n⚠️ Если упоминаешь сайт, используй ТОЛЬКО: ${realWebsiteUrl}`;
-      enhancedPrompt += `\n🔒 НЕ СОЗДАВАЙ вымышленные сайты типа business-analytics.ru, diet-expert.ru и подобные!`;
+      
+      if (campaignWebsiteUrl) {
+        enhancedPrompt += `\n📌 ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ САЙТ: ${campaignWebsiteUrl}`;
+        enhancedPrompt += `\n🚫 ЗАПРЕЩЕНО использовать любые другие сайты кроме: ${campaignWebsiteUrl}`;
+        enhancedPrompt += `\n⚠️ Если пишешь ссылку, используй ТОЛЬКО: ${campaignWebsiteUrl}`;
+      }
       
       if (questionnaireData) {
         if (questionnaireData.company_name) {
