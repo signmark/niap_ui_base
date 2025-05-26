@@ -1520,6 +1520,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log(`[CONTENT-GEN] Контент успешно сгенерирован с сервисом ${usedService}, длина: ${generatedContent?.length || 0} символов`);
     
+    // Критически важная фильтрация: заменяем неправильные сайты на правильный
+    if (useCampaignData && campaignWebsiteUrl && generatedContent) {
+      console.log(`[CONTENT-GEN] Применяем фильтрацию URL для кампании`);
+      
+      // Список запрещенных доменов, которые AI часто "придумывает"
+      const bannedDomains = [
+        'www.diet-expert.ru',
+        'diet-expert.ru',
+        'diet-analysis.ru',
+        'www.diet-analysis.ru',
+        'healthy-diet.ru',
+        'www.healthy-diet.ru',
+        'питание-эксперт.ру',
+        'диета-анализ.ру'
+      ];
+      
+      // Заменяем все запрещенные домены на правильный URL кампании
+      let filteredContent = generatedContent;
+      bannedDomains.forEach(domain => {
+        const regex = new RegExp(domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        filteredContent = filteredContent.replace(regex, campaignWebsiteUrl);
+      });
+      
+      // Дополнительно заменяем любые другие домены, которые AI мог придумать
+      const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9][\w.-]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g;
+      filteredContent = filteredContent.replace(websiteRegex, (match) => {
+        // Если это не наш правильный домен, заменяем
+        if (!match.includes(campaignWebsiteUrl.replace(/^https?:\/\//, '').replace(/^www\./, ''))) {
+          console.log(`[CONTENT-GEN] Заменяем неправильный URL ${match} на ${campaignWebsiteUrl}`);
+          return campaignWebsiteUrl;
+        }
+        return match;
+      });
+      
+      generatedContent = filteredContent;
+      console.log(`[CONTENT-GEN] Фильтрация завершена, используется только правильный URL: ${campaignWebsiteUrl}`);
+    }
+    
     res.json({
       success: true,
       content: generatedContent,
