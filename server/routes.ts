@@ -1583,18 +1583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       generatedContent = response.text();
       
     } else {
-      // Для других сервисов используем Claude по умолчанию
-      const { ClaudeService } = await import('./services/claude');
-      
-      const claudeService = new ClaudeService();
-      await claudeService.initialize(userId);
-      
-      generatedContent = await claudeService.generateSocialContent(
-        enhancedPrompt,
-        platform || 'instagram',
-        tone || 'дружелюбный',
-        keywords || []
-      );
+      console.log(`❌ НЕИЗВЕСТНЫЙ СЕРВИС: ${service}. Поддерживаемые: claude, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp`);
+      throw new Error(`Неподдерживаемый сервис: ${service}. Поддерживаемые сервисы: claude, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp`);
       usedService = 'claude';
     }
     
