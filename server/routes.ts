@@ -1354,6 +1354,19 @@ function parseArrayField(value: any, itemId?: string): any[] {
 export async function registerRoutes(app: Express): Promise<Server> {
   // ВАЖНО: Регистрируем наш улучшенный маршрут ПЕРЕД старыми роутами Claude
   // Маршрут для генерации контента с данными кампании
+  // Тестовый эндпоинт для проверки данных кампании
+  app.post("/api/test-campaign-data", async (req: any, res) => {
+    console.log(`[TEST-CAMPAIGN] Тестовый запрос получен`);
+    const { campaignId, useCampaignData } = req.body;
+    console.log(`[TEST-CAMPAIGN] campaignId: ${campaignId}, useCampaignData: ${useCampaignData}`);
+    
+    return res.json({ 
+      success: true, 
+      message: "Тест получен", 
+      data: { campaignId, useCampaignData }
+    });
+  });
+
   app.post("/api/generate-content", async (req: any, res) => {
     console.log(`🎯🎯🎯 [FIXED-HANDLER] ЗАПРОС ПОПАЛ В ИСПРАВЛЕННЫЙ ОБРАБОТЧИК! 🎯🎯🎯`);
     console.log(`[CONTENT-GEN-MAIN] Запрос получен в главном обработчике routes.ts`);
