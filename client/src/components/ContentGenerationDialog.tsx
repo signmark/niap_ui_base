@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,16 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
   const [selectedService, setSelectedService] = useState<ApiService>('gemini-2.0-flash');
+  const [useCampaignData, setUseCampaignData] = useState(false);
+
+  // Получение данных о кампании
+  const { data: campaignData } = useQuery({
+    queryKey: ['/api/campaigns', campaignId],
+    enabled: !!campaignId
+  });
+
+  // Проверка возможности использования данных кампании
+  const canUseCampaignData = campaignId && campaignData?.link;
 
   const { mutate: generateContent, isPending } = useMutation({
     mutationFn: async () => {
@@ -81,7 +91,8 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           tone,
           campaignId,
           platform: platform, // Используется для всех сервисов
-          service: selectedService // Указываем выбранный сервис
+          service: selectedService, // Указываем выбранный сервис
+          useCampaignData: useCampaignData // Добавляем параметр использования данных кампании
         })
       });
 
@@ -362,6 +373,36 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                 )}
               </div>
             </div>
+
+            {/* Чекбокс "Использовать данные кампании" */}
+            <div className="grid grid-cols-4 items-start gap-4">
+              <div className="text-right"></div>
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="useCampaignData"
+                    checked={useCampaignData}
+                    onCheckedChange={(checked) => setUseCampaignData(!!checked)}
+                    disabled={!canUseCampaignData}
+                  />
+                  <Label 
+                    htmlFor="useCampaignData" 
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Использовать данные кампании
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  При включении AI получит информацию о компании и ссылку на сайт для создания более персонализированного контента
+                </p>
+                {!canUseCampaignData && (
+                  <p className="text-xs text-yellow-600">
+                    Функция недоступна: не указана ссылка на сайт в настройках кампании
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="flex justify-end space-x-2 mt-2">
               <Button variant="outline" onClick={onClose} size="sm" className="w-[100px]">
                 Отмена

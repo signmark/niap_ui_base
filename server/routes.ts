@@ -3444,9 +3444,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Функция получения контекста кампании для обогащения промптов AI
+  async function getCampaignContext(campaignId: string, userToken: string): Promise<string> {
+    try {
+      const contextParts: string[] = [];
+      
+      // Получаем данные кампании
+      const campaignResponse = await storage.getCampaign(campaignId, userToken);
+      const campaignData = campaignResponse;
+      
+      // Добавляем ссылку на сайт кампании
+      if (campaignData?.link) {
+        contextParts.push(`Сайт компании: ${campaignData.link}`);
+      }
+      
+      // Получаем данные анкеты, если есть questionnaire_id
+      if (campaignData?.questionnaire_id) {
+        try {
+          const questionnaireData = await storage.getBusinessQuestionnaire(campaignData.questionnaire_id, userToken);
+          
+          if (questionnaireData) {
+            // Основная информация о компании
+            if (questionnaireData.company_name) {
+              contextParts.push(`Название компании: ${questionnaireData.company_name}`);
+            }
+            if (questionnaireData.contact_info) {
+              contextParts.push(`Контактная информация: ${questionnaireData.contact_info}`);
+            }
+            if (questionnaireData.business_description) {
+              contextParts.push(`Описание бизнеса: ${questionnaireData.business_description}`);
+            }
+            
+            // Направления деятельности
+            if (questionnaireData.main_directions) {
+              contextParts.push(`Основные направления: ${questionnaireData.main_directions}`);
+            }
+            if (questionnaireData.products_services) {
+              contextParts.push(`Продукты/услуги: ${questionnaireData.products_services}`);
+            }
+            
+            // Целевая аудитория и результаты
+            if (questionnaireData.target_audience) {
+              contextParts.push(`Целевая аудитория: ${questionnaireData.target_audience}`);
+            }
+            if (questionnaireData.customer_results) {
+              contextParts.push(`Результаты для клиентов: ${questionnaireData.customer_results}`);
+            }
+            
+            // Особенности и преимущества компании
+            if (questionnaireData.company_features) {
+              contextParts.push(`Особенности компании: ${questionnaireData.company_features}`);
+            }
+            if (questionnaireData.competitive_advantages) {
+              contextParts.push(`Конкурентные преимущества: ${questionnaireData.competitive_advantages}`);
+            }
+            
+            // Ценности и убеждения
+            if (questionnaireData.business_values) {
+              contextParts.push(`Ценности бизнеса: ${questionnaireData.business_values}`);
+            }
+            if (questionnaireData.product_beliefs) {
+              contextParts.push(`Убеждения о продукте: ${questionnaireData.product_beliefs}`);
+            }
+            
+            // Маркетинговые ожидания
+            if (questionnaireData.marketing_expectations) {
+              contextParts.push(`Маркетинговые ожидания: ${questionnaireData.marketing_expectations}`);
+            }
+            
+            // Брендинг
+            if (questionnaireData.brand_image) {
+              contextParts.push(`Образ бренда: ${questionnaireData.brand_image}`);
+            }
+          }
+        } catch (questionnaireError) {
+          console.log('Ошибка получения анкеты:', questionnaireError);
+          // Продолжаем работу без данных анкеты
+        }
+      }
+      
+      return contextParts.length > 0 
+        ? `\n\nДАННЫЕ О КОМПАНИИ:\n${contextParts.join('\n')}\n\nИспользуй эту информацию для создания персонализированного контента.`
+        : '';
+        
+    } catch (error) {
+      console.error('Ошибка получения данных кампании:', error);
+      return ''; // При ошибке просто не добавляем контекст
+    }
+  }
+
   app.post("/api/generate-content", authenticateUser, async (req: any, res) => {
     try {
-      const { prompt, keywords, tone, campaignId, service, aiService } = req.body;
+      const { prompt, keywords, tone, campaignId, service, aiService, useCampaignData } = req.body;
       
       if (!prompt || !keywords || !tone || !campaignId) {
         return res.status(400).json({ error: "Missing required parameters" });
