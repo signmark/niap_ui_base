@@ -1408,19 +1408,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // 1. Получаем данные кампании (включая ссылку на сайт)
         console.log(`[CONTENT-GEN-DEBUG] Запрашиваем данные кампании из Directus...`);
         
-        // Используем админский токен если пользовательский не работает
-        let authToken = token;
-        if (!authToken) {
-          const adminToken = await getDirectusAdminToken();
-          if (adminToken) {
-            authToken = adminToken;
-            console.log(`[CONTENT-GEN-DEBUG] Используем админский токен для загрузки данных кампании`);
-          }
-        }
+        // Используем пользовательский токен, как во всех остальных частях системы
+        console.log(`[CONTENT-GEN-DEBUG] Используем пользовательский токен для загрузки данных кампании`);
+        console.log(`[CONTENT-GEN-DEBUG] token = ${token ? 'ИМЕЕТСЯ' : 'ОТСУТСТВУЕТ'}`);
         
         const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL || 'https://directus.nplanner.ru'}/items/user_campaigns/${campaignId}`, {
           headers: {
-            'Authorization': `Bearer ${authToken}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
