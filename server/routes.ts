@@ -2086,6 +2086,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = authHeader.replace('Bearer ', '');
       
       console.log(`Запрос на генерацию контента: service=${service}, useCampaignData=${useCampaignData}, campaignId=${campaignId}`);
+      console.log(`DEBUG: Типы параметров - useCampaignData: ${typeof useCampaignData}, campaignId: ${typeof campaignId}`);
+      console.log(`DEBUG: Проверка условия: useCampaignData=${useCampaignData}, campaignId=${campaignId}, результат: ${useCampaignData && campaignId}`);
       
       if (!prompt || !prompt.trim()) {
         return res.status(400).json({
@@ -2098,6 +2100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Если включено использование данных кампании, получаем их
       if (useCampaignData && campaignId) {
+        console.log('🎯 УСЛОВИЕ ВЫПОЛНЕНО - вызываем getCampaignContext');
         try {
           const campaignContext = await getCampaignContext(userId, campaignId, token);
           if (campaignContext) {
