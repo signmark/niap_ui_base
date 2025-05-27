@@ -8630,7 +8630,7 @@ https://t.me/channelname/ - description`;
       }
       
       const token = authHeader.replace('Bearer ', '');
-      const directusAuth = directusApiManager.getInstance();
+      const directusAuth = directusApiManager.instance;
       
       // Сначала получаем данные кампании для проверки доступа и получения questionnaire_id
       const campaignData = await directusAuth.directusCrud.readItem('campaigns', campaignId, token);
