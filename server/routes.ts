@@ -6723,7 +6723,7 @@ https://t.me/channelname/ - description`;
         
         // Дополнительно попробуем удалить из оригинальной таблицы campaigns если она существует
         try {
-          await directusApi.delete(`/items/campaigns/${campaignId}`, {
+          await directusApi.delete(`/items/user_campaigns/${campaignId}`, {
             headers: { Authorization: authToken }
           });
           console.log(`Кампания ${campaignId} успешно удалена из campaigns`);
@@ -8732,7 +8732,7 @@ https://t.me/channelname/ - description`;
       const directusAuth = directusApiManager.instance;
       
       // Сначала получаем данные кампании для проверки доступа и получения questionnaire_id
-      const campaignData = await directusAuth.directusCrud.readItem('campaigns', campaignId, token);
+      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', campaignId, token);
       
       if (!campaignData) {
         return res.status(404).json({
