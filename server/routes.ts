@@ -2032,7 +2032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Получаем данные кампании напрямую из Directus API
       const directusApi = axios.create({
-        baseURL: 'https://smm.ceo',
+        baseURL: 'https://directus.nplanner.ru',
         timeout: 10000
       });
       
@@ -2237,21 +2237,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let enrichedPrompt = prompt;
       
       // Если включено использование данных кампании, получаем их
-      if (useCampaignData && campaignId) {
-        console.log('🎯 УСЛОВИЕ ВЫПОЛНЕНО - вызываем getCampaignContext');
+      if (useCampaignData) {
+        console.log('🎯 УСЛОВИЕ ВЫПОЛНЕНО - получаем активную кампанию пользователя');
         try {
-          const campaignContext = await getCampaignContext(userId, campaignId, token);
-          if (campaignContext) {
-            enrichedPrompt = `${prompt}
+          // Получаем активную кампанию пользователя
+          let activeCampaignId = campaignId;
+          
+          if (!activeCampaignId) {
+            console.log('🔍 ID кампании не указан, ищем активную кампанию пользователя');
+            const directusApi = axios.create({
+              baseURL: 'https://directus.nplanner.ru',
+              timeout: 10000
+            });
+            
+            const campaignsResponse = await directusApi.get('/items/user_campaigns', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              params: {
+                filter: {
+                  user_id: { _eq: userId }
+                },
+                limit: 1,
+                sort: ['-date_created']
+              }
+            });
+            
+            const campaigns = campaignsResponse.data?.data;
+            if (campaigns && campaigns.length > 0) {
+              activeCampaignId = campaigns[0].id;
+              console.log(`🎯 Найдена активная кампания: ${activeCampaignId}`);
+            } else {
+              console.log('⚠️ Активная кампания не найдена');
+            }
+          }
+          
+          if (activeCampaignId) {
+            const campaignContext = await getCampaignContext(userId, activeCampaignId, token);
+            if (campaignContext) {
+              enrichedPrompt = `${prompt}
 
 ВАЖНО: Используй только предоставленную информацию о компании:
 ${campaignContext}
 
 ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-            console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
-            console.log('=====================================');
-            console.log(enrichedPrompt);
-            console.log('=====================================');
+              console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
+              console.log('=====================================');
+              console.log(enrichedPrompt);
+              console.log('=====================================');
+            }
           }
         } catch (error) {
           console.error('Ошибка при получении данных кампании:', error);
