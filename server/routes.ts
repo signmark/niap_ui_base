@@ -2025,6 +2025,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Маршрут для генерации контента с помощью AI сервисов
+  app.post('/api/generate-content', authenticateUser, async (req, res) => {
+    try {
+      const { prompt, keywords, platform, tone, service, useCampaignData, campaignId } = req.body;
+      
+      // Получаем userId из middleware аутентификации
+      const userId = (req as any).userId;
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Запрос на генерацию контента: service=${service}, useCampaignData=${useCampaignData}, campaignId=${campaignId}`);
+      
+      if (!prompt || !prompt.trim()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Промпт не может быть пустым'
+        });
+      }
+      
+      let enrichedPrompt = prompt;
+      
+      // Если включено использование данных кампании, получаем их
+      if (useCampaignData && campaignId) {
+        try {
+          const campaignContext = await getCampaignContext(userId, campaignId, token);
+          if (campaignContext) {
+            enrichedPrompt = `${prompt}\n\n${campaignContext}`;
+            console.log('Промпт обогащен данными кампании');
+          }
+        } catch (error) {
+          console.error('Ошибка при получении данных кампании:', error);
+          // Продолжаем с обычным промптом
+        }
+      }
+      
+      // Добавляем информацию о ключевых словах и платформе
+      if (keywords && keywords.length > 0) {
+        enrichedPrompt += `\n\nКлючевые слова: ${keywords.join(', ')}`;
+      }
+      
+      if (platform) {
+        enrichedPrompt += `\n\nПлатформа: ${platform}`;
+      }
+      
+      if (tone) {
+        enrichedPrompt += `\n\nТон: ${tone}`;
+      }
+      
+      let generatedContent;
+      let usedService = service || 'claude';
+      
+      // Генерируем контент с помощью выбранного сервиса
+      switch (usedService.toLowerCase()) {
+        case 'claude':
+          const claudeService = new ClaudeService();
+          const claudeInitialized = await claudeService.initialize(userId, token);
+          if (!claudeInitialized) {
+            return res.status(400).json({
+              success: false,
+              error: 'Claude API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          generatedContent = await claudeService.generateContent(enrichedPrompt);
+          break;
+          
+        case 'gemini':
+        case 'gemini-2.0-flash':
+        case 'gemini-pro':
+          const geminiService = new GeminiService();
+          const geminiInitialized = await geminiService.initialize(userId, token);
+          if (!geminiInitialized) {
+            return res.status(400).json({
+              success: false,
+              error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          generatedContent = await geminiService.generateContent(enrichedPrompt);
+          break;
+          
+        case 'deepseek':
+          const deepseekInitialized = await deepseekService.initialize(userId, token);
+          if (!deepseekInitialized) {
+            return res.status(400).json({
+              success: false,
+              error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          generatedContent = await deepseekService.generateText(enrichedPrompt);
+          break;
+          
+        case 'qwen':
+          const qwenInitialized = await qwenService.initialize(userId, token);
+          if (!qwenInitialized) {
+            return res.status(400).json({
+              success: false,
+              error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          generatedContent = await qwenService.generateContent(enrichedPrompt);
+          break;
+          
+        default:
+          // По умолчанию используем Claude
+          const defaultClaudeService = new ClaudeService();
+          const defaultInitialized = await defaultClaudeService.initialize(userId, token);
+          if (!defaultInitialized) {
+            return res.status(400).json({
+              success: false,
+              error: 'Claude API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          generatedContent = await defaultClaudeService.generateContent(enrichedPrompt);
+          usedService = 'claude';
+          break;
+      }
+      
+      console.log(`Контент успешно сгенерирован с помощью ${usedService}`);
+      
+      return res.json({
+        success: true,
+        content: generatedContent,
+        service: usedService
+      });
+      
+    } catch (error: any) {
+      console.error('Ошибка при генерации контента:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Ошибка при генерации контента'
+      });
+    }
+  });
+
   // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
   // Этот маршрут используется клиентскими компонентами для генерации изображений
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
