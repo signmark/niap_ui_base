@@ -8575,7 +8575,7 @@ https://t.me/channelname/ - description`;
       }
       
       const token = authHeader.replace('Bearer ', '');
-      const directusAuth = directusApiManager.getInstance();
+      const directusAuth = directusApiManager.instance;
       
       // Получаем данные кампании через Directus
       const campaignData = await directusAuth.directusCrud.readItem('campaigns', id, token);
