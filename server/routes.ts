@@ -2028,9 +2028,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} через наш API`);
+      console.log(`INFO: Получение данных кампании ${campaignId} напрямую из Directus`);
       
-      // Получаем данные кампании через Directus API
+      // Получаем данные кампании напрямую из Directus API
       const directusApi = axios.create({
         baseURL: 'https://smm.ceo',
         timeout: 10000
@@ -2042,6 +2042,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('INFO: Данные кампании получены из Directus');
       
       const campaignData = campaignResponse.data?.data;
       
