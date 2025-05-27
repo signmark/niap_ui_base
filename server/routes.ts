@@ -2025,6 +2025,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Функция для получения контекста кампании и данных анкеты
+  async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
+    try {
+      console.log(`INFO: Получение данных кампании ${campaignId} с токеном пользователя`);
+      
+      // Получаем данные кампании из Directus
+      const campaignResponse = await directusApi.get(`/items/campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('INFO: Ответ Directus для кампании:', JSON.stringify(campaignResponse.data, null, 2));
+      
+      const campaign = campaignResponse.data?.data;
+      if (!campaign) {
+        console.log('WARN: Данные кампании не найдены');
+        return null;
+      }
+      
+      let context = '';
+      
+      // Добавляем ссылку на сайт кампании
+      if (campaign.link) {
+        console.log(`INFO: Получена ссылка на сайт кампании: ${campaign.link}`);
+        context += `\n\nСайт кампании: ${campaign.link}`;
+      }
+      
+      // Пытаемся получить данные анкеты
+      try {
+        const questionnaireResponse = await directusApi.get('/items/business_questionnaire', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          params: {
+            filter: {
+              campaign_id: { _eq: campaignId }
+            }
+          }
+        });
+        
+        const questionnaire = questionnaireResponse.data?.data?.[0];
+        if (questionnaire) {
+          console.log('INFO: Найдена анкета кампании');
+          
+          // Добавляем данные из анкеты в контекст
+          const fields = [
+            { key: 'companyName', label: 'Название компании' },
+            { key: 'contactInfo', label: 'Контактная информация' },
+            { key: 'businessDescription', label: 'Описание бизнеса' },
+            { key: 'productsServices', label: 'Продукты и услуги' },
+            { key: 'targetAudience', label: 'Целевая аудитория' },
+            { key: 'uniqueSellingProposition', label: 'Уникальное торговое предложение' },
+            { key: 'competitiveAdvantages', label: 'Конкурентные преимущества' },
+            { key: 'brandPersonality', label: 'Личность бренда' },
+            { key: 'brandValues', label: 'Ценности бренда' },
+            { key: 'communicationStyle', label: 'Стиль коммуникации' },
+            { key: 'contentThemes', label: 'Темы контента' },
+            { key: 'brandImage', label: 'Образ бренда' },
+            { key: 'additionalInfo', label: 'Дополнительная информация' }
+          ];
+          
+          context += '\n\nДанные компании:';
+          fields.forEach(field => {
+            if (questionnaire[field.key] && questionnaire[field.key].trim()) {
+              context += `\n${field.label}: ${questionnaire[field.key]}`;
+            }
+          });
+        } else {
+          console.log('WARN: Анкета кампании не найдена в ответе Directus');
+        }
+      } catch (questionnaireError: any) {
+        console.log('WARN: Ошибка при получении анкеты:', questionnaireError.message);
+        // Продолжаем без данных анкеты
+      }
+      
+      return context.trim() ? context : null;
+    } catch (error: any) {
+      console.error('ERROR: Ошибка при запросе к Directus:', error.message, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseData: error.response?.data
+      });
+      return null;
+    }
+  }
+
   // Маршрут для генерации контента с помощью AI сервисов
   app.post('/api/generate-content', authenticateUser, async (req, res) => {
     try {
