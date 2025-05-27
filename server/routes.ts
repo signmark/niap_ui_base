@@ -2100,8 +2100,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const campaignContext = await getCampaignContext(userId, campaignId, token);
           if (campaignContext) {
-            enrichedPrompt = `${prompt}\n\n${campaignContext}`;
-            console.log('Промпт обогащен данными кампании');
+            enrichedPrompt = `${prompt}
+
+ВАЖНО: Используй только предоставленную информацию о компании:
+${campaignContext}
+
+ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+            console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
+            console.log('=====================================');
+            console.log(enrichedPrompt);
+            console.log('=====================================');
           }
         } catch (error) {
           console.error('Ошибка при получении данных кампании:', error);
