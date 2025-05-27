@@ -2030,9 +2030,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log(`INFO: Получение данных кампании ${campaignId} через наш API`);
       
-      // Получаем данные кампании напрямую из Directus
-      const directusAuth = directusApiManager.instance;
-      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', campaignId, token);
+      // Получаем данные кампании через Directus API
+      const directusApi = axios.create({
+        baseURL: 'https://smm.ceo',
+        timeout: 10000
+      });
+      
+      const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const campaignData = campaignResponse.data?.data;
       
       if (!campaignData) {
         console.log('WARN: Данные кампании не найдены');
@@ -2068,7 +2079,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (campaignData.questionnaire_id) {
         try {
           console.log(`INFO: Получение данных анкеты ${campaignData.questionnaire_id}`);
-          const questionnaireData = await directusAuth.directusCrud.readItem('campaign_questionnaires', campaignData.questionnaire_id, token);
+          const questionnaireResponse = await directusApi.get(`/items/campaign_questionnaires/${campaignData.questionnaire_id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const questionnaireData = questionnaireResponse.data?.data;
           
           if (questionnaireData) {
             console.log('INFO: Данные анкеты получены успешно');
