@@ -2028,12 +2028,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} с токеном пользователя`);
+      console.log(`INFO: Получение данных кампании ${campaignId} с административным токеном`);
       
-      // Получаем данные кампании из Directus
+      // Получаем административный токен
+      const adminToken = await getDirectusAdminToken();
+      if (!adminToken) {
+        console.error('ERROR: Не удалось получить административный токен');
+        return null;
+      }
+      
+      // Получаем данные кампании из Directus с административным токеном
       const campaignResponse = await directusApi.get(`/items/campaigns/${campaignId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
       
