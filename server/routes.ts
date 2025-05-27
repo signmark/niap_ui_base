@@ -2028,17 +2028,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} для пользователя ${userId}`);
-      console.log(`DEBUG: Токен пользователя начинается с: ${token.substring(0, 20)}...`);
+      console.log(`INFO: Получение данных кампании ${campaignId} с токеном пользователя`);
       
-      // Получаем данные кампании из Directus с токеном пользователя
-      const campaignResponse = await directusApi.get(`/items/campaigns/${campaignId}`, {
+      // Используем прямой запрос axios к Directus API, как это делается в других частях кода
+      const campaignResponse = await axios.get(`https://directus.nplanner.ru/items/campaigns/${campaignId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
       });
       
-      console.log('INFO: Ответ Directus для кампании:', JSON.stringify(campaignResponse.data, null, 2));
+      console.log('INFO: Ответ Directus для кампании получен успешно');
       
       const campaign = campaignResponse.data?.data;
       if (!campaign) {
@@ -2051,7 +2052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Добавляем ссылку на сайт кампании
       if (campaign.link) {
         console.log(`INFO: Получена ссылка на сайт кампании: ${campaign.link}`);
-        context += `\n\nСайт кампании: ${campaign.link}`;
+        context += `\n\nОБЯЗАТЕЛЬНО используйте этот сайт кампании: ${campaign.link}`;
       }
       
       // Добавляем основную информацию о кампании
@@ -2062,7 +2063,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context += `\nОписание кампании: ${campaign.description}`;
       }
       
-      console.log('INFO: Базовый контекст кампании сформирован успешно');
+      // Пробуем получить данные анкеты через связанный questionnaire_id
+      if (campaign.questionnaire_id) {
+        try {
+          console.log(`INFO: Получение данных анкеты ${campaign.questionnaire_id}`);
+          const questionnaireResponse = await axios.get(`https://directus.nplanner.ru/items/campaign_questionnaires/${campaign.questionnaire_id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000
+          });
+          
+          const questionnaire = questionnaireResponse.data?.data;
+          if (questionnaire) {
+            console.log('INFO: Данные анкеты получены успешно');
+            
+            // Добавляем данные о компании из анкеты
+            if (questionnaire.company_name) {
+              context += `\nНазвание компании: ${questionnaire.company_name}`;
+            }
+            if (questionnaire.business_description) {
+              context += `\nОписание бизнеса: ${questionnaire.business_description}`;
+            }
+            if (questionnaire.target_audience) {
+              context += `\nЦелевая аудитория: ${questionnaire.target_audience}`;
+            }
+            if (questionnaire.contact_info) {
+              context += `\nКонтактная информация: ${questionnaire.contact_info}`;
+            }
+          }
+        } catch (questionnaireError: any) {
+          console.log('WARN: Не удалось получить данные анкеты:', questionnaireError.message);
+        }
+      }
+      
+      console.log('INFO: Контекст кампании сформирован успешно');
       
       return context.trim() ? context : null;
     } catch (error: any) {
