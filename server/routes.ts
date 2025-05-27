@@ -63,7 +63,7 @@ import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
-import contentGenerationRouter from './routes/content-generation';
+
 
 /**
  * Подготавливает токен авторизации для запросов к Directus API
@@ -3148,7 +3148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем роуты генерации контента
   console.log('Registering content generation routes...');
-  app.use('/api', contentGenerationRouter);
+
   
   // Регистрируем вебхук-маршруты для прямой интеграции с социальными сетями
   console.log('Registering direct webhook routes for social platforms...');
