@@ -2028,10 +2028,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} с токеном пользователя`);
+      console.log(`INFO: Получение данных кампании ${campaignId} через наш API`);
       
-      // Используем прямой запрос axios к Directus API, как это делается в других частях кода
-      const campaignResponse = await axios.get(`https://directus.nplanner.ru/items/campaigns/${campaignId}`, {
+      // Используем наш собственный API endpoint для получения данных кампании
+      const campaignResponse = await axios.get(`http://localhost:5000/api/campaigns/${campaignId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -2039,7 +2039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeout: 15000
       });
       
-      console.log('INFO: Ответ Directus для кампании получен успешно');
+      console.log('INFO: Данные кампании получены через наш API');
       
       const campaign = campaignResponse.data?.data;
       if (!campaign) {
@@ -2063,11 +2063,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context += `\nОписание кампании: ${campaign.description}`;
       }
       
-      // Пробуем получить данные анкеты через связанный questionnaire_id
+      // Пробуем получить данные анкеты через наш API
       if (campaign.questionnaire_id) {
         try {
-          console.log(`INFO: Получение данных анкеты ${campaign.questionnaire_id}`);
-          const questionnaireResponse = await axios.get(`https://directus.nplanner.ru/items/campaign_questionnaires/${campaign.questionnaire_id}`, {
+          console.log(`INFO: Получение данных анкеты ${campaign.questionnaire_id} через наш API`);
+          const questionnaireResponse = await axios.get(`http://localhost:5000/api/campaigns/${campaignId}/questionnaire`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -2094,15 +2094,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (questionnaireError: any) {
-          console.log('WARN: Не удалось получить данные анкеты:', questionnaireError.message);
+          console.log('WARN: Не удалось получить данные анкеты через наш API:', questionnaireError.message);
         }
       }
       
       console.log('INFO: Контекст кампании сформирован успешно');
+      console.log('DEBUG: Сформированный контекст:', context.trim());
       
       return context.trim() ? context : null;
     } catch (error: any) {
-      console.error('ERROR: Ошибка при запросе к Directus:', error.message, {
+      console.error('ERROR: Ошибка при запросе данных кампании через наш API:', error.message, {
         status: error.response?.status,
         statusText: error.response?.statusText,
         responseData: error.response?.data
