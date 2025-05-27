@@ -2053,53 +2053,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context += `\n\nСайт кампании: ${campaign.link}`;
       }
       
-      // Пытаемся получить данные анкеты
-      try {
-        const questionnaireResponse = await directusApi.get('/items/business_questionnaire', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          params: {
-            filter: {
-              campaign_id: { _eq: campaignId }
-            }
-          }
-        });
-        
-        const questionnaire = questionnaireResponse.data?.data?.[0];
-        if (questionnaire) {
-          console.log('INFO: Найдена анкета кампании');
-          
-          // Добавляем данные из анкеты в контекст
-          const fields = [
-            { key: 'companyName', label: 'Название компании' },
-            { key: 'contactInfo', label: 'Контактная информация' },
-            { key: 'businessDescription', label: 'Описание бизнеса' },
-            { key: 'productsServices', label: 'Продукты и услуги' },
-            { key: 'targetAudience', label: 'Целевая аудитория' },
-            { key: 'uniqueSellingProposition', label: 'Уникальное торговое предложение' },
-            { key: 'competitiveAdvantages', label: 'Конкурентные преимущества' },
-            { key: 'brandPersonality', label: 'Личность бренда' },
-            { key: 'brandValues', label: 'Ценности бренда' },
-            { key: 'communicationStyle', label: 'Стиль коммуникации' },
-            { key: 'contentThemes', label: 'Темы контента' },
-            { key: 'brandImage', label: 'Образ бренда' },
-            { key: 'additionalInfo', label: 'Дополнительная информация' }
-          ];
-          
-          context += '\n\nДанные компании:';
-          fields.forEach(field => {
-            if (questionnaire[field.key] && questionnaire[field.key].trim()) {
-              context += `\n${field.label}: ${questionnaire[field.key]}`;
-            }
-          });
-        } else {
-          console.log('WARN: Анкета кампании не найдена в ответе Directus');
-        }
-      } catch (questionnaireError: any) {
-        console.log('WARN: Ошибка при получении анкеты:', questionnaireError.message);
-        // Продолжаем без данных анкеты
+      // Добавляем основную информацию о кампании
+      if (campaign.name) {
+        context += `\nНазвание кампании: ${campaign.name}`;
       }
+      if (campaign.description) {
+        context += `\nОписание кампании: ${campaign.description}`;
+      }
+      
+      console.log('INFO: Базовый контекст кампании сформирован успешно');
       
       return context.trim() ? context : null;
     } catch (error: any) {
