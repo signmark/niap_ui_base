@@ -2225,7 +2225,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Запрос на генерацию контента: service=${service}, useCampaignData=${useCampaignData}, campaignId=${campaignId}`);
       console.log(`DEBUG: Типы параметров - useCampaignData: ${typeof useCampaignData}, campaignId: ${typeof campaignId}`);
-      console.log(`DEBUG: Проверка условия: useCampaignData=${useCampaignData}, campaignId=${campaignId}, результат: ${useCampaignData && campaignId}`);
+      console.log(`DEBUG: Значения - useCampaignData: ${useCampaignData}, campaignId: ${campaignId}`);
+      console.log(`DEBUG: Булевое значение useCampaignData: ${!!useCampaignData}`);
       
       if (!prompt || !prompt.trim()) {
         return res.status(400).json({
