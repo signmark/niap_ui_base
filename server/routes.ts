@@ -2030,6 +2030,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log(`INFO: Получение данных кампании ${campaignId} через наш API`);
       
+      // Получаем данные кампании напрямую из Directus
+      const directusAuth = directusApiManager.instance;
+      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', campaignId, token);
+      
+      if (!campaignData) {
+        console.log('WARN: Данные кампании не найдены');
+        return null;
+      }
+      
+      // Проверяем принадлежность кампании пользователю
+      if (campaignData.user_id !== userId) {
+        console.log('WARN: Кампания не принадлежит пользователю');
+        return null;
+      }
+      
+      console.log('INFO: Данные кампании получены успешно');
+      console.log('DEBUG: Данные кампании:', JSON.stringify(campaignData, null, 2));
+      
+      let context = '';
+      
+      // Добавляем ссылку на сайт кампании
+      if (campaignData.link) {
+        console.log(`INFO: Получена ссылка на сайт кампании: ${campaignData.link}`);
+        context += `\n\nОБЯЗАТЕЛЬНО используйте этот сайт кампании: ${campaignData.link}`;
+      }
+      
+      // Добавляем основную информацию о кампании
+      if (campaignData.name) {
+        context += `\nНазвание кампании: ${campaignData.name}`;
+      }
+      if (campaignData.description) {
+        context += `\nОписание кампании: ${campaignData.description}`;
+      }
+      
+      // Пробуем получить данные анкеты если есть questionnaire_id
+      if (campaignData.questionnaire_id) {
+        try {
+          console.log(`INFO: Получение данных анкеты ${campaignData.questionnaire_id}`);
+          const questionnaireData = await directusAuth.directusCrud.readItem('campaign_questionnaires', campaignData.questionnaire_id, token);
+          
+          if (questionnaireData) {
+            console.log('INFO: Данные анкеты получены успешно');
+            
+            // Добавляем данные о компании из анкеты
+            if (questionnaireData.company_name) {
+              context += `\nНазвание компании: ${questionnaireData.company_name}`;
+            }
+            if (questionnaireData.business_description) {
+              context += `\nОписание бизнеса: ${questionnaireData.business_description}`;
+            }
+            if (questionnaireData.target_audience) {
+              context += `\nЦелевая аудитория: ${questionnaireData.target_audience}`;
+            }
+            if (questionnaireData.contact_info) {
+              context += `\nКонтактная информация: ${questionnaireData.contact_info}`;
+            }
+          }
+        } catch (questionnaireError: any) {
+          console.log('WARN: Не удалось получить данные анкеты:', questionnaireError.message);
+        }
+      }
+      
+      console.log('INFO: Контекст кампании сформирован успешно');
+      console.log('DEBUG: Сформированный контекст:', context.trim());
+      
+      return context.trim() ? context : null;
+    } catch (error: any) {
+      console.error('ERROR: Ошибка при получении данных кампании:', error.message, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseData: error.response?.data
+      });
+      return null;
+    }
+  }
+
+  // Fallback - если прямой доступ не сработал, пробуем через API
+  async function getCampaignContextFallback(userId: string, campaignId: string, token: string): Promise<string | null> {
+    try {
+      console.log(`INFO: Fallback - получение данных кампании ${campaignId} через API`);
+      
       // Используем наш собственный API endpoint для получения данных кампании
       const campaignResponse = await axios.get(`http://localhost:5000/api/campaigns/${campaignId}`, {
         headers: {
