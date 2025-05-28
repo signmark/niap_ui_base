@@ -96,7 +96,7 @@ export class CampaignDataService {
    */
   private async getCampaignData(campaignId: string, token?: string): Promise<any> {
     try {
-      const response = await this.directusApi.get(`/items/campaigns/${campaignId}`, {
+      const response = await this.directusApi.get(`/items/user_campaigns/${campaignId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -115,7 +115,7 @@ export class CampaignDataService {
    */
   private async getQuestionnaireData(campaignId: string, token?: string): Promise<any> {
     try {
-      const response = await this.directusApi.get('/items/campaign_questionnaires', {
+      const response = await this.directusApi.get('/items/business_questionnaire', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
