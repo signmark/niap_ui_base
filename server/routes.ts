@@ -2397,11 +2397,24 @@ ${campaignContext}
         case 'gemini-2.0-flash':
         case 'gemini-pro':
           try {
-            // Используем глобальный API ключ Gemini напрямую
-            console.log('[gemini] Инициализация Gemini с глобальным API ключом');
-            const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
-            console.log('[gemini] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
-            generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
+            // Прямой вызов Gemini API без сервиса для обхода проблемы require
+            console.log('[gemini] Прямой вызов Gemini API');
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+            
+            const geminiResponse = await fetch(geminiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: enrichedPrompt }] }]
+              })
+            });
+            
+            if (!geminiResponse.ok) {
+              throw new Error(`Gemini API error: ${geminiResponse.status}`);
+            }
+            
+            const geminiData = await geminiResponse.json();
+            generatedContent = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Ошибка генерации контента';
             console.log('[gemini] Контент успешно сгенерирован');
           } catch (geminiError) {
             console.error('[gemini] Ошибка при генерации:', geminiError);
@@ -9504,7 +9517,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       let validatedUpdates;
       try {
         // Импортируем схему еще раз для надежности
-        const { insertBusinessQuestionnaireSchema } = require('@shared/schema');
+        // const { insertBusinessQuestionnaireSchema } = require('@shared/schema');
         const updateSchema = insertBusinessQuestionnaireSchema.partial();
         validatedUpdates = updateSchema.parse(req.body);
       } catch (importError) {
@@ -9587,7 +9600,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       let validatedUpdates;
       try {
         // Импортируем схему еще раз для надежности
-        const { insertBusinessQuestionnaireSchema } = require('@shared/schema');
+        // const { insertBusinessQuestionnaireSchema } = require('@shared/schema');
         const updateSchema = insertBusinessQuestionnaireSchema.partial();
         validatedUpdates = updateSchema.parse(req.body);
       } catch (importError) {
