@@ -80,7 +80,8 @@ export class ApiKeyService {
    * @returns API ключ или null, если ключ не найден
    */
   async getApiKey(userId: string, serviceName: ApiServiceName, authToken?: string): Promise<string | null> {
-    console.log(`[DEBUG] Запрашивается ключ для сервиса: ${serviceName}, пользователя: ${userId}`);
+    console.log(`[DEBUG] API-KEYS: Запрашивается ключ для сервиса: ${serviceName}, пользователя: ${userId}`);
+    console.log(`[DEBUG] API-KEYS: Тип userId: ${typeof userId}, значение: "${userId}"`);
     
     // НОВАЯ ЛОГИКА: Сначала пробуем получить глобальный API ключ
     const globalKey = await globalApiKeysService.getGlobalApiKey(serviceName);
