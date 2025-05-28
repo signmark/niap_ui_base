@@ -2296,14 +2296,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log('[claude] 🎯 Инициализация Claude с глобальным API ключом');
           const { ClaudeService } = await import('./services/claude.js');
-          const claudeService = new ClaudeService();
           
-          // Инициализируем сервис с API ключом из переменных окружения
-          const initialized = await claudeService.initialize(userId || 'anonymous');
-          if (!initialized) {
-            throw new Error('Не удалось инициализировать Claude API. Проверьте настройки API ключа.');
+          // Создаем сервис напрямую с API ключом из переменных окружения
+          const apiKey = process.env.ANTHROPIC_API_KEY;
+          console.log(`[claude] 🔑 API ключ доступен: ${apiKey ? 'ДА' : 'НЕТ'}`);
+          
+          if (!apiKey) {
+            throw new Error('ANTHROPIC_API_KEY не найден в переменных окружения');
           }
           
+          const claudeService = new ClaudeService(apiKey);
           const result = await claudeService.generateContent(enrichedPrompt);
           console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
           
