@@ -2250,26 +2250,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 Заголовки авторизации:', req.headers['authorization']);
       const { prompt, keywords, platform, tone, service, useCampaignData, campaignId } = req.body;
       
+      // Извлекаем токен из заголовков
+      const authHeader = req.headers['authorization'];
+      const userToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      console.log('🔑 Извлеченный токен:', userToken ? 'Присутствует' : 'Отсутствует');
+      
       // Для Gemini работаем без авторизации, используя глобальный API ключ
       if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro') {
         console.log('[gemini] Обработка запроса Gemini без авторизации');
         
         let enrichedPrompt = prompt;
         
-        // Получаем данные кампании через функцию getCampaignContext
+        // Используем централизованный сервис данных кампании
         if (useCampaignData && campaignId) {
-          console.log('[gemini] Добавляем данные кампании для Gemini');
+          console.log('[gemini] Добавляем данные кампании для Gemini через централизованный сервис');
           try {
+            const campaignDataService = new CampaignDataService();
             // Для Gemini используем временный userId из админских настроек
             const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-            const campaignContext = await getCampaignContext(adminUserId, campaignId, '');
-            
-            if (campaignContext) {
-              console.log('[gemini] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
-              enrichedPrompt = `${prompt}\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
-            } else {
-              console.log('[gemini] Данные кампании не найдены, используем базовый промпт');
-            }
+            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+              prompt, 
+              adminUserId, 
+              campaignId, 
+              userToken // используем токен пользователя
+            );
           } catch (campaignError) {
             console.error('[gemini] Ошибка при получении данных кампании:', campaignError);
           }
