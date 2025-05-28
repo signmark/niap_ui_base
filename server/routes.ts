@@ -2255,7 +2255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
       console.log('🔑 Извлеченный токен:', userToken ? 'Присутствует' : 'Отсутствует');
       
-      // ВАЖНО: Ранняя обработка Claude с данными кампании (ПЕРЕД всеми остальными)
+      // 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ (САМАЯ ПЕРВАЯ!)
       if (service === 'claude') {
         console.log('[claude] 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ');
         
@@ -2308,6 +2308,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      
+
       
       // Для DeepSeek работаем без авторизации, используя глобальный API ключ
       if (service === 'deepseek' || service === 'dipsik') {
