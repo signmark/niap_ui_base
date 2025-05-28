@@ -2309,13 +2309,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const token = authHeader.replace('Bearer ', '');
       
-      // Получаем реальный ID пользователя из токена через DirectusAuthManager
+      // Получаем реальный ID пользователя из токена
       let userId: string;
       try {
-        // Сначала пытаемся получить пользователя из DirectusAuthManager
-        const userSession = await directusAuthManager.getUserFromToken(token);
-        if (userSession) {
-          userId = userSession.id;
+        // Получаем информацию о пользователе через API /users/me
+        const directusApi = axios.create({
+          baseURL: 'https://directus.nplanner.ru',
+          timeout: 10000
+        });
+        
+        const userResponse = await directusApi.get('/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (userResponse.data && userResponse.data.data && userResponse.data.data.id) {
+          userId = userResponse.data.data.id;
           console.log(`✅ Получен реальный ID пользователя: ${userId}`);
         } else {
           // Fallback: получаем через API /users/me
@@ -2510,7 +2518,7 @@ ${campaignContext}
           // Получаем API ключ для DeepSeek (пробуем глобальный, если личного нет)
           let deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
           if (!deepseekApiKey) {
-            console.log('[DEBUG] Запрашивается ключ для сервиса: deepseek, пользователя: temp-user-id');
+            console.log('[DEBUG] Используется глобальный ключ для deepseek');
             deepseekApiKey = await apiKeyService.getGlobalApiKey('deepseek');
             if (deepseekApiKey) {
               console.log('[deepseek] Используется глобальный API ключ');
