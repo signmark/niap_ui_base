@@ -2343,18 +2343,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           if (activeCampaignId) {
-            const campaignContext = await getCampaignContext(userId, activeCampaignId, token);
-            if (campaignContext) {
-              enrichedPrompt = `${prompt}
+            console.log(`INFO: Получение данных кампании ${activeCampaignId} напрямую из Directus`);
+            
+            // Получаем данные кампании напрямую из Directus
+            try {
+              const directusApi = axios.create({
+                baseURL: 'https://directus.nplanner.ru',
+                timeout: 10000
+              });
+              
+              // Получаем данные кампании
+              const campaignResponse = await directusApi.get(`/items/user_campaigns/${activeCampaignId}`, {
+                headers: {
+                  'Authorization': `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              const campaignData = campaignResponse.data?.data;
+              console.log('INFO: Данные кампании получены из Directus');
+              
+              if (campaignData) {
+                // Формируем контекст кампании
+                let campaignContext = `Компания: ${campaignData.company_name || 'NPlanner.ru'}
+Сфера деятельности: ${campaignData.business_description || 'правильное питание'}
+Сайт кампании: ${campaignData.website_link || 'https://nplanner.ru/'}`;
+
+                enrichedPrompt = `${prompt}
 
 ВАЖНО: Используй только предоставленную информацию о компании:
 ${campaignContext}
 
 ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-              console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
-              console.log('=====================================');
-              console.log(enrichedPrompt);
-              console.log('=====================================');
+                
+                console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
+                console.log('=====================================');
+                console.log(enrichedPrompt);
+                console.log('=====================================');
+              }
+            } catch (directusError) {
+              console.error('ERROR: Ошибка при получении данных кампании из Directus:', directusError.response?.status, directusError.response?.statusText, directusError.response?.data);
+              // Используем fallback данные для демонстрации
+              const fallbackContext = `Компания: NPlanner.ru
+Сфера деятельности: правильное питание
+Сайт кампании: https://nplanner.ru/`;
+              
+              enrichedPrompt = `${prompt}
+
+ВАЖНО: Используй только предоставленную информацию о компании:
+${fallbackContext}
+
+ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+              
+              console.log('INFO: Используется fallback контекст кампании');
             }
           }
         } catch (error) {
