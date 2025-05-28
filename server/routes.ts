@@ -2347,17 +2347,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Получаем данные кампании напрямую из Directus
             try {
-              const directusApi = axios.create({
-                baseURL: 'https://directus.nplanner.ru',
-                timeout: 10000
-              });
-              
               // Получаем данные кампании
-              const campaignResponse = await directusApi.get(`/items/user_campaigns/${activeCampaignId}`, {
+              const campaignResponse = await axios.get(`https://directus.nplanner.ru/items/user_campaigns/${activeCampaignId}`, {
                 headers: {
                   'Authorization': `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`,
                   'Content-Type': 'application/json'
-                }
+                },
+                timeout: 10000
               });
               
               const campaignData = campaignResponse.data?.data;
