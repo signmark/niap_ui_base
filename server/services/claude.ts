@@ -468,60 +468,93 @@ export class ClaudeService {
    * Выполняет запрос к Claude API
    */
   private async makeRequest(requestData: ClaudeRequest): Promise<ClaudeResponse> {
-    try {
-      if (!this.apiKey) {
-        throw new Error('Claude API key is not configured');
-      }
-      
-      logger.debug(`Making Claude API request to ${this.apiUrl}`, 'claude');
-      logger.debug(`Using model: ${requestData.model}`, 'claude');
-      
-      // Вывод заголовков (без API ключа)
-      logger.debug('Request headers: Content-Type: application/json, anthropic-version: 2023-06-01', 'claude');
-      
-      // Первые 20 символов содержимого запроса для логирования
-      const contentPreview = requestData.messages[0].content.substring(0, 20) + '...';
-      logger.debug(`Request content preview: ${contentPreview}`, 'claude');
-      
-      const response = await axios.post<ClaudeResponse>(
-        this.apiUrl,
-        requestData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`,
-            'anthropic-version': '2023-06-01',
-            'x-api-key': this.apiKey // для обратной совместимости со старыми ключами
-          }
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 секунда
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (!this.apiKey) {
+          throw new Error('Claude API key is not configured');
         }
-      );
-      
-      if (response.status !== 200) {
-        throw new Error(`Claude API responded with status code ${response.status}`);
-      }
-      
-      logger.debug(`Claude API response received with status: ${response.status}`, 'claude');
-      
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        logger.error(`Claude API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`, 'claude');
         
-        // Расширенное логирование ошибок по статус-кодам
-        const status = error.response.status;
-        if (status === 401) {
-          logger.error('Claude API rejected request: Invalid API key or permissions (401)', 'claude');
-        } else if (status === 400) {
-          logger.error(`Claude API rejected request: Bad request (400) - ${JSON.stringify(error.response.data)}`, 'claude');
-        } else if (status === 429) {
-          logger.error('Claude API rejected request: Rate limit exceeded (429)', 'claude');
-        } else if (status >= 500) {
-          logger.error(`Claude API server error (${status}). Please try again later.`, 'claude');
+        logger.debug(`Making Claude API request to ${this.apiUrl} (попытка ${attempt}/${maxRetries})`, 'claude');
+        logger.debug(`Using model: ${requestData.model}`, 'claude');
+        
+        // Вывод заголовков (без API ключа)
+        logger.debug('Request headers: Content-Type: application/json, anthropic-version: 2023-06-01', 'claude');
+        
+        // Первые 20 символов содержимого запроса для логирования
+        const contentPreview = requestData.messages[0].content.substring(0, 20) + '...';
+        logger.debug(`Request content preview: ${contentPreview}`, 'claude');
+        
+        const response = await axios.post<ClaudeResponse>(
+          this.apiUrl,
+          requestData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.apiKey}`,
+              'anthropic-version': '2023-06-01',
+              'x-api-key': this.apiKey // для обратной совместимости со старыми ключами
+            }
+          }
+        );
+        
+        if (response.status !== 200) {
+          throw new Error(`Claude API responded with status code ${response.status}`);
         }
-      } else {
-        logger.error('Error making Claude API request:', error, 'claude');
+        
+        logger.debug(`Claude API response received with status: ${response.status}`, 'claude');
+        if (attempt > 1) {
+          logger.log(`Claude API успешно ответил с попытки ${attempt}`, 'claude');
+        }
+        
+        return response.data;
+        
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const status = error.response.status;
+          logger.error(`Claude API error: ${status} - ${JSON.stringify(error.response.data)}`, 'claude');
+          
+          // Если ошибка 529 (перегрузка сервера) и есть еще попытки
+          if (status === 529 && attempt < maxRetries) {
+            const delay = baseDelay * Math.pow(2, attempt - 1); // Экспоненциальная задержка
+            logger.log(`Claude API перегружен (529), повторная попытка ${attempt + 1}/${maxRetries} через ${delay}ms`, 'claude');
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          // Расширенное логирование ошибок по статус-кодам
+          if (status === 401) {
+            logger.error('Claude API rejected request: Invalid API key or permissions (401)', 'claude');
+          } else if (status === 400) {
+            logger.error(`Claude API rejected request: Bad request (400) - ${JSON.stringify(error.response.data)}`, 'claude');
+          } else if (status === 429) {
+            logger.error('Claude API rejected request: Rate limit exceeded (429)', 'claude');
+          } else if (status >= 500) {
+            logger.error(`Claude API server error (${status}). Please try again later.`, 'claude');
+          }
+          
+          // Если это последняя попытка, выбрасываем ошибку
+          if (attempt === maxRetries) {
+            throw error;
+          }
+        } else {
+          logger.error('Error making Claude API request:', error, 'claude');
+          
+          // Если это последняя попытка или ошибка не связана с сетью
+          if (attempt === maxRetries) {
+            throw error;
+          }
+          
+          // Повторяем попытку для сетевых ошибок
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          logger.log(`Ошибка сети Claude API, повторная попытка ${attempt + 1}/${maxRetries} через ${delay}ms`, 'claude');
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
-      throw error;
     }
+    
+    throw new Error('Claude API недоступен после всех попыток');
   }
 }
