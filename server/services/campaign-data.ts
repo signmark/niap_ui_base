@@ -222,9 +222,9 @@ export class CampaignDataService {
       
       console.log('🎉 [PROMPT-ENRICHMENT] Промпт успешно обогащен данными кампании');
       console.log('🚨 [FINAL-PROMPT] ФИНАЛЬНЫЙ ОБОГАЩЕННЫЙ ПРОМПТ:');
-      console.log('=' * 50);
+      console.log('='.repeat(50));
       console.log(enrichedPrompt);
-      console.log('=' * 50);
+      console.log('='.repeat(50));
       
       return enrichedPrompt;
     } catch (error) {
