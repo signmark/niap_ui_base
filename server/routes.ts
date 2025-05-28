@@ -2535,6 +2535,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         default:
           // По умолчанию используем Claude
+          console.log('[claude] Обработка запроса Claude');
+          
+          let claudeEnrichedPrompt = prompt;
+          
+          // Используем централизованный сервис данных кампании для Claude
+          if (useCampaignData && campaignId) {
+            console.log('[claude] Добавляем данные кампании для Claude');
+            try {
+              const campaignDataService = new CampaignDataService();
+              const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+              claudeEnrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+                prompt, 
+                adminUserId, 
+                campaignId, 
+                userToken
+              );
+              console.log('[claude] Обогащенный промпт создан:', claudeEnrichedPrompt.substring(0, 100) + '...');
+            } catch (campaignError) {
+              console.error('[claude] Ошибка при получении данных кампании:', campaignError);
+            }
+          }
+          
           const defaultClaudeService = new ClaudeService();
           const defaultInitialized = await defaultClaudeService.initialize(userId, token);
           if (!defaultInitialized) {
@@ -2543,7 +2565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               error: 'Claude API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          generatedContent = await defaultClaudeService.generateContent(enrichedPrompt);
+          generatedContent = await defaultClaudeService.generateContent(claudeEnrichedPrompt);
           usedService = 'claude';
           break;
       }
