@@ -2320,6 +2320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let enrichedPrompt = prompt;
       
       // Если включено использование данных кампании, получаем их
+      console.log('📊 Проверка параметра useCampaignData:', useCampaignData, 'campaignId:', campaignId);
       if (useCampaignData) {
         console.log('🎯 УСЛОВИЕ ВЫПОЛНЕНО - получаем активную кампанию пользователя');
         try {
