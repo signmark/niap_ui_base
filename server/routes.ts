@@ -2255,47 +2255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
       console.log('🔑 Извлеченный токен:', userToken ? 'Присутствует' : 'Отсутствует');
       
-      // Для DeepSeek работаем без авторизации, используя глобальный API ключ
-      if (service === 'deepseek' || service === 'dipsik') {
-        console.log('[deepseek] Обработка запроса DeepSeek без авторизации');
-        
-        let enrichedPrompt = prompt;
-        
-        // Используем централизованный сервис данных кампании
-        if (useCampaignData && campaignId) {
-          console.log('[deepseek] Добавляем данные кампании для DeepSeek');
-          try {
-            const campaignDataService = new CampaignDataService();
-            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-              prompt, 
-              adminUserId, 
-              campaignId, 
-              userToken
-            );
-            console.log('[deepseek] Обогащенный промпт создан:', enrichedPrompt.substring(0, 100) + '...');
-          } catch (campaignError) {
-            console.error('[deepseek] Ошибка при получении данных кампании:', campaignError);
-          }
-        }
-
-        console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом');
-        try {
-          const { DeepSeekService } = await import('./services/deepseek.js');
-          const deepseekService = new DeepSeekService();
-          const result = await deepseekService.generateText(enrichedPrompt);
-          console.log('[deepseek] Контент успешно сгенерирован');
-          return res.json({ success: true, content: result });
-        } catch (error) {
-          console.error('[deepseek] Ошибка генерации:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: 'Ошибка при генерации контента через DeepSeek' 
-          });
-        }
-      }
-
-      // ВАЖНО: Добавляем ранний блок обработки Claude с данными кампании
+      // ВАЖНО: Ранняя обработка Claude с данными кампании (ПЕРЕД всеми остальными)
       if (service === 'claude') {
         console.log('[claude] 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ');
         
@@ -2348,6 +2308,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      
+      // Для DeepSeek работаем без авторизации, используя глобальный API ключ
+      if (service === 'deepseek' || service === 'dipsik') {
+        console.log('[deepseek] Обработка запроса DeepSeek без авторизации');
+        
+        let enrichedPrompt = prompt;
+        
+        // Используем централизованный сервис данных кампании
+        if (useCampaignData && campaignId) {
+          console.log('[deepseek] Добавляем данные кампании для DeepSeek');
+          try {
+            const campaignDataService = new CampaignDataService();
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+              prompt, 
+              adminUserId, 
+              campaignId, 
+              userToken
+            );
+            console.log('[deepseek] Обогащенный промпт создан:', enrichedPrompt.substring(0, 100) + '...');
+          } catch (campaignError) {
+            console.error('[deepseek] Ошибка при получении данных кампании:', campaignError);
+          }
+        }
+
+        console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом');
+        try {
+          const { DeepSeekService } = await import('./services/deepseek.js');
+          const deepseekService = new DeepSeekService();
+          const result = await deepseekService.generateText(enrichedPrompt);
+          console.log('[deepseek] Контент успешно сгенерирован');
+          return res.json({ success: true, content: result });
+        } catch (error) {
+          console.error('[deepseek] Ошибка генерации:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: 'Ошибка при генерации контента через DeepSeek' 
+          });
+        }
+      }
+
+
 
       // Для Qwen работаем без авторизации, используя глобальный API ключ
       if (service === 'qwen') {
