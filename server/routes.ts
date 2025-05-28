@@ -2409,20 +2409,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let generatedContent;
       let usedService = service || 'claude';
       
-      // Генерируем контент с помощью выбранного сервиса
+      // Примечание: основная обработка теперь происходит в специальных блоках для каждого AI сервиса выше
       switch (usedService.toLowerCase()) {
-        case 'claude':
-          console.log('[claude] Обработка запроса Claude');
-          const claudeService = new ClaudeService();
-          const claudeInitialized = await claudeService.initialize(userId, token);
-          if (!claudeInitialized) {
-            return res.status(400).json({
-              success: false,
-              error: 'Claude API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          generatedContent = await claudeService.generateContent(enrichedPrompt);
-          break;
           
         case 'gemini':
         case 'gemini-2.0-flash':
