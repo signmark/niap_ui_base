@@ -2352,8 +2352,17 @@ ${campaignContext}
         case 'gemini':
         case 'gemini-2.0-flash':
         case 'gemini-pro':
+          // Получаем API ключ для Gemini из коллекции или используем глобальный
+          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token) || process.env.GEMINI_API_KEY;
+          if (!geminiApiKey) {
+            return res.status(400).json({
+              success: false,
+              error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
+          
           try {
-            const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+            const geminiService = new GeminiService({ apiKey: geminiApiKey });
             generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           } catch (geminiError) {
             console.error('Gemini API error:', geminiError);
