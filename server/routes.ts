@@ -2029,15 +2029,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} через DirectusAuthManager`);
+      console.log(`INFO: Получение данных кампании ${campaignId} для пользователя ${userId}`);
       
-      // Используем directusAuthManager для получения авторизованного токена
-      const userToken = await directusAuthManager.getAuthToken(userId);
-      
-      if (!userToken) {
-        console.log('WARN: Не удалось получить токен пользователя из DirectusAuthManager');
-        return null;
-      }
+      // Используем переданный токен напрямую вместо запроса через DirectusAuthManager
+      const userToken = token;
       
       // Получаем данные кампании через авторизованный токен
       const directusApi = axios.create({
