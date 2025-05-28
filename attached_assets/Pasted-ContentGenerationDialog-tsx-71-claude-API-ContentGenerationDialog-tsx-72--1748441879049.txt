@@ -1,0 +1,49 @@
+ContentGenerationDialog.tsx:71 Генерация контента через claude API
+ContentGenerationDialog.tsx:72 Параметры запроса: {prompt: 'Создай пост про продукты компании с описанием услу…изывом к действию. В конце напиши ссылку на сайт.', keywords: Array(2), tone: 'informative', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platform: 'facebook', …}
+index.tsx:296 Загружено контента: 100
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+ContentGenerationDialog.tsx:82 
+            
+            
+           POST https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/generate-content 500 (Internal Server Error)
+mutationFn @ ContentGenerationDialog.tsx:82
+fn @ @tanstack_react-query.js?v=8b145873:1189
+run @ @tanstack_react-query.js?v=8b145873:494
+start @ @tanstack_react-query.js?v=8b145873:536
+execute @ @tanstack_react-query.js?v=8b145873:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=8b145873:2630
+(anonymous) @ @tanstack_react-query.js?v=8b145873:3295
+onClick @ ContentGenerationDialog.tsx:397
+callCallback2 @ chunk-RPCDYKBN.js?v=8b145873:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=8b145873:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=8b145873:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=8b145873:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=8b145873:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=8b145873:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=8b145873:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=8b145873:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=8b145873:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=8b145873:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=8b145873:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=8b145873:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=8b145873:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=8b145873:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=8b145873:5449
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
