@@ -81,8 +81,9 @@ export class ClaudeService {
         // Пробуем получить глобальный ключ из переменных окружения
         this.apiKey = process.env.ANTHROPIC_API_KEY || null;
         if (this.apiKey) {
-          logger.log('Инициализация Claude с глобальным API ключом', 'claude');
+          logger.log(`🎯 Инициализация Claude с глобальным API ключом: ${this.apiKey.substring(0, 15)}...`, 'claude');
         } else {
+          logger.error(`❌ API ключ Claude не найден в переменных окружения. ANTHROPIC_API_KEY = ${process.env.ANTHROPIC_API_KEY}`, 'claude');
           logger.error(`Failed to get Claude API key for user ${userId}`, 'claude');
           return false;
         }
