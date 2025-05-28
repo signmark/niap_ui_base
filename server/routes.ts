@@ -2405,7 +2405,13 @@ ${campaignContext}
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                contents: [{ parts: [{ text: enrichedPrompt }] }]
+                contents: [{ parts: [{ text: enrichedPrompt }] }],
+                generationConfig: {
+                  maxOutputTokens: 2048,
+                  temperature: 0.7,
+                  topP: 0.8,
+                  topK: 40
+                }
               })
             });
             
