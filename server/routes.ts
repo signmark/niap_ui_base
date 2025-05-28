@@ -2383,11 +2383,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Запрос на генерацию контента: service=${service}, useCampaignData=${useCampaignData}, campaignId=${campaignId}`);
-      console.log(`DEBUG: Типы параметров - useCampaignData: ${typeof useCampaignData}, campaignId: ${typeof campaignId}`);
-      console.log(`DEBUG: Значения - useCampaignData: ${useCampaignData}, campaignId: ${campaignId}`);
-      console.log(`DEBUG: Булевое значение useCampaignData: ${!!useCampaignData}`);
-      
       if (!prompt || !prompt.trim()) {
         return res.status(400).json({
           success: false,
@@ -2395,19 +2390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Инициализируем сервис для работы с данными кампании
-      const campaignDataService = new CampaignDataService();
-      
-      // Обогащаем промпт данными кампании если нужно
+      // Обработка остальных сервисов через switch case
       let enrichedPrompt = prompt;
-      if (useCampaignData) {
-        console.log('[campaign-data] Обогащение промпта данными кампании');
-        enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-          prompt, 
-          userId, 
-          campaignId, 
-          token
-        );
+      
+      if (tone) {
+        enrichedPrompt += `\n\nТон: ${tone}`;
       }
       
       // Добавляем информацию о ключевых словах и платформе
@@ -2417,10 +2404,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (platform) {
         enrichedPrompt += `\n\nПлатформа: ${platform}`;
-      }
-      
-      if (tone) {
-        enrichedPrompt += `\n\nТон: ${tone}`;
       }
       
       let generatedContent;
