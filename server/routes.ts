@@ -2254,15 +2254,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         let enrichedPrompt = prompt;
         
-        // Для Gemini пока упростим получение данных кампании
+        // Получаем данные кампании через функцию getCampaignContext
         if (useCampaignData && campaignId) {
           console.log('[gemini] Добавляем данные кампании для Gemini');
-          const campaignContext = `
-ОБЯЗАТЕЛЬНО используйте этот сайт кампании: https://nplanner.ru/
-Название кампании: NPlanner.ru
-Описание кампании: Правильное питание
-ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-          enrichedPrompt = `${prompt}\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
+          try {
+            // Для Gemini используем временный userId из админских настроек
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            const campaignContext = await getCampaignContext(adminUserId, campaignId, '');
+            
+            if (campaignContext) {
+              console.log('[gemini] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
+              enrichedPrompt = `${prompt}\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
+            } else {
+              console.log('[gemini] Данные кампании не найдены, используем базовый промпт');
+            }
+          } catch (campaignError) {
+            console.error('[gemini] Ошибка при получении данных кампании:', campaignError);
+          }
         }
         
         try {
