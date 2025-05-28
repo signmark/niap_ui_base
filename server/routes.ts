@@ -2032,7 +2032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`INFO: Получение данных кампании ${campaignId} через DirectusAuthManager`);
       
       // Используем directusAuthManager для получения авторизованного токена
-      const userToken = await directusAuthManager.getValidToken(userId);
+      const userToken = await directusAuthManager.getAuthToken(userId);
       
       if (!userToken) {
         console.log('WARN: Не удалось получить токен пользователя из DirectusAuthManager');
