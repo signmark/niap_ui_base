@@ -2435,7 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      const token = authHeaderGeneral.replace('Bearer ', '');
       
       // Получаем реальный ID пользователя из токена
       let userId: string;
