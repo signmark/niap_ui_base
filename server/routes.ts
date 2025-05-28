@@ -2299,6 +2299,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Для Qwen работаем без авторизации, используя глобальный API ключ
+      if (service === 'qwen') {
+        console.log('[qwen] Обработка запроса Qwen без авторизации');
+        
+        let enrichedPrompt = prompt;
+        
+        // Добавляем данные кампании для Qwen, как для Gemini
+        if (useCampaignData && campaignId) {
+          console.log('[qwen] Добавляем данные кампании для Qwen');
+          try {
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            const campaignContext = await getCampaignContext(adminUserId, campaignId, userToken);
+            
+            if (campaignContext) {
+              console.log('[qwen] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
+              enrichedPrompt = `${prompt}\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
+            } else {
+              console.log('[qwen] Данные кампании не найдены, используем базовый промпт');
+            }
+          } catch (campaignError) {
+            console.error('[qwen] Ошибка при получении данных кампании:', campaignError);
+          }
+        }
+        
+        try {
+          console.log('[qwen] Инициализация Qwen с глобальным API ключом');
+          const qwenService = new QwenService({ apiKey: process.env.QWEN_API_KEY || '' });
+          console.log('[qwen] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
+          const generatedContent = await qwenService.generateText(enrichedPrompt);
+          console.log('[qwen] Контент успешно сгенерирован');
+          
+          return res.json({
+            success: true,
+            content: generatedContent,
+            service: 'qwen'
+          });
+        } catch (qwenError) {
+          console.error('[qwen] Ошибка при генерации:', qwenError);
+          return res.status(500).json({
+            success: false,
+            error: `Ошибка генерации контента с Qwen API: ${qwenError}`
+          });
+        }
+      }
+      
       // Для остальных сервисов требуем авторизацию
       const authHeader = req.headers['authorization'] as string;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -2462,29 +2507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('[deepseek] Контент успешно сгенерирован');
           break;
           
-        case 'qwen':
-          console.log('[qwen] Начинаем генерацию контента с Qwen');
-          // Получаем API ключ для Qwen
-          const qwenApiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
-          if (!qwenApiKey) {
-            return res.status(400).json({
-              success: false,
-              error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          
-
-          
-          const qwenInitialized = await qwenService.initialize(userId, token);
-          if (!qwenInitialized) {
-            return res.status(400).json({
-              success: false,
-              error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          generatedContent = await qwenService.generateText(enrichedPrompt);
-          console.log('[qwen] Контент успешно сгенерирован');
-          break;
+        // Qwen обрабатывается в отдельном блоке выше, как Gemini
           
         default:
           // По умолчанию используем Claude
