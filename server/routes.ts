@@ -2246,6 +2246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации контента с помощью AI сервисов
   app.post('/api/generate-content', async (req, res) => {
     try {
+      console.log('🚀 ЗАПРОС НА ГЕНЕРАЦИЮ КОНТЕНТА ПОЛУЧЕН');
+      console.log('📋 Параметры запроса:', req.body);
       const { prompt, keywords, platform, tone, service, useCampaignData, campaignId } = req.body;
       
       // Для Gemini работаем без авторизации, используя глобальный API ключ
