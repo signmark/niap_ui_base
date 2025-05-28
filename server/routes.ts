@@ -2295,55 +2295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Для Claude работаем с авторизацией и интеграцией данных кампании
-      if (service === 'claude') {
-        console.log('🎯🎯🎯 CLAUDE ЗАПРОС ПОЛУЧЕН В ОБЩЕМ МАРШРУТЕ 🎯🎯🎯');
-        console.log('📋📋📋 ПАРАМЕТРЫ CLAUDE:', JSON.stringify({ useCampaignData, campaignId, prompt: prompt.substring(0, 100) }, null, 2));
-        
-        let enrichedPrompt = prompt;
-        
-        // Используем централизованный сервис данных кампании для Claude
-        if (useCampaignData && campaignId) {
-          console.log('[claude] ✅ ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE!');
-          try {
-            const campaignDataService = new CampaignDataService();
-            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-              prompt, 
-              adminUserId, 
-              campaignId, 
-              userToken
-            );
-            console.log('[claude] Обогащенный промпт создан:', enrichedPrompt.substring(0, 100) + '...');
-          } catch (campaignError) {
-            console.error('[claude] Ошибка при получении данных кампании:', campaignError);
-          }
-        }
-
-        console.log('[claude] Инициализация Claude с API ключом');
-        try {
-          const claudeService = new ClaudeService();
-          const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // Используем админский ID
-          const initialized = await claudeService.initialize(userId, userToken);
-          
-          if (!initialized) {
-            return res.status(400).json({
-              success: false,
-              error: 'Claude API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-
-          const result = await claudeService.generateContent(enrichedPrompt);
-          console.log('[claude] Контент успешно сгенерирован');
-          return res.json({ success: true, content: result, service: 'claude' });
-        } catch (error) {
-          console.error('[claude] Ошибка генерации:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: 'Ошибка при генерации контента через Claude' 
-          });
-        }
-      }
+      // Claude обрабатывается в основном switch-блоке ниже
 
       // Для Qwen работаем без авторизации, используя глобальный API ключ
       if (service === 'qwen') {
