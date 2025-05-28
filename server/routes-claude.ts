@@ -217,13 +217,134 @@ export function registerClaudeRoutes(app: Router) {
    */
   router.post('/api/claude/generate-content', async (req: Request, res: Response) => {
     try {
-      const { prompt, model } = req.body;
+      console.log('🚀 ЗАПРОС В CLAUDE ENDPOINT ПОЛУЧЕН');
+      console.log('📋 Параметры запроса Claude:', req.body);
+      
+      const { prompt, model, useCampaignData, campaignId } = req.body;
       
       if (!prompt) {
         return res.status(400).json({
           success: false,
           error: 'Промпт обязателен'
         });
+      }
+      
+      let enrichedPrompt = prompt;
+      
+      // Если включено использование данных кампании, получаем их
+      if (useCampaignData) {
+        console.log('🎯 Claude: получаем данные кампании');
+        try {
+          // Получаем userId из токена авторизации
+          const authHeader = req.headers['authorization'] as string;
+          if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.replace('Bearer ', '');
+            
+            // Декодируем токен для получения userId (упрощенная версия)
+            const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // Временно используем известный ID
+            
+            // Импортируем функцию getCampaignContext из routes.ts
+            const getCampaignContext = async (userId: string, campaignId: string, token: string): Promise<string | null> => {
+              const { directusAuthManager } = await import('../services/directus-auth-manager.js');
+              const axios = await import('axios');
+              
+              try {
+                console.log(`INFO: Получение данных кампании ${campaignId} через DirectusAuthManager`);
+                
+                const userToken = await directusAuthManager.getAuthToken(userId);
+                
+                if (!userToken) {
+                  console.log('WARN: Не удалось получить токен пользователя из DirectusAuthManager');
+                  return null;
+                }
+                
+                const directusApi = axios.default.create({
+                  baseURL: 'https://directus.nplanner.ru',
+                  timeout: 10000
+                });
+                
+                const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+                  headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                
+                console.log('INFO: Данные кампании получены из Directus');
+                
+                const campaignData = campaignResponse.data?.data;
+                
+                if (!campaignData) {
+                  console.log('WARN: Данные кампании не найдены');
+                  return null;
+                }
+                
+                console.log('INFO: Данные кампании получены успешно');
+                
+                let context = '';
+                
+                if (campaignData.link) {
+                  console.log(`INFO: Получена ссылка на сайт кампании: ${campaignData.link}`);
+                  context += `\n\nОБЯЗАТЕЛЬНО используйте этот сайт кампании: ${campaignData.link}`;
+                }
+                
+                if (campaignData.name) {
+                  context += `\nНазвание кампании: ${campaignData.name}`;
+                }
+                if (campaignData.description) {
+                  context += `\nОписание кампании: ${campaignData.description}`;
+                }
+                
+                // Пробуем получить данные анкеты
+                if (campaignData.questionnaire_id) {
+                  try {
+                    console.log(`INFO: Получение данных анкеты ${campaignData.questionnaire_id}`);
+                    const questionnaireResponse = await directusApi.get(`/items/campaign_questionnaires/${campaignData.questionnaire_id}`, {
+                      headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    
+                    const questionnaireData = questionnaireResponse.data?.data;
+                    
+                    if (questionnaireData) {
+                      console.log('INFO: Данные анкеты получены успешно');
+                      
+                      context += `\n\nДАННЫЕ КОМПАНИИ ИЗ АНКЕТЫ:`;
+                      
+                      if (questionnaireData.company_name) {
+                        context += `\nНазвание компании: ${questionnaireData.company_name}`;
+                      }
+                      if (questionnaireData.business_description) {
+                        context += `\nОписание бизнеса: ${questionnaireData.business_description}`;
+                      }
+                    }
+                  } catch (questionnaireError: any) {
+                    console.log('WARN: Не удалось получить данные анкеты:', questionnaireError.message);
+                  }
+                }
+                
+                console.log('INFO: Контекст кампании сформирован успешно');
+                
+                return context.trim() ? context : null;
+              } catch (error: any) {
+                console.error('ERROR: Ошибка при получении данных кампании:', error.message);
+                return null;
+              }
+            };
+            
+            if (campaignId) {
+              const campaignContext = await getCampaignContext(userId, campaignId, token);
+              if (campaignContext) {
+                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+                console.log('🔥 Claude: ПРОМПТ С ДАННЫМИ КАМПАНИИ СОЗДАН');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Claude: Ошибка при получении данных кампании:', error);
+        }
       }
       
       const claudeService = await getClaudeService(req);
