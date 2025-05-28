@@ -11,7 +11,7 @@ import { apiKeyService } from './services/api-keys';
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
 import { registerFalAiImageRoutes } from './routes-fal-ai-images';
-import { registerClaudeRoutes } from './routes-claude';
+// import { registerClaudeRoutes } from './routes-claude'; // ОТКЛЮЧЕНО: используем единый маршрут
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
@@ -2251,6 +2251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 useCampaignData в запросе:', req.body.useCampaignData);
       console.log('🔍 campaignId в запросе:', req.body.campaignId);
       console.log('🔍 service в запросе:', req.body.service);
+      console.log('🔍 Заголовки авторизации:', req.headers['authorization']);
       const { prompt, keywords, platform, tone, service, useCampaignData, campaignId } = req.body;
       
       // Для Gemini работаем без авторизации, используя глобальный API ключ
