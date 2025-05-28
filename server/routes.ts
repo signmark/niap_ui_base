@@ -2255,6 +2255,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
       console.log('🔑 Извлеченный токен:', userToken ? 'Присутствует' : 'Отсутствует');
       
+      // Для DeepSeek работаем без авторизации, используя глобальный API ключ
+      if (service === 'deepseek' || service === 'dipsik') {
+        console.log('[deepseek] Обработка запроса DeepSeek без авторизации');
+        
+        let enrichedPrompt = prompt;
+        
+        // Используем централизованный сервис данных кампании
+        if (useCampaignData && campaignId) {
+          console.log('[deepseek] Добавляем данные кампании для DeepSeek');
+          try {
+            const campaignDataService = new CampaignDataService();
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+              prompt, 
+              adminUserId, 
+              campaignId, 
+              userToken
+            );
+          } catch (campaignError) {
+            console.error('[deepseek] Ошибка при получении данных кампании:', campaignError);
+          }
+        }
+
+        console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом');
+        try {
+          const deepseekService = new DeepSeekService();
+          const result = await deepseekService.generateText(enrichedPrompt);
+          console.log('[deepseek] Контент успешно сгенерирован');
+          return res.json({ success: true, content: result.content });
+        } catch (error) {
+          console.error('[deepseek] Ошибка генерации:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: 'Ошибка при генерации контента через DeepSeek' 
+          });
+        }
+      }
+
+      // Для Qwen работаем без авторизации, используя глобальный API ключ
+      if (service === 'qwen') {
+        console.log('[qwen] Обработка запроса Qwen без авторизации');
+        
+        let enrichedPrompt = prompt;
+        
+        // Используем централизованный сервис данных кампании
+        if (useCampaignData && campaignId) {
+          console.log('[qwen] Добавляем данные кампании для Qwen');
+          try {
+            const campaignDataService = new CampaignDataService();
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+              prompt, 
+              adminUserId, 
+              campaignId, 
+              userToken
+            );
+          } catch (campaignError) {
+            console.error('[qwen] Ошибка при получении данных кампании:', campaignError);
+          }
+        }
+
+        console.log('[qwen] Инициализация Qwen с глобальным API ключом');
+        try {
+          const qwenService = new QwenService();
+          const result = await qwenService.generateText(enrichedPrompt);
+          console.log('[qwen] Контент успешно сгенерирован');
+          return res.json({ success: true, content: result.content });
+        } catch (error) {
+          console.error('[qwen] Ошибка генерации:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: 'Ошибка при генерации контента через Qwen' 
+          });
+        }
+      }
+
       // Для Gemini работаем без авторизации, используя глобальный API ключ
       if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro') {
         console.log('[gemini] Обработка запроса Gemini без авторизации');
