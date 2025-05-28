@@ -2297,7 +2297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Для Claude работаем с авторизацией и интеграцией данных кампании
       if (service === 'claude') {
-        console.log('[claude] Обработка запроса Claude с данными кампании');
+        console.log('🎯🎯🎯 CLAUDE ЗАПРОС ПОЛУЧЕН В ОБЩЕМ МАРШРУТЕ 🎯🎯🎯');
+        console.log('📋📋📋 ПАРАМЕТРЫ CLAUDE:', JSON.stringify({ useCampaignData, campaignId, prompt: prompt.substring(0, 100) }, null, 2));
         
         let enrichedPrompt = prompt;
         
