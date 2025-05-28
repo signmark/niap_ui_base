@@ -2310,7 +2310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('[qwen] Добавляем данные кампании для Qwen');
           try {
             const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-            const campaignContext = await getCampaignContext(adminUserId, campaignId, userToken);
+            const campaignContext = await getCampaignContext(adminUserId, campaignId, req.headers['authorization']?.replace('Bearer ', '') || '');
             
             if (campaignContext) {
               console.log('[qwen] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
@@ -2325,9 +2325,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           console.log('[qwen] Инициализация Qwen с глобальным API ключом');
-          const qwenService = new QwenService({ apiKey: process.env.QWEN_API_KEY || '' });
+          const qwenServiceInstance = new QwenService();
           console.log('[qwen] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
-          const generatedContent = await qwenService.generateText(enrichedPrompt);
+          const generatedContent = await qwenServiceInstance.generateText(enrichedPrompt);
           console.log('[qwen] Контент успешно сгенерирован');
           
           return res.json({
