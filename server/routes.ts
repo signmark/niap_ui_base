@@ -48,6 +48,7 @@ import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
+import { CampaignDataService } from './services/campaign-data.js';
 import { directusAuthManager } from './services/directus-auth-manager';
 import { publicationStatusChecker } from './services/status-checker';
 // import { geminiRouter } from './api/gemini-routes'; // ОТКЛЮЧЕНО: используем единый маршрут
@@ -2343,65 +2344,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      let enrichedPrompt = prompt;
+      // Инициализируем сервис для работы с данными кампании
+      const campaignDataService = new CampaignDataService();
       
-      // Если включено использование данных кампании, получаем их
-      console.log('📊 Проверка параметра useCampaignData:', useCampaignData, 'campaignId:', campaignId);
+      // Обогащаем промпт данными кампании если нужно
+      let enrichedPrompt = prompt;
       if (useCampaignData) {
-        console.log('🎯 УСЛОВИЕ ВЫПОЛНЕНО - получаем активную кампанию пользователя');
-        try {
-          // Получаем активную кампанию пользователя
-          let activeCampaignId = campaignId;
-          
-          if (!activeCampaignId) {
-            console.log('🔍 ID кампании не указан, ищем активную кампанию пользователя');
-            const directusApi = axios.create({
-              baseURL: 'https://directus.nplanner.ru',
-              timeout: 10000
-            });
-            
-            const campaignsResponse = await directusApi.get('/items/user_campaigns', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              params: {
-                filter: {
-                  user_id: { _eq: userId }
-                },
-                limit: 1,
-                sort: ['-date_created']
-              }
-            });
-            
-            const campaigns = campaignsResponse.data?.data;
-            if (campaigns && campaigns.length > 0) {
-              activeCampaignId = campaigns[0].id;
-              console.log(`🎯 Найдена активная кампания: ${activeCampaignId}`);
-            } else {
-              console.log('⚠️ Активная кампания не найдена');
-            }
-          }
-          
-          if (activeCampaignId) {
-            const campaignContext = await getCampaignContext(userId, activeCampaignId, token);
-            if (campaignContext) {
-              enrichedPrompt = `${prompt}
-
-ВАЖНО: Используй только предоставленную информацию о компании:
-${campaignContext}
-
-ОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-              console.log('🔥 ПРОМПТ С ДАННЫМИ КАМПАНИИ:');
-              console.log('=====================================');
-              console.log(enrichedPrompt);
-              console.log('=====================================');
-            }
-          }
-        } catch (error) {
-          console.error('Ошибка при получении данных кампании:', error);
-          // Продолжаем с обычным промптом
-        }
+        console.log('[campaign-data] Обогащение промпта данными кампании');
+        enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+          prompt, 
+          userId, 
+          campaignId, 
+          token
+        );
       }
       
       // Добавляем информацию о ключевых словах и платформе
@@ -2424,29 +2379,6 @@ ${campaignContext}
       switch (usedService.toLowerCase()) {
         case 'claude':
           console.log('[claude] Обработка запроса Claude');
-          
-          // Добавляем данные кампании для Claude
-          if (useCampaignData && campaignId) {
-            console.log('[claude] Добавляем данные кампании для Claude');
-            try {
-              const campaignContext = await getCampaignContext(userId, campaignId, token);
-              
-              if (campaignContext) {
-                console.log('[claude] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
-                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: 
-1. Отвечай ТОЛЬКО на русском языке
-2. Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.
-3. Используй данные только из предоставленного контекста кампании.`;
-                console.log('[claude] Промпт с данными кампании создан');
-              } else {
-                console.log('[claude] Данные кампании не найдены, используем базовый промпт');
-              }
-            } catch (campaignError) {
-              console.error('[claude] Ошибка при получении данных кампании:', campaignError);
-            }
-          }
-          
-          console.log(`[DEBUG] Передаем в Claude сервис userId: ${userId}`);
           const claudeService = new ClaudeService();
           const claudeInitialized = await claudeService.initialize(userId, token);
           if (!claudeInitialized) {
@@ -2515,19 +2447,7 @@ ${campaignContext}
             });
           }
           
-          // Обогащаем промпт данными кампании для DeepSeek
-          if (useCampaignData && campaignId) {
-            console.log('[deepseek] Обогащение промпта данными кампании');
-            try {
-              const campaignContext = await getCampaignContext(userId, campaignId, token);
-              if (campaignContext) {
-                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-                console.log('[deepseek] Промпт обогащен данными кампании');
-              }
-            } catch (error) {
-              console.error('[deepseek] Ошибка при получении данных кампании:', error);
-            }
-          }
+
           
           // Создаем экземпляр DeepSeek сервиса с увеличенным лимитом токенов
           const deepseekServiceInstance = new DeepSeekService({ 
