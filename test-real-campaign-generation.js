@@ -5,10 +5,10 @@
 
 import axios from 'axios';
 
-// Данные для авторизации (из логов)
+// Данные для авторизации
 const authData = {
   email: 'lbrspb@gmail.com',
-  password: 'nplanner2024'
+  password: 'QtpZ3dh7'
 };
 
 // URL сервера
