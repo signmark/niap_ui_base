@@ -2522,6 +2522,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Обработка остальных сервисов через switch case
       let enrichedPrompt = prompt;
       
+      // 🚀 ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ЕСЛИ НУЖНО 🚀
+      if (useCampaignData && campaignId) {
+        console.log('🎯 ОБОГАЩЕНИЕ ПРОМПТА ДАННЫМИ КАМПАНИИ');
+        try {
+          const { CampaignDataService } = await import('./services/campaign-data.js');
+          const campaignDataService = new CampaignDataService();
+          enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+            prompt, 
+            userId, 
+            campaignId, 
+            token
+          );
+          console.log('✅ Промпт обогащен данными кампании:', enrichedPrompt.substring(0, 150) + '...');
+        } catch (campaignError) {
+          console.error('❌ Ошибка при обогащении данными кампании:', campaignError);
+        }
+      }
+      
       if (tone) {
         enrichedPrompt += `\n\nТон: ${tone}`;
       }
@@ -2545,6 +2563,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Примечание: основная обработка теперь происходит в специальных блоках для каждого AI сервиса выше
       switch (usedService.toLowerCase()) {
+          
+        case 'claude':
+          try {
+            console.log('[claude] 🎯 Инициализация Claude сервиса');
+            const { ClaudeService } = await import('./services/claude.js');
+            const claudeService = new ClaudeService();
+            const initialized = await claudeService.initialize(userId, token);
+            
+            if (!initialized) {
+              return res.status(400).json({
+                success: false,
+                error: 'Claude API не настроен. Добавьте API ключ в настройки.'
+              });
+            }
+
+            generatedContent = await claudeService.generateContent(enrichedPrompt);
+            console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
+          } catch (claudeError) {
+            console.error('[claude] ❌ Ошибка генерации:', claudeError);
+            return res.status(500).json({ 
+              success: false, 
+              error: 'Ошибка при генерации контента через Claude' 
+            });
+          }
+          break;
           
         case 'gemini':
         case 'gemini-2.0-flash':
