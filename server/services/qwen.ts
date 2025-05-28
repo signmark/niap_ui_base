@@ -56,8 +56,8 @@ export class QwenService {
     stop?: string[];
   }): Promise<string>;
   
-  constructor(config: QwenConfig) {
-    this.apiKey = config.apiKey;
+  constructor(config?: QwenConfig) {
+    this.apiKey = config?.apiKey || process.env.QWEN_API_KEY || '';
   }
   
   /**

@@ -2282,7 +2282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом');
         try {
           const { DeepSeekService } = await import('./services/deepseek.js');
-          const deepseekService = new DeepSeekService({ apiKey: process.env.DEEPSEEK_API_KEY || '' });
+          const deepseekService = new DeepSeekService();
           const result = await deepseekService.generateText(enrichedPrompt);
           console.log('[deepseek] Контент успешно сгенерирован');
           return res.json({ success: true, content: result });
@@ -2321,7 +2321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[qwen] Инициализация Qwen с глобальным API ключом');
         try {
           const { QwenService } = await import('./services/qwen.js');
-          const qwenService = new QwenService({ apiKey: process.env.QWEN_API_KEY || '' });
+          const qwenService = new QwenService();
           const result = await qwenService.generateText(enrichedPrompt);
           console.log('[qwen] Контент успешно сгенерирован');
           return res.json({ success: true, content: result });
