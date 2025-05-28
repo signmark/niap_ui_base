@@ -2426,8 +2426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       
       // Для остальных сервисов требуем авторизацию
-      const authHeader = req.headers['authorization'] as string;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      const authHeaderGeneral = req.headers['authorization'] as string;
+      if (!authHeaderGeneral || !authHeaderGeneral.startsWith('Bearer ')) {
         return res.status(401).json({
           error: 'Не авторизован: Отсутствует заголовок авторизации'
         });
