@@ -2432,16 +2432,28 @@ ${campaignContext}
           break;
           
         case 'deepseek':
-          // Получаем API ключ для DeepSeek
-          const deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+          // Получаем API ключ для DeepSeek (пробуем глобальный, если личного нет)
+          let deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+          if (!deepseekApiKey) {
+            console.log('[DEBUG] Запрашивается ключ для сервиса: deepseek, пользователя: temp-user-id');
+            deepseekApiKey = await apiKeyService.getGlobalApiKey('deepseek');
+            if (deepseekApiKey) {
+              console.log('[deepseek] Используется глобальный API ключ');
+            }
+          }
+          
           if (!deepseekApiKey) {
             return res.status(400).json({
               success: false,
               error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          // Создаем экземпляр DeepSeek сервиса
-          const deepseekServiceInstance = new DeepSeekService({ apiKey: deepseekApiKey });
+          
+          // Создаем экземпляр DeepSeek сервиса с увеличенным лимитом токенов
+          const deepseekServiceInstance = new DeepSeekService({ 
+            apiKey: deepseekApiKey,
+            maxTokens: 8192 
+          });
           generatedContent = await deepseekServiceInstance.generateText(enrichedPrompt);
           break;
           
