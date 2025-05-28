@@ -22,15 +22,12 @@ export class CampaignDataService {
     try {
       console.log('[campaign-data] Получение контекста кампании для пользователя:', userId);
       
-      // Получаем действительный токен авторизации
-      let authToken = token;
-      if (!authToken) {
-        authToken = await directusAuthManager.getAuthToken(userId);
-        if (!authToken) {
-          console.log('[campaign-data] Не удалось получить токен авторизации');
-          return null;
-        }
+      // Используем переданный токен напрямую
+      if (!token) {
+        console.log('[campaign-data] Токен авторизации не передан');
+        return null;
       }
+      const authToken = token;
       
       let targetCampaignId = campaignId;
       
