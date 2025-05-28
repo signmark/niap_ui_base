@@ -2407,7 +2407,7 @@ ${campaignContext}
               body: JSON.stringify({
                 contents: [{ parts: [{ text: enrichedPrompt }] }],
                 generationConfig: {
-                  maxOutputTokens: 2048,
+                  maxOutputTokens: 8192,
                   temperature: 0.7,
                   topP: 0.8,
                   topK: 40
