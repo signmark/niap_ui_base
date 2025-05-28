@@ -8,10 +8,41 @@ import axios from 'axios';
 // Конфигурация тестов
 const CONFIG = {
   baseUrl: 'http://localhost:5000',
-  authToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0ODQ0NzgwNywiZXhwIjoxNzQ4NDQ4NzA3LCJpc3MiOiJkaXJlY3R1cyJ9.4dqTV1zL7jdY03K9L2aCp4djbvwy7lonlU-DPtWShbc',
+  directusUrl: 'https://directus.nplanner.ru',
+  credentials: {
+    email: 'lbrspb@gmail.com',
+    password: 'QtpZ3dh7'
+  },
+  authToken: null, // Будет получен автоматически
   campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e',
   timeout: 30000
 };
+
+/**
+ * Получает свежий токен авторизации от Directus
+ */
+async function getFreshAuthToken() {
+  try {
+    console.log('🔑 Получение свежего токена авторизации...');
+    
+    const response = await axios.post(`${CONFIG.directusUrl}/auth/login`, {
+      email: CONFIG.credentials.email,
+      password: CONFIG.credentials.password
+    });
+    
+    if (response.data && response.data.data && response.data.data.access_token) {
+      const token = response.data.data.access_token;
+      CONFIG.authToken = token;
+      console.log('✅ Токен успешно получен');
+      return token;
+    } else {
+      throw new Error('Неверная структура ответа от Directus');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка получения токена:', error.message);
+    throw error;
+  }
+}
 
 // Тестовые AI сервисы
 const AI_SERVICES = [
@@ -188,6 +219,14 @@ class CampaignDataTester {
     console.log('🚀 ЗАПУСК АВТОТЕСТОВ ИНТЕГРАЦИИ ДАННЫХ КАМПАНИИ');
     console.log(`⏰ Timeout: ${CONFIG.timeout}ms`);
     console.log(`🎯 Campaign ID: ${CONFIG.campaignId}`);
+    
+    // Получаем свежий токен авторизации перед запуском тестов
+    try {
+      await getFreshAuthToken();
+    } catch (error) {
+      console.error('💥 Не удалось получить токен авторизации. Тесты остановлены.');
+      return;
+    }
     
     const startTime = Date.now();
 
