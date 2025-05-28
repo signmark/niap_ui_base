@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
-import { registerClaudeRoutes } from "./routes-claude";
+// import { registerClaudeRoutes } from "./routes-claude"; // ОТКЛЮЧЕНО: используем единый маршрут
 import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
@@ -215,7 +215,7 @@ app.use((req, res, next) => {
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes...");
-    registerClaudeRoutes(app);
+    // registerClaudeRoutes(app); // ОТКЛЮЧЕНО: используем единый маршрут /api/generate-content
     console.log("Claude AI routes registered");
     log("Claude AI routes registered successfully");
     
