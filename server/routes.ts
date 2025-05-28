@@ -2534,6 +2534,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'claude':
           try {
             console.log('[claude] 🎯 Инициализация Claude сервиса');
+            
+            // ВАЖНО: Добавляем данные кампании для Claude
+            if (useCampaignData && campaignId) {
+              console.log('[claude] 🎯 ОБОГАЩАЕМ ПРОМПТ ДАННЫМИ КАМПАНИИ');
+              try {
+                const { CampaignDataService } = await import('./services/campaign-data.js');
+                const campaignDataService = new CampaignDataService();
+                enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+                  enrichedPrompt, 
+                  userId, 
+                  campaignId, 
+                  token
+                );
+                console.log('[claude] ✅ ПРОМПТ УСПЕШНО ОБОГАЩЕН ДАННЫМИ НИАП!');
+                console.log('[claude] 📝 Обогащенный промпт длина:', enrichedPrompt.length);
+                
+                // Проверяем, содержит ли обогащенный промпт данные НИАП
+                if (enrichedPrompt.includes('НИАП') || enrichedPrompt.includes('nplanner.ru')) {
+                  console.log('[claude] 🎉 ДАННЫЕ НИАП НАЙДЕНЫ В ПРОМПТЕ!');
+                } else {
+                  console.log('[claude] ⚠️ Данные НИАП не найдены в промпте');
+                }
+              } catch (campaignError) {
+                console.error('[claude] ❌ Ошибка обогащения данными кампании:', campaignError);
+              }
+            }
+            
             const { ClaudeService } = await import('./services/claude.js');
             const claudeService = new ClaudeService();
             const initialized = await claudeService.initialize(userId, token);
