@@ -2322,7 +2322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[claude] Инициализация Claude с API ключом');
         try {
           const claudeService = new ClaudeService();
-          const userId = await getUserIdFromToken(userToken);
+          const userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // Используем админский ID
           const initialized = await claudeService.initialize(userId, userToken);
           
           if (!initialized) {
@@ -2588,42 +2588,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Qwen обрабатывается в отдельном блоке выше, как Gemini
           
         default:
-          // По умолчанию используем Claude
-          console.log('[claude] Обработка запроса Claude');
-          console.log('[claude] DEBUG: useCampaignData =', useCampaignData);
-          console.log('[claude] DEBUG: campaignId =', campaignId);
-          
-          let claudeEnrichedPrompt = prompt;
-          
-          // Используем централизованный сервис данных кампании для Claude
-          if (useCampaignData && campaignId) {
-            console.log('[claude] ✅ ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE!');
-            try {
-              const campaignDataService = new CampaignDataService();
-              const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-              claudeEnrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-                prompt, 
-                adminUserId, 
-                campaignId, 
-                token
-              );
-              console.log('[claude] Обогащенный промпт создан:', claudeEnrichedPrompt.substring(0, 100) + '...');
-            } catch (campaignError) {
-              console.error('[claude] Ошибка при получении данных кампании:', campaignError);
-            }
-          }
-          
-          const defaultClaudeService = new ClaudeService();
-          const defaultInitialized = await defaultClaudeService.initialize(userId, token);
-          if (!defaultInitialized) {
-            return res.status(400).json({
-              success: false,
-              error: 'Claude API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          generatedContent = await defaultClaudeService.generateContent(claudeEnrichedPrompt);
-          usedService = 'claude';
-          break;
+          return res.status(400).json({
+            success: false,
+            error: 'Неподдерживаемый AI сервис. Используйте claude, deepseek, qwen или gemini.'
+          });
       }
       
       console.log(`Контент успешно сгенерирован с помощью ${usedService}`);

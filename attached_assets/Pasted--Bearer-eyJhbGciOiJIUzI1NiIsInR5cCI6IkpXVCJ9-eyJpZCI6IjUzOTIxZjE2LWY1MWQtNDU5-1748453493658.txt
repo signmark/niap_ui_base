@@ -1,0 +1,593 @@
+ Заголовки авторизации: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0ODQ1MjkyOSwiZXhwIjoxNzQ4NDUzODI5LCJpc3MiOiJkaXJlY3R1cyJ9.unRb7qap3XI2OQePQxFtSzu2u4h9MW_A2_-1sFBaRAM
+🔑 Извлеченный токен: Присутствует
+✅ Получен реальный ID пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+5:31:06 PM [claude] Initializing Claude service for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Запрашивается ключ для сервиса: claude, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Тип userId: string, значение: "53921f16-f51d-4591-80b9-8caa4fde4d13"
+5:31:06 PM [global-api-keys] Using cached global claude API key
+[claude] Используется глобальный API ключ
+5:31:06 PM [api-keys] Using global claude API key
+5:31:06 PM [claude] Testing Claude API key starting with: sk-a...0QAA
+5:31:06 PM [claude] Using model claude-3-haiku-20240307 for API key test
+5:31:06 PM [claude] API URL: https://api.anthropic.com/v1/messages
+5:31:06 PM [claude] API Key format verification: true
+5:31:06 PM [claude] Making Claude API request to https://api.anthropic.com/v1/messages (попытка 1/3)
+5:31:06 PM [claude] Using model: claude-3-haiku-20240307
+5:31:06 PM [claude] Request headers: Content-Type: application/json, anthropic-version: 2023-06-01
+5:31:06 PM [claude] Request content preview: Say "API key is vali...
+5:31:06 PM [claude] Claude API response received with status: 200
+5:31:06 PM [claude] Claude API key test result: Valid, response content: [{"type":"text","text":"API key is valid"}]
+5:31:06 PM [claude] Claude service successfully initialized for user 53921f16-f51d-4591-80b9-8caa4fde4d13
+5:31:06 PM [claude] Generating content with Claude AI...
+5:31:06 PM [claude] Making Claude API request to https://api.anthropic.com/v1/messages (попытка 1/3)
+5:31:06 PM [claude] Using model: claude-3-7-sonnet-20250219
+5:31:06 PM [claude] Request headers: Content-Type: application/json, anthropic-version: 2023-06-01
+5:31:06 PM [claude] Request content preview: Создай пост про прод...
+5:31:18 PM [claude] Claude API response received with status: 200
+5:31:18 PM [claude] Content successfully generated with Claude AI
+Контент успешно сгенерирован с помощью claude
+5:31:18 PM [express] POST /api/generate-content 200 in 12269ms :: {"success":true,"content":"# Индив…
+5:31:19 PM [scheduler] Проверка запланированных публикаций
+5:31:19 PM [scheduler] Принудительное обновление токена администратора
+5:31:19 PM [scheduler] Запуск проверки статусов контента
+5:31:19 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+5:31:19 PM [scheduler] Попытка авторизации администратора с учетными данными из env
+5:31:19 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+5:31:19 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+5:31:19 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+5:31:19 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+5:31:19 PM [scheduler] Авторизация администратора успешна через прямой API запрос
+5:31:19 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+5:31:19 PM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+5:31:19 PM [directus-crud] Попытка авторизации пользователя lbrspb@gmail.com
+5:31:19 PM [scheduler] Прямой запрос axios к https://directus.nplanner.ru/items/campaign_content с фильтром по статусу scheduled
+5:31:20 PM [scheduler] Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'
+5:31:20 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+5:31:20 PM [directus-crud] Выполнение операции read для коллекции users/me
+5:31:20 PM [directus-crud] Пользователь lbrspb@gmail.com успешно авторизован
+5:31:20 PM [directus-crud] Выполнение операции read для коллекции users/me
+5:31:20 PM [scheduler] Получено 50 элементов контента для проверки статусов платформ
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 006c2b56-ebd6-475b-a64c-0b931754e71f:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"301","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_301","platform":"vk","analytics":{"likes":1,"views":18,"clicks":1,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:47.558Z","engagementRate":10},"publishedAt":"2025-04-06T15:57:38.463Z"},"facebook":{"status":"published","analytics":{"likes":0,"views":6,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:47.558Z","engagementRate":11},"permalink":"https://facebook.com/985366027084025","publishedAt":"2025-04-23T12:15:20.183Z"},"telegram":{"error":"Ошибка при публикации в Telegram: Request failed with status code 400","status":"failed","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","platform":"telegram","publishedAt":null}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: failed, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 006c2b56-ebd6-475b-a64c-0b931754e71f (Чилим на чиле: вайб 2025 🔥) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 1
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=2, Результат=false
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook
+5:31:20 PM [scheduler] Контент 006c2b56-ebd6-475b-a64c-0b931754e71f частично опубликован, имеет и успешные публикации, и ошибки
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 01178500-ca20-4262-b19d-71bd841b567f:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"325","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_325","platform":"vk","analytics":{"likes":2,"views":25,"clicks":1,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:47.712Z","engagementRate":7},"publishedAt":"2025-04-07T07:43:39.059Z"},"telegram":{"postId":"506","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/@ya_delayu_moschno/506","platform":"telegram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:03.069Z"},"publishedAt":"2025-04-07T07:43:39.804Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 01178500-ca20-4262-b19d-71bd841b567f (Картинка с длинным текстом по расписанию) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 01178500-ca20-4262-b19d-71bd841b567f уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 02201888-20e8-4190-a5e1-0061d45e607f:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"error":null,"postId":57,"status":"published","postUrl":"https://t.me/testorsa/57","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:25:58.515Z"},"messageId":null,"publishedAt":"2025-04-15T14:00:27.956Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 02201888-20e8-4190-a5e1-0061d45e607f (🍓 Вкусный секрет долголетия: клубничное варенье!) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 02201888-20e8-4190-a5e1-0061d45e607f уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 02abd744-cdf8-4f9d-884d-33c5e75953ee:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"postId":"1584","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/2302366310/1584","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:04.272Z"},"publishedAt":"2025-04-25T13:53:20.489Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 02abd744-cdf8-4f9d-884d-33c5e75953ee (Вкусно и полезно - это совсем не сложно!) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 02abd744-cdf8-4f9d-884d-33c5e75953ee уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 02cf8438-eff8-4155-9f2f-b7d5f914b764:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"263","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_263","platform":"vk","analytics":{"likes":2,"views":23,"clicks":1,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:47.855Z","engagementRate":17},"publishedAt":"2025-04-22T13:50:21.221Z"},"telegram":{"postId":"417","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/2302366310/417","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:05.353Z"},"publishedAt":"2025-04-22T13:50:21.221Z"},"instagram":{"postId":"18162026155347724","status":"published","postUrl":"https://www.instagram.com/p/DIwDApcI5IW/","platform":"instagram","analytics":{"likes":1,"views":16,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:47.855Z","engagementRate":19},"publishedAt":"2025-04-22T13:50:21.221Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 02cf8438-eff8-4155-9f2f-b7d5f914b764 (Автоматизируй соцсети и освободи время для важного) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram, instagram
+5:31:20 PM [scheduler] Контент 02cf8438-eff8-4155-9f2f-b7d5f914b764 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 02e757aa-719a-496c-b227-1b15b5c48b6b:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"status":"published","postUrl":"https://vk.com/wall-228626989_444","platform":"vk","analytics":{"likes":3,"views":27,"clicks":2,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:48.015Z","engagementRate":9},"publishedAt":"2025-04-09T10:43:05.416Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310","platform":"telegram","analytics":{"likes":3,"views":24,"clicks":2,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:48.015Z","engagementRate":9},"publishedAt":"2025-04-09T10:43:04.705Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 02e757aa-719a-496c-b227-1b15b5c48b6b (Еще один, надеюсь успешный) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 02e757aa-719a-496c-b227-1b15b5c48b6b уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0360501b-0afa-447d-96a1-92739f24c8f8:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"status":"published","postUrl":"https://vk.com/test_1744888026123","platform":"vk","analytics":{"likes":1,"views":4,"clicks":0,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:00:26.204Z","engagementRate":10},"publishedAt":"2025-04-17T11:07:06.123Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/test_channel/5249","platform":"telegram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:26:00.067Z"},"messageId":"5249","publishedAt":"2025-04-17T11:07:07.576Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0360501b-0afa-447d-96a1-92739f24c8f8 (💪 Таурин: незаменимая аминокислота для здоровья) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 0360501b-0afa-447d-96a1-92739f24c8f8 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 03be041a-c9cf-4f2c-8fd5-c9b5692067b0:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"facebook":{"status":"pending","selected":true},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1617","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:07.014Z"},"publishedAt":"2025-04-28T14:33:49.440Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: pending, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 1
+5:31:20 PM [scheduler] Контент 03be041a-c9cf-4f2c-8fd5-c9b5692067b0 (Красители в еде: ярко, но опасно) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 1
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=1, Результат=false
+5:31:20 PM [scheduler] DEBUG: Платформы: facebook, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 03be041a-c9cf-4f2c-8fd5-c9b5692067b0 имеет платформы в ожидании - статус не обновляется
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 043dbfb2-20d6-4160-94f7-48f19e3a0956:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":759,"status":"published","postUrl":"https://vk.com/wall-228626989_759","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:06.940Z"},"publishedAt":"2025-04-29T11:55:21.990Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1685","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:08.073Z"},"publishedAt":"2025-04-29T11:55:19.394Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 043dbfb2-20d6-4160-94f7-48f19e3a0956 (Как похудеть правильно) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 043dbfb2-20d6-4160-94f7-48f19e3a0956 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0459f406-a964-4c40-851c-1afed5167f93:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"923","status":"published","postUrl":"https://vk.com/wall-228626989_923","platform":"vk","analytics":{"likes":0,"views":3,"shares":0,"comments":0,"lastUpdated":"2025-05-23T11:25:57.893Z"},"publishedAt":"2025-05-19T17:07:09.834Z"},"facebook":{"error":null,"postId":"2120362494678794_1003621398591821","status":"published","postUrl":"https://facebook.com/2120362494678794_1003621398591821","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-20T08:00:08.503Z"},"publishedAt":"2025-05-19T17:07:19.662Z"},"telegram":{"postId":"1947","status":"published","postUrl":"https://t.me/c/2302366310/1947","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:09.092Z"},"publishedAt":"2025-05-19T17:07:08.698Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 2
+5:31:20 PM [scheduler] Контент 0459f406-a964-4c40-851c-1afed5167f93 (🥗 Хотите, чтобы питание работало на вас, а не против? 🥗) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram
+5:31:20 PM [scheduler] Контент 0459f406-a964-4c40-851c-1afed5167f93 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 046d37c8-f4fc-4b1f-b1eb-28a0fea36787:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":767,"status":"published","postUrl":"https://vk.com/wall-228626989_767","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:07.908Z"},"publishedAt":"2025-04-29T12:59:56.775Z"},"facebook":{"error":null,"postId":"989812569972704","status":"published","postUrl":"https://facebook.com/989812569972704","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:07.908Z"},"publishedAt":"2025-04-29T13:00:44.144Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1691","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:10.139Z"},"publishedAt":"2025-04-29T12:59:52.509Z"},"instagram":{"postId":"18063318314023072","status":"published","postUrl":"https://www.instagram.com/p/DJCAlAMo7KD/","platform":"instagram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:07.908Z"},"publishedAt":"2025-04-29T13:01:00.278Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 4, С данными: 4, Без selected: 3
+5:31:20 PM [scheduler] Контент 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 (Куриные рубленные котлетки с сыром) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 4
+5:31:20 PM [scheduler]   - Опубликовано: 4
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=4, Опубликовано=4, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] Контент 046d37c8-f4fc-4b1f-b1eb-28a0fea36787 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 04ef09bd-11f2-4dcb-86f5-f6004edb901f:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"error":null,"postId":702,"status":"published","postUrl":"https://vk.com/wall-228626989_702","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-29T08:00:06.717Z"},"publishedAt":"2025-04-28T15:00:34.548Z"},"facebook":{"error":null,"postId":"989157733371521","status":"published","postUrl":"https://facebook.com/989157733371521","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-29T08:00:06.717Z"},"publishedAt":"2025-04-28T15:00:42.545Z","scheduledAt":"2025-04-28T15:00:00.000Z","scheduled_at":"2025-04-28T15:00:00.000Z"},"telegram":{"error":null,"status":"published","postUrl":"https://t.me/c/2302366310/1623","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:11.222Z"},"publishedAt":"2025-04-28T15:00:45.506Z"},"instagram":{"error":null,"postId":"18063993185494301","status":"published","postUrl":"https://www.instagram.com/p/DI_phQ-I7_Z/","platform":"instagram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-29T08:00:06.717Z"},"publishedAt":"2025-04-28T15:01:03.031Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 4, С данными: 4, Без selected: 3
+5:31:20 PM [scheduler] Контент 04ef09bd-11f2-4dcb-86f5-f6004edb901f (Салат-паста: идеальный ПП рецепт от НИАП) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 4
+5:31:20 PM [scheduler]   - Опубликовано: 4
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=4, Опубликовано=4, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] Контент 04ef09bd-11f2-4dcb-86f5-f6004edb901f уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 05241a0e-24b7-4fe9-be9a-b707b963818e:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"status":"published","postUrl":"https://vk.com/wall-229896090_30","platform":"vk","analytics":{"likes":2,"views":6,"clicks":0,"shares":1,"comments":1,"lastUpdated":"2025-04-24T11:00:26.346Z","engagementRate":10},"publishedAt":"2025-04-14T12:25:47.435Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2518212096/49","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:26:01.456Z"},"publishedAt":"2025-04-14T12:25:43.303Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 05241a0e-24b7-4fe9-be9a-b707b963818e (🧬 Раскройте секреты долголетия с помощью персонализированного питания!) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 05241a0e-24b7-4fe9-be9a-b707b963818e уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0547e166-3466-4846-b197-e1d04fea3d9e:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"71","status":"published","postUrl":"https://vk.com/wall-229896090_71","platform":"vk","analytics":{"likes":0,"views":4,"shares":0,"comments":0,"lastUpdated":"2025-05-23T12:54:33.040Z"},"publishedAt":"2025-05-05T15:11:02.102Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2518212096/104","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:26:02.883Z"},"publishedAt":"2025-05-05T15:10:59.382Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0547e166-3466-4846-b197-e1d04fea3d9e (Средиземноморская диета: основа долголетия и здоровья) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 0547e166-3466-4846-b197-e1d04fea3d9e уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 060182c2-0439-42a2-afef-b92960a335f5:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"instagram":{"error":null,"postId":null,"status":"published","postUrl":"https://www.instagram.com/p/DIQxcpnoiUN/","analytics":{"likes":1,"views":12,"clicks":1,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.160Z","engagementRate":22},"publishedAt":"2025-04-10T10:05:55.721Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 060182c2-0439-42a2-afef-b92960a335f5 (О пользе и недостатках Replit) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: instagram
+5:31:20 PM [scheduler] Контент 060182c2-0439-42a2-afef-b92960a335f5 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 060cac9d-bf3f-44f3-b757-d6b7d5b9685e:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"318","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_318","platform":"vk","analytics":{"likes":1,"views":10,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.301Z","engagementRate":11},"publishedAt":"2025-04-06T17:16:57.974Z"},"telegram":{"postId":"476","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/@ya_delayu_moschno/476","platform":"telegram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:12.890Z"},"publishedAt":"2025-04-06T17:16:58.813Z"},"instagram":{"error":null,"postId":"17856693669348508","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://www.instagram.com/p/DIHPnxxIqzC/","platform":"instagram","analytics":{"likes":2,"views":18,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.301Z","engagementRate":16},"publishedAt":"2025-04-06T17:17:11.950Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 060cac9d-bf3f-44f3-b757-d6b7d5b9685e (Длинный с картинкой через планирование) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram, instagram
+5:31:20 PM [scheduler] Контент 060cac9d-bf3f-44f3-b757-d6b7d5b9685e уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 062c3052-822b-4797-a9da-0216070cd231:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"instagram":{"error":null,"postId":"18079153555668642","status":"published","userId":"df0a82dc-5922-4917-beef-3d2013112cc4","postUrl":"https://www.instagram.com/p/18079153555668642/","platform":"instagram","analytics":{"likes":0,"views":6,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:00:26.496Z","engagementRate":10},"publishedAt":"2025-03-31T07:20:28.758Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 062c3052-822b-4797-a9da-0216070cd231 (тестовая публикация) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: instagram
+5:31:20 PM [scheduler] Контент 062c3052-822b-4797-a9da-0216070cd231 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 071104ad-67f0-4467-9690-51a0999e51a6:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"72","status":"published","postUrl":"https://vk.com/wall-229896090_72","platform":"vk","analytics":{"likes":0,"views":12,"shares":0,"comments":0,"lastUpdated":"2025-05-23T12:54:33.037Z"},"publishedAt":"2025-05-06T16:30:19.398Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2518212096/105","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:26:05.488Z"},"publishedAt":"2025-05-06T16:00:19.180Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 071104ad-67f0-4467-9690-51a0999e51a6 (Гормоны щитовидной железы и их влияние на продолжительность жизни ✨) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 071104ad-67f0-4467-9690-51a0999e51a6 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0857f743-9ffc-435d-afd5-f6a3520e836c:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"911","status":"published","postUrl":"https://vk.com/wall-228626989_911","platform":"vk","analytics":{"likes":0,"views":1,"shares":0,"comments":0,"lastUpdated":"2025-05-23T11:25:57.900Z"},"publishedAt":"2025-05-15T07:21:48.679Z"},"facebook":{"error":null,"postId":"2120362494678794_1000626198891341","status":"published","postUrl":"https://facebook.com/2120362494678794_1000626198891341","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-15T08:00:17.805Z"},"publishedAt":"2025-05-15T07:22:11.049Z","scheduledAt":"2025-05-15T07:20:00.000Z","scheduled_at":"2025-05-15T07:22:00.000Z"},"telegram":{"postId":"1935","status":"published","postUrl":"https://t.me/c/2302366310/1935","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:13.938Z"},"publishedAt":"2025-05-15T07:22:12.255Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 2
+5:31:20 PM [scheduler] Контент 0857f743-9ffc-435d-afd5-f6a3520e836c (Автоматизация в нутрициологии: будущее уже здесь) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram
+5:31:20 PM [scheduler] Контент 0857f743-9ffc-435d-afd5-f6a3520e836c уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 09700ec9-2b83-436b-88c7-4300a441ee8d:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"postId":"12","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/2300439078/12","platform":"telegram","analytics":{"likes":0,"views":11,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.453Z","engagementRate":21},"publishedAt":"2025-03-28T07:18:32.804Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 09700ec9-2b83-436b-88c7-4300a441ee8d (Есть на ночь?  Разбираемся надо ли и сколько раз.) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 09700ec9-2b83-436b-88c7-4300a441ee8d уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 097f4be4-a7f9-44af-8999-a7aa120889ab:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"status":"published","postUrl":"https://vk.com/wall-228626989_612","platform":"vk","analytics":{"likes":1,"views":12,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.612Z","engagementRate":6},"publishedAt":"2025-04-16T16:45:02.978Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1412","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:14.975Z"},"publishedAt":"2025-04-16T16:45:00.055Z"},"instagram":{"error":"Ошибка API Instagram: Only photo or video can be accepted as media type. (код 9004)","status":"failed","platform":"instagram","publishedAt":null}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: failed, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 097f4be4-a7f9-44af-8999-a7aa120889ab (Как автоматизация составления рационов экономит время специалистов) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 1
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=2, Результат=false
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 097f4be4-a7f9-44af-8999-a7aa120889ab частично опубликован, имеет и успешные публикации, и ошибки
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 09946a3f-2808-42ca-a145-a83055b3ed7b:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1370","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:16.006Z"},"publishedAt":"2025-04-15T14:15:27.648Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 09946a3f-2808-42ca-a145-a83055b3ed7b (Автоматизация в работе нутрициолога) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 09946a3f-2808-42ca-a145-a83055b3ed7b уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0a9dc844-23b5-4904-8eb3-cb8169f534ee:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"333","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_333","platform":"vk","analytics":{"likes":1,"views":12,"clicks":1,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:48.896Z","engagementRate":12},"publishedAt":"2025-04-07T08:29:30.973Z"},"telegram":{"postId":"518","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/@ya_delayu_moschno/518","platform":"telegram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:17.246Z"},"publishedAt":"2025-04-07T08:29:25.844Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0a9dc844-23b5-4904-8eb3-cb8169f534ee (SaLO) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 0a9dc844-23b5-4904-8eb3-cb8169f534ee уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0ac21f50-17ed-4436-988c-da38559e37b9:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"329","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_329","platform":"vk","analytics":{"likes":0,"views":18,"clicks":1,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:49.038Z","engagementRate":15},"publishedAt":"2025-04-07T08:03:54.900Z"},"telegram":{"error":"Ошибка при публикации в Telegram: Request failed with status code 400","status":"failed","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","platform":"telegram","publishedAt":null}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: failed, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0ac21f50-17ed-4436-988c-da38559e37b9 (Дичь ебаная) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 1
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=1, Результат=false
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk
+5:31:20 PM [scheduler] Контент 0ac21f50-17ed-4436-988c-da38559e37b9 частично опубликован, имеет и успешные публикации, и ошибки
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0bdc770c-c65b-45d3-977e-b616fe4c9431:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":748,"status":"published","postUrl":"https://vk.com/wall-228626989_748","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:15.254Z"},"publishedAt":"2025-04-29T09:53:10.761Z"},"facebook":{"error":null,"postId":"989725666648061","status":"published","postUrl":"https://facebook.com/989725666648061","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:15.254Z"},"publishedAt":"2025-04-29T10:32:01.853Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1674","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:18.865Z"},"publishedAt":"2025-04-29T09:53:07.521Z"},"instagram":{"postId":"18326375641166417","status":"published","postUrl":"https://www.instagram.com/p/DJBrFPXoA5V/","platform":"instagram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-30T08:00:15.254Z"},"publishedAt":"2025-04-29T09:53:04.727Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 4, С данными: 4, Без selected: 3
+5:31:20 PM [scheduler] Контент 0bdc770c-c65b-45d3-977e-b616fe4c9431 (Лучший витамин для крепких сосудов) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 4
+5:31:20 PM [scheduler]   - Опубликовано: 4
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=4, Опубликовано=4, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] Контент 0bdc770c-c65b-45d3-977e-b616fe4c9431 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0c107e8a-c6be-4596-a719-a444afd49bf5:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"instagram":{"error":null,"status":"published","platform":"instagram","updatedAt":"2025-05-13T15:58:45.574Z","publishedAt":"2025-05-13T15:58:45.681Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 0c107e8a-c6be-4596-a719-a444afd49bf5 (Падло) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: instagram
+5:31:20 PM [scheduler] Контент 0c107e8a-c6be-4596-a719-a444afd49bf5 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0c21b8b7-ea94-41ed-b02a-b9caf28ca1a6:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1434","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:20.520Z"},"publishedAt":"2025-04-17T10:19:11.232Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 0c21b8b7-ea94-41ed-b02a-b9caf28ca1a6 (Сбалансированный рацион питания: как составить идеальное меню на неделю) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 0c21b8b7-ea94-41ed-b02a-b9caf28ca1a6 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0c3e3086-9c69-4d87-8c5e-421149848895:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"686","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_686","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-04-25T13:57:43.551Z"},"publishedAt":"2025-04-25T13:53:27.791Z"},"telegram":{"postId":"1585","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/2302366310/1585","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:21.594Z"},"publishedAt":"2025-04-25T13:53:29.132Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0c3e3086-9c69-4d87-8c5e-421149848895 (Тест планировщика) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 0c3e3086-9c69-4d87-8c5e-421149848895 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0cbf0ef3-b2b1-4289-b103-2e69764b4978:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"status":"published","postUrl":"https://vk.com/wall-228626989_360","platform":"vk","analytics":{"likes":1,"views":10,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:49.181Z","engagementRate":18},"publishedAt":"2025-04-07T12:06:04.202Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/@ya_delayu_moschno/","platform":"telegram","analytics":{"likes":3,"views":24,"clicks":1,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:49.181Z","engagementRate":23},"publishedAt":"2025-04-07T12:05:57.475Z"},"instagram":{"postId":"mock_post_id","status":"published","postUrl":"https://instagram.com/example","platform":"instagram","analytics":{"likes":0,"views":15,"clicks":0,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:49.181Z","engagementRate":34},"publishedAt":"2025-04-07T12:05:54.543Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 0cbf0ef3-b2b1-4289-b103-2e69764b4978 (Почему индивидуальные планы питания — это не просто мода, а забота о себе? 🌿) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram, instagram
+5:31:20 PM [scheduler] Контент 0cbf0ef3-b2b1-4289-b103-2e69764b4978 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0cdb4f1e-0197-48a3-b2ef-03be93181019:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"status":"published","postUrl":"https://t.me/c/2518212096/89","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-14T10:26:06.893Z"},"publishedAt":"2025-04-30T13:20:33.972Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 0cdb4f1e-0197-48a3-b2ef-03be93181019 (Как современная наука продлевает нашу жизнь?) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 0cdb4f1e-0197-48a3-b2ef-03be93181019 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0d1aae06-84e1-4d3e-99e8-6357ddf71e63:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1779","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:23.224Z"},"publishedAt":"2025-05-05T07:18:37.187Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 1, С данными: 1, Без selected: 1
+5:31:20 PM [scheduler] Контент 0d1aae06-84e1-4d3e-99e8-6357ddf71e63 (Еще разок) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 1
+5:31:20 PM [scheduler]   - Опубликовано: 1
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=1, Опубликовано=1, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: telegram
+5:31:20 PM [scheduler] Контент 0d1aae06-84e1-4d3e-99e8-6357ddf71e63 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0d213a61-324c-4826-a291-312ec57af6ff:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":825,"status":"published","postUrl":"https://vk.com/wall-228626989_825","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-03T08:00:18.428Z"},"publishedAt":"2025-05-02T12:25:04.401Z"},"facebook":{"error":null,"postId":"991986989755262","status":"published","postUrl":"https://facebook.com/991986989755262","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-03T08:00:18.428Z"},"publishedAt":"2025-05-02T12:25:18.152Z"},"telegram":{"status":"published","postUrl":"https://t.me/c/2302366310/1764","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:24.266Z"},"publishedAt":"2025-05-02T12:25:02.219Z"},"instagram":{"postId":"17996145551628547","status":"published","postUrl":"https://www.instagram.com/p/DJJq1zSo1dZ/","platform":"instagram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-03T08:00:18.428Z"},"publishedAt":"2025-05-02T12:25:00.854Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 4, С данными: 4, Без selected: 3
+5:31:20 PM [scheduler] Контент 0d213a61-324c-4826-a291-312ec57af6ff (Сравнение продуктов и рецептов: сделайте правильный выбор) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 4
+5:31:20 PM [scheduler]   - Опубликовано: 4
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=4, Опубликовано=4, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] Контент 0d213a61-324c-4826-a291-312ec57af6ff уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0d6f51b8-0571-401e-9c28-ff382911a356:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"305","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_305","platform":"vk","analytics":{"likes":4,"views":29,"clicks":2,"shares":1,"comments":1,"lastUpdated":"2025-04-24T11:14:49.321Z","engagementRate":11},"publishedAt":"2025-04-06T16:10:42.994Z"},"telegram":{"postId":"458","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/@ya_delayu_moschno/458","platform":"telegram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:25.343Z"},"publishedAt":"2025-04-06T16:10:41.505Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 2, С данными: 2, Без selected: 2
+5:31:20 PM [scheduler] Контент 0d6f51b8-0571-401e-9c28-ff382911a356 (Тест короткого поста с картинкой) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 2
+5:31:20 PM [scheduler]   - Опубликовано: 2
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=2, Опубликовано=2, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram
+5:31:20 PM [scheduler] Контент 0d6f51b8-0571-401e-9c28-ff382911a356 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0dcafeeb-2b66-41c8-afe9-a0761ca06fa7:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":"280","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://vk.com/wall-228626989_280","platform":"vk","analytics":{"likes":1,"views":19,"clicks":1,"shares":0,"comments":0,"lastUpdated":"2025-04-24T11:14:49.460Z","engagementRate":17},"publishedAt":"2025-04-04T14:39:40.647Z"},"telegram":{"postId":"441","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://t.me/c/2302366310/441","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:26.371Z"},"publishedAt":"2025-04-04T14:39:37.036Z"},"instagram":{"error":null,"postId":"18065749051769493","status":"published","userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","postUrl":"https://www.instagram.com/p/DIBz_47xqwS/","platform":"instagram","analytics":{"likes":1,"views":21,"clicks":1,"shares":0,"comments":1,"lastUpdated":"2025-04-24T11:14:49.460Z","engagementRate":30},"publishedAt":"2025-04-04T14:39:35.164Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 3, С данными: 3, Без selected: 3
+5:31:20 PM [scheduler] Контент 0dcafeeb-2b66-41c8-afe9-a0761ca06fa7 (Искусство приготовления мяса ) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 3
+5:31:20 PM [scheduler]   - Опубликовано: 3
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=3, Опубликовано=3, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, telegram, instagram
+5:31:20 PM [scheduler] Контент 0dcafeeb-2b66-41c8-afe9-a0761ca06fa7 уже имеет статус 'published'
+5:31:20 PM [scheduler] DEBUG: Детальная проверка платформ для контента 0ddb9ef1-6f25-4a0f-9b1e-b4ae3964bedd:
+5:31:20 PM [scheduler] DEBUG: Исходная структура social_platforms: {"vk":{"postId":849,"status":"published","postUrl":"https://vk.com/wall-228626989_849","platform":"vk","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-08T08:00:34.560Z"},"publishedAt":"2025-05-07T11:36:16.578Z"},"facebook":{"error":null,"postId":"2120362494678794_995532356067392","status":"published","postUrl":"https://facebook.com/2120362494678794_995532356067392","selected":true,"analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-08T08:00:34.560Z"},"publishedAt":"2025-05-07T11:36:33.972Z"},"telegram":{"postId":"1854","status":"published","postUrl":"https://t.me/c/2302366310/1854","platform":"telegram","analytics":{"likes":0,"views":10,"shares":0,"comments":0,"lastUpdated":"2025-05-28T08:00:27.427Z"},"publishedAt":"2025-05-07T11:36:12.617Z"},"instagram":{"postId":"18095052754567290","status":"published","postUrl":"https://www.instagram.com/p/DJWdPBRooOz/","platform":"instagram","analytics":{"likes":0,"views":0,"shares":0,"comments":0,"lastUpdated":"2025-05-08T08:00:34.560Z"},"publishedAt":"2025-05-07T11:36:09.837Z"}}
+5:31:20 PM [scheduler] DEBUG: Платформа vk, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа facebook, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа telegram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Платформа instagram, статус: published, selected: ДА/НЕ УСТАНОВЛЕНО
+5:31:20 PM [scheduler] DEBUG: Статистика платформ - Всего: 4, С данными: 4, Без selected: 3
+5:31:20 PM [scheduler] Контент 0ddb9ef1-6f25-4a0f-9b1e-b4ae3964bedd (Дратути! ) - статус: published
+5:31:20 PM [scheduler]   - Всего платформ: 4
+5:31:20 PM [scheduler]   - Опубликовано: 4
+5:31:20 PM [scheduler]   - В ожидании: 0
+5:31:20 PM [scheduler]   - Запланировано: 0
+5:31:20 PM [scheduler]   - С ошибками: 0
+5:31:20 PM [scheduler] DEBUG: Проверка всех опубликованных платформ: Всего=4, Опубликовано=4, Результат=true
+5:31:20 PM [scheduler] DEBUG: Платформы: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] DEBUG: Опубликованные: vk, facebook, telegram, instagram
+5:31:20 PM [scheduler] Контент 0ddb9ef1-6f25-4a0f-9b1e-b4ae3964bedd уже имеет статус 'published'
+5:31:20 PM [scheduler] Завершена проверка статусов. Обновлено статусов: 0
+5:31:20 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+5:31:20 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+5:31:20 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+5:31:20 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+5:31:20 PM [directus-crud] Операция read для коллекции users/me выполнена успешно
+5:31:20 PM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+5:31:20 PM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+5:31:20 PM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+5:31:21 PM [scheduler] Дополнительный запрос по контенту со статусом scheduled и платформами
+5:31:21 PM [scheduler] Получено 2 запланированных публикаций со статусом 'scheduled'
