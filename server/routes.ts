@@ -2488,6 +2488,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let generatedContent;
       let usedService = service || 'claude';
       
+      // Отладочные логи для параметров
+      console.log('🔧 DEBUG: useCampaignData =', useCampaignData);
+      console.log('🔧 DEBUG: campaignId =', campaignId);
+      console.log('🔧 DEBUG: usedService =', usedService);
+      
       // Примечание: основная обработка теперь происходит в специальных блоках для каждого AI сервиса выше
       switch (usedService.toLowerCase()) {
           
