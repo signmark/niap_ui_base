@@ -204,19 +204,32 @@ export class CampaignDataService {
     token?: string
   ): Promise<string> {
     try {
+      console.log('🎯 [PROMPT-ENRICHMENT] Начинаем обогащение промпта для пользователя:', userId);
+      console.log('🎯 [PROMPT-ENRICHMENT] Исходный промпт:', originalPrompt);
+      
       const campaignContext = await this.getCampaignContext(userId, campaignId, token);
       
       if (!campaignContext) {
-        console.log('[campaign-data] Контекст кампании недоступен, используем исходный промпт');
+        console.log('❌ [PROMPT-ENRICHMENT] Контекст кампании недоступен, используем исходный промпт');
+        console.log('🚨 [FINAL-PROMPT] ПРОМПТ БЕЗ ДАННЫХ КАМПАНИИ:', originalPrompt);
         return originalPrompt;
       }
 
+      console.log('✅ [PROMPT-ENRICHMENT] Контекст кампании получен!');
+      console.log('📝 [CAMPAIGN-CONTEXT]:', campaignContext);
+
       const enrichedPrompt = `${originalPrompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
       
-      console.log('[campaign-data] Промпт успешно обогащен данными кампании');
+      console.log('🎉 [PROMPT-ENRICHMENT] Промпт успешно обогащен данными кампании');
+      console.log('🚨 [FINAL-PROMPT] ФИНАЛЬНЫЙ ОБОГАЩЕННЫЙ ПРОМПТ:');
+      console.log('=' * 50);
+      console.log(enrichedPrompt);
+      console.log('=' * 50);
+      
       return enrichedPrompt;
     } catch (error) {
-      console.error('[campaign-data] Ошибка при обогащении промпта:', error);
+      console.error('💥 [PROMPT-ENRICHMENT] Ошибка при обогащении промпта:', error);
+      console.log('🚨 [FINAL-PROMPT] ПРОМПТ С ОШИБКОЙ (используем исходный):', originalPrompt);
       return originalPrompt;
     }
   }
