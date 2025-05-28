@@ -2361,13 +2361,10 @@ ${campaignContext}
             });
           }
           
-          // Используем прямой вызов Gemini прокси-сервиса
-          const { geminiProxyService } = require('./services/gemini-proxy');
+          // Используем Gemini сервис
+          const geminiService = new GeminiService({ apiKey: geminiApiKey });
           try {
-            generatedContent = await geminiProxyService.generateText({
-              prompt: enrichedPrompt,
-              model: 'gemini-2.0-flash'
-            });
+            generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           } catch (geminiError) {
             console.error('Gemini API error:', geminiError);
             return res.status(500).json({
