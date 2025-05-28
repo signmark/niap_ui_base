@@ -74,12 +74,18 @@ export class ClaudeService {
       
       logger.log(`Initializing Claude service for user ${userId}`, 'claude');
       
-      // Получаем API ключ из хранилища
+      // Получаем API ключ из хранилища пользователя или используем глобальный
       this.apiKey = await apiKeyService.getApiKey(userId, 'claude', token);
       
       if (!this.apiKey) {
-        logger.error(`Failed to get Claude API key for user ${userId}`, 'claude');
-        return false;
+        // Пробуем получить глобальный ключ из переменных окружения
+        this.apiKey = process.env.ANTHROPIC_API_KEY || null;
+        if (this.apiKey) {
+          logger.log('Инициализация Claude с глобальным API ключом', 'claude');
+        } else {
+          logger.error(`Failed to get Claude API key for user ${userId}`, 'claude');
+          return false;
+        }
       }
       
       // Проверяем валидность ключа
