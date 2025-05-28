@@ -1,4 +1,4 @@
-import { deepseekService, DeepSeekMessage } from './services/deepseek';
+import { deepseekService, DeepSeekMessage, DeepSeekService } from './services/deepseek';
 import { perplexityService } from './services/perplexity';
 import { ClaudeService } from './services/claude';
 import { falAiService } from './services/falai';
@@ -2352,26 +2352,15 @@ ${campaignContext}
         case 'gemini':
         case 'gemini-2.0-flash':
         case 'gemini-pro':
-          // Получаем API ключ для Gemini
-          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
-          if (!geminiApiKey) {
+          const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+          const geminiInitialized = await geminiService.testApiKey();
+          if (!geminiInitialized) {
             return res.status(400).json({
               success: false,
               error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          
-          // Используем Gemini сервис
-          const geminiService = new GeminiService({ apiKey: geminiApiKey });
-          try {
-            generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
-          } catch (geminiError) {
-            console.error('Gemini API error:', geminiError);
-            return res.status(500).json({
-              success: false,
-              error: 'Ошибка генерации контента с Gemini API'
-            });
-          }
+          generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           break;
           
         case 'deepseek':
