@@ -2497,6 +2497,7 @@ ${campaignContext}
           break;
           
         case 'deepseek':
+          console.log('[deepseek] Начинаем генерацию контента с DeepSeek');
           // Получаем API ключ для DeepSeek (пробуем глобальный, если личного нет)
           let deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
           if (!deepseekApiKey) {
@@ -2514,15 +2515,31 @@ ${campaignContext}
             });
           }
           
+          // Обогащаем промпт данными кампании для DeepSeek
+          if (useCampaignData && campaignId) {
+            console.log('[deepseek] Обогащение промпта данными кампании');
+            try {
+              const campaignContext = await getCampaignContext(userId, campaignId, token);
+              if (campaignContext) {
+                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+                console.log('[deepseek] Промпт обогащен данными кампании');
+              }
+            } catch (error) {
+              console.error('[deepseek] Ошибка при получении данных кампании:', error);
+            }
+          }
+          
           // Создаем экземпляр DeepSeek сервиса с увеличенным лимитом токенов
           const deepseekServiceInstance = new DeepSeekService({ 
             apiKey: deepseekApiKey,
             maxTokens: 8192 
           });
           generatedContent = await deepseekServiceInstance.generateText(enrichedPrompt);
+          console.log('[deepseek] Контент успешно сгенерирован');
           break;
           
         case 'qwen':
+          console.log('[qwen] Начинаем генерацию контента с Qwen');
           // Получаем API ключ для Qwen
           const qwenApiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
           if (!qwenApiKey) {
@@ -2531,6 +2548,21 @@ ${campaignContext}
               error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
             });
           }
+          
+          // Обогащаем промпт данными кампании для Qwen
+          if (useCampaignData && campaignId) {
+            console.log('[qwen] Обогащение промпта данными кампании');
+            try {
+              const campaignContext = await getCampaignContext(userId, campaignId, token);
+              if (campaignContext) {
+                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+                console.log('[qwen] Промпт обогащен данными кампании');
+              }
+            } catch (error) {
+              console.error('[qwen] Ошибка при получении данных кампании:', error);
+            }
+          }
+          
           const qwenInitialized = await qwenService.initialize(userId, token);
           if (!qwenInitialized) {
             return res.status(400).json({
@@ -2539,6 +2571,7 @@ ${campaignContext}
             });
           }
           generatedContent = await qwenService.generateText(enrichedPrompt);
+          console.log('[qwen] Контент успешно сгенерирован');
           break;
           
         default:
