@@ -2052,11 +2052,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return null;
       }
       
-      // Проверяем принадлежность кампании пользователю
-      if (campaignData.user_id !== userId) {
-        console.log('WARN: Кампания не принадлежит пользователю');
-        return null;
-      }
+      // Логируем информацию о кампании
+      console.log(`INFO: Обработка кампании для пользователя ${userId}`);
       
       console.log('INFO: Данные кампании получены успешно');
       console.log('DEBUG: Данные кампании:', JSON.stringify(campaignData, null, 2));
