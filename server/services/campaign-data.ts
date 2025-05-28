@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { directusAuthManager } from './directus-auth-manager';
 
 /**
  * Сервис для работы с данными кампании
- * Предоставляет централизованный доступ к информации о кампаниях и анкетах
+ * Предоставляет централизованный доступ к информации о кампаниям и анкетам
  */
 export class CampaignDataService {
   private directusApi = axios.create({
@@ -21,11 +22,21 @@ export class CampaignDataService {
     try {
       console.log('[campaign-data] Получение контекста кампании для пользователя:', userId);
       
+      // Получаем действительный токен авторизации
+      let authToken = token;
+      if (!authToken) {
+        authToken = await directusAuthManager.getAuthToken(userId);
+        if (!authToken) {
+          console.log('[campaign-data] Не удалось получить токен авторизации');
+          return null;
+        }
+      }
+      
       let targetCampaignId = campaignId;
       
       // Если ID кампании не указан, найдем активную кампанию пользователя
       if (!targetCampaignId) {
-        targetCampaignId = await this.getActiveCampaignId(userId, token);
+        targetCampaignId = await this.getActiveCampaignId(userId, authToken);
         if (!targetCampaignId) {
           console.log('[campaign-data] Активная кампания не найдена');
           return null;
@@ -33,14 +44,14 @@ export class CampaignDataService {
       }
 
       // Получаем данные кампании
-      const campaignData = await this.getCampaignData(targetCampaignId, token);
+      const campaignData = await this.getCampaignData(targetCampaignId, authToken);
       if (!campaignData) {
         console.log('[campaign-data] Данные кампании не найдены');
         return null;
       }
 
       // Получаем данные анкеты
-      const questionnaireData = await this.getQuestionnaireData(targetCampaignId, token);
+      const questionnaireData = await this.getQuestionnaireData(targetCampaignId, authToken);
       
       // Форматируем контекст для AI
       const context = this.formatCampaignContext(campaignData, questionnaireData);
