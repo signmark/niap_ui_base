@@ -35,6 +35,17 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// 🔥 УНИВЕРСАЛЬНОЕ ОТСЛЕЖИВАНИЕ ВСЕХ POST ЗАПРОСОВ 🔥
+app.use((req, res, next) => {
+  if (req.method === 'POST') {
+    console.log('🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥');
+    console.log('🔥 URL:', req.url);
+    console.log('🔥 PATH:', req.path);
+    console.log('🔥 BODY:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // Добавляем API маршруты для проверки статуса и проверки админа явно, чтобы они работали до инициализации Vite
 app.get('/api/status-check', (req, res) => {
   return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
