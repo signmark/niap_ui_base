@@ -8,9 +8,9 @@ import axios from 'axios';
 // Конфигурация тестов
 const CONFIG = {
   baseUrl: 'http://localhost:5000',
-  authToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiI4NWQ1ZmMwMC1hOGQ4LTQ2MDUtOWY5NC05ZmNkODQ2OTc1ZjAiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTczMjgwMDI0MSwiZXhwIjoxNzMyODA3NDQxfQ.3kc_8OFzOVpHN_1KEzjhj_mSGwKCzjBJQ11o0lk3Evk',
+  authToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc0ODQ0NzgwNywiZXhwIjoxNzQ4NDQ4NzA3LCJpc3MiOiJkaXJlY3R1cyJ9.4dqTV1zL7jdY03K9L2aCp4djbvwy7lonlU-DPtWShbc',
   campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e',
-  timeout: 45000
+  timeout: 30000
 };
 
 // Тестовые AI сервисы
