@@ -2352,15 +2352,16 @@ ${campaignContext}
         case 'gemini':
         case 'gemini-2.0-flash':
         case 'gemini-pro':
-          const geminiService = new GeminiService();
-          const geminiInitialized = await geminiService.initialize(userId, token);
-          if (!geminiInitialized) {
+          // Получаем API ключ для Gemini
+          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
+          if (!geminiApiKey) {
             return res.status(400).json({
               success: false,
               error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          generatedContent = await geminiService.generateContent(enrichedPrompt);
+          const geminiService = new GeminiService({ apiKey: geminiApiKey });
+          generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           break;
           
         case 'deepseek':
@@ -2375,6 +2376,14 @@ ${campaignContext}
           break;
           
         case 'qwen':
+          // Получаем API ключ для Qwen
+          const qwenApiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
+          if (!qwenApiKey) {
+            return res.status(400).json({
+              success: false,
+              error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
           const qwenInitialized = await qwenService.initialize(userId, token);
           if (!qwenInitialized) {
             return res.status(400).json({
@@ -2382,7 +2391,7 @@ ${campaignContext}
               error: 'Qwen API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          generatedContent = await qwenService.generateContent(enrichedPrompt);
+          generatedContent = await qwenService.generateText(enrichedPrompt);
           break;
           
         default:
