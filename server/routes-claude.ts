@@ -357,7 +357,7 @@ export function registerClaudeRoutes(app: Router) {
         });
       }
       
-      const generatedContent = await claudeService.generateContent(prompt, model);
+      const generatedContent = await claudeService.generateContent(enrichedPrompt, model);
       
       return res.json({
         success: true,
@@ -365,9 +365,42 @@ export function registerClaudeRoutes(app: Router) {
       });
     } catch (error) {
       logger.error('[claude-routes] Error generating content with Claude:', error);
-      return res.status(500).json({
+      
+      // Проверяем тип ошибки для более понятного сообщения пользователю
+      let errorMessage = 'Ошибка при генерации контента';
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        // Проверяем на ошибки перегрузки сервера Claude
+        if (error.message.includes('529') || error.message.includes('server overload')) {
+          errorMessage = 'Сервер Claude временно перегружен. Попробуйте снова через несколько минут или используйте другую AI модель (например, Gemini).';
+          statusCode = 503; // Service Unavailable
+        }
+        // Проверяем на ошибки авторизации
+        else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          errorMessage = 'Проблема с API ключом Claude. Проверьте правильность ключа в настройках.';
+          statusCode = 401;
+        }
+        // Проверяем на ошибки лимитов
+        else if (error.message.includes('429') || error.message.includes('rate limit')) {
+          errorMessage = 'Превышен лимит запросов к Claude API. Попробуйте позже.';
+          statusCode = 429;
+        }
+        // Проверяем на сетевые ошибки
+        else if (error.message.includes('network') || error.message.includes('timeout')) {
+          errorMessage = 'Проблема с подключением к Claude API. Проверьте интернет-соединение.';
+          statusCode = 503;
+        }
+        // Если ошибка содержит "недоступен после всех попыток"
+        else if (error.message.includes('недоступен после всех попыток')) {
+          errorMessage = 'Claude API недоступен после нескольких попыток. Попробуйте использовать Gemini или другую AI модель.';
+          statusCode = 503;
+        }
+      }
+      
+      return res.status(statusCode).json({
         success: false,
-        error: 'Ошибка при генерации контента'
+        error: errorMessage
       });
     }
   });
