@@ -2352,15 +2352,16 @@ ${campaignContext}
         case 'gemini':
         case 'gemini-2.0-flash':
         case 'gemini-pro':
-          const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
-          const geminiInitialized = await geminiService.testApiKey();
-          if (!geminiInitialized) {
-            return res.status(400).json({
+          try {
+            const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+            generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
+          } catch (geminiError) {
+            console.error('Gemini API error:', geminiError);
+            return res.status(500).json({
               success: false,
-              error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
+              error: `Ошибка генерации контента с Gemini API: ${geminiError}`
             });
           }
-          generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           break;
           
         case 'deepseek':
