@@ -2242,8 +2242,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Маршрут для генерации контента с помощью AI сервисов
   app.post('/api/generate-content', async (req, res) => {
     try {
-      console.log('🚀 ЗАПРОС НА ГЕНЕРАЦИЮ КОНТЕНТА ПОЛУЧЕН');
-      console.log('📋 Параметры запроса:', req.body);
+      console.log('🚀🚀🚀 ЗАПРОС НА ГЕНЕРАЦИЮ КОНТЕНТА ПОЛУЧЕН 🚀🚀🚀');
+      console.log('📋📋📋 ПАРАМЕТРЫ ЗАПРОСА:', JSON.stringify(req.body, null, 2));
       console.log('🔍 useCampaignData в запросе:', req.body.useCampaignData);
       console.log('🔍 campaignId в запросе:', req.body.campaignId);
       console.log('🔍 service в запросе:', req.body.service);
