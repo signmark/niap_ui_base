@@ -2360,8 +2360,21 @@ ${campaignContext}
               error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          const geminiService = new GeminiService({ apiKey: geminiApiKey });
-          generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
+          
+          // Используем прямой вызов Gemini прокси-сервиса
+          const { geminiProxyService } = require('./services/gemini-proxy');
+          try {
+            generatedContent = await geminiProxyService.generateText({
+              prompt: enrichedPrompt,
+              model: 'gemini-2.0-flash'
+            });
+          } catch (geminiError) {
+            console.error('Gemini API error:', geminiError);
+            return res.status(500).json({
+              success: false,
+              error: 'Ошибка генерации контента с Gemini API'
+            });
+          }
           break;
           
         case 'deepseek':
