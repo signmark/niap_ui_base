@@ -2375,6 +2375,14 @@ ${campaignContext}
           break;
           
         case 'deepseek':
+          // Получаем API ключ для DeepSeek
+          const deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+          if (!deepseekApiKey) {
+            return res.status(400).json({
+              success: false,
+              error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
+            });
+          }
           const deepseekInitialized = await deepseekService.initialize(userId, token);
           if (!deepseekInitialized) {
             return res.status(400).json({
