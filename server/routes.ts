@@ -2469,19 +2469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           
-          // Обогащаем промпт данными кампании для Qwen
-          if (useCampaignData && campaignId) {
-            console.log('[qwen] Обогащение промпта данными кампании');
-            try {
-              const campaignContext = await getCampaignContext(userId, campaignId, token);
-              if (campaignContext) {
-                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
-                console.log('[qwen] Промпт обогащен данными кампании');
-              }
-            } catch (error) {
-              console.error('[qwen] Ошибка при получении данных кампании:', error);
-            }
-          }
+
           
           const qwenInitialized = await qwenService.initialize(userId, token);
           if (!qwenInitialized) {
