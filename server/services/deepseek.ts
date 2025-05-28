@@ -19,8 +19,8 @@ export class DeepSeekService {
   private apiKey: string;
   private readonly baseUrl = 'https://api.deepseek.com/v1';
   
-  constructor(config: DeepSeekConfig) {
-    this.apiKey = config.apiKey;
+  constructor(config?: DeepSeekConfig) {
+    this.apiKey = config?.apiKey || process.env.DEEPSEEK_API_KEY || '';
   }
   
   /**
