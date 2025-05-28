@@ -2297,6 +2297,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('[claude] 🎯 Инициализация Claude с глобальным API ключом');
           const { ClaudeService } = await import('./services/claude.js');
           const claudeService = new ClaudeService();
+          
+          // Инициализируем сервис с API ключом из переменных окружения
+          const initialized = await claudeService.initialize(userId || 'anonymous');
+          if (!initialized) {
+            throw new Error('Не удалось инициализировать Claude API. Проверьте настройки API ключа.');
+          }
+          
           const result = await claudeService.generateContent(enrichedPrompt);
           console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
           
