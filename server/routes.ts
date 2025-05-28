@@ -2273,6 +2273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               campaignId, 
               userToken
             );
+            console.log('[deepseek] Обогащенный промпт создан:', enrichedPrompt.substring(0, 100) + '...');
           } catch (campaignError) {
             console.error('[deepseek] Ошибка при получении данных кампании:', campaignError);
           }
@@ -2284,7 +2285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const deepseekService = new DeepSeekService();
           const result = await deepseekService.generateText(enrichedPrompt);
           console.log('[deepseek] Контент успешно сгенерирован');
-          return res.json({ success: true, content: result.content });
+          return res.json({ success: true, content: result });
         } catch (error) {
           console.error('[deepseek] Ошибка генерации:', error);
           return res.status(500).json({ 
@@ -2323,7 +2324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const qwenService = new QwenService();
           const result = await qwenService.generateText(enrichedPrompt);
           console.log('[qwen] Контент успешно сгенерирован');
-          return res.json({ success: true, content: result.content });
+          return res.json({ success: true, content: result });
         } catch (error) {
           console.error('[qwen] Ошибка генерации:', error);
           return res.status(500).json({ 
@@ -2528,35 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           break;
           
-        case 'deepseek':
-          console.log('[deepseek] Начинаем генерацию контента с DeepSeek');
-          // Получаем API ключ для DeepSeek (пробуем глобальный, если личного нет)
-          let deepseekApiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
-          if (!deepseekApiKey) {
-            console.log('[DEBUG] Используется глобальный ключ для deepseek');
-            deepseekApiKey = await apiKeyService.getGlobalApiKey('deepseek');
-            if (deepseekApiKey) {
-              console.log('[deepseek] Используется глобальный API ключ');
-            }
-          }
-          
-          if (!deepseekApiKey) {
-            return res.status(400).json({
-              success: false,
-              error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          
-
-          
-          // Создаем экземпляр DeepSeek сервиса с увеличенным лимитом токенов
-          const deepseekServiceInstance = new DeepSeekService({ 
-            apiKey: deepseekApiKey,
-            maxTokens: 8192 
-          });
-          generatedContent = await deepseekServiceInstance.generateText(enrichedPrompt);
-          console.log('[deepseek] Контент успешно сгенерирован');
-          break;
+        // DeepSeek обрабатывается в специальном блоке выше, как Gemini
           
         // Qwen обрабатывается в отдельном блоке выше, как Gemini
           
