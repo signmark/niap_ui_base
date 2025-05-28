@@ -2092,8 +2092,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (questionnaireData) {
             console.log('INFO: Данные анкеты получены успешно');
+            console.log('DEBUG: Полные данные анкеты:', JSON.stringify(questionnaireData, null, 2));
             
-            // Добавляем данные о компании из анкеты
+            // Добавляем все доступные данные о компании из анкеты
+            context += `\n\nДАННЫЕ КОМПАНИИ ИЗ АНКЕТЫ:`;
+            
             if (questionnaireData.company_name) {
               context += `\nНазвание компании: ${questionnaireData.company_name}`;
             }
@@ -2105,6 +2108,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             if (questionnaireData.contact_info) {
               context += `\nКонтактная информация: ${questionnaireData.contact_info}`;
+            }
+            if (questionnaireData.products_services) {
+              context += `\nПродукты/услуги: ${questionnaireData.products_services}`;
+            }
+            if (questionnaireData.unique_selling_points) {
+              context += `\nУникальные преимущества: ${questionnaireData.unique_selling_points}`;
+            }
+            if (questionnaireData.marketing_goals) {
+              context += `\nМаркетинговые цели: ${questionnaireData.marketing_goals}`;
+            }
+            if (questionnaireData.brand_tone) {
+              context += `\nТон бренда: ${questionnaireData.brand_tone}`;
+            }
+            if (questionnaireData.competitors) {
+              context += `\nКонкуренты: ${questionnaireData.competitors}`;
+            }
+            if (questionnaireData.competitive_advantages) {
+              context += `\nКонкурентные преимущества: ${questionnaireData.competitive_advantages}`;
+            }
+            if (questionnaireData.marketing_expectations) {
+              context += `\nОжидания от маркетинга: ${questionnaireData.marketing_expectations}`;
             }
           }
         } catch (questionnaireError: any) {
