@@ -2451,6 +2451,7 @@ ${campaignContext}
             }
           }
           
+          console.log(`[DEBUG] Передаем в Claude сервис userId: ${userId}`);
           const claudeService = new ClaudeService();
           const claudeInitialized = await claudeService.initialize(userId, token);
           if (!claudeInitialized) {
