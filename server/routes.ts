@@ -2523,21 +2523,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let enrichedPrompt = prompt;
       
       // 🚀 ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ЕСЛИ НУЖНО 🚀
+      console.log('🔍 ПАРАМЕТРЫ КАМПАНИИ: useCampaignData =', useCampaignData, 'campaignId =', campaignId, 'userId =', userId);
       if (useCampaignData && campaignId) {
-        console.log('🎯 ОБОГАЩЕНИЕ ПРОМПТА ДАННЫМИ КАМПАНИИ');
+        console.log('🎯 НАЧИНАЕМ ОБОГАЩЕНИЕ ПРОМПТА ДАННЫМИ КАМПАНИИ');
+        console.log('📋 Исходный промпт:', prompt.substring(0, 100) + '...');
         try {
           const { CampaignDataService } = await import('./services/campaign-data.js');
           const campaignDataService = new CampaignDataService();
+          const originalPrompt = enrichedPrompt;
           enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
             prompt, 
             userId, 
             campaignId, 
             token
           );
-          console.log('✅ Промпт обогащен данными кампании:', enrichedPrompt.substring(0, 150) + '...');
+          console.log('✅ ПРОМПТ УСПЕШНО ОБОГАЩЕН!');
+          console.log('📝 Исходный промпт длина:', originalPrompt.length);
+          console.log('📝 Обогащенный промпт длина:', enrichedPrompt.length);
+          console.log('📝 Первые 200 символов обогащенного промпта:', enrichedPrompt.substring(0, 200) + '...');
+          
+          // Проверяем, содержит ли обогащенный промпт данные НИАП
+          if (enrichedPrompt.includes('НИАП') || enrichedPrompt.includes('nplanner.ru')) {
+            console.log('🎉 ДАННЫЕ НИАП НАЙДЕНЫ В ПРОМПТЕ!');
+          } else {
+            console.log('⚠️ ДАННЫЕ НИАП НЕ НАЙДЕНЫ В ПРОМПТЕ!');
+          }
         } catch (campaignError) {
           console.error('❌ Ошибка при обогащении данными кампании:', campaignError);
         }
+      } else {
+        console.log('⏭️ Пропускаем обогащение: useCampaignData =', useCampaignData, 'campaignId =', campaignId);
       }
       
       if (tone) {
