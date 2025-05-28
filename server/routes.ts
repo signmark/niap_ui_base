@@ -2588,55 +2588,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       switch (usedService.toLowerCase()) {
           
         case 'claude':
-          try {
-            console.log('[claude] 🎯 Инициализация Claude сервиса');
-            
-            // ВАЖНО: Добавляем данные кампании для Claude
-            if (useCampaignData && campaignId) {
-              console.log('[claude] 🎯 ОБОГАЩАЕМ ПРОМПТ ДАННЫМИ КАМПАНИИ');
-              try {
-                const { CampaignDataService } = await import('./services/campaign-data.js');
-                const campaignDataService = new CampaignDataService();
-                enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-                  enrichedPrompt, 
-                  userId, 
-                  campaignId, 
-                  token
-                );
-                console.log('[claude] ✅ ПРОМПТ УСПЕШНО ОБОГАЩЕН ДАННЫМИ НИАП!');
-                console.log('[claude] 📝 Обогащенный промпт длина:', enrichedPrompt.length);
-                
-                // Проверяем, содержит ли обогащенный промпт данные НИАП
-                if (enrichedPrompt.includes('НИАП') || enrichedPrompt.includes('nplanner.ru')) {
-                  console.log('[claude] 🎉 ДАННЫЕ НИАП НАЙДЕНЫ В ПРОМПТЕ!');
-                } else {
-                  console.log('[claude] ⚠️ Данные НИАП не найдены в промпте');
-                }
-              } catch (campaignError) {
-                console.error('[claude] ❌ Ошибка обогащения данными кампании:', campaignError);
-              }
-            }
-            
-            const { ClaudeService } = await import('./services/claude.js');
-            const claudeService = new ClaudeService();
-            const initialized = await claudeService.initialize(userId, token);
-            
-            if (!initialized) {
-              return res.status(400).json({
-                success: false,
-                error: 'Claude API не настроен. Добавьте API ключ в настройки.'
-              });
-            }
-
-            generatedContent = await claudeService.generateContent(enrichedPrompt);
-            console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
-          } catch (claudeError) {
-            console.error('[claude] ❌ Ошибка генерации:', claudeError);
-            return res.status(500).json({ 
-              success: false, 
-              error: 'Ошибка при генерации контента через Claude' 
-            });
-          }
+          // Claude обрабатывается в раннем блоке выше
+          return res.status(500).json({
+            success: false,
+            error: 'Claude должен обрабатываться в раннем блоке'
+          });
           break;
           
         case 'gemini':
