@@ -2248,6 +2248,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🚀 ЗАПРОС НА ГЕНЕРАЦИЮ КОНТЕНТА ПОЛУЧЕН');
       console.log('📋 Параметры запроса:', req.body);
+      console.log('🔍 useCampaignData в запросе:', req.body.useCampaignData);
+      console.log('🔍 campaignId в запросе:', req.body.campaignId);
+      console.log('🔍 service в запросе:', req.body.service);
       const { prompt, keywords, platform, tone, service, useCampaignData, campaignId } = req.body;
       
       // Для Gemini работаем без авторизации, используя глобальный API ключ
@@ -2304,8 +2307,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const token = authHeader.replace('Bearer ', '');
-      // Здесь нужно добавить проверку токена для других сервисов
-      const userId = 'temp-user-id'; // Временное решение
+      
+      // Получаем реальный ID пользователя из токена через DirectusAuthManager
+      let userId: string;
+      try {
+        // Сначала пытаемся получить пользователя из DirectusAuthManager
+        const userSession = await directusAuthManager.getUserFromToken(token);
+        if (userSession) {
+          userId = userSession.id;
+          console.log(`✅ Получен реальный ID пользователя: ${userId}`);
+        } else {
+          // Fallback: получаем через API /users/me
+          const directusApi = axios.create({
+            baseURL: 'https://directus.nplanner.ru',
+            timeout: 10000
+          });
+          
+          const userResponse = await directusApi.get('/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          userId = userResponse.data?.data?.id;
+          if (!userId) {
+            throw new Error('Не удалось получить ID пользователя');
+          }
+          console.log(`✅ Получен ID пользователя через API: ${userId}`);
+        }
+      } catch (error) {
+        console.error('❌ Ошибка получения ID пользователя:', error);
+        return res.status(401).json({
+          success: false,
+          error: 'Ошибка авторизации пользователя'
+        });
+      }
       
       console.log(`Запрос на генерацию контента: service=${service}, useCampaignData=${useCampaignData}, campaignId=${campaignId}`);
       console.log(`DEBUG: Типы параметров - useCampaignData: ${typeof useCampaignData}, campaignId: ${typeof campaignId}`);
