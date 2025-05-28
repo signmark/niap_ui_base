@@ -2549,7 +2549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 prompt, 
                 adminUserId, 
                 campaignId, 
-                userToken
+                token
               );
               console.log('[claude] Обогащенный промпт создан:', claudeEnrichedPrompt.substring(0, 100) + '...');
             } catch (campaignError) {
