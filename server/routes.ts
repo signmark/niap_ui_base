@@ -2028,9 +2028,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Функция для получения контекста кампании и данных анкеты
   async function getCampaignContext(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
-      console.log(`INFO: Получение данных кампании ${campaignId} напрямую из Directus`);
+      console.log(`INFO: Получение данных кампании ${campaignId} через DirectusAuthManager`);
       
-      // Получаем данные кампании напрямую из Directus API
+      // Используем directusAuthManager для получения авторизованного токена
+      const userToken = await directusAuthManager.getValidToken(userId);
+      
+      if (!userToken) {
+        console.log('WARN: Не удалось получить токен пользователя из DirectusAuthManager');
+        return null;
+      }
+      
+      // Получаем данные кампании через авторизованный токен
       const directusApi = axios.create({
         baseURL: 'https://directus.nplanner.ru',
         timeout: 10000
@@ -2038,7 +2046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -2080,7 +2088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`INFO: Получение данных анкеты ${campaignData.questionnaire_id}`);
           const questionnaireResponse = await directusApi.get(`/items/campaign_questionnaires/${campaignData.questionnaire_id}`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${userToken}`,
               'Content-Type': 'application/json'
             }
           });
