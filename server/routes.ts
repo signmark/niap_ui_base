@@ -2295,7 +2295,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Claude обрабатывается в основном switch-блоке ниже
+      // ВАЖНО: Добавляем ранний блок обработки Claude с данными кампании
+      if (service === 'claude') {
+        console.log('[claude] 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ');
+        
+        let enrichedPrompt = prompt;
+        
+        // Обогащаем промпт данными кампании для Claude
+        if (useCampaignData && campaignId) {
+          console.log('[claude] 🎯 ОБОГАЩАЕМ ПРОМПТ ДАННЫМИ КАМПАНИИ');
+          try {
+            const { CampaignDataService } = await import('./services/campaign-data.js');
+            const campaignDataService = new CampaignDataService();
+            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
+              prompt, 
+              adminUserId, 
+              campaignId, 
+              userToken
+            );
+            console.log('[claude] ✅ ПРОМПТ УСПЕШНО ОБОГАЩЕН ДАННЫМИ НИАП!');
+            console.log('[claude] 📝 Обогащенный промпт длина:', enrichedPrompt.length);
+            
+            // Проверяем, содержит ли обогащенный промпт данные НИАП
+            if (enrichedPrompt.includes('НИАП') || enrichedPrompt.includes('nplanner.ru')) {
+              console.log('[claude] 🎉 ДАННЫЕ НИАП НАЙДЕНЫ В ПРОМПТЕ!');
+            } else {
+              console.log('[claude] ⚠️ Данные НИАП не найдены в промпте');
+            }
+          } catch (campaignError) {
+            console.error('[claude] ❌ Ошибка обогащения данными кампании:', campaignError);
+          }
+        }
+        
+        try {
+          console.log('[claude] 🎯 Инициализация Claude с глобальным API ключом');
+          const { ClaudeService } = await import('./services/claude.js');
+          const claudeService = new ClaudeService();
+          const result = await claudeService.generateContent(enrichedPrompt);
+          console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
+          
+          return res.json({
+            success: true,
+            content: result,
+            service: 'claude'
+          });
+        } catch (error) {
+          console.error('[claude] ❌ Ошибка генерации:', error);
+          return res.status(500).json({
+            success: false,
+            error: `Ошибка генерации контента с Claude API: ${error}`
+          });
+        }
+      }
 
       // Для Qwen работаем без авторизации, используя глобальный API ключ
       if (service === 'qwen') {
