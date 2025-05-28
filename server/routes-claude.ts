@@ -217,8 +217,8 @@ export function registerClaudeRoutes(app: Router) {
    */
   router.post('/api/claude/generate-content', async (req: Request, res: Response) => {
     try {
-      console.log('🚀 ЗАПРОС В CLAUDE ENDPOINT ПОЛУЧЕН');
-      console.log('📋 Параметры запроса Claude:', req.body);
+      console.log('🚀🚀🚀 ЗАПРОС В CLAUDE СПЕЦИАЛЬНЫЙ ENDPOINT ПОЛУЧЕН 🚀🚀🚀');
+      console.log('📋📋📋 ПАРАМЕТРЫ ЗАПРОСА CLAUDE:', JSON.stringify(req.body, null, 2));
       
       const { prompt, model, useCampaignData, campaignId } = req.body;
       
