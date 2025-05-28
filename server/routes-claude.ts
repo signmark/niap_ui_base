@@ -233,7 +233,23 @@ export function registerClaudeRoutes(app: Router) {
       
       // Если включено использование данных кампании, получаем их
       if (useCampaignData && campaignId) {
-        console.log('[claude-endpoint] ✅ ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE!');
+        console.log('🔍🔍🔍 ПОЛУЧАЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE...');
+        try {
+          const { getCampaignContext } = await import('./services/campaign-data');
+          const campaignContext = await getCampaignContext(campaignId, req.userId || '');
+          
+          if (campaignContext) {
+            console.log('✅✅✅ ДАННЫЕ КАМПАНИИ ПОЛУЧЕНЫ ДЛЯ CLAUDE:', JSON.stringify(campaignContext, null, 2));
+            enrichedPrompt = `${campaignContext}\n\n${prompt}`;
+          } else {
+            console.log('❌❌❌ НЕ УДАЛОСЬ ПОЛУЧИТЬ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE');
+          }
+        } catch (error) {
+          console.error('🚨🚨🚨 ОШИБКА ПРИ ПОЛУЧЕНИИ ДАННЫХ КАМПАНИИ ДЛЯ CLAUDE:', error);
+        }
+      }
+      
+      console.log('[claude-endpoint] ✅ ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE!');
         try {
           // Получаем токен авторизации
           const authHeader = req.headers['authorization'] as string;
