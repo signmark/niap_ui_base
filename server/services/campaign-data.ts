@@ -25,7 +25,7 @@ export class CampaignDataService {
       // Получаем действительный токен авторизации
       let authToken = token;
       if (!authToken) {
-        authToken = await directusAuthManager.getAuthToken(userId);
+        authToken = await directusAuthManager.getValidToken(userId);
         if (!authToken) {
           console.log('[campaign-data] Не удалось получить токен авторизации');
           return null;
