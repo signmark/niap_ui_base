@@ -2256,6 +2256,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔑 Извлеченный токен:', userToken ? 'Присутствует' : 'Отсутствует');
       
       // 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ (САМАЯ ПЕРВАЯ!)
+      console.log('🔍 ПРОВЕРКА УСЛОВИЯ: service === "claude"');
+      console.log('🔍 service тип:', typeof service);
+      console.log('🔍 service значение:', JSON.stringify(service));
+      console.log('🔍 Результат сравнения:', service === 'claude');
+      
       if (service === 'claude') {
         console.log('[claude] 🎯 РАННЯЯ ОБРАБОТКА CLAUDE С ДАННЫМИ КАМПАНИИ');
         
