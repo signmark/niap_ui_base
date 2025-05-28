@@ -2325,6 +2325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           console.log('[qwen] Инициализация Qwen с глобальным API ключом');
+          const { QwenService } = await import('./services/qwen.js');
           const qwenServiceInstance = new QwenService();
           console.log('[qwen] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
           const generatedContent = await qwenServiceInstance.generateText(enrichedPrompt);
@@ -2343,6 +2344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+
       
       // Для остальных сервисов требуем авторизацию
       const authHeader = req.headers['authorization'] as string;
