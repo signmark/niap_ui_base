@@ -41,17 +41,30 @@ async function testService(service) {
 }
 
 async function main() {
-  console.log('🚀 Быстрый тест функции "Использовать данные кампании"\n');
+  console.log('🚀 Финальный тест функции "Использовать данные кампании"\n');
   
   const services = ['gemini', 'deepseek', 'qwen'];
+  const results = {};
   
   for (const service of services) {
-    await testService(service);
+    console.log(`📋 Тестируем ${service}...`);
+    const result = await testService(service);
+    results[service] = result;
     console.log('');
-    // Пауза между тестами
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Короткая пауза между тестами
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
+  console.log('📊 ИТОГОВЫЕ РЕЗУЛЬТАТЫ:');
+  console.log('========================');
+  
+  for (const [service, result] of Object.entries(results)) {
+    const status = result.success ? (result.hasRealData ? '✅ С данными кампании' : '⚠️ Без данных кампании') : '❌ Ошибка';
+    console.log(`${service.toUpperCase()}: ${status}`);
+  }
+  
+  const successCount = Object.values(results).filter(r => r.success && r.hasRealData).length;
+  console.log(`\n🎯 Успешно работают с данными кампании: ${successCount}/${services.length} сервисов`);
   console.log('🏁 Тестирование завершено!');
 }
 
