@@ -5,7 +5,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
-import { geminiTestRouter } from './routes/gemini-test-route';
+// import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
 import { apiKeyService } from './services/api-keys';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
@@ -50,7 +50,7 @@ import { publishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { directusAuthManager } from './services/directus-auth-manager';
 import { publicationStatusChecker } from './services/status-checker';
-import { geminiRouter } from './api/gemini-routes';
+// import { geminiRouter } from './api/gemini-routes'; // ОТКЛЮЧЕНО: используем единый маршрут
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
 import instagramWebhookRoutes from './api/instagram-webhook-direct';
@@ -1354,7 +1354,7 @@ function parseArrayField(value: any, itemId?: string): any[] {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем универсальный интерфейс для FAL.AI
-  registerClaudeRoutes(app);
+  // registerClaudeRoutes(app); // ОТКЛЮЧЕНО: используем единый маршрут /api/generate-content
   registerFalAiImageRoutes(app);
   registerFalAiRedirectRoutes(app);
   // Прокси для прямых запросов к FAL.AI REST API
@@ -3557,7 +3557,7 @@ ${campaignContext}
   // ДУБЛИРУЮЩИЙ РОУТ АНАЛИТИКИ УДАЛЕН - используется только новый роут в начале файла
   
   // Регистрируем маршруты для тестирования Gemini API через SOCKS5 прокси
-  app.use('/api/gemini', geminiTestRouter);
+  // app.use('/api/gemini', geminiTestRouter); // ОТКЛЮЧЕНО: используем единый маршрут /api/generate-content
   console.log('Gemini API test routes registered successfully');
   
   // Регистрируем маршруты для тестирования Instagram
