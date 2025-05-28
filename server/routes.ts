@@ -2536,12 +2536,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           // По умолчанию используем Claude
           console.log('[claude] Обработка запроса Claude');
+          console.log('[claude] DEBUG: useCampaignData =', useCampaignData);
+          console.log('[claude] DEBUG: campaignId =', campaignId);
           
           let claudeEnrichedPrompt = prompt;
           
           // Используем централизованный сервис данных кампании для Claude
           if (useCampaignData && campaignId) {
-            console.log('[claude] Добавляем данные кампании для Claude');
+            console.log('[claude] ✅ ДОБАВЛЯЕМ ДАННЫЕ КАМПАНИИ ДЛЯ CLAUDE!');
             try {
               const campaignDataService = new CampaignDataService();
               const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
