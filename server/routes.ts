@@ -2352,20 +2352,15 @@ ${campaignContext}
         case 'gemini':
         case 'gemini-2.0-flash':
         case 'gemini-pro':
-          // Получаем API ключ для Gemini из коллекции или используем глобальный
-          const geminiApiKey = await apiKeyService.getApiKey(userId, 'gemini', token) || process.env.GEMINI_API_KEY;
-          if (!geminiApiKey) {
-            return res.status(400).json({
-              success: false,
-              error: 'Gemini API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          
           try {
-            const geminiService = new GeminiService({ apiKey: geminiApiKey });
+            // Используем глобальный API ключ Gemini напрямую
+            console.log('[gemini] Инициализация Gemini с глобальным API ключом');
+            const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+            console.log('[gemini] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
             generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
+            console.log('[gemini] Контент успешно сгенерирован');
           } catch (geminiError) {
-            console.error('Gemini API error:', geminiError);
+            console.error('[gemini] Ошибка при генерации:', geminiError);
             return res.status(500).json({
               success: false,
               error: `Ошибка генерации контента с Gemini API: ${geminiError}`
