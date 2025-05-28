@@ -2399,6 +2399,26 @@ ${campaignContext}
       // Генерируем контент с помощью выбранного сервиса
       switch (usedService.toLowerCase()) {
         case 'claude':
+          console.log('[claude] Обработка запроса Claude');
+          
+          // Добавляем данные кампании для Claude
+          if (useCampaignData && campaignId) {
+            console.log('[claude] Добавляем данные кампании для Claude');
+            try {
+              const campaignContext = await getCampaignContext(userId, campaignId, token);
+              
+              if (campaignContext) {
+                console.log('[claude] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
+                enrichedPrompt = `${prompt}\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}\n\nОБЯЗАТЕЛЬНО: Если в контексте указан сайт кампании, используй ТОЛЬКО эту ссылку в посте. Не придумывай другие ссылки.`;
+                console.log('[claude] Промпт с данными кампании создан');
+              } else {
+                console.log('[claude] Данные кампании не найдены, используем базовый промпт');
+              }
+            } catch (campaignError) {
+              console.error('[claude] Ошибка при получении данных кампании:', campaignError);
+            }
+          }
+          
           const claudeService = new ClaudeService();
           const claudeInitialized = await claudeService.initialize(userId, token);
           if (!claudeInitialized) {
