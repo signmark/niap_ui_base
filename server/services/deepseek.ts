@@ -42,9 +42,41 @@ export class DeepSeekService {
   }
 
   /**
+   * Инициализирует сервис с получением API ключа
+   */
+  async initialize(userId: string, token: string): Promise<boolean> {
+    try {
+      const apiKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+      if (apiKey) {
+        this.updateApiKey(apiKey);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('DeepSeek initialization error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Простой метод для генерации текста с одним промптом
+   */
+  async generateText(prompt: string): Promise<string> {
+    const messages: DeepSeekMessage[] = [
+      { role: 'user', content: prompt }
+    ];
+    
+    return this.generateTextFromMessages(messages, {
+      model: 'deepseek-chat',
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+  }
+
+  /**
    * Отправляет запрос на генерацию текста через DeepSeek API
    */
-  async generateText(messages: DeepSeekMessage[], options: {
+  async generateTextFromMessages(messages: DeepSeekMessage[], options: {
     model?: string;
     temperature?: number;
     max_tokens?: number;

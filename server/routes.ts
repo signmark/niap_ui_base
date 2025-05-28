@@ -2383,14 +2383,9 @@ ${campaignContext}
               error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
             });
           }
-          const deepseekInitialized = await deepseekService.initialize(userId, token);
-          if (!deepseekInitialized) {
-            return res.status(400).json({
-              success: false,
-              error: 'DeepSeek API не настроен. Добавьте API ключ в настройки.'
-            });
-          }
-          generatedContent = await deepseekService.generateText(enrichedPrompt);
+          // Создаем экземпляр DeepSeek сервиса
+          const deepseekServiceInstance = new DeepSeekService({ apiKey: deepseekApiKey });
+          generatedContent = await deepseekServiceInstance.generateText(enrichedPrompt);
           break;
           
         case 'qwen':
