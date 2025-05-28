@@ -2326,24 +2326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId = userResponse.data.data.id;
           console.log(`✅ Получен реальный ID пользователя: ${userId}`);
         } else {
-          // Fallback: получаем через API /users/me
-          const directusApi = axios.create({
-            baseURL: 'https://directus.nplanner.ru',
-            timeout: 10000
-          });
-          
-          const userResponse = await directusApi.get('/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          userId = userResponse.data?.data?.id;
-          if (!userId) {
-            throw new Error('Не удалось получить ID пользователя');
-          }
-          console.log(`✅ Получен ID пользователя через API: ${userId}`);
+          throw new Error('Не удалось получить ID пользователя из ответа API');
         }
       } catch (error) {
         console.error('❌ Ошибка получения ID пользователя:', error);
