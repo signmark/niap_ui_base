@@ -282,13 +282,25 @@ export class GeminiProxyService {
    */
   async generateText(params: { prompt: string; model?: string }): Promise<string> {
     try {
-      const { prompt, model = 'gemini-1.5-flash' } = params;
+      const { prompt, model = 'gemini-2.5-flash' } = params;
       
       logger.log(`[gemini-proxy] Generating text with model: ${model}`, 'gemini');
       
+      // Преобразуем модель в правильное название API
+      const apiModel = this.mapModelToApiName(model);
+      logger.log(`[gemini-proxy] Mapped model ${model} to API model: ${apiModel}`, 'gemini');
+      
       // Определяем правильную версию API для модели
-      const { baseUrl } = this.getApiVersionForModel(model);
-      const url = `${baseUrl}/models/${model}:generateContent?key=${this.apiKey}`;
+      const { baseUrl, isVertexAI } = this.getApiVersionForModel(apiModel);
+      
+      let url: string;
+      if (isVertexAI) {
+        // Для Vertex AI используем другой формат URL
+        url = `${baseUrl}/${apiModel}:generateContent`;
+      } else {
+        // Для генеративного API используем стандартный формат
+        url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
+      }
       
       // Формируем запрос
       const requestData = {
