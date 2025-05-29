@@ -191,10 +191,7 @@ export function TextEnhancementDialog({
       case 'qwen':
         return '/qwen/improve-text';
       case 'gemini':
-        // Для моделей Gemini 2.5 используем Vertex AI эндпоинт
-        if (selectedModelId === 'gemini-2.5-flash' || selectedModelId === 'gemini-2.5-pro') {
-          return '/vertex-ai/improve-text';
-        }
+        // Временно используем стандартный Gemini API для всех моделей
         return '/gemini/improve-text';
       default:
         return '/claude/improve-text';

@@ -1,4 +1,6 @@
 import { GoogleAuth } from 'google-auth-library';
+import axios from 'axios';
+import * as crypto from 'crypto';
 import * as logger from '../utils/logger';
 
 interface VertexAIConfig {
@@ -42,12 +44,20 @@ export class VertexAIService {
    */
   private async getAccessToken(): Promise<string> {
     try {
+      // Получаем токен доступа напрямую через auth клиент
       const authClient = await this.auth.getClient();
-      const accessToken = await authClient.getAccessToken();
-      return accessToken.token || '';
+      const accessTokenResponse = await authClient.getAccessToken();
+      
+      if (!accessTokenResponse.token) {
+        throw new Error('Токен доступа не получен от Google Auth');
+      }
+      
+      logger.log(`[vertex-ai] Токен доступа получен успешно`);
+      return accessTokenResponse.token;
     } catch (error) {
       logger.error('[vertex-ai] Ошибка получения токена доступа:', error);
-      throw new Error('Не удалось получить токен доступа для Vertex AI');
+      logger.error('[vertex-ai] Детали ошибки:', JSON.stringify(error, null, 2));
+      throw new Error(`Не удалось получить токен доступа для Vertex AI: ${(error as Error).message}`);
     }
   }
 
