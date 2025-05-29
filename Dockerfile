@@ -24,8 +24,8 @@ RUN npm install react-draggable@4.4.6 --save --no-audit
 # Явно устанавливаем multer
 RUN npm install multer@1.4.5-lts.2 @types/multer@1.4.12 --save --no-audit
 
-# Явно устанавливаем @google/generative-ai для интеграции с Gemini и socks-proxy-agent для работы через SOCKS5 прокси
-RUN npm install @google/generative-ai socks-proxy-agent --save --no-audit
+# Явно устанавливаем Google AI и Vertex AI зависимости
+RUN npm install @google/generative-ai socks-proxy-agent google-auth-library gtoken --save --no-audit
 
 # Устанавливаем emoji-picker-react
 RUN npm install emoji-picker-react --save --no-audit
@@ -46,7 +46,7 @@ RUN npm install --save --no-audit \
     && echo "Nivo библиотеки установлены успешно"
 
 # Проверяем наличие библиотек
-RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls socks-proxy-agent && npm ls @aws-sdk/client-s3 && npm ls emoji-picker-react
+RUN npm ls react-draggable && npm ls multer && npm ls @google/generative-ai && npm ls socks-proxy-agent && npm ls google-auth-library && npm ls gtoken && npm ls @aws-sdk/client-s3 && npm ls emoji-picker-react
 
 # Проверяем наличие ffmpeg
 RUN ffmpeg -version
