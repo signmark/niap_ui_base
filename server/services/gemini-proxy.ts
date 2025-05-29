@@ -41,6 +41,23 @@ export class GeminiProxyService {
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
     };
   }
+
+  /**
+   * Преобразует упрощенные названия моделей в правильные названия API
+   * @param model Упрощенное название модели
+   * @returns Правильное название для API
+   */
+  private mapModelToApiName(model: string): string {
+    const modelMap: Record<string, string> = {
+      'gemini-2.5-flash': 'gemini-2.5-flash-preview-05-20',
+      'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
+      'gemini-2.0-flash': 'gemini-2.0-flash',
+      'gemini-1.5-flash': 'gemini-1.5-flash',
+      'gemini-1.5-pro': 'gemini-1.5-pro'
+    };
+
+    return modelMap[model] || model;
+  }
   
   /**
    * Создает новый экземпляр GeminiProxyService
@@ -180,13 +197,17 @@ export class GeminiProxyService {
    */
   async improveText(params: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
-      const { text, prompt, model = 'gemini-1.5-flash' } = params;
+      const { text, prompt, model = 'gemini-2.5-flash' } = params;
       
       logger.log(`[gemini-proxy] Improving text with model: ${model}`, 'gemini');
       
+      // Преобразуем модель в правильное название API
+      const apiModel = this.mapModelToApiName(model);
+      logger.log(`[gemini-proxy] Mapped model ${model} to API model: ${apiModel}`, 'gemini');
+      
       // Определяем правильную версию API для модели
-      const { baseUrl } = this.getApiVersionForModel(model);
-      const url = `${baseUrl}/models/${model}:generateContent?key=${this.apiKey}`;
+      const { baseUrl } = this.getApiVersionForModel(apiModel);
+      const url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
       
       // Формируем запрос
       const requestData = {

@@ -60,7 +60,7 @@ export function registerGeminiRoutes(app: any) {
    */
   router.post('/api/gemini/improve-text', async (req: Request, res: Response) => {
     try {
-      const { text, prompt, model = 'gemini-2.0-flash' } = req.body;
+      const { text, prompt, model = 'gemini-2.5-flash' } = req.body;
       
       logger.log(`[gemini-routes] Received improve-text request with model: ${model}`, 'gemini');
       
