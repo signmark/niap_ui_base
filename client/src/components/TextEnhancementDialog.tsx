@@ -206,21 +206,46 @@ export function TextEnhancementDialog({
   console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
   console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
   
-  // Мутация для улучшения текста
+  // Мутация для улучшения текста через единый эндпоинт генерации контента
   const { mutate: improveText, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await api.post(getApiEndpoint(), {
-        text,
-        prompt: getCurrentPrompt(),
-        model: selectedModelId,
-        service: selectedService
-      });
-      
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Произошла ошибка при улучшении текста');
+      // Получаем токен авторизации
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error('Требуется авторизация');
       }
-      
-      return response.data.text;
+
+      // Формируем промпт для улучшения текста
+      const enhancementPrompt = `${getCurrentPrompt()}
+
+Исходный текст для улучшения:
+${text}`;
+
+      // Используем единый эндпоинт генерации контента
+      const response = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          prompt: enhancementPrompt,
+          keywords: [],
+          tone: 'professional',
+          campaignId: null, // Для улучшения текста не нужна кампания
+          platform: 'general',
+          service: selectedService === 'gemini' ? selectedModelId || 'gemini-2.5-flash' : selectedService,
+          useCampaignData: false // Для улучшения текста не используем данные кампании
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Не удалось улучшить текст');
+      }
+
+      const result = await response.json();
+      return result.content || result.text || result.improvedText;
     },
     onSuccess: (data) => {
       setEnhancedText(data);
