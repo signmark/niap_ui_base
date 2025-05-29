@@ -60,10 +60,9 @@ export function registerGeminiRoutes(app: any) {
    */
   router.post('/api/gemini/improve-text', async (req: Request, res: Response) => {
     try {
-      const { text, prompt, model } = req.body;
-      const userId = req.userId;
+      const { text, prompt, model = 'gemini-1.5-flash' } = req.body;
       
-      logger.log(`[gemini-routes] Received improve-text request from user ${userId}`, 'gemini');
+      logger.log(`[gemini-routes] Received improve-text request with model: ${model}`, 'gemini');
       
       if (!text || !prompt) {
         logger.log('[gemini-routes] Missing text or prompt in improve-text request', 'gemini');
@@ -73,20 +72,17 @@ export function registerGeminiRoutes(app: any) {
         });
       }
       
-      // Получаем сервис Gemini для пользователя
-      const geminiService = await getGeminiService(req);
+      // Используем geminiProxyService с глобальным API ключом (как в генерации контента)
+      const { geminiProxyService } = await import('./services/gemini-proxy');
       
-      if (!geminiService) {
-        logger.log(`[gemini-routes] Gemini API key not configured for user ${userId}`, 'gemini');
-        return res.status(400).json({
-          success: false,
-          error: 'API ключ Gemini не настроен',
-          needApiKey: true
-        });
-      }
+      // Формируем полный промпт для улучшения текста
+      const fullPrompt = `${prompt}
+
+Исходный текст для улучшения:
+${text}`;
       
-      // Используем сервис для улучшения текста
-      const improvedText = await geminiService.improveText({
+      // Используем метод improveText из geminiProxyService
+      const improvedText = await geminiProxyService.improveText({
         text,
         prompt,
         model
