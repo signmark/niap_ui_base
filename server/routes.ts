@@ -11073,23 +11073,28 @@ ${datesText}
         });
       }
       
-      // Получаем API ключ Qwen из сервиса ключей
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', token);
+      // Получаем API ключ Qwen из централизованной системы Global API Keys
+      const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+      const { ApiServiceName } = await import('./services/api-keys.js');
       
-      if (!apiKey) {
+      const qwenApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
+      
+      if (!qwenApiKey) {
         return res.status(400).json({
           success: false,
-          error: 'API ключ Qwen не найден. Пожалуйста, добавьте ключ в настройках.'
+          error: 'API ключ Qwen не найден в Global API Keys collection.'
         });
       }
       
-      // Инициализируем сервис Qwen с полученным ключом
-      const initialized = await qwenService.initialize(userId, token);
+      // Инициализируем сервис Qwen с ключом из централизованной системы
+      qwenService.updateApiKey(qwenApiKey);
+      
+      const initialized = await qwenService.testApiKey();
       
       if (!initialized) {
         return res.status(400).json({
           success: false,
-          error: 'Не удалось инициализировать Qwen API. Проверьте ключ в настройках.'
+          error: 'Не удалось инициализировать Qwen API. Проверьте ключ в Global API Keys.'
         });
       }
       

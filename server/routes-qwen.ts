@@ -1,30 +1,24 @@
 import { Router, Request, Response } from 'express';
 import { qwenService } from './services/qwen';
-import { apiKeyService } from './services/api-keys';
+import { globalApiKeyManager } from './services/global-api-key-manager';
+import { ApiServiceName } from './services/api-keys';
 import { log } from './utils/logger';
 
 export function registerQwenRoutes(app: Router) {
   const router = app;
 
   /**
-   * Проверка наличия API ключа Qwen для текущего пользователя
+   * Получение API ключа Qwen из централизованной системы Global API Keys
    */
   async function getQwenApiKey(req: Request): Promise<string | null> {
     try {
-      const userId = req.userId;
-      if (!userId) {
-        log('Cannot get Qwen API key: userId is missing in request');
-        return null;
-      }
-
-      // Извлекаем токен из заголовка Authorization
-      const authHeader = req.headers.authorization;
-      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+      log('Getting Qwen API key from Global API Keys collection');
       
-      log(`Getting Qwen API key for user ${userId}`);
-      log(`Auth token present: ${!!authToken}`);
+      // Импортируем централизованный менеджер API ключей
+      const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+      const { ApiServiceName } = await import('./services/api-keys.js');
       
-      const apiKey = await apiKeyService.getApiKey(userId, 'qwen', authToken);
+      const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
       
       if (apiKey) {
         log(`Successfully retrieved Qwen API key for user ${userId} (length: ${apiKey.length})`);
