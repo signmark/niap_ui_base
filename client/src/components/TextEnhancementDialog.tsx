@@ -120,38 +120,25 @@ const AI_SERVICES = [
     name: "Gemini",
     models: [
       {
-        id: "gemini-pro",
-        name: "Gemini Pro",
-        default: false
-      },
-      {
-        id: "gemini-1.5-pro",
-        name: "Gemini 1.5 Pro",
+        id: "gemini-1.5-flash",
+        name: "Gemini 1.5 Flash (быстрая)",
         default: true
       },
       {
-        id: "gemini-1.5-flash",
-        name: "Gemini 1.5 Flash (быстрая)"
+        id: "gemini-1.5-pro",
+        name: "Gemini 1.5 Pro"
       },
       {
         id: "gemini-2.0-flash",
         name: "Gemini 2.0 Flash (быстрее + 1M токенов)"
       },
       {
-        id: "gemini-2.0-pro-exp",
-        name: "Gemini 2.0 Pro Experimental"
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash (новая)"
       },
       {
-        id: "gemini-2.5-pro-preview-03-25",
-        name: "Gemini 2.5 Pro Preview"
-      },
-      {
-        id: "gemini-2.5-pro-exp-03-25",
-        name: "Gemini 2.5 Pro Experimental"
-      },
-      {
-        id: "gemini-ultra",
-        name: "Gemini Ultra (мощная)"
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro (новая)"
       }
     ]
   }
