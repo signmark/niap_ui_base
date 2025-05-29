@@ -10,23 +10,19 @@ export function registerQwenRoutes(app: Router) {
   /**
    * Получение API ключа Qwen из централизованной системы Global API Keys
    */
-  async function getQwenApiKey(req: Request): Promise<string | null> {
+  async function getQwenApiKey(): Promise<string | null> {
     try {
       log('Getting Qwen API key from Global API Keys collection');
-      
-      // Импортируем централизованный менеджер API ключей
-      const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
-      const { ApiServiceName } = await import('./services/api-keys.js');
       
       const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
       
       if (apiKey) {
-        log(`Successfully retrieved Qwen API key for user ${userId} (length: ${apiKey.length})`);
+        log(`Successfully retrieved Qwen API key from Global API Keys (length: ${apiKey.length})`);
         // Маскируем ключ для логирования - показываем только первые 4 символа
         const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
         log(`Qwen API key starts with: ${maskedKey}`);
       } else {
-        log(`Qwen API key not found for user ${userId}`);
+        log('Qwen API key not found in Global API Keys collection');
       }
       
       return apiKey;
@@ -54,8 +50,8 @@ export function registerQwenRoutes(app: Router) {
         });
       }
       
-      // Получаем API ключ Qwen для пользователя
-      const qwenApiKey = await getQwenApiKey(req);
+      // Получаем API ключ Qwen из Global API Keys
+      const qwenApiKey = await getQwenApiKey();
       
       if (!qwenApiKey) {
         log(`Qwen API key not configured for user ${userId}`);
