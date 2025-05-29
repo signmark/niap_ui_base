@@ -27,8 +27,8 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Модели Gemini 2.5 временно используют стандартный API (как 2.0)
-    if (model.includes('2.5-pro') || model.includes('2.5-flash')) {
+    // Модели Gemini 2.5 экспериментальные используют v1beta API
+    if (model.includes('2.5-flash-exp') || model.includes('2.5-pro-exp')) {
       return {
         version: 'v1beta',
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta'

@@ -125,6 +125,10 @@ const AI_SERVICES = [
         default: true
       },
       {
+        id: "gemini-2.5-flash-exp",
+        name: "Gemini 2.5 Flash (экспериментальная)"
+      },
+      {
         id: "gemini-1.5-pro",
         name: "Gemini 1.5 Pro"
       },
