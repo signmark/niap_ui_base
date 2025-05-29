@@ -2294,18 +2294,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          console.log('[claude] 🎯 Инициализация Claude с глобальным API ключом');
+          console.log('[claude] 🎯 Инициализация Claude с глобальным API ключом из Directus');
           const { ClaudeService } = await import('./services/claude.js');
           
-          // Создаем сервис напрямую с API ключом из переменных окружения
-          const apiKey = process.env.ANTHROPIC_API_KEY;
-          console.log(`[claude] 🔑 API ключ доступен: ${apiKey ? 'ДА' : 'НЕТ'}`);
+          // Создаем сервис и инициализируем его через Directus Global API Keys
+          const claudeService = new ClaudeService();
+          const initialized = await claudeService.initialize();
           
-          if (!apiKey) {
-            throw new Error('ANTHROPIC_API_KEY не найден в переменных окружения');
+          if (!initialized) {
+            throw new Error('Claude API key is not configured');
           }
           
-          const claudeService = new ClaudeService(apiKey);
           const result = await claudeService.generateContent(enrichedPrompt);
           console.log('[claude] ✅ Контент успешно сгенерирован с данными кампании');
           
@@ -2431,8 +2430,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          console.log('[gemini] Инициализация Gemini с глобальным API ключом');
-          const geminiService = new GeminiService({ apiKey: process.env.GEMINI_API_KEY || '' });
+          console.log('[gemini] Инициализация Gemini с глобальным API ключом из Directus');
+          const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+          const { ApiServiceName } = await import('./services/api-keys.js');
+          
+          const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
+          if (!geminiApiKey) {
+            throw new Error('Gemini API key not found in Global API Keys collection');
+          }
+          
+          const geminiService = new GeminiService({ apiKey: geminiApiKey });
           console.log('[gemini] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
           const generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
           console.log('[gemini] Контент успешно сгенерирован');

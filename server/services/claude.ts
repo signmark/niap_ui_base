@@ -1,6 +1,8 @@
 import axios from 'axios';
 import * as logger from '../utils/logger';
 import { apiKeyService } from './api-keys';
+import { GlobalApiKeysService } from './global-api-keys';
+import { ApiServiceName } from './api-keys';
 
 export interface ClaudeRequest {
   model: string;
@@ -51,8 +53,10 @@ export class ClaudeService {
   private apiUrl = 'https://api.anthropic.com/v1/messages';
   private defaultModel = 'claude-3-7-sonnet-20250219'; // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
   private isInitialized = false;
+  private globalApiKeysService: GlobalApiKeysService;
 
   constructor(apiKey?: string) {
+    this.globalApiKeysService = new GlobalApiKeysService();
     if (apiKey) {
       this.apiKey = apiKey;
       this.isInitialized = true;
@@ -60,40 +64,34 @@ export class ClaudeService {
   }
   
   /**
-   * Инициализирует сервис Claude с ключом из хранилища API ключей
-   * @param userId ID пользователя
+   * Инициализирует сервис Claude с ключом из Directus Global API Keys
+   * @param userId ID пользователя (опционально, для совместимости)
    * @param token Токен авторизации (опционально)
    * @returns true, если инициализация успешна, иначе false
    */
-  async initialize(userId: string, token?: string): Promise<boolean> {
+  async initialize(userId?: string, token?: string): Promise<boolean> {
     try {
       if (this.isInitialized && this.apiKey) {
         logger.log(`Claude service already initialized`, 'claude');
         return true;
       }
       
-      logger.log(`Initializing Claude service for user ${userId}`, 'claude');
+      logger.log(`Initializing Claude service from Global API Keys`, 'claude');
       
-      // Получаем API ключ из хранилища пользователя или используем глобальный
-      this.apiKey = await apiKeyService.getApiKey(userId, 'claude', token);
+      // Получаем API ключ только из Directus Global API Keys
+      this.apiKey = await this.globalApiKeysService.getGlobalApiKey(ApiServiceName.CLAUDE);
       
       if (!this.apiKey) {
-        // Пробуем получить глобальный ключ из переменных окружения
-        this.apiKey = process.env.ANTHROPIC_API_KEY || null;
-        if (this.apiKey) {
-          logger.log(`🎯 Инициализация Claude с глобальным API ключом: ${this.apiKey.substring(0, 15)}...`, 'claude');
-        } else {
-          logger.error(`❌ API ключ Claude не найден в переменных окружения. ANTHROPIC_API_KEY = ${process.env.ANTHROPIC_API_KEY}`, 'claude');
-          logger.error(`Failed to get Claude API key for user ${userId}`, 'claude');
-          return false;
-        }
+        logger.error(`Claude API key not found in Global API Keys collection`, 'claude');
+        return false;
       }
+      
+      logger.log(`Claude service initialized with global API key from Directus`, 'claude');
       
       // Проверяем валидность ключа
       const isValid = await this.testApiKey();
       if (!isValid) {
-        logger.error(`Claude API key for user ${userId} is invalid`, 'claude');
-        logger.error(`Ключ Claude API недействителен. Возможные причины: истек срок действия, неверный формат или отозван доступ. Попробуйте получить новый ключ в личном кабинете Anthropic.`, 'claude');
+        logger.error(`Claude API key from Global API Keys is invalid`, 'claude');
         this.apiKey = null;
         return false;
       }
