@@ -27,28 +27,8 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Модели Gemini 2.5 и некоторые 2.0 используют Vertex AI
-    if (model.includes('gemini-2.5-flash-preview') || 
-        model.includes('gemini-2.5-pro-preview') ||
-        model.includes('gemini-2.0-flash-lite') ||
-        model === 'gemini-2.5-flash' ||
-        model === 'gemini-2.5-pro') {
-      return {
-        version: 'v1',
-        baseUrl: 'https://us-central1-aiplatform.googleapis.com/v1/projects/gen-lang-client-0762407615/locations/us-central1/publishers/google/models',
-        isVertexAI: true
-      };
-    }
-    
-    // Остальные модели используют генеративный API
-    if (model.startsWith('gemini-2.')) {
-      return {
-        version: 'v1beta',
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
-      };
-    }
-    
-    // Для других моделей используем v1beta как стандарт
+    // Временно используем только стандартный Gemini API для всех моделей
+    // Это обеспечит совместимость с обычными API ключами
     return {
       version: 'v1beta',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
@@ -62,15 +42,15 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      'gemini-2.5-flash': 'gemini-2.5-flash-preview-05-20',
-      'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
-      'gemini-2.0-flash': 'gemini-2.0-flash',
-      'gemini-2.0-flash-lite': 'gemini-2.0-flash-lite',
+      'gemini-2.5-flash': 'gemini-1.5-flash',
+      'gemini-2.5-pro': 'gemini-1.5-pro',
+      'gemini-2.0-flash': 'gemini-1.5-flash',
+      'gemini-2.0-flash-lite': 'gemini-1.5-flash',
       'gemini-1.5-flash': 'gemini-1.5-flash',
       'gemini-1.5-pro': 'gemini-1.5-pro'
     };
 
-    return modelMap[model] || model;
+    return modelMap[model] || 'gemini-1.5-flash';
   }
   
   /**
@@ -132,6 +112,15 @@ export class GeminiProxyService {
           },
           body: JSON.stringify(body)
         };
+        
+        // Для Vertex AI используем специальную авторизацию
+        if (url.includes('aiplatform.googleapis.com')) {
+          logger.log(`[gemini-proxy] Используется Vertex AI, добавляем OAuth авторизацию`, 'gemini');
+          fetchOptions.headers = {
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${this.apiKey}`
+          };
+        }
         
         // Добавляем прокси-агент, если он доступен
         if (this.agent) {
