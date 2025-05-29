@@ -2349,10 +2349,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом');
+        console.log('[deepseek] Инициализация DeepSeek с глобальным API ключом из Directus');
         try {
+          const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+          const { ApiServiceName } = await import('./services/api-keys.js');
+          
+          const deepseekApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.DEEPSEEK);
+          if (!deepseekApiKey) {
+            throw new Error('DeepSeek API key not found in Global API Keys collection');
+          }
+          
           const { DeepSeekService } = await import('./services/deepseek.js');
           const deepseekService = new DeepSeekService();
+          deepseekService.updateApiKey(deepseekApiKey);
+          
+          console.log('[deepseek] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
           const result = await deepseekService.generateText(enrichedPrompt);
           console.log('[deepseek] Контент успешно сгенерирован');
           return res.json({ success: true, content: result });
@@ -2360,7 +2371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('[deepseek] Ошибка генерации:', error);
           return res.status(500).json({ 
             success: false, 
-            error: 'Ошибка при генерации контента через DeepSeek' 
+            error: `Ошибка генерации контента с DeepSeek API: ${error}` 
           });
         }
       }
