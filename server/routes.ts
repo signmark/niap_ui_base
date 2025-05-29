@@ -2367,57 +2367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-      // Для Qwen работаем без авторизации, используя глобальный API ключ
-      if (service === 'qwen') {
-        console.log('[qwen] Обработка запроса Qwen без авторизации');
-        
-        let enrichedPrompt = prompt;
-        
-        // Используем централизованный сервис данных кампании
-        if (useCampaignData && campaignId) {
-          console.log('[qwen] Добавляем данные кампании для Qwen');
-          try {
-            const campaignDataService = new CampaignDataService();
-            const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
-            enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
-              prompt, 
-              adminUserId, 
-              campaignId, 
-              userToken
-            );
-          } catch (campaignError) {
-            console.error('[qwen] Ошибка при получении данных кампании:', campaignError);
-          }
-        }
 
-        console.log('[qwen] Инициализация Qwen с глобальным API ключом');
-        try {
-          // Получаем API ключ Qwen из Global API Keys
-          const qwenApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
-          
-          if (!qwenApiKey) {
-            throw new Error('Qwen API key not found in Global API Keys collection');
-          }
-          
-          console.log(`[qwen] ✅ API ключ получен из Global API Keys (длина: ${qwenApiKey.length})`);
-          
-          const { QwenService } = await import('./services/qwen.js');
-          const qwenService = new QwenService();
-          console.log('[qwen] 🔧 Обновление API ключа в сервисе');
-          qwenService.updateApiKey(qwenApiKey);
-          console.log('[qwen] 🔧 API ключ обновлен, начинаем генерацию');
-          
-          const result = await qwenService.generateText(enrichedPrompt);
-          console.log('[qwen] ✅ Контент успешно сгенерирован с данными кампании');
-          return res.json({ success: true, content: result, service: 'qwen' });
-        } catch (error) {
-          console.error('[qwen] Ошибка генерации:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: 'Ошибка при генерации контента через Qwen' 
-          });
-        }
-      }
 
       // Для Gemini работаем без авторизации, используя глобальный API ключ
       if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro') {
