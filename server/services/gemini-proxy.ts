@@ -27,7 +27,16 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Все современные модели Gemini 2.x используют v1beta API
+    // Модели Gemini 2.5 используют Vertex AI
+    if (model.includes('gemini-2.5-flash-preview') || model.includes('gemini-2.5-pro-preview')) {
+      return {
+        version: 'v1',
+        baseUrl: 'https://us-central1-aiplatform.googleapis.com/v1/projects/gen-lang-client-0762407615/locations/us-central1/publishers/google/models',
+        isVertexAI: true
+      };
+    }
+    
+    // Остальные модели используют генеративный API
     if (model.startsWith('gemini-2.')) {
       return {
         version: 'v1beta',
@@ -206,8 +215,16 @@ export class GeminiProxyService {
       logger.log(`[gemini-proxy] Mapped model ${model} to API model: ${apiModel}`, 'gemini');
       
       // Определяем правильную версию API для модели
-      const { baseUrl } = this.getApiVersionForModel(apiModel);
-      const url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
+      const { baseUrl, isVertexAI } = this.getApiVersionForModel(apiModel);
+      
+      let url: string;
+      if (isVertexAI) {
+        // Для Vertex AI используем другой формат URL
+        url = `${baseUrl}/${apiModel}:generateContent`;
+      } else {
+        // Для генеративного API используем стандартный формат
+        url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
+      }
       
       // Формируем запрос
       const requestData = {
