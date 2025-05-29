@@ -181,7 +181,7 @@ export function TextEnhancementDialog({
     return customPrompt || (selectedPrompt ? selectedPrompt.prompt : "");
   };
 
-  // Получение эндпоинта API в зависимости от выбранного сервиса
+  // Получение эндпоинта API в зависимости от выбранного сервиса и модели
   const getApiEndpoint = () => {
     switch (selectedService) {
       case 'claude':
@@ -191,6 +191,10 @@ export function TextEnhancementDialog({
       case 'qwen':
         return '/qwen/improve-text';
       case 'gemini':
+        // Для моделей Gemini 2.5 используем Vertex AI эндпоинт
+        if (selectedModelId === 'gemini-2.5-flash' || selectedModelId === 'gemini-2.5-pro') {
+          return '/vertex-ai/improve-text';
+        }
         return '/gemini/improve-text';
       default:
         return '/claude/improve-text';
