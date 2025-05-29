@@ -2434,7 +2434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const generatedContent = await vertexAIService.generateText({
                 prompt: enrichedPrompt,
                 model: modelName,
-                maxTokens: 2000,
+                maxTokens: 5000,
                 temperature: 0.7
               });
               
