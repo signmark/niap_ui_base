@@ -6,7 +6,8 @@ import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
-import { apiKeyService } from './services/api-keys';
+import { apiKeyService, ApiServiceName } from './services/api-keys';
+import { globalApiKeyManager } from './services/global-api-key-manager';
 // Убрали ненужный импорт schnellService - теперь используем универсальный интерфейс
 import { falAiUniversalService, FalAiModelName } from './services/fal-ai-universal';
 import { registerFalAiRedirectRoutes } from './routes-fal-ai-redirect';
@@ -2391,11 +2392,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log('[qwen] Инициализация Qwen с глобальным API ключом');
         try {
+          // Получаем API ключ Qwen из Global API Keys
+          const qwenApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
+          
+          if (!qwenApiKey) {
+            throw new Error('Qwen API key not found in Global API Keys collection');
+          }
+          
+          console.log(`[qwen] ✅ API ключ получен из Global API Keys (длина: ${qwenApiKey.length})`);
+          
           const { QwenService } = await import('./services/qwen.js');
           const qwenService = new QwenService();
+          console.log('[qwen] 🔧 Обновление API ключа в сервисе');
+          qwenService.updateApiKey(qwenApiKey);
+          console.log('[qwen] 🔧 API ключ обновлен, начинаем генерацию');
+          
           const result = await qwenService.generateText(enrichedPrompt);
-          console.log('[qwen] Контент успешно сгенерирован');
-          return res.json({ success: true, content: result });
+          console.log('[qwen] ✅ Контент успешно сгенерирован с данными кампании');
+          return res.json({ success: true, content: result, service: 'qwen' });
         } catch (error) {
           console.error('[qwen] Ошибка генерации:', error);
           return res.status(500).json({ 
