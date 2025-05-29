@@ -27,28 +27,18 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Модели Gemini 2.5 используют v1beta API
-    if (model.includes('2.5-flash') || model.includes('2.5-pro')) {
+    // Все современные модели Gemini 2.x используют v1beta API
+    if (model.startsWith('gemini-2.')) {
       return {
         version: 'v1beta',
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
       };
     }
     
-    // Модели Gemini 2.x экспериментальные требуют v1beta API
-    if (model.startsWith('gemini-2.') || 
-        model.includes('exp') || 
-        model.includes('preview')) {
-      return {
-        version: 'v1beta',
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
-      };
-    }
-    
-    // Модели Gemini 1.x используют v1 API
+    // Для других моделей используем v1beta как стандарт
     return {
-      version: 'v1',
-      baseUrl: 'https://generativelanguage.googleapis.com/v1'
+      version: 'v1beta',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
     };
   }
   
