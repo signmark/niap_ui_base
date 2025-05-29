@@ -3787,8 +3787,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // УДАЛЕН ДУБЛИРУЮЩИЙ РОУТ - теперь DeepSeek обрабатывается через централизованный /api/generate-content
 
-  // Эндпоинт для извлечения ключевых слов из текста
-  app.post("/api/analyze-text-keywords", authenticateUser, async (req, res) => {
+  // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
+  // Эндпоинт для извлечения ключевых слов из текста - переехал в новую централизованную систему
+  app.post("/api/analyze-text-keywords-disabled", authenticateUser, async (req, res) => {
     try {
       const { text, maxKeywords = 5 } = req.body;
       
@@ -3930,8 +3931,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Эндпоинт для генерации промта для изображения на основе текста через DeepSeek
-  app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
+  // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
+  // Эндпоинт для генерации промта для изображения - переехал в новую централизованную систему  
+  app.post("/api/generate-image-prompt-disabled", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
       
