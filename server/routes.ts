@@ -2380,8 +2380,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-      // Для Gemini работаем без авторизации, используя глобальный API ключ
-      if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro') {
+      // Для Gemini работаем без авторизации, используя глобальный API ключ  
+      if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro' || 
+          service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
         console.log('[gemini] Обработка запроса Gemini без авторизации');
         
         let enrichedPrompt = prompt;
@@ -2405,24 +2406,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          console.log('[gemini] Инициализация Gemini с глобальным API ключом из Directus');
-          const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
-          const { ApiServiceName } = await import('./services/api-keys.js');
-          
-          const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
-          if (!geminiApiKey) {
-            throw new Error('Gemini API key not found in Global API Keys collection');
+          // Для моделей 2.5 используем Vertex AI
+          if (service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
+            console.log('[gemini-2.5] Инициализация Vertex AI для модели', service);
+            const { vertexAICredentials } = await import('./services/vertex-ai-credentials.js');
+            const { createVertexAIService } = await import('./services/vertex-ai.js');
+            
+            if (!vertexAICredentials.hasCredentials()) {
+              throw new Error('Vertex AI credentials not found. Please configure Google Cloud Service Account credentials.');
+            }
+            
+            const credentials = vertexAICredentials.loadCredentials();
+            const projectId = vertexAICredentials.getProjectId();
+            
+            if (!projectId) {
+              throw new Error('Project ID not found in Vertex AI credentials');
+            }
+            
+            const vertexAIService = createVertexAIService(projectId, credentials);
+            
+            // Преобразуем название модели для Vertex AI
+            const modelName = service === 'gemini-2.5-flash' ? 'gemini-2.5-flash' : 'gemini-2.5-pro';
+            
+            console.log('[gemini-2.5] Генерация контента с моделью:', modelName);
+            const generatedContent = await vertexAIService.generateText({
+              prompt: enrichedPrompt,
+              model: modelName,
+              maxTokens: 1000,
+              temperature: 0.7
+            });
+            
+            console.log('[gemini-2.5] Контент успешно сгенерирован через Vertex AI');
+            
+            return res.json({
+              success: true,
+              content: generatedContent,
+              service: service
+            });
+          } else {
+            // Для стандартных моделей Gemini используем обычный API
+            console.log('[gemini] Инициализация Gemini с глобальным API ключом из Directus');
+            const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+            const { ApiServiceName } = await import('./services/api-keys.js');
+            
+            const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
+            if (!geminiApiKey) {
+              throw new Error('Gemini API key not found in Global API Keys collection');
+            }
+            
+            const geminiService = new GeminiService({ apiKey: geminiApiKey });
+            console.log('[gemini] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
+            const generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
+            console.log('[gemini] Контент успешно сгенерирован');
+            
+            return res.json({
+              success: true,
+              content: generatedContent,
+              service: service
+            });
           }
-          
-          const geminiService = new GeminiService({ apiKey: geminiApiKey });
-          console.log('[gemini] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
-          const generatedContent = await geminiService.generateText(enrichedPrompt, 'gemini-2.0-flash');
-          console.log('[gemini] Контент успешно сгенерирован');
-          
-          return res.json({
-            success: true,
-            content: generatedContent
-          });
         } catch (geminiError) {
           console.error('[gemini] Ошибка при генерации:', geminiError);
           return res.status(500).json({

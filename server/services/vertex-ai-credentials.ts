@@ -79,3 +79,10 @@ export class VertexAICredentialsService {
 
 // Экспортируем единственный экземпляр
 export const vertexAICredentials = new VertexAICredentialsService();
+
+// Автоматическая загрузка учетных данных при запуске
+if (vertexAICredentials.hasCredentials()) {
+  console.log('✅ Vertex AI credentials загружены успешно');
+} else {
+  console.log('⚠️ Vertex AI credentials не найдены');
+}
