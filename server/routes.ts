@@ -2383,8 +2383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
       // Для Gemini работаем без авторизации, используя глобальный API ключ  
-      if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-pro' || 
-          service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
+      if (service === 'gemini' || service === 'gemini-2.0-flash' || service === 'gemini-2.0-flash-lite' || 
+          service === 'gemini-pro' || service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
         console.log('[gemini] Обработка запроса Gemini без авторизации');
         
         let enrichedPrompt = prompt;
