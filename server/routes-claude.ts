@@ -19,32 +19,25 @@ export function registerClaudeRoutes(app: Router) {
   // Создаем экземпляр ApiKeyService
   const apiKeyServiceInstance = new ApiKeyService();
   /**
-   * Проверка наличия API ключа Claude для текущего пользователя
+   * Получение API ключа Claude из централизованной системы Global API Keys
    */
   async function getClaudeApiKey(req: Request): Promise<string | null> {
     try {
-      const userId = req.userId;
-      if (!userId) {
-        logger.error('[claude-routes] Cannot get Claude API key: userId is missing in request');
-        return null;
-      }
-
-      // Извлекаем токен из заголовка Authorization
-      const authHeader = req.headers.authorization;
-      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+      logger.log('[claude-routes] Getting Claude API key from Global API Keys collection', 'claude');
       
-      logger.log(`[claude-routes] Getting Claude API key for user ${userId}`, 'claude');
-      logger.log(`[claude-routes] Auth token present: ${!!authToken}`, 'claude');
+      // Импортируем централизованный менеджер API ключей
+      const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+      const { ApiServiceName } = await import('./services/api-keys.js');
       
-      const apiKey = await apiKeyServiceInstance.getApiKey(userId, 'claude', authToken);
+      const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.CLAUDE);
       
       if (apiKey) {
-        logger.log(`[claude-routes] Successfully retrieved Claude API key for user ${userId} (length: ${apiKey.length})`, 'claude');
+        logger.log(`[claude-routes] Successfully retrieved Claude API key from Global API Keys (length: ${apiKey.length})`, 'claude');
         // Маскируем ключ для логирования - показываем только первые 4 символа
         const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
         logger.log(`[claude-routes] Claude API key starts with: ${maskedKey}`, 'claude');
       } else {
-        logger.error(`[claude-routes] Claude API key not found for user ${userId}`, 'claude');
+        logger.error('[claude-routes] Claude API key not found in Global API Keys collection', 'claude');
       }
       
       return apiKey;

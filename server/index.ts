@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
-// import { registerClaudeRoutes } from "./routes-claude"; // ОТКЛЮЧЕНО: используем единый маршрут
+import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
 import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
