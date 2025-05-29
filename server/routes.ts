@@ -5,6 +5,8 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { VertexAIService } from './services/vertex-ai';
+import { vertexAICredentials } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
 import { apiKeyService, ApiServiceName } from './services/api-keys';
 import { globalApiKeyManager } from './services/global-api-key-manager';
@@ -11483,6 +11485,98 @@ ${datesText}
         success: false,
         error: "Ошибка при тестировании формата ключа",
         message: error.message
+      });
+    }
+  });
+
+  // Vertex AI эндпоинт для улучшения текста с моделями Gemini 2.5
+  app.post('/api/vertex-ai/improve-text', async (req: Request, res: Response) => {
+    try {
+      const { text, prompt, model } = req.body;
+      
+      if (!text || !prompt) {
+        return res.status(400).json({
+          success: false,
+          error: 'Текст и инструкции обязательны'
+        });
+      }
+
+      // Проверяем наличие учетных данных Vertex AI
+      if (!vertexAICredentials.hasCredentials()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Учетные данные Vertex AI не настроены'
+        });
+      }
+
+      const credentials = vertexAICredentials.loadCredentials();
+      const projectId = vertexAICredentials.getProjectId();
+
+      if (!credentials || !projectId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Некорректные учетные данные Vertex AI'
+        });
+      }
+
+      // Создаем сервис Vertex AI
+      const vertexAIService = new VertexAIService({
+        projectId,
+        location: 'us-central1',
+        credentials
+      });
+
+      // Определяем, содержит ли текст HTML-теги
+      const containsHtml = /<[^>]+>/.test(text);
+
+      let systemMessage = '';
+      let userMessage = '';
+
+      if (containsHtml) {
+        systemMessage = `Ты профессиональный копирайтер и редактор. Твоя задача - улучшить HTML-текст согласно инструкциям пользователя, сохранив всю HTML-разметку и структуру. Не удаляй HTML-теги, не изменяй их структуру. Улучшай только текстовое содержимое внутри тегов.
+
+ВАЖНО: 
+- Сохраняй все HTML-теги точно как есть
+- Улучшай только текст внутри тегов  
+- Не добавляй новые HTML-теги
+- Сохраняй оригинальную структуру документа`;
+
+        userMessage = `Инструкции: ${prompt}
+
+HTML-текст для улучшения:
+${text}
+
+Улучши текстовое содержимое, строго сохранив всю HTML-разметку.`;
+      } else {
+        systemMessage = `Ты профессиональный копирайтер и редактор. Твоя задача - улучшить текст согласно инструкциям пользователя. Создавай качественный, живой и привлекательный контент. Сохраняй стиль и тон оригинального текста, если не указано иное.`;
+
+        userMessage = `Инструкции: ${prompt}
+
+Текст для улучшения:
+${text}
+
+Создай улучшенную версию этого текста.`;
+      }
+
+      // Генерируем улучшенный текст
+      const improvedText = await vertexAIService.generateText({
+        prompt: userMessage,
+        model: model || 'gemini-2.5-flash',
+        maxTokens: 5000,
+        temperature: 0.7
+      });
+
+      return res.json({
+        success: true,
+        text: improvedText
+      });
+
+    } catch (error: any) {
+      console.error('[vertex-ai] Ошибка при улучшении текста:', error);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Ошибка при улучшении текста: ${error.message}`
       });
     }
   });
