@@ -2482,9 +2482,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          console.log('[qwen] Инициализация Qwen с глобальным API ключом');
+          console.log('[qwen] Инициализация Qwen с глобальным API ключом из Directus');
+          const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+          const { ApiServiceName } = await import('./services/api-keys.js');
+          
+          const qwenApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
+          if (!qwenApiKey) {
+            throw new Error('Qwen API key not found in Global API Keys collection');
+          }
+          
           const { QwenService } = await import('./services/qwen.js');
-          const qwenServiceInstance = new QwenService();
+          const qwenServiceInstance = new QwenService(qwenApiKey);
           console.log('[qwen] Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
           const generatedContent = await qwenServiceInstance.generateText(enrichedPrompt);
           console.log('[qwen] Контент успешно сгенерирован');
