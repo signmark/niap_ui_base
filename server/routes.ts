@@ -2446,9 +2446,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 service: service
               });
             } catch (vertexError) {
-              console.log('[gemini-2.5] Vertex AI недоступен, используем fallback на Gemini 2.0 Flash:', vertexError.message);
+              console.log('[gemini-2.5] Vertex AI недоступен, используем fallback на Gemini 2.0 Flash:', (vertexError as Error).message);
               // Fallback на обычную модель Gemini 2.0 Flash
-              service = 'gemini-2.0-flash';
+              let fallbackService = 'gemini-2.0-flash';
+              // Продолжаем с fallback сервисом
+              console.log('[gemini] Fallback: Инициализация Gemini с глобальным API ключом из Directus');
+              const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+              const { ApiServiceName } = await import('./services/api-keys.js');
+              
+              const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
+              
+              if (!geminiApiKey) {
+                throw new Error('Gemini API ключ не найден в глобальных настройках');
+              }
+              
+              const { GeminiService } = await import('./services/gemini.js');
+              const geminiService = new GeminiService({ apiKey: geminiApiKey });
+              
+              console.log('[gemini] Fallback: Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
+              const generatedContent = await geminiService.generateText(enrichedPrompt, fallbackService);
+              
+              console.log('[gemini] Fallback: Контент успешно сгенерирован');
+              
+              return res.json({
+                success: true,
+                content: generatedContent,
+                service: fallbackService
+              });
             }
           }
           
