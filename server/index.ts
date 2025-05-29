@@ -251,6 +251,12 @@ app.use((req, res, next) => {
     console.log("Gemini routes registered");
     log("Gemini routes registered successfully");
 
+    // Регистрируем маршруты Claude
+    log("Registering Claude routes...");
+    registerClaudeRoutes(app);
+    console.log("Claude routes registered");
+    log("Claude routes registered successfully");
+
     log("Registering routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
