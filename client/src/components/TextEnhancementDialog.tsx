@@ -129,8 +129,8 @@ const AI_SERVICES = [
         name: "Gemini 2.5 Pro"
       },
       {
-        id: "gemini-2.0-flash-exp",
-        name: "Gemini 2.0 Flash Experimental"
+        id: "gemini-2.0-flash",
+        name: "Gemini 2.0 Flash"
       }
     ]
   }
