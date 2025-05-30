@@ -8,7 +8,6 @@ const directusApi = directusApiManager.instance;
 
 // Типы API сервисов, используемых в приложении
 export enum ApiServiceName {
-  PERPLEXITY = 'perplexity',
   SOCIAL_SEARCHER = 'social_searcher',
   APIFY = 'apify',
   DEEPSEEK = 'deepseek',
@@ -21,7 +20,6 @@ export enum ApiServiceName {
 
 // Маппинг имен сервисов как они записаны в БД
 const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
-  [ApiServiceName.PERPLEXITY]: 'perplexity',
   [ApiServiceName.SOCIAL_SEARCHER]: 'social_searcher',
   [ApiServiceName.APIFY]: 'apify',
   [ApiServiceName.DEEPSEEK]: 'deepseek',
@@ -35,15 +33,14 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
 // Индексы полей в UI и их сопоставление с сервисами в случае отсутствия service_name
 // Этот маппинг соответствует порядку полей в интерфейсе "Настройки API ключей"
 const SERVICE_INDEX_MAPPING: Record<number, ApiServiceName> = {
-  0: ApiServiceName.PERPLEXITY,       // Первое поле в UI - API Ключ Perplexity
-  1: ApiServiceName.SOCIAL_SEARCHER,  // Второе поле в UI - API Ключ Social Searcher
-  2: ApiServiceName.APIFY,            // Третье поле в UI - API Ключ Apify
-  3: ApiServiceName.DEEPSEEK,         // Четвертое поле в UI - API Ключ DeepSeek
-  4: ApiServiceName.FAL_AI,           // Пятое поле в UI - API Ключ FAL.AI
-  5: ApiServiceName.XMLRIVER,         // Шестое поле в UI - API Ключ XMLRiver
-  6: ApiServiceName.QWEN,             // Седьмое поле в UI - API Ключ Qwen
-  7: ApiServiceName.CLAUDE,           // Восьмое поле в UI - API Ключ Claude
-  8: ApiServiceName.GEMINI            // Девятое поле в UI - API Ключ Gemini
+  0: ApiServiceName.SOCIAL_SEARCHER,  // Первое поле в UI - API Ключ Social Searcher
+  1: ApiServiceName.APIFY,            // Второе поле в UI - API Ключ Apify
+  2: ApiServiceName.DEEPSEEK,         // Третье поле в UI - API Ключ DeepSeek
+  3: ApiServiceName.FAL_AI,           // Четвертое поле в UI - API Ключ FAL.AI
+  4: ApiServiceName.XMLRIVER,         // Пятое поле в UI - API Ключ XMLRiver
+  5: ApiServiceName.QWEN,             // Шестое поле в UI - API Ключ Qwen
+  6: ApiServiceName.CLAUDE,           // Седьмое поле в UI - API Ключ Claude
+  7: ApiServiceName.GEMINI            // Восьмое поле в UI - API Ключ Gemini
 };
 
 // Интерфейс для хранения API ключей и метаданных

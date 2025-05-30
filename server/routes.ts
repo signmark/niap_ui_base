@@ -6223,7 +6223,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'application/json');
     
     console.log('📣 ПОЛУЧЕН ЗАПРОС на /api/sources/search:', JSON.stringify(req.body, null, 2));
-    console.log('📣 ЗАГОЛОВКИ:', JSON.stringify(req.headers, null, 2));
     
     try {
       const authHeader = req.headers['authorization'];
@@ -6263,188 +6262,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
       }
 
-      // Проверяем кэш для быстрого ответа
-      const cachedResults = getCachedResults(keyword);
-      if (cachedResults) {
-        console.log(`Using ${cachedResults.length} cached results for keyword: ${keyword}`);
-        
-        // Даже если есть кэш, фильтруем результаты по платформам
-        const filteredResults = cachedResults.filter(source => 
-          platforms.some(platform => 
-            source.platform?.toLowerCase().includes(platform.toLowerCase())
-          )
-        );
-        
-        return res.json({
-          success: true,
-          data: {
-            sources: filteredResults
-          }
-        });
-      }
-
-      // Поиск источников напрямую через Perplexity API
-      console.log('Searching sources using Perplexity API directly');
+      // Perplexity service has been removed
+      console.log('Perplexity service has been removed - returning empty results');
       
-      try {
-        // Получаем API ключ Perplexity из сервиса ключей
-        const perplexityKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
-        if (!perplexityKey) {
-          return res.status(400).json({ 
-            success: false, 
-            error: "Не найден API ключ Perplexity", 
-            message: "Для поиска источников необходимо настроить API ключ Perplexity в настройках"
-          });
-        }
-        
-        // Создаем идентификатор запроса для логирования
-        const requestId = crypto.randomUUID();
-        
-        // Формируем системный промпт в зависимости от выбранных платформ
-        let systemPrompt = "";
-        
-        if (customPrompt) {
-          // Используем кастомный промпт, если он предоставлен
-          systemPrompt = customPrompt;
-        } else {
-          // Формируем промпт на основе выбранных платформ
-          if (platforms.includes('instagram') && platforms.includes('telegram')) {
-            systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts and Telegram channels.
-For Instagram, focus only on accounts with >50K followers that post in Russian.
-For Telegram, focus on channels with >5K subscribers that post in Russian.
-
-For each source provide:
-1. Username with @ symbol 
-2. Full name in Russian
-3. Follower/subscriber count with K or M
-4. Brief description in Russian
-
-Format Instagram accounts as:
-**@username** - Name (500K followers) - Description
-
-Format Telegram channels as:
-**@username** - Name (50K subscribers) - Description
-
-Also include direct URLs in the response like:
-https://www.instagram.com/username/ - description
-https://t.me/channelname/ - description`;
-          } else if (platforms.includes('instagram')) {
-            systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts.
-Focus only on Instagram accounts with >50K followers that post in Russian.
-For each account provide:
-1. Username with @ symbol 
-2. Full name in Russian
-3. Follower count with K or M
-4. Brief description in Russian
-
-Format each account as:
-**@username** - Name (500K followers) - Description
-
-Also include direct Instagram URLs in the response like:
-https://www.instagram.com/username/ - description`;
-          } else if (platforms.includes('telegram')) {
-            systemPrompt = `You are an expert at finding high-quality Russian Telegram channels.
-Focus only on Telegram channels with >5K subscribers that post in Russian.
-For each channel provide:
-1. Username with @ symbol 
-2. Channel name in Russian
-3. Subscriber count with K or M
-4. Brief description in Russian
-
-Format each channel as:
-**@username** - Name (50K subscribers) - Description
-
-Also include direct Telegram URLs in the response like:
-https://t.me/channelname/ - description`;
-          }
-        }
-        
-        if (!systemPrompt) {
-          return res.status(400).json({ 
-            success: false, 
-            error: "Не удалось сформировать промпт для поиска", 
-            message: "Выберите хотя бы одну платформу для поиска"
-          });
-        }
-        
-        // Подготавливаем данные для запроса к Perplexity API
-        console.log(`📝 Подготовка запроса к Perplexity API с ключом: ${perplexityKey?.substring(0, 5)}...`);
-        
-        const requestData = {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            {
-              role: "user",
-              content: `Find TOP-5 most authoritative Russian ${platforms.join(' and ')} ${platforms.length > 1 ? 'sources' : platforms[0] === 'instagram' ? 'accounts' : 'channels'} for: ${keyword}`
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        };
-        
-        console.log('📝 Отправляем запрос к Perplexity API:', JSON.stringify(requestData, null, 2));
-        
-        console.log(`🚀 Отправка запроса к Perplexity API...`);
-        
-        // Делаем запрос к Perplexity API напрямую
-        const response = await axios.post(
-          'https://api.perplexity.ai/chat/completions',
-          requestData,
-          {
-            headers: {
-              'Authorization': `Bearer ${perplexityKey}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 30000 // Увеличиваем таймаут до 30 секунд для надежности
-          }
-        );
-        
-        console.log(`✅ Успешный ответ от Perplexity API. Статус: ${response.status}`);
-        
-
-        if (!response.data?.choices?.[0]?.message?.content) {
-          throw new Error('Invalid API response structure');
-        }
-
-        const content = response.data.choices[0].message.content;
-        console.log(`Raw API response for keyword ${keyword}:`, content);
-
-        // Извлекаем источники из текста
-        const sources = extractSourcesFromText(content, platforms);
-        console.log(`Found ${sources.length} sources for keyword ${keyword} (platforms: ${platforms.join(', ')})`);
-
-        // Кешируем результаты
-        if (sources.length > 0) {
-          console.log(`Caching ${sources.length} results for keyword: ${keyword}`);
-          searchCache.set(keyword, {
-            timestamp: Date.now(),
-            results: sources
-          });
-        }
-
-        return res.json({
-          success: true,
-          data: {
-            sources: sources
-          }
-        });
-      } catch (error) {
-        console.error('Error during Perplexity search:', error);
-        
-        // В случае ошибки возвращаем пустой список и сообщение об ошибке
-        return res.json({
-          success: false,
-          error: "Ошибка при поиске источников через Perplexity API",
-          details: error instanceof Error ? error.message : "Неизвестная ошибка",
-          data: {
-            sources: []
-          }
-        });
-      }
+      return res.json({
+        success: true,
+        data: {
+          sources: []
+        },
+        message: 'Сервис поиска источников временно недоступен'
+      });
     } catch (error) {
       console.error('Error in /api/sources/search:', error);
       res.status(500).json({
