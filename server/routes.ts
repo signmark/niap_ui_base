@@ -2138,7 +2138,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const keywordsText = keywords && keywords.length > 0 ? 
             `\n\nОБЯЗАТЕЛЬНО используй эти ключевые слова в тексте: ${keywords.join(', ')}` : '';
           
-          enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+          // Определяем, требуется ли развернутый контент по ключевым словам в промпте
+          const isDetailedRequest = prompt.toLowerCase().includes('подробн') || 
+                                   prompt.toLowerCase().includes('развернут') || 
+                                   prompt.toLowerCase().includes('максимальн') ||
+                                   prompt.toLowerCase().includes('детальн') ||
+                                   prompt.toLowerCase().includes('полн') ||
+                                   prompt.toLowerCase().includes('статья') ||
+                                   prompt.toLowerCase().includes('описани') ||
+                                   prompt.toLowerCase().includes('преимущества') ||
+                                   prompt.toLowerCase().includes('отзыв');
+          
+          if (isDetailedRequest) {
+            // Для развернутых запросов используем специальный промпт
+            enrichedPrompt = `Создай развернутый и детальный контент${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+
+ВАЖНО: Создай максимально подробный и информативный контент. Контент должен быть:
+- Развернутым и детальным (используй весь доступный лимит символов)
+- Содержать много полезной информации
+- Включать примеры, советы, рекомендации
+- Структурированным с заголовками и разделами
+- Содержать призывы к действию
+- ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
+
+Не ограничивайся кратким описанием - создай максимально полный и ценный контент.`;
+          } else {
+            // Для обычных запросов используем стандартный промпт
+            enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
 
 ВАЖНО: Создай ОДИН конкретный готовый пост, а не варианты или предложения. Пост должен быть:
 - Готов к публикации
@@ -2148,6 +2174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 - ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
 
 НЕ предлагай варианты, НЕ спрашивай дополнительные детали, НЕ давай советы - просто напиши готовый пост.`;
+          }
         }
         
         // Обогащаем промпт данными кампании для Claude
@@ -2221,7 +2248,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const keywordsText = keywords && keywords.length > 0 ? 
             `\n\nОБЯЗАТЕЛЬНО используй эти ключевые слова в тексте: ${keywords.join(', ')}` : '';
           
-          enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+          // Определяем, требуется ли развернутый контент по ключевым словам в промпте
+          const isDetailedRequest = prompt.toLowerCase().includes('подробн') || 
+                                   prompt.toLowerCase().includes('развернут') || 
+                                   prompt.toLowerCase().includes('максимальн') ||
+                                   prompt.toLowerCase().includes('детальн') ||
+                                   prompt.toLowerCase().includes('полн') ||
+                                   prompt.toLowerCase().includes('статья') ||
+                                   prompt.toLowerCase().includes('описани') ||
+                                   prompt.toLowerCase().includes('преимущества') ||
+                                   prompt.toLowerCase().includes('отзыв');
+          
+          if (isDetailedRequest) {
+            // Для развернутых запросов используем специальный промпт
+            enrichedPrompt = `Создай развернутый и детальный контент${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+
+ВАЖНО: Создай максимально подробный и информативный контент. Контент должен быть:
+- Развернутым и детальным (используй весь доступный лимит символов)
+- Содержать много полезной информации
+- Включать примеры, советы, рекомендации
+- Структурированным с заголовками и разделами
+- Содержать призывы к действию
+- ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
+
+Не ограничивайся кратким описанием - создай максимально полный и ценный контент.`;
+          } else {
+            // Для обычных запросов используем стандартный промпт
+            enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
 
 ВАЖНО: Создай ОДИН конкретный готовый пост, а не варианты или предложения. Пост должен быть:
 - Готов к публикации
@@ -2231,6 +2284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 - ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
 
 НЕ предлагай варианты, НЕ спрашивай дополнительные детали, НЕ давай советы - просто напиши готовый пост.`;
+          }
         }
         
         // Используем централизованный сервис данных кампании
@@ -2469,7 +2523,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const keywordsText = keywords && keywords.length > 0 ? 
             `\n\nОБЯЗАТЕЛЬНО используй эти ключевые слова в тексте: ${keywords.join(', ')}` : '';
           
-          enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+          // Определяем, требуется ли развернутый контент по ключевым словам в промпте
+          const isDetailedRequest = prompt.toLowerCase().includes('подробн') || 
+                                   prompt.toLowerCase().includes('развернут') || 
+                                   prompt.toLowerCase().includes('максимальн') ||
+                                   prompt.toLowerCase().includes('детальн') ||
+                                   prompt.toLowerCase().includes('полн') ||
+                                   prompt.toLowerCase().includes('статья') ||
+                                   prompt.toLowerCase().includes('описани') ||
+                                   prompt.toLowerCase().includes('преимущества') ||
+                                   prompt.toLowerCase().includes('отзыв');
+          
+          if (isDetailedRequest) {
+            // Для развернутых запросов используем специальный промпт
+            enrichedPrompt = `Создай развернутый и детальный контент${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+
+ВАЖНО: Создай максимально подробный и информативный контент. Контент должен быть:
+- Развернутым и детальным (используй весь доступный лимит символов)
+- Содержать много полезной информации
+- Включать примеры, советы, рекомендации
+- Структурированным с заголовками и разделами
+- Содержать призывы к действию
+- ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
+
+Не ограничивайся кратким описанием - создай максимально полный и ценный контент.`;
+          } else {
+            // Для обычных запросов используем стандартный промпт
+            enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
 
 ВАЖНО: Создай ОДИН конкретный готовый пост, а не варианты или предложения. Пост должен быть:
 - Готов к публикации
@@ -2479,6 +2559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 - ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
 
 НЕ предлагай варианты, НЕ спрашивай дополнительные детали, НЕ давай советы - просто напиши готовый пост.`;
+          }
         }
         
         // Добавляем данные кампании для Qwen, как для Gemini
