@@ -255,7 +255,7 @@ export class GeminiProxyService {
           temperature: 0.4,
           topP: 0.9,
           topK: 40,
-          maxOutputTokens: 5000
+          maxOutputTokens: 8192
         }
       };
       
