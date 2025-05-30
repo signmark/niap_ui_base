@@ -172,8 +172,13 @@ export default function PublicationCalendar({
     // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
     const uniquePostsMap = new Map<string, CampaignContent>();
     
+    // Отладочная информация для первых 3 дней месяца
+    if (day.getDate() <= 3) {
+      console.log(`Checking day ${day.toDateString()}, total content items: ${content.length}`);
+    }
+    
     // Проходим по всем постам и собираем только уникальные на эту дату
-    content.forEach(post => {
+    content.forEach((post, index) => {
       // Проверяем наличие socialPlatforms - если его нет, пост не отображаем в календаре
       if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
         return; // Пропускаем посты без social_platforms
@@ -182,17 +187,30 @@ export default function PublicationCalendar({
       // Формируем массив дат, которые относятся к этому посту
       let relevantDates: Date[] = [];
       
+      // Отладка для первых 5 постов
+      if (index < 5 && day.getDate() <= 3) {
+        console.log(`Post ${index}: publishedAt=${post.publishedAt}, scheduledAt=${post.scheduledAt}, socialPlatforms=`, Object.keys(post.socialPlatforms || {}));
+      }
+      
       // 1. Проверяем publishedAt
       if (post.publishedAt) {
         try {
-          relevantDates.push(new Date(post.publishedAt));
+          const pubDate = new Date(post.publishedAt);
+          relevantDates.push(pubDate);
+          if (index < 5 && day.getDate() <= 3) {
+            console.log(`  - publishedAt date: ${pubDate.toDateString()}`);
+          }
         } catch (e) {}
       }
       
       // 2. Проверяем scheduledAt
       if (post.scheduledAt) {
         try {
-          relevantDates.push(new Date(post.scheduledAt));
+          const schedDate = new Date(post.scheduledAt);
+          relevantDates.push(schedDate);
+          if (index < 5 && day.getDate() <= 3) {
+            console.log(`  - scheduledAt date: ${schedDate.toDateString()}`);
+          }
         } catch (e) {}
       }
       
