@@ -31,6 +31,7 @@ import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
 import TelegramTestPage from "@/pages/telegram-test";
 import EditorDemoPage from "@/pages/editor-demo";
 import AiImageTester from "@/pages/AiImageTester";
+import BusinessQuestionnairePage from "@/pages/business-questionnaire";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -67,6 +68,7 @@ const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTeste
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
 const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
 const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
+const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
 
 function Router() {
   return (
@@ -76,6 +78,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
+      <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
       <Route path="/posts" component={LayoutPosts} />
