@@ -52,106 +52,107 @@ export default function PublicationCalendar({
   // startOfDay из date-fns используется для корректного сравнения дат
   // без учета времени (сбрасывает время до 00:00:00)
   
-  // Сначала создаем Map для отфильтрованного контента, чтобы избежать дублирования
-  const filteredContentMap = new Map<string, CampaignContent>();
-  
-  // Фильтруем содержимое
-  content.forEach(post => {
-    // Пропускаем посты без social_platforms
-    if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
-      return; // Пропускаем посты без social_platforms
-    }
+  // Получаем публикации для выбранной даты
+  const getContentForSelectedDate = () => {
+    const filteredContentMap = new Map<string, CampaignContent>();
     
-    // 1. Формируем массив дат, которые относятся к этому посту
-    let relevantDates: Date[] = [];
-    let platformsWithDates: Set<SocialPlatform> = new Set();
-    
-    // Проверяем publishedAt
-    if (post.publishedAt) {
-      try {
-        relevantDates.push(new Date(post.publishedAt));
-      } catch (e) {}
-    }
-    
-    // Проверяем scheduledAt
-    if (post.scheduledAt) {
-      try {
-        relevantDates.push(new Date(post.scheduledAt));
-      } catch (e) {}
-    }
-    
-    // Проверяем даты из платформ социальных сетей
-    if (post.socialPlatforms) {
-      for (const platform in post.socialPlatforms) {
-        const platformData = post.socialPlatforms[platform as SocialPlatform];
-        let hasPlatformDate = false;
-        
-        // Проверяем дату публикации
-        if (platformData && platformData.publishedAt) {
-          try {
-            const publishDate = new Date(platformData.publishedAt);
-            if (isSameDay(startOfDay(selectedDate), startOfDay(publishDate))) {
-              hasPlatformDate = true;
-              platformsWithDates.add(platform as SocialPlatform);
-            }
-            relevantDates.push(publishDate);
-          } catch (e) {}
-        }
-        
-        // Проверяем запланированную дату для платформы
-        if (platformData && platformData.scheduledAt) {
-          try {
-            const scheduledDate = new Date(platformData.scheduledAt);
-            if (isSameDay(startOfDay(selectedDate), startOfDay(scheduledDate))) {
-              hasPlatformDate = true;
-              platformsWithDates.add(platform as SocialPlatform);
-            }
-            relevantDates.push(scheduledDate);
-          } catch (e) {}
-        }
-      }
-    }
-    
-    // 2. Проверяем совпадение любой даты с выбранной датой
-    const hasMatchingDate = relevantDates.some(date => 
-      isSameDay(startOfDay(selectedDate), startOfDay(date))
-    );
-    
-    // 3. Применяем фильтрацию по платформам, если необходимо
-    if (hasMatchingDate) {
-      if (filteredPlatforms.length === 0) {
-        // Если фильтр не выбран, показываем пост
-        filteredContentMap.set(post.id, post);
+    // Фильтруем содержимое для выбранной даты
+    content.forEach(post => {
+      // Пропускаем посты без social_platforms
+      if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
         return;
       }
       
-      // Проверяем, есть ли какая-либо из выбранных платформ у поста
+      // 1. Формируем массив дат, которые относятся к этому посту
+      let relevantDates: Date[] = [];
+      let platformsWithDates: Set<SocialPlatform> = new Set();
+      
+      // Проверяем publishedAt
+      if (post.publishedAt) {
+        try {
+          relevantDates.push(new Date(post.publishedAt));
+        } catch (e) {}
+      }
+      
+      // Проверяем scheduledAt
+      if (post.scheduledAt) {
+        try {
+          relevantDates.push(new Date(post.scheduledAt));
+        } catch (e) {}
+      }
+      
+      // Проверяем даты из платформ социальных сетей
       if (post.socialPlatforms) {
-        // Если платформы фильтруются, проверяем, есть ли выбранные платформы среди тех, что имеют даты на выбранный день
-        const hasFilteredPlatform = Array.from(platformsWithDates).some(platform => 
-          filteredPlatforms.includes(platform)
-        );
-        
-        if (hasFilteredPlatform) {
+        for (const platform in post.socialPlatforms) {
+          const platformData = post.socialPlatforms[platform as SocialPlatform];
+          
+          // Проверяем дату публикации
+          if (platformData && platformData.publishedAt) {
+            try {
+              const publishDate = new Date(platformData.publishedAt);
+              if (isSameDay(startOfDay(selectedDate), startOfDay(publishDate))) {
+                platformsWithDates.add(platform as SocialPlatform);
+              }
+              relevantDates.push(publishDate);
+            } catch (e) {}
+          }
+          
+          // Проверяем запланированную дату для платформы
+          if (platformData && platformData.scheduledAt) {
+            try {
+              const scheduledDate = new Date(platformData.scheduledAt);
+              if (isSameDay(startOfDay(selectedDate), startOfDay(scheduledDate))) {
+                platformsWithDates.add(platform as SocialPlatform);
+              }
+              relevantDates.push(scheduledDate);
+            } catch (e) {}
+          }
+        }
+      }
+      
+      // 2. Проверяем совпадение любой даты с выбранной датой
+      const hasMatchingDate = relevantDates.some(date => 
+        isSameDay(startOfDay(selectedDate), startOfDay(date))
+      );
+      
+      // 3. Применяем фильтрацию по платформам, если необходимо
+      if (hasMatchingDate) {
+        if (filteredPlatforms.length === 0) {
+          // Если фильтр не выбран, показываем пост
           filteredContentMap.set(post.id, post);
           return;
         }
         
-        // Если нет совпадений по платформам, проверяем общую дату поста (scheduledAt/publishedAt)
-        // и показываем пост, только если платформы вообще не выбраны
-        const hasMatchingGeneralDate = 
-          (post.scheduledAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.scheduledAt)))) ||
-          (post.publishedAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.publishedAt))));
-        
-        if (hasMatchingGeneralDate && filteredPlatforms.length === 0) {
-          filteredContentMap.set(post.id, post);
+        // Проверяем, есть ли какая-либо из выбранных платформ у поста
+        if (post.socialPlatforms) {
+          // Если платформы фильтруются, проверяем, есть ли выбранные платформы среди тех, что имеют даты на выбранный день
+          const hasFilteredPlatform = Array.from(platformsWithDates).some(platform => 
+            filteredPlatforms.includes(platform)
+          );
+          
+          if (hasFilteredPlatform) {
+            filteredContentMap.set(post.id, post);
+            return;
+          }
+          
+          // Если нет совпадений по платформам, проверяем общую дату поста (scheduledAt/publishedAt)
+          // и показываем пост, только если платформы вообще не выбраны
+          const hasMatchingGeneralDate = 
+            (post.scheduledAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.scheduledAt)))) ||
+            (post.publishedAt && isSameDay(startOfDay(selectedDate), startOfDay(new Date(post.publishedAt))));
+          
+          if (hasMatchingGeneralDate && filteredPlatforms.length === 0) {
+            filteredContentMap.set(post.id, post);
+          }
         }
       }
-    }
-  });
+    });
+    
+    return Array.from(filteredContentMap.values());
+  };
   
-  // Преобразуем Map в массив и сортируем
-  const filteredContent = Array.from(filteredContentMap.values())
+  // Получаем отфильтрованный контент для выбранной даты
+  const filteredContent = getContentForSelectedDate()
     .sort((a, b) => {
       // Сортировка по времени публикации
       const timeA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
