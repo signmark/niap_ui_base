@@ -103,19 +103,19 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
   }
 
   return (
-    <DialogContent className="max-w-4xl">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
       <DialogHeader>
         <DialogTitle>Редактировать кампанию v2</DialogTitle>
       </DialogHeader>
 
-      <Tabs defaultValue="general" className="mt-4">
+      <Tabs defaultValue="general" className="mt-4 flex-1 overflow-hidden flex flex-col">
         <TabsList className="mb-4">
           <TabsTrigger value="general">Основные настройки</TabsTrigger>
           <TabsTrigger value="trend-analysis">Анализ трендов</TabsTrigger>
           <TabsTrigger value="social-media">Социальные сети</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="general" className="space-y-4 py-2">
+        <TabsContent value="general" className="space-y-4 py-2 overflow-y-auto flex-1">
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Название кампании</label>
@@ -158,7 +158,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
           </div>
         </TabsContent>
         
-        <TabsContent value="trend-analysis" className="space-y-4 py-2">
+        <TabsContent value="trend-analysis" className="space-y-4 py-2 overflow-y-auto flex-1">
           <TrendAnalysisSettings 
             campaignId={campaignId} 
             initialSettings={trendSettings}
@@ -169,7 +169,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
           />
         </TabsContent>
 
-        <TabsContent value="social-media" className="space-y-4 py-2">
+        <TabsContent value="social-media" className="space-y-4 py-2 overflow-y-auto flex-1">
           <SocialMediaSettings 
             campaignId={campaignId} 
             initialSettings={socialSettings}
