@@ -226,7 +226,7 @@ app.use((req, res, next) => {
     // Регистрируем маршруты для Claude AI
     console.log("Registering Claude AI routes...");
     log("Registering Claude AI routes...");
-    // registerClaudeRoutes(app); // ОТКЛЮЧЕНО: используем единый маршрут /api/generate-content
+    registerClaudeRoutes(app);
     console.log("Claude AI routes registered");
     log("Claude AI routes registered successfully");
     

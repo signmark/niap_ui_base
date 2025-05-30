@@ -1,0 +1,75 @@
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+TextEnhancementDialog.tsx:226 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/claude/improve-text 500 (Internal Server Error)
+mutationFn @ TextEnhancementDialog.tsx:226
+fn @ @tanstack_react-query.js?v=49418eff:1189
+run @ @tanstack_react-query.js?v=49418eff:494
+start @ @tanstack_react-query.js?v=49418eff:536
+execute @ @tanstack_react-query.js?v=49418eff:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=49418eff:2630
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3295
+onClick @ TextEnhancementDialog.tsx:433
+callCallback2 @ chunk-RPCDYKBN.js?v=49418eff:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=49418eff:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=49418eff:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=49418eff:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=49418eff:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=49418eff:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=49418eff:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=49418eff:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=49418eff:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=49418eff:5449
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 22
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
