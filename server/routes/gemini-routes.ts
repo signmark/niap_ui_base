@@ -79,16 +79,19 @@ geminiRouter.post('/improve-text', async (req, res) => {
     logger.log(`[gemini-routes] Получен результат от AI: ${result.substring(0, 100)}...`);
     logger.log(`[gemini-routes] Полный результат от AI: ${result}`);
     
-    // Если оригинальный текст содержал HTML, восстанавливаем форматирование сразу
+    // Обрабатываем результат и возвращаем
+    let finalText = result;
+    
+    // Если оригинальный текст содержал HTML, восстанавливаем форматирование
     if (hasOriginalHtml) {
-      logger.log(`[gemini-routes] 🔧 ВОССТАНАВЛИВАЕМ HTML! Исходный: ${text}`);
-      logger.log(`[gemini-routes] 🔧 Результат AI без HTML: ${result}`);
+      logger.log(`[gemini-routes] ВОССТАНАВЛИВАЕМ HTML! Исходный: ${text}`);
+      logger.log(`[gemini-routes] Результат AI без HTML: ${result}`);
       
       // Подсчитываем параграфы в оригинале
       const originalParagraphs = (text.match(/<p[^>]*>/g) || []).length;
-      logger.log(`[gemini-routes] 🔧 Найдено параграфов в оригинале: ${originalParagraphs}`);
+      logger.log(`[gemini-routes] Найдено параграфов в оригинале: ${originalParagraphs}`);
       
-      // Очищаем от markdown и восстанавливаем HTML
+      // Очищаем от возможных markdown символов
       let cleanResult = result
         .replace(/\*\*([^*]+)\*\*/g, '$1')
         .replace(/\*([^*]+)\*/g, '$1')
@@ -96,14 +99,8 @@ geminiRouter.post('/improve-text', async (req, res) => {
         .trim();
       
       if (originalParagraphs === 1) {
-        const restoredHtml = `<p>${cleanResult}</p>`;
-        logger.log(`[gemini-routes] 🔧 Восстановлен единичный параграф: ${restoredHtml}`);
-        
-        res.json({ 
-          success: true, 
-          text: restoredHtml 
-        });
-        return;
+        finalText = `<p>${cleanResult}</p>`;
+        logger.log(`[gemini-routes] Восстановлен единичный параграф: ${finalText}`);
       } else if (originalParagraphs > 1) {
         // Разбиваем по точкам для нескольких параграфов
         const sentences = cleanResult.split(/(?<=[.!?])\s+/).filter(s => s.trim());
@@ -115,15 +112,18 @@ geminiRouter.post('/improve-text', async (req, res) => {
           paragraphs.push(`<p>${paragraphSentences.join(' ').trim()}</p>`);
         }
         
-        const restoredHtml = paragraphs.join('');
-        logger.log(`[gemini-routes] 🔧 Восстановлено ${paragraphs.length} параграфов: ${restoredHtml}`);
-        
-        res.json({ 
-          success: true, 
-          text: restoredHtml 
-        });
-        return;
+        finalText = paragraphs.join('');
+        logger.log(`[gemini-routes] Восстановлено ${paragraphs.length} параграфов: ${finalText}`);
+      } else {
+        finalText = cleanResult;
+        logger.log(`[gemini-routes] Очищен текст без параграфов: ${finalText}`);
       }
+      
+      res.json({ 
+        success: true, 
+        text: finalText 
+      });
+      return;
     }
     
     // Профессиональная конвертация Markdown в HTML
