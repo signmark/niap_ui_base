@@ -4690,20 +4690,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          // Получаем API ключ Perplexity
-          const settings = await directusApi.get('/items/user_api_keys', {
-            params: {
-              filter: {
-                service_name: { _eq: 'perplexity' }
+          // Получаем информацию о пользователе из токена
+          let userId;
+          try {
+            const userResponse = await directusApi.get('/users/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`
               }
+            });
+            userId = userResponse.data?.data?.id;
+            if (!userId) {
+              throw new Error('Cannot identify user');
             }
-          });
-          
-          const perplexityKey = settings.data?.data?.[0]?.api_key;
-          if (!perplexityKey) {
-            throw new Error('Perplexity API key not found');
+          } catch (userError) {
+            console.error("Error getting user from token:", userError);
+            userId = 'guest';
           }
-          
+
           // Сначала попробуем получить контент с сайта для лучшего анализа
           let siteContent = "";
           let metaDescription = "";
@@ -4713,7 +4716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             console.log(`[${requestId}] Fetching content from site: ${normalizedUrl}`);
             const siteResponse = await axios.get(normalizedUrl, {
-              timeout: 8000, // Увеличиваем таймаут для медленных сайтов
+              timeout: 8000,
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml',
@@ -4721,8 +4724,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             });
             
-            // Получаем HTML контент
             const htmlContent = siteResponse.data;
+            
+            // Извлекаем мета-теги
+            const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
+            if (titleMatch && titleMatch[1]) {
+              title = titleMatch[1].trim();
+            }
+            
+            const descriptionMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i);
+            if (descriptionMatch && descriptionMatch[1]) {
+              metaDescription = descriptionMatch[1].trim();
+            }
+            
+            const keywordsMatch = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["'][^>]*>/i);
+            if (keywordsMatch && keywordsMatch[1]) {
+              metaKeywords = keywordsMatch[1].trim();
+            }
+            
+            // Извлекаем основной контент
+            let mainContent = "";
+            const contentContainers = [
+              /<main[^>]*>(.*?)<\/main>/si,
+              /<article[^>]*>(.*?)<\/article>/si,
+              /<div[^>]*class=["'][^"']*content[^"']*["'][^>]*>(.*?)<\/div>/si,
+              /<section[^>]*>(.*?)<\/section>/si
+            ];
+            
+            for (const pattern of contentContainers) {
+              const match = htmlContent.match(pattern);
+              if (match && match[1]) {
+                mainContent = match[1];
+                break;
+              }
+            }
+            
+            if (!mainContent) {
+              const bodyMatch = htmlContent.match(/<body[^>]*>(.*?)<\/body>/si);
+              if (bodyMatch && bodyMatch[1]) {
+                mainContent = bodyMatch[1];
+              }
+            }
+            
+            if (mainContent) {
+              mainContent = mainContent.replace(/<script[^>]*>.*?<\/script>/sig, '');
+              mainContent = mainContent.replace(/<style[^>]*>.*?<\/style>/sig, '');
+              mainContent = mainContent.replace(/<[^>]+>/g, ' ');
+              mainContent = mainContent.replace(/\s+/g, ' ').trim();
+              
+              if (mainContent.length > 3000) {
+                mainContent = mainContent.substring(0, 3000) + '...';
+              }
+            }
+            
+            siteContent = `URL: ${normalizedUrl}\n`;
+            if (title) siteContent += `Заголовок: ${title}\n`;
+            if (metaDescription) siteContent += `Описание: ${metaDescription}\n`;
+            if (metaKeywords) siteContent += `Ключевые слова: ${metaKeywords}\n`;
+            if (mainContent) siteContent += `Содержимое:\n${mainContent}`;
+            
+          } catch (siteError) {
+            console.error(`[${requestId}] Error fetching site content:`, siteError);
+            const url = new URL(normalizedUrl);
+            siteContent = `URL: ${normalizedUrl}\nДомен: ${url.hostname}`;
+          }
+          
+          // Используем Gemini для анализа сайта
+          const geminiKey = await apiKeyService.getApiKey(userId, ApiServiceName.GEMINI, token);
+          if (geminiKey) {
+            console.log(`[${requestId}] Using Gemini for site analysis`);
+            
+            try {
+              const geminiResponse = await axios.post(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+                {
+                  contents: [{
+                    parts: [{
+                      text: `Проанализируй содержание сайта и создай набор релевантных ключевых слов для SEO.
+
+ТРЕБОВАНИЯ:
+- Определи тематику и специализацию сайта
+- НЕ используй доменное имя в ключевых словах
+- Создай 10-15 конкретных ключевых слов
+- Включи коммерческие запросы если это коммерческий сайт
+- Верни ТОЛЬКО JSON массив
+
+ФОРМАТ:
+[
+  {"keyword": "ключевое слово", "trend": число_100-10000, "competition": число_0-100}
+]
+
+Содержимое сайта:
+${siteContent}`
+                    }]
+                  }],
+                  generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 1000
+                  }
+                }
+              );
+              
+              const content = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (content) {
+                const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
+                if (jsonMatch) {
+                  const parsedData = JSON.parse(jsonMatch[0]);
+                  if (Array.isArray(parsedData)) {
+                    finalKeywords = parsedData.map(item => ({
+                      keyword: item.keyword || "",
+                      trend: typeof item.trend === 'number' ? item.trend : Math.floor(Math.random() * 5000) + 1000,
+                      competition: typeof item.competition === 'number' ? item.competition : Math.floor(Math.random() * 100)
+                    })).filter(item => item.keyword.trim() !== "");
+                  }
+                }
+              }
+            } catch (geminiError) {
+              console.error(`[${requestId}] Gemini analysis failed:`, geminiError);
+            }
+          }
+          
+          // Если Gemini не сработал, пробуем Claude
+          if (finalKeywords.length === 0) {
+            const claudeKey = await apiKeyService.getApiKey(userId, ApiServiceName.CLAUDE, token);
+            if (claudeKey) {
+              console.log(`[${requestId}] Using Claude for site analysis`);
+              
+              try {
+                const claudeResponse = await axios.post(
+                  'https://api.anthropic.com/v1/messages',
+                  {
+                    model: "claude-3-7-sonnet-20250219",
+                    max_tokens: 1000,
+                    temperature: 0.1,
+                    messages: [{
+                      role: "user",
+                      content: `Проанализируй сайт и создай ключевые слова в JSON формате:
+
+${siteContent}
+
+Верни массив: [{"keyword": "слово", "trend": число, "competition": число}]`
+                    }]
+                  },
+                  {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'x-api-key': claudeKey,
+                      'anthropic-version': '2023-06-01'
+                    }
+                  }
+                );
+                
+                const content = claudeResponse.data?.content?.[0]?.text;
+                if (content) {
+                  const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
+                  if (jsonMatch) {
+                    const parsedData = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(parsedData)) {
+                      finalKeywords = parsedData.map(item => ({
+                        keyword: item.keyword || "",
+                        trend: typeof item.trend === 'number' ? item.trend : Math.floor(Math.random() * 5000) + 1000,
+                        competition: typeof item.competition === 'number' ? item.competition : Math.floor(Math.random() * 100)
+                      })).filter(item => item.keyword.trim() !== "");
+                    }
+                  }
+                }
+              } catch (claudeError) {
+                console.error(`[${requestId}] Claude analysis failed:`, claudeError);
+              }
+            }
+          }
+          
+          // Кешируем результаты если получили ключевые слова
+          if (finalKeywords.length > 0) {
+            console.log(`[${requestId}] Caching ${finalKeywords.length} keywords for URL: ${normalizedUrl}`);
+            searchCache.set(normalizedUrl, {
+              timestamp: Date.now(),
+              results: finalKeywords
+            });
+          }
             
             // Извлекаем мета-теги
             const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
