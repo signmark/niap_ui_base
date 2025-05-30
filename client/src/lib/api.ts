@@ -124,7 +124,7 @@ export const api = axios.create({
 // Добавляем логирование для отладки
 api.interceptors.request.use(
   config => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, config.data);
+    // API request intercepted
     return config;
   },
   error => {
@@ -136,7 +136,7 @@ api.interceptors.request.use(
 // Добавляем логирование ответов для отладки
 api.interceptors.response.use(
   response => {
-    console.log(`API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    // API response intercepted
     return response;
   },
   error => {

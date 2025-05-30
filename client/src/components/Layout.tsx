@@ -56,7 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
         
         const data = await response.json();
-        console.log('Получены данные пользователя:', data);
+        // User data retrieved
         
         if (data.user && data.user.email) {
           setUserEmail(data.user.email);
@@ -67,13 +67,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                            data.user.is_smm_admin === '1' || 
                            data.user.is_smm_admin === 'true';
           
-          console.log('Проверка администратора: is_smm_admin =', data.user.is_smm_admin, 'итог:', adminStatus);
+          // Admin status checked
           setIsSmmAdmin(adminStatus);
           
           // Дополнительная проверка - через email
           const isAdminByEmail = ADMIN_EMAILS.includes(data.user.email);
           if (isAdminByEmail) {
-            console.log('Пользователь является администратором по email:', data.user.email);
+            // User is admin by email verification
           }
         }
       } catch (error) {
@@ -100,10 +100,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     
     // Если нет токена и мы не на странице входа - перенаправляем
     if (!token && !isLoginPage) {
-      console.log('Токен авторизации не найден, перенаправляем на страницу входа');
+      // Redirecting to login page
       navigate("/auth/login");
     } else if (token) {
-      console.log('Авторизован с токеном, длина:', token.length);
+      // User authenticated with token
       
       // Если мы авторизованы и находимся на странице входа - перенаправляем на главную
       if (isLoginPage) {
@@ -180,7 +180,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/analytics", label: "Аналитика", icon: BarChart },
   ];
 
-  console.log('Layout рендер: isAdmin =', isAdmin, 'isSmmAdmin =', isSmmAdmin, 'userIsAdmin =', userIsAdmin, 'userId =', userId, 'userEmail =', userEmail); 
+  // Layout render state tracked 
 
   return (
     <ThemeProvider>

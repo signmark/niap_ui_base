@@ -92,7 +92,7 @@ export function AuthGuard({ children }: Props) {
       // Пробуем обновить токен
       if (storedRefreshToken) {
         try {
-          console.log('AuthGuard: Attempting to refresh token with refresh_token');
+          // Attempting to refresh token
           setIsRefreshing(true);
           await refreshAccessToken();
           
