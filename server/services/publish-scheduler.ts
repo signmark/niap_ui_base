@@ -23,8 +23,8 @@ export class PublishScheduler {
   public disablePublishing = false;
   
   // Флаг для вывода информационных сообщений и детального логирования
-  // Установлен в false для уменьшения количества логов
-  private verboseLogging = false;
+  // Управляется переменной окружения DEBUG_SCHEDULER
+  private verboseLogging = process.env.DEBUG_SCHEDULER === 'true';
   
   // Кэш токенов, чтобы не выполнять повторные авторизации
   private adminTokenCache: string | null = null;

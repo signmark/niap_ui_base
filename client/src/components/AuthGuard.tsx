@@ -130,9 +130,9 @@ export function AuthGuard({ children }: Props) {
       }
       
       // Если нет ни токена, ни возможности обновить, перенаправляем на логин
-      console.log('AuthGuard: No valid authentication found');
+      // No valid authentication found
       if (!isLoginPage && !isRegisterPage) {
-        console.log('AuthGuard: No token found, redirecting to login');
+        // Redirecting to login page
         navigate('/auth/login');
       }
       
