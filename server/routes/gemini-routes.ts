@@ -79,6 +79,53 @@ geminiRouter.post('/improve-text', async (req, res) => {
     logger.log(`[gemini-routes] Получен результат от AI: ${result.substring(0, 100)}...`);
     logger.log(`[gemini-routes] Полный результат от AI: ${result}`);
     
+    // Если оригинальный текст содержал HTML, восстанавливаем форматирование сразу
+    if (hasOriginalHtml) {
+      logger.log(`[gemini-routes] 🔧 ВОССТАНАВЛИВАЕМ HTML! Исходный: ${text}`);
+      logger.log(`[gemini-routes] 🔧 Результат AI без HTML: ${result}`);
+      
+      // Подсчитываем параграфы в оригинале
+      const originalParagraphs = (text.match(/<p[^>]*>/g) || []).length;
+      logger.log(`[gemini-routes] 🔧 Найдено параграфов в оригинале: ${originalParagraphs}`);
+      
+      // Очищаем от markdown и восстанавливаем HTML
+      let cleanResult = result
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/^#+\s+/gm, '')
+        .trim();
+      
+      if (originalParagraphs === 1) {
+        const restoredHtml = `<p>${cleanResult}</p>`;
+        logger.log(`[gemini-routes] 🔧 Восстановлен единичный параграф: ${restoredHtml}`);
+        
+        res.json({ 
+          success: true, 
+          text: restoredHtml 
+        });
+        return;
+      } else if (originalParagraphs > 1) {
+        // Разбиваем по точкам для нескольких параграфов
+        const sentences = cleanResult.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+        const sentencesPerParagraph = Math.max(1, Math.ceil(sentences.length / originalParagraphs));
+        const paragraphs = [];
+        
+        for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+          const paragraphSentences = sentences.slice(i, i + sentencesPerParagraph);
+          paragraphs.push(`<p>${paragraphSentences.join(' ').trim()}</p>`);
+        }
+        
+        const restoredHtml = paragraphs.join('');
+        logger.log(`[gemini-routes] 🔧 Восстановлено ${paragraphs.length} параграфов: ${restoredHtml}`);
+        
+        res.json({ 
+          success: true, 
+          text: restoredHtml 
+        });
+        return;
+      }
+    }
+    
     // Профессиональная конвертация Markdown в HTML
     const convertMarkdownToHtml = (markdown: string): string => {
       let html = markdown;
@@ -145,34 +192,47 @@ geminiRouter.post('/improve-text', async (req, res) => {
     if (hasOriginalHtml) {
       logger.log('[gemini-routes] Восстанавливаем HTML-форматирование');
       
-      if (hasMarkdownSymbols) {
-        logger.log('[gemini-routes] Конвертируем Markdown в HTML');
-        cleanedText = convertMarkdownToHtml(result);
-        logger.log(`[gemini-routes] После конвертации: ${cleanedText.substring(0, 100)}...`);
-      } else {
-        // AI убрал HTML-теги, нужно их восстановить
-        // Определяем исходную структуру HTML
-        const originalHtmlStructure = text.match(/<[^>]+>/g) || [];
-        logger.log(`[gemini-routes] Найдено исходных HTML-тегов: ${originalHtmlStructure.length}`);
-        
-        if (originalHtmlStructure.length > 0) {
-          // Простейший случай - один параграф
-          if (originalHtmlStructure.join('') === '<p></p>' || text.startsWith('<p>') && text.endsWith('</p>')) {
-            cleanedText = `<p>${result.trim()}</p>`;
-            logger.log('[gemini-routes] Восстановлен единичный параграф');
-          } else {
-            // Разбиваем на абзацы и оборачиваем
-            const paragraphs = result.split('\n\n').filter(p => p.trim());
-            cleanedText = paragraphs.map(paragraph => {
-              const trimmed = paragraph.trim();
-              if (!trimmed) return '';
-              return `<p>${trimmed}</p>`;
-            }).filter(p => p.trim()).join('');
-            logger.log('[gemini-routes] Обернули несколько абзацев в HTML-теги');
+      // Подсчитываем количество параграфов в оригинальном тексте
+      const originalParagraphs = (text.match(/<p[^>]*>/g) || []).length;
+      logger.log(`[gemini-routes] В оригинале было параграфов: ${originalParagraphs}`);
+      
+      // Очищаем результат от возможных markdown символов
+      let cleanResult = result
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/^#+\s+/gm, '')
+        .trim();
+      
+      if (originalParagraphs === 1) {
+        // Один параграф - просто оборачиваем
+        cleanedText = `<p>${cleanResult}</p>`;
+        logger.log('[gemini-routes] Восстановлен единичный параграф');
+      } else if (originalParagraphs > 1) {
+        // Несколько параграфов - разбиваем по точкам и предложениям
+        const sentences = cleanResult.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+        if (sentences.length >= originalParagraphs) {
+          // Группируем предложения в параграфы
+          const sentencesPerParagraph = Math.ceil(sentences.length / originalParagraphs);
+          const paragraphs = [];
+          for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+            const paragraphSentences = sentences.slice(i, i + sentencesPerParagraph);
+            paragraphs.push(`<p>${paragraphSentences.join(' ').trim()}</p>`);
           }
+          cleanedText = paragraphs.join('');
         } else {
-          cleanedText = result;
+          // Разбиваем по переносам строк или делаем один параграф
+          const parts = cleanResult.split('\n\n').filter(p => p.trim());
+          if (parts.length > 1) {
+            cleanedText = parts.map(part => `<p>${part.trim()}</p>`).join('');
+          } else {
+            cleanedText = `<p>${cleanResult}</p>`;
+          }
         }
+        logger.log('[gemini-routes] Восстановлено несколько параграфов');
+      } else {
+        // Есть HTML-теги, но не параграфы - просто очищаем
+        cleanedText = cleanResult;
+        logger.log('[gemini-routes] Очищен текст без параграфов');
       }
     } else {
       // Если оригинал не содержал HTML - просто очищаем от markdown
