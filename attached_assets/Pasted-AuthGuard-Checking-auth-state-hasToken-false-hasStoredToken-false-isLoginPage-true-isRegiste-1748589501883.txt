@@ -1,0 +1,430 @@
+AuthGuard: Checking auth state {hasToken: false, hasStoredToken: false, isLoginPage: true, isRegisterPage: false, userId: null}
+AuthGuard.tsx:139 AuthGuard: No valid authentication found
+queryClient.ts:74 
+            
+            
+           GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/auth/me 401 (Unauthorized)
+(anonymous) @ queryClient.ts:74
+fetchFn @ @tanstack_react-query.js?v=4862d14a:840
+run @ @tanstack_react-query.js?v=4862d14a:494
+start @ @tanstack_react-query.js?v=4862d14a:536
+fetch @ @tanstack_react-query.js?v=4862d14a:926
+executeFetch_fn @ @tanstack_react-query.js?v=4862d14a:2211
+onSubscribe @ @tanstack_react-query.js?v=4862d14a:1898
+subscribe @ @tanstack_react-query.js?v=4862d14a:24
+(anonymous) @ @tanstack_react-query.js?v=4862d14a:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=db2e0018:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=db2e0018:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=db2e0018:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=db2e0018:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=db2e0018:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=db2e0018:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=db2e0018:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=db2e0018:19447
+(anonymous) @ chunk-RPCDYKBN.js?v=db2e0018:19328
+workLoop @ chunk-RPCDYKBN.js?v=db2e0018:197
+flushWork @ chunk-RPCDYKBN.js?v=db2e0018:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=db2e0018:384Understand this error
+login.tsx:35 Attempting login with: lbrspb@gmail.com
+login.tsx:41 Sending login request to: /api/auth/login
+login.tsx:70 Received auth tokens, access token length: 321
+login.tsx:71 Login successful, user ID: 53921f16-f51d-4591-80b9-8caa4fde4d13
+store.ts:41 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+AuthGuard.tsx:31 AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: true, isRegisterPage: false, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+AuthGuard.tsx:69 AuthGuard: Validating token from store
+Layout.tsx:183 Layout рендер: isAdmin = false isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+index.tsx:39 Авторизован с токеном, длина: 321
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+Layout.tsx:106 Авторизован с токеном, длина: 321
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+AuthGuard.tsx:31 AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: false, isRegisterPage: false, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+AuthGuard.tsx:69 AuthGuard: Validating token from store
+api.ts:127 API Request: GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/user-api-keys undefined
+AuthGuard.tsx:57 AuthGuard: Token validation result: {valid: true, user: {…}}
+AuthGuard.tsx:73 AuthGuard: Token validation successful
+index.tsx:62 Campaigns loaded: 8
+AuthGuard.tsx:57 AuthGuard: Token validation result: {valid: true, user: {…}}
+AuthGuard.tsx:73 AuthGuard: Token validation successful
+api.ts:139 API Response: 200 GET /user-api-keys {success: true, data: Array(8)}
+SettingsDialog.tsx:105 Successfully fetched 8 API keys
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1748589401805}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+Layout.tsx:59 Получены данные пользователя: {user: {…}}
+Layout.tsx:70 Проверка администратора: is_smm_admin = true итог: true
+Layout.tsx:76 Пользователь является администратором по email: lbrspb@gmail.com
+3Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+CampaignSelector.tsx:108 Auto-selected campaign: "Нерудстрой"
+campaignStore.ts:88 Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+ImageGenerationDialog.tsx:129 🔄 Сброс состояния ImageGenerationDialog при открытии {contentId: undefined, hasInitialPrompt: false, hasInitialContent: false}
+ImageGenerationDialog.tsx:186 Создание нового контента - промт сброшен
+ImageGenerationDialog.tsx:230 Выбрана вкладка прямого промта (по умолчанию)
+Layout.tsx:106 Авторизован с токеном, длина: 321
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+AuthGuard.tsx:31 AuthGuard: Checking auth state {hasToken: true, hasStoredToken: true, isLoginPage: false, isRegisterPage: false, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+AuthGuard.tsx:69 AuthGuard: Validating token from store
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = false userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = null
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+api.ts:127 API Request: GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/api/fal-ai-models?nocache=1748589406349 undefined
+index.tsx:283 Загрузка контента для кампании: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+index.tsx:311 Загрузка ключевых слов для кампании: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+index.tsx:267 
+            
+            
+           GET https://de45f609-15e7-449f-a439-9b9a36f3658e-00-2umrdnr87jxq0.worf.replit.dev/api/campaigns 401 (Unauthorized)
+queryFn @ index.tsx:267
+fetchFn @ @tanstack_react-query.js?v=4862d14a:840
+run @ @tanstack_react-query.js?v=4862d14a:494
+start @ @tanstack_react-query.js?v=4862d14a:536
+fetch @ @tanstack_react-query.js?v=4862d14a:926
+executeFetch_fn @ @tanstack_react-query.js?v=4862d14a:2211
+onSubscribe @ @tanstack_react-query.js?v=4862d14a:1898
+subscribe @ @tanstack_react-query.js?v=4862d14a:24
+(anonymous) @ @tanstack_react-query.js?v=4862d14a:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=db2e0018:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=db2e0018:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=db2e0018:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=db2e0018:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=db2e0018:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=db2e0018:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=db2e0018:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=db2e0018:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=db2e0018:19416
+commitRoot @ chunk-RPCDYKBN.js?v=db2e0018:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=db2e0018:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=db2e0018:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=db2e0018:18627Understand this error
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+api.ts:139 API Response: 200 GET /api/fal-ai-models?nocache=1748589406349 <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style data-vite-theme="" data-inject-first="">:root {
+      --background: 345 94% 98%;
+--foreground: 344 100% 3%;
+--muted: 344 86% 90%;
+--muted-foreground: 344 100% 3%;
+--popover: 345 94% 98%;
+--popover-foreground: 344 100% 3%;
+--card: 345 94% 98%;
+--card-foreground: 344 100% 3%;
+--border: 344 86% 90%;
+--input: 344 86% 90%;
+--primary: 345 0% 39%;
+--primary-foreground: 344 0% 98%;
+--secondary: 344 100% 95%;
+--secondary-foreground: 344 100% 3%;
+--accent: 344 100% 95%;
+--accent-foreground: 344 100% 3%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 345 0% 39%;
+--radius: 0.5rem;
+  }
+  .dark {
+      --background: 343 24% 9%;
+--foreground: 344 86% 90%;
+--muted: 338 50% 20%;
+--muted-foreground: 344 86% 90%;
+--popover: 343 24% 9%;
+--popover-foreground: 344 86% 90%;
+--card: 343 24% 9%;
+--card-foreground: 344 86% 90%;
+--border: 338 50% 20%;
+--input: 338 50% 20%;
+--primary: 336 0% 62%;
+--primary-foreground: 342 0% 99%;
+--secondary: 338 50% 20%;
+--secondary-foreground: 344 86% 90%;
+--accent: 338 50% 20%;
+--accent-foreground: 344 86% 90%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 336 0% 62%;
+--radius: 0.5rem;
+  }</style>
+
+    <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+    <script type="module">
+import RefreshRuntime from "/@react-refresh"
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$ = () => {}
+window.$RefreshSig$ = () => (type) => type
+window.__vite_plugin_react_preamble_installed__ = true
+</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SMM Manager</title>
+    <script type="module">"use strict";(()=>{var t={HIGHLIGHT_COLOR:"#8B5CF6",HIGHLIGHT_BG:"#8B5CF610",Z_INDEX:{BASE:1e4,OVERLAY:10001,TOOLTIP:10002,CONTENT:10003},HOVERED_ATTR:"data-replit-hovered",SELECTED_ATTR:"data-replit-selected",TOOLTIP_OFFSET:25,MAX_TOOLTIP_WIDTH:200,ALLOWED_DOMAIN:".replit.dev"},s=`
+  .replit-beacon-tooltip {
+    position: fixed;
+    z-index: ${t.Z_INDEX.TOOLTIP};
+    pointer-events: none;
+    background-color: ${t.HIGHLIGHT_COLOR};
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    white-space: nowrap;
+    display: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: opacity 0.2s ease-in-out;
+    margin: 0;
+  }
+
+  /* Base positioning for highlighted elements */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}] {
+    position: relative !important;
+    z-index: ${t.Z_INDEX.BASE} !important;
+  }
+
+  /* Common overlay styles */
+  [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}]::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: ${t.Z_INDEX.OVERLAY};
+    transition: none !important;
+    box-sizing: border-box;
+  }
+
+  /* Hover state */
+  [${t.HOVERED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+    border: 2px dashed ${t.HIGHLIGHT_COLOR};
+  }
+
+  /* Selected state - we can add dotted border, removed due to visual bugs and inconsistencies across different element types */
+  [${t.SELECTED_ATTR}]::before {
+    background-color: ${t.HIGHLIGHT_BG};
+  }
+
+  /* Preserve child element positioning */
+  [${t.HOVERED_ATTR}] > *,
+  [${t.SELECTED_ATTR}] > * {
+    position: relative;
+    z-index: ${t.Z_INDEX.CONTENT};
+  }
+
+  /* Special handling for images */
+  img[${t.HOVERED_ATTR}],
+  img[${t.SELECTED_ATTR}] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Prevent nested highlights */
+  [${t.HOVERED_ATTR}] [${t.HOVERED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.HOVERED_ATTR}] [${t.SELECTED_ATTR}]::before,
+  [${t.SELECTED_ATTR}] [${t.HOVERED_ATTR}]::before {
+    display: none;
+  }
+
+  /* Fix for absolutely positioned elements */
+  [${t.HOVERED_ATTR}] [class*="absolute"],
+  [${t.SELECTED_ATTR}] [class*="absolute"] {
+    z-index: ${t.Z_INDEX.CONTENT} !important;
+  }
+
+  /* Fix for flex and grid layouts */
+  [${t.HOVERED_ATTR}].flex,
+  [${t.SELECTED_ATTR}].flex,
+  [${t.HOVERED_ATTR}].grid,
+  [${t.SELECTED_ATTR}].grid {
+    display: flex !important;
+  }
+
+  /* Prevent transition jumps */
+  [${t.HOVERED_ATTR}],
+  [${t.SELECTED_ATTR}],
+  [${t.HOVERED_ATTR}] *,
+  [${t.SELECTED_ATTR}] * {
+    transition: none !important;
+    animation: none !im
+AuthGuard.tsx:57 AuthGuard: Token validation result: {valid: true, user: {…}}
+AuthGuard.tsx:73 AuthGuard: Token validation successful
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1748589408433}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+Layout.tsx:59 Получены данные пользователя: {user: {…}}
+Layout.tsx:70 Проверка администратора: is_smm_admin = true итог: true
+Layout.tsx:76 Пользователь является администратором по email: lbrspb@gmail.com
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+index.tsx:324 Загружено ключевых слов: 7
+index.tsx:296 Загружено контента: 0
+CampaignSelector.tsx:116 Выбрана кампания: "NPlanner.ru" (id: 46868c44-c6a4-4bed-accf-9ad07bba790e)
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+Layout.tsx:183 Layout рендер: isAdmin = true isSmmAdmin = true userIsAdmin = true userId = 53921f16-f51d-4591-80b9-8caa4fde4d13 userEmail = lbrspb@gmail.com
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:296 Загружено контента: 100
+2accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+hook.js:608 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`. Error Component Stack
+    at Badge (badge.tsx:32:18)
+    at chunk-UACHJROW.js?v=db2e0018:52:11
+    at chunk-UACHJROW.js?v=db2e0018:33:11
+    at chunk-RLTE5R7I.js?v=db2e0018:41:13
+    at chunk-UACHJROW.js?v=db2e0018:52:11
+    at chunk-UACHJROW.js?v=db2e0018:33:11
+    at chunk-RLTE5R7I.js?v=db2e0018:41:13
+    at chunk-EYZBUH3S.js?v=db2e0018:1982:13
+    at @radix-ui_react-tooltip.js?v=5c5c3fd7:190:13
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at Provider (chunk-EYZBUH3S.js?v=db2e0018:1917:15)
+    at Popper (chunk-EYZBUH3S.js?v=db2e0018:1974:11)
+    at Tooltip (@radix-ui_react-tooltip.js?v=5c5c3fd7:108:5)
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=5c5c3fd7:64:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ScheduledPostInfo (ScheduledPostInfo.tsx:130:37)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=db2e0018:41:13
+    at @radix-ui_react-accordion.js?v=2acf7d6b:121:11
+    at Presence (chunk-67VZ6NIO.js?v=db2e0018:24:11)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:114:13
+    at @radix-ui_react-accordion.js?v=2acf7d6b:445:13
+    at _c7 (accordion.tsx:142:6)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=db2e0018:41:13
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:55:7
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:363:13
+    at _c3 (accordion.tsx:39:6)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=db2e0018:41:13
+    at chunk-UACHJROW.js?v=db2e0018:52:11
+    at chunk-UACHJROW.js?v=db2e0018:33:11
+    at chunk-MRB2OOEX.js?v=db2e0018:98:15
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:267:13
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at Provider (chunk-7X6RRC7I.js?v=db2e0018:38:15)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:234:12
+    at Provider (chunk-MRB2OOEX.js?v=db2e0018:28:15)
+    at CollectionProvider (chunk-MRB2OOEX.js?v=db2e0018:89:13)
+    at @radix-ui_react-accordion.js?v=2acf7d6b:193:13
+    at _c (accordion.tsx:12:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c9 (card.tsx:62:6)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:112:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:23:26)
+    at WithLayout (App.tsx:40:23)
+    at _c8 (<anonymous>)
+    at Route (wouter.js?v=5ffe6484:323:16)
+    at Switch (wouter.js?v=5ffe6484:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=4862d14a:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+printWarning @ chunk-RPCDYKBN.js?v=db2e0018:521
+error @ chunk-RPCDYKBN.js?v=db2e0018:505
+validateFunctionComponentInDev @ chunk-RPCDYKBN.js?v=db2e0018:15013
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=db2e0018:14988
+beginWork @ chunk-RPCDYKBN.js?v=db2e0018:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=db2e0018:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=db2e0018:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=db2e0018:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=db2e0018:19116
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=db2e0018:18874
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=db2e0018:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=db2e0018:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=4862d14a:555
+flush @ @tanstack_react-query.js?v=4862d14a:569
+batch @ @tanstack_react-query.js?v=4862d14a:587
+dispatch_fn @ @tanstack_react-query.js?v=4862d14a:996
+setData @ @tanstack_react-query.js?v=4862d14a:696
+onSuccess @ @tanstack_react-query.js?v=4862d14a:897
+resolve @ @tanstack_react-query.js?v=4862d14a:456
+Promise.then
+run @ @tanstack_react-query.js?v=4862d14a:498
+start @ @tanstack_react-query.js?v=4862d14a:536
+fetch @ @tanstack_react-query.js?v=4862d14a:926
+executeFetch_fn @ @tanstack_react-query.js?v=4862d14a:2211
+setOptions @ @tanstack_react-query.js?v=4862d14a:1955
+(anonymous) @ @tanstack_react-query.js?v=4862d14a:3032
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=db2e0018:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=db2e0018:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=db2e0018:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=db2e0018:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=db2e0018:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=db2e0018:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=db2e0018:19447
+(anonymous) @ chunk-RPCDYKBN.js?v=db2e0018:19328
+workLoop @ chunk-RPCDYKBN.js?v=db2e0018:197
+flushWork @ chunk-RPCDYKBN.js?v=db2e0018:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=db2e0018:384Understand this error
+4accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+6accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:296 Загружено контента: 100
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 33

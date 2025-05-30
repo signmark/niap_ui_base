@@ -28,13 +28,7 @@ export function AuthGuard({ children }: Props) {
     const isLoginPage = location === '/auth/login' || location === '/login';
     const isRegisterPage = location === '/auth/register';
     
-    console.log('AuthGuard: Checking auth state', { 
-      hasToken: !!token, 
-      hasStoredToken: !!storedToken, 
-      isLoginPage,
-      isRegisterPage,
-      userId
-    });
+    // Убрано избыточное логирование
 
     const validateToken = async (accessToken: string): Promise<boolean> => {
       try {
@@ -54,7 +48,7 @@ export function AuthGuard({ children }: Props) {
         }
 
         const data = await response.json();
-        console.log('AuthGuard: Token validation result:', data);
+        // Token validation result processed
         
         return data && data.valid === true;
       } catch (error) {
@@ -66,31 +60,31 @@ export function AuthGuard({ children }: Props) {
     const checkSession = async () => {
       // Если есть токен в store и userId, проверяем его действительность
       if (token && userId) {
-        console.log('AuthGuard: Validating token from store');
+        // Validating token from store
         const isValid = await validateToken(token);
         
         if (isValid) {
-          console.log('AuthGuard: Token validation successful');
+          // Token validation successful
           setIsSessionChecked(true);
           return;
         } else {
-          console.log('AuthGuard: Token from store is invalid, attempting to restore from localStorage');
+          // Token from store is invalid, attempting to restore from localStorage
           // Токен недействителен, пробуем взять из localStorage
         }
       }
       
       // Если есть сохраненный токен, проверяем его
       if (storedToken && storedUserId) {
-        console.log('AuthGuard: Validating token from localStorage');
+        // Validating token from localStorage
         const isValid = await validateToken(storedToken);
         
         if (isValid) {
-          console.log('AuthGuard: Stored token is valid, restoring session');
+          // Stored token is valid, restoring session
           setAuth(storedToken, storedUserId);
           setIsSessionChecked(true);
           return;
         } else {
-          console.log('AuthGuard: Stored token is invalid, attempting to refresh');
+          // Stored token is invalid, attempting to refresh
           // Сохраненный токен недействителен, пробуем обновить
         }
       }
