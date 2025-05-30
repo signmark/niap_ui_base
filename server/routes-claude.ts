@@ -182,10 +182,99 @@ export function registerClaudeRoutes(app: Router) {
       logger.log(`[claude-routes] Calling improveText with model ${model || 'default'}`, 'claude');
       const improvedText = await claudeService.improveText({ text, prompt, model });
       
+      logger.log(`[claude-routes] Claude response: ${improvedText.substring(0, 100)}...`, 'claude');
+      
+      // Профессиональная конвертация Markdown в HTML
+      const convertMarkdownToHtml = (markdown: string): string => {
+        let html = markdown;
+        
+        // Сначала обрабатываем блочные элементы
+        // Заголовки (должны быть в начале строки)
+        html = html.replace(/^### (.+)$/gm, '<h3><strong>$1</strong></h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2><strong>$1</strong></h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1><strong>$1</strong></h1>');
+        
+        // Затем обрабатываем инлайн-элементы
+        // Жирный текст (сохраняем как <strong>)
+        html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+        
+        // Курсив (сохраняем как <em>)
+        html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+        html = html.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+        
+        // Удаляем остатки кода
+        html = html.replace(/```[\s\S]*?```/g, '');
+        html = html.replace(/`([^`]+)`/g, '$1');
+        
+        // Убираем ссылки markdown, оставляем только текст
+        html = html.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+        
+        // Обрабатываем списки - убираем маркеры
+        html = html.replace(/^\s*[-*+]\s+/gm, '');
+        html = html.replace(/^\s*\d+\.\s+/gm, '');
+        
+        // Убираем цитаты
+        html = html.replace(/^\s*>\s+/gm, '');
+        
+        // Убираем горизонтальные линии
+        html = html.replace(/^[-=*]{3,}$/gm, '');
+        
+        // Разбиваем на параграфы
+        const paragraphs = html.split(/\n\s*\n/);
+        const processedParagraphs = paragraphs.map(para => {
+          const trimmed = para.trim();
+          if (!trimmed) return '';
+          
+          // Если уже есть HTML-теги, не оборачиваем в <p>
+          if (trimmed.match(/^<(h[1-6]|div|blockquote|ul|ol|li)/)) {
+            return trimmed;
+          }
+          
+          // Оборачиваем в параграф
+          return `<p>${trimmed}</p>`;
+        });
+        
+        return processedParagraphs.filter(p => p.trim()).join('');
+      };
+      
+      // Определяем, есть ли HTML в оригинальном тексте
+      const hasOriginalHtml = text.includes('<') && text.includes('>');
+      
+      // Проверяем наличие Markdown символов в результате
+      const hasMarkdownSymbols = improvedText.includes('#') || improvedText.includes('**') || improvedText.includes('*');
+      logger.log(`[claude-routes] AI результат содержит Markdown: ${hasMarkdownSymbols}`, 'claude');
+      logger.log(`[claude-routes] Оригинальный текст содержал HTML: ${hasOriginalHtml}`, 'claude');
+      
+      // Применяем конвертацию
+      let finalText = improvedText;
+      
+      // Если результат содержит Markdown - конвертируем в HTML
+      if (hasMarkdownSymbols) {
+        logger.log('[claude-routes] Конвертируем Markdown в HTML', 'claude');
+        finalText = convertMarkdownToHtml(improvedText);
+        logger.log(`[claude-routes] После конвертации: ${finalText.substring(0, 100)}...`, 'claude');
+      } else {
+        // Просто очищаем от возможных markdown символов
+        finalText = improvedText
+          .replace(/^#+\s+/gm, '')
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/\*([^*]+)\*/g, '$1')
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+          .replace(/^\s*[-*+]\s+/gm, '')
+          .replace(/^\s*\d+\.\s+/gm, '')
+          .replace(/^\s*>\s+/gm, '')
+          .replace(/^[-=*]{3,}$/gm, '')
+          .trim();
+        logger.log('[claude-routes] Очистили от markdown символов', 'claude');
+      }
+      
       logger.log('[claude-routes] Text improved successfully, returning response', 'claude');
       return res.json({
         success: true,
-        text: improvedText
+        text: finalText
       });
     } catch (error) {
       logger.error('[claude-routes] Error improving text with Claude:', error);
