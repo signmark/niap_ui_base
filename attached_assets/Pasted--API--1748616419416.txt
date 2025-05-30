@@ -1,0 +1,221 @@
+ Начинаем обновление токена
+ Используем локальный API для обновления токена
+ Токен успешно обновлен через API
+ Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+ Токен успешно обновлен, длина нового токена: 321
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+ Fetching user API keys using the API route
+ Проверка принадлежности кампании пользователю: Object
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Campaigns loaded: 7
+ Восстанавливаем сохраненную кампанию: "NPlanner.ru"
+ Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Successfully fetched 8 API keys
+ Загружено публикаций: 753
+ Успешно получены данные кампании: NPlanner.ru
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ 📤 API Запрос: GET /api/campaigns/46868c44-c6a4-4bed-accf-9ad07bba790e/questionnaire
+ 🔐 Статус авторизации: Object
+ 📤 Заголовки запроса: Object
+/api/campaigns/46868c44-c6a4-4bed-accf-9ad07bba790e/questionnaire:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+ Error fetching questionnaire: 
+overrideMethod @ installHook.js:1
+ Starting website analysis for URL: https://nplanner.ru/
+ 📤 API Запрос: POST /api/website-analysis
+ 🔐 Статус авторизации: Object
+ 📤 Заголовки запроса: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+ Успешно получены данные кампании: NPlanner.ru
+ Received analysis data: Object
+ After website analysis, form values: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Form submit with values: Object
+ Creating new questionnaire for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Creating questionnaire with data: Object
+ 📤 API Запрос: POST /api/campaigns/46868c44-c6a4-4bed-accf-9ad07bba790e/questionnaire
+ 🔐 Статус авторизации: Object
+ 📤 Заголовки запроса: Object
+/api/campaigns/46868c44-c6a4-4bed-accf-9ad07bba790e/questionnaire:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 (Bad Request)
+hook.js:608 Error in create mutation: Error: 400: {"error":"Анкета для этой кампании уже существует","data":{"id":"9d854bc4-907d-47b8-a068-e30ee83287a6","campaignId":"46868c44-c6a4-4bed-accf-9ad07bba790e","companyName":"НИАП","contactInfo":"Санкт-Петербург","businessDescription":"НИАП — профессиональный аналитический сервис для врачей и нутрициологов, предназначенный для создания персональных сбалансированных рационов и оценки состояния клиентов. Сервис позволяет экономить до 80% рабочего времени благодаря автоматизации процессов.","mainDirections":"Автоматическая диагностика состояния здоровья, создание персонализированных рационов, анализ пищевого статуса, формирование клиентских отчетов.","brandImage":"Научный инструмент анализа питания, созданный на основе официальных медицинских данных. Профессиональный и технологичный сервис для специалистов в области питания и профилактики заболеваний.","productsServices":"Создание клиентских отчетов в формате PDF, формирование меню, автоматический и ручной режимы составления рационов, сравнение продуктов и рецептов, автоматический расчёт нутриентов, картотека клиентов, онлайн-анкетирование, база продуктов и рецептов.","targetAudience":"Врачи-диетологи, нутрициологи, фитнес-тренеры, медицинские организации, специалисты по здоровому питанию и профилактике заболеваний.","customerResults":"Рационы питания, советы по питанию.","companyFeatures":"Сервис разработан учёными и инженерами ФГБУН «ФИЦ питания и биотехнологии» совместно с ООО «Нутриент Планнер». Учитывает более 85 факторов при создании рационов, поддерживает автоматический и ручной режимы работы, предоставляет подробные отчеты с инфографикой.","businessValues":"Строго научный подход, внимание к клиенту, экономия времени специалистов, повышение эффективности лечения и профилактики заболеваний, рост доверия и рейтинга специалистов.","productBeliefs":"Отличный, полезный продукт, повышающий качество жизни человека.","competitiveAdvantages":"Экономия до 80% рабочего времени, автоматизация процессов, учет более 85 факторов, подробные и наглядные отчеты для клиентов, интеграция с медицинскими системами, поддержка госпрограмм по здоровьесбережению и цифровизации здравоохранения.","marketingExpectations":"Рост кол-ва подписок на сервис.","createdAt":"2025-03-13T15:08:31.000Z"}}
+    at throwIfResNotOk (/src/lib/queryClient.ts:6:11)
+    at async apiRequest (/src/lib/queryClient.ts:36:3)
+    at async Object.mutationFn (/src/components/BusinessQuestionnaireForm.tsx:108:26)
+overrideMethod @ hook.js:608
+hook.js:608 Error creating questionnaire: Error: 400: {"error":"Анкета для этой кампании уже существует","data":{"id":"9d854bc4-907d-47b8-a068-e30ee83287a6","campaignId":"46868c44-c6a4-4bed-accf-9ad07bba790e","companyName":"НИАП","contactInfo":"Санкт-Петербург","businessDescription":"НИАП — профессиональный аналитический сервис для врачей и нутрициологов, предназначенный для создания персональных сбалансированных рационов и оценки состояния клиентов. Сервис позволяет экономить до 80% рабочего времени благодаря автоматизации процессов.","mainDirections":"Автоматическая диагностика состояния здоровья, создание персонализированных рационов, анализ пищевого статуса, формирование клиентских отчетов.","brandImage":"Научный инструмент анализа питания, созданный на основе официальных медицинских данных. Профессиональный и технологичный сервис для специалистов в области питания и профилактики заболеваний.","productsServices":"Создание клиентских отчетов в формате PDF, формирование меню, автоматический и ручной режимы составления рационов, сравнение продуктов и рецептов, автоматический расчёт нутриентов, картотека клиентов, онлайн-анкетирование, база продуктов и рецептов.","targetAudience":"Врачи-диетологи, нутрициологи, фитнес-тренеры, медицинские организации, специалисты по здоровому питанию и профилактике заболеваний.","customerResults":"Рационы питания, советы по питанию.","companyFeatures":"Сервис разработан учёными и инженерами ФГБУН «ФИЦ питания и биотехнологии» совместно с ООО «Нутриент Планнер». Учитывает более 85 факторов при создании рационов, поддерживает автоматический и ручной режимы работы, предоставляет подробные отчеты с инфографикой.","businessValues":"Строго научный подход, внимание к клиенту, экономия времени специалистов, повышение эффективности лечения и профилактики заболеваний, рост доверия и рейтинга специалистов.","productBeliefs":"Отличный, полезный продукт, повышающий качество жизни человека.","competitiveAdvantages":"Экономия до 80% рабочего времени, автоматизация процессов, учет более 85 факторов, подробные и наглядные отчеты для клиентов, интеграция с медицинскими системами, поддержка госпрограмм по здоровьесбережению и цифровизации здравоохранения.","marketingExpectations":"Рост кол-ва подписок на сервис.","createdAt":"2025-03-13T15:08:31.000Z"}}
+    at throwIfResNotOk (/src/lib/queryClient.ts:6:11)
+    at async apiRequest (/src/lib/queryClient.ts:36:3)
+    at async Object.mutationFn (/src/components/BusinessQuestionnaireForm.tsx:108:26)
+overrideMethod @ hook.js:608
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+ Checking fullscreen page for value: schedule exists: false url: undefined

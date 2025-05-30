@@ -8345,72 +8345,7 @@ Return your response as a JSON array in this exact format:
     }
   });
 
-  // Маршрут для получения анкеты кампании
-  app.get("/api/campaigns/:campaignId/questionnaire", authenticateUser, async (req, res) => {
-    try {
-      const { campaignId } = req.params;
-      const userId = (req as any).userId;
-      
-      console.log(`Запрос анкеты для кампании ${campaignId} пользователя ${userId}`);
-      
-      // Получаем токен из заголовков
-      const authHeader = req.headers['authorization'] as string;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-          success: false,
-          error: 'Токен авторизации не предоставлен'
-        });
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      const directusAuth = directusApiManager.instance;
-      
-      // Сначала получаем данные кампании для проверки доступа и получения questionnaire_id
-      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', campaignId, token);
-      
-      if (!campaignData) {
-        return res.status(404).json({
-          success: false,
-          error: 'Кампания не найдена'
-        });
-      }
-      
-      // Проверяем, что кампания принадлежит пользователю
-      if (campaignData.user_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          error: 'Доступ к кампании запрещен'
-        });
-      }
-      
-      // Если нет questionnaire_id, возвращаем пустой результат
-      if (!campaignData.questionnaire_id) {
-        return res.json({
-          success: true,
-          data: null,
-          message: 'Анкета для данной кампании не найдена'
-        });
-      }
-      
-      // Получаем данные анкеты
-      const questionnaireData = await directusAuth.directusCrud.readItem('campaign_questionnaires', campaignData.questionnaire_id, token);
-      
-      console.log(`Анкета для кампании ${campaignId} успешно получена`);
-      
-      res.json({
-        success: true,
-        data: questionnaireData
-      });
-      
-    } catch (error: any) {
-      console.error('Ошибка при получении анкеты кампании:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Ошибка сервера при получении анкеты кампании',
-        details: error.message
-      });
-    }
-  });
+
 
   app.patch("/api/campaigns/:id", authenticateUser, async (req, res) => {
     try {
