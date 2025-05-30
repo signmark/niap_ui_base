@@ -7862,6 +7862,9 @@ https://t.me/channelname/ - description`;
   app.get("/api/campaign-content", async (req, res) => {
     try {
       const campaignId = req.query.campaignId as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 500; // Увеличиваем лимит по умолчанию
+      const offset = (page - 1) * limit;
       const authHeader = req.headers['authorization'];
       
       if (!authHeader) {
@@ -7871,7 +7874,7 @@ https://t.me/channelname/ - description`;
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        console.log(`Fetching content for campaign ID: ${campaignId || 'all campaigns'}`);
+        console.log(`Fetching content for campaign ID: ${campaignId || 'all campaigns'}, page: ${page}, limit: ${limit}`);
         
         // Получаем ID пользователя из токена
         const userResponse = await directusApi.get('/users/me', {
@@ -7886,7 +7889,7 @@ https://t.me/channelname/ - description`;
           throw new Error('User ID not found');
         }
         
-        // Вместо storage API, получаем контент напрямую из Directus API
+        // Вместо storage API, получаем контент напрямую из Directus API с пагинацией
         const response = await directusApi.get('/items/campaign_content', {
           params: {
             filter: JSON.stringify({
@@ -7895,7 +7898,10 @@ https://t.me/channelname/ - description`;
               },
               ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
             }),
-            sort: ['-created_at']
+            sort: ['-created_at'],
+            limit: limit,
+            offset: offset,
+            meta: 'total_count,filter_count'
           },
           headers: {
             'Authorization': `Bearer ${token}`
@@ -7974,7 +7980,7 @@ https://t.me/channelname/ - description`;
           };
         });
         
-        console.log(`Found ${contentItems.length} content items for campaign ${campaignId || 'all'}`);
+        console.log(`Found ${contentItems.length} content items for campaign ${campaignId || 'all'} (page ${page})`);
         
         // Для отладки выводим ключевые слова из первого элемента
         if (contentItems.length > 0) {
@@ -7985,7 +7991,24 @@ https://t.me/channelname/ - description`;
             JSON.stringify(sample.keywords).substring(0, 100));
         }
         
-        res.json({ data: contentItems });
+        // Получаем метаданные пагинации
+        const meta = response.data.meta || {};
+        const totalCount = meta.total_count || contentItems.length;
+        const totalPages = Math.ceil(totalCount / limit);
+        
+        console.log(`Pagination info: total items ${totalCount}, current page ${page}/${totalPages}`);
+        
+        res.json({ 
+          data: contentItems,
+          meta: {
+            total: totalCount,
+            page: page,
+            limit: limit,
+            totalPages: totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+          }
+        });
       } catch (error) {
         console.error('Error getting campaign content:', error);
         if (error.response) {
