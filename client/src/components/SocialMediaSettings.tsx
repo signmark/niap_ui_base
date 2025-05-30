@@ -23,6 +23,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -345,351 +351,351 @@ export function SocialMediaSettings({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Telegram Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <h3 className="font-medium">Telegram</h3>
-            <ValidationBadge status={telegramStatus} />
-          </div>
-          <FormField
-            control={form.control}
-            name="telegram.token"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bot Token</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Введите токен бота" 
-                      {...field} 
-                      value={field.value || ''} 
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={validateTelegramToken}
-                    disabled={telegramStatus.isLoading}
-                  >
-                    {telegramStatus.isLoading ? 
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                    }
-                    Проверить
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="telegram.chatId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ID Чата или @username канала</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Например: -1001234567890 или @channel_name" 
-                    {...field} 
-                    value={field.value || ''}
-                    className={field.value?.startsWith('@') ? "border-green-500" : ""}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  <span className="font-medium text-orange-600">Важно!</span> Для корректной работы аналитики рекомендуется указывать @username канала, а не его ID. 
-                  Если вы укажете только числовой ID канала (например, -100...), вы не сможете собирать аналитику из-за ограничений Telegram API.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Accordion type="multiple" className="space-y-2">
+          {/* Telegram Settings */}
+          <AccordionItem value="telegram">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center space-x-2">
+                <span>Telegram</span>
+                <ValidationBadge status={telegramStatus} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="telegram.token"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bot Token</FormLabel>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Введите токен бота" 
+                          {...field} 
+                          value={field.value || ''} 
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={validateTelegramToken}
+                        disabled={telegramStatus.isLoading}
+                      >
+                        {telegramStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <AlertCircle className="h-4 w-4" />
+                        }
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="telegram.chatId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Чата или @username канала</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Например: -1001234567890 или @channel_name" 
+                        {...field} 
+                        value={field.value || ''}
+                        className={field.value?.startsWith('@') ? "border-green-500" : ""}
+                      />
+                    </FormControl>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-medium text-orange-600">Важно!</span> Для аналитики лучше указывать @username канала.
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* VK Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <h3 className="font-medium">ВКонтакте</h3>
-            <ValidationBadge status={vkStatus} />
-          </div>
-          <FormField
-            control={form.control}
-            name="vk.token"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Access Token</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Введите токен доступа" 
-                      {...field} 
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={validateVkToken}
-                    disabled={vkStatus.isLoading}
-                  >
-                    {vkStatus.isLoading ? 
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                    }
-                    Проверить
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="vk.groupId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ID Группы</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Например: 228626989 (без знака минус)" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  ID группы ВКонтакте можно найти в адресной строке: vk.com/club<span className="font-semibold">123456789</span> или в настройках группы. Вводите только числовой ID без знака минус.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* VK Settings */}
+          <AccordionItem value="vk">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center space-x-2">
+                <span>ВКонтакте</span>
+                <ValidationBadge status={vkStatus} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="vk.token"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Access Token</FormLabel>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Введите токен доступа" 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={validateVkToken}
+                        disabled={vkStatus.isLoading}
+                      >
+                        {vkStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <AlertCircle className="h-4 w-4" />
+                        }
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="vk.groupId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Группы</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Например: 228626989 (без знака минус)" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <div className="text-xs text-muted-foreground">
+                      ID группы можно найти в адресной строке: vk.com/club<span className="font-semibold">123456789</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Instagram Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <h3 className="font-medium">Instagram</h3>
-            <ValidationBadge status={instagramStatus} />
-          </div>
-          <FormField
-            control={form.control}
-            name="instagram.token"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Access Token</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Введите токен доступа" 
-                      {...field} 
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={validateInstagramToken}
-                    disabled={instagramStatus.isLoading}
-                  >
-                    {instagramStatus.isLoading ? 
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                    }
-                    Проверить
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="instagram.accessToken"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Дополнительный токен</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="password" 
-                    placeholder="Введите дополнительный токен" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="instagram.businessAccountId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ID бизнес-аккаунта</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Например: 17841409299499997" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Для публикации в Instagram требуется ID бизнес-аккаунта. Его можно получить через 
-                  <a href="https://developers.facebook.com/tools/explorer/" target="_blank" className="text-blue-500 ml-1 hover:underline">Graph API Explorer</a>. 
-                  Подключите Instagram к Facebook Business Suite для корректной работы публикаций.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* Instagram Settings */}
+          <AccordionItem value="instagram">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center space-x-2">
+                <span>Instagram</span>
+                <ValidationBadge status={instagramStatus} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="instagram.token"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Access Token</FormLabel>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Введите токен доступа" 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={validateInstagramToken}
+                        disabled={instagramStatus.isLoading}
+                      >
+                        {instagramStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <AlertCircle className="h-4 w-4" />
+                        }
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="instagram.accessToken"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Дополнительный токен</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Введите дополнительный токен" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="instagram.businessAccountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID бизнес-аккаунта</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Например: 17841409299499997" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <div className="text-xs text-muted-foreground">
+                      Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Facebook Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <h3 className="font-medium">Facebook</h3>
-            <ValidationBadge status={facebookStatus} />
-          </div>
-          <FormField
-            control={form.control}
-            name="facebook.token"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Access Token</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Введите токен доступа"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={validateFacebookToken}
-                    disabled={facebookStatus.isLoading}
-                  >
-                    {facebookStatus.isLoading ? 
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                    }
-                    Проверить
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="facebook.pageId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Page ID</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Например: 102938475647382"
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  ID Facebook страницы можно найти в настройках страницы или в URL-адресе: facebook.com/<span className="font-semibold">yourpagename</span>. 
-                  Если используете числовой ID, убедитесь, что он соответствует бизнес-странице, связанной с вашим Instagram-аккаунтом.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* Facebook Settings */}
+          <AccordionItem value="facebook">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center space-x-2">
+                <span>Facebook</span>
+                <ValidationBadge status={facebookStatus} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="facebook.token"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Access Token</FormLabel>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Введите токен доступа" 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={validateFacebookToken}
+                        disabled={facebookStatus.isLoading}
+                      >
+                        {facebookStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <AlertCircle className="h-4 w-4" />
+                        }
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="facebook.pageId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Page ID</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Например: 102938475647382" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <div className="text-xs text-muted-foreground">
+                      ID Facebook страницы можно найти в настройках страницы или в URL: facebook.com/yourpagename
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* YouTube Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <h3 className="font-medium">YouTube</h3>
-            <ValidationBadge status={youtubeStatus} />
-          </div>
-          <FormField
-            control={form.control}
-            name="youtube.apiKey"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>API Key</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Введите API ключ" 
-                      {...field} 
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={validateYoutubeApiKey}
-                    disabled={youtubeStatus.isLoading}
-                  >
-                    {youtubeStatus.isLoading ? 
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                    }
-                    Проверить
-                  </Button>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Для получения API ключа YouTube необходимо создать проект в 
-                  <a href="https://console.developers.google.com/" target="_blank" className="text-blue-500 ml-1 hover:underline">Google Cloud Console</a>, 
-                  активировать YouTube Data API v3 и создать ключ API. Убедитесь, что для API ключа нет ограничений по IP или URL.
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="youtube.channelId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ID Канала</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Например: UC_x5XG1OV2P6uZZ5FSM9Ttw" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground mt-1">
-                  ID YouTube канала начинается с "UC" и содержит 24 символа. Его можно найти в настройках канала YouTube Studio или 
-                  извлечь из URL-адреса вашего канала. Не путайте с именем пользователя канала (@username).
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* YouTube Settings */}
+          <AccordionItem value="youtube">
+            <AccordionTrigger className="py-2">
+              <div className="flex items-center space-x-2">
+                <span>YouTube</span>
+                <ValidationBadge status={youtubeStatus} />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="youtube.apiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>API Key</FormLabel>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Введите API ключ" 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={validateYoutubeApiKey}
+                        disabled={youtubeStatus.isLoading}
+                      >
+                        {youtubeStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <AlertCircle className="h-4 w-4" />
+                        }
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="youtube.channelId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Канала</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Например: UCxyz123abc..." 
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Сохранение...
-            </>
-          ) : (
-            "Сохранить настройки"
-          )}
-        </Button>
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Сохранить настройки
+          </Button>
+        </div>
       </form>
     </Form>
   );
