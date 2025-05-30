@@ -126,13 +126,23 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
               />
             </div>
 
+            <div>
+              <label className="text-sm font-medium mb-1 block">Описание кампании</label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Введите описание кампании (необязательно)"
+                rows={3}
+              />
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={onClose}>
                 Отмена
               </Button>
               <Button 
                 onClick={updateCampaign}
-                disabled={isUpdating || !name.trim() || name === currentName}
+                disabled={isUpdating || !name.trim() || (name === currentName && description === (campaignData?.description || ""))}
               >
                 {isUpdating ? (
                   <>
