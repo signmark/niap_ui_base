@@ -1,0 +1,40 @@
+api/auth/me:1 
+            
+            
+           Failed to load resource: the server responded with a status of 401 (Unauthorized)
+login.tsx:35 Attempting login with: lbrspb@gmail.com
+login.tsx:41 Sending login request to: /api/auth/login
+login.tsx:70 Received auth tokens, access token length: 321
+login.tsx:71 Login successful, user ID: 53921f16-f51d-4591-80b9-8caa4fde4d13
+store.ts:41 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+index.tsx:39 Авторизован с токеном, длина: 321
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+index.tsx:62 Campaigns loaded: 8
+store.ts:113 Ответ сервера на запрос проверки админа: Object
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+SettingsDialog.tsx:105 Successfully fetched 8 API keys
+CampaignSelector.tsx:108 Auto-selected campaign: "Нерудстрой"
+campaignStore.ts:88 Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+index.tsx:38 Загрузка публикаций для кампании: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: Object
+store.ts:113 Ответ сервера на запрос проверки админа: Object
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+index.tsx:51 Загружено публикаций: 0
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+CampaignSelector.tsx:116 Выбрана кампания: "NPlanner.ru" (id: 46868c44-c6a4-4bed-accf-9ad07bba790e)
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+index.tsx:38 Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: Object
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+index.tsx:51 Загружено публикаций: 100
+index.tsx:38 Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:51 Загружено публикаций: 100
