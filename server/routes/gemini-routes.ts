@@ -62,82 +62,22 @@ geminiRouter.post('/improve-text', async (req, res) => {
     
     logger.log(`[gemini-routes] Обработка текста: ${text.substring(0, 50)}...`);
     
-    // Извлекаем структуру HTML и текст отдельно
-    function extractHtmlStructure(htmlText: string) {
-      const sections: Array<{type: 'tag' | 'text', content: string, tag?: string}> = [];
-      let currentPos = 0;
-      
-      // Находим все HTML-теги
-      const tagRegex = /<\/?[^>]+>/g;
-      let match;
-      
-      while ((match = tagRegex.exec(htmlText)) !== null) {
-        // Добавляем текст перед тегом
-        if (match.index > currentPos) {
-          const textContent = htmlText.slice(currentPos, match.index);
-          if (textContent.trim()) {
-            sections.push({type: 'text', content: textContent});
-          }
-        }
-        
-        // Добавляем тег
-        sections.push({type: 'tag', content: match[0], tag: match[0]});
-        currentPos = match.index + match[0].length;
-      }
-      
-      // Добавляем оставшийся текст
-      if (currentPos < htmlText.length) {
-        const textContent = htmlText.slice(currentPos);
-        if (textContent.trim()) {
-          sections.push({type: 'text', content: textContent});
-        }
-      }
-      
-      return sections;
-    }
+    // Более простой и надежный подход: всегда конвертируем результат
+    logger.log('[gemini-routes] Обрабатываем текст через AI и конвертируем результат');
     
-    // Если это HTML-текст, обрабатываем структурированно
-    if (text.includes('<') && text.includes('>')) {
-      logger.log('[gemini-routes] Обнаружен HTML-текст, используем структурированный подход');
-      
-      const sections = extractHtmlStructure(text);
-      let improvedSections: typeof sections = [];
-      
-      for (const section of sections) {
-        if (section.type === 'text' && section.content.trim()) {
-          // Улучшаем только текстовые части
-          const simplePrompt = `Исправь только грамматические ошибки в тексте. НЕ добавляй markdown, НЕ меняй смысл: "${section.content}"`;
-          try {
-            const improvedText = await geminiService.generateText(simplePrompt, 'gemini-1.5-flash');
-            improvedSections.push({...section, content: improvedText.replace(/[#*`_]/g, '').trim()});
-          } catch (error) {
-            // Если ошибка, оставляем оригинальный текст
-            improvedSections.push(section);
-          }
-        } else {
-          // HTML-теги оставляем без изменений
-          improvedSections.push(section);
-        }
-      }
-      
-      // Собираем результат
-      const result = improvedSections.map(s => s.content).join('');
-      logger.log('[gemini-routes] HTML-структура сохранена, текст улучшен');
-      
-      return res.json({
-        success: true,
-        text: result
-      });
-    }
+    // Определяем, есть ли HTML в оригинальном тексте
+    const hasOriginalHtml = text.includes('<') && text.includes('>');
+    logger.log(`[gemini-routes] Оригинальный текст содержит HTML: ${hasOriginalHtml}`);
     
     // Для обычного текста используем стандартный подход
     const userPrompt = `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
     
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
+    logger.log(`[gemini-routes] Получен результат от AI: ${result.substring(0, 100)}...`);
     
     // Профессиональная конвертация Markdown в HTML
-    function convertMarkdownToHtml(markdown: string): string {
+    const convertMarkdownToHtml = (markdown: string): string => {
       let html = markdown;
       
       // Сначала обрабатываем блочные элементы
@@ -188,17 +128,23 @@ geminiRouter.post('/improve-text', async (req, res) => {
       });
       
       return processedParagraphs.filter(p => p.trim()).join('');
-    }
+    };
     
     // Применяем конвертацию
     let cleanedText = result;
     
-    // Если исходный текст был HTML, а результат содержит Markdown
-    if (text.includes('<') && (result.includes('#') || result.includes('**') || result.includes('*'))) {
-      logger.log('[gemini-routes] Конвертируем Markdown обратно в HTML');
+    // Проверяем наличие Markdown символов в результате
+    const hasMarkdownSymbols = result.includes('#') || result.includes('**') || result.includes('*');
+    logger.log(`[gemini-routes] AI результат содержит Markdown: ${hasMarkdownSymbols}`);
+    logger.log(`[gemini-routes] Оригинальный текст содержал HTML: ${hasOriginalHtml}`);
+    
+    // Если результат содержит Markdown - конвертируем в HTML
+    if (hasMarkdownSymbols) {
+      logger.log('[gemini-routes] Конвертируем Markdown в HTML');
       cleanedText = convertMarkdownToHtml(result);
+      logger.log(`[gemini-routes] После конвертации: ${cleanedText.substring(0, 100)}...`);
     } else {
-      // Просто очищаем от markdown символов
+      // Просто очищаем от возможных markdown символов
       cleanedText = result
         .replace(/^#+\s+/gm, '')
         .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -211,6 +157,7 @@ geminiRouter.post('/improve-text', async (req, res) => {
         .replace(/^\s*>\s+/gm, '')
         .replace(/^[-=*]{3,}$/gm, '')
         .trim();
+      logger.log('[gemini-routes] Очистили от markdown символов');
     }
     
     logger.log('[gemini-routes] Текст успешно улучшен и очищен от markdown');
