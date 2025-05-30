@@ -7863,8 +7863,8 @@ https://t.me/channelname/ - description`;
     try {
       const campaignId = req.query.campaignId as string;
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 500; // Увеличиваем лимит по умолчанию
-      const offset = (page - 1) * limit;
+      const limit = parseInt(req.query.limit as string) || -1; // -1 означает без лимита
+      const offset = limit > 0 ? (page - 1) * limit : 0;
       const authHeader = req.headers['authorization'];
       
       if (!authHeader) {
@@ -7889,20 +7889,26 @@ https://t.me/channelname/ - description`;
           throw new Error('User ID not found');
         }
         
-        // Вместо storage API, получаем контент напрямую из Directus API с пагинацией
+        // Вместо storage API, получаем контент напрямую из Directus API без лимита
+        const params: any = {
+          filter: JSON.stringify({
+            user_id: {
+              _eq: userId
+            },
+            ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
+          }),
+          sort: ['-created_at'],
+          meta: 'total_count,filter_count'
+        };
+
+        // Добавляем лимит и оффсет только если лимит больше 0
+        if (limit > 0) {
+          params.limit = limit;
+          params.offset = offset;
+        }
+
         const response = await directusApi.get('/items/campaign_content', {
-          params: {
-            filter: JSON.stringify({
-              user_id: {
-                _eq: userId
-              },
-              ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
-            }),
-            sort: ['-created_at'],
-            limit: limit,
-            offset: offset,
-            meta: 'total_count,filter_count'
-          },
+          params,
           headers: {
             'Authorization': `Bearer ${token}`
           }
