@@ -421,8 +421,10 @@ export class PublishScheduler {
           const errorPlatforms = [];
 
           // Проходим по всем платформам и распределяем по статусам
-          log(`DEBUG: Детальная проверка платформ для контента ${item.id}:`, 'scheduler');
-          log(`DEBUG: Исходная структура social_platforms: ${JSON.stringify(platforms)}`, 'scheduler');
+          if (this.verboseLogging) {
+            log(`DEBUG: Детальная проверка платформ для контента ${item.id}:`, 'scheduler');
+            log(`DEBUG: Исходная структура social_platforms: ${JSON.stringify(platforms)}`, 'scheduler');
+          }
           
           // Счетчики для проверки проблемы с 2 платформами
           let totalPlatformsWithData = 0;
@@ -457,7 +459,9 @@ export class PublishScheduler {
               instagramPublished = (status === 'published');
             }
             
-            log(`DEBUG: Платформа ${platform}, статус: ${status}, selected: ${isSelected ? 'ДА/НЕ УСТАНОВЛЕНО' : 'НЕТ'}`, 'scheduler');
+            if (this.verboseLogging) {
+              log(`DEBUG: Платформа ${platform}, статус: ${status}, selected: ${isSelected ? 'ДА/НЕ УСТАНОВЛЕНО' : 'НЕТ'}`, 'scheduler');
+            }
             
             // Всегда учитываем платформу в независимости от selected
             switch(status) {
@@ -495,9 +499,13 @@ export class PublishScheduler {
           // 1. Если ВСЕ платформы в JSON имеют статус 'published'
           const allPublished = allPlatforms.length > 0 && allPlatforms.length === publishedPlatforms.length;
           
-          log(`DEBUG: Проверка всех опубликованных платформ: Всего=${allPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Результат=${allPublished}`, 'scheduler');
-          log(`DEBUG: Платформы: ${allPlatforms.join(', ')}`, 'scheduler');
-          log(`DEBUG: Опубликованные: ${publishedPlatforms.join(', ')}`, 'scheduler');
+          if (this.verboseLogging) {
+            log(`DEBUG: Проверка всех опубликованных платформ: Всего=${allPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Результат=${allPublished}`, 'scheduler');
+          }
+          if (this.verboseLogging) {
+            log(`DEBUG: Платформы: ${allPlatforms.join(', ')}`, 'scheduler');
+            log(`DEBUG: Опубликованные: ${publishedPlatforms.join(', ')}`, 'scheduler');
+          }
           
           // 2. Если есть ошибки и нет ожидающих платформ
           const hasErrors = errorPlatforms.length > 0;
