@@ -437,13 +437,13 @@ export default function PublicationCalendar({
               <div className="text-center py-6">
                 <p className="text-muted-foreground">Загрузка публикаций...</p>
               </div>
-            ) : Array.from(filteredContentMap.values()).length === 0 ? (
+            ) : filteredContent.length === 0 ? (
               <div className="text-center py-12 border rounded-lg">
                 <p className="text-muted-foreground">Нет публикаций на выбранную дату</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {Array.from(filteredContentMap.values()).map(post => (
+                {filteredContent.map(post => (
                   <div 
                     key={post.id}
                     className="p-4 border rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"

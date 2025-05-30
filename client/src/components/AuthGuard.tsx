@@ -43,7 +43,12 @@ export function AuthGuard({ children }: Props) {
         });
 
         if (!response.ok) {
-          console.warn('AuthGuard: Token validation failed, response status:', response.status);
+          if (response.status === 401) {
+            // Токен истек, очищаем localStorage
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('refresh_token');
+          }
           return false;
         }
 
