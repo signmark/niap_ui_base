@@ -10668,8 +10668,8 @@ ${datesText}
       });
       
       // Получаем ключи через API Key Service для каждого сервиса
-      const serviceNames: Array<'perplexity'|'deepseek'|'fal_ai'|'xmlriver'|'apify'|'social_searcher'> = [
-        'perplexity', 'deepseek', 'fal_ai', 'xmlriver', 'apify', 'social_searcher'
+      const serviceNames: Array<'deepseek'|'fal_ai'|'xmlriver'|'apify'|'social_searcher'> = [
+        'deepseek', 'fal_ai', 'xmlriver', 'apify', 'social_searcher'
       ];
       
       const results = await Promise.all(
