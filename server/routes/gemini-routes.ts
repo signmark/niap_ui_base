@@ -100,8 +100,8 @@ geminiRouter.post('/improve-text', async (req, res) => {
       const originalCleanText = text.replace(/<[^>]*>/g, '').trim();
       
       // Проверяем, что AI дал в ответ
-      if (result.includes('Грамматических ошибок') || result.includes('стилистически') || result.includes('**') || result.length > originalCleanText.length * 3) {
-        logger.log(`[gemini-routes] AI дал пояснения, применяем базовые исправления к HTML`);
+      if (result.includes('Грамматических ошибок') || result.includes('стилистически') || result.includes('замечание') || result.includes('обычно') || result.includes('**') || result.length > originalCleanText.length * 2) {
+        logger(`[gemini-routes] AI дал пояснения, применяем базовые исправления к HTML`);
         // Применяем простые грамматические исправления к оригинальному HTML
         finalText = text
           .replace(/Привет мир/g, 'Привет, мир')
