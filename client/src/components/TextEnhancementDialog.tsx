@@ -221,21 +221,18 @@ export function TextEnhancementDialog({
 Исходный текст для улучшения:
 ${text}`;
 
-      // Используем единый эндпоинт генерации контента
-      const response = await fetch('/api/generate-content', {
+      // Используем специальный эндпоинт для улучшения текста
+      const endpoint = `/api${getApiEndpoint()}`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          prompt: enhancementPrompt,
-          keywords: [],
-          tone: 'professional',
-          campaignId: null, // Для улучшения текста не нужна кампания
-          platform: 'general',
-          service: selectedService === 'gemini' ? selectedModelId || 'gemini-2.5-flash' : selectedService,
-          useCampaignData: false // Для улучшения текста не используем данные кампании
+          text: text,
+          prompt: getCurrentPrompt(),
+          model: selectedModelId
         })
       });
 
