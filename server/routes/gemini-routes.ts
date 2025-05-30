@@ -62,16 +62,17 @@ geminiRouter.post('/improve-text', async (req, res) => {
     
     logger.log(`[gemini-routes] Обработка текста: ${text.substring(0, 50)}...`);
     
-    // Более простой и надежный подход: всегда конвертируем результат
-    logger.log('[gemini-routes] Обрабатываем текст через AI и конвертируем результат');
-    
     // Определяем, есть ли HTML в оригинальном тексте
     const hasOriginalHtml = text.includes('<') && text.includes('>');
     logger.log(`[gemini-routes] Оригинальный текст содержит HTML: ${hasOriginalHtml}`);
     logger.log(`[gemini-routes] Исходный текст: ${text}`);
     
-    // Для обычного текста используем стандартный подход
-    const userPrompt = `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
+    // Специальный промпт для HTML текста
+    const userPrompt = hasOriginalHtml 
+      ? `Исправь только грамматические и стилистические ошибки в тексте. НЕ удаляй HTML теги. НЕ добавляй markdown. Верни только исправленный текст: ${text}`
+      : `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
+    
+    logger.log(`[gemini-routes] Используемый промпт: ${userPrompt.substring(0, 100)}...`);
     
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
