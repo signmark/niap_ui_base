@@ -4038,7 +4038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
   // Эндпоинт для генерации промта для изображения - переехал в новую централизованную систему  
-  app.post("/api/generate-image-prompt-disabled", authenticateUser, async (req, res) => {
+  app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
     try {
       const { content, keywords } = req.body;
       
