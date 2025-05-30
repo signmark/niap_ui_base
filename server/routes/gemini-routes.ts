@@ -143,26 +143,36 @@ geminiRouter.post('/improve-text', async (req, res) => {
     
     // Если оригинальный текст содержал HTML, восстанавливаем HTML-форматирование
     if (hasOriginalHtml) {
+      logger.log('[gemini-routes] Восстанавливаем HTML-форматирование');
+      
       if (hasMarkdownSymbols) {
         logger.log('[gemini-routes] Конвертируем Markdown в HTML');
         cleanedText = convertMarkdownToHtml(result);
         logger.log(`[gemini-routes] После конвертации: ${cleanedText.substring(0, 100)}...`);
       } else {
-        // Разбиваем текст на абзацы и оборачиваем в <p>
-        const paragraphs = result.split('\n\n').filter(p => p.trim());
-        cleanedText = paragraphs.map(paragraph => {
-          const trimmed = paragraph.trim();
-          if (!trimmed) return '';
-          
-          // Если уже есть HTML-теги, не оборачиваем в <p>
-          if (trimmed.match(/^<(h[1-6]|div|blockquote|ul|ol|li)/)) {
-            return trimmed;
+        // AI убрал HTML-теги, нужно их восстановить
+        // Определяем исходную структуру HTML
+        const originalHtmlStructure = text.match(/<[^>]+>/g) || [];
+        logger.log(`[gemini-routes] Найдено исходных HTML-тегов: ${originalHtmlStructure.length}`);
+        
+        if (originalHtmlStructure.length > 0) {
+          // Простейший случай - один параграф
+          if (originalHtmlStructure.join('') === '<p></p>' || text.startsWith('<p>') && text.endsWith('</p>')) {
+            cleanedText = `<p>${result.trim()}</p>`;
+            logger.log('[gemini-routes] Восстановлен единичный параграф');
+          } else {
+            // Разбиваем на абзацы и оборачиваем
+            const paragraphs = result.split('\n\n').filter(p => p.trim());
+            cleanedText = paragraphs.map(paragraph => {
+              const trimmed = paragraph.trim();
+              if (!trimmed) return '';
+              return `<p>${trimmed}</p>`;
+            }).filter(p => p.trim()).join('');
+            logger.log('[gemini-routes] Обернули несколько абзацев в HTML-теги');
           }
-          
-          // Оборачиваем в параграф
-          return `<p>${trimmed}</p>`;
-        }).filter(p => p.trim()).join('');
-        logger.log('[gemini-routes] Обернули текст в HTML-теги');
+        } else {
+          cleanedText = result;
+        }
       }
     } else {
       // Если оригинал не содержал HTML - просто очищаем от markdown
