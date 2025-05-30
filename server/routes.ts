@@ -4071,7 +4071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
             contents: [{
               parts: [{
-                text: `Create a detailed English image generation prompt from this Russian text: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nFocus on visual elements, lighting, composition. Include quality enhancers like "detailed", "high quality", "4k". Output ONLY the English prompt, no explanations.`
+                text: `Create a short, vivid English image prompt from this Russian text: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nUse visual descriptions, avoid quotes. Make it concise and artistic. Maximum 40 words.`
               }]
             }],
             generationConfig: {
@@ -4086,7 +4086,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
           
-          prompt = response.data.candidates[0].content.parts[0].text;
+          prompt = response.data.candidates[0].content.parts[0].text.replace(/['"]/g, '').trim();
           usedService = 'gemini-2.5';
           console.log('Successfully generated prompt with Gemini 2.5');
         }
@@ -4103,11 +4103,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const response = await axios.post('https://api.anthropic.com/v1/messages', {
               model: 'claude-3-sonnet-20240229',
               max_tokens: 300,
-              system: `You are an expert image prompt generator. Create detailed English prompts for AI image generation based on Russian text. Focus on visual elements, composition, lighting. Include quality enhancers like "detailed", "high quality", "4k". Output ONLY the prompt.`,
+              system: `You are an expert image prompt generator. Create short, vivid English prompts for AI image generation. Focus on visual elements, avoid quotes. Be concise and artistic.`,
               messages: [
                 {
                   role: 'user',
-                  content: `Create an image prompt from: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nOutput only the English prompt.`
+                  content: `Create a short image prompt from: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nMaximum 40 words, no quotes.`
                 }
               ]
             }, {
@@ -4118,7 +4118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             });
             
-            prompt = response.data.content[0].text;
+            prompt = response.data.content[0].text.replace(/['"]/g, '').trim();
             usedService = 'claude';
             console.log('Successfully generated prompt with Claude');
           }
@@ -4138,11 +4138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               messages: [
                 {
                   role: 'system',
-                  content: 'You are an expert image prompt generator. Create detailed English prompts for AI image generation. Focus on visual elements and include quality enhancers. Output ONLY the prompt.'
+                  content: 'You are an expert image prompt generator. Create short, vivid English prompts for AI image generation. Focus on visual elements, avoid quotes. Be concise and artistic.'
                 },
                 {
                   role: 'user',
-                  content: `Create an image prompt from this Russian text: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nOutput only the English prompt.`
+                  content: `Create a short image prompt from: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nMaximum 40 words, no quotes.`
                 }
               ],
               max_tokens: 300,
@@ -4154,7 +4154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             });
             
-            prompt = response.data.choices[0].message.content;
+            prompt = response.data.choices[0].message.content.replace(/['"]/g, '').trim();
             usedService = 'deepseek';
             console.log('Successfully generated prompt with DeepSeek');
           }
