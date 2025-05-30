@@ -4053,16 +4053,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
       
-      // Генерируем промт для изображения на основе текста локально
-      console.log(`Generating image prompt locally. Content length: ${content.length} chars`);
-      
       // Очищаем HTML теги из контента
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
-      // Локальная генерация промта для изображения
-      function generateImagePromptLocally(text: string, keywordsList: string[] = []): string {
-        // Базовые шаблоны для разных тем
+      // Пробуем использовать глобальные AI сервисы для генерации промтов
+      const { globalApiKeysService } = await import('./services/global-api-keys');
+      
+      let prompt: string | null = null;
+      let usedService = 'local';
+      
+      // 1. Сначала пробуем Gemini 2.5
+      try {
+        const geminiApiKey = await globalApiKeysService.getGlobalApiKey('gemini');
+        if (geminiApiKey) {
+          console.log('Trying Gemini 2.5 API for prompt generation...');
+          const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+            contents: [{
+              parts: [{
+                text: `Create a detailed English image generation prompt from this Russian text: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nFocus on visual elements, lighting, composition. Include quality enhancers like "detailed", "high quality", "4k". Output ONLY the English prompt, no explanations.`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 300
+            }
+          }, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          prompt = response.data.candidates[0].content.parts[0].text;
+          usedService = 'gemini-2.5';
+          console.log('Successfully generated prompt with Gemini 2.5');
+        }
+      } catch (error) {
+        console.log('Gemini 2.5 API failed, trying Claude...');
+      }
+      
+      // 2. Если Gemini не сработал, пробуем Claude
+      if (!prompt) {
+        try {
+          const claudeApiKey = await globalApiKeysService.getGlobalApiKey('claude');
+          if (claudeApiKey) {
+            console.log('Trying Claude API for prompt generation...');
+            const response = await axios.post('https://api.anthropic.com/v1/messages', {
+              model: 'claude-3-sonnet-20240229',
+              max_tokens: 300,
+              system: `You are an expert image prompt generator. Create detailed English prompts for AI image generation based on Russian text. Focus on visual elements, composition, lighting. Include quality enhancers like "detailed", "high quality", "4k". Output ONLY the prompt.`,
+              messages: [
+                {
+                  role: 'user',
+                  content: `Create an image prompt from: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nOutput only the English prompt.`
+                }
+              ]
+            }, {
+              headers: {
+                'Authorization': `Bearer ${claudeApiKey}`,
+                'Content-Type': 'application/json',
+                'anthropic-version': '2023-06-01'
+              }
+            });
+            
+            prompt = response.data.content[0].text;
+            usedService = 'claude';
+            console.log('Successfully generated prompt with Claude');
+          }
+        } catch (error) {
+          console.log('Claude API failed, trying DeepSeek...');
+        }
+      }
+      
+      // 3. Если Claude не сработал, пробуем DeepSeek
+      if (!prompt) {
+        try {
+          const deepseekApiKey = await globalApiKeysService.getGlobalApiKey('deepseek');
+          if (deepseekApiKey) {
+            console.log('Trying DeepSeek API for prompt generation...');
+            const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+              model: 'deepseek-chat',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are an expert image prompt generator. Create detailed English prompts for AI image generation. Focus on visual elements and include quality enhancers. Output ONLY the prompt.'
+                },
+                {
+                  role: 'user',
+                  content: `Create an image prompt from this Russian text: "${cleanContent}"\nKeywords: ${keywords?.join(', ') || 'none'}\nOutput only the English prompt.`
+                }
+              ],
+              max_tokens: 300,
+              temperature: 0.7
+            }, {
+              headers: {
+                'Authorization': `Bearer ${deepseekApiKey}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            prompt = response.data.choices[0].message.content;
+            usedService = 'deepseek';
+            console.log('Successfully generated prompt with DeepSeek');
+          }
+        } catch (error) {
+          console.log('DeepSeek API failed, using local fallback...');
+        }
+      }
+      
+      // 4. Если все AI сервисы не сработали, используем локальный генератор
+      if (!prompt) {
+        console.log('All AI services failed, using local prompt generation...');
         const templates = {
           health: "A vibrant and healthy lifestyle scene featuring fresh organic vegetables, fruits, and nutritious meals, bright natural lighting, clean modern kitchen setting, high quality, detailed, 4k",
           nutrition: "Professional nutrition concept with colorful fresh produce, balanced meal preparation, clean bright kitchen environment, soft natural lighting, photorealistic, detailed, masterpiece",
@@ -4073,52 +4176,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           default: "Professional high-quality photograph with clean composition, balanced lighting, modern aesthetic, detailed, 4k resolution, masterpiece"
         };
 
-        const lowerText = text.toLowerCase();
-        const allKeywords = keywordsList.map(k => k.toLowerCase());
+        const lowerText = cleanContent.toLowerCase();
+        const allKeywords = (keywords || []).map(k => k.toLowerCase());
         
-        // Определяем тему на основе ключевых слов и содержания
         if (lowerText.includes('питан') || lowerText.includes('еда') || lowerText.includes('пища') || 
             allKeywords.some(k => k.includes('питан') || k.includes('еда'))) {
-          return templates.nutrition;
-        }
-        
-        if (lowerText.includes('здоров') || lowerText.includes('диет') || 
+          prompt = templates.nutrition;
+        } else if (lowerText.includes('здоров') || lowerText.includes('диет') || 
             allKeywords.some(k => k.includes('здоров') || k.includes('диет'))) {
-          return templates.health;
-        }
-        
-        if (lowerText.includes('рецепт') || lowerText.includes('готов') || lowerText.includes('блюд') ||
+          prompt = templates.health;
+        } else if (lowerText.includes('рецепт') || lowerText.includes('готов') || lowerText.includes('блюд') ||
             allKeywords.some(k => k.includes('рецепт') || k.includes('готов'))) {
-          return templates.food;
-        }
-        
-        if (lowerText.includes('бизнес') || lowerText.includes('компан') || lowerText.includes('услуг') ||
+          prompt = templates.food;
+        } else if (lowerText.includes('бизнес') || lowerText.includes('компан') || lowerText.includes('услуг') ||
             allKeywords.some(k => k.includes('бизнес') || k.includes('компан'))) {
-          return templates.business;
-        }
-        
-        if (lowerText.includes('технолог') || lowerText.includes('digital') || lowerText.includes('онлайн') ||
+          prompt = templates.business;
+        } else if (lowerText.includes('технолог') || lowerText.includes('digital') || lowerText.includes('онлайн') ||
             allKeywords.some(k => k.includes('технолог') || k.includes('онлайн'))) {
-          return templates.technology;
-        }
-        
-        if (lowerText.includes('фитнес') || lowerText.includes('спорт') || lowerText.includes('тренир') ||
+          prompt = templates.technology;
+        } else if (lowerText.includes('фитнес') || lowerText.includes('спорт') || lowerText.includes('тренир') ||
             allKeywords.some(k => k.includes('фитнес') || k.includes('спорт'))) {
-          return templates.wellness;
+          prompt = templates.wellness;
+        } else {
+          prompt = templates.default;
         }
         
-        return templates.default;
+        usedService = 'local';
       }
-
-      const prompt = generateImagePromptLocally(cleanContent, keywords || []);
       
-      console.log(`Generated image prompt with Claude: ${prompt.substring(0, 100)}...`);
+      console.log(`Generated image prompt with ${usedService}: ${prompt?.substring(0, 100)}...`);
       
       // Возвращаем сгенерированный промт
       return res.json({
         success: true,
         prompt,
-        service: 'deepseek'
+        service: usedService
       });
     } catch (error: any) {
       console.error("Error generating prompt with DeepSeek:", error);
