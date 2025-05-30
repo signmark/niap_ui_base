@@ -5254,27 +5254,20 @@ ${siteContent}
               
               console.log(`[${requestId}] Processed ${finalKeywords.length} valid keywords`);
             }
-          } catch (processingError) {
-            console.error(`[${requestId}] Error during keyword processing:`, processingError);
+          } catch (aiError) {
+            console.error(`[${requestId}] Error during AI site analysis:`, aiError);
           }
-        } catch (perplexityError) {
-          console.error('Error using Perplexity API:', perplexityError);
-        }
-      }
-      
-      // Если перплексити не вернул результатов или это не URL, используем XMLRiver
-      if (finalKeywords.length === 0) {
-        console.log(`[${requestId}] Falling back to XMLRiver for keyword search`);
-        try {
-          // Получаем userId из запроса, установленный authenticateUser middleware
-          // Если пользователь не авторизован, используем временный ID
-          const userId = req.user?.id || 'guest';
-          const token = req.user?.token || null;
-          
-          console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
-          
-          // Получаем API ключ XMLRiver из сервиса API ключей
-          const xmlRiverConfig = await apiKeyService.getApiKey(userId, 'xmlriver', token);
+        
+        // Если AI не сработал, пробуем XMLRiver для обычных ключевых слов
+        if (finalKeywords.length === 0) {
+          console.log(`[${requestId}] Falling back to XMLRiver for keyword search`);
+          try {
+            const userId = req.user?.id || 'guest';
+            const token = req.user?.token || null;
+            
+            console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
+            
+            const xmlRiverConfig = await apiKeyService.getApiKey(userId, ApiServiceName.XMLRIVER, token);
           
           if (!xmlRiverConfig) {
             console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
