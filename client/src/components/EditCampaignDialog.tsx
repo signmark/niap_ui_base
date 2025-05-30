@@ -105,7 +105,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
   return (
     <DialogContent className="max-w-4xl">
       <DialogHeader>
-        <DialogTitle>Редактировать кампанию</DialogTitle>
+        <DialogTitle>Редактировать кампанию v2</DialogTitle>
       </DialogHeader>
 
       <Tabs defaultValue="general" className="mt-4">

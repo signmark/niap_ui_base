@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash } from "lucide-react";
+import { Plus, Search, Pencil, Trash, Settings } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { DeleteCampaignConfirmDialog } from "@/components/DeleteCampaignConfirmDialog";
+import { EditCampaignDialog } from "@/components/EditCampaignDialog";
 
 export default function Campaigns() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +26,10 @@ export default function Campaigns() {
   // Состояние для диалога подтверждения удаления кампании
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<{id: string, name: string} | null>(null);
+  
+  // Состояние для диалога редактирования кампании
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<{id: string; name: string} | null>(null);
   
   // Получаем функции для управления кампаниями
   const { setSelectedCampaign } = useCampaignStore();
@@ -285,6 +290,17 @@ export default function Campaigns() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      setEditingCampaign({id: campaign.id, name: campaign.name});
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Настройки
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
                       // Инициируем процесс удаления кампании через новую функцию
                       initiateDeleteCampaign({id: campaign.id, name: campaign.name});
                     }}
@@ -316,6 +332,22 @@ export default function Campaigns() {
           setCampaignToDelete(null);
         }}
       />
+
+      {/* Диалог редактирования кампании */}
+      {editingCampaign && (
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <EditCampaignDialog
+            campaignId={editingCampaign.id}
+            currentName={editingCampaign.name}
+            onClose={() => {
+              setEditDialogOpen(false);
+              setEditingCampaign(null);
+              // Обновляем список кампаний после редактирования
+              queryClient.invalidateQueries({ queryKey: ["/api/campaigns", userId] });
+            }}
+          />
+        </Dialog>
+      )}
     </div>
   );
 }
