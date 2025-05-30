@@ -4053,31 +4053,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
       
-      // Инициализируем DeepSeek сервис с ключом пользователя
-      const initialized = await deepseekService.initialize(userId, token);
-      
-      if (!initialized) {
-        return res.status(400).json({ 
-          error: "Не удалось инициализировать DeepSeek API", 
-          details: "API ключ не найден. Пожалуйста, добавьте API ключ в настройках пользователя." 
-        });
-      }
-      
-      // Генерируем промт для изображения на основе текста
-      console.log(`Generating image prompt with DeepSeek (optimized method). Content length: ${content.length} chars`);
+      // Генерируем промт для изображения на основе текста локально
+      console.log(`Generating image prompt locally. Content length: ${content.length} chars`);
       
       // Очищаем HTML теги из контента
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
-      // Отправляем контент напрямую в DeepSeek для генерации промта без предварительного перевода
-      // DeepSeek сам переведет контент и сгенерирует промт в одном запросе
-      const prompt = await deepseekService.generateImagePrompt(
-        cleanContent,
-        keywords || []
-      );
+      // Локальная генерация промта для изображения
+      function generateImagePromptLocally(text: string, keywordsList: string[] = []): string {
+        // Базовые шаблоны для разных тем
+        const templates = {
+          health: "A vibrant and healthy lifestyle scene featuring fresh organic vegetables, fruits, and nutritious meals, bright natural lighting, clean modern kitchen setting, high quality, detailed, 4k",
+          nutrition: "Professional nutrition concept with colorful fresh produce, balanced meal preparation, clean bright kitchen environment, soft natural lighting, photorealistic, detailed, masterpiece",
+          food: "Appetizing gourmet food photography with fresh ingredients, elegant presentation, warm ambient lighting, restaurant quality, high resolution, detailed composition",
+          wellness: "Wellness and health concept with natural elements, fresh ingredients, peaceful atmosphere, soft lighting, clean aesthetic, professional photography, 4k quality",
+          business: "Professional business environment with modern clean design, bright office lighting, sleek contemporary style, high quality, detailed, corporate aesthetic",
+          technology: "Modern technology concept with clean minimalist design, futuristic elements, professional lighting, high-tech atmosphere, detailed, 4k quality",
+          default: "Professional high-quality photograph with clean composition, balanced lighting, modern aesthetic, detailed, 4k resolution, masterpiece"
+        };
+
+        const lowerText = text.toLowerCase();
+        const allKeywords = keywordsList.map(k => k.toLowerCase());
+        
+        // Определяем тему на основе ключевых слов и содержания
+        if (lowerText.includes('питан') || lowerText.includes('еда') || lowerText.includes('пища') || 
+            allKeywords.some(k => k.includes('питан') || k.includes('еда'))) {
+          return templates.nutrition;
+        }
+        
+        if (lowerText.includes('здоров') || lowerText.includes('диет') || 
+            allKeywords.some(k => k.includes('здоров') || k.includes('диет'))) {
+          return templates.health;
+        }
+        
+        if (lowerText.includes('рецепт') || lowerText.includes('готов') || lowerText.includes('блюд') ||
+            allKeywords.some(k => k.includes('рецепт') || k.includes('готов'))) {
+          return templates.food;
+        }
+        
+        if (lowerText.includes('бизнес') || lowerText.includes('компан') || lowerText.includes('услуг') ||
+            allKeywords.some(k => k.includes('бизнес') || k.includes('компан'))) {
+          return templates.business;
+        }
+        
+        if (lowerText.includes('технолог') || lowerText.includes('digital') || lowerText.includes('онлайн') ||
+            allKeywords.some(k => k.includes('технолог') || k.includes('онлайн'))) {
+          return templates.technology;
+        }
+        
+        if (lowerText.includes('фитнес') || lowerText.includes('спорт') || lowerText.includes('тренир') ||
+            allKeywords.some(k => k.includes('фитнес') || k.includes('спорт'))) {
+          return templates.wellness;
+        }
+        
+        return templates.default;
+      }
+
+      const prompt = generateImagePromptLocally(cleanContent, keywords || []);
       
-      console.log(`Generated image prompt with DeepSeek: ${prompt.substring(0, 100)}...`);
+      console.log(`Generated image prompt with Claude: ${prompt.substring(0, 100)}...`);
       
       // Возвращаем сгенерированный промт
       return res.json({

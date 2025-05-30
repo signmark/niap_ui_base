@@ -440,7 +440,7 @@ Output ONLY the English prompt with no explanations or preamble.`;
       ];
 
       // Вызываем генерацию с соответствующими параметрами
-      const result = await this.generateText(messages, {
+      const result = await this.generateTextFromMessages(messages, {
         model: 'deepseek-chat',
         temperature: 0.7,  // Более высокая температура для творческих результатов
         max_tokens: 300    // Ограничиваем длину промта
