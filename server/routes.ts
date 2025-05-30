@@ -1,5 +1,4 @@
 import { deepseekService, DeepSeekMessage, DeepSeekService } from './services/deepseek';
-import { perplexityService } from './services/perplexity';
 import { ClaudeService } from './services/claude';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
@@ -187,7 +186,7 @@ function getCachedKeywordsByUrl(url: string): any[] | null {
 }
 
 // Функция для объединения ключевых слов из разных источников
-function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deepseekKeywords: any[] = []): any[] {
+function mergeKeywords(xmlRiverKeywords: any[], deepseekKeywords: any[] = []): any[] {
   // Создаем Map для уникальности по ключевому слову
   const keywordMap = new Map<string, any>();
   
@@ -198,15 +197,6 @@ function mergeKeywords(perplexityKeywords: any[], xmlRiverKeywords: any[], deeps
     if (!keywordMap.has(key)) {
       // Добавляем источник к ключевому слову
       keywordMap.set(key, { ...keyword, source: 'deepseek' });
-    }
-  });
-  
-  // Затем добавляем ключевые слова от Perplexity
-  perplexityKeywords.forEach(keyword => {
-    if (!keyword?.keyword) return;
-    const key = keyword.keyword.toLowerCase().trim();
-    if (!keywordMap.has(key)) {
-      keywordMap.set(key, { ...keyword, source: 'perplexity' });
     }
   });
   

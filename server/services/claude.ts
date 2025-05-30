@@ -209,7 +209,7 @@ export class ClaudeService {
       
       const result = await this.makeRequest({
         model: requestModel,
-        max_tokens: 4000,
+        max_tokens: 5000,
         temperature: 0.7,
         messages: [
           {
@@ -263,7 +263,7 @@ export class ClaudeService {
     try {
       const result = await this.makeRequest({
         model: requestModel,
-        max_tokens: 4000,
+        max_tokens: 5000,
         temperature: 0.7,
         messages: [
           {

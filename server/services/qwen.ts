@@ -96,7 +96,7 @@ export class QwenService {
     try {
       const model = options.model || 'qwen-plus';
       const temperature = options.temperature !== undefined ? options.temperature : 0.3;
-      const max_tokens = options.max_tokens || options.maxTokens || 1000;
+      const max_tokens = options.max_tokens || options.maxTokens || 5000;
       const top_p = options.top_p !== undefined ? options.top_p : 0.9;
       
       // Проверяем, что API ключ установлен
