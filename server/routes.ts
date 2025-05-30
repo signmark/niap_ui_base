@@ -7898,12 +7898,12 @@ https://t.me/channelname/ - description`;
             ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
           }),
           sort: ['-created_at'],
-          meta: 'total_count,filter_count'
+          meta: 'total_count,filter_count',
+          limit: limit > 0 ? limit : 10000  // Устанавливаем большой лимит вместо -1
         };
 
-        // Добавляем лимит и оффсет только если лимит больше 0
+        // Добавляем оффсет только если лимит больше 0 и есть пагинация
         if (limit > 0) {
-          params.limit = limit;
           params.offset = offset;
         }
 
