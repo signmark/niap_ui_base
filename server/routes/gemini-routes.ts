@@ -4,100 +4,7 @@ import { log as logger } from '../utils/logger';
 
 export const geminiRouter = express.Router();
 
-/**
- * Новая функция улучшения текста с правильным сохранением HTML
- * POST /api/gemini/improve-text-fixed
- */
-geminiRouter.post('/improve-text-fixed', async (req: Request, res: Response) => {
-  try {
-    const { text, prompt, model = 'gemini-1.5-flash' } = req.body;
-    
-    if (!text) {
-      return res.status(400).json({ error: 'Текст обязателен' });
-    }
-    
-    logger.log(`[improve-text-fixed] Исходный текст: "${text}"`);
-    
-    // Проверяем наличие HTML
-    const hasHtml = text.includes('<') && text.includes('>');
-    logger.log(`[improve-text-fixed] Содержит HTML: ${hasHtml}`);
-    
-    // Создаем промпт для AI
-    const aiPrompt = hasHtml 
-      ? `Исправь только грамматические и стилистические ошибки в тексте. ОБЯЗАТЕЛЬНО сохрани все HTML теги в том же виде. Не добавляй markdown. Верни только исправленный текст: ${text}`
-      : `Исправь грамматические ошибки в тексте. Не добавляй markdown или HTML. Верни только исправленный текст: ${text}`;
-    
-    logger.log(`[improve-text-fixed] Отправляем в AI`);
-    
-    // Получаем результат от AI
-    const aiResult = await geminiService.generateText(aiPrompt, model);
-    logger.log(`[improve-text-fixed] AI вернул: "${aiResult}"`);
-    
-    // Если исходный текст был с HTML, восстанавливаем структуру
-    if (hasHtml) {
-      logger.log(`[improve-text-fixed] ВОССТАНАВЛИВАЕМ HTML`);
-      
-      // Убираем возможные markdown символы
-      let cleanText = aiResult
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/^#+\s+/gm, '')
-        .trim();
-      
-      // Считаем параграфы в оригинале
-      const originalPCount = (text.match(/<p[^>]*>/g) || []).length;
-      logger.log(`[improve-text-fixed] Параграфов в оригинале: ${originalPCount}`);
-      
-      let resultHtml;
-      if (originalPCount === 1) {
-        // Один параграф
-        resultHtml = `<p>${cleanText}</p>`;
-      } else if (originalPCount > 1) {
-        // Несколько параграфов - разбиваем по предложениям
-        const sentences = cleanText.split(/(?<=[.!?])\s+/).filter(s => s.trim());
-        const sentencesPerP = Math.max(1, Math.ceil(sentences.length / originalPCount));
-        const paragraphs = [];
-        
-        for (let i = 0; i < sentences.length; i += sentencesPerP) {
-          const pSentences = sentences.slice(i, i + sentencesPerP);
-          paragraphs.push(`<p>${pSentences.join(' ').trim()}</p>`);
-        }
-        resultHtml = paragraphs.join('');
-      } else {
-        // Нет параграфов, создаем один
-        resultHtml = `<p>${cleanText}</p>`;
-      }
-      
-      logger.log(`[improve-text-fixed] Финальный HTML: "${resultHtml}"`);
-      
-      res.json({ 
-        success: true, 
-        text: resultHtml 
-      });
-    } else {
-      // Без HTML - просто возвращаем очищенный текст
-      const cleanText = aiResult
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/^#+\s+/gm, '')
-        .trim();
-      
-      logger.log(`[improve-text-fixed] Возвращаем обычный текст: "${cleanText}"`);
-      
-      res.json({ 
-        success: true, 
-        text: cleanText 
-      });
-    }
-    
-  } catch (error) {
-    logger.error('[improve-text-fixed] Ошибка:', error);
-    res.status(500).json({ 
-      error: 'Ошибка при улучшении текста',
-      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
-    });
-  }
-});
+
 
 /**
  * Тестирует доступность API Gemini
@@ -164,13 +71,20 @@ geminiRouter.post('/improve-text', async (req, res) => {
     
     // Специальный промпт для HTML текста
     const userPrompt = hasOriginalHtml 
-      ? `Исправь только грамматические и стилистические ошибки в тексте. НЕ удаляй HTML теги. НЕ добавляй markdown. Верни только исправленный текст: ${text}`
-      : `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
+      ? `Исправь грамматические ошибки и верни только исправленный текст с HTML тегами. Пример входа: <p>Привет мир!</p> Пример выхода: <p>Привет, мир!</p> Твой вход: ${text}`
+      : `Исправь грамматические ошибки и верни только исправленный текст без пояснений: ${text}`;
     
     logger.log(`[gemini-routes] Используемый промпт: ${userPrompt.substring(0, 100)}...`);
     
+    // Получаем модель из запроса, поддерживаем новую модель
+    let model = req.body.model || 'gemini-1.5-flash';
+    if (model === 'gemini-2.5-flash') {
+      model = 'gemini-2.5-flash-preview-05-20';
+    }
+    logger(`[gemini-routes] Используемая модель: ${model}`);
+    
     // Используем метод generateText для улучшения текста
-    const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
+    const result = await geminiService.generateText(userPrompt, model);
     logger.log(`[gemini-routes] Получен результат от AI: ${result.substring(0, 100)}...`);
     logger.log(`[gemini-routes] Полный результат от AI: ${result}`);
     
