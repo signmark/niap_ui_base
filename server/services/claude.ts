@@ -228,6 +228,11 @@ export class ClaudeService {
       // Удаляем служебный текст в тройных обратных кавычках (```)
       improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
       
+      // Удаляем лишние разделители --- в начале и конце текста
+      improvedText = improvedText.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+      improvedText = improvedText.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      improvedText = improvedText.trim(); // Убираем лишние пробелы
+      
       // Если оригинальный текст содержал HTML, но ответ не содержит, 
       // попробуем заключить абзацы в теги <p>
       if (containsHtml && !/<[^>]+>/.test(improvedText)) {
@@ -281,6 +286,11 @@ export class ClaudeService {
       
       // Удаляем служебный текст в тройных обратных кавычках (```)
       generatedContent = generatedContent.replace(/```[\s\S]*?```/g, '');
+      
+      // Удаляем лишние разделители --- в начале и конце текста
+      generatedContent = generatedContent.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+      generatedContent = generatedContent.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      generatedContent = generatedContent.trim(); // Убираем лишние пробелы
       
       logger.log('Content successfully generated with Claude AI', 'claude');
       return generatedContent;
@@ -340,6 +350,11 @@ export class ClaudeService {
       
       // Удаляем служебный текст в тройных обратных кавычках (```)
       generatedContent = generatedContent.replace(/```[\s\S]*?```/g, '');
+      
+      // Удаляем лишние разделители --- в начале и конце текста
+      generatedContent = generatedContent.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+      generatedContent = generatedContent.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      generatedContent = generatedContent.trim(); // Убираем лишние пробелы
       
       // Форматируем контент в зависимости от платформы
       const formattedContent = this.formatContentForPlatform(generatedContent, platform);
