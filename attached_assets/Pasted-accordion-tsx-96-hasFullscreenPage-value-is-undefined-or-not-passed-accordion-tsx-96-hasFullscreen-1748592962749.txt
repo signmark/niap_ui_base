@@ -1,0 +1,153 @@
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ImageGenerationDialog.tsx:274 Генерация промта на основе текста через DeepSeek (оптимизированный метод)
+ImageGenerationDialog.tsx:280 Очищенный текст перед отправкой: NPlanner.ru: Экономьте время и создавайте персональные рационы с НИАПВы врач-диетолог, нутрициолог или фитнес-тренер, стремящийся оптимизировать свою работу и предоставлять клиентам максимально качественные услуги? НИАП от NPlanner.ru – это профессиональный аналитический сервис, созданный специально для вас!НИАП – ваш незаменимый помощник в создании персональных сбалансированных рационов и оценке состояния клиентов. Забудьте о рутинных расчетах и бесконечных таблицах – НИАП автоматизирует процессы, позволяя вам экономить до 80% рабочего времени.Что НИАП может предложить вам:* Создание клиентских отчетов в формате PDF: Предоставляйте клиентам профессионально оформленные отчеты с подробным анализом их рациона и рекомендациями.
+* Формирование меню: Легко и быстро создавайте разнообразные и сбалансированные меню, отвечающие индивидуальным потребностям каждого клиента.
+* Автоматический и ручной режимы составления рационов: Выбирайте подходящий режим в зависимости от сложности задачи и ваших предпочтений. Автоматический режим поможет быстро создать базовый рацион, а ручной позволит внести точные корректировки.
+* Сравнение продуктов и рецептов: Анализируйте пищевую ценность различных продуктов и рецептов, чтобы сделать оптимальный выбор для своих клиентов.
+* Автоматический расчёт нутриентов: НИАП автоматически рассчитает содержание белков, жиров, углеводов, витаминов и минералов в рационе, избавляя вас от необходимости делать это вручную.
+* Картотека клиентов: Удобно храните и систематизируйте информацию о своих клиентах, отслеживайте их прогресс и адаптируйте рационы в соответствии с их потребностями.
+* Онлайн-анкетирование: Собирайте первичную информацию о клиентах с помощью онлайн-анкет, что экономит время на первой консультации.
+* База продуктов и рецептов: Получите доступ к обширной базе данных с информацией о пищевой ценности продуктов и рецептов.НИАП от NPlanner.ru идеально подходит для:* Врачей-диетологов
+* Нутрициологов
+* Фитнес-тренеров
+* Медицинских организаций
+* Специалистов по здоровому питанию и профилактике заболеванийНИАП от НИАП, расположенный в Санкт-Петербурге, – это инвестиция в ваше профессиональное развитие и повышение качества предоставляемых услуг. Позвольте себе работать эффективнее и уделять больше времени своим клиентам, а не рутинным задачам!
+ImageGenerationDialog.tsx:32 Автоматическое извлечение ключевых слов отключено
+ImageGenerationDialog.tsx:294 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/generate-image-prompt 400 (Bad Request)
+dispatchXhrRequest @ axios.js?v=49418eff:1637
+xhr @ axios.js?v=49418eff:1517
+dispatchRequest @ axios.js?v=49418eff:1992
+Promise.then
+_request @ axios.js?v=49418eff:2195
+request @ axios.js?v=49418eff:2104
+httpMethod @ axios.js?v=49418eff:2242
+wrap @ axios.js?v=49418eff:8
+mutationFn @ ImageGenerationDialog.tsx:294
+await in mutationFn
+fn @ @tanstack_react-query.js?v=49418eff:1189
+run @ @tanstack_react-query.js?v=49418eff:494
+start @ @tanstack_react-query.js?v=49418eff:536
+execute @ @tanstack_react-query.js?v=49418eff:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=49418eff:2630
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3295
+onClick @ ImageGenerationDialog.tsx:1112
+callCallback2 @ chunk-RPCDYKBN.js?v=49418eff:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=49418eff:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=49418eff:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=49418eff:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=49418eff:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=49418eff:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=49418eff:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=49418eff:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=49418eff:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=49418eff:5449
+api.ts:143 API Error: 400 for POST /generate-image-prompt {error: 'Ошибка при генерации промта', details: 'Не удалось сгенерировать промт для изображения: Request failed with status code 422'}
+overrideMethod @ hook.js:608
+(anonymous) @ api.ts:143
+Promise.then
+_request @ axios.js?v=49418eff:2195
+request @ axios.js?v=49418eff:2104
+httpMethod @ axios.js?v=49418eff:2242
+wrap @ axios.js?v=49418eff:8
+mutationFn @ ImageGenerationDialog.tsx:294
+await in mutationFn
+fn @ @tanstack_react-query.js?v=49418eff:1189
+run @ @tanstack_react-query.js?v=49418eff:494
+start @ @tanstack_react-query.js?v=49418eff:536
+execute @ @tanstack_react-query.js?v=49418eff:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=49418eff:2630
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3295
+onClick @ ImageGenerationDialog.tsx:1112
+callCallback2 @ chunk-RPCDYKBN.js?v=49418eff:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=49418eff:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=49418eff:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=49418eff:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=49418eff:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=49418eff:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=49418eff:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=49418eff:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=49418eff:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=49418eff:5449
+ImageGenerationDialog.tsx:325 Ошибка при генерации промта: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+overrideMethod @ hook.js:608
+onError @ ImageGenerationDialog.tsx:325
+execute @ @tanstack_react-query.js?v=49418eff:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=49418eff:2630
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3295
+onClick @ ImageGenerationDialog.tsx:1112
+callCallback2 @ chunk-RPCDYKBN.js?v=49418eff:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=49418eff:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=49418eff:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=49418eff:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=49418eff:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=49418eff:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=49418eff:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=49418eff:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=49418eff:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=49418eff:5449
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:296 Загружено контента: 740
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:96 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:206 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-sonnet-20240229
+index.tsx:324 Загружено ключевых слов: 33
