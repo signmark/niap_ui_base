@@ -228,7 +228,7 @@ export class DeepSeekService {
         { role: 'user', content: userContent }
       ];
 
-      const result = await this.generateText(messages, {
+      const result = await this.generateTextFromMessages(messages, {
         model: 'deepseek-chat',  // Используем самую мощную доступную модель DeepSeek для чата
         temperature: 0.2,        // Немного увеличиваем для разнообразия
         top_p: 0.85,
