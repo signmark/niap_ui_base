@@ -485,7 +485,9 @@ export class PublishScheduler {
             }
           }
           
-          log(`DEBUG: Статистика платформ - Всего: ${allPlatforms.length}, С данными: ${totalPlatformsWithData}, Без selected: ${platformsWithoutSelected}`, 'scheduler');
+          if (this.verboseLogging) {
+            log(`DEBUG: Статистика платформ - Всего: ${allPlatforms.length}, С данными: ${totalPlatformsWithData}, Без selected: ${platformsWithoutSelected}`, 'scheduler');
+          }
 
           // Логируем результаты анализа
           log(`Контент ${item.id} (${item.title || 'Без названия'}) - статус: ${item.status}`, 'scheduler');
