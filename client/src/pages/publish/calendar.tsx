@@ -50,7 +50,27 @@ export default function CalendarView() {
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
 
-  // Логи для отладки дат публикаций удалены
+  // Отладка данных календаря
+  useEffect(() => {
+    if (campaignContent.length > 0) {
+      console.log(`СТРАНИЦА КАЛЕНДАРЯ: Получено ${campaignContent.length} публикаций`);
+      
+      const withSocialPlatforms = campaignContent.filter(post => 
+        post.socialPlatforms && 
+        typeof post.socialPlatforms === 'object' && 
+        Object.keys(post.socialPlatforms).length > 0
+      );
+      
+      console.log(`СТРАНИЦА КАЛЕНДАРЯ: С социальными платформами: ${withSocialPlatforms.length}`);
+      
+      if (withSocialPlatforms.length > 0) {
+        console.log('СТРАНИЦА КАЛЕНДАРЯ: Первые 5 публикаций с платформами:');
+        withSocialPlatforms.slice(0, 5).forEach((post, i) => {
+          console.log(`  ${i + 1}. Title: "${post.title}", publishedAt: ${post.publishedAt}, scheduledAt: ${post.scheduledAt}, platforms: ${Object.keys(post.socialPlatforms || {}).join(', ')}`);
+        });
+      }
+    }
+  }, [campaignContent]);
 
   const handleCreateClick = () => {
     // Перенаправляем на страницу создания контента
