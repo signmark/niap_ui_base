@@ -91,29 +91,46 @@ ${text}`;
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
     
-    // Умная очистка: удаляем только Markdown, сохраняем HTML
-    let cleanedText = result
-      // Удаляем Markdown заголовки, но сохраняем HTML <h1>, <h2>
-      .replace(/^#+\s+/gm, '')
-      // Удаляем Markdown жирный/курсив, но сохраняем HTML <strong>, <em>
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/__([^_]+)__/g, '$1')
-      .replace(/_([^_]+)_/g, '$1')
-      // Удаляем Markdown код блоки
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/`([^`]+)`/g, '$1')
-      // Удаляем Markdown ссылки, оставляя текст
-      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-      // Удаляем Markdown списки
-      .replace(/^\s*[-*+]\s+/gm, '')
-      .replace(/^\s*\d+\.\s+/gm, '')
-      // Удаляем Markdown цитаты
-      .replace(/^\s*>\s+/gm, '')
-      // Удаляем Markdown разделители
-      .replace(/^[-=*]{3,}$/gm, '')
-      // НЕ удаляем HTML-теги - они должны остаться
-      .trim();
+    // Конвертируем Markdown обратно в HTML, если AI вернул Markdown
+    let cleanedText = result;
+    
+    // Если текст содержит исходные HTML-теги, попробуем их восстановить
+    if (text.includes('<') && !result.includes('<')) {
+      // AI конвертировал HTML в Markdown, восстанавливаем HTML-структуру
+      cleanedText = result
+        // Конвертируем Markdown заголовки в HTML
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // Конвертируем жирный текст
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        // Конвертируем курсив
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        // Разбиваем на параграфы
+        .split('\n\n')
+        .map(paragraph => {
+          if (paragraph.trim() && !paragraph.includes('<h') && !paragraph.includes('<p>')) {
+            return `<p>${paragraph.trim()}</p>`;
+          }
+          return paragraph;
+        })
+        .join('\n\n')
+        .trim();
+    } else {
+      // Просто удаляем лишнюю Markdown-разметку
+      cleanedText = result
+        .replace(/^#+\s+/gm, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+        .replace(/^\s*[-*+]\s+/gm, '')
+        .replace(/^\s*\d+\.\s+/gm, '')
+        .replace(/^\s*>\s+/gm, '')
+        .replace(/^[-=*]{3,}$/gm, '')
+        .trim();
+    }
     
     logger.log('[gemini-routes] Текст успешно улучшен и очищен от markdown');
     
