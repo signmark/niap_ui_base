@@ -62,31 +62,76 @@ geminiRouter.post('/improve-text', async (req, res) => {
     
     logger.log(`[gemini-routes] Обработка текста: ${text.substring(0, 50)}...`);
     
-    const userPrompt = `ТЫ КОРРЕКТОР, НЕ ПИСАТЕЛЬ. Твоя единственная задача: найти и исправить грамматические ошибки.
-
-СТРОГО ЗАПРЕЩЕНО:
-- Переписывать предложения
-- Менять смысл или содержание
-- Добавлять символы: ** # ``` --- 
-- Менять HTML теги: <h1>, <p>, <strong>, <em>
-- Добавлять новые слова
-- Изменять структуру текста
-- "Улучшать стиль" или "делать красивее"
-
-ЕДИНСТВЕННОЕ, ЧТО РАЗРЕШЕНО:
-- Исправить явные опечатки (например: "првильно" → "правильно")
-- Исправить падежи (например: "красивая дом" → "красивый дом")
-- Исправить пунктуацию (добавить/убрать запятые где нужно)
-
-ПРИМЕР РАБОТЫ:
-Входной текст: <p>Это красивая дом в центре города.</p>
-Результат: <p>Это красивый дом в центре города.</p>
-
-НЕ ДЕЛАЙ ТАК:
-❌ <p>**Это прекрасный особняк в сердце мегаполиса!**</p>
-
-ИСПРАВЬ ТОЛЬКО ОШИБКИ В ТЕКСТЕ:
-${text}`;
+    // Извлекаем структуру HTML и текст отдельно
+    function extractHtmlStructure(htmlText: string) {
+      const sections: Array<{type: 'tag' | 'text', content: string, tag?: string}> = [];
+      let currentPos = 0;
+      
+      // Находим все HTML-теги
+      const tagRegex = /<\/?[^>]+>/g;
+      let match;
+      
+      while ((match = tagRegex.exec(htmlText)) !== null) {
+        // Добавляем текст перед тегом
+        if (match.index > currentPos) {
+          const textContent = htmlText.slice(currentPos, match.index);
+          if (textContent.trim()) {
+            sections.push({type: 'text', content: textContent});
+          }
+        }
+        
+        // Добавляем тег
+        sections.push({type: 'tag', content: match[0], tag: match[0]});
+        currentPos = match.index + match[0].length;
+      }
+      
+      // Добавляем оставшийся текст
+      if (currentPos < htmlText.length) {
+        const textContent = htmlText.slice(currentPos);
+        if (textContent.trim()) {
+          sections.push({type: 'text', content: textContent});
+        }
+      }
+      
+      return sections;
+    }
+    
+    // Если это HTML-текст, обрабатываем структурированно
+    if (text.includes('<') && text.includes('>')) {
+      logger.log('[gemini-routes] Обнаружен HTML-текст, используем структурированный подход');
+      
+      const sections = extractHtmlStructure(text);
+      let improvedSections: typeof sections = [];
+      
+      for (const section of sections) {
+        if (section.type === 'text' && section.content.trim()) {
+          // Улучшаем только текстовые части
+          const simplePrompt = `Исправь только грамматические ошибки в тексте. НЕ добавляй markdown, НЕ меняй смысл: "${section.content}"`;
+          try {
+            const improvedText = await geminiService.generateText(simplePrompt, 'gemini-1.5-flash');
+            improvedSections.push({...section, content: improvedText.replace(/[#*`_]/g, '').trim()});
+          } catch (error) {
+            // Если ошибка, оставляем оригинальный текст
+            improvedSections.push(section);
+          }
+        } else {
+          // HTML-теги оставляем без изменений
+          improvedSections.push(section);
+        }
+      }
+      
+      // Собираем результат
+      const result = improvedSections.map(s => s.content).join('');
+      logger.log('[gemini-routes] HTML-структура сохранена, текст улучшен');
+      
+      return res.json({
+        success: true,
+        text: result
+      });
+    }
+    
+    // Для обычного текста используем стандартный подход
+    const userPrompt = `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
     
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
