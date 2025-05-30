@@ -59,18 +59,32 @@ export class DeepSeekService {
   }
 
   /**
-   * Простой метод для генерации текста с одним промптом
+   * Метод для генерации текста с промптом или массивом сообщений
    */
-  async generateText(prompt: string): Promise<string> {
-    const messages: DeepSeekMessage[] = [
-      { role: 'user', content: prompt }
-    ];
-    
-    return this.generateTextFromMessages(messages, {
-      model: 'deepseek-chat',
-      temperature: 0.7,
-      max_tokens: 5000
-    });
+  async generateText(messagesOrPrompt: DeepSeekMessage[] | string, options?: {
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+  }): Promise<string> {
+    if (typeof messagesOrPrompt === 'string') {
+      const messages: DeepSeekMessage[] = [
+        { role: 'user', content: messagesOrPrompt }
+      ];
+      
+      return this.generateTextFromMessages(messages, {
+        model: 'deepseek-chat',
+        temperature: 0.7,
+        max_tokens: 5000,
+        ...options
+      });
+    } else {
+      return this.generateTextFromMessages(messagesOrPrompt, {
+        model: 'deepseek-chat',
+        temperature: 0.3,
+        max_tokens: 1500,
+        ...options
+      });
+    }
   }
 
   /**
