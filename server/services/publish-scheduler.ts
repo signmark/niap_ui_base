@@ -24,7 +24,7 @@ export class PublishScheduler {
   
   // Флаг для вывода информационных сообщений и детального логирования
   // Управляется переменной окружения DEBUG_SCHEDULER
-  private verboseLogging = process.env.DEBUG_SCHEDULER === 'true';
+  private verboseLogging = false;
   
   // Кэш токенов, чтобы не выполнять повторные авторизации
   private adminTokenCache: string | null = null;
@@ -489,13 +489,15 @@ export class PublishScheduler {
             log(`DEBUG: Статистика платформ - Всего: ${allPlatforms.length}, С данными: ${totalPlatformsWithData}, Без selected: ${platformsWithoutSelected}`, 'scheduler');
           }
 
-          // Логируем результаты анализа
-          log(`Контент ${item.id} (${item.title || 'Без названия'}) - статус: ${item.status}`, 'scheduler');
-          log(`  - Всего платформ: ${allPlatforms.length}`, 'scheduler');
-          log(`  - Опубликовано: ${publishedPlatforms.length}`, 'scheduler');
-          log(`  - В ожидании: ${pendingPlatforms.length}`, 'scheduler');
-          log(`  - Запланировано: ${scheduledPlatforms.length}`, 'scheduler');
-          log(`  - С ошибками: ${errorPlatforms.length}`, 'scheduler');
+          // Логируем результаты анализа только в режиме отладки
+          if (this.verboseLogging) {
+            log(`Контент ${item.id} (${item.title || 'Без названия'}) - статус: ${item.status}`, 'scheduler');
+            log(`  - Всего платформ: ${allPlatforms.length}`, 'scheduler');
+            log(`  - Опубликовано: ${publishedPlatforms.length}`, 'scheduler');
+            log(`  - В ожидании: ${pendingPlatforms.length}`, 'scheduler');
+            log(`  - Запланировано: ${scheduledPlatforms.length}`, 'scheduler');
+            log(`  - С ошибками: ${errorPlatforms.length}`, 'scheduler');
+          }
 
           // Выполняем проверку по правилам из документа
           // 1. Если ВСЕ платформы в JSON имеют статус 'published'
@@ -549,7 +551,7 @@ export class PublishScheduler {
               } catch (error) {
                 log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
               }
-            } else {
+            } else if (this.verboseLogging) {
               log(`Контент ${item.id} уже имеет статус 'published'`, 'scheduler');
             }
           }

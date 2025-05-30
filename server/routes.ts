@@ -4055,7 +4055,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Очищаем HTML теги из контента
       const cleanContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      console.log(`Content cleaned from HTML tags, new length: ${cleanContent.length} chars`);
       
       // Пробуем использовать глобальные AI сервисы для генерации промтов
       const { globalApiKeysService } = await import('./services/global-api-keys');
