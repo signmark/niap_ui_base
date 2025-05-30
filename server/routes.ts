@@ -9272,17 +9272,39 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       // Запрос к DeepSeek API для анализа содержимого сайта
       let analysisResponse = '';
       try {
+        console.log('Начинаем анализ сайта через DeepSeek API...');
         analysisResponse = await deepseekService.generateText(messages, {
           model: 'deepseek-chat',
           temperature: 0.3,
           max_tokens: 1500
         });
+        console.log('DeepSeek API вернул ответ:', analysisResponse ? 'ответ получен' : 'пустой ответ');
       } catch (aiError) {
         console.error("Ошибка при обращении к DeepSeek API:", aiError);
-        return res.status(500).json({ 
-          success: false,
-          error: "Ошибка при анализе данных сайта через AI" 
-        });
+        
+        // Пробуем использовать Gemini как альтернативу
+        try {
+          console.log('Пробуем использовать Gemini как альтернативу для анализа сайта...');
+          const geminiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
+          
+          if (geminiKey) {
+            const geminiProxy = await import('./services/gemini-proxy');
+            const geminiResponse = await geminiProxy.generateText(
+              messages.map(msg => msg.content).join('\n\n'),
+              { model: 'gemini-1.5-flash' }
+            );
+            analysisResponse = geminiResponse;
+            console.log('Gemini API вернул ответ для анализа сайта');
+          } else {
+            throw new Error('Gemini API ключ недоступен');
+          }
+        } catch (geminiError) {
+          console.error("Ошибка при обращении к Gemini API:", geminiError);
+          return res.status(500).json({ 
+            success: false,
+            error: "Ошибка при анализе данных сайта через AI. Проверьте API ключи DeepSeek или Gemini." 
+          });
+        }
       }
       
       // Парсим ответ для извлечения JSON
