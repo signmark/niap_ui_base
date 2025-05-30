@@ -88,13 +88,25 @@ ${text}`;
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
     
-    logger.log('[gemini-routes] Текст успешно улучшен');
+    // Пост-обработка: удаляем нежелательное форматирование, которое мог добавить Gemini
+    let cleanedText = result
+      .replace(/^#+\s+/gm, '') // Удаляем Markdown заголовки (#, ##, ###)
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Удаляем **жирный** текст
+      .replace(/^\s*[-\*\+]\s+/gm, '') // Удаляем списки с -, *, +
+      .replace(/---+/g, '') // Удаляем разделители ---
+      .replace(/```[\s\S]*?```/g, '') // Удаляем блоки кода
+      .replace(/`([^`]+)`/g, '$1') // Удаляем инлайн код
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Удаляем ссылки [text](url) → text
+      .replace(/^\s*>/gm, '') // Удаляем цитаты >
+      .trim();
+    
+    logger.log('[gemini-routes] Текст успешно улучшен и очищен от markdown');
     
     // Возвращаем результат
     return res.status(200).json({
       success: true,
       originalText: text,
-      improvedText: result
+      improvedText: cleanedText
     });
   } catch (error) {
     logger.error('[gemini-routes] Ошибка при улучшении текста:', error);
