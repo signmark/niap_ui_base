@@ -27,7 +27,8 @@ const expandablePages: Record<string, string> = {
   'keywords': '/keywords',
   'trends': '/trends',
   'content': '/content',
-  'scheduled': '/posts'
+  'scheduled': '/posts',
+  'business-questionnaire': '/business-questionnaire'
 };
 
 const AccordionItem = React.forwardRef<

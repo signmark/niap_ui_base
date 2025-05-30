@@ -1,0 +1,113 @@
+ Starting website analysis for URL: https://nplanner.ru/
+ 📤 API Запрос: POST /api/website-analysis
+ 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+ 📤 Заголовки запроса: {hasAuthHeader: true, contentType: 'application/json', userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/website-analysis 500 (Internal Server Error)
+apiRequest @ /src/lib/queryClient.ts:30
+analyzeWebsite @ /src/components/Busi…onnaireForm.tsx:256
+onClick @ /src/components/Busi…onnaireForm.tsx:408
+callCallback2 @ /@fs/home/runner/wor….js?v=49418eff:3674
+invokeGuardedCallbackDev @ /@fs/home/runner/wor….js?v=49418eff:3699
+invokeGuardedCallback @ /@fs/home/runner/wor….js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/home/runner/wor….js?v=49418eff:3736
+executeDispatch @ /@fs/home/runner/wor….js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ /@fs/home/runner/wor….js?v=49418eff:7034
+processDispatchQueue @ /@fs/home/runner/wor….js?v=49418eff:7043
+dispatchEventsForPlugins @ /@fs/home/runner/wor….js?v=49418eff:7051
+(anonymous) @ /@fs/home/runner/wor….js?v=49418eff:7174
+batchedUpdates$1 @ /@fs/home/runner/wor…js?v=49418eff:18913
+batchedUpdates @ /@fs/home/runner/wor….js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ /@fs/home/runner/wor….js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/home/runner/wor….js?v=49418eff:5478
+dispatchEvent @ /@fs/home/runner/wor….js?v=49418eff:5472
+dispatchDiscreteEvent @ /@fs/home/runner/wor….js?v=49418eff:5449
+ Error analyzing website: Error: 500: {"success":false,"error":"Ошибка при анализе данных сайта через AI"}
+    at throwIfResNotOk (/src/lib/queryClient.ts:6:11)
+    at async apiRequest (/src/lib/queryClient.ts:36:3)
+    at async analyzeWebsite (/src/components/BusinessQuestionnaireForm.tsx:256:24)
+overrideMethod @ hook.js:608
+analyzeWebsite @ /src/components/Busi…onnaireForm.tsx:309
+await in analyzeWebsite
+onClick @ /src/components/Busi…onnaireForm.tsx:408
+callCallback2 @ /@fs/home/runner/wor….js?v=49418eff:3674
+invokeGuardedCallbackDev @ /@fs/home/runner/wor….js?v=49418eff:3699
+invokeGuardedCallback @ /@fs/home/runner/wor….js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/home/runner/wor….js?v=49418eff:3736
+executeDispatch @ /@fs/home/runner/wor….js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ /@fs/home/runner/wor….js?v=49418eff:7034
+processDispatchQueue @ /@fs/home/runner/wor….js?v=49418eff:7043
+dispatchEventsForPlugins @ /@fs/home/runner/wor….js?v=49418eff:7051
+(anonymous) @ /@fs/home/runner/wor….js?v=49418eff:7174
+batchedUpdates$1 @ /@fs/home/runner/wor…js?v=49418eff:18913
+batchedUpdates @ /@fs/home/runner/wor….js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ /@fs/home/runner/wor….js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/home/runner/wor….js?v=49418eff:5478
+dispatchEvent @ /@fs/home/runner/wor….js?v=49418eff:5472
+dispatchDiscreteEvent @ /@fs/home/runner/wor….js?v=49418eff:5449
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (4) ['keywords', 'trends', 'content', 'scheduled']
+ Checking fullscreen page for value: schedule exists: false url: undefined
