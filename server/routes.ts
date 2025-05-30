@@ -7058,11 +7058,7 @@ Return your response as a JSON array in this exact format:
           }
         });
         
-        console.log('Directus keywords API response:', {
-          status: response.status,
-          dataLength: response.data?.data?.length,
-          firstKeyword: response.data?.data?.[0]
-        });
+
         
         // Преобразуем данные из Directus в нужный формат
         const keywords = (response.data?.data || []).map((item: any) => ({

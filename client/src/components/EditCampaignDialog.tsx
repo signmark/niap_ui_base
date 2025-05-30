@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { queryClient } from "@/lib/queryClient";
@@ -22,6 +23,7 @@ interface EditCampaignDialogProps {
 export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCampaignDialogProps) {
   const { toast } = useToast();
   const [name, setName] = useState(currentName);
+  const [description, setDescription] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [trendSettings, setTrendSettings] = useState<TrendSettings | undefined>(undefined);
   const [socialSettings, setSocialSettings] = useState<SocialSettings | undefined>(undefined);
@@ -42,6 +44,10 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
 
   useEffect(() => {
     if (campaignData) {
+      // Загружаем данные кампании
+      setName(campaignData.name || currentName);
+      setDescription(campaignData.description || "");
+      
       // Загружаем настройки из полученных данных
       if (campaignData.trend_analysis_settings) {
         setTrendSettings(campaignData.trend_analysis_settings);
@@ -50,7 +56,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
         setSocialSettings(campaignData.social_media_settings);
       }
     }
-  }, [campaignData]);
+  }, [campaignData, currentName]);
 
   const updateCampaign = async () => {
     if (!name.trim()) {
@@ -65,20 +71,21 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
     setIsUpdating(true);
     try {
       await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
-        name: name.trim()
+        name: name.trim(),
+        description: description.trim()
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       toast({
         title: "Успешно",
-        description: "Название кампании обновлено"
+        description: "Кампания обновлена"
       });
     } catch (error) {
       console.error('Error updating campaign:', error);
       toast({
         variant: "destructive",
         title: "Ошибка", 
-        description: "Не удалось обновить название кампании"
+        description: "Не удалось обновить кампанию"
       });
     } finally {
       setIsUpdating(false);
