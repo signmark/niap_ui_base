@@ -136,33 +136,69 @@ geminiRouter.post('/improve-text', async (req, res) => {
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
     
-    // Конвертируем Markdown обратно в HTML, если AI вернул Markdown
+    // Профессиональная конвертация Markdown в HTML
+    function convertMarkdownToHtml(markdown: string): string {
+      let html = markdown;
+      
+      // Сначала обрабатываем блочные элементы
+      // Заголовки (должны быть в начале строки)
+      html = html.replace(/^### (.+)$/gm, '<h3><strong>$1</strong></h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2><strong>$1</strong></h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1><strong>$1</strong></h1>');
+      
+      // Затем обрабатываем инлайн-элементы
+      // Жирный текст (сохраняем как <strong>)
+      html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+      
+      // Курсив (сохраняем как <em>)
+      html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      html = html.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+      
+      // Удаляем остатки кода
+      html = html.replace(/```[\s\S]*?```/g, '');
+      html = html.replace(/`([^`]+)`/g, '$1');
+      
+      // Убираем ссылки markdown, оставляем только текст
+      html = html.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+      
+      // Обрабатываем списки - убираем маркеры
+      html = html.replace(/^\s*[-*+]\s+/gm, '');
+      html = html.replace(/^\s*\d+\.\s+/gm, '');
+      
+      // Убираем цитаты
+      html = html.replace(/^\s*>\s+/gm, '');
+      
+      // Убираем горизонтальные линии
+      html = html.replace(/^[-=*]{3,}$/gm, '');
+      
+      // Разбиваем на параграфы
+      const paragraphs = html.split(/\n\s*\n/);
+      const processedParagraphs = paragraphs.map(para => {
+        const trimmed = para.trim();
+        if (!trimmed) return '';
+        
+        // Если уже есть HTML-теги, не оборачиваем в <p>
+        if (trimmed.match(/^<(h[1-6]|div|blockquote|ul|ol|li)/)) {
+          return trimmed;
+        }
+        
+        // Оборачиваем в параграф
+        return `<p>${trimmed}</p>`;
+      });
+      
+      return processedParagraphs.filter(p => p.trim()).join('');
+    }
+    
+    // Применяем конвертацию
     let cleanedText = result;
     
-    // Если текст содержит исходные HTML-теги, попробуем их восстановить
-    if (text.includes('<') && !result.includes('<')) {
-      // AI конвертировал HTML в Markdown, восстанавливаем HTML-структуру
-      cleanedText = result
-        // Конвертируем Markdown заголовки в HTML
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-        // Конвертируем жирный текст
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        // Конвертируем курсив
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-        // Разбиваем на параграфы
-        .split('\n\n')
-        .map(paragraph => {
-          if (paragraph.trim() && !paragraph.includes('<h') && !paragraph.includes('<p>')) {
-            return `<p>${paragraph.trim()}</p>`;
-          }
-          return paragraph;
-        })
-        .join('\n\n')
-        .trim();
+    // Если исходный текст был HTML, а результат содержит Markdown
+    if (text.includes('<') && (result.includes('#') || result.includes('**') || result.includes('*'))) {
+      logger.log('[gemini-routes] Конвертируем Markdown обратно в HTML');
+      cleanedText = convertMarkdownToHtml(result);
     } else {
-      // Просто удаляем лишнюю Markdown-разметку
+      // Просто очищаем от markdown символов
       cleanedText = result
         .replace(/^#+\s+/gm, '')
         .replace(/\*\*([^*]+)\*\*/g, '$1')
