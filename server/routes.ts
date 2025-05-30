@@ -9135,11 +9135,15 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
 
   // API для анализа веб-сайта и автоматического заполнения бизнес-анкеты
   app.post("/api/website-analysis", authenticateUser, async (req: any, res) => {
+    console.log('[WEBSITE-ANALYSIS] Начало обработки запроса на анализ сайта');
     try {
       const { url, campaignId } = req.body;
       const authHeader = req.headers['authorization'];
       
+      console.log(`[WEBSITE-ANALYSIS] Получен URL: ${url}, campaignId: ${campaignId}`);
+      
       if (!url) {
+        console.log('[WEBSITE-ANALYSIS] Ошибка: URL не указан');
         return res.status(400).json({ 
           success: false,
           error: "URL сайта не указан"
@@ -9147,6 +9151,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       }
       
       if (!authHeader) {
+        console.log('[WEBSITE-ANALYSIS] Ошибка: отсутствует заголовок авторизации');
         return res.status(401).json({ 
           success: false,
           error: "Не авторизован: Отсутствует токен авторизации"
@@ -9157,13 +9162,14 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
       const userId = req.userId;
       
       if (!userId) {
+        console.log('[WEBSITE-ANALYSIS] Ошибка: не удалось определить пользователя');
         return res.status(401).json({ 
           success: false,
           error: "Не авторизован: Не удалось определить пользователя"
         });
       }
       
-      console.log(`Запрос на анализ сайта: ${url} для кампании ${campaignId} от пользователя ${userId}`);
+      console.log(`[WEBSITE-ANALYSIS] Запрос на анализ сайта: ${url} для кампании ${campaignId} от пользователя ${userId}`);
       
       // Получаем содержимое сайта
       let websiteContent = '';
