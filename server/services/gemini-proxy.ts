@@ -276,6 +276,11 @@ export class GeminiProxyService {
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
         
+        // Удаляем лишние разделители --- в начале и конце текста
+        resultText = resultText.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+        resultText = resultText.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+        resultText = resultText.trim(); // Убираем лишние пробелы
+        
         return resultText;
       }
       
@@ -348,6 +353,11 @@ export class GeminiProxyService {
         resultText = resultText.replace(/<[^>]*>/g, '');
         resultText = resultText.replace(/```html/g, ''); // Удаляем маркеры начала HTML-кода
         resultText = resultText.replace(/```/g, ''); // Удаляем оставшиеся маркеры кода
+        
+        // Удаляем лишние разделители --- в начале и конце текста
+        resultText = resultText.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+        resultText = resultText.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+        resultText = resultText.trim(); // Убираем лишние пробелы
         
         return resultText;
       }
