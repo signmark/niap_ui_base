@@ -2435,6 +2435,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         let enrichedPrompt = prompt;
         
+        // Улучшаем промпт с ключевыми словами для Qwen
+        if (prompt && prompt.trim().length > 0) {
+          const platformText = platform ? ` для платформы ${platform}` : '';
+          const toneText = tone ? ` в ${tone} тоне` : '';
+          const keywordsText = keywords && keywords.length > 0 ? 
+            `\n\nОБЯЗАТЕЛЬНО используй эти ключевые слова в тексте: ${keywords.join(', ')}` : '';
+          
+          enrichedPrompt = `Напиши готовый пост${platformText}${toneText} на тему: "${prompt}".${keywordsText}
+
+ВАЖНО: Создай ОДИН конкретный готовый пост, а не варианты или предложения. Пост должен быть:
+- Готов к публикации
+- Интересный и привлекательный  
+- Подходящий для выбранной платформы
+- Содержать призыв к действию или вопрос для вовлечения аудитории
+- ОБЯЗАТЕЛЬНО включать указанные ключевые слова естественным образом
+
+НЕ предлагай варианты, НЕ спрашивай дополнительные детали, НЕ давай советы - просто напиши готовый пост.`;
+        }
+        
         // Добавляем данные кампании для Qwen, как для Gemini
         if (useCampaignData && campaignId) {
           console.log('[qwen] Добавляем данные кампании для Qwen');
@@ -2444,7 +2463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             if (campaignContext) {
               console.log('[qwen] Получены данные кампании:', campaignContext.substring(0, 200) + '...');
-              enrichedPrompt = `${prompt}\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
+              enrichedPrompt += `\n\nВАЖНО: Используй только предоставленную информацию о компании:${campaignContext}`;
             } else {
               console.log('[qwen] Данные кампании не найдены, используем базовый промпт');
             }
