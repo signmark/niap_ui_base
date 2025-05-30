@@ -146,7 +146,14 @@ export class QwenService {
         throw new Error('Некорректный ответ от Qwen API. Пожалуйста, проверьте настройки или попробуйте позже.');
       }
       
-      return response.data.choices[0].message.content;
+      let content = response.data.choices[0].message.content;
+      
+      // Удаляем лишние разделители --- в начале и конце текста
+      content = content.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
+      content = content.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      content = content.trim(); // Убираем лишние пробелы
+      
+      return content;
     } catch (error: any) {
       console.error('Error calling Qwen API:', error);
       
