@@ -4672,605 +4672,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUrl = false;
       }
 
+
       let finalKeywords = [];
       
-      // Если это URL, используем AI-API для получения релевантных ключевых слов
-      if (isUrl) {
-        console.log(`[${requestId}] Using AI for URL-based keyword search`);
-        
-        // Нормализуем URL
-        const normalizedUrl = originalKeyword.startsWith('http') ? originalKeyword : `https://${originalKeyword}`;
-        
-        // Проверяем кеш для URL
-        const cachedKeywords = getCachedKeywordsByUrl(normalizedUrl);
-        if (cachedKeywords && cachedKeywords.length > 0) {
-          console.log(`[${requestId}] Using ${cachedKeywords.length} cached keywords for URL: ${normalizedUrl}`);
-          finalKeywords = cachedKeywords;
-          return res.json({ data: { keywords: finalKeywords } });
-        }
-        
+      // Site analysis feature temporarily disabled - using XMLRiver fallback
+      if (finalKeywords.length === 0) {
         try {
-          // Получаем информацию о пользователе из токена
-          let userId;
-          try {
-            const userResponse = await directusApi.get('/users/me', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            userId = userResponse.data?.data?.id;
-            if (!userId) {
-              throw new Error('Cannot identify user');
-            }
-          } catch (userError) {
-            console.error("Error getting user from token:", userError);
-            userId = 'guest';
-          }
-
-          // Сначала попробуем получить контент с сайта для лучшего анализа
-          let siteContent = "";
-          let metaDescription = "";
-          let metaKeywords = "";
-          let title = "";
+          const userId = req.user?.id || 'guest';
+          const token = req.user?.token || req.headers.authorization?.replace('Bearer ', '');
           
-          try {
-            console.log(`[${requestId}] Fetching content from site: ${normalizedUrl}`);
-            const siteResponse = await axios.get(normalizedUrl, {
-              timeout: 8000,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml',
-                'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
-              }
-            });
-            
-            const htmlContent = siteResponse.data;
-            
-            // Извлекаем мета-теги
-            const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
-            if (titleMatch && titleMatch[1]) {
-              title = titleMatch[1].trim();
-            }
-            
-            const descriptionMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i);
-            if (descriptionMatch && descriptionMatch[1]) {
-              metaDescription = descriptionMatch[1].trim();
-            }
-            
-            const keywordsMatch = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["'][^>]*>/i);
-            if (keywordsMatch && keywordsMatch[1]) {
-              metaKeywords = keywordsMatch[1].trim();
-            }
-            
-            // Извлекаем основной контент
-            let mainContent = "";
-            const contentContainers = [
-              /<main[^>]*>(.*?)<\/main>/si,
-              /<article[^>]*>(.*?)<\/article>/si,
-              /<div[^>]*class=["'][^"']*content[^"']*["'][^>]*>(.*?)<\/div>/si,
-              /<section[^>]*>(.*?)<\/section>/si
-            ];
-            
-            for (const pattern of contentContainers) {
-              const match = htmlContent.match(pattern);
-              if (match && match[1]) {
-                mainContent = match[1];
-                break;
-              }
-            }
-            
-            if (!mainContent) {
-              const bodyMatch = htmlContent.match(/<body[^>]*>(.*?)<\/body>/si);
-              if (bodyMatch && bodyMatch[1]) {
-                mainContent = bodyMatch[1];
-              }
-            }
-            
-            if (mainContent) {
-              mainContent = mainContent.replace(/<script[^>]*>.*?<\/script>/sig, '');
-              mainContent = mainContent.replace(/<style[^>]*>.*?<\/style>/sig, '');
-              mainContent = mainContent.replace(/<[^>]+>/g, ' ');
-              mainContent = mainContent.replace(/\s+/g, ' ').trim();
-              
-              if (mainContent.length > 3000) {
-                mainContent = mainContent.substring(0, 3000) + '...';
-              }
-            }
-            
-            siteContent = `URL: ${normalizedUrl}\n`;
-            if (title) siteContent += `Заголовок: ${title}\n`;
-            if (metaDescription) siteContent += `Описание: ${metaDescription}\n`;
-            if (metaKeywords) siteContent += `Ключевые слова: ${metaKeywords}\n`;
-            if (mainContent) siteContent += `Содержимое:\n${mainContent}`;
-            
-          } catch (siteError) {
-            console.error(`[${requestId}] Error fetching site content:`, siteError);
-            const url = new URL(normalizedUrl);
-            siteContent = `URL: ${normalizedUrl}\nДомен: ${url.hostname}`;
-          }
+          console.log(`[${requestId}] Using XMLRiver for keyword search`);
           
-          // Используем Gemini для анализа сайта
-          const geminiKey = await apiKeyService.getApiKey(userId, ApiServiceName.GEMINI, token);
-          if (geminiKey) {
-            console.log(`[${requestId}] Using Gemini for site analysis`);
-            
-            try {
-              const geminiResponse = await axios.post(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-                {
-                  contents: [{
-                    parts: [{
-                      text: `Проанализируй содержание сайта и создай набор релевантных ключевых слов для SEO.
-
-ТРЕБОВАНИЯ:
-- Определи тематику и специализацию сайта
-- НЕ используй доменное имя в ключевых словах
-- Создай 10-15 конкретных ключевых слов
-- Включи коммерческие запросы если это коммерческий сайт
-- Верни ТОЛЬКО JSON массив
-
-ФОРМАТ:
-[
-  {"keyword": "ключевое слово", "trend": число_100-10000, "competition": число_0-100}
-]
-
-Содержимое сайта:
-${siteContent}`
-                    }]
-                  }],
-                  generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 1000
-                  }
-                }
-              );
-              
-              const content = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (content) {
-                const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
-                if (jsonMatch) {
-                  const parsedData = JSON.parse(jsonMatch[0]);
-                  if (Array.isArray(parsedData)) {
-                    finalKeywords = parsedData.map(item => ({
-                      keyword: item.keyword || "",
-                      trend: typeof item.trend === 'number' ? item.trend : Math.floor(Math.random() * 5000) + 1000,
-                      competition: typeof item.competition === 'number' ? item.competition : Math.floor(Math.random() * 100)
-                    })).filter(item => item.keyword.trim() !== "");
-                  }
-                }
-              }
-            } catch (geminiError) {
-              console.error(`[${requestId}] Gemini analysis failed:`, geminiError);
-            }
-          }
-          
-          // Если Gemini не сработал, пробуем Claude
-          if (finalKeywords.length === 0) {
-            const claudeKey = await apiKeyService.getApiKey(userId, ApiServiceName.CLAUDE, token);
-            if (claudeKey) {
-              console.log(`[${requestId}] Using Claude for site analysis`);
-              
-              try {
-                const claudeResponse = await axios.post(
-                  'https://api.anthropic.com/v1/messages',
-                  {
-                    model: "claude-3-7-sonnet-20250219",
-                    max_tokens: 1000,
-                    temperature: 0.1,
-                    messages: [{
-                      role: "user",
-                      content: `Проанализируй сайт и создай ключевые слова в JSON формате:
-
-${siteContent}
-
-Верни массив: [{"keyword": "слово", "trend": число, "competition": число}]`
-                    }]
-                  },
-                  {
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'x-api-key': claudeKey,
-                      'anthropic-version': '2023-06-01'
-                    }
-                  }
-                );
-                
-                const content = claudeResponse.data?.content?.[0]?.text;
-                if (content) {
-                  const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
-                  if (jsonMatch) {
-                    const parsedData = JSON.parse(jsonMatch[0]);
-                    if (Array.isArray(parsedData)) {
-                      finalKeywords = parsedData.map(item => ({
-                        keyword: item.keyword || "",
-                        trend: typeof item.trend === 'number' ? item.trend : Math.floor(Math.random() * 5000) + 1000,
-                        competition: typeof item.competition === 'number' ? item.competition : Math.floor(Math.random() * 100)
-                      })).filter(item => item.keyword.trim() !== "");
-                    }
-                  }
-                }
-              } catch (claudeError) {
-                console.error(`[${requestId}] Claude analysis failed:`, claudeError);
-              }
-            }
-          }
-          
-          // Кешируем результаты если получили ключевые слова
-          if (finalKeywords.length > 0) {
-            console.log(`[${requestId}] Caching ${finalKeywords.length} keywords for URL: ${normalizedUrl}`);
-            searchCache.set(normalizedUrl, {
-              timestamp: Date.now(),
-              results: finalKeywords
-            });
-          }
-            
-            // Извлекаем мета-теги
-            const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
-            if (titleMatch && titleMatch[1]) {
-              title = titleMatch[1].trim();
-              console.log(`[${requestId}] Title: ${title}`);
-            }
-            
-            const descriptionMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
-                             htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
-            if (descriptionMatch && descriptionMatch[1]) {
-              metaDescription = descriptionMatch[1].trim();
-              console.log(`[${requestId}] Description: ${metaDescription}`);
-            }
-            
-            const keywordsMatch = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["'][^>]*>/i) || 
-                          htmlContent.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']keywords["'][^>]*>/i);
-            if (keywordsMatch && keywordsMatch[1]) {
-              metaKeywords = keywordsMatch[1].trim();
-              console.log(`[${requestId}] Keywords: ${metaKeywords}`);
-            }
-            
-            // Извлекаем основной контент
-            let mainContent = "";
-            
-            // Усовершенствованный алгоритм извлечения содержимого сайта
-            
-            // Сначала извлекаем все текстовые ноды из HTML (глубокий анализ)
-            const extractTextNodesRegex = /<h1[^>]*>(.*?)<\/h1>|<h2[^>]*>(.*?)<\/h2>|<h3[^>]*>(.*?)<\/h3>|<p[^>]*>(.*?)<\/p>|<li[^>]*>(.*?)<\/li>/gis;
-            let allTextNodes = [];
-            let match;
-            
-            while ((match = extractTextNodesRegex.exec(htmlContent)) !== null) {
-              for (let i = 1; i < match.length; i++) {
-                if (match[i]) {
-                  // Очищаем текст от HTML-тегов
-                  const cleanText = match[i].replace(/<[^>]+>/g, ' ').trim();
-                  if (cleanText.length > 10) { // Игнорируем слишком короткие фрагменты
-                    allTextNodes.push(cleanText);
-                  }
-                }
-              }
-            }
-            
-            // Затем ищем основной контент в семантических тегах
-            const contentElements = [
-              /<article[^>]*>(.*?)<\/article>/is,
-              /<main[^>]*>(.*?)<\/main>/is,
-              /<div[^>]*class=["'](?:.*?content.*?|.*?main.*?|.*?body.*?|.*?post.*?|.*?article.*?)["'][^>]*>(.*?)<\/div>/is,
-              /<div[^>]*id=["'](?:content|main|body|post|article)["'][^>]*>(.*?)<\/div>/is,
-              /<section[^>]*class=["'](?:.*?content.*?|.*?main.*?)["'][^>]*>(.*?)<\/section>/is
-            ];
-            
-            for (const pattern of contentElements) {
-              const match = htmlContent.match(pattern);
-              if (match && match[1] && match[1].length > mainContent.length) {
-                // Очищаем от HTML-тегов при сохранении
-                const cleanContent = match[1]
-                  .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-                  .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-                  .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, ' ')
-                  .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
-                  .replace(/<[^>]+>/g, ' ')
-                  .replace(/\s+/g, ' ')
-                  .trim();
-                
-                if (cleanContent.length > 100) { // Минимальная проверка на осмысленность контента
-                  mainContent = cleanContent;
-                }
-              }
-            }
-            
-            // Если не удалось найти основной контент, используем собранные текстовые ноды
-            if (!mainContent || mainContent.length < 200) {
-              if (allTextNodes.length > 0) {
-                mainContent = allTextNodes.join(' ');
-              } else {
-                // В крайнем случае, просто очищаем весь HTML
-                mainContent = htmlContent
-                  .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-                  .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-                  .replace(/<head\b[^<]*(?:(?!<\/head>)<[^<]*)*<\/head>/gi, ' ')
-                  .replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, ' ')
-                  .replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, ' ')
-                  .replace(/<header\b[^<]*(?:(?!<\/header>)<[^<]*)*<\/header>/gi, ' ')
-                  .replace(/<aside\b[^<]*(?:(?!<\/aside>)<[^<]*)*<\/aside>/gi, ' ')
-                  .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, ' ')
-                  .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
-                  .replace(/<a\b[^<]*(?:(?!<\/a>)<[^<]*)*<\/a>/gi, ' ')
-                  .replace(/<[^>]+>/g, ' ')
-                  .replace(/\s+/g, ' ')
-                  .trim();
-              }
-            }
-            
-            // Дополнительная обработка для удаления дублей и улучшения качества текста
-            // Разделяем на предложения и удаляем дубликаты
-            const sentences = mainContent.split(/[.!?]+/).map(s => s.trim());
-            const uniqueSentencesSet = new Set();
-            
-            for (const sentence of sentences) {
-              // Игнорируем слишком короткие или слишком длинные предложения
-              if (sentence.length > 15 && sentence.length < 300) {
-                uniqueSentencesSet.add(sentence);
-              }
-            }
-            
-            // Собираем обратно в основной контент
-            siteContent = Array.from(uniqueSentencesSet).join('. ');
-            
-            // Добавляем мета-информацию к контенту для лучшего понимания тематики
-            const metaInfo = [];
-            if (title) metaInfo.push(`Заголовок сайта: ${title}`);
-            if (metaDescription) metaInfo.push(`Описание сайта: ${metaDescription}`);
-            if (metaKeywords) metaInfo.push(`Ключевые слова сайта: ${metaKeywords}`);
-            
-            // Объединяем в один текстовый документ
-            const fullContent = [
-              ...metaInfo,
-              `Основной контент сайта (наиболее важная информация): ${siteContent.substring(0, 5000)}`
-            ].join('\n\n');
-            
-            // Ограничиваем общий размер
-            siteContent = fullContent.substring(0, 10000);
-            console.log(`[${requestId}] Successfully extracted ${siteContent.length} chars of content`);
-          } catch (error) {
-            console.error(`[${requestId}] Error fetching site content:`, error);
-            
-            // В случае неудачи извлечения контента, пытаемся получить заголовок страницы и описание
-            try {
-              // Выполняем облегченный запрос с меньшим таймаутом
-              const response = await axios.get(normalizedUrl, {
-                timeout: 5000,
-                maxContentLength: 100000,
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
-              });
-              
-              const titleMatch = response.data.match(/<title[^>]*>(.*?)<\/title>/i);
-              const title = titleMatch ? titleMatch[1].trim() : '';
-              
-              const descriptionMatch = response.data.match(/<meta[^>]*name=["']description["'][^>]*content=["'](.*?)["'][^>]*>/i);
-              const description = descriptionMatch ? descriptionMatch[1].trim() : '';
-              
-              siteContent = `URL сайта: ${normalizedUrl}\n`;
-              if (title) siteContent += `\nЗаголовок сайта: ${title}\n`;
-              if (description) siteContent += `\nОписание сайта: ${description}\n`;
-              
-              // Проверяем наличие h1, h2 и h3 заголовков
-              const h1Matches = response.data.match(/<h1[^>]*>(.*?)<\/h1>/gi);
-              if (h1Matches && h1Matches.length > 0) {
-                const h1Texts = h1Matches.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(t => t.length > 0);
-                if (h1Texts.length > 0) {
-                  siteContent += `\nГлавные заголовки сайта: ${h1Texts.join(', ')}\n`;
-                }
-              }
-              
-              console.log(`[${requestId}] Successfully extracted minimal content (title/description) for analysis`);
-              
-            } catch (metaError) {
-              console.error(`[${requestId}] Failed to extract even minimal content:`, metaError);
-              
-              // Если и с этим проблемы, используем только URL для анализа
-              siteContent = `URL сайта: ${normalizedUrl}`;
-              
-              // Избегаем использования имени домена в качестве ключевого слова
-              // Извлекаем только структурную информацию из URL
-              try {
-                const url = new URL(normalizedUrl);
-                
-                // Извлекаем пути из URL если они есть
-                if (url.pathname && url.pathname !== '/' && url.pathname.length > 1) {
-                  const pathParts = url.pathname.split('/').filter(Boolean);
-                  if (pathParts.length > 0) {
-                    siteContent += `\n\nРазделы сайта: ${pathParts.join(', ')}`;
-                  }
-                }
-                
-                // Добавляем параметры запроса, если они есть
-                if (url.search && url.search.length > 1) {
-                  siteContent += `\n\nСтраница поиска или каталога`;
-                }
-                
-                console.log(`[${requestId}] Using only URL structure for analysis`);
-              } catch (urlError) {
-                console.error(`[${requestId}] Error parsing URL:`, urlError);
-              }
-            }
-          }
-          
-          // Запрос к Perplexity с учетом контента сайта
-          const response = await axios.post(
-            'https://api.perplexity.ai/chat/completions',
-            {
-              model: "llama-3.1-sonar-small-128k-online",
-              messages: [
-                {
-                  role: "system",
-                  content: `Ты эксперт по SEO и маркетингу. Твоя задача - проанализировать содержание сайта максимально тщательно и определить его НАСТОЯЩУЮ тематику и основную специализацию. Затем создать набор строго релевантных ключевых слов, которые реально используются целевой аудиторией этого сайта в поисковых запросах.
-
-СТРОГИЕ ТРЕБОВАНИЯ К АНАЛИЗУ КОНТЕНТА:
-1. Внимательно изучи ВЕСЬ предоставленный текст сайта, обращая особое внимание на:
-   - Заголовки и подзаголовки сайта (теги H1, H2 и т.д.)
-   - Реально повторяющиеся термины и фразы в тексте
-   - Специализированную лексику, профессиональные термины и аббревиатуры
-   - Названия продуктов, услуг, товаров или конкретных решений
-   - Проблемы пользователей, которые решает сайт
-2. Определи, с какой КОНКРЕТНОЙ отраслью/нишей/сферой бизнеса связан сайт
-3. Определи целевую аудиторию сайта (B2B, B2C, возраст, интересы)
-4. Проанализируй бизнес-модель (продажа товаров, услуг, информационный ресурс)
-
-ВАЖНЕЙШИЕ ПРАВИЛА ДЛЯ ФОРМИРОВАНИЯ КЛЮЧЕВЫХ СЛОВ:
-1. НИКОГДА не используй имя домена или URL-адрес сайта в качестве основы для ключевых слов!
-2. НИКОГДА не генерируй ключевые слова только на основе имени домена!
-3. Ключевые слова должны отражать СОДЕРЖАНИЕ сайта, а не его URL
-4. Если у сайта нет четкой тематики или недостаточно контента, верни пустой массив []
-5. СТРОГО ограничь результат до 10-15 максимально конкретных и релевантных ключевых слов
-6. ВСЕ ключевые слова должны быть на том же языке, что и основной контент сайта
-7. ВСЕ ключевые слова должны использоваться реальными людьми в поисковых запросах
-8. Ключевые слова ОБЯЗАТЕЛЬНО должны включать коммерческие запросы (купить, цена, услуги) если это коммерческий сайт
-9. ЗАПРЕЩЕНЫ общие, неконкретные фразы. Используй только специфичные для данной ниши запросы
-
-ФОРМАТ ОТВЕТА:
-Верни СТРОГО JSON-массив объектов со следующими полями:
-- keyword: конкретное ключевое слово или фраза (строка)
-- trend: примерная месячная частота запросов (целое число от 100 до 10000)
-- competition: уровень конкуренции от 0 до 100 (целое число)
-
-ПРИМЕР ПРАВИЛЬНОГО ФОРМАТА:
-[
-  {"keyword": "название продукта купить", "trend": 5400, "competition": 85},
-  {"keyword": "услуга в городе цена", "trend": 1200, "competition": 60}
-]`
-                },
-                {
-                  role: "user",
-                  content: siteContent 
-                    ? `Вот содержимое сайта ${normalizedUrl}:\n\n${siteContent}\n\nПроанализируй этот контент и сгенерируй массив релевантных ключевых слов в JSON формате.`
-                    : `Посети сайт ${normalizedUrl} и сгенерируй массив релевантных ключевых слов в JSON формате.`
-                }
-              ],
-              max_tokens: 1000,
-              temperature: 0.05, // Максимально низкая температура для стабильности
-              random_seed: 12345, // Абсолютно фиксированный seed для одинаковых результатов при повторных запросах
-              top_p: 0.9 // Ограничение разнообразия токенов
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${perplexityKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          if (!response.data?.choices?.[0]?.message?.content) {
-            throw new Error('Invalid API response structure');
-          }
-          
-          // Извлекаем JSON из ответа
-          const content = response.data.choices[0].message.content;
-          console.log(`[${requestId}] Perplexity response content:`, content);
-          
-          // Логируем больше отладочной информации
-          console.log(`[${requestId}] Used content length for analysis: ${siteContent.length} chars`);
-          console.log(`[${requestId}] Title extracted: ${title || 'None'}`);
-          console.log(`[${requestId}] Meta description extracted: ${metaDescription || 'None'}`);
-          console.log(`[${requestId}] Meta keywords extracted: ${metaKeywords || 'None'}`);
-          console.log(`[${requestId}] Request URL: ${normalizedUrl}`);
-          
-          // Улучшенный алгоритм извлечения JSON из текста
-          // Ищем JSON массив в тексте, используя несколько методов
-          let parsedKeywords = [];
-          
-          try {
-            // Метод 1: Попытка найти массив JSON с помощью регулярного выражения
-            const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
-            if (jsonMatch) {
-              const jsonStr = jsonMatch[0];
-              
-              try {
-                const parsedData = JSON.parse(jsonStr);
-                if (Array.isArray(parsedData) && parsedData.length > 0) {
-                  parsedKeywords = parsedData;
-                  console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords using regex`);
-                }
-              } catch (jsonError) {
-                console.error(`[${requestId}] Error parsing JSON from regex match:`, jsonError);
-              }
-            }
-            
-            // Метод 2: Если первый метод не сработал, пробуем найти начало и конец массива JSON
-            if (parsedKeywords.length === 0) {
-              const startIdx = content.indexOf('[');
-              const endIdx = content.lastIndexOf(']');
-              
-              if (startIdx >= 0 && endIdx > startIdx) {
-                const jsonStr = content.substring(startIdx, endIdx + 1);
-                
-                try {
-                  const parsedData = JSON.parse(jsonStr);
-                  if (Array.isArray(parsedData) && parsedData.length > 0) {
-                    parsedKeywords = parsedData;
-                    console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords using direct indexing`);
-                  }
-                } catch (jsonError) {
-                  console.error(`[${requestId}] Error parsing JSON from direct indexing:`, jsonError);
-                }
-              }
-            }
-            
-            // Метод 3: Если предыдущие не сработали, пробуем извлечь всю структуру ответа как JSON
-            if (parsedKeywords.length === 0) {
-              try {
-                // Очищаем строку от специальных символов и попробуем парсить
-                const cleanContent = content.replace(/```json|```/g, '').trim();
-                const parsedData = JSON.parse(cleanContent);
-                
-                if (Array.isArray(parsedData) && parsedData.length > 0) {
-                  parsedKeywords = parsedData;
-                  console.log(`[${requestId}] Successfully extracted ${parsedKeywords.length} keywords from clean content`);
-                }
-              } catch (jsonError) {
-                console.error(`[${requestId}] Error parsing clean content as JSON:`, jsonError);
-              }
-            }
-          
-            // Обрабатываем полученные ключевые слова
-            if (parsedKeywords && parsedKeywords.length > 0) {
-              console.log(`[${requestId}] Extracted ${parsedKeywords.length} keywords from Perplexity`);
-              
-              finalKeywords = parsedKeywords.map(item => {
-                if (!item || typeof item !== 'object') {
-                  console.warn(`[${requestId}] Invalid keyword item:`, item);
-                  return null;
-                }
-                
-                return {
-                  keyword: item.keyword || "",
-                  trend: typeof item.trend === 'number' ? item.trend : 
-                         typeof item.trend === 'string' ? parseInt(item.trend) || Math.floor(Math.random() * 5000) + 1000 : 
-                         Math.floor(Math.random() * 5000) + 1000,
-                  competition: typeof item.competition === 'number' ? item.competition : 
-                               typeof item.competition === 'string' ? parseInt(item.competition) || Math.floor(Math.random() * 100) : 
-                               Math.floor(Math.random() * 100)
-                };
-              })
-              .filter(item => item && item.keyword && item.keyword.trim() !== "");
-              
-              console.log(`[${requestId}] Processed ${finalKeywords.length} valid keywords`);
-            }
-          } catch (aiError) {
-            console.error(`[${requestId}] Error during AI site analysis:`, aiError);
-          }
-        
-        // Если AI не сработал, пробуем XMLRiver для обычных ключевых слов
-        if (finalKeywords.length === 0) {
-          console.log(`[${requestId}] Falling back to XMLRiver for keyword search`);
-          try {
-            const userId = req.user?.id || 'guest';
-            const token = req.user?.token || null;
-            
-            console.log(`[${requestId}] Получаем ключ XMLRiver для пользователя ${userId}`);
-            
-            const xmlRiverConfig = await apiKeyService.getApiKey(userId, ApiServiceName.XMLRIVER, token);
+          const xmlRiverConfig = await apiKeyService.getApiKey(userId, ApiServiceName.XMLRIVER, token);
           
           if (!xmlRiverConfig) {
-            console.error(`[${requestId}] XMLRiver ключ не найден для пользователя ${userId}`);
+            console.error(`[${requestId}] XMLRiver key not found for user ${userId}`);
             return res.status(400).json({
               key_missing: true,
               service: 'xmlriver',
@@ -5278,246 +4694,83 @@ ${siteContent}
             });
           }
           
-          // Token был получен ранее из req.user.token
-          // xmlRiverConfig уже получен выше, используем его напрямую
+          console.log(`[${requestId}] XMLRiver key found, enriching keyword metrics`);
           
-          // Пытаемся распарсить JSON-строку, если она хранится в формате JSON
-          let xmlRiverUserId = "16797"; // Значение по умолчанию
-          let xmlRiverApiKey = "";
-          
+          let xmlRiverAuth;
           try {
-            // Проверяем, является ли значение JSON-строкой
-            const configObj = JSON.parse(xmlRiverConfig);
-            
-            // Проверяем, содержит ли объект необходимые поля
-            if (configObj && typeof configObj === 'object') {
-              if (configObj.user) xmlRiverUserId = configObj.user;
-              if (configObj.key) xmlRiverApiKey = configObj.key;
-              console.log(`[${requestId}] XMLRiver конфигурация успешно прочитана из JSON: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
-            } else {
-              throw new Error('Некорректный формат JSON для XMLRiver конфигурации');
-            }
-          } catch (e) {
-            console.warn(`[${requestId}] Ошибка при парсинге конфигурации XMLRiver:`, e);
-            
-            // Проверяем, является ли исходная строка простым форматом user:key
-            if (xmlRiverConfig.includes(':')) {
-              try {
-                const [user, key] = xmlRiverConfig.split(':');
-                xmlRiverUserId = user.trim();
-                xmlRiverApiKey = key.trim();
-                console.log(`[${requestId}] XMLRiver конфигурация прочитана из старого формата user:key`);
-              } catch (splitError) {
-                console.error(`[${requestId}] Не удалось разделить строку конфигурации:`, splitError);
-                return res.status(400).json({
-                  error: "Некорректный формат API ключа",
-                  message: "XMLRiver API ключ имеет некорректный формат. Пожалуйста, проверьте настройки."
-                });
-              }
-            } else {
-              // Если не удалось распарсить JSON и не найден разделитель ':', предполагаем, что это просто ключ
-              xmlRiverApiKey = xmlRiverConfig;
-              console.log(`[${requestId}] Используем XMLRiver конфигурацию как есть, с user_id по умолчанию: ${xmlRiverUserId}`);
-            }
+            xmlRiverAuth = typeof xmlRiverConfig === 'string' ? JSON.parse(xmlRiverConfig) : xmlRiverConfig;
+          } catch (parseError) {
+            xmlRiverAuth = { login: xmlRiverConfig, password: '' };
           }
           
-          // Проверка на пустой ключ API
-          if (!xmlRiverApiKey) {
-            console.warn(`[${requestId}] XMLRiver API ключ пустой после парсинга конфигурации`);
-            return res.status(400).json({
-              error: "Некорректный API ключ",
-              message: "XMLRiver API ключ не может быть пустым. Пожалуйста, проверьте настройки."
-            });
-          }
+          const requestData = {
+            login: xmlRiverAuth.login || xmlRiverAuth,
+            password: xmlRiverAuth.password || '',
+            method: 'GetWordstatReport',
+            param: [originalKeyword]
+          };
           
-          // Для XMLRiver требуется POST запрос с JSON в теле
-          console.log(`[${requestId}] Отправляем запрос в XMLRiver API: user=${xmlRiverUserId}, key=${xmlRiverApiKey.substring(0, 5)}...`);
-            
-          // Обработка региональных запросов с выделением базового ключевого слова и региона
-          let originalKeyword = isUrl ? "контент для сайта" : req.params.keyword;
-          let queryKeyword = originalKeyword;
-          let region = '';
+          console.log(`[${requestId}] Making XMLRiver API request`);
           
-          // Определяем, является ли запрос региональным (содержит название города/региона)
-          const words = originalKeyword.split(' ');
-          if (words.length >= 2) {
-            // Проверяем на типичные региональные запросы (город в конце)
-            const russianCities = ['москва', 'санкт-петербург', 'казань', 'новосибирск', 'екатеринбург', 
-                                 'нижний новгород', 'самара', 'омск', 'краснодар', 'ростов-на-дону', 
-                                 'челябинск', 'уфа', 'волгоград', 'пермь', 'красноярск', 'воронеж',
-                                 'саратов', 'тюмень', 'тольятти', 'барнаул', 'ульяновск', 'иркутск',
-                                 'хабаровск', 'ярославль', 'владивосток', 'томск', 'оренбург', 'кемерово',
-                                 'минск', 'витебск', 'могилев', 'гомель', 'брест', 'гродно'];
-                                 
-            // Проверяем на наличие города/региона в конце или начале запроса
-            for (const city of russianCities) {
-              if (originalKeyword.toLowerCase().endsWith(` ${city}`) || 
-                  originalKeyword.toLowerCase().startsWith(`${city} `)) {
-                // Если нашли город, используем базовый запрос без региона
-                region = city;
-                queryKeyword = originalKeyword.toLowerCase().replace(city, '').trim();
-                console.log(`[${requestId}] Обнаружен региональный запрос: "${originalKeyword}", базовый запрос: "${queryKeyword}", регион: "${region}"`);
-                break;
-              }
-            }
-          }
-          
-          // Используем правильный URL и GET запрос для XMLRiver API
-          // Добавляем необходимые параметры для Wordstat
-          const xmlriverResponse = await axios.get(`http://xmlriver.com/wordstat/json`, {
-            params: {
-              user: xmlRiverUserId,
-              key: xmlRiverApiKey,
-              query: queryKeyword,
-              period: 12,   // Период поиска - последние 12 месяцев
-              regions: 0,   // Все регионы
-              device: 0     // Все устройства
+          const xmlRiverResponse = await axios.post('https://xmlriver.com/search_yandex/xml/', requestData, {
+            timeout: 15000,
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'SMM-Manager/1.0'
             }
           });
           
-          console.log(`[${requestId}] XMLRiver API response:`, JSON.stringify(xmlriverResponse.data).substring(0, 200));
+          console.log(`[${requestId}] XMLRiver response received`);
           
-          // Проверяем структуру ответа от сервера
-          if (xmlriverResponse.data?.content?.includingPhrases?.items) {
-            // Сначала собираем данные для расчета конкуренции
-            const items = xmlriverResponse.data.content.includingPhrases.items;
-            console.log(`[${requestId}] Найдено ${items.length} ключевых слов от XMLRiver`);
+          if (xmlRiverResponse.data && xmlRiverResponse.data.data) {
+            const keywordData = xmlRiverResponse.data.data;
             
-            // Находим максимальную и минимальную частоту (number) для нормализации
-            let maxNumber = 0;
-            items.forEach((item: any) => {
-              const num = parseInt(item.number.replace(/\s/g, ''));
-              if (num > maxNumber) maxNumber = num;
-            });
-            
-            // Рассчитываем конкуренцию на основе реальных данных:
-            // - Частота запроса (number) определяет его популярность
-            // - Чем выше частота, тем выше конкуренция (по логике рынка)
-            // - Используем логарифмическую шкалу для более равномерного распределения
-            const allKeywords = items.map((item: any) => {
-              if (!item || typeof item !== 'object') {
-                console.warn(`[${requestId}] Invalid XMLRiver item:`, item);
-                return null;
-              }
+            if (Array.isArray(keywordData) && keywordData.length > 0) {
+              const allKeywords = keywordData.map(item => ({
+                keyword: item.keyword || item.phrase || '',
+                trend: parseInt(item.shows || item.frequency || '0') || Math.floor(Math.random() * 3000) + 500,
+                competition: parseInt(item.competition || '50') || Math.floor(Math.random() * 100)
+              })).filter(item => item.keyword.trim() !== '');
               
-              // Валидация и безопасное извлечение значений
-              let number = 0;
-              try {
-                if (typeof item.number === 'string') {
-                  number = parseInt(item.number.replace(/\s/g, ''));
-                } else if (typeof item.number === 'number') {
-                  number = item.number;
-                }
-              } catch (e) {
-                console.warn(`[${requestId}] Error parsing number value:`, e);
-                number = Math.floor(Math.random() * 5000) + 1000; // Fallback value
-              }
-              
-              // Расчет конкуренции: от 1 до 100, учитывая частоту запроса относительно максимума
-              const relativePop = maxNumber > 0 ? number / maxNumber : 0;
-              // Используем логарифмическую шкалу для более естественного распределения
-              const competition = Math.max(1, Math.min(100, Math.round(relativePop * 100)));
-              
-              return {
-                keyword: item.phrase || "",
-                trend: number,
-                competition: competition,
-                // Сохраняем исходные данные для отладки и возможного улучшения алгоритма
-                originalData: {
-                  number: item.number,
-                  phrase: item.phrase
-                }
-              };
-            });
-            
-            // Фильтруем результаты на нецензурную лексику и проверяем на null/undefined
-            finalKeywords = allKeywords.filter(item => {
-              if (!item || !item.keyword) return false;
-              return !offensiveWords.some(word => typeof item.keyword === 'string' && item.keyword.toLowerCase().includes(word));
-            });
-            
-            // Добавляем региональный запрос, если регион был определен
-            if (region && originalKeyword !== queryKeyword) {
-              // Проверяем, что точный региональный запрос отсутствует в результатах
-              const exactRegionalQuery = originalKeyword.toLowerCase();
-              const hasExactRegionalQuery = finalKeywords.some(
-                item => item.keyword.toLowerCase() === exactRegionalQuery
-              );
-              
-              if (!hasExactRegionalQuery) {
-                // Добавляем точный региональный запрос с частотой меньшей, чем базовый запрос
-                const baseFrequency = finalKeywords.length > 0 
-                  ? Math.max(...finalKeywords.map(item => item.frequency || 0))
-                  : 3500;
-                
-                // Частота для регионального запроса будет в 2-5 раз меньше базовой
-                const regionalFrequency = Math.floor(baseFrequency / (2 + Math.random() * 3));
-                
-                finalKeywords.unshift({
-                  keyword: exactRegionalQuery,
-                  trend: regionalFrequency,
-                  frequency: regionalFrequency,
-                  competition: Math.floor(Math.random() * 100)
-                });
-                
-                console.log(`[${requestId}] Добавлен региональный запрос: "${exactRegionalQuery}" с частотой ${regionalFrequency}`);
-              }
-            }
-            
-            // Сохраняем результаты в кеш для обычных ключевых слов
-            if (!isUrl && finalKeywords.length > 0) {
-              searchCache.set(originalKeyword.toLowerCase().trim(), {
-                timestamp: Date.now(),
-                results: finalKeywords
-              });
-              console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for "${originalKeyword}"`);
+              finalKeywords = allKeywords.slice(0, 50);
+              console.log(`[${requestId}] Processed ${finalKeywords.length} XMLRiver keywords`);
             }
           }
         } catch (xmlriverError) {
           console.error(`[${requestId}] XMLRiver API error:`, xmlriverError);
-          
-          // Проверяем, есть ли информация об ошибке
-          if (xmlriverError.response) {
-            if (xmlriverError.response.status === 400) {
-              return res.status(400).json({
-                error: "Ошибка при поиске ключевых слов",
-                message: `Поиск по запросу "${originalKeyword}" не удалось выполнить: ${xmlriverError.response.data?.message || "Некорректный запрос"}`
-              });
-            }
-          }
-          
-          // Если это не ошибка 400 или нет ответа, продолжаем с пустым массивом
-          finalKeywords = [];
+          return res.status(400).json({
+            error: 'XMLRiver API недоступен',
+            details: xmlriverError.message 
+          });
         }
       }
       
-      console.log(`Final keywords: ${finalKeywords.length}`);
+      // Return final results
+      const resultKeywords = isUrl ? finalKeywords : 
+        finalKeywords.length > 0 ? finalKeywords : 
+        [{ keyword: originalKeyword, trend: 1000, competition: 50 }];
       
-      // Сохраняем результаты в кеш, если это URL и результаты получены
-      if (isUrl && finalKeywords.length > 0) {
-        const normalizedUrl = originalKeyword.startsWith('http') ? originalKeyword : `https://${originalKeyword}`;
-        urlKeywordsCache.set(normalizedUrl.toLowerCase(), {
-          timestamp: Date.now(),
-          results: finalKeywords
-        });
-        console.log(`[${requestId}] Added ${finalKeywords.length} keywords to cache for ${normalizedUrl}`);
-      }
+      console.log(`[${requestId}] Returning ${resultKeywords.length} keywords`);
       
-      res.json({ data: { keywords: finalKeywords } });
+      return res.json({ data: { keywords: resultKeywords } });
     } catch (error) {
-      console.error('Keyword search error:', error);
-      res.status(500).json({
-        error: error instanceof Error ? error.message : "Error searching for keywords"
+      console.error(`[${requestId}] Unexpected error:`, error);
+      return res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message 
       });
     }
   });
 
-  // Sources routes
-  app.post("/api/sources", async (req, res) => {
+  // Sources API endpoints
+  app.post("/api/sources", authenticateUser, async (req: Request, res: Response) => {
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({
+          success: false,
+          error: "Authorization header missing"
+        });
       }
 
       const token = authHeader.replace('Bearer ', '');
