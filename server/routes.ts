@@ -944,135 +944,7 @@ function extractSourcesFromText(content: string, platforms: string[] = ['instagr
   return sources;
 }
 
-// Helper function for Perplexity search
-async function existingPerplexitySearch(keyword: string, token: string, platform: string = 'instagram'): Promise<any[]> {
-  const cacheKey = `${keyword}_${platform}`;
-  const cached = getCachedResults(cacheKey);
-  if (cached) {
-    console.log(`Using ${cached.length} cached results for keyword: ${keyword} (platform: ${platform})`);
-    return cached;
-  }
 
-  try {
-    const settings = await directusApi.get('/items/user_api_keys', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      params: {
-        filter: {
-          service_name: { _eq: 'perplexity' }
-        }
-      }
-    });
-
-    let perplexityKey = settings.data?.data?.[0]?.api_key;
-    if (!perplexityKey) {
-      console.error('Perplexity API key not found');
-      return [];
-    }
-    
-    // Используем ключ как есть, без префиксов - просто добавляем Bearer при отправке запроса
-    // Удаляем префикс Bearer, если он уже есть в ключе
-    if (perplexityKey && perplexityKey.startsWith('Bearer ')) {
-      perplexityKey = perplexityKey.replace('Bearer ', '');
-      console.log('Removed "Bearer" prefix from stored Perplexity API key');
-    }
-    
-    console.log(`Using Perplexity API key format: ${perplexityKey.substring(0, 6)}...`);
-
-    let systemPrompt = '';
-    let userPrompt = '';
-    
-    if (platform === 'instagram') {
-      systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts.
-Focus only on Instagram accounts with >50K followers that post in Russian.
-For each account provide:
-1. Username with @ symbol 
-2. Full name in Russian
-3. Follower count with K or M
-4. Brief description in Russian
-
-Format each account as:
-**@username** - Name (500K followers) - Description
-
-Also include direct Instagram URLs in the response like:
-https://www.instagram.com/username/ - description`;
-      userPrompt = `Find TOP-5 most authoritative Russian Instagram accounts for: ${keyword}`;
-    } else if (platform === 'telegram') {
-      systemPrompt = `You are an expert at finding high-quality Russian Telegram channels.
-Focus only on Telegram channels with >10K subscribers that post in Russian.
-For each channel provide:
-1. Channel name with @ symbol 
-2. Full name in Russian
-3. Subscriber count with K or M
-4. Brief description in Russian
-
-Format each channel as:
-**@channelname** - Name (500K subscribers) - Description
-
-Also include direct Telegram URLs in the response like:
-https://t.me/channelname - description`;
-      userPrompt = `Find TOP-5 most authoritative Russian Telegram channels for: ${keyword}`;
-    }
-
-    try {
-      const response = await axios.post(
-        'https://api.perplexity.ai/chat/completions',
-        {
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            {
-              role: "user",
-              content: userPrompt
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.7
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${perplexityKey}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000 // Увеличиваем таймаут до 30 секунд для стабильности
-        }
-      );
-
-      if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid API response structure');
-      }
-
-      const content = response.data.choices[0].message.content;
-      console.log(`Raw API response for keyword ${keyword} (platform: ${platform}):`, content);
-
-      // Извлекаем источники из текста с учетом платформы
-      const sources = extractSourcesFromText(content, [platform]);
-      console.log(`Found ${sources.length} sources for keyword ${keyword} (platform: ${platform})`);
-
-      // Кешируем результаты с учетом платформы
-      if (sources.length > 0) {
-        console.log(`Caching ${sources.length} results for keyword: ${keyword} (platform: ${platform})`);
-        searchCache.set(cacheKey, {
-          timestamp: Date.now(),
-          results: sources
-        });
-      }
-
-      return sources;
-    } catch (innerError) {
-      console.error('Error in Perplexity API request:', innerError);
-      throw innerError; // Пробрасываем ошибку в основной блок try-catch
-    }
-
-  } catch (error) {
-    console.error('Error in Perplexity search:', error);
-    return [];
-  }
-}
 
 // Helper function to merge sources and remove duplicates
 function mergeSources(sources: any[]): any[] {
@@ -6221,66 +6093,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Поиск источников напрямую через Perplexity API
-      console.log('Searching sources using Perplexity API directly');
+      // Возвращаем пустой результат, так как Perplexity больше не используется
+      console.log('Perplexity service has been removed');
       
-      try {
-        // Создаем идентификатор запроса для логирования
-        const requestId = crypto.randomUUID();
-        
-        // Получаем результаты из Perplexity для каждого ключевого слова
-        const perplexityResults = await Promise.all(
-          keywords.map(async (keyword: string, index: number) => {
-            if (cachedResults[index]) {
-              return cachedResults[index];
-            }
-            
-            // Используем только Perplexity API для поиска источников
-            const results = await existingPerplexitySearch(keyword, token);
-            
-            // Кешируем результаты
-            if (results && results.length > 0) {
-              console.log(`Caching ${results.length} results for keyword: ${keyword}`);
-              searchCache.set(keyword, {
-                timestamp: Date.now(),
-                results
-              });
-            }
-            
-            return results;
-          })
-        );
-        
-        // Объединяем результаты и удаляем дубликаты
-        const uniqueSourcesPerplexity = perplexityResults.flat().reduce((acc: any[], source) => {
-          const exists = acc.some(s => s.url === source.url);
-          if (!exists) {
-            acc.push(source);
-          }
-          return acc;
-        }, []);
-        
-        console.log(`Found ${uniqueSourcesPerplexity.length} unique sources from Perplexity search`);
-        
-        return res.json({
-          success: true,
-          data: {
-            sources: uniqueSourcesPerplexity
-          }
-        });
-      } catch (error) {
-        console.error('Error during Perplexity search:', error);
-        
-        // В случае ошибки возвращаем пустой список и сообщение об ошибке
-        return res.json({
-          success: false,
-          error: "Ошибка при поиске источников через Perplexity API",
-          details: error instanceof Error ? error.message : "Неизвестная ошибка",
-          data: {
-            sources: []
-          }
-        });
-      }
+      return res.json({
+        success: true,
+        data: {
+          sources: []
+        }
+      });
 
       // (Этот блок кода недостижим)
 
@@ -6362,16 +6183,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: 'Не авторизован: Не удалось определить пользователя'
         });
       }
-      
-      // Получаем API ключ Perplexity
-      const perplexityApiKey = await apiKeyService.getApiKey(userId, 'perplexity', token);
-      
-      if (!perplexityApiKey) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'API ключ Perplexity не найден. Добавьте его в настройках.' 
-        });
-      }
 
       // Получаем ключевые слова кампании
       const keywords = await getCampaignKeywords(campaignId, token);
@@ -6385,130 +6196,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Собираем результаты для всех ключевых слов
-      const allResults = [];
-      const keywordResults: Record<string, number> = {};
-      
-      for (const keyword of keywords) {
-        try {
-          console.log(`Поиск источников для ключевого слова "${keyword}" на платформе ${platform}...`);
-          
-          // Определяем prompts для запроса в зависимости от платформы
-          let systemPrompt, userPrompt;
-
-          if (platform === 'instagram') {
-            systemPrompt = `You are an expert at finding high-quality Russian Instagram accounts.
-Focus only on Instagram accounts with >50K followers that post content in Russian.
-For each account provide:
-1. Username with @ symbol 
-2. Full name in Russian
-3. Follower count with K or M
-4. Brief description in Russian
-
-Format each account exactly as:
-**@username** - Name (500K followers) - Description
-
-Also include direct Instagram URLs in the response like:
-https://www.instagram.com/username/ - description
-
-NOTE: Format is CRITICAL. Each account MUST start with **@username** with two asterisks.`;
-            userPrompt = `Find TOP-3 most authoritative Russian Instagram accounts for the keyword: ${keyword}`;
-          } else if (platform === 'telegram') {
-            systemPrompt = `You are an expert at finding high-quality Russian Telegram channels and chats.
-Focus only on Telegram channels with >10K subscribers that post content in Russian.
-For each channel or chat provide:
-1. Channel name with @ symbol 
-2. Title in Russian
-3. Subscriber count with K or M
-4. Brief description of channel content in Russian
-
-Format each channel exactly as:
-**@channelname** - Title (500K subscribers) - Description
-
-Also include direct Telegram URLs in the response like:
-https://t.me/channelname - description
-
-NOTE: Format is CRITICAL. Each channel MUST start with **@channelname** with two asterisks.`;
-            userPrompt = `Find TOP-3 most popular and authoritative Russian Telegram channels for the keyword: ${keyword}`;
-          } else {
-            console.error(`Неподдерживаемая платформа: ${platform}. Поддерживаются: instagram, telegram`);
-            continue;
-          }
-
-          // Удаляем префикс "Bearer", если он уже есть в ключе
-          const cleanKey = perplexityApiKey.startsWith('Bearer ') 
-            ? perplexityApiKey.substring(7)
-            : perplexityApiKey;
-
-          // Выполняем запрос к Perplexity API
-          const response = await axios.post(
-            'https://api.perplexity.ai/chat/completions',
-            {
-              model: "llama-3.1-sonar-small-128k-online",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt }
-              ],
-              max_tokens: 1000,
-              temperature: 0.7
-            },
-            {
-              headers: {
-                'Authorization': `Bearer ${cleanKey}`,
-                'Content-Type': 'application/json'
-              },
-              timeout: 30000 // 30 секунд таймаут
-            }
-          );
-
-          // Проверяем структуру ответа
-          if (!response.data?.choices?.[0]?.message?.content) {
-            console.error('Некорректный формат ответа API для ключевого слова:', keyword);
-            continue;
-          }
-
-          // Получаем текст ответа
-          const content = response.data.choices[0].message.content;
-          console.log(`Raw API response for keyword ${keyword}:`, content.substring(0, 200) + '...');
-
-          // Извлекаем источники из текста с учетом платформы
-          const sources = extractSourcesFromText(content, [platform]);
-          console.log(`Found ${sources.length} sources for keyword ${keyword}`);
-
-          // Добавляем к каждому источнику информацию о ключевом слове, по которому он был найден
-          const sourcesWithKeyword = sources.map(source => ({
-            ...source,
-            matchedKeyword: keyword
-          }));
-          
-          allResults.push(...sourcesWithKeyword);
-          keywordResults[keyword] = sources.length;
-          
-          // Небольшая пауза между запросами, чтобы не перегружать API
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-        } catch (keywordError) {
-          console.error(`Ошибка при поиске для ключевого слова "${keyword}":`, keywordError);
-          keywordResults[keyword] = 0;
-          // Продолжаем с другими ключевыми словами
-        }
-      }
-      
-      // Объединяем результаты и удаляем дубликаты
-      const mergedResults = mergeSources(allResults);
-      console.log(`Total sources after merging: ${mergedResults.length}`);
-      
-      // Лимитируем количество результатов
-      const limitedSources = mergedResults.slice(0, maxResults);
+      // Perplexity service has been removed
+      console.log('Perplexity service has been removed - returning empty results');
       
       return res.json({
         success: true,
-        data: limitedSources,
+        data: [],
         keywords: keywords,
-        keywordResults: keywordResults,
-        totalFound: mergedResults.length,
-        returned: limitedSources.length,
-        message: `Найдено ${mergedResults.length} уникальных источников для ${keywords.length} ключевых слов`
+        keywordResults: {},
+        totalFound: 0,
+        returned: 0,
+        message: 'Сервис поиска источников временно недоступен'
       });
     } catch (error) {
       console.error('Error in /api/sources/search-by-campaign:', error);
