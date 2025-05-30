@@ -105,7 +105,7 @@ export function EditCampaignDialog({ campaignId, currentName, onClose }: EditCam
   return (
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
       <DialogHeader>
-        <DialogTitle>Редактировать кампанию v2</DialogTitle>
+        <DialogTitle>Редактировать кампанию</DialogTitle>
       </DialogHeader>
 
       <Tabs defaultValue="general" className="mt-4 flex-1 overflow-hidden flex flex-col">
