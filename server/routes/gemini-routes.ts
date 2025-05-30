@@ -68,6 +68,7 @@ geminiRouter.post('/improve-text', async (req, res) => {
     // Определяем, есть ли HTML в оригинальном тексте
     const hasOriginalHtml = text.includes('<') && text.includes('>');
     logger.log(`[gemini-routes] Оригинальный текст содержит HTML: ${hasOriginalHtml}`);
+    logger.log(`[gemini-routes] Исходный текст: ${text}`);
     
     // Для обычного текста используем стандартный подход
     const userPrompt = `Исправь только грамматические ошибки. НЕ добавляй markdown. НЕ меняй смысл: ${text}`;
@@ -75,6 +76,7 @@ geminiRouter.post('/improve-text', async (req, res) => {
     // Используем метод generateText для улучшения текста
     const result = await geminiService.generateText(userPrompt, 'gemini-1.5-flash');
     logger.log(`[gemini-routes] Получен результат от AI: ${result.substring(0, 100)}...`);
+    logger.log(`[gemini-routes] Полный результат от AI: ${result}`);
     
     // Профессиональная конвертация Markdown в HTML
     const convertMarkdownToHtml = (markdown: string): string => {
@@ -138,35 +140,58 @@ geminiRouter.post('/improve-text', async (req, res) => {
     logger.log(`[gemini-routes] AI результат содержит Markdown: ${hasMarkdownSymbols}`);
     logger.log(`[gemini-routes] Оригинальный текст содержал HTML: ${hasOriginalHtml}`);
     
-    // Если результат содержит Markdown - конвертируем в HTML
-    if (hasMarkdownSymbols) {
-      logger.log('[gemini-routes] Конвертируем Markdown в HTML');
-      cleanedText = convertMarkdownToHtml(result);
-      logger.log(`[gemini-routes] После конвертации: ${cleanedText.substring(0, 100)}...`);
+    // Если оригинальный текст содержал HTML, восстанавливаем HTML-форматирование
+    if (hasOriginalHtml) {
+      if (hasMarkdownSymbols) {
+        logger.log('[gemini-routes] Конвертируем Markdown в HTML');
+        cleanedText = convertMarkdownToHtml(result);
+        logger.log(`[gemini-routes] После конвертации: ${cleanedText.substring(0, 100)}...`);
+      } else {
+        // Разбиваем текст на абзацы и оборачиваем в <p>
+        const paragraphs = result.split('\n\n').filter(p => p.trim());
+        cleanedText = paragraphs.map(paragraph => {
+          const trimmed = paragraph.trim();
+          if (!trimmed) return '';
+          
+          // Если уже есть HTML-теги, не оборачиваем в <p>
+          if (trimmed.match(/^<(h[1-6]|div|blockquote|ul|ol|li)/)) {
+            return trimmed;
+          }
+          
+          // Оборачиваем в параграф
+          return `<p>${trimmed}</p>`;
+        }).filter(p => p.trim()).join('');
+        logger.log('[gemini-routes] Обернули текст в HTML-теги');
+      }
     } else {
-      // Просто очищаем от возможных markdown символов
-      cleanedText = result
-        .replace(/^#+\s+/gm, '')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/```[\s\S]*?```/g, '')
-        .replace(/`([^`]+)`/g, '$1')
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-        .replace(/^\s*[-*+]\s+/gm, '')
-        .replace(/^\s*\d+\.\s+/gm, '')
-        .replace(/^\s*>\s+/gm, '')
-        .replace(/^[-=*]{3,}$/gm, '')
-        .trim();
+      // Если оригинал не содержал HTML - просто очищаем от markdown
+      if (hasMarkdownSymbols) {
+        cleanedText = convertMarkdownToHtml(result);
+      } else {
+        cleanedText = result
+          .replace(/^#+\s+/gm, '')
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/\*([^*]+)\*/g, '$1')
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+          .replace(/^\s*[-*+]\s+/gm, '')
+          .replace(/^\s*\d+\.\s+/gm, '')
+          .replace(/^\s*>\s+/gm, '')
+          .replace(/^[-=*]{3,}$/gm, '')
+          .trim();
+      }
       logger.log('[gemini-routes] Очистили от markdown символов');
     }
     
     logger.log('[gemini-routes] Текст успешно улучшен и очищен от markdown');
     
     // Возвращаем результат
+    logger.log(`[gemini-routes] Финальный результат: ${cleanedText}`);
+    
     return res.status(200).json({
       success: true,
-      originalText: text,
-      improvedText: cleanedText
+      text: cleanedText
     });
   } catch (error) {
     logger.error('[gemini-routes] Ошибка при улучшении текста:', error);
