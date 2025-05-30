@@ -167,15 +167,31 @@ export default function PublicationCalendar({
     setFilteredPlatforms(selected);
   };
 
+  // Добавляем анализ данных один раз
+  React.useEffect(() => {
+    if (content.length > 0) {
+      const withSocialPlatforms = content.filter(post => 
+        post.socialPlatforms && 
+        typeof post.socialPlatforms === 'object' && 
+        Object.keys(post.socialPlatforms).length > 0
+      );
+      
+      console.log(`КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: ${content.length}`);
+      console.log(`КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: ${withSocialPlatforms.length}`);
+      
+      if (withSocialPlatforms.length > 0) {
+        console.log(`КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:`);
+        withSocialPlatforms.slice(0, 3).forEach((post, i) => {
+          console.log(`  ${i + 1}. publishedAt: ${post.publishedAt}, scheduledAt: ${post.scheduledAt}, platforms: ${Object.keys(post.socialPlatforms || {}).join(', ')}`);
+        });
+      }
+    }
+  }, [content]);
+
   // Индикатор публикаций на дату в календаре
   const getDayContent = (day: Date) => {
     // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
     const uniquePostsMap = new Map<string, CampaignContent>();
-    
-    // Отладочная информация для первых 3 дней месяца
-    if (day.getDate() <= 3) {
-      console.log(`Checking day ${day.toDateString()}, total content items: ${content.length}`);
-    }
     
     // Проходим по всем постам и собираем только уникальные на эту дату
     content.forEach((post, index) => {
