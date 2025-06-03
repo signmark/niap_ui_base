@@ -50,9 +50,9 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      // Gemini 2.5 Flash маппится на 2.0 Flash Experimental (самая новая доступная модель)
-      'gemini-2.5-flash': 'gemini-2.0-flash-exp',
-      'gemini-2.5-pro': 'gemini-1.5-pro-latest',
+      // Gemini 2.5 Flash используем правильную модель
+      'gemini-2.5-flash': 'gemini-2.5-flash-preview-0514',
+      'gemini-2.5-pro': 'gemini-2.5-pro-preview-0506',
       // Gemini 2.0 модели для стандартного API
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
       'gemini-2.0-flash-lite': 'gemini-2.0-flash-thinking-exp-1219',
