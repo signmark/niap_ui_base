@@ -4,6 +4,7 @@
 - **Project ID**: gen-lang-client-0762407615
 - **Service Account Email**: vertexai@gen-lang-client-0762407615.iam.gserviceaccount.com
 - **Client ID**: 101608073551091542897
+- **Private Key ID**: 1d404280ad34bf873985b4c7556172af935276e5
 
 ## Доступные модели Gemini 2.5
 - **gemini-2.5-flash** - Быстрая модель для генерации коротких текстов
@@ -15,7 +16,8 @@
 - europe-west1
 
 ## Service Account Key
-Файл сохранен в `config/vertex-ai/service-account.json`
+Файл сохранен в `google-service-account.json` в корне проекта
+Содержит полный приватный ключ для OAuth аутентификации с Vertex AI
 
 ## Реализованные функции
 ✅ Интеграция с существующей системой генерации контента
