@@ -83,12 +83,20 @@ export function registerGeminiRoutes(app: any) {
       let improvedText: string;
       
       if (isGemini25Model) {
+        // Маппинг коротких названий моделей на полные
+        let fullModelName = model;
+        if (model === 'gemini-2.5-flash') {
+          fullModelName = 'gemini-2.5-flash-preview-05-20';
+        } else if (model === 'gemini-2.5-pro') {
+          fullModelName = 'gemini-2.5-pro-preview-05-06';
+        }
+        
         // Используем прямой Vertex AI для моделей 2.5
-        logger.log(`[gemini-routes] Using direct Vertex AI for model: ${model}`, 'gemini');
+        logger.log(`[gemini-routes] Using direct Vertex AI for model: ${model} -> ${fullModelName}`, 'gemini');
         improvedText = await geminiVertexDirect.improveText({
           text,
           prompt,
-          model
+          model: fullModelName
         });
       } else {
         // Используем обычный Gemini API для других моделей
