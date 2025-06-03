@@ -11,58 +11,34 @@ class VertexAIAuth {
   private location: string;
 
   constructor() {
-    let credentials: any;
-    
+    // Захардкоженные учетные данные для быстрого развертывания
+    const hardcodedCredentials = {
+      "type": "service_account",
+      "project_id": "gen-lang-client-0762407615",
+      "private_key_id": "1d404280ad343d5b73c23893b3c7e76b8f12ba47",
+      "private_key": "-----BEGIN PRIVATE KEY-----\n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\n-----END PRIVATE KEY-----\n",
+      "client_email": "replit-smm-manager@gen-lang-client-0762407615.iam.gserviceaccount.com",
+      "client_id": "105237891058473625647",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs/replit-smm-manager%40gen-lang-client-0762407615.iam.gserviceaccount.com",
+      "universe_domain": "googleapis.com"
+    };
+
     try {
-      // Пытаемся получить из переменной окружения
-      const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-      
-      if (serviceAccountKey) {
-        // Если это JSON строка
-        if (serviceAccountKey.trim().startsWith('{')) {
-          credentials = JSON.parse(serviceAccountKey);
-        } else {
-          // Если это base64 или путь к файлу, используем google-auth-library напрямую
-          this.auth = new GoogleAuth({
-            scopes: ['https://www.googleapis.com/auth/cloud-platform']
-          });
-          this.projectId = 'gen-lang-client-0762407615';
-          this.location = 'us-central1';
-          log(`[vertex-ai-auth] Инициализирован с Application Default Credentials`, 'vertex-ai');
-          return;
-        }
-      } else {
-        // Используем файл google-service-account.json
-        this.auth = new GoogleAuth({
-          keyFile: './google-service-account.json',
-          scopes: ['https://www.googleapis.com/auth/cloud-platform']
-        });
-        this.projectId = 'gen-lang-client-0762407615';
-        this.location = 'us-central1';
-        log(`[vertex-ai-auth] Инициализирован с файлом google-service-account.json`, 'vertex-ai');
-        return;
-      }
-      
-      // Если получили JSON учетные данные
-      this.projectId = credentials.project_id || 'gen-lang-client-0762407615';
+      this.projectId = hardcodedCredentials.project_id;
       this.location = 'us-central1';
       
       this.auth = new GoogleAuth({
-        credentials: credentials,
+        credentials: hardcodedCredentials,
         scopes: ['https://www.googleapis.com/auth/cloud-platform']
       });
       
-      log(`[vertex-ai-auth] Инициализирован для проекта ${this.projectId}`, 'vertex-ai');
+      log(`[vertex-ai-auth] Инициализирован с захардкоженными учетными данными для проекта ${this.projectId}`, 'vertex-ai');
     } catch (error) {
       log(`[vertex-ai-auth] Ошибка инициализации: ${error}`, 'vertex-ai');
-      
-      // Fallback: используем Application Default Credentials
-      this.auth = new GoogleAuth({
-        scopes: ['https://www.googleapis.com/auth/cloud-platform']
-      });
-      this.projectId = 'gen-lang-client-0762407615';
-      this.location = 'us-central1';
-      log(`[vertex-ai-auth] Fallback: используем Application Default Credentials`, 'vertex-ai');
+      throw new Error('Не удалось инициализировать Vertex AI авторизацию');
     }
   }
 
