@@ -75,8 +75,8 @@ const AI_SERVICES = [
         name: "Claude 3 Haiku (быстрая)"
       },
       {
-        id: "claude-3-sonnet-20240229",
-        name: "Claude 3 Sonnet (сбалансированная)",
+        id: "claude-3-5-sonnet-20241022",
+        name: "Claude 3.5 Sonnet (сбалансированная)",
         default: true
       },
       {
