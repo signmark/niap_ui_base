@@ -28,7 +28,16 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Все модели используют стандартный Generative Language API для простоты
+    // Gemini 2.5 модели требуют Vertex AI
+    if (model === 'gemini-2.5-flash' || model === 'gemini-2.5-pro') {
+      return {
+        version: 'v1',
+        baseUrl: vertexAIAuth.getVertexAIUrl(model).replace(`:generateContent`, ''),
+        isVertexAI: true
+      };
+    }
+    
+    // Остальные модели используют стандартный Generative Language API
     return {
       version: 'v1beta',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
@@ -42,9 +51,9 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      // Gemini 2.5 Flash маппится на лучшую доступную модель - Gemini 2.0 Flash Experimental
-      'gemini-2.5-flash': 'gemini-2.0-flash-exp',
-      'gemini-2.5-pro': 'gemini-2.5-pro-preview-0506',
+      // Gemini 2.5 модели используют правильные названия для Vertex AI (из документации)
+      'gemini-2.5-flash': 'gemini-2.5-flash',
+      'gemini-2.5-pro': 'gemini-2.5-pro',
       // Gemini 2.0 модели для стандартного API
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
       'gemini-2.0-flash-lite': 'gemini-2.0-flash-thinking-exp-1219',
