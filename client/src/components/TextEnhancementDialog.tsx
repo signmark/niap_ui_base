@@ -22,7 +22,6 @@ interface TextEnhancementDialogProps {
   onOpenChange: (open: boolean) => void;
   initialText: string;
   onSave: (enhancedText: string) => void;
-  campaignId?: string;
 }
 
 // Предустановленные промпты для улучшения текста
