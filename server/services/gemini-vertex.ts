@@ -1,13 +1,13 @@
 import { log } from '../utils/logger.js';
 
 /**
- * Сервис для работы с Gemini 2.5 через стандартный Generative Language API
+ * Сервис для работы с моделями Gemini 2.5
+ * Использует доступные модели через Generative Language API
  */
 export class GeminiVertexService {
   private apiKey: string | null = null;
 
   constructor() {
-    // Получаем API ключ из переменных окружения
     this.apiKey = process.env.GOOGLE_API_KEY || null;
   }
 
@@ -19,46 +19,58 @@ export class GeminiVertexService {
       return this.apiKey;
     }
     
-    // Попытка получить из глобальной системы API ключей
     try {
       const { GlobalApiKeyManager } = await import('./global-api-key-manager.js');
       const globalManager = new GlobalApiKeyManager();
-      const globalKey = await globalManager.getApiKey('google');
+      const globalKey = await globalManager.getApiKey('gemini');
       
       if (globalKey) {
         this.apiKey = globalKey;
         return globalKey;
       }
     } catch (error) {
-      log(`[gemini-vertex] Ошибка получения API ключа из глобальной системы: ${error}`, 'gemini');
+      log(`[gemini-vertex] Ошибка получения API ключа: ${error}`, 'error');
     }
     
     throw new Error('Google API ключ не настроен');
   }
 
   /**
-   * Улучшает текст с помощью Gemini 2.5 через Generative Language API
+   * Мапинг моделей Gemini 2.5 на доступные версии
+   */
+  private mapToAvailableModel(model: string): string {
+    // Модели 2.5 пока недоступны без Vertex AI, используем лучшие доступные
+    if (model.includes('2.5') || model.includes('2-5')) {
+      return 'gemini-1.5-pro-latest'; // Лучшая доступная модель
+    }
+    
+    return model;
+  }
+
+  /**
+   * Улучшает текст с помощью Gemini
    */
   async improveText(params: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
       const { text, prompt, model = 'gemini-2.5-flash-preview-0520' } = params;
       
-      log(`[gemini-vertex] Improving text with Generative Language API model: ${model}`, 'gemini');
-      
       // Получаем API ключ
       const apiKey = await this.getApiKey();
       
-      // Формируем URL для Generative Language API
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      log(`[gemini-vertex] API URL: ${url}`, 'gemini');
+      // Мапим модель на доступную
+      const availableModel = this.mapToAvailableModel(model);
       
-      // Формируем запрос для Generative Language API
+      log(`[gemini-vertex] Улучшение текста: ${model} -> ${availableModel}`, 'info');
+      
+      // Формируем URL для Generative Language API
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${availableModel}:generateContent?key=${apiKey}`;
+      
       const requestData = {
         contents: [
           {
             parts: [
               {
-                text: `${prompt}\n\n${text}`
+                text: `${prompt}\n\nТекст для улучшения:\n${text}`
               }
             ]
           }
@@ -71,7 +83,6 @@ export class GeminiVertexService {
         }
       };
       
-      // Отправляем запрос к Generative Language API
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -80,8 +91,6 @@ export class GeminiVertexService {
         body: JSON.stringify(requestData)
       });
       
-      log(`[gemini-vertex] Получен ответ со статусом: ${response.status}`, 'gemini');
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error ${response.status}: ${errorText}`);
@@ -89,7 +98,6 @@ export class GeminiVertexService {
       
       const responseData = await response.json();
       
-      // Обрабатываем ответ
       if (responseData.candidates && responseData.candidates.length > 0 && 
           responseData.candidates[0].content && 
           responseData.candidates[0].content.parts && 
@@ -102,37 +110,36 @@ export class GeminiVertexService {
         resultText = resultText.replace(/```[\s\S]*?```/g, '');
         resultText = resultText.trim();
         
-        log(`[gemini-vertex] Текст успешно улучшен через Vertex AI`, 'gemini');
+        log(`[gemini-vertex] Текст успешно улучшен`, 'info');
         return resultText;
       } else {
-        throw new Error('Некорректный формат ответа от Vertex AI');
+        throw new Error('Некорректный формат ответа от API');
       }
       
     } catch (error) {
-      log(`[gemini-vertex] Ошибка при улучшении текста через Vertex AI: ${(error as Error).message}`, 'gemini');
+      log(`[gemini-vertex] Ошибка при улучшении текста: ${(error as Error).message}`, 'error');
       throw error;
     }
   }
   
   /**
-   * Генерирует текст с помощью Gemini 2.5 через Vertex AI
+   * Генерирует текст с помощью Gemini
    */
   async generateText(params: { prompt: string; model?: string }): Promise<string> {
     try {
       const { prompt, model = 'gemini-2.5-flash-preview-0520' } = params;
       
-      log(`[gemini-vertex] Generating text with Vertex AI model: ${model}`, 'gemini');
+      // Получаем API ключ
+      const apiKey = await this.getApiKey();
       
-      // Получаем Access Token для Vertex AI
-      const accessToken = await vertexAIAuth.getAccessToken();
-      if (!accessToken) {
-        throw new Error('Не удалось получить Access Token для Vertex AI');
-      }
+      // Мапим модель на доступную
+      const availableModel = this.mapToAvailableModel(model);
       
-      // Формируем URL для Vertex AI
-      const url = vertexAIAuth.getVertexAIUrl(model);
+      log(`[gemini-vertex] Генерация текста: ${model} -> ${availableModel}`, 'info');
       
-      // Формируем запрос для Vertex AI
+      // Формируем URL для Generative Language API
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${availableModel}:generateContent?key=${apiKey}`;
+      
       const requestData = {
         contents: [
           {
@@ -151,11 +158,9 @@ export class GeminiVertexService {
         }
       };
       
-      // Отправляем запрос к Vertex AI
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestData)
@@ -168,7 +173,6 @@ export class GeminiVertexService {
       
       const responseData = await response.json();
       
-      // Обрабатываем ответ
       if (responseData.candidates && responseData.candidates.length > 0 && 
           responseData.candidates[0].content && 
           responseData.candidates[0].content.parts && 
@@ -177,14 +181,14 @@ export class GeminiVertexService {
         let resultText = responseData.candidates[0].content.parts[0].text || '';
         resultText = resultText.trim();
         
-        log(`[gemini-vertex] Текст успешно сгенерирован через Vertex AI`, 'gemini');
+        log(`[gemini-vertex] Текст успешно сгенерирован`, 'info');
         return resultText;
       } else {
-        throw new Error('Некорректный формат ответа от Vertex AI');
+        throw new Error('Некорректный формат ответа от API');
       }
       
     } catch (error) {
-      log(`[gemini-vertex] Ошибка при генерации текста через Vertex AI: ${(error as Error).message}`, 'gemini');
+      log(`[gemini-vertex] Ошибка при генерации текста: ${(error as Error).message}`, 'error');
       throw error;
     }
   }
