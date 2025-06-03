@@ -47,7 +47,7 @@ export class GeminiVertexService {
    */
   async improveText(params: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
-      const { text, prompt, model = 'gemini-2.5-flash-preview-0520' } = params;
+      const { text, prompt, model = 'gemini-2.5-flash-preview-05-20' } = params;
       
       // Проверяем, является ли это моделью 2.5
       if (this.isGemini25Model(model)) {
@@ -90,6 +90,7 @@ export class GeminiVertexService {
       const requestData = {
         contents: [
           {
+            role: "user",
             parts: [
               {
                 text: `${prompt}\n\nТекст для улучшения:\n${text}`
