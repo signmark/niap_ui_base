@@ -158,6 +158,7 @@ export function registerClaudeRoutes(app: Router) {
       const userId = req.userId;
       
       logger.log(`[claude-routes] Received improve-text request from user ${userId}`, 'claude');
+      logger.log(`[claude-routes] Request data: text length=${text?.length}, prompt length=${prompt?.length}, model=${model}`, 'claude');
       
       if (!text || !prompt) {
         logger.error('[claude-routes] Missing text or prompt in improve-text request', 'claude');
@@ -179,7 +180,9 @@ export function registerClaudeRoutes(app: Router) {
         });
       }
       
+      logger.log(`[claude-routes] Claude service initialized successfully`, 'claude');
       logger.log(`[claude-routes] Calling improveText with model ${model || 'default'}`, 'claude');
+      
       const improvedText = await claudeService.improveText({ text, prompt, model });
       
       logger.log(`[claude-routes] Claude response: ${improvedText.substring(0, 100)}...`, 'claude');

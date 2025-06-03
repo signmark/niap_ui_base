@@ -51,7 +51,7 @@ interface SocialContentParams {
 export class ClaudeService {
   private apiKey: string | null = null;
   private apiUrl = 'https://api.anthropic.com/v1/messages';
-  private defaultModel = 'claude-3-7-sonnet-20250219'; // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
+  private defaultModel = 'claude-3-5-sonnet-20241022'; // Current stable Claude model
   private isInitialized = false;
   private globalApiKeysService: GlobalApiKeysService;
 
