@@ -151,6 +151,11 @@ export class QwenService {
       // Удаляем лишние разделители --- в начале и конце текста
       content = content.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
       content = content.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      
+      // Удаляем тройные кавычки в начале и конце текста
+      content = content.replace(/^"""\s*\n?/g, ''); // Удаляем """ в начале
+      content = content.replace(/\n?\s*"""\s*$/g, ''); // Удаляем """ в конце
+      
       content = content.trim(); // Убираем лишние пробелы
       
       return content;

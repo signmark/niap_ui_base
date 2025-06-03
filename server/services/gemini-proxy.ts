@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as logger from '../utils/logger';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import fetch from 'node-fetch';
-import { vertexAIAuth } from './vertex-ai-auth';
 
 
 interface GeminiProxyOptions {
@@ -125,19 +124,9 @@ export class GeminiProxyService {
           body: JSON.stringify(body)
         };
         
-        // Для Vertex AI используем OAuth авторизацию
+        // Vertex AI отключен для предотвращения использования браузерного аккаунта пользователя
         if (url.includes('aiplatform.googleapis.com')) {
-          logger.log(`[gemini-proxy] Используется Vertex AI, получаем OAuth токен`, 'gemini');
-          const accessToken = await vertexAIAuth.getAccessToken();
-          if (accessToken) {
-            fetchOptions.headers = {
-              ...fetchOptions.headers,
-              'Authorization': `Bearer ${accessToken}`
-            };
-            logger.log(`[gemini-proxy] OAuth токен добавлен для Vertex AI`, 'gemini');
-          } else {
-            throw new Error('Не удалось получить OAuth токен для Vertex AI');
-          }
+          throw new Error('Vertex AI отключен. Используйте стандартный Gemini API.');
         }
         
         // Добавляем прокси-агент, если он доступен

@@ -19,27 +19,10 @@ export class VertexAIAuth {
    * Инициализирует Google Auth с сервисным аккаунтом
    */
   private initializeAuth(): void {
-    try {
-      const serviceAccountPath = path.join(process.cwd(), 'google-service-account.json');
-      
-      if (fs.existsSync(serviceAccountPath)) {
-        // Используем файл сервисного аккаунта
-        this.auth = new GoogleAuth({
-          keyFile: serviceAccountPath,
-          scopes: ['https://www.googleapis.com/auth/cloud-platform']
-        });
-        logger.log('[vertex-ai-auth] Аутентификация инициализирована с сервисным аккаунтом', 'gemini');
-      } else {
-        // Пытаемся использовать переменные окружения
-        this.auth = new GoogleAuth({
-          scopes: ['https://www.googleapis.com/auth/cloud-platform']
-        });
-        logger.log('[vertex-ai-auth] Аутентификация инициализирована через переменные окружения', 'gemini');
-      }
-    } catch (error) {
-      logger.error(`[vertex-ai-auth] Ошибка инициализации аутентификации: ${(error as Error).message}`, 'gemini');
-      this.auth = null;
-    }
+    // Отключено: не инициализируем Google Auth для предотвращения использования
+    // браузерного аккаунта пользователя
+    logger.log('[vertex-ai-auth] Vertex AI аутентификация отключена', 'gemini');
+    this.auth = null;
   }
   
   /**
