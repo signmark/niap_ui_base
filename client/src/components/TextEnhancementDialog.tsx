@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -21,6 +22,7 @@ interface TextEnhancementDialogProps {
   onOpenChange: (open: boolean) => void;
   initialText: string;
   onSave: (enhancedText: string) => void;
+  campaignId?: string;
 }
 
 // Предустановленные промпты для улучшения текста

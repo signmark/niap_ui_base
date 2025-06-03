@@ -549,7 +549,13 @@ export class ClaudeService {
           } else if (status === 400) {
             logger.error(`Claude API rejected request: Bad request (400)`, 'claude');
             logger.error(`Error details: ${JSON.stringify(error.response.data, null, 2)}`, 'claude');
-            logger.error(`Request data sent: ${JSON.stringify(requestData, null, 2)}`, 'claude');
+            logger.error(`Request data model: ${requestData.model}`, 'claude');
+            logger.error(`Request data max_tokens: ${requestData.max_tokens}`, 'claude');
+            logger.error(`Request data messages length: ${requestData.messages.length}`, 'claude');
+            if (requestData.messages[0]) {
+              logger.error(`First message role: ${requestData.messages[0].role}`, 'claude');
+              logger.error(`First message content length: ${requestData.messages[0].content.length}`, 'claude');
+            }
           } else if (status === 429) {
             logger.error('Claude API rejected request: Rate limit exceeded (429)', 'claude');
           } else if (status >= 500) {
