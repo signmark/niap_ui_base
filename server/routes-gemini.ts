@@ -82,9 +82,10 @@ export function registerGeminiRoutes(app: any) {
       let improvedText: string;
       
       if (isGemini25Model) {
-        // Используем Vertex AI для моделей 2.5
-        logger.log(`[gemini-routes] Using Vertex AI for model: ${model}`, 'gemini');
-        improvedText = await geminiVertexService.improveText({
+        // Используем чистый Vertex AI для моделей 2.5
+        logger.log(`[gemini-routes] Using clean Vertex AI for model: ${model}`, 'gemini');
+        const { geminiVertexClean } = await import('./services/gemini-vertex-clean.js');
+        improvedText = await geminiVertexClean.improveText({
           text,
           prompt,
           model
