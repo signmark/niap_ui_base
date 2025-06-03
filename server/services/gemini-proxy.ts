@@ -28,7 +28,16 @@ export class GeminiProxyService {
    * @returns Объект с версией API и базовым URL
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
-    // Все модели Gemini используют стандартный Generative Language API
+    // Gemini 2.5 модели требуют Vertex AI
+    if (model === 'gemini-2.5-flash-preview-0514' || model === 'gemini-2.5-pro-preview-0506') {
+      return {
+        version: 'v1',
+        baseUrl: vertexAIAuth.getVertexAIUrl(model).replace(`:generateContent`, ''),
+        isVertexAI: true
+      };
+    }
+    
+    // Остальные модели используют стандартный Generative Language API
     if (model.startsWith('gemini-') || model.includes('gemini')) {
       return {
         version: 'v1beta',
