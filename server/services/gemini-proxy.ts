@@ -29,7 +29,6 @@ export class GeminiProxyService {
    */
   private getApiVersionForModel(model: string): { version: string; baseUrl: string; isVertexAI?: boolean } {
     // Все модели Gemini используют стандартный Generative Language API
-    // так как Vertex AI API требует дополнительной активации
     if (model.startsWith('gemini-') || model.includes('gemini')) {
       return {
         version: 'v1beta',
@@ -51,8 +50,8 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      // Gemini 2.5 модели используют Vertex AI
-      'gemini-2.5-flash': 'gemini-2.5-flash-002',
+      // Gemini 2.5 Flash маппится на 2.0 Flash Experimental (самая новая доступная модель)
+      'gemini-2.5-flash': 'gemini-2.0-flash-exp',
       'gemini-2.5-pro': 'gemini-1.5-pro-latest',
       // Gemini 2.0 модели для стандартного API
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
