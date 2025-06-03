@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DeepSeekService, DeepSeekMessage } from './services/deepseek';
 import { apiKeyService } from './services/api-keys';
+import { globalApiKeyManager } from './services/global-api-key-manager';
 import { log } from './utils/logger';
 
 export function registerDeepSeekRoutes(app: Router) {
@@ -11,9 +12,25 @@ export function registerDeepSeekRoutes(app: Router) {
    */
   async function getDeepSeekApiKey(req: Request): Promise<string | null> {
     try {
+      // Сначала пробуем получить ключ из глобальной коллекции
+      log('[deepseek-routes] Getting DeepSeek API key from Global API Keys collection');
+      
+      try {
+        const globalKey = await globalApiKeyManager.getApiKey('deepseek');
+        if (globalKey) {
+          log(`[deepseek-routes] Successfully retrieved DeepSeek API key from Global API Keys (length: ${globalKey.length})`);
+          const maskedKey = globalKey.substring(0, 8) + '...' + globalKey.substring(globalKey.length - 4);
+          log(`[deepseek-routes] DeepSeek API key: ${maskedKey}`);
+          return globalKey;
+        }
+      } catch (globalError) {
+        log(`[deepseek-routes] Global API key retrieval failed: ${globalError instanceof Error ? globalError.message : 'Unknown error'}`);
+      }
+
+      // Если глобального ключа нет, пробуем пользовательский ключ
       const userId = req.userId;
       if (!userId) {
-        log('Cannot get DeepSeek API key: userId is missing in request');
+        log('Cannot get DeepSeek API key: userId is missing in request and no global key available');
         return null;
       }
 
