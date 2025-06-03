@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { GeminiService, geminiService } from './services/gemini';
 import { geminiVertexService } from './services/gemini-vertex';
-import { geminiVertexClean } from './services/gemini-vertex-clean';
+import { geminiVertexDirect } from './services/gemini-vertex-direct';
 import { ApiKeyService } from './services/api-keys';
 import * as logger from './utils/logger';
 
@@ -83,9 +83,9 @@ export function registerGeminiRoutes(app: any) {
       let improvedText: string;
       
       if (isGemini25Model) {
-        // Используем чистый Vertex AI для моделей 2.5
-        logger.log(`[gemini-routes] Using clean Vertex AI for model: ${model}`, 'gemini');
-        improvedText = await geminiVertexClean.improveText({
+        // Используем прямой Vertex AI для моделей 2.5
+        logger.log(`[gemini-routes] Using direct Vertex AI for model: ${model}`, 'gemini');
+        improvedText = await geminiVertexDirect.improveText({
           text,
           prompt,
           model

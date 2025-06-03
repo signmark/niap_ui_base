@@ -40,11 +40,21 @@ export class GeminiVertexClean {
    */
   private async tryVertexAI(text: string, prompt: string, model: string): Promise<string> {
     try {
+      log(`[gemini-vertex-clean] Начинаем запрос к Vertex AI для модели: ${model}`, 'info');
+      
       // Импортируем Vertex AI auth
       const { vertexAIAuth } = await import('./vertex-ai-auth.js');
+      log(`[gemini-vertex-clean] Vertex AI auth загружен`, 'info');
       
       // Получаем токен доступа для Vertex AI
+      log(`[gemini-vertex-clean] Получаем access token`, 'info');
       const accessToken = await vertexAIAuth.getAccessToken();
+      
+      if (!accessToken) {
+        throw new Error('Не удалось получить access token для Vertex AI');
+      }
+      
+      log(`[gemini-vertex-clean] Access token получен: ${accessToken.substring(0, 20)}...`, 'info');
       
       // Формируем URL для Vertex AI API
       const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
@@ -76,7 +86,8 @@ export class GeminiVertexClean {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
+        signal: AbortSignal.timeout(30000) // 30 секунд таймаут
       });
       
       const responseText = await response.text();
