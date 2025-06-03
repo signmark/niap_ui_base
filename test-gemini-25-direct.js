@@ -6,15 +6,19 @@ async function testGemini25Direct() {
   try {
     console.log('=== Тест Gemini 2.5 с новыми креденшалами ===');
     
-    // Проверяем переменную окружения
-    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountKey) {
-      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY не настроен');
-    }
+    // Читаем правильный Service Account напрямую из файла
+    const fs = await import('fs');
+    const path = await import('path');
     
-    const credentials = JSON.parse(serviceAccountKey);
-    console.log('✅ Project ID из env:', credentials.project_id);
-    console.log('✅ Client email из env:', credentials.client_email);
+    const serviceAccountPath = path.default.join(process.cwd(), 'attached_assets', 'laboratory-449308-e59e916c28da.json');
+    const serviceAccountData = fs.default.readFileSync(serviceAccountPath, 'utf8');
+    const credentials = JSON.parse(serviceAccountData);
+    
+    console.log('✅ Project ID из файла:', credentials.project_id);
+    console.log('✅ Client email из файла:', credentials.client_email);
+    
+    // Принудительно устанавливаем правильные креденшалы
+    process.env.GOOGLE_SERVICE_ACCOUNT_KEY = serviceAccountData;
     
     // Импортируем сервис
     const { vertexAIAuth } = await import('./server/services/vertex-ai-auth.js');
