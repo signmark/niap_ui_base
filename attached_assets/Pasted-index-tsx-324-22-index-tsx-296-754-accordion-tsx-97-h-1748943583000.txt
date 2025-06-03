@@ -1,0 +1,331 @@
+index.tsx:324 Загружено ключевых слов: 22
+index.tsx:296 Загружено контента: 754
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+iruKqJq33WihhGSJNlA5Y.jpeg:1 
+            
+            
+           GET https://v3.fal.media/files/koala/iruKqJq33WihhGSJNlA5Y.jpeg 403 (Forbidden)
+Image
+commitMount @ chunk-RPCDYKBN.js?v=49418eff:8412
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=49418eff:17102
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=49418eff:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=49418eff:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=49418eff:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=49418eff:19353
+commitRoot @ chunk-RPCDYKBN.js?v=49418eff:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=49418eff:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=49418eff:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=49418eff:555
+flush @ @tanstack_react-query.js?v=49418eff:569
+batch @ @tanstack_react-query.js?v=49418eff:587
+dispatch_fn @ @tanstack_react-query.js?v=49418eff:996
+setData @ @tanstack_react-query.js?v=49418eff:696
+onSuccess @ @tanstack_react-query.js?v=49418eff:897
+resolve @ @tanstack_react-query.js?v=49418eff:456
+Promise.then
+run @ @tanstack_react-query.js?v=49418eff:498
+start @ @tanstack_react-query.js?v=49418eff:536
+fetch @ @tanstack_react-query.js?v=49418eff:926
+executeFetch_fn @ @tanstack_react-query.js?v=49418eff:2211
+onSubscribe @ @tanstack_react-query.js?v=49418eff:1898
+subscribe @ @tanstack_react-query.js?v=49418eff:24
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=49418eff:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=49418eff:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=49418eff:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=49418eff:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=49418eff:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=49418eff:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=49418eff:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=49418eff:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=49418eff:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=49418eff:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=49418eff:19432
+commitRoot @ chunk-RPCDYKBN.js?v=49418eff:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=49418eff:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=49418eff:18718
+workLoop @ chunk-RPCDYKBN.js?v=49418eff:197
+flushWork @ chunk-RPCDYKBN.js?v=49418eff:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=49418eff:384
+index.tsx:197 Setting content with processed keywords: (3) ['творожная запеканка', 'десерт', 'пп']
+index.tsx:205 Comparing keywords for selection: (3) ['творожная запеканка', 'десерт', 'пп']
+index.tsx:214 Keyword "пищевой дневник" (08454b75-fe25-4c66-99d4-3d026b7dec22) match: false
+index.tsx:214 Keyword "анализ диеты" (0b3a0505-4222-4cd8-b711-a6dbab16f7dc) match: false
+index.tsx:214 Keyword "индивидуальные рационы питания" (39cf22ae-f27f-4bee-97d1-49cf9f8acc13) match: false
+index.tsx:214 Keyword "программное обеспечение для нутрициологов" (3d8f1e49-c574-4870-bc48-4b807cc5c0d0) match: false
+index.tsx:214 Keyword "персональные сбалансированные рационы" (3ec803ae-b1ac-4da1-a0a5-b1bc7abbc148) match: false
+index.tsx:214 Keyword "рацион питания" (46fa5790-339c-4d49-94ea-14fa503c30f6) match: false
+index.tsx:214 Keyword "составление рационов онлайн" (54ba08bb-91b6-435b-9c21-11b2f439cfde) match: false
+index.tsx:214 Keyword "пп питание на неделю с рецептами" (5692a5cd-c2d4-4bda-a7a7-3c0543e3d367) match: false
+index.tsx:214 Keyword "сервис для диетологов" (5e12347d-6913-48bf-a784-96b7a34c0893) match: false
+index.tsx:214 Keyword "план питания" (5f0756a2-e115-494b-805d-42a75ddd0575) match: false
+index.tsx:214 Keyword "индивидуальные планы питания" (62c8abe9-9eab-4fe0-b621-e5f37a136c46) match: false
+index.tsx:214 Keyword "пп питание" (7edcead8-6ab4-43af-9617-4e7a07fc657c) match: false
+index.tsx:214 Keyword "баланс питания для клиентов" (830e2f1c-622d-460d-9d46-c5a1300b4685) match: false
+index.tsx:214 Keyword "анализ питания клиентов" (abe3a77c-36cd-41fd-a54c-982821ce3808) match: false
+index.tsx:214 Keyword "создание рационов для клиентов" (b14496d6-8f90-4471-8752-36aa3c8dcc85) match: false
+index.tsx:214 Keyword "Nutrient Planner" (b9e0a18e-bec1-48e7-a446-43b9d1d20f66) match: false
+index.tsx:214 Keyword "индивидуальный рацион" (bbd22f52-5ade-412e-a62b-915c494d0e9c) match: false
+index.tsx:214 Keyword "аналитический сервис для врачей" (c19c86d0-bd48-4aa5-b133-671bdab846b6) match: false
+index.tsx:214 Keyword "профессиональный аналитический сервис для врачей" (c6a315a1-5bbf-4cec-ae4b-e166b07c273e) match: false
+index.tsx:214 Keyword "автоматизация составления рационов" (e6d60e2b-7555-4ae8-a582-d0d325f41f43) match: false
+index.tsx:214 Keyword "сервис для нутрициологов" (ecec659f-b007-4a83-b796-0ef27c3da4d7) match: false
+index.tsx:214 Keyword "составление диеты" (f13effeb-ce40-40cc-b7e9-700389d1c419) match: false
+index.tsx:223 Selected keyword IDs updated: []
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+ImageGenerationDialog.tsx:129 🔄 Сброс состояния ImageGenerationDialog при открытии {contentId: '1a7b7bfb-fb6f-4bb7-a98b-7b2057e030ac', hasInitialPrompt: true, hasInitialContent: true}
+ImageGenerationDialog.tsx:173 Использован сохраненный промт из БД: Delicious cottage cheese casserole with peaches, served on a plate...
+ImageGenerationDialog.tsx:209 Установлен контент для текущего поста: 
+
+
+    
+    
+    Творожная запеканка с персиками: идеальный десерт для здорового питания
+
+
+
+Творожна...
+ImageGenerationDialog.tsx:219 Выбрана вкладка прямого промта, так как есть сохраненный промт
+ImageGenerationDialog.tsx:222 Используем готовый промт из текущего поста: contentId=1a7b7bfb-fb6f-4bb7-a98b-7b2057e030ac
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - claude, модель - 
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-DMFJI7XL.js?v=49418eff:330:29)
+    at chunk-DMFJI7XL.js?v=49418eff:234:13
+    at chunk-DMFJI7XL.js?v=49418eff:157:58
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at chunk-DMFJI7XL.js?v=49418eff:148:64
+    at chunk-UACHJROW.js?v=49418eff:52:11
+    at chunk-UACHJROW.js?v=49418eff:33:11
+    at chunk-RLTE5R7I.js?v=49418eff:41:13
+    at chunk-T7WS74FN.js?v=49418eff:260:22
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at DialogPortal (chunk-DMFJI7XL.js?v=49418eff:111:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at Dialog (chunk-DMFJI7XL.js?v=49418eff:52:5)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:112:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:23:26)
+    at WithLayout (App.tsx:41:23)
+    at _c8 (<anonymous>)
+    at Route (wouter.js?v=49418eff:323:16)
+    at Switch (wouter.js?v=49418eff:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=49418eff:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-DMFJI7XL.js?v=49418eff:338
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=49418eff:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=49418eff:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=49418eff:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=49418eff:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=49418eff:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=49418eff:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=49418eff:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=49418eff:19416
+commitRoot @ chunk-RPCDYKBN.js?v=49418eff:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=49418eff:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=49418eff:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:18627
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - claude, модель - 
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+hook.js:608 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-DMFJI7XL.js?v=49418eff:330:29)
+    at chunk-DMFJI7XL.js?v=49418eff:234:13
+    at chunk-DMFJI7XL.js?v=49418eff:157:58
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at chunk-DMFJI7XL.js?v=49418eff:148:64
+    at chunk-UACHJROW.js?v=49418eff:52:11
+    at chunk-UACHJROW.js?v=49418eff:33:11
+    at chunk-RLTE5R7I.js?v=49418eff:41:13
+    at chunk-T7WS74FN.js?v=49418eff:260:22
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at DialogPortal (chunk-DMFJI7XL.js?v=49418eff:111:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at Dialog (chunk-DMFJI7XL.js?v=49418eff:52:5)
+    at TextEnhancementDialog (TextEnhancementDialog.tsx:145:3)
+    at div (<anonymous>)
+    at RichTextEditor (RichTextEditor.tsx:95:3)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=49418eff:41:13
+    at chunk-T7WS74FN.js?v=49418eff:61:7
+    at chunk-UACHJROW.js?v=49418eff:52:11
+    at chunk-UACHJROW.js?v=49418eff:33:11
+    at chunk-RLTE5R7I.js?v=49418eff:41:13
+    at chunk-NAGEHQIT.js?v=49418eff:29:5
+    at chunk-DMFJI7XL.js?v=49418eff:234:13
+    at chunk-DMFJI7XL.js?v=49418eff:157:58
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at chunk-DMFJI7XL.js?v=49418eff:148:64
+    at chunk-UACHJROW.js?v=49418eff:52:11
+    at chunk-UACHJROW.js?v=49418eff:33:11
+    at chunk-RLTE5R7I.js?v=49418eff:41:13
+    at chunk-T7WS74FN.js?v=49418eff:260:22
+    at Presence (chunk-67VZ6NIO.js?v=49418eff:24:11)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at DialogPortal (chunk-DMFJI7XL.js?v=49418eff:111:11)
+    at _c3 (dialog.tsx:33:6)
+    at Provider (chunk-7X6RRC7I.js?v=49418eff:38:15)
+    at Dialog (chunk-DMFJI7XL.js?v=49418eff:52:5)
+    at div (<anonymous>)
+    at ContentPage (index.tsx:112:32)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:23:26)
+    at WithLayout (App.tsx:41:23)
+    at _c8 (<anonymous>)
+    at Route (wouter.js?v=49418eff:323:16)
+    at Switch (wouter.js?v=49418eff:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=49418eff:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-DMFJI7XL.js?v=49418eff:338
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=49418eff:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=49418eff:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=49418eff:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=49418eff:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=49418eff:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=49418eff:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=49418eff:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=49418eff:19416
+commitRoot @ chunk-RPCDYKBN.js?v=49418eff:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=49418eff:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=49418eff:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:18627
+index.tsx:324 Загружено ключевых слов: 22
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - gemini-2.5-flash
+index.tsx:296 Загружено контента: 754
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - gemini-2.5-flash
+TextEnhancementDialog.tsx:227 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/gemini/improve-text 500 (Internal Server Error)
+mutationFn @ TextEnhancementDialog.tsx:227
+fn @ @tanstack_react-query.js?v=49418eff:1189
+run @ @tanstack_react-query.js?v=49418eff:494
+start @ @tanstack_react-query.js?v=49418eff:536
+execute @ @tanstack_react-query.js?v=49418eff:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=49418eff:2630
+(anonymous) @ @tanstack_react-query.js?v=49418eff:3295
+onClick @ TextEnhancementDialog.tsx:434
+callCallback2 @ chunk-RPCDYKBN.js?v=49418eff:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=49418eff:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=49418eff:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=49418eff:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=49418eff:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=49418eff:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=49418eff:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=49418eff:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=49418eff:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=49418eff:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=49418eff:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=49418eff:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=49418eff:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=49418eff:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=49418eff:5449
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - gemini-2.5-flash
+index.tsx:311 Загрузка ключевых слов для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:324 Загружено ключевых слов: 22
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - gemini-2.5-flash
+index.tsx:283 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:97 hasFullscreenPage: value is undefined or not passed
+TextEnhancementDialog.tsx:207 TextEnhancementDialog: будет использован API эндпоинт /gemini/improve-text
+TextEnhancementDialog.tsx:208 TextEnhancementDialog: выбранный сервис - gemini, модель - gemini-2.5-flash
+index.tsx:296 Загружено контента: 754
