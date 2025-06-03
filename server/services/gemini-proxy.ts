@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as logger from '../utils/logger';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import fetch from 'node-fetch';
+import { vertexAIAuth } from './vertex-ai-auth';
 
 
 interface GeminiProxyOptions {
@@ -61,11 +62,13 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      // Gemini 2.5 модели пока недоступны через стандартный API, используем Gemini 2.0
-      'gemini-2.5-flash': 'gemini-2.0-flash-exp',
-      'gemini-2.5-pro': 'gemini-2.0-flash-exp',
+      // Gemini 2.5 модели для Vertex AI
+      'gemini-2.5-flash': 'gemini-2.5-flash-002',
+      'gemini-2.5-pro': 'gemini-2.5-pro-002',
+      // Gemini 2.0 модели для стандартного API
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
       'gemini-2.0-flash-lite': 'gemini-2.0-flash-thinking-exp-1219',
+      // Gemini 1.5 модели
       'gemini-1.5-flash': 'gemini-1.5-flash',
       'gemini-1.5-pro': 'gemini-1.5-pro'
     };
@@ -133,13 +136,19 @@ export class GeminiProxyService {
           body: JSON.stringify(body)
         };
         
-        // Для Vertex AI используем специальную авторизацию
+        // Для Vertex AI используем OAuth авторизацию
         if (url.includes('aiplatform.googleapis.com')) {
-          logger.log(`[gemini-proxy] Используется Vertex AI, добавляем OAuth авторизацию`, 'gemini');
-          fetchOptions.headers = {
-            ...fetchOptions.headers,
-            'Authorization': `Bearer ${this.apiKey}`
-          };
+          logger.log(`[gemini-proxy] Используется Vertex AI, получаем OAuth токен`, 'gemini');
+          const accessToken = await vertexAIAuth.getAccessToken();
+          if (accessToken) {
+            fetchOptions.headers = {
+              ...fetchOptions.headers,
+              'Authorization': `Bearer ${accessToken}`
+            };
+            logger.log(`[gemini-proxy] OAuth токен добавлен для Vertex AI`, 'gemini');
+          } else {
+            throw new Error('Не удалось получить OAuth токен для Vertex AI');
+          }
         }
         
         // Добавляем прокси-агент, если он доступен
