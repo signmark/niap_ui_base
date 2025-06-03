@@ -20,7 +20,17 @@ async function testVertexAIDirect() {
       throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY не настроен');
     }
     
-    const credentials = JSON.parse(serviceAccountKey);
+    console.log('Service Account Key:', serviceAccountKey.substring(0, 100) + '...');
+    
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountKey);
+    } catch (parseError) {
+      console.log('❌ Ошибка парсинга Service Account Key:', parseError.message);
+      console.log('Содержимое ключа:', serviceAccountKey);
+      throw parseError;
+    }
+    
     const projectId = credentials.project_id;
     console.log('✅ Project ID:', projectId);
     
