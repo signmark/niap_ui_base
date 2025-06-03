@@ -29,28 +29,31 @@ export function registerGeminiRoutes(app: any) {
   }
   
   /**
-   * Получает API ключ Gemini для пользователя
+   * Получает API ключ Gemini из глобальной системы API ключей
    * @param req Запрос Express
    * @returns API ключ или null, если не настроен
    */
   async function getGeminiApiKey(req: Request): Promise<string | null> {
     try {
-      const userId = req.userId;
-      if (!userId) {
-        logger.log('No user ID found in request');
-        return null;
+      logger.log('[gemini-routes] Getting Gemini API key from Global API Keys collection', 'gemini');
+      
+      // Импортируем централизованный менеджер API ключей
+      const { globalApiKeyManager } = await import('./services/global-api-key-manager');
+      const { ApiServiceName } = await import('./services/api-keys');
+      
+      const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
+      
+      if (apiKey) {
+        logger.log(`[gemini-routes] Successfully retrieved Gemini API key from Global API Keys (length: ${apiKey.length})`, 'gemini');
+        const maskedKey = apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4);
+        logger.log(`[gemini-routes] Gemini API key: ${maskedKey}`, 'gemini');
+      } else {
+        logger.error('[gemini-routes] Gemini API key not found in Global API Keys collection', 'gemini');
       }
       
-      // Извлекаем токен из заголовка Authorization
-      const authHeader = req.headers.authorization;
-      const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
-      
-      logger.log(`[gemini-routes] Getting Gemini API key for user ${userId}`, 'gemini');
-      logger.log(`[gemini-routes] Auth token present: ${!!authToken}`, 'gemini');
-      
-      return await apiKeyServiceInstance.getApiKey(userId, 'gemini', authToken);
+      return apiKey;
     } catch (error) {
-      logger.log(`[gemini-routes] Error getting Gemini API key: ${(error as Error).message}`, 'gemini');
+      logger.error('[gemini-routes] Error getting Gemini API key:', error);
       return null;
     }
   }

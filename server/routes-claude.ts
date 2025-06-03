@@ -26,16 +26,16 @@ export function registerClaudeRoutes(app: Router) {
       logger.log('[claude-routes] Getting Claude API key from Global API Keys collection', 'claude');
       
       // Импортируем централизованный менеджер API ключей
-      const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
-      const { ApiServiceName } = await import('./services/api-keys.js');
+      const { globalApiKeyManager } = await import('./services/global-api-key-manager');
+      const { ApiServiceName } = await import('./services/api-keys');
       
       const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.CLAUDE);
       
       if (apiKey) {
         logger.log(`[claude-routes] Successfully retrieved Claude API key from Global API Keys (length: ${apiKey.length})`, 'claude');
         // Маскируем ключ для логирования - показываем только первые 4 символа
-        const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
-        logger.log(`[claude-routes] Claude API key starts with: ${maskedKey}`, 'claude');
+        const maskedKey = apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4);
+        logger.log(`[claude-routes] Claude API key: ${maskedKey}`, 'claude');
       } else {
         logger.error('[claude-routes] Claude API key not found in Global API Keys collection', 'claude');
       }
