@@ -51,8 +51,8 @@ export class GeminiProxyService {
    */
   private mapModelToApiName(model: string): string {
     const modelMap: Record<string, string> = {
-      // Gemini 2.5 модели мапятся на доступные 1.5 модели
-      'gemini-2.5-flash': 'gemini-1.5-flash-latest',
+      // Gemini 2.5 модели используют Vertex AI
+      'gemini-2.5-flash': 'gemini-2.5-flash-002',
       'gemini-2.5-pro': 'gemini-1.5-pro-latest',
       // Gemini 2.0 модели для стандартного API
       'gemini-2.0-flash': 'gemini-2.0-flash-exp',
