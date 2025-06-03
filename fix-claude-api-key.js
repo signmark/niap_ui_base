@@ -9,8 +9,8 @@ async function setupClaudeApiKey() {
   try {
     console.log('🔧 Настройка Claude API ключа...');
     
-    // Получаем токен администратора
-    const loginResponse = await axios.post('http://localhost:5000/api/auth/login', {
+    // Получаем токен администратора - используем правильный порт и endpoint
+    const loginResponse = await axios.post('http://localhost:3000/api/auth/login', {
       email: 'lbrspb@gmail.com',
       password: 'lbrspb2024'
     });
