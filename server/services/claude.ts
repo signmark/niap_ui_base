@@ -513,9 +513,8 @@ export class ClaudeService {
           {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this.apiKey}`,
-              'anthropic-version': '2023-06-01',
-              'x-api-key': this.apiKey // для обратной совместимости со старыми ключами
+              'x-api-key': this.apiKey,
+              'anthropic-version': '2023-06-01'
             }
           }
         );
