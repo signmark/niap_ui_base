@@ -76,21 +76,29 @@ export function registerGeminiRoutes(app: any) {
         });
       }
       
-      // Используем geminiProxyService с глобальным API ключом (как в генерации контента)
-      const { geminiProxyService } = await import('./services/gemini-proxy');
+      // Проверяем, является ли модель 2.5 - если да, используем Vertex AI
+      const isGemini25Model = model.includes('2.5') || model.includes('2-5');
       
-      // Формируем полный промпт для улучшения текста
-      const fullPrompt = `${prompt}
-
-Исходный текст для улучшения:
-${text}`;
+      let improvedText: string;
       
-      // Используем метод improveText из geminiProxyService
-      const improvedText = await geminiProxyService.improveText({
-        text,
-        prompt,
-        model
-      });
+      if (isGemini25Model) {
+        // Используем Vertex AI для моделей 2.5
+        logger.log(`[gemini-routes] Using Vertex AI for model: ${model}`, 'gemini');
+        improvedText = await geminiVertexService.improveText({
+          text,
+          prompt,
+          model
+        });
+      } else {
+        // Используем обычный Gemini API для других моделей
+        logger.log(`[gemini-routes] Using standard Gemini API for model: ${model}`, 'gemini');
+        const { geminiProxyService } = await import('./services/gemini-proxy');
+        improvedText = await geminiProxyService.improveText({
+          text,
+          prompt,
+          model
+        });
+      }
       
       return res.json({
         success: true,
