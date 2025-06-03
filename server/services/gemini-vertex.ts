@@ -36,15 +36,10 @@ export class GeminiVertexService {
   }
 
   /**
-   * Мапинг моделей Gemini 2.5 на доступные версии
+   * Проверяет, является ли модель Gemini 2.5
    */
-  private mapToAvailableModel(model: string): string {
-    // Модели 2.5 пока недоступны без Vertex AI, используем лучшие доступные
-    if (model.includes('2.5') || model.includes('2-5')) {
-      return 'gemini-1.5-pro-latest'; // Лучшая доступная модель
-    }
-    
-    return model;
+  private isGemini25Model(model: string): boolean {
+    return model.includes('2.5') || model.includes('2-5');
   }
 
   /**
