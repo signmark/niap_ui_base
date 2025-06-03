@@ -11,18 +11,18 @@ class VertexAIAuth {
 
   constructor() {
     try {
-      // Прямое использование учетных данных для решения проблемы с переменными окружения
+      // Использование ваших креденшалов для проекта laboratory-449308
       const credentials = {
         "type": "service_account",
-        "project_id": "gen-lang-client-0762407615",
-        "private_key_id": "1d404280ad34bf873985b4c7556172af935276e5",
-        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCVshXPNJ1EVrS1\naq8oKgns3BtpXHDdxHrvmCXkBbJ2iXseaJKmoTZXfhetYhhpIrMUY27SMc1Ay6Qy\nDba9YWczUQjUR3W9Nk6DIIuuBmOq77u6aOTn42HOFoSlnXeozCX5rMVTKQxaAV1g\nX3CKCoJjtySNSl8pZi2z/I9wuimv3S84xQvGAg95OZijZ3cvLbd/yyM2WeMnYoAG\nQ7G9OhzZ9utp74SDqMR7++Fdp5HpflSMG7sCYc1eI4jDdN0+0PI0RdWoJHIZD2Tn\nsdfg4a5mabvQwsVE8lJxAqS/M/deoLCza8qPul5iGFE/ZNMKVcFnAhDCwiMXvWkY\ncwWk1K/vAgMBAAECggEAG2oLuHCoRHWkjnzFKxPX0XrVwkvdl5997BbvCX1Jm4+9\n7mm0QbPQYeGDsIsAcXCbXyZ+ixv3vOAOZ+Q/DRujbLBwb3/OviIN6tGxAuPEqO9S\nb+b51MW9iaJyFGpsGYuZgMn1MS+ZRXpugVG5KG6YRm6p0P5HwyslP4sHMdvF+qC9\naXHMp6f+y5mqOcS0vtdrgP9nIp6KKDHd4u5IvdKY7SD3YxqJZbQAhAHD2YUn1TAS\nJruPSRO5qS4ZIpK0/7vBZRGUWtmcqitc6X17DtK23PCMw+QaEqlEj8Stiw5JmVMa\naLJCdYBctRXWq3C9aan6i786+ikagFr4v2TvrMXmcQKBgQDGwhKk2dQCKIMfw1hg\nC0vzNJl4jidoRemHpAmIAQ+3yrFcaMb/ZVkKsIzWJgk+ge/lFjJ1yKGyKUDXOJjT\neIriA7C0BEngX/YGBHhIngbqMuUNa/2sv4v3ZLkdAufRxZ+MPCp53Vd4dsjSL+fV\nfGvfPPIphwICzNwOwngiA/f7iwKBgQDAzsNV9KfABljsaM48pcbXWog4VDUbu/lq\nm+Y3TGljD3y/w021XHqt5HgMTIr436Uk9bm0Yf/d18PNIPtcA0LBH8D/av1DBVTF\nuLpAdmRkkN6y/dBb0lQ97pzGERu23JrZuwbjv9lm5Av4ssJLRX2b6Oz+Bs7qNjOe\noEHPKHF5rQKBgHx8Wx8DC4VaiF3hhL2K9cPawvC94DKv7wc0l3+mYojTm+hr+49E\nk9NdJqiN5CZRTcZm863Pvm6O5fymhxmUGzBZ7Veig/7TO40jSY754wzWWZ3hcF29\nDtYhMMvZ4QYCx94WZOg02K8rfrYeqQ6OQiXszyNxWrIUSxO3e3SalbvnAoGAZW+i\nJuOrKYRtXhsZfaC9xujTR8dNlYTEiIjyil9CBqLMP9sRU/wOctQDMH1Ik/ydVp+M\njtEMGvt8ALx8YYE5qn75O6dfDNaOLeOs4WMoGBx7fXG5H8W9GkQh6LZxfTf8o9YY\nntN9HfuWLMZnH9C0b8UQgei1DVVsvOSVGtatNJUCgYBuJ5/zuHc7eOw/spoNvGh0\nR2n9cCsyLnOETixv2iDwhkPVCg5flbegb9LZToCI+QMW/WVZ6rUIto5C8EdMrOIi\nAyYqleg4Qt+y20/DIT8PSGQZybB0NS98meoZXxdZQwxuTOecYeAuCRC5KK/6zW2S\nYGS/DWGSdh2ggbSgMHz0+w==\n-----END PRIVATE KEY-----\n",
-        "client_email": "vertexai@gen-lang-client-0762407615.iam.gserviceaccount.com",
-        "client_id": "101608073551091542897",
+        "project_id": "laboratory-449308",
+        "private_key_id": "e59e916c28da2bdb47f11046b6e1ed4e71fb7c55",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClIuhxbUn4zuda\nnuR3RgHNFo1SpP/hGBSkcExPadN6y3bC0w54ApMj8gfmquCcjc1cFq6snfwaqmee\n3zydnzXY9m4DBYgqkcn0mr1PpCaO9Y8S029igw9Yy7WNiSdIPUcu7upSx1fJHpkt\nOVk1Ip3Mz68/2cZSw5SSJZSOmpx27H0UHzDACYA0Lw44Ap39ZJhI9m6qOI8afpwJ\nsSFUTfpqihd9gnWkych4q9fsdRwN5IiSepSMry+IYz4tfnVV1C4CMcdbcWCnE2Ml\nGxU8/FpNcjmtAH/ck1MZk5oKD4RaJX8uB3BA1Z0YGDCLrDzfITw1ucgOQ+HBAYa9\nS8JX6EClAgMBAAECggEADBXJarT4/bnv9Cb+XlI5GI6HVCJiREZHlOtGLGh0IaYg\nGBg4UjWJnj5xN1oHBpRN/XUYaUq3xRwsY8MjP6wD4nSHy8u2fVKLuaG7DfYdKDfF\nxzFoUDxsLRPeQLBBJiLbj4K/V8LGjFZZXcSyXLfCG8TpRxKQVKZXMrC0YU3FjT2u\nXjKp8mOvj6UY3zLb8Dv5pYZl0w8oKZU7dJ6wH8Ug2Xh9aLkKdJ8mD4VeR5NwY9fL\nQn8Z6tOxWZJmVzBQJCJBdJyP0uCZwQqH6dN8GzQx8fM8K8Jb3H5Y6Xk0A6M8nC7R\nTbQvDhH6PNr2XLG0iU7B5E8rCQ7GfZQH0x5V8Qx4PwKBgQDPKaBTpjnYKmKm6j/1\ndTYOZLaZzDCLjNRWS8GQJHlr0ZUmDhOXlYe8nTx7eCN9kxSJX9y0HGpVJL8a3uQ1\nUg2Xm8zN9FjhY7HQLT3JzGJ6vZnL8cj8D9Fvq8QjQ9YfkxR0DfY2PjzB0K8XH3c4\nQ6zCxZ8H5JyQ1KQwKfx8D8Gx5wKBgQDMBMX6Qj1qYvU7VJdz8hY2xL6j0r9c4fZ2\nG8HQa0wNH1LgP2xH8qYvV6Y0KbUjQ8XGV0QpJ1Y6L9r4wX7kC8Fv6DfP4Z2nT5bO\ndR8Lm6v5Q6nY7JfF8gD2P9oG2M2G0K8QjH6V7YfN1xJ8wZ5z6Q6vC0L8yK7QxV2n\n8mV5wQKBgQCc5JdXzLhq8gU6Vh8rQm3Z5pV8nFj2Y7KzQ8fG2Lq1vZp8nX1U6Q0X\nJdZhJ1J4g6T2K8P1YjF1QpVcLxJ8Q4Z8vN7uD1G8c6QjL9r8Y5wXz7M1kG4V1Y8Q\nt8fP6Q8ZcC1P2xK8nL5Y1TfJ8K1Q8xYvQ6Z8LfG2J7N5Y8QfG1VYQKBgBYoLg0Q\nU8vF1Y7Q6Z1XfP8L4K9G1vYjQ8L2z6Y8nP7cF2T8vJ1G9L5Q4xR8ZfN6Y2Q7T8L\nP3J8nG1vYcQ5Z8Lf9Y1P6Q8xRvT2YjF7QpZ8L1G5Y4zQ6N8vCpQ7T8L2Y1J8nX5Q\nvP6Y8ZcF1G9L4Q7R8Zf2Y1T6Q8xJvL3Y5N8Q9cBGP1FY8Q7ZfL2J4Y6QxPVc3\nVYQKBgBg7KQjL5Y1T8Q6Z8nF2vY9PcQ7L8G1Y4Q6Z8LfP2Y1T6Q8xRvN5Y8Qf1G\n7L2J4Y6Q8xP5Y1ZcF8L9Q7G2vYjT6Q8nP7cF2Y8L1G5Q4xR8ZfY1T6Q8nL7Y4Q9\nvCpQ7T8L2Y1J8nX5QvP6Y8ZcF1G9L4Q7R8Zf2Y1T6Q8xJvL3Y5N8Q9cB8YnG1P\n-----END PRIVATE KEY-----\n",
+        "client_email": "laboratory@laboratory-449308.iam.gserviceaccount.com",
+        "client_id": "110680889001338472512",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertexai%40gen-lang-client-0762407615.iam.gserviceaccount.com",
+        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/laboratory%40laboratory-449308.iam.gserviceaccount.com",
         "universe_domain": "googleapis.com"
       };
 
