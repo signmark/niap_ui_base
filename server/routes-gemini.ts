@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { GeminiService, geminiService } from './services/gemini';
 import { geminiVertexService } from './services/gemini-vertex';
+import { geminiVertexClean } from './services/gemini-vertex-clean';
 import { ApiKeyService } from './services/api-keys';
 import * as logger from './utils/logger';
 
@@ -64,7 +65,7 @@ export function registerGeminiRoutes(app: any) {
    */
   router.post('/api/gemini/improve-text', async (req: Request, res: Response) => {
     try {
-      const { text, prompt, model = 'gemini-2.5-flash' } = req.body;
+      const { text, prompt, model = 'gemini-2.5-flash-preview-05-20' } = req.body;
       
       logger.log(`[gemini-routes] Received improve-text request with model: ${model}`, 'gemini');
       
@@ -84,7 +85,6 @@ export function registerGeminiRoutes(app: any) {
       if (isGemini25Model) {
         // Используем чистый Vertex AI для моделей 2.5
         logger.log(`[gemini-routes] Using clean Vertex AI for model: ${model}`, 'gemini');
-        const { geminiVertexClean } = await import('./services/gemini-vertex-clean.js');
         improvedText = await geminiVertexClean.improveText({
           text,
           prompt,
