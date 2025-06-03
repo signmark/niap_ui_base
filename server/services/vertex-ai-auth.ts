@@ -1,77 +1,113 @@
 import { GoogleAuth } from 'google-auth-library';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as logger from '../utils/logger';
+import { log } from '../utils/logger';
 
 /**
- * Сервис для аутентификации с Google Cloud Vertex AI
+ * Сервис для авторизации в Vertex AI через Service Account
+ * Использует GOOGLE_SERVICE_ACCOUNT_KEY из переменных окружения
  */
-export class VertexAIAuth {
-  private auth: GoogleAuth | null = null;
-  private accessToken: string | null = null;
-  private tokenExpiry: number = 0;
-  
+class VertexAIAuth {
+  private auth: GoogleAuth;
+  private projectId: string;
+  private location: string;
+
   constructor() {
-    this.initializeAuth();
-  }
-  
-  /**
-   * Инициализирует Google Auth с сервисным аккаунтом
-   */
-  private initializeAuth(): void {
-    // Отключено: не инициализируем Google Auth для предотвращения использования
-    // браузерного аккаунта пользователя
-    logger.log('[vertex-ai-auth] Vertex AI аутентификация отключена', 'gemini');
-    this.auth = null;
-  }
-  
-  /**
-   * Получает актуальный access token
-   * @returns Access token или null если не удалось получить
-   */
-  async getAccessToken(): Promise<string | null> {
-    if (!this.auth) {
-      logger.error('[vertex-ai-auth] Аутентификация не инициализирована', 'gemini');
-      return null;
-    }
+    let credentials: any;
     
     try {
-      // Проверяем, действителен ли текущий токен
-      const now = Date.now();
-      if (this.accessToken && this.tokenExpiry > now + 60000) { // 1 минута запас
-        return this.accessToken;
+      // Пытаемся получить из переменной окружения
+      const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      
+      if (serviceAccountKey) {
+        // Если это JSON строка
+        if (serviceAccountKey.trim().startsWith('{')) {
+          credentials = JSON.parse(serviceAccountKey);
+        } else {
+          // Если это base64 или путь к файлу, используем google-auth-library напрямую
+          this.auth = new GoogleAuth({
+            scopes: ['https://www.googleapis.com/auth/cloud-platform']
+          });
+          this.projectId = 'gen-lang-client-0762407615';
+          this.location = 'us-central1';
+          log(`[vertex-ai-auth] Инициализирован с Application Default Credentials`, 'vertex-ai');
+          return;
+        }
+      } else {
+        // Используем файл google-service-account.json
+        this.auth = new GoogleAuth({
+          keyFile: './google-service-account.json',
+          scopes: ['https://www.googleapis.com/auth/cloud-platform']
+        });
+        this.projectId = 'gen-lang-client-0762407615';
+        this.location = 'us-central1';
+        log(`[vertex-ai-auth] Инициализирован с файлом google-service-account.json`, 'vertex-ai');
+        return;
       }
       
-      // Получаем новый токен
+      // Если получили JSON учетные данные
+      this.projectId = credentials.project_id || 'gen-lang-client-0762407615';
+      this.location = 'us-central1';
+      
+      this.auth = new GoogleAuth({
+        credentials: credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      });
+      
+      log(`[vertex-ai-auth] Инициализирован для проекта ${this.projectId}`, 'vertex-ai');
+    } catch (error) {
+      log(`[vertex-ai-auth] Ошибка инициализации: ${error}`, 'vertex-ai');
+      
+      // Fallback: используем Application Default Credentials
+      this.auth = new GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      });
+      this.projectId = 'gen-lang-client-0762407615';
+      this.location = 'us-central1';
+      log(`[vertex-ai-auth] Fallback: используем Application Default Credentials`, 'vertex-ai');
+    }
+  }
+
+  /**
+   * Получает access token для Vertex AI API
+   */
+  async getAccessToken(): Promise<string | null> {
+    try {
       const client = await this.auth.getClient();
       const accessTokenResponse = await client.getAccessToken();
       
       if (accessTokenResponse.token) {
-        this.accessToken = accessTokenResponse.token;
-        // Устанавливаем время истечения токена (обычно 1 час)
-        this.tokenExpiry = now + (3600 * 1000); // 1 час
-        
-        logger.log('[vertex-ai-auth] Получен новый access token', 'gemini');
-        return this.accessToken;
+        log(`[vertex-ai-auth] Получен access token для Vertex AI`, 'vertex-ai');
+        return accessTokenResponse.token;
       }
       
-      logger.error('[vertex-ai-auth] Не удалось получить access token', 'gemini');
+      log(`[vertex-ai-auth] Не удалось получить access token`, 'vertex-ai');
       return null;
     } catch (error) {
-      logger.error(`[vertex-ai-auth] Ошибка получения access token: ${(error as Error).message}`, 'gemini');
+      log(`[vertex-ai-auth] Ошибка получения access token: ${error}`, 'vertex-ai');
       return null;
     }
   }
-  
+
   /**
-   * Проверяет доступность аутентификации
-   * @returns true если аутентификация работает
+   * Получает ID проекта
    */
-  async isAvailable(): Promise<boolean> {
-    const token = await this.getAccessToken();
-    return token !== null;
+  getProjectId(): string {
+    return this.projectId;
+  }
+
+  /**
+   * Получает локацию
+   */
+  getLocation(): string {
+    return this.location;
+  }
+
+  /**
+   * Формирует URL для Vertex AI API
+   */
+  getVertexAIUrl(model: string): string {
+    return `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
   }
 }
 
-// Экспортируем глобальный экземпляр
+// Экспортируем единственный экземпляр
 export const vertexAIAuth = new VertexAIAuth();
