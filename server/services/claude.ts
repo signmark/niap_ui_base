@@ -533,7 +533,7 @@ export class ClaudeService {
       } catch (error) {
         if (axios.isAxiosError(error) && error.response) {
           const status = error.response.status;
-          logger.error(`Claude API error: ${status} - ${JSON.stringify(error.response.data)}`, 'claude');
+          logger.error(`Claude API error: ${status}`, 'claude');
           
           // Если ошибка 529 (перегрузка сервера) и есть еще попытки
           if (status === 529 && attempt < maxRetries) {
@@ -547,7 +547,9 @@ export class ClaudeService {
           if (status === 401) {
             logger.error('Claude API rejected request: Invalid API key or permissions (401)', 'claude');
           } else if (status === 400) {
-            logger.error(`Claude API rejected request: Bad request (400) - ${JSON.stringify(error.response.data)}`, 'claude');
+            logger.error(`Claude API rejected request: Bad request (400)`, 'claude');
+            logger.error(`Error details: ${JSON.stringify(error.response.data, null, 2)}`, 'claude');
+            logger.error(`Request data sent: ${JSON.stringify(requestData, null, 2)}`, 'claude');
           } else if (status === 429) {
             logger.error('Claude API rejected request: Rate limit exceeded (429)', 'claude');
           } else if (status >= 500) {
