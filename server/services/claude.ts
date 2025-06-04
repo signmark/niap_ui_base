@@ -204,16 +204,22 @@ export class ClaudeService {
       // Если текст содержит HTML, добавляем специальные инструкции для сохранения форматирования
       let contentPrompt = '';
       if (containsHtml) {
-        contentPrompt = `${prompt}\n\n
-Важно: текст содержит HTML-форматирование, которое необходимо сохранить. 
-Сохраняй все HTML-теги (например, <p>, <strong>, <em>, <ul>, <li> и др.) в твоем ответе.
-Не добавляй новые HTML-теги, если они не нужны для форматирования.
-Сохраняй структуру абзацев и списков.
+        contentPrompt = `${prompt}
 
-Исходный текст с HTML:\n"""${text}"""\n\nУлучшенный текст (с сохранением HTML-форматирования):`;
+ВАЖНО: Верни только улучшенный текст, сохраняя все HTML-теги. Не добавляй объяснения, комментарии или дополнительный текст. Только улучшенная версия исходного текста с HTML-форматированием.
+
+Исходный текст: ${text}
+
+Улучшенный текст:`;
       } else {
         // Обычный промпт с поддержкой markdown форматирования
-        contentPrompt = `${prompt}\n\nИсходный текст:\n"""${text}"""\n\nУлучшенный текст:`;
+        contentPrompt = `${prompt}
+
+ВАЖНО: Верни только улучшенный текст без объяснений, комментариев или дополнительного текста.
+
+Исходный текст: ${text}
+
+Улучшенный текст:`;
       }
       
       const result = await this.makeRequest({
@@ -240,6 +246,45 @@ export class ClaudeService {
       // Удаляем лишние разделители --- в начале и конце текста
       improvedText = improvedText.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
       improvedText = improvedText.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
+      
+      // Извлекаем только улучшенный контент из ответа Claude
+      // Ищем контент в тройных кавычках
+      const tripleQuoteMatch = improvedText.match(/"""([^"]+)"""/s);
+      if (tripleQuoteMatch) {
+        improvedText = tripleQuoteMatch[1].trim();
+      } else {
+        // Ищем HTML теги в отдельных строках
+        const lines = improvedText.split('\n');
+        const htmlLine = lines.find(line => /<[^>]+>.*<\/[^>]+>/.test(line.trim()));
+        if (htmlLine) {
+          improvedText = htmlLine.trim();
+        } else {
+          // Ищем строку с HTML тегом (может быть самозакрывающийся)
+          const singleHtmlLine = lines.find(line => /<[^>]+>/.test(line.trim()) && !line.toLowerCase().includes('let me') && !line.includes('?'));
+          if (singleHtmlLine) {
+            improvedText = singleHtmlLine.trim();
+          } else {
+            // Убираем все объяснительные строки
+            const cleanLines = lines.filter(line => {
+              const lower = line.toLowerCase();
+              return !lower.includes('let me') && 
+                     !lower.includes('would you like') && 
+                     !lower.includes('this maintains') && 
+                     !lower.includes('this version') &&
+                     !lower.includes('here is') &&
+                     !lower.includes('here\'s') &&
+                     !line.includes('?') && 
+                     line.trim().length > 5;
+            });
+            
+            if (cleanLines.length > 0) {
+              // Берем первую содержательную строку
+              improvedText = cleanLines[0].trim();
+            }
+          }
+        }
+      }
+      
       improvedText = improvedText.trim(); // Убираем лишние пробелы
       
       // Если оригинальный текст содержал HTML, но ответ не содержит, 

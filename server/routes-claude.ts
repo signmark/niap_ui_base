@@ -255,11 +255,17 @@ export function registerClaudeRoutes(app: Router) {
       // Применяем конвертацию
       let finalText = improvedText;
       
-      // Если результат содержит Markdown - конвертируем в HTML
-      if (hasMarkdownSymbols) {
-        logger.log('[claude-routes] Конвертируем Markdown в HTML', 'claude');
-        finalText = convertMarkdownToHtml(improvedText);
-        logger.log(`[claude-routes] После конвертации: ${finalText.substring(0, 100)}...`, 'claude');
+      // Если оригинальный текст содержал HTML или результат содержит Markdown - обрабатываем соответственно
+      if (hasOriginalHtml || hasMarkdownSymbols) {
+        if (hasMarkdownSymbols) {
+          logger.log('[claude-routes] Конвертируем Markdown в HTML', 'claude');
+          finalText = convertMarkdownToHtml(improvedText);
+          logger.log(`[claude-routes] После конвертации: ${finalText.substring(0, 100)}...`, 'claude');
+        } else if (hasOriginalHtml && !improvedText.includes('<p>')) {
+          // Если в оригинале был HTML, но в ответе его нет - оборачиваем в параграф
+          logger.log('[claude-routes] Оборачиваем текст в HTML параграф', 'claude');
+          finalText = `<p>${improvedText.replace(/\n\n+/g, '</p><p>').replace(/\n/g, ' ')}</p>`;
+        }
       } else {
         // Просто очищаем от возможных markdown символов
         finalText = improvedText
