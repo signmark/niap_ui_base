@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as geminiService from '../services/gemini-proxy';
-import { logger } from '../utils/logger';
+import { log } from '../utils/logger.js';
 
 export const geminiImproveRouter = express.Router();
 
@@ -16,26 +16,26 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'Текст обязателен' });
     }
     
-    logger.log(`[improve-text] Исходный текст: "${text}"`);
+    log(`[improve-text] Исходный текст: "${text}"`);
     
     // Проверяем наличие HTML
     const hasHtml = text.includes('<') && text.includes('>');
-    logger.log(`[improve-text] Содержит HTML: ${hasHtml}`);
+    log(`[improve-text] Содержит HTML: ${hasHtml}`);
     
     // Создаем промпт для AI
     const aiPrompt = hasHtml 
       ? `${prompt || 'Улучши этот текст'}. ОБЯЗАТЕЛЬНО сохрани все HTML теги в том же виде. Текст: ${text}`
       : `${prompt || 'Улучши этот текст'}. Текст: ${text}`;
     
-    logger.log(`[improve-text] Отправляем в AI`);
+    log(`[improve-text] Отправляем в AI`);
     
-    // Получаем результат от AI
-    const aiResult = await geminiService.generateText(aiPrompt, model);
-    logger.log(`[improve-text] AI вернул: "${aiResult}"`);
+    // Получаем результат от AI (используем правильный метод)
+    const aiResult = prompt ? await geminiService.improveText(text, aiPrompt, model) : await geminiService.improveText(text, 'Улучши этот текст', model);
+    log(`[improve-text] AI вернул: "${aiResult}"`);
     
     // Если исходный текст был с HTML, восстанавливаем структуру
     if (hasHtml) {
-      logger.log(`[improve-text] ВОССТАНАВЛИВАЕМ HTML`);
+      log(`[improve-text] ВОССТАНАВЛИВАЕМ HTML`);
       
       // Убираем возможные markdown символы
       let cleanText = aiResult
@@ -46,7 +46,7 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
       
       // Считаем параграфы в оригинале
       const originalPCount = (text.match(/<p[^>]*>/g) || []).length;
-      logger.log(`[improve-text] Параграфов в оригинале: ${originalPCount}`);
+      log(`[improve-text] Параграфов в оригинале: ${originalPCount}`);
       
       let resultHtml;
       if (originalPCount === 1) {
@@ -54,7 +54,7 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
         resultHtml = `<p>${cleanText}</p>`;
       } else if (originalPCount > 1) {
         // Несколько параграфов - разбиваем по предложениям
-        const sentences = cleanText.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+        const sentences = cleanText.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim());
         const sentencesPerP = Math.max(1, Math.ceil(sentences.length / originalPCount));
         const paragraphs = [];
         
@@ -68,7 +68,7 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
         resultHtml = `<p>${cleanText}</p>`;
       }
       
-      logger.log(`[improve-text] Финальный HTML: "${resultHtml}"`);
+      log(`[improve-text] Финальный HTML: "${resultHtml}"`);
       
       res.json({ 
         success: true, 
@@ -82,7 +82,7 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
         .replace(/^#+\s+/gm, '')
         .trim();
       
-      logger.log(`[improve-text] Возвращаем обычный текст: "${cleanText}"`);
+      log(`[improve-text] Возвращаем обычный текст: "${cleanText}"`);
       
       res.json({ 
         success: true, 
@@ -91,7 +91,7 @@ geminiImproveRouter.post('/improve-text', async (req: Request, res: Response) =>
     }
     
   } catch (error) {
-    logger.error('[improve-text] Ошибка:', error);
+    log('[improve-text] Ошибка:', error);
     res.status(500).json({ 
       error: 'Ошибка при улучшении текста',
       details: error instanceof Error ? error.message : 'Неизвестная ошибка'

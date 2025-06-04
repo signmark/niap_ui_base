@@ -123,7 +123,14 @@ class GeminiVertexDirect {
         throw new Error('Неверная структура ответа от Vertex AI');
       }
       
-      const improvedText = content.parts[0].text || '';
+      let improvedText = content.parts[0].text || '';
+      
+      // Очищаем служебный текст от AI
+      improvedText = improvedText
+        .replace(/^.*?(вот улучшенный вариант|улучшенный текст|улучшенная версия).*?:/gi, '')
+        .replace(/^.*?(here's|here is).*?:/gi, '')
+        .replace(/^[^\w\n]*/, '') // Удаляем символы в начале
+        .trim();
       
       log(`[gemini-vertex-direct] Текст успешно улучшен`, 'info');
       return improvedText;
