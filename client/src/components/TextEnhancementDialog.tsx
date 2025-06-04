@@ -239,24 +239,36 @@ ${text}`;
     onSuccess: (data) => {
       console.log('Исходный ответ AI:', data);
       
-      // Преобразуем markdown разметку в HTML
-      let processedText = data
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **текст** -> жирный
-        .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный  
-        .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
-        .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
+      let processedText = data;
       
-      // Разбиваем на абзацы по двойным переносам
-      const paragraphs = processedText.split(/\n\s*\n/);
+      // Проверяем, уже ли текст в HTML формате
+      const isHtmlFormat = data.includes('<p>') || data.includes('<div>') || data.includes('<br>');
       
-      // Формируем HTML структуру
-      processedText = paragraphs
-        .map(paragraph => {
-          // Заменяем одинарные переносы на <br>
-          const formattedParagraph = paragraph.replace(/\n/g, '<br>');
-          return `<p>${formattedParagraph}</p>`;
-        })
-        .join('');
+      if (!isHtmlFormat) {
+        // Если текст в markdown формате, преобразуем в HTML
+        processedText = data
+          .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **текст** -> жирный
+          .replace(/\*(.*?)\*/g, '<b>$1</b>') // *текст* -> жирный  
+          .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
+          .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
+        
+        // Разбиваем на абзацы по двойным переносам
+        const paragraphs = processedText.split(/\n\s*\n/);
+        
+        // Формируем HTML структуру
+        processedText = paragraphs
+          .map((paragraph: string) => {
+            // Заменяем одинарные переносы на <br>
+            const formattedParagraph = paragraph.replace(/\n/g, '<br>');
+            return `<p>${formattedParagraph}</p>`;
+          })
+          .join('');
+      } else {
+        // Если текст уже в HTML, только преобразуем markdown в нем
+        processedText = data
+          .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // **текст** -> жирный
+          .replace(/\*(.*?)\*/g, '<b>$1</b>'); // *текст* -> жирный
+      }
       
       console.log('Обработанный HTML:', processedText);
       
