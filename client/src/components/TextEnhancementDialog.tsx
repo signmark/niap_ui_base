@@ -237,30 +237,35 @@ ${text}`;
       return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
-      // Преобразуем markdown разметку в HTML, сохраняя естественные переносы
+      console.log('Исходный ответ AI:', data);
+      
+      // Преобразуем markdown разметку в HTML
       let processedText = data
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **текст** -> жирный
         .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный  
         .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
         .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
       
-      // Сохраняем структуру абзацев для TipTap редактора
-      processedText = processedText
-        .replace(/\n{3,}/g, '\n\n') // нормализуем множественные переносы
-        .replace(/\n\n/g, '</p><p>') // двойные переносы -> новые абзацы
-        .replace(/\n/g, '<br>'); // одинарные переносы -> переносы строк
+      // Разбиваем на абзацы по двойным переносам
+      const paragraphs = processedText.split(/\n\s*\n/);
       
-      // Оборачиваем в параграфы, если нет HTML структуры
-      if (!processedText.includes('<p>')) {
-        processedText = `<p>${processedText}</p>`;
-      }
+      // Формируем HTML структуру
+      processedText = paragraphs
+        .map(paragraph => {
+          // Заменяем одинарные переносы на <br>
+          const formattedParagraph = paragraph.replace(/\n/g, '<br>');
+          return `<p>${formattedParagraph}</p>`;
+        })
+        .join('');
+      
+      console.log('Обработанный HTML:', processedText);
       
       setEnhancedText(processedText);
       
       // Показываем уведомление об успешном улучшении
       toast({
         title: "Готово!",
-        description: "Текст успешно улучшен. Нажмите 'Применить' для сохранения.",
+        description: "Текст улучшен и применен в редакторе",
       });
       
       // Сразу применяем улучшенный текст и закрываем диалог
@@ -435,35 +440,16 @@ ${text}`;
               </div>
             )}
             
-            <div className="flex justify-between pt-4">
-              {!isPending && !enhancedText?.trim() ? (
-                <Button
-                  type="button"
-                  variant="default"
-                  onClick={() => improveText()}
-                  disabled={isPending || !text?.trim()}
-                  className="w-full"
-                >
-                  Улучшить и применить текст
-                </Button>
-              ) : (
-                <div className="flex justify-between w-full">
-                  <DialogClose asChild>
-                    <Button variant="outline" type="button">
-                      Отмена
-                    </Button>
-                  </DialogClose>
-                  
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={handleSave}
-                    disabled={!enhancedText?.trim() || isPending}
-                  >
-                    Использовать улучшенный текст
-                  </Button>
-                </div>
-              )}
+            <div className="flex justify-center pt-4">
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => improveText()}
+                disabled={isPending || !text?.trim()}
+                className="w-full"
+              >
+                Улучшить и применить текст
+              </Button>
             </div>
           </div>
         )}
