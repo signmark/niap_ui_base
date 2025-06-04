@@ -186,7 +186,16 @@ export class ClaudeService {
       throw new Error('Claude API key is not configured');
     }
     
-    const requestModel = model || this.defaultModel;
+    // Маппинг старых названий моделей на новые поддерживаемые
+    const modelMapping: Record<string, string> = {
+      'claude-3-haiku-20240307': 'claude-3-5-haiku-20241022',
+      'claude-3-sonnet-20240229': 'claude-3-5-sonnet-20241022', 
+      'claude-3-opus-20240229': 'claude-3-5-sonnet-20241022',
+      'claude-3-5-sonnet-20240620': 'claude-3-5-sonnet-20241022',
+      'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022'
+    };
+    
+    const requestModel = modelMapping[model] || model || this.defaultModel;
     
     try {
       // Определяем, содержит ли текст HTML-теги
