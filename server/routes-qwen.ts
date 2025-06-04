@@ -18,20 +18,21 @@ class QwenService {
 
   async improveText({ text, prompt, model = 'qwen-max' }: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
-      const response = await axios.post(this.baseURL, {
+      // Используем совместимый с OpenAI API endpoint
+      const compatibleURL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+      
+      const response = await axios.post(compatibleURL, {
         model: model,
-        input: {
-          messages: [
-            {
-              role: 'user',
-              content: `${prompt}\n\nТекст для улучшения:\n${text}`
-            }
-          ]
-        },
-        parameters: {
-          temperature: 0.7,
-          max_tokens: 5000
-        }
+        messages: [
+          {
+            role: 'user',
+            content: `Задача: улучшить предоставленный текст в соответствии с инструкциями.\nИнструкции: ${prompt}\n\nИсходный текст:\n"""\n${text}\n"""\n\nУлучшенный текст:`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 4000,
+        top_p: 0.9,
+        stop: null
       }, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -39,8 +40,8 @@ class QwenService {
         }
       });
 
-      if (response.data?.output?.text) {
-        return response.data.output.text;
+      if (response.data?.choices?.[0]?.message?.content) {
+        return response.data.choices[0].message.content.trim();
       }
 
       throw new Error('Qwen API returned empty response');
