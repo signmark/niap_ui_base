@@ -10783,82 +10783,19 @@ ${datesText}
         });
       }
 
-      // Проверяем наличие учетных данных Vertex AI в переменных окружения
-      const googleServiceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-      console.log('[vertex-ai] GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!googleServiceAccountKey);
-      console.log('[vertex-ai] GOOGLE_SERVICE_ACCOUNT_KEY length:', googleServiceAccountKey?.length);
+      log(`[vertex-ai] Начинаем улучшение текста с помощью Gemini Direct`, 'info');
       
-      if (!googleServiceAccountKey) {
-        return res.status(400).json({
-          success: false,
-          error: 'Учетные данные Vertex AI не настроены'
-        });
-      }
-
-      let credentials;
-      try {
-        credentials = JSON.parse(googleServiceAccountKey);
-      } catch (error) {
-        return res.status(400).json({
-          success: false,
-          error: 'Некорректные учетные данные Vertex AI'
-        });
-      }
-
-      const projectId = credentials.project_id;
-      if (!projectId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Project ID не найден в учетных данных'
-        });
-      }
-
-      // Создаем сервис Vertex AI
-      const vertexAIService = new VertexAIService({
-        projectId,
-        location: 'us-central1',
-        credentials
+      // Используем прямой сервис Gemini с правильным проектом
+      const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
+      
+      // Используем Gemini для улучшения текста
+      const improvedText = await geminiVertexDirect.improveText({
+        text: text,
+        prompt: prompt,
+        model: model || 'gemini-2.5-flash-preview-05-20'
       });
 
-      // Определяем, содержит ли текст HTML-теги
-      const containsHtml = /<[^>]+>/.test(text);
-
-      let systemMessage = '';
-      let userMessage = '';
-
-      if (containsHtml) {
-        systemMessage = `Ты профессиональный копирайтер и редактор. Твоя задача - улучшить HTML-текст согласно инструкциям пользователя, сохранив всю HTML-разметку и структуру. Не удаляй HTML-теги, не изменяй их структуру. Улучшай только текстовое содержимое внутри тегов.
-
-ВАЖНО: 
-- Сохраняй все HTML-теги точно как есть
-- Улучшай только текст внутри тегов  
-- Не добавляй новые HTML-теги
-- Сохраняй оригинальную структуру документа`;
-
-        userMessage = `Инструкции: ${prompt}
-
-HTML-текст для улучшения:
-${text}
-
-Улучши текстовое содержимое, строго сохранив всю HTML-разметку.`;
-      } else {
-        systemMessage = `Ты профессиональный копирайтер и редактор. Твоя задача - улучшить текст согласно инструкциям пользователя. Создавай качественный, живой и привлекательный контент. Сохраняй стиль и тон оригинального текста, если не указано иное.`;
-
-        userMessage = `Инструкции: ${prompt}
-
-Текст для улучшения:
-${text}
-
-Создай улучшенную версию этого текста.`;
-      }
-
-      // Генерируем улучшенный текст
-      const improvedText = await vertexAIService.generateText({
-        prompt: userMessage,
-        model: model || 'gemini-2.5-flash',
-        maxTokens: 5000,
-        temperature: 0.7
-      });
+      log(`[vertex-ai] Текст успешно улучшен через Gemini Direct`, 'info');
 
       return res.json({
         success: true,
