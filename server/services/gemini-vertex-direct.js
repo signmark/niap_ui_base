@@ -1,4 +1,5 @@
 const { GoogleAuth } = require('google-auth-library');
+const fetch = require('node-fetch');
 
 /**
  * Прямой сервис для работы с Gemini через Vertex AI без зависимостей
