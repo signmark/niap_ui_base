@@ -10783,21 +10783,33 @@ ${datesText}
         });
       }
 
-      // Проверяем наличие учетных данных Vertex AI
-      if (!vertexAICredentials.hasCredentials()) {
+      // Проверяем наличие учетных данных Vertex AI в переменных окружения
+      const googleServiceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      console.log('[vertex-ai] GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!googleServiceAccountKey);
+      console.log('[vertex-ai] GOOGLE_SERVICE_ACCOUNT_KEY length:', googleServiceAccountKey?.length);
+      
+      if (!googleServiceAccountKey) {
         return res.status(400).json({
           success: false,
           error: 'Учетные данные Vertex AI не настроены'
         });
       }
 
-      const credentials = vertexAICredentials.loadCredentials();
-      const projectId = vertexAICredentials.getProjectId();
-
-      if (!credentials || !projectId) {
+      let credentials;
+      try {
+        credentials = JSON.parse(googleServiceAccountKey);
+      } catch (error) {
         return res.status(400).json({
           success: false,
           error: 'Некорректные учетные данные Vertex AI'
+        });
+      }
+
+      const projectId = credentials.project_id;
+      if (!projectId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Project ID не найден в учетных данных'
         });
       }
 
