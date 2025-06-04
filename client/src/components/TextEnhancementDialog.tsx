@@ -237,19 +237,20 @@ ${text}`;
       return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
-      // Преобразуем markdown разметку в HTML для правильного форматирования
-      const processedText = data
+      // Преобразуем markdown разметку в HTML, сохраняя естественные переносы
+      let processedText = data
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **текст** -> жирный
         .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный  
         .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
-        .replace(/`(.*?)`/g, '<code>$1</code>') // `код` -> моноширинный
-        .replace(/\n\n/g, '</p><p>') // двойные переносы -> новые абзацы
-        .replace(/\n/g, '<br>'); // одинарные переносы -> переносы строк
+        .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
       
-      // Оборачиваем в параграфы, если текст не содержит HTML-тегов
-      const finalText = processedText.includes('<') ? processedText : `<p>${processedText}</p>`;
+      // Убираем избыточные переносы строк, оставляя естественную структуру
+      processedText = processedText
+        .replace(/\n{3,}/g, '\n\n') // убираем тройные и более переносы
+        .replace(/\n\n/g, '<br><br>') // двойные переносы -> двойные br
+        .replace(/\n/g, '<br>'); // одинарные переносы -> br
       
-      setEnhancedText(finalText);
+      setEnhancedText(processedText);
       
       // Показываем уведомление об успешном улучшении
       toast({
@@ -258,7 +259,7 @@ ${text}`;
       });
       
       // Сохраняем обработанный HTML текст и закрываем диалог
-      onSave(finalText);
+      onSave(processedText);
       onOpenChange(false);
     },
     onError: (error: any) => {
