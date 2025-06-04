@@ -2408,74 +2408,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          // Для моделей 2.5 используем Vertex AI с fallback на обычный Gemini
+          // Для моделей 2.5 используем прямой Vertex AI БЕЗ фолбека
           if (service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
-            console.log('[gemini-2.5] Попытка использования Vertex AI для модели', service);
+            console.log('[gemini-2.5] Использование прямого Vertex AI для модели', service);
             
-            try {
-              const { vertexAICredentials } = await import('./services/vertex-ai-credentials.js');
-              const { createVertexAIService } = await import('./services/vertex-ai.js');
-              
-              if (!vertexAICredentials.hasCredentials()) {
-                throw new Error('Vertex AI credentials not found');
-              }
-              
-              const credentials = vertexAICredentials.loadCredentials();
-              const projectId = vertexAICredentials.getProjectId();
-              
-              if (!projectId) {
-                throw new Error('Project ID not found in Vertex AI credentials');
-              }
-              
-              const vertexAIService = createVertexAIService(projectId, credentials);
-              
-              // Преобразуем название модели для Vertex AI
-              const modelName = service === 'gemini-2.5-flash' ? 'gemini-2.5-flash' : 'gemini-2.5-pro';
-              
-              console.log('[gemini-2.5] Генерация контента с моделью:', modelName);
-              const generatedContent = await vertexAIService.generateText({
-                prompt: enrichedPrompt,
-                model: modelName,
-                maxTokens: 5000,
-                temperature: 0.7
-              });
-              
-              console.log('[gemini-2.5] Контент успешно сгенерирован через Vertex AI');
-              
-              return res.json({
-                success: true,
-                content: generatedContent,
-                service: service
-              });
-            } catch (vertexError) {
-              console.log('[gemini-2.5] Vertex AI недоступен, используем fallback на Gemini 2.0 Flash:', (vertexError as Error).message);
-              // Fallback на обычную модель Gemini 2.0 Flash
-              let fallbackService = 'gemini-2.0-flash';
-              // Продолжаем с fallback сервисом
-              console.log('[gemini] Fallback: Инициализация Gemini с глобальным API ключом из Directus');
-              const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
-              const { ApiServiceName } = await import('./services/api-keys.js');
-              
-              const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
-              
-              if (!geminiApiKey) {
-                throw new Error('Gemini API ключ не найден в глобальных настройках');
-              }
-              
-              const { GeminiService } = await import('./services/gemini.js');
-              const geminiService = new GeminiService({ apiKey: geminiApiKey });
-              
-              console.log('[gemini] Fallback: Начинаем генерацию текста с промптом:', enrichedPrompt.substring(0, 100) + '...');
-              const generatedContent = await geminiService.generateText(enrichedPrompt, fallbackService);
-              
-              console.log('[gemini] Fallback: Контент успешно сгенерирован');
-              
-              return res.json({
-                success: true,
-                content: generatedContent,
-                service: fallbackService
-              });
+            const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
+            
+            // Маппинг коротких названий моделей на полные Vertex AI названия
+            let fullModelName = service;
+            if (service === 'gemini-2.5-flash') {
+              fullModelName = 'gemini-2.5-flash-preview-05-20';
+            } else if (service === 'gemini-2.5-pro') {
+              fullModelName = 'gemini-2.5-pro-preview-05-06';
             }
+            
+            console.log('[gemini-2.5] Генерация контента с полным названием модели:', fullModelName);
+            const generatedContent = await geminiVertexDirect.generateText({
+              prompt: enrichedPrompt,
+              model: fullModelName
+            });
+            
+            console.log('[gemini-2.5] Контент успешно сгенерирован через прямой Vertex AI');
+            
+            return res.json({
+              success: true,
+              content: generatedContent,
+              service: service,
+              actualModel: fullModelName
+            });
           }
           
           // Для стандартных моделей Gemini используем обычный API
