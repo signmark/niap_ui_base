@@ -41,7 +41,19 @@ class QwenService {
       });
 
       if (response.data?.choices?.[0]?.message?.content) {
-        return response.data.choices[0].message.content.trim();
+        let content = response.data.choices[0].message.content.trim();
+        
+        // Простая и надежная очистка Qwen форматирования
+        // Убираем все тройные кавычки
+        content = content.replace(/"""/g, '');
+        
+        // Убираем кавычки в начале и конце
+        content = content.replace(/^["'`]+/, '').replace(/["'`]+$/, '');
+        
+        // Убираем пустые строки в начале и конце
+        content = content.replace(/^\s+/, '').replace(/\s+$/, '');
+        
+        return content.trim();
       }
 
       throw new Error('Qwen API returned empty response');
