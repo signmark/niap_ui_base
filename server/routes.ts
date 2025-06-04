@@ -2412,7 +2412,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
             console.log('[gemini-2.5] Использование прямого Vertex AI для модели', service);
             
-            const { geminiVertexDirect } = await import('./services/gemini-vertex-direct');
+            // Прямой импорт для обеспечения доступности метода
+            const geminiVertexDirectModule = require('./services/gemini-vertex-direct');
+            const geminiVertexDirect = geminiVertexDirectModule.geminiVertexDirect;
             
             // Маппинг коротких названий моделей на полные Vertex AI названия
             let fullModelName = service;
