@@ -232,8 +232,17 @@ ${text}
 Улучшенный текст:`;
       }
       
-      // Используем фиксированный лимит 5000 токенов для всех моделей Claude
-      const maxTokens = 5000;
+      // Используем правильные лимиты для разных моделей Claude
+      let maxTokens = 4000; // По умолчанию безопасный лимит
+      
+      // Устанавливаем лимиты в зависимости от модели
+      if (requestModel.includes('claude-3-5-sonnet-20241022')) {
+        maxTokens = 7000; // Для новой модели можем использовать больше
+      } else if (requestModel.includes('claude-3-5-sonnet')) {
+        maxTokens = 6000; // Для обычных моделей Sonnet
+      } else if (requestModel.includes('claude-3-haiku')) {
+        maxTokens = 4000; // Для Haiku меньший лимит
+      }
       
       const result = await this.makeRequest({
         model: requestModel,
@@ -253,6 +262,11 @@ ${text}
       
       let improvedText = result.content[0].text.trim();
       
+      // Детальное логирование для диагностики
+      console.log('[CLAUDE DEBUG] Full API response length:', improvedText.length);
+      console.log('[CLAUDE DEBUG] Full API response:', improvedText.substring(0, 500) + (improvedText.length > 500 ? '...' : ''));
+      console.log('[CLAUDE DEBUG] Usage stats:', result.usage);
+      
       // Удаляем служебный текст в тройных обратных кавычках (```)
       improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
       
@@ -260,42 +274,24 @@ ${text}
       improvedText = improvedText.replace(/^---\s*\n?/g, ''); // Удаляем --- в начале
       improvedText = improvedText.replace(/\n?\s*---\s*$/g, ''); // Удаляем --- в конце
       
-      // Извлекаем только улучшенный контент из ответа Claude
-      // Ищем контент в тройных кавычках
-      const tripleQuoteMatch = improvedText.match(/"""([^"]+)"""/s);
-      if (tripleQuoteMatch) {
-        improvedText = tripleQuoteMatch[1].trim();
-      } else {
-        // Ищем HTML теги в отдельных строках
-        const lines = improvedText.split('\n');
-        const htmlLine = lines.find(line => /<[^>]+>.*<\/[^>]+>/.test(line.trim()));
-        if (htmlLine) {
-          improvedText = htmlLine.trim();
+      // Простая очистка от служебного текста - оставляем весь контент
+      // Удаляем только явные инструкции в начале ответа
+      const lines = improvedText.split('\n');
+      let startIndex = 0;
+      
+      // Пропускаем строки с инструкциями в начале
+      for (let i = 0; i < lines.length; i++) {
+        const lower = lines[i].toLowerCase();
+        if (lower.includes('let me') || lower.includes('here is') || lower.includes('here\'s') || lines[i].trim() === '') {
+          startIndex = i + 1;
         } else {
-          // Ищем строку с HTML тегом (может быть самозакрывающийся)
-          const singleHtmlLine = lines.find(line => /<[^>]+>/.test(line.trim()) && !line.toLowerCase().includes('let me') && !line.includes('?'));
-          if (singleHtmlLine) {
-            improvedText = singleHtmlLine.trim();
-          } else {
-            // Убираем все объяснительные строки
-            const cleanLines = lines.filter(line => {
-              const lower = line.toLowerCase();
-              return !lower.includes('let me') && 
-                     !lower.includes('would you like') && 
-                     !lower.includes('this maintains') && 
-                     !lower.includes('this version') &&
-                     !lower.includes('here is') &&
-                     !lower.includes('here\'s') &&
-                     !line.includes('?') && 
-                     line.trim().length > 5;
-            });
-            
-            if (cleanLines.length > 0) {
-              // Берем первую содержательную строку
-              improvedText = cleanLines[0].trim();
-            }
-          }
+          break;
         }
+      }
+      
+      // Берем весь контент начиная с первой содержательной строки
+      if (startIndex < lines.length) {
+        improvedText = lines.slice(startIndex).join('\n');
       }
       
       improvedText = improvedText.trim(); // Убираем лишние пробелы
@@ -339,7 +335,8 @@ ${text}
     try {
       const result = await this.makeRequest({
         model: requestModel,
-        max_tokens: 5000, // Фиксированный лимит для всех моделей Claude
+        max_tokens: requestModel.includes('claude-3-5-sonnet-20241022') ? 7000 : 
+                   requestModel.includes('claude-3-5-sonnet') ? 6000 : 4000,
         temperature: 0.7,
         messages: [
           {
