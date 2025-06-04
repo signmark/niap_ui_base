@@ -10,7 +10,7 @@ async function testNewQwenKey() {
     
     console.log('Тестируем новый Qwen API ключ напрямую с DashScope...');
     
-    const response = await axios.post('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+    const response = await axios.post('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', {
       model: 'qwen2.5-72b-instruct',
       messages: [
         {

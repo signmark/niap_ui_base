@@ -18,8 +18,8 @@ class QwenService {
 
   async improveText({ text, prompt, model = 'qwen-max' }: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
-      // Используем совместимый с OpenAI API endpoint
-      const compatibleURL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+      // Используем международный совместимый с OpenAI API endpoint
+      const compatibleURL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
       
       const response = await axios.post(compatibleURL, {
         model: model,
