@@ -2426,7 +2426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             console.log('[gemini-2.5] Генерация контента с полным названием модели:', fullModelName);
-            const generatedContent = await geminiVertexDirect.generateText({
+            const generatedContent = await geminiVertexDirect.generateContent({
               prompt: enrichedPrompt,
               model: fullModelName
             });
