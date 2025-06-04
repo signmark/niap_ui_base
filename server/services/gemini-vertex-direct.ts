@@ -84,7 +84,7 @@ export class GeminiVertexDirect {
       log(`[gemini-vertex-direct] Отправляем запрос к: ${url}`, 'info');
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 секунд
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 минуты для AI обработки
       
       const response = await fetch(url, {
         method: 'POST',

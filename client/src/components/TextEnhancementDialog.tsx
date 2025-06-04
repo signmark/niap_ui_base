@@ -222,28 +222,19 @@ export function TextEnhancementDialog({
 Исходный текст для улучшения:
 ${text}`;
 
-      // Используем специальный эндпоинт для улучшения текста
-      const endpoint = `/api${getApiEndpoint()}`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
+      // Используем API с увеличенным таймаутом для AI запросов
+      const response = await api.post(getApiEndpoint(), {
+        text: text,
+        prompt: getCurrentPrompt(),
+        model: selectedModelId
+      }, {
+        timeout: 120000, // 2 минуты для AI обработки
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          text: text,
-          prompt: getCurrentPrompt(),
-          model: selectedModelId
-        })
+        }
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Не удалось улучшить текст');
-      }
-
-      const result = await response.json();
-      return result.content || result.text || result.improvedText;
+      return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
       setEnhancedText(data);
