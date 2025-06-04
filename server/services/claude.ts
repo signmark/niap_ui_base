@@ -229,9 +229,13 @@ export class ClaudeService {
 Улучшенный текст:`;
       }
       
+      // Определяем количество токенов на основе длины исходного текста
+      const estimatedTokens = Math.max(8000, Math.ceil(text.length * 1.5));
+      const maxTokens = Math.min(estimatedTokens, 12000); // Максимум 12000 токенов
+      
       const result = await this.makeRequest({
         model: requestModel,
-        max_tokens: 8000, // Увеличиваем лимит для длинного контента
+        max_tokens: maxTokens,
         temperature: 0.7,
         messages: [
           {

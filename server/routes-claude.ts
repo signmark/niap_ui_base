@@ -271,10 +271,17 @@ export function registerClaudeRoutes(app: Router) {
             .trim();
           
           logger.log(`[claude-routes] После конвертации: ${finalText.substring(0, 100)}...`, 'claude');
-        } else if (hasOriginalHtml && !improvedText.includes('<p>')) {
-          // Если в оригинале был HTML, но в ответе его нет - оборачиваем в параграф
-          logger.log('[claude-routes] Оборачиваем текст в HTML параграф', 'claude');
-          finalText = `<p>${improvedText.replace(/\n\n+/g, '</p><p>').replace(/\n/g, ' ')}</p>`;
+        } else if (hasOriginalHtml) {
+          // Проверяем, содержит ли улучшенный текст HTML теги
+          if (/<[^>]+>/.test(improvedText)) {
+            // Если текст уже содержит HTML теги, просто очищаем лишние пробелы
+            logger.log('[claude-routes] Текст уже содержит HTML, очищаем форматирование', 'claude');
+            finalText = improvedText.trim();
+          } else {
+            // Если в оригинале был HTML, но в ответе его нет - оборачиваем в параграф
+            logger.log('[claude-routes] Оборачиваем текст в HTML параграф', 'claude');
+            finalText = `<p>${improvedText.replace(/\n\n+/g, '</p><p>').replace(/\n/g, ' ')}</p>`;
+          }
         }
       } else {
         // Просто очищаем от возможных markdown символов
