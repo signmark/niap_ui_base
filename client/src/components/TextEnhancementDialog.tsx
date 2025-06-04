@@ -237,7 +237,14 @@ ${text}`;
       return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
-      setEnhancedText(data);
+      // Преобразуем markdown разметку в HTML
+      const processedText = data
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **текст** -> жирный
+        .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный
+        .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
+        .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
+      
+      setEnhancedText(processedText);
       
       // Показываем уведомление об успешном улучшении
       toast({
@@ -245,8 +252,8 @@ ${text}`;
         description: "Текст успешно улучшен и применен в редакторе",
       });
       
-      // Сразу же сохраняем улучшенный текст и закрываем диалог
-      onSave(data);
+      // Сразу же сохраняем обработанный текст и закрываем диалог
+      onSave(processedText);
       onOpenChange(false);
     },
     onError: (error: any) => {
