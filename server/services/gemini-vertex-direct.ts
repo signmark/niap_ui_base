@@ -225,6 +225,13 @@ class GeminiVertexDirect {
       throw error;
     }
   }
+
+  /**
+   * Генерирует текст (алиас для generateContent)
+   */
+  async generateText(params: { prompt: string; model?: string }): Promise<string> {
+    return this.generateContent(params);
+  }
 }
 
 // Создаем и экспортируем экземпляр
