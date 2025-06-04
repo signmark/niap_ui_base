@@ -232,10 +232,8 @@ ${text}
 Улучшенный текст:`;
       }
       
-      // Определяем количество токенов на основе длины исходного текста
-      // Используем корректные лимиты для Claude 3.5 Sonnet (максимум 8192 токена)
-      const estimatedTokens = Math.max(4000, Math.ceil(text.length * 2.5));
-      const maxTokens = Math.min(estimatedTokens, 8192); // Корректный лимит для Claude 3.5 Sonnet
+      // Используем фиксированный лимит 5000 токенов для всех моделей Claude
+      const maxTokens = 5000;
       
       const result = await this.makeRequest({
         model: requestModel,
@@ -341,7 +339,7 @@ ${text}
     try {
       const result = await this.makeRequest({
         model: requestModel,
-        max_tokens: 4000, // Безопасный лимит для Claude 3.5 Sonnet
+        max_tokens: 5000, // Фиксированный лимит для всех моделей Claude
         temperature: 0.7,
         messages: [
           {
