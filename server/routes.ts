@@ -2291,6 +2291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (useCampaignData && campaignId) {
           console.log('[deepseek] Добавляем данные кампании для DeepSeek');
           try {
+            const { CampaignDataService } = await import('./services/campaign-data.js');
             const campaignDataService = new CampaignDataService();
             const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
             enrichedPrompt = await campaignDataService.enrichPromptWithCampaignData(
@@ -2393,6 +2394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (useCampaignData && campaignId) {
           console.log('[gemini] Добавляем данные кампании для Gemini через централизованный сервис');
           try {
+            const { CampaignDataService } = await import('./services/campaign-data.js');
             const campaignDataService = new CampaignDataService();
             // Для Gemini используем временный userId из админских настроек
             const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
@@ -2413,8 +2415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('[gemini-2.5] Использование прямого Vertex AI для модели', service);
             
             // Прямой импорт для обеспечения доступности метода
-            const geminiVertexDirectModule = require('./services/gemini-vertex-direct');
-            const geminiVertexDirect = geminiVertexDirectModule.geminiVertexDirect;
+            const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
             
             // Маппинг коротких названий моделей на полные Vertex AI названия
             let fullModelName = service;
