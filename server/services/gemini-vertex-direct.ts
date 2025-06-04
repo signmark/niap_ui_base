@@ -67,6 +67,7 @@ export class GeminiVertexDirect {
       const requestData = {
         contents: [
           {
+            role: "user",
             parts: [
               {
                 text: `${prompt}\n\nТекст для улучшения:\n${text}`
@@ -74,11 +75,11 @@ export class GeminiVertexDirect {
             ]
           }
         ],
-        generation_config: {
+        generationConfig: {
           temperature: 0.4,
-          top_p: 0.9,
-          top_k: 40,
-          max_output_tokens: 8192
+          topP: 0.9,
+          topK: 40,
+          maxOutputTokens: 8192
         }
       };
       
@@ -164,11 +165,9 @@ export class GeminiVertexDirect {
             ]
           }
         ],
-        generation_config: {
+        generationConfig: {
           temperature: 0.7,
-          top_p: 0.9,
-          top_k: 40,
-          max_output_tokens: 8192
+          maxOutputTokens: 8192
         }
       };
       
