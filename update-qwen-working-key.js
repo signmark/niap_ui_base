@@ -2,7 +2,7 @@
  * Обновление Qwen API ключа на рабочий
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 async function updateQwenWorkingKey() {
     try {
