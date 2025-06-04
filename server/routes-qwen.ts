@@ -45,9 +45,18 @@ class QwenService {
       }
 
       throw new Error('Qwen API returned empty response');
-    } catch (error) {
+    } catch (error: any) {
+      console.log('Qwen API Full Error:', error);
+      console.log('Qwen API Response status:', error.response?.status);
+      console.log('Qwen API Response data:', error.response?.data);
       logger.error('Error calling Qwen API:', error);
-      throw new Error('Ошибка при обращении к Qwen API');
+      logger.error('Qwen API Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      throw new Error(`Ошибка при обращении к Qwen API: ${error.response?.data?.error?.message || error.message}`);
     }
   }
 }
