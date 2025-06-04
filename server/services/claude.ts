@@ -316,9 +316,13 @@ ${text}
       
       logger.log('Text successfully improved with Claude AI', 'claude');
       return improvedText;
-    } catch (error) {
+    } catch (error: any) {
+      console.log('Claude API Full Error:', error);
+      console.log('Claude API Response status:', error.response?.status);
+      console.log('Claude API Response data:', error.response?.data);
       logger.error('Error improving text with Claude:', error, 'claude');
-      throw new Error('Failed to improve text with Claude: ' + (error instanceof Error ? error.message : String(error)));
+      const errorMessage = error.response?.data?.error?.message || error.message || String(error);
+      throw new Error('Failed to improve text with Claude: ' + errorMessage);
     }
   }
 
@@ -616,6 +620,10 @@ ${text}
           if (status === 401) {
             logger.error('Claude API rejected request: Invalid API key or permissions (401)', 'claude');
           } else if (status === 400) {
+            console.log('Claude API 400 Error Details:', JSON.stringify(error.response.data, null, 2));
+            console.log('Request data model:', requestData.model);
+            console.log('Request data max_tokens:', requestData.max_tokens);
+            console.log('Request data messages:', JSON.stringify(requestData.messages, null, 2));
             logger.error(`Claude API rejected request: Bad request (400)`, 'claude');
             logger.error(`Error details: ${JSON.stringify(error.response.data, null, 2)}`, 'claude');
             logger.error(`Request data model: ${requestData.model}`, 'claude');
