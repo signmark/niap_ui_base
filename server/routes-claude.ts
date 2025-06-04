@@ -223,7 +223,7 @@ export function registerClaudeRoutes(app: Router) {
         // Убираем горизонтальные линии
         html = html.replace(/^[-=*]{3,}$/gm, '');
         
-        // Разбиваем на параграфы
+        // Разбиваем на параграфы более аккуратно
         const paragraphs = html.split(/\n\s*\n/);
         const processedParagraphs = paragraphs.map(para => {
           const trimmed = para.trim();
@@ -234,11 +234,14 @@ export function registerClaudeRoutes(app: Router) {
             return trimmed;
           }
           
+          // Заменяем одиночные переносы на пробелы внутри параграфа
+          const cleanPara = trimmed.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+          
           // Оборачиваем в параграф
-          return `<p>${trimmed}</p>`;
+          return `<p>${cleanPara}</p>`;
         });
         
-        return processedParagraphs.filter(p => p.trim()).join('').replace(/\n\s*\n+/g, '\n');
+        return processedParagraphs.filter(p => p.trim()).join('');
       };
       
       // Определяем, есть ли HTML в оригинальном тексте

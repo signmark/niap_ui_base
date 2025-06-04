@@ -195,7 +195,7 @@ export class ClaudeService {
       'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022'
     };
     
-    const requestModel = modelMapping[model] || model || this.defaultModel;
+    const requestModel = (model ? (modelMapping[model] || model) : this.defaultModel);
     
     try {
       // Определяем, содержит ли текст HTML-теги
