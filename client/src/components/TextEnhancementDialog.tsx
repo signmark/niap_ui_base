@@ -237,14 +237,19 @@ ${text}`;
       return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
-      // Преобразуем markdown разметку в HTML
+      // Преобразуем markdown разметку в HTML для правильного форматирования
       const processedText = data
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **текст** -> жирный
-        .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный
+        .replace(/\*(.*?)\*/g, '<strong>$1</strong>') // *текст* -> жирный  
         .replace(/_(.*?)_/g, '<em>$1</em>') // _текст_ -> курсив
-        .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
+        .replace(/`(.*?)`/g, '<code>$1</code>') // `код` -> моноширинный
+        .replace(/\n\n/g, '</p><p>') // двойные переносы -> новые абзацы
+        .replace(/\n/g, '<br>'); // одинарные переносы -> переносы строк
       
-      setEnhancedText(processedText);
+      // Оборачиваем в параграфы, если текст не содержит HTML-тегов
+      const finalText = processedText.includes('<') ? processedText : `<p>${processedText}</p>`;
+      
+      setEnhancedText(finalText);
       
       // Показываем уведомление об успешном улучшении
       toast({
@@ -252,8 +257,8 @@ ${text}`;
         description: "Текст успешно улучшен и применен в редакторе",
       });
       
-      // Сразу же сохраняем обработанный текст и закрываем диалог
-      onSave(processedText);
+      // Сохраняем обработанный HTML текст и закрываем диалог
+      onSave(finalText);
       onOpenChange(false);
     },
     onError: (error: any) => {

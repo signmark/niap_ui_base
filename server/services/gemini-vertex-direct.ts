@@ -120,36 +120,33 @@ export class GeminiVertexDirect {
       
       const content = candidates[0].content;
       if (!content || !content.parts || content.parts.length === 0) {
-        throw new Error('Vertex AI вернул пустой контент');
+        throw new Error('Неверная структура ответа от Vertex AI');
       }
       
-      const improvedText = content.parts[0].text;
-      if (!improvedText) {
-        throw new Error('Vertex AI не вернул улучшенный текст');
-      }
+      const improvedText = content.parts[0].text || '';
       
       log(`[gemini-vertex-direct] Текст успешно улучшен`, 'info');
-      return improvedText.trim();
+      return improvedText;
       
     } catch (error) {
-      log(`[gemini-vertex-direct] Ошибка: ${(error as Error).message}`, 'error');
+      log(`[gemini-vertex-direct] Ошибка при улучшении текста: ${(error as Error).message}`, 'error');
       throw error;
     }
   }
 
   /**
-   * Генерирует текст с помощью Gemini Vertex AI
+   * Генерирует контент с помощью Gemini через Vertex AI
    */
-  async generateText(params: { prompt: string; model: string }): Promise<string> {
+  async generateContent(params: { prompt: string; model?: string }): Promise<string> {
     try {
-      const { prompt, model } = params;
+      const { prompt, model = 'gemini-2.5-flash-preview-05-20' } = params;
       
       log(`[gemini-vertex-direct] Запрос генерации текста с моделью: ${model}`, 'info');
-      log(`[gemini-vertex-direct] Получаем прямой access token`, 'info');
       
+      // Получаем токен доступа
       const accessToken = await this.getDirectAccessToken();
-      log(`[gemini-vertex-direct] Access token получен успешно`, 'info');
       
+      // Формируем URL для Vertex AI API
       const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`;
       
       const requestData = {
@@ -172,7 +169,7 @@ export class GeminiVertexDirect {
       log(`[gemini-vertex-direct] Отправляем запрос к: ${url}`, 'info');
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд для генерации
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 минуты для AI обработки
       
       const response = await fetch(url, {
         method: 'POST',
@@ -208,23 +205,17 @@ export class GeminiVertexDirect {
       
       const content = candidates[0].content;
       if (!content || !content.parts || content.parts.length === 0) {
-        throw new Error('Vertex AI вернул пустой контент');
+        throw new Error('Неверная структура ответа от Vertex AI');
       }
       
-      const generatedText = content.parts[0].text;
-      if (!generatedText) {
-        throw new Error('Vertex AI не вернул сгенерированный текст');
-      }
+      const generatedText = content.parts[0].text || '';
       
       log(`[gemini-vertex-direct] Текст успешно сгенерирован`, 'info');
-      return generatedText.trim();
+      return generatedText;
       
     } catch (error) {
-      log(`[gemini-vertex-direct] Ошибка генерации: ${(error as Error).message}`, 'error');
+      log(`[gemini-vertex-direct] Ошибка при генерации текста: ${(error as Error).message}`, 'error');
       throw error;
     }
   }
 }
-
-// Экспортируем экземпляр сервиса
-export const geminiVertexDirect = new GeminiVertexDirect();
