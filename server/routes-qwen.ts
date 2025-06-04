@@ -1,160 +1,168 @@
 import { Router, Request, Response } from 'express';
-import { qwenService } from './services/qwen';
-import { globalApiKeyManager } from './services/global-api-key-manager';
-import { ApiServiceName } from './services/api-keys';
-import { log } from './utils/logger';
+import axios from 'axios';
+import * as logger from './utils/logger';
+import { GlobalApiKeysService } from './services/global-api-keys';
 
-export function registerQwenRoutes(app: Router) {
-  const router = app;
+const router = Router();
 
-  /**
-   * Получение API ключа Qwen из централизованной системы Global API Keys
-   */
-  async function getQwenApiKey(): Promise<string | null> {
-    try {
-      log('Getting Qwen API key from Global API Keys collection');
-      
-      const apiKey = await globalApiKeyManager.getApiKey(ApiServiceName.QWEN);
-      
-      if (apiKey) {
-        log(`Successfully retrieved Qwen API key from Global API Keys (length: ${apiKey.length})`);
-        // Маскируем ключ для логирования - показываем только первые 4 символа
-        const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
-        log(`Qwen API key starts with: ${maskedKey}`);
-      } else {
-        log('Qwen API key not found in Global API Keys collection');
-      }
-      
-      return apiKey;
-    } catch (error) {
-      log('Error getting Qwen API key:', (error as Error).message);
-      return null;
-    }
+/**
+ * Сервис для работы с Qwen API
+ */
+class QwenService {
+  private apiKey: string;
+  private baseURL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
+
+  constructor({ apiKey }: { apiKey: string }) {
+    this.apiKey = apiKey;
   }
 
-  /**
-   * Маршрут для улучшения текста с помощью Qwen
-   */
-  router.post('/api/qwen/improve-text', async (req: Request, res: Response) => {
+  async improveText({ text, prompt, model = 'qwen-max' }: { text: string; prompt: string; model?: string }): Promise<string> {
     try {
-      const { text, prompt, model } = req.body;
-      const userId = req.userId;
-      
-      log(`Received improve-text request from user ${userId}`);
-      
-      if (!text || !prompt) {
-        log('Missing text or prompt in improve-text request');
-        return res.status(400).json({
-          success: false,
-          error: 'Текст и инструкции обязательны'
-        });
-      }
-      
-      // Получаем API ключ Qwen из Global API Keys
-      const qwenApiKey = await getQwenApiKey();
-      
-      if (!qwenApiKey) {
-        log(`Qwen API key not configured for user ${userId}`);
-        return res.status(400).json({
-          success: false,
-          error: 'API ключ Qwen не настроен',
-          needApiKey: true
-        });
-      }
-      
-      // Используем Qwen сервис с API ключом пользователя
-      qwenService.updateApiKey(qwenApiKey);
-      
-      // Определяем, содержит ли текст HTML-теги
-      const containsHtml = /<[^>]+>/.test(text);
-      
-      // Формируем промпт для Qwen в зависимости от наличия HTML
-      let fullPrompt = '';
-      
-      if (containsHtml) {
-        fullPrompt = `Задача: улучшить предоставленный текст в соответствии с инструкциями, сохраняя HTML форматирование.
-Инструкции: ${prompt}
-
-ВАЖНО: текст содержит HTML-форматирование, которое необходимо сохранить.
-Сохраняй все HTML-теги (например, <p>, <strong>, <em>, <ul>, <li> и др.) в твоем ответе.
-Не добавляй новые HTML-теги, если они не нужны для форматирования.
-Сохраняй структуру абзацев и списков.
-Не пиши служебную разметку или блоки кода.
-
-Исходный текст с HTML:
-"""
-${text}
-"""
-
-Улучшенный текст (с сохранением HTML-форматирования):`;
-      } else {
-        fullPrompt = `Задача: улучшить предоставленный текст в соответствии с инструкциями.
-Инструкции: ${prompt}
-
-Исходный текст:
-"""
-${text}
-"""
-
-Улучшенный текст:`;
-      }
-      
-      // Выбираем модель (или используем дефолтную)
-      const modelToUse = model || 'qwen-max';
-      
-      log(`Calling Qwen with model ${modelToUse}`);
-      // Генерируем улучшенный текст
-      let improvedText = await qwenService.generateText(fullPrompt, {
-        model: modelToUse,
-        temperature: 0.3,
-        maxTokens: 4000
+      const response = await axios.post(this.baseURL, {
+        model: model,
+        input: {
+          messages: [
+            {
+              role: 'user',
+              content: `${prompt}\n\nТекст для улучшения:\n${text}`
+            }
+          ]
+        },
+        parameters: {
+          temperature: 0.7,
+          max_tokens: 5000
+        }
+      }, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
       });
-      
-      // Удаляем служебный текст в тройных обратных кавычках (```)
-      improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
-      
-      // Если оригинальный текст содержал HTML, но ответ не содержит, 
-      // попробуем заключить абзацы в теги <p>
-      if (containsHtml && !/<[^>]+>/.test(improvedText)) {
-        log('HTML tags were not preserved in Qwen response, attempting to add paragraph tags');
-        improvedText = improvedText
-          .split('\n\n')
-          .map(para => para.trim())
-          .filter(para => para.length > 0)
-          .map(para => `<p>${para}</p>`)
-          .join('\n');
+
+      if (response.data?.output?.text) {
+        return response.data.output.text;
       }
-      
-      log('Text improved successfully with Qwen, returning response');
-      return res.json({
-        success: true,
-        text: improvedText
-      });
+
+      throw new Error('Qwen API returned empty response');
     } catch (error) {
-      log('Error improving text with Qwen:', (error as Error).message);
-      
-      if (error instanceof Error) {
-        log(`Error message: ${error.message}`);
-        if ('stack' in error) {
-          log(`Error stack: ${error.stack}`);
-        }
-        
-        // Проверяем, связана ли ошибка с API ключом
-        if (error.message.includes('API ключ') || error.message.includes('API key')) {
-          return res.status(400).json({
-            success: false,
-            error: error.message,
-            needApiKey: true
-          });
-        }
-      }
-      
-      return res.status(500).json({
+      logger.error('Error calling Qwen API:', error);
+      throw new Error('Ошибка при обращении к Qwen API');
+    }
+  }
+}
+
+/**
+ * Получает API ключ Qwen из глобального хранилища
+ */
+async function getQwenApiKey(req: Request): Promise<string | null> {
+  try {
+    logger.log('[qwen-routes] Getting Qwen API key from Global API Keys collection', 'qwen');
+    
+    const globalApiKeysService = new GlobalApiKeysService();
+    const apiKey = await globalApiKeysService.getGlobalApiKey('qwen' as any);
+    
+    if (apiKey) {
+      logger.log(`[qwen-routes] Successfully retrieved Qwen API key from Global API Keys (length: ${apiKey.length})`, 'qwen');
+      logger.log(`[qwen-routes] Qwen API key: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}`, 'qwen');
+      return apiKey;
+    } else {
+      logger.log('[qwen-routes] Qwen API key not found in Global API Keys collection', 'qwen');
+    }
+    
+    return apiKey;
+  } catch (error) {
+    logger.error('[qwen-routes] Error getting Qwen API key:', error);
+    return null;
+  }
+}
+
+/**
+ * Создает экземпляр сервиса Qwen для пользователя
+ */
+async function getQwenService(req: Request): Promise<QwenService | null> {
+  const apiKey = await getQwenApiKey(req);
+  
+  if (!apiKey) {
+    return null;
+  }
+  
+  return new QwenService({ apiKey });
+}
+
+/**
+ * Маршрут для улучшения текста с помощью Qwen
+ */
+router.post('/api/qwen/improve-text', async (req: Request, res: Response) => {
+  try {
+    const { text, prompt, model } = req.body;
+    const userId = req.userId;
+    
+    logger.log(`[qwen-routes] Received improve-text request from user ${userId}`, 'qwen');
+    logger.log(`[qwen-routes] Request data: text length=${text?.length}, prompt length=${prompt?.length}, model=${model}`, 'qwen');
+    
+    if (!text || !prompt) {
+      logger.error('[qwen-routes] Missing text or prompt in improve-text request', 'qwen');
+      return res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Ошибка при улучшении текста'
+        error: 'Текст и инструкции обязательны'
       });
     }
-  });
+    
+    logger.log(`[qwen-routes] Getting Qwen service for user ${userId}`, 'qwen');
+    const qwenService = await getQwenService(req);
+    
+    if (!qwenService) {
+      logger.error(`[qwen-routes] Qwen API key not configured for user ${userId}`, 'qwen');
+      return res.status(400).json({
+        success: false,
+        error: 'API ключ Qwen не настроен',
+        needApiKey: true
+      });
+    }
+    
+    logger.log(`[qwen-routes] Qwen service initialized successfully`, 'qwen');
+    logger.log(`[qwen-routes] Calling improveText with model ${model || 'default'}`, 'qwen');
+    
+    const improvedText = await qwenService.improveText({ text, prompt, model });
+    
+    logger.log(`[qwen-routes] Qwen response: ${improvedText.substring(0, 100)}...`, 'qwen');
+    
+    // Очищаем текст от лишних переносов строк и markdown
+    let finalText = improvedText
+      .replace(/^#+\s+/gm, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+      .replace(/^\s*[-*+]\s+/gm, '')
+      .replace(/^\s*\d+\.\s+/gm, '')
+      .replace(/^\s*>\s+/gm, '')
+      .replace(/^[-=*]{3,}$/gm, '')
+      .replace(/\n\s*\n+/g, '\n')
+      .trim();
+    
+    logger.log('[qwen-routes] Text improved successfully, returning response', 'qwen');
+    return res.json({
+      success: true,
+      text: finalText
+    });
+  } catch (error) {
+    logger.error('[qwen-routes] Error improving text with Qwen:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Ошибка при улучшении текста'
+    });
+  }
+});
 
-  return router;
+/**
+ * Регистрация маршрутов Qwen в Express приложении
+ */
+export function registerQwenRoutes(app: any) {
+  app.use('/', router);
+  console.log('Qwen routes registered');
 }
+
+export default router;
