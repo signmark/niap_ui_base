@@ -533,7 +533,9 @@ export default function RichTextEditor({
         onOpenChange={setIsTextEnhancementOpen}
         initialText={editor.getHTML()}
         onSave={(enhancedText) => {
+          console.log('RichTextEditor получил улучшенный текст:', enhancedText);
           editor.commands.setContent(enhancedText);
+          console.log('После setContent, HTML в редакторе:', editor.getHTML());
           onChange(enhancedText);
         }}
       />
