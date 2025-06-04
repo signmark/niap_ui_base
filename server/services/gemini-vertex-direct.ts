@@ -77,8 +77,6 @@ export class GeminiVertexDirect {
         ],
         generationConfig: {
           temperature: 0.4,
-          topP: 0.9,
-          topK: 40,
           maxOutputTokens: 8192
         }
       };
