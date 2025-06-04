@@ -260,6 +260,16 @@ export function registerClaudeRoutes(app: Router) {
         if (hasMarkdownSymbols) {
           logger.log('[claude-routes] Конвертируем Markdown в HTML', 'claude');
           finalText = convertMarkdownToHtml(improvedText);
+          
+          // Очищаем проблемы с двойными параграфами и лишними пробелами
+          finalText = finalText
+            .replace(/<p><p>/g, '<p>')  // Убираем двойные открывающие <p>
+            .replace(/<\/p><\/p>/g, '</p>')  // Убираем двойные закрывающие </p>
+            .replace(/<p>\s*<\/p>/g, '')  // Убираем пустые параграфы
+            .replace(/^\s+/, '')  // Убираем пробелы в начале
+            .replace(/\s+$/, '')  // Убираем пробелы в конце
+            .trim();
+          
           logger.log(`[claude-routes] После конвертации: ${finalText.substring(0, 100)}...`, 'claude');
         } else if (hasOriginalHtml && !improvedText.includes('<p>')) {
           // Если в оригинале был HTML, но в ответе его нет - оборачиваем в параграф

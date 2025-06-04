@@ -143,6 +143,29 @@ export function registerDeepSeekRoutes(app: Router) {
       // Удаляем служебный текст в тройных обратных кавычках (```)
       improvedText = improvedText.replace(/```[\s\S]*?```/g, '');
       
+      // Извлекаем только улучшенный контент, убираем объяснения DeepSeek
+      const explanationPatterns = [
+        /\(Note:.*?\)/gi,
+        /\(Примечание:.*?\)/gi,
+        /Note:.*$/gmi,
+        /Примечание:.*$/gmi,
+        /I made.*$/gmi,
+        /Я сделал.*$/gmi,
+        /The original.*$/gmi,
+        /Оригинальный.*$/gmi,
+        /This version.*$/gmi,
+        /Эта версия.*$/gmi
+      ];
+      
+      explanationPatterns.forEach(pattern => {
+        improvedText = improvedText.replace(pattern, '');
+      });
+      
+      // Очищаем лишние пробелы и переносы
+      improvedText = improvedText
+        .replace(/\n\s*\n+/g, '\n\n')
+        .trim();
+      
       // Если оригинальный текст содержал HTML, но ответ не содержит, 
       // попробуем заключить абзацы в теги <p>
       if (containsHtml && !/<[^>]+>/.test(improvedText)) {
