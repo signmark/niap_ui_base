@@ -4,7 +4,7 @@ import { GoogleAuth } from 'google-auth-library';
 /**
  * Прямой сервис для работы с Gemini через Vertex AI без зависимостей
  */
-export class GeminiVertexDirect {
+class GeminiVertexDirect {
   private projectId = 'laboratory-449308';
   private location = 'us-central1';
   private credentials = {
@@ -219,3 +219,6 @@ export class GeminiVertexDirect {
     }
   }
 }
+
+// Создаем и экспортируем экземпляр
+export const geminiVertexDirect = new GeminiVertexDirect();
