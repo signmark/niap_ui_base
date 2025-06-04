@@ -238,7 +238,7 @@ export function registerClaudeRoutes(app: Router) {
           return `<p>${trimmed}</p>`;
         });
         
-        return processedParagraphs.filter(p => p.trim()).join('');
+        return processedParagraphs.filter(p => p.trim()).join('').replace(/\n\s*\n+/g, '\n');
       };
       
       // Определяем, есть ли HTML в оригинальном тексте
@@ -270,6 +270,7 @@ export function registerClaudeRoutes(app: Router) {
           .replace(/^\s*\d+\.\s+/gm, '')
           .replace(/^\s*>\s+/gm, '')
           .replace(/^[-=*]{3,}$/gm, '')
+          .replace(/\n\s*\n+/g, '\n')
           .trim();
         logger.log('[claude-routes] Очистили от markdown символов', 'claude');
       }

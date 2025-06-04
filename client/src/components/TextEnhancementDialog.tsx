@@ -152,7 +152,11 @@ export function TextEnhancementDialog({
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedPromptId, setSelectedPromptId] = useState("improve");
   const [selectedService, setSelectedService] = useState(AI_SERVICES.find(s => s.default)?.id || "claude");
-  const [selectedModelId, setSelectedModelId] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState(() => {
+    const defaultService = AI_SERVICES.find(s => s.default) || AI_SERVICES[0];
+    const defaultModel = defaultService.models.find(m => m.default) || defaultService.models[0];
+    return defaultModel?.id || "";
+  });
   const [hasApiKey, setHasApiKey] = useState(true); // Предполагаем, что ключ есть, потом проверим
   
   const { toast } = useToast();
