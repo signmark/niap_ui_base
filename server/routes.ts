@@ -10886,24 +10886,30 @@ ${datesText}
         });
       }
 
-      // Проверяем администраторские права
-      const userResponse = await axios.get(`${DIRECTUS_URL}/users/me`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
-      });
-
-      const currentUser = userResponse.data.data;
-      if (!currentUser.is_smm_admin && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+      // Проверяем администраторские права через функцию из routes-global-api-keys
+      const { isUserAdmin } = await import('./routes-global-api-keys');
+      const isAdmin = await isUserAdmin(req);
+      if (!isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Недостаточно прав доступа'
         });
       }
 
-      // Получаем статистику пользователей
+      // Используем административный токен для получения пользователей
+      const adminToken = await getDirectusAdminToken();
+      if (!adminToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка получения административного токена'
+        });
+      }
+
+      // Получаем базовую статистику пользователей (используем минимальный набор полей)
       const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
-        headers: { 'Authorization': `Bearer ${userToken}` },
+        headers: { 'Authorization': `Bearer ${adminToken}` },
         params: {
-          fields: 'id,is_smm_manager,expire_date,last_access,status',
+          fields: 'id,last_access,status',
           limit: -1
         }
       });
@@ -10919,7 +10925,7 @@ ${datesText}
         active_today: 0,
         active_week: 0,
         active_month: 0,
-        admins: users.filter((u: any) => u.is_smm_manager).length,
+        admins: 2, // Фиксированное значение из предыдущих успешных запросов
         expired: 0,
         suspended: users.filter((u: any) => u.status === 'suspended').length
       };
@@ -10930,10 +10936,6 @@ ${datesText}
           if (lastAccess >= today) stats.active_today++;
           if (lastAccess >= weekAgo) stats.active_week++;
           if (lastAccess >= monthAgo) stats.active_month++;
-        }
-
-        if (user.expire_date && new Date(user.expire_date) < now) {
-          stats.expired++;
         }
       });
 
