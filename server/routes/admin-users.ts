@@ -33,19 +33,32 @@ router.get('/admin/users', async (req: any, res: Response) => {
     
     const adminToken = authHeader.substring(7);
     console.log('[admin-users] Используем токен авторизованного администратора для получения пользователей');
+    console.log('[admin-users] Токен начинается с:', adminToken.substring(0, 10) + '...');
 
     // Получаем список всех пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-    const usersResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`, {
+    const requestUrl = `${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`;
+    console.log('[admin-users] Запрос к URL:', requestUrl);
+    
+    const usersResponse = await fetch(requestUrl, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
       }
     });
 
+    console.log('[admin-users] Статус ответа:', usersResponse.status);
+    console.log('[admin-users] Статус текст:', usersResponse.statusText);
+
     if (!usersResponse.ok) {
+      const errorText = await usersResponse.text();
+      console.log('[admin-users] Текст ошибки:', errorText);
       console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
-      return res.status(500).json({ error: 'Ошибка получения списка пользователей' });
+      return res.status(500).json({ 
+        error: 'Ошибка получения списка пользователей',
+        status: usersResponse.status,
+        details: errorText
+      });
     }
 
     const usersData = await usersResponse.json();
