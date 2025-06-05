@@ -11,6 +11,7 @@ import { CampaignSelector } from "@/components/CampaignSelector";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { SmmLogo } from "./SmmLogo";
+import { SubscriptionExpiredBanner } from "./SubscriptionExpiredBanner";
 import useCampaignOwnershipCheck from "@/hooks/useCampaignOwnershipCheck";
 
 // Проверка наличия администраторских прав у пользователя по email
@@ -337,7 +338,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <ThemeSwitcher />
             </div>
           </div>
-          <main className="flex-1 p-4 lg:p-8">{children}</main>
+          <main className="flex-1 p-4 lg:p-8">
+            <SubscriptionExpiredBanner />
+            {children}
+          </main>
         </div>
 
         {/* Оверлей для мобильного меню */}
