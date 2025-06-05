@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Calendar, Settings, AlertTriangle } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface User {
   id: string;
@@ -39,15 +40,7 @@ export default function UserManagement() {
   // Загрузка списка пользователей
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки пользователей');
-      }
-
-      const data = await response.json();
+      const data = await apiRequest('/api/admin/users');
       if (data.success) {
         setUsers(data.data);
       }
@@ -64,15 +57,7 @@ export default function UserManagement() {
   // Загрузка статистики
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/admin/users/activity', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Ошибка загрузки статистики');
-      }
-
-      const data = await response.json();
+      const data = await apiRequest('/api/admin/users/activity');
       if (data.success) {
         setStats(data.data.stats);
       }
@@ -89,20 +74,11 @@ export default function UserManagement() {
   // Обновление пользователя
   const updateUser = async (userId: string, updates: Partial<User>) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const data = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(updates),
+        data: updates,
       });
-
-      if (!response.ok) {
-        throw new Error('Ошибка обновления пользователя');
-      }
-
-      const data = await response.json();
+      
       if (data.success) {
         toast({
           title: "Успех",
