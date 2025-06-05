@@ -130,7 +130,7 @@ services:
 
   smm:
     build:
-      context: .
+      context: ./smm
       dockerfile: Dockerfile
     restart: always
     environment:

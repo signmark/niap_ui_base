@@ -112,10 +112,10 @@ cat > smm/smmniap_static/index.html << EOF
 </html>
 EOF
 
-# Создание недостающего Dockerfile
-if [ ! -f "Dockerfile" ]; then
-    log "Создаем недостающий Dockerfile..."
-    cat > Dockerfile << 'DOCKERFILE_EOF'
+# Создание недостающего Dockerfile в папке smm
+if [ ! -f "smm/Dockerfile" ]; then
+    log "Создаем недостающий Dockerfile в папке smm..."
+    cat > smm/Dockerfile << 'DOCKERFILE_EOF'
 FROM node:18-alpine
 
 WORKDIR /app
