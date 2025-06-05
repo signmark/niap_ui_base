@@ -24,12 +24,14 @@ router.get('/admin/users', async (req: any, res: Response) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Используем административный статический токен из переменных окружения
-    const adminToken = process.env.DIRECTUS_TOKEN;
-    if (!adminToken) {
-      console.log('[admin-users] Отсутствует административный токен в переменных окружения');
-      return res.status(500).json({ error: 'Ошибка получения административного доступа' });
+    // Получаем токен текущего авторизованного администратора из заголовков
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации в заголовках');
+      return res.status(401).json({ error: 'Требуется авторизация' });
     }
+    
+    const adminToken = authHeader.substring(7); // Убираем "Bearer " из начала
 
     // Получаем список всех пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -138,12 +140,14 @@ router.get('/admin/users/activity', async (req, res) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем административный токен для доступа к статистике пользователей
-    const adminToken = await directusCrud.getAdminToken();
-    if (!adminToken) {
-      console.log('[admin-users] Не удалось получить административный токен для статистики');
-      return res.status(500).json({ error: 'Ошибка получения административного доступа' });
+    // Получаем токен текущего авторизованного администратора из заголовков
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации в заголовках для статистики');
+      return res.status(401).json({ error: 'Требуется авторизация' });
     }
+    
+    const adminToken = authHeader.substring(7); // Убираем "Bearer " из начала
 
     // Получаем статистику пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
