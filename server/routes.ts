@@ -10834,12 +10834,15 @@ ${datesText}
       // Проверяем администраторские права через функцию из routes-global-api-keys
       const { isUserAdmin } = await import('./routes-global-api-keys');
       const isAdmin = await isUserAdmin(req);
+      console.log(`Admin check for user ${userId}: ${isAdmin}`);
       if (!isAdmin) {
+        console.log(`Access denied for user ${userId} - not admin`);
         return res.status(403).json({
           success: false,
           error: 'Недостаточно прав доступа'
         });
       }
+      console.log(`Access granted for admin user ${userId}`);
 
       // Используем административный токен для получения пользователей
       const adminToken = await getDirectusAdminToken();
