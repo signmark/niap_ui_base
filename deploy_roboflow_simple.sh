@@ -113,11 +113,14 @@ cat > smm/smmniap_static/index.html << EOF
 EOF
 
 # Копирование docker-compose конфигурации
-if [ -f "docker-compose.roboflow.yml" ]; then
+if [ -f "../docker-compose.roboflow.yml" ]; then
+    cp ../docker-compose.roboflow.yml docker-compose.yml
+    log "Используем конфигурацию docker-compose.roboflow.yml из родительской директории"
+elif [ -f "docker-compose.roboflow.yml" ]; then
     cp docker-compose.roboflow.yml docker-compose.yml
-    log "Используем конфигурацию docker-compose.roboflow.yml"
+    log "Используем конфигурацию docker-compose.roboflow.yml из текущей директории"
 else
-    error "Файл docker-compose.roboflow.yml не найден"
+    error "Файл docker-compose.roboflow.yml не найден ни в текущей, ни в родительской директории"
 fi
 
 # Сохранение паролей

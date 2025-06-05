@@ -1,0 +1,15 @@
+FROM n8nio/n8n:latest
+
+USER root
+
+# Устанавливаем дополнительные пакеты если нужно
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    build-base
+
+USER node
+
+WORKDIR /home/node
+
+EXPOSE 5678
