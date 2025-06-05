@@ -1,0 +1,26 @@
+WARN[0004] Found orphan containers ([root-adminer-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
+[+] Running 5/6
+ ✔ Container root-postgres-1  Started                                                                                                                                                                       5.6s
+ ✔ Container root-smm-1       Started                                                                                                                                                                       5.6s
+ ⠹ Container root-traefik-1   Starting                                                                                                                                                                      5.6s
+ ✔ Container root-n8n-1       Created                                                                                                                                                                       0.4s
+ ✔ Container root-pgadmin-1   Created                                                                                                                                                                       0.4s
+ ✔ Container root-directus-1  Created                                                                                                                                                                       0.4s
+Error response from daemon: driver failed programming external connectivity on endpoint root-traefik-1 (89ab945443ae8a2d495398a8fafd9a6d20612b89856424e4f103e21130d091e6): Bind for 0.0.0.0:80 failed: port is already allocated
+      - traefik.http.routers.n8n.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.pgadmin.rule=Host(`${PGADMIN_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.directus.rule=Host(`directus.${DOMAIN_NAME}`)
+      - traefik.http.routers.smm.rule=Host(`smm.roboflow.tech`)
+root@jycuzxsrys:~# docker ps
+CONTAINER ID   IMAGE                      COMMAND                  CREATED              STATUS                            PORTS                                                                      NAMES
+cae481329c31   root-smm                   "docker-entrypoint.s…"   17 seconds ago       Up 2 seconds                      5000/tcp                                                                   root-smm-1
+7d7ffbd59774   postgres:16                "docker-entrypoint.s…"   17 seconds ago       Up 15 seconds                     5432/tcp                                                                   root-postgres-1
+976e1395b62a   directus/directus:latest   "docker-entrypoint.s…"   About a minute ago   Up 30 seconds                     8055/tcp                                                                   smm-system-directus-1
+736e65b6dbcd   smm-system-n8n             "tini -- /docker-ent…"   About a minute ago   Up 21 seconds                     127.0.0.1:5678->5678/tcp                                                   smm-system-n8n-1
+7fc6ea8bde0f   dpage/pgadmin4             "/entrypoint.sh"         About a minute ago   Up About a minute                 80/tcp, 443/tcp                                                            smm-system-pgadmin-1
+7e9a4eb97b17   traefik:v3.3               "/entrypoint.sh --ap…"   About a minute ago   Up About a minute                 0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp   smm-system-traefik-1
+27880857a127   postgres:16                "docker-entrypoint.s…"   About a minute ago   Up About a minute                 5432/tcp                                                                   smm-system-postgres-1
+d75bb6bafb0d   smm-system-smm             "docker-entrypoint.s…"   About a minute ago   Restarting (127) 12 seconds ago                                                                              smm-system-smm-1
+02f921319f93   nginx:alpine               "/docker-entrypoint.…"   15 minutes ago       Up 14 minutes                     80/tcp                                                                     smm-system-smmniap-1
+2cb95815676f   adminer                    "entrypoint.sh php -…"   6 months ago         Up 6 days                         8080/tcp                                                                   root-adminer-1
+root@jycuzxsrys:~#

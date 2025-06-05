@@ -1,0 +1,105 @@
+31.128.43.113root@j# Проверить DNS разрешение всех доменов всех доменов
+nslookup smm.roboflow.tech
+nslookup directus.roboflow.tech
+nslookup n8n.roboflow.tech
+nslookup pgladmin.roboflow.tech
+
+# Проверить IP адреса доменов
+dig +short smm.roboflow.tech
+dig +short directus.roboflow.tech
+dig +short n8n.roboflow.tech
+dig +short pgladmin.roboflow.tech
+
+# Проверить доступность через HTTP/HTTPS
+curl -I http://smm.roboflow.tech
+curl -I https://smm.roboflow.tech
+curl -I http://directus.roboflow.tech
+curl -I https://directus.roboflow.tech
+
+# Проверить статус контейнеров
+cd /opt/smm-system
+docker-compose ps
+
+# Проверить логи Traefik для SSL сертификатов
+docker-compose logs traefik | grep -E "(certificate|error|smm|directus)" | tail -20
+
+# Проверить конфигурацию доменов в docker-compose
+grep -E "rule=Host" docker-compose.yml
+Server:         198.18.18.18
+Address:        198.18.18.18#53
+
+Non-authoritative answer:
+Name:   smm.roboflow.tech
+Address: 31.128.43.113
+
+Server:         198.18.18.18
+Address:        198.18.18.18#53
+
+** server can't find directus.roboflow.tech: NXDOMAIN
+
+Server:         198.18.18.18
+Address:        198.18.18.18#53
+
+Non-authoritative answer:
+Name:   n8n.roboflow.tech
+Address: 31.128.43.113
+
+Server:         198.18.18.18
+Address:        198.18.18.18#53
+
+** server can't find pgladmin.roboflow.tech: NXDOMAIN
+
+31.128.43.113
+31.128.43.113
+HTTP/1.1 308 Permanent Redirect
+Location: https://smm.roboflow.tech/
+Date: Thu, 05 Jun 2025 12:10:20 GMT
+Content-Length: 18
+
+curl: (60) SSL certificate problem: self-signed certificate
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+curl: (6) Could not resolve host: directus.roboflow.tech
+curl: (6) Could not resolve host: directus.roboflow.tech
+WARN[0000] The "PASSWORD_PGADMIN" variable is not set. Defaulting to a blank string.
+WARN[0000] The "PGADMIN_SUBDOMAIN" variable is not set. Defaulting to a blank string.
+WARN[0000] /opt/smm-system/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+NAME                    IMAGE                      COMMAND                  SERVICE    CREATED          STATUS                            PORTS
+smm-system-directus-1   directus/directus:latest   "docker-entrypoint.s…"   directus   6 minutes ago    Up 15 seconds                     8055/tcp
+smm-system-n8n-1        smm-system-n8n             "tini -- /docker-ent…"   n8n        6 minutes ago    Up 16 seconds                     127.0.0.1:5678->5678/tcp
+smm-system-pgadmin-1    dpage/pgadmin4             "/entrypoint.sh"         pgadmin    6 minutes ago    Up 6 minutes                      80/tcp, 443/tcp
+smm-system-postgres-1   postgres:16                "docker-entrypoint.s…"   postgres   6 minutes ago    Up 6 minutes                      5432/tcp
+smm-system-smm-1        smm-system-smm             "docker-entrypoint.s…"   smm        6 minutes ago    Restarting (127) 26 seconds ago
+smm-system-smmniap-1    nginx:alpine               "/docker-entrypoint.…"   smmniap    19 minutes ago   Up 19 minutes                     80/tcp
+smm-system-traefik-1    traefik:v3.3               "/entrypoint.sh --ap…"   traefik    6 minutes ago    Up 6 minutes                      0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp
+WARN[0000] The "PASSWORD_PGADMIN" variable is not set. Defaulting to a blank string.
+WARN[0000] The "PGADMIN_SUBDOMAIN" variable is not set. Defaulting to a blank string.
+WARN[0000] /opt/smm-system/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+traefik-1  | 2025-06-05T12:09:53Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [directus.roboflow.tech]: acme: error: 429 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rateLimited :: too many failed authorizations (5) for \"directus.roboflow.tech\" in the last 1h0m0s, retry after 2025-06-05 12:14:59 UTC: see https://letsencrypt.org/docs/rate-limits/#authorization-failures-per-hostname-per-account" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=["directus.roboflow.tech"] providerName=mytlschallenge.acme routerName=directus@docker rule=Host(`directus.roboflow.tech`)
+traefik-1  | 2025-06-05T12:09:53Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [smm.roboflow.tech]: acme: error: 429 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rateLimited :: too many failed authorizations (5) for \"smm.roboflow.tech\" in the last 1h0m0s, retry after 2025-06-05 12:15:58 UTC: see https://letsencrypt.org/docs/rate-limits/#authorization-failures-per-hostname-per-account" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=["smm.roboflow.tech"] providerName=mytlschallenge.acme routerName=smm@docker rule=Host(`smm.roboflow.tech`)
+traefik-1  | 2025-06-05T12:09:53Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [.roboflow.tech]: acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rejectedIdentifier :: Invalid identifiers requested :: Cannot issue for \".roboflow.tech\": Domain name can not have two dots in a row" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=[".roboflow.tech"] providerName=mytlschallenge.acme routerName=pgadmin@docker rule=Host(`.roboflow.tech`)
+traefik-1  | 2025-06-05T12:09:53Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [smmniap]: acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rejectedIdentifier :: Invalid identifiers requested :: Cannot issue for \"smmniap\": Domain name needs at least one dot" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=["smmniap."] providerName=mytlschallenge.acme routerName=smmniap@docker rule=Host(`smmniap.`)
+traefik-1  | 2025-06-05T12:09:54Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:09:54Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+traefik-1  | 2025-06-05T12:09:54Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:09:54Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+traefik-1  | 2025-06-05T12:09:55Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [smmniap]: acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rejectedIdentifier :: Invalid identifiers requested :: Cannot issue for \"smmniap\": Domain name needs at least one dot" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=["smmniap."] providerName=mytlschallenge.acme routerName=smmniap@docker rule=Host(`smmniap.`)
+traefik-1  | 2025-06-05T12:09:55Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [.roboflow.tech]: acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rejectedIdentifier :: Invalid identifiers requested :: Cannot issue for \".roboflow.tech\": Domain name can not have two dots in a row" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=[".roboflow.tech"] providerName=mytlschallenge.acme routerName=pgadmin@docker rule=Host(`.roboflow.tech`)
+traefik-1  | 2025-06-05T12:09:55Z ERR Unable to obtain ACME certificate for domains error="unable to generate a certificate for the domains [directus.roboflow.tech]: acme: error: 429 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-order :: urn:ietf:params:acme:error:rateLimited :: too many failed authorizations (5) for \"directus.roboflow.tech\" in the last 1h0m0s, retry after 2025-06-05 12:15:03 UTC: see https://letsencrypt.org/docs/rate-limits/#authorization-failures-per-hostname-per-account" ACME CA=https://acme-v02.api.letsencrypt.org/directory acmeCA=https://acme-v02.api.letsencrypt.org/directory domains=["directus.roboflow.tech"] providerName=mytlschallenge.acme routerName=directus@docker rule=Host(`directus.roboflow.tech`)
+traefik-1  | 2025-06-05T12:10:04Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:10:04Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"directus\" error: unable to find the IP address for the container \"/smm-system-directus-1\": the server is ignored" container=directus-smm-system-976e1395b62a0fec462b3e850cb13b23f7cd7b1bfacc2f5c50cbebb4e27f09bf providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/root-smm-1\": the server is ignored" container=smm-root-cae481329c315274a602b389ce2d485debba04595c507debd7e04ad617f045ee providerName=docker
+traefik-1  | 2025-06-05T12:10:05Z ERR error="service \"smm\" error: unable to find the IP address for the container \"/smm-system-smm-1\": the server is ignored" container=smm-smm-system-d75bb6bafb0d517bbf3ada6302ab6bbb8cbcf2cde16a554392d8e114d27a1ed7 providerName=docker
+      - traefik.http.routers.n8n.rule=Host(`n8n.roboflow.tech`)
+      - traefik.http.routers.pgadmin.rule=Host(`${PGADMIN_SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.directus.rule=Host(`directus.${DOMAIN_NAME}`)
+      - traefik.http.routers.smm.rule=Host(`smm.roboflow.tech`)
+root@jycuzxsrys:/opt/smm-system#
