@@ -10812,6 +10812,173 @@ ${datesText}
       });
     }
   });
+
+  // API управления пользователями
+  app.get('/api/admin/users', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userToken = (req as any).user?.token;
+      const userId = (req as any).user?.id;
+      
+      if (!userToken || !userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован'
+        });
+      }
+
+      // Проверяем администраторские права
+      const userResponse = await axios.get(`${DIRECTUS_URL}/users/me`, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+
+      const currentUser = userResponse.data.data;
+      if (!currentUser.is_smm_manager && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+        return res.status(403).json({
+          success: false,
+          error: 'Недостаточно прав доступа'
+        });
+      }
+
+      // Получаем список всех пользователей
+      const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${userToken}` },
+        params: {
+          fields: 'id,email,first_name,last_name,is_smm_manager,expire_date,last_access,status'
+        }
+      });
+
+      res.json({
+        success: true,
+        data: usersResponse.data.data
+      });
+    } catch (error: any) {
+      console.error('Ошибка получения пользователей:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения пользователей'
+      });
+    }
+  });
+
+  app.get('/api/admin/users/activity', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userToken = (req as any).user?.token;
+      const userId = (req as any).user?.id;
+      
+      if (!userToken || !userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован'
+        });
+      }
+
+      // Проверяем администраторские права
+      const userResponse = await axios.get(`${DIRECTUS_URL}/users/me`, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+
+      const currentUser = userResponse.data.data;
+      if (!currentUser.is_smm_manager && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+        return res.status(403).json({
+          success: false,
+          error: 'Недостаточно прав доступа'
+        });
+      }
+
+      // Получаем статистику пользователей
+      const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${userToken}` },
+        params: {
+          fields: 'id,is_smm_manager,expire_date,last_access,status',
+          limit: -1
+        }
+      });
+
+      const users = usersResponse.data.data;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const stats = {
+        total: users.length,
+        active_today: 0,
+        active_week: 0,
+        active_month: 0,
+        admins: users.filter((u: any) => u.is_smm_manager).length,
+        expired: 0,
+        suspended: users.filter((u: any) => u.status === 'suspended').length
+      };
+
+      users.forEach((user: any) => {
+        if (user.last_access) {
+          const lastAccess = new Date(user.last_access);
+          if (lastAccess >= today) stats.active_today++;
+          if (lastAccess >= weekAgo) stats.active_week++;
+          if (lastAccess >= monthAgo) stats.active_month++;
+        }
+
+        if (user.expire_date && new Date(user.expire_date) < now) {
+          stats.expired++;
+        }
+      });
+
+      res.json({
+        success: true,
+        data: { stats }
+      });
+    } catch (error: any) {
+      console.error('Ошибка получения статистики:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения статистики'
+      });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userToken = (req as any).user?.token;
+      const currentUserId = (req as any).user?.id;
+      const targetUserId = req.params.userId;
+      
+      if (!userToken || !currentUserId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован'
+        });
+      }
+
+      // Проверяем администраторские права
+      const userResponse = await axios.get(`${DIRECTUS_URL}/users/me`, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+
+      const currentUser = userResponse.data.data;
+      if (!currentUser.is_smm_manager && currentUserId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+        return res.status(403).json({
+          success: false,
+          error: 'Недостаточно прав доступа'
+        });
+      }
+
+      // Обновляем пользователя
+      const updateResponse = await axios.patch(`${DIRECTUS_URL}/users/${targetUserId}`, req.body, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+
+      res.json({
+        success: true,
+        data: updateResponse.data.data
+      });
+    } catch (error: any) {
+      console.error('Ошибка обновления пользователя:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка обновления пользователя'
+      });
+    }
+  });
   
   return httpServer;
 }
