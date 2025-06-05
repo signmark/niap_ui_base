@@ -68,6 +68,7 @@ const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsT
 const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
 const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
+const LayoutUserManagement = React.memo(() => <WithLayout Component={UserManagement} />);
 const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
 const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
 
@@ -103,6 +104,7 @@ function Router() {
       <Route path="/test/ai-image" component={LayoutAiImageTester} />
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
+      <Route path="/admin/users" component={LayoutUserManagement} />
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}
