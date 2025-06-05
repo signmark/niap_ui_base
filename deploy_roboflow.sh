@@ -44,15 +44,16 @@ fi
 PROJECT_DIR="/opt/smm-system"
 log "Создаем директорию проекта: $PROJECT_DIR"
 mkdir -p "$PROJECT_DIR"
-cd "$PROJECT_DIR"
 
-# Клонирование репозитория (если еще не клонирован)
-if [ ! -d ".git" ]; then
-    log "Клонируем репозиторий..."
-    # Замените на ваш реальный URL репозитория
-    read -p "Введите URL Git репозитория: " REPO_URL
-    git clone "$REPO_URL" .
-fi
+# Определение текущей директории как источника
+CURRENT_DIR=$(pwd)
+log "Копируем файлы из текущей директории: $CURRENT_DIR"
+
+# Копирование всех файлов проекта
+log "Копируем файлы проекта..."
+rsync -av --exclude='.git' --exclude='node_modules' --exclude='postgres' --exclude='directus_data' --exclude='n8n_data' --exclude='pgadmin_data' --exclude='traefik_data' "$CURRENT_DIR/" "$PROJECT_DIR/"
+
+cd "$PROJECT_DIR"
 
 # Создание файла переменных окружения
 log "Создаем файл переменных окружения..."
