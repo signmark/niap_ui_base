@@ -24,14 +24,14 @@ router.get('/admin/users', async (req: any, res: Response) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем токен текущего авторизованного администратора из заголовков
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации в заголовках');
-      return res.status(401).json({ error: 'Требуется авторизация' });
+    // Используем статический административный токен для доступа к системным функциям
+    const adminToken = process.env.DIRECTUS_TOKEN;
+    if (!adminToken) {
+      console.log('[admin-users] Отсутствует административный токен DIRECTUS_TOKEN');
+      return res.status(500).json({ error: 'Ошибка конфигурации сервера' });
     }
     
-    const adminToken = authHeader.substring(7); // Убираем "Bearer " из начала
+    console.log('[admin-users] Используем административный токен для получения пользователей');
 
     // Получаем список всех пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
@@ -140,14 +140,14 @@ router.get('/admin/users/activity', async (req, res) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем токен текущего авторизованного администратора из заголовков
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации в заголовках для статистики');
-      return res.status(401).json({ error: 'Требуется авторизация' });
+    // Используем статический административный токен для доступа к статистике
+    const adminToken = process.env.DIRECTUS_TOKEN;
+    if (!adminToken) {
+      console.log('[admin-users] Отсутствует административный токен DIRECTUS_TOKEN для статистики');
+      return res.status(500).json({ error: 'Ошибка конфигурации сервера' });
     }
     
-    const adminToken = authHeader.substring(7); // Убираем "Bearer " из начала
+    console.log('[admin-users] Используем административный токен для получения статистики');
 
     // Получаем статистику пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
