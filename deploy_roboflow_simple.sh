@@ -143,26 +143,11 @@ CMD ["npm", "run", "dev"]
 DOCKERFILE_EOF
 fi
 
-# Создание Dockerfile-n8n если отсутствует
+# Проверка существования Dockerfile-n8n
 if [ ! -f "Dockerfile-n8n" ]; then
-    log "Создаем Dockerfile-n8n..."
-    cat > Dockerfile-n8n << 'N8N_DOCKERFILE_EOF'
-FROM n8nio/n8n:latest
-
-USER root
-
-# Устанавливаем дополнительные пакеты если нужно
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    build-base
-
-USER node
-
-WORKDIR /home/node
-
-EXPOSE 5678
-N8N_DOCKERFILE_EOF
+    log "ВНИМАНИЕ: Dockerfile-n8n не найден, используем базовый образ n8n"
+else
+    log "Найден существующий Dockerfile-n8n, используем его"
 fi
 
 # Обновление существующего docker-compose.yml для roboflow.tech
