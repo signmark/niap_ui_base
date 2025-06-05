@@ -10831,8 +10831,9 @@ ${datesText}
         });
       }
 
-      // Проверяем администраторские права через внутреннюю функцию
-      const isAdmin = await isUserAdmin(userId);
+      // Проверяем администраторские права через функцию из routes-global-api-keys
+      const { isUserAdmin } = await import('./routes-global-api-keys');
+      const isAdmin = await isUserAdmin(req);
       if (!isAdmin) {
         return res.status(403).json({
           success: false,

@@ -20,10 +20,23 @@ import axios from 'axios';
  */
 export async function isUserAdmin(req: Request, directusToken?: string): Promise<boolean> {
   try {
-    // Если токен не передан, пытаемся извлечь из заголовка запроса
-    const token = directusToken || (req.headers.authorization?.startsWith('Bearer ') 
-      ? req.headers.authorization.substring(7) 
-      : null);
+    // Если токен не передан, пытаемся извлечь из заголовка или cookie
+    let token = directusToken;
+    
+    if (!token) {
+      // Проверяем заголовок Authorization
+      if (req.headers.authorization?.startsWith('Bearer ')) {
+        token = req.headers.authorization.substring(7);
+      }
+      // Проверяем cookie (при наличии cookie-parser)
+      else if ((req as any).cookies?.directus_session_token) {
+        token = (req as any).cookies.directus_session_token;
+      }
+      // Проверяем req.user.token (установленный middleware)
+      else if ((req as any).user?.token) {
+        token = (req as any).user.token;
+      }
+    }
 
     if (!token) {
       log('Нет токена для проверки прав администратора', 'admin');
