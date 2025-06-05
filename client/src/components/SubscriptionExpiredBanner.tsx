@@ -14,6 +14,8 @@ export function SubscriptionExpiredBanner() {
   const token = useAuthStore((state) => state.token);
   const userId = useAuthStore((state) => state.userId);
 
+  console.log('SubscriptionExpiredBanner: компонент загружен', { token: !!token, userId });
+
   useEffect(() => {
     const checkSubscription = async () => {
       if (!token || !userId) return;
