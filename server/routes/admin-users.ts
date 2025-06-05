@@ -38,7 +38,7 @@ router.get('/admin/users', async (req: any, res: Response) => {
     // Получаем список всех пользователей через DirectusCrud с токеном текущего пользователя
     console.log('[admin-users] Получаем список пользователей через DirectusCrud');
     
-    const users = await directusCrud.readMany('users', {
+    const users = await directusCrud.list('users', {
       fields: ['id', 'email', 'first_name', 'last_name', 'is_smm_admin', 'expire_date', 'last_access', 'status'],
       sort: ['-last_access'],
       limit: 100
