@@ -10906,7 +10906,7 @@ ${datesText}
       }
 
       // Получаем базовую статистику пользователей (используем минимальный набор полей)
-      const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
+      const usersResponse = await axios.get(`${DIRECTUS_URL}/items/directus_users`, {
         headers: { 'Authorization': `Bearer ${adminToken}` },
         params: {
           fields: 'id,last_access,status',
