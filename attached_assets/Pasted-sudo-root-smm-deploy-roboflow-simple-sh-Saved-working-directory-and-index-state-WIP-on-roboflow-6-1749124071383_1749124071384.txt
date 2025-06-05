@@ -1,0 +1,42 @@
+sudo /root/smm/deploy_roboflow_simple.sh
+Saved working directory and index state WIP on roboflow: 635c03d6 Add automated script to deploy the platform on the Roboflow infrastructure
+From github.com:signmark/niap_ui_base
+ * branch              roboflow   -> FETCH_HEAD
+Updating 635c03d6..d154caab
+Fast-forward
+ Dockerfile                                                                                                                   |  31 +++++---------
+ Dockerfile-n8n                                                                                                               |  15 +++++++
+ attached_assets/Dockerfile-n8n_1749123931497                                                                                 |  24 +++++++++++
+ attached_assets/Pasted-root-jycuzxsrys-smm-git-pull-origin-roboflow--1749123773735_1749123773736.txt                         |  42 +++++++++++++++++++
+ attached_assets/Pasted-version-3-services-traefik-image-traefik-v3-3-restart-always-command--1749123881235_1749123881237.txt | 169 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/image_1749123918985.png                                                                                      | Bin 0 -> 39242 bytes
+ deploy_roboflow_simple.sh                                                                                                    |  57 +++++++++++++++++++++++---
+ docker-compose.roboflow.yml                                                                                                  |   4 +-
+ 8 files changed, 314 insertions(+), 28 deletions(-)
+ create mode 100644 Dockerfile-n8n
+ create mode 100644 attached_assets/Dockerfile-n8n_1749123931497
+ create mode 100644 attached_assets/Pasted-root-jycuzxsrys-smm-git-pull-origin-roboflow--1749123773735_1749123773736.txt
+ create mode 100644 attached_assets/Pasted-version-3-services-traefik-image-traefik-v3-3-restart-always-command--1749123881235_1749123881237.txt
+ create mode 100644 attached_assets/image_1749123918985.png
+sudo: /root/smm/deploy_roboflow_simple.sh: command not found
+root@jycuzxsrys:~# sudo ./smm/deploy_roboflow_simple.sh
+sudo: ./smm/deploy_roboflow_simple.sh: command not found
+root@jycuzxsrys:~# cd smm/
+root@jycuzxsrys:~/smm# ls
+attached_assets              drizzle.config.ts           postcss.config.js                  test-campaign-data.js                     test-gemini-proxy-success.cjs      test-vertex-ai-simple.js
+AUTHORIZATION_GUIDE.md       enable-vertex-ai.js         project_docs                       test-claude-campaign-final.js             test-gemini-service.cjs            theme.json
+aws-package.json             fix-analytics.ts            quick-test-remaining-services.js   test-claude-campaign-integration.js       test-gemini-simple.cjs             tsconfig.json
+backup                       fix-claude-api-key.js       README.md                          test-content-generation-with-campaign.js  test-gemini-socks.cjs              update-claude-key.js
+client                       fixed-analytics-service.ts  replit_agent                       test-content-response.json                test-gemini-vertex-fixed.js        update-qwen-direct.js
+config                       fix-env-update.js           replit.nix                         test-direct-vertex-ai.js                  test-http-proxy.cjs                update-qwen-key-direct.js
+custom_modules               fix-qwen-api-key.js         restore-app.mjs                    test-gemini-25-correct-names.js           test-new-qwen-key.js               update-qwen-working-key.js
+debug-env.js                 fix-qwen-production-key.js  scripts                            test-gemini-25-direct.js                  test-real-campaign-generation.js   uploads
+demo-campaign-function.js    fix-site-analysis.js        server                             test-gemini-2-flash.js                    test_scripts                       vite.config.ts
+deploy                       generated-icon.png          shared                             test-gemini-api.js                        test-socks-proxy.cjs               План_работ_SMM_Manager.md
+deploy_roboflow.sh           implementation_docs         smmniap_static                     test-gemini-campaign-data.js              test-socks-proxy-server.js         ТЗ_доработки_SMM_Manager.md
+deploy_roboflow_simple.sh    install-xray.sh             tailwind.config.ts                 test-gemini-campaign-fix.js               test-socks-proxy-server.mjs        ТЗ_Новая_Аналитика_SMM_Manager.md
+docker-compose.roboflow.yml  layout_update.js            test-available-models.js           test-gemini-clean-service.js              test-socks-proxy-server-v2.mjs     ТЗ_Система_Аналитики.md
+Dockerfile                   log.txt                     test-campaign-context-demo.js      test-gemini-connection.js                 test-text-enhancement-complete.js  ТЗ_Фикс_Бага_Публикации.md
+Dockerfile-n8n               package.json                test-campaign-data-direct.js       test-gemini-proxy.cjs                     test-vertex-ai-direct.js
+docs                         package-lock.json           test-campaign-data-integration.js  test-gemini-proxy.js                      test-vertex-ai-gemini-2.5.js
+root@jycuzxsrys:~/smm#
