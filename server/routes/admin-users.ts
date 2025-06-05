@@ -24,15 +24,15 @@ router.get('/admin/users', async (req: any, res: Response) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Для получения списка пользователей используем административный токен из переменных окружения
-    // так как обычные пользователи не имеют прав на чтение всех пользователей в Directus
-    const adminToken = process.env.DIRECTUS_TOKEN;
-    if (!adminToken) {
-      console.log('[admin-users] Отсутствует административный токен DIRECTUS_TOKEN');
-      return res.status(500).json({ error: 'Ошибка конфигурации сервера' });
+    // Используем токен текущего авторизованного администратора
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации');
+      return res.status(401).json({ error: 'Требуется авторизация' });
     }
     
-    console.log('[admin-users] Используем системный административный токен для получения пользователей');
+    const adminToken = authHeader.substring(7);
+    console.log('[admin-users] Используем токен текущего администратора для получения пользователей');
     console.log('[admin-users] Токен начинается с:', adminToken.substring(0, 10) + '...');
 
     // Получаем список всех пользователей напрямую через Directus API
@@ -154,14 +154,15 @@ router.get('/admin/users/activity', async (req, res) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Для получения статистики используем административный токен из переменных окружения
-    const adminToken = process.env.DIRECTUS_TOKEN;
-    if (!adminToken) {
-      console.log('[admin-users] Отсутствует административный токен DIRECTUS_TOKEN для статистики');
-      return res.status(500).json({ error: 'Ошибка конфигурации сервера' });
+    // Используем токен текущего авторизованного администратора
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации для статистики');
+      return res.status(401).json({ error: 'Требуется авторизация' });
     }
     
-    console.log('[admin-users] Используем системный административный токен для получения статистики');
+    const adminToken = authHeader.substring(7);
+    console.log('[admin-users] Используем токен текущего администратора для получения статистики');
 
     // Получаем статистику пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
