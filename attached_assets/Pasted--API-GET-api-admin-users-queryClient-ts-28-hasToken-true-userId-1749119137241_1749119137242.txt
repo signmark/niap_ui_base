@@ -1,0 +1,51 @@
+📤 API Запрос: GET /api/admin/users
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: 'df0a82dc-5922-4917-beef-3d2013112cc4', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: 'df0a82dc-5922-4917-beef-3d2013112cc4'}
+queryClient.ts:27 📤 API Запрос: GET /api/admin/users/activity
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: 'df0a82dc-5922-4917-beef-3d2013112cc4', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: 'df0a82dc-5922-4917-beef-3d2013112cc4'}
+queryClient.ts:48 
+            
+            
+           GET https://smm.nplanner.ru/api/admin/users 500 (Internal Server Error)
+apiRequest @ queryClient.ts:48
+loadUsers @ UserManagement.tsx:43
+onClick @ UserManagement.tsx:165
+callCallback2 @ chunk-RPCDYKBN.js?v=1988145e:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=1988145e:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=1988145e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=1988145e:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=1988145e:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=1988145e:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=1988145e:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=1988145e:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=1988145e:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=1988145e:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=1988145e:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=1988145e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=1988145e:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=1988145e:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=1988145e:5449
+UserManagement.tsx:48 Ошибка загрузки пользователей: Error: 500: {"success":false,"error":"Ошибка получения пользователей"}
+    at throwIfResNotOk (queryClient.ts:7:11)
+    at async apiRequest (queryClient.ts:55:3)
+    at async loadUsers (UserManagement.tsx:43:20)
+overrideMethod @ hook.js:608
+loadUsers @ UserManagement.tsx:48
+await in loadUsers
+onClick @ UserManagement.tsx:165
+callCallback2 @ chunk-RPCDYKBN.js?v=1988145e:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=1988145e:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=1988145e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=1988145e:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=1988145e:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=1988145e:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=1988145e:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=1988145e:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=1988145e:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=1988145e:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=1988145e:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=1988145e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=1988145e:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=1988145e:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=1988145e:5449

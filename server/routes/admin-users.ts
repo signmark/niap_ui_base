@@ -84,9 +84,17 @@ router.get('/admin/users', async (req: any, res: Response) => {
 
   } catch (error: any) {
     console.error('[admin-users] Ошибка при получении списка пользователей:', error);
+    console.error('[admin-users] Детали ошибки:', {
+      message: error?.message,
+      stack: error?.stack,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      responseData: error?.response?.data
+    });
     res.status(500).json({ 
-      error: 'Ошибка сервера при получении списка пользователей',
-      details: error.message 
+      success: false,
+      error: 'Ошибка получения пользователей',
+      details: error?.message || 'Unknown error'
     });
   }
 });

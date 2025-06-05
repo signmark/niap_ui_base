@@ -1,0 +1,60 @@
+CampaignSelector.tsx:108 Auto-selected campaign: "Нерудстрой"
+campaignStore.ts:88 Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+queryClient.ts:27 📤 API Запрос: GET /api/admin/users
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+queryClient.ts:27 📤 API Запрос: GET /api/admin/users/activity
+queryClient.ts:28 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:42 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1749119191402}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+queryClient.ts:48 
+            
+            
+           GET https://smm.nplanner.ru/api/admin/users 500 (Internal Server Error)
+apiRequest @ queryClient.ts:48
+loadUsers @ UserManagement.tsx:43
+loadData @ UserManagement.tsx:146
+(anonymous) @ UserManagement.tsx:150
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=1988145e:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=1988145e:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=1988145e:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=1988145e:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=1988145e:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=1988145e:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=1988145e:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=1988145e:19416
+commitRoot @ chunk-RPCDYKBN.js?v=1988145e:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=1988145e:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=1988145e:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=1988145e:18627
+UserManagement.tsx:48 Ошибка загрузки пользователей: Error: 500: {"success":false,"error":"Ошибка получения пользователей"}
+    at throwIfResNotOk (queryClient.ts:7:11)
+    at async apiRequest (queryClient.ts:55:3)
+    at async loadUsers (UserManagement.tsx:43:20)
+    at async Promise.all (index 0)
+    at async loadData (UserManagement.tsx:146:7)
+overrideMethod @ hook.js:608
+loadUsers @ UserManagement.tsx:48
+await in loadUsers
+loadData @ UserManagement.tsx:146
+(anonymous) @ UserManagement.tsx:150
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=1988145e:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=1988145e:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=1988145e:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=1988145e:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=1988145e:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=1988145e:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=1988145e:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=1988145e:19416
+commitRoot @ chunk-RPCDYKBN.js?v=1988145e:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=1988145e:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=1988145e:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=1988145e:18627
