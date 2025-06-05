@@ -287,6 +287,31 @@ export class DirectusCrud {
   }
 
   /**
+   * Получает данные пользователя по токену авторизации
+   * @param token Токен авторизации
+   * @returns Данные пользователя или null
+   */
+  async getUserByToken(token: string): Promise<any | null> {
+    try {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const response = await axios.get(`${directusUrl}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.data || !response.data.data) {
+        return null;
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      log(`Ошибка при получении пользователя по токену: ${error.message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
    * Авторизует пользователя в Directus и возвращает информацию о токене
    * @param email Email пользователя
    * @param password Пароль пользователя
