@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
@@ -34,6 +35,7 @@ global['directusApiManager'] = directusApiManager;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 // 🔥 УНИВЕРСАЛЬНОЕ ОТСЛЕЖИВАНИЕ ВСЕХ POST ЗАПРОСОВ 🔥
 app.use((req, res, next) => {

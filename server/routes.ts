@@ -965,16 +965,21 @@ function mergeSources(sources: any[]): any[] {
 // Middleware для проверки авторизации
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Пытаемся получить токен из заголовка Authorization или из cookie
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No authorization header provided');
-      return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
+    const cookieToken = req.cookies?.directus_session_token;
+    
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (cookieToken) {
+      token = cookieToken;
     }
-
-    const token = authHeader.split(' ')[1];
+    
     if (!token) {
-      console.log('Empty token provided');
-      return res.status(401).json({ error: 'Не авторизован: Пустой токен' });
+      console.log('No token provided in header or cookie');
+      return res.status(401).json({ error: 'Не авторизован: Отсутствует токен авторизации' });
     }
 
     try {
