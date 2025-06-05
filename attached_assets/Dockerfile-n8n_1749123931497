@@ -1,0 +1,24 @@
+FROM docker.n8n.io/n8nio/n8n:latest
+
+# Переключаемся на root пользователя для установки системных пакетов
+USER root
+
+# Обновляем пакеты и устанавливаем необходимые зависимости, включая ffmpeg, chromium и youtube-dl
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache python3 py3-pip ffmpeg chromium youtube-dl
+
+# Создаём директорию для модулей n8n
+WORKDIR /usr/local/lib/node_modules/n8n
+
+# Устанавливаем модули глобально для всего приложения
+RUN npm install -g cheerio
+
+# Создаём символические ссылки для модулей
+RUN ln -s /usr/local/lib/node_modules/n8n/node_modules/cheerio /usr/local/lib/node_modules/cheerio
+
+# Возвращаем рабочий каталог
+WORKDIR /usr/local/lib/node_modules/n8n
+
+# Переключаемся обратно на пользователя node
+USER node

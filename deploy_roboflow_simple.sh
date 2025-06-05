@@ -165,15 +165,21 @@ EXPOSE 5678
 N8N_DOCKERFILE_EOF
 fi
 
-# Копирование docker-compose конфигурации
-if [ -f "../docker-compose.roboflow.yml" ]; then
-    cp ../docker-compose.roboflow.yml docker-compose.yml
-    log "Используем конфигурацию docker-compose.roboflow.yml из родительской директории"
-elif [ -f "docker-compose.roboflow.yml" ]; then
-    cp docker-compose.roboflow.yml docker-compose.yml
-    log "Используем конфигурацию docker-compose.roboflow.yml из текущей директории"
+# Обновление существующего docker-compose.yml для roboflow.tech
+if [ -f "docker-compose.yml" ]; then
+    log "Обновляем существующий docker-compose.yml для доменов roboflow.tech..."
+    # Создаем резервную копию
+    cp docker-compose.yml docker-compose.yml.backup
+    
+    # Обновляем домены в docker-compose.yml
+    sed -i "s/smm\.nplanner\.ru/smm.${DOMAIN_NAME}/g" docker-compose.yml
+    sed -i "s/smmniap\.pw/smmniap.${DOMAIN_NAME}/g" docker-compose.yml
+    sed -i "s/\${SUBDOMAIN}\.\${DOMAIN_NAME}/n8n.${DOMAIN_NAME}/g" docker-compose.yml
+    sed -i "s/\${PGADMIN_SUBDOMAIN}\.\${DOMAIN_NAME}/pgadmin.${DOMAIN_NAME}/g" docker-compose.yml
+    
+    log "Docker-compose.yml обновлен для доменов roboflow.tech"
 else
-    error "Файл docker-compose.roboflow.yml не найден ни в текущей, ни в родительской директории"
+    error "Файл docker-compose.yml не найден в текущей директории"
 fi
 
 # Сохранение паролей
