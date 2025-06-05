@@ -14,42 +14,28 @@ export function SubscriptionExpiredBanner() {
   const token = useAuthStore((state) => state.token);
   const userId = useAuthStore((state) => state.userId);
 
-  console.log('SubscriptionExpiredBanner: компонент загружен', { token: !!token, userId });
-
   useEffect(() => {
-    console.log('SubscriptionExpiredBanner: useEffect запущен', { token: !!token, userId });
-    
     const checkSubscription = async () => {
       if (!token || !userId) {
-        console.log('SubscriptionExpiredBanner: нет токена или userId');
         return;
       }
 
       try {
-        console.log('SubscriptionExpiredBanner: проверяем подписку для userId:', userId);
         const response = await fetch('/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
-        console.log('SubscriptionExpiredBanner: статус ответа:', response.status);
-
         if (!response.ok) {
-          console.log('SubscriptionExpiredBanner: ошибка ответа:', response.status, response.statusText);
           return;
         }
 
         const data = await response.json();
         const user = data.user;
-        console.log('SubscriptionExpiredBanner: данные пользователя:', { 
-          email: user?.email, 
-          expire_date: user?.expire_date 
-        });
 
         if (!user?.expire_date) {
           // Нет даты окончания = безлимитная подписка
-          console.log('SubscriptionExpiredBanner: нет expire_date, безлимитная подписка');
           setSubscriptionStatus(null);
           return;
         }
@@ -59,19 +45,13 @@ export function SubscriptionExpiredBanner() {
         const timeDiff = expireDate.getTime() - now.getTime();
         const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-        console.log('SubscriptionExpiredBanner: расчет подписки:', {
-          expireDate: expireDate.toISOString(),
-          daysLeft,
-          isExpired: daysLeft <= 0
-        });
-
         setSubscriptionStatus({
           isExpired: daysLeft <= 0,
           daysLeft: Math.max(0, daysLeft),
           expireDate: expireDate.toLocaleDateString('ru-RU')
         });
       } catch (error) {
-        console.error('SubscriptionExpiredBanner: ошибка при проверке статуса подписки:', error);
+        console.error('Ошибка при проверке статуса подписки:', error);
       }
     };
 
