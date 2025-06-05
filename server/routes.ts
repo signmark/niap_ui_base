@@ -130,6 +130,7 @@ async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
   }
 }
 
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
 const searchCache = new Map<string, { timestamp: number, results: any[] }>();
 const urlKeywordsCache = new Map<string, { timestamp: number, results: any[] }>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
