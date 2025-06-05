@@ -10905,39 +10905,43 @@ ${datesText}
         });
       }
 
-      // Получаем базовую статистику пользователей (используем минимальный набор полей)
-      const usersResponse = await axios.get(`${DIRECTUS_URL}/items/directus_users`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` },
+      // Получаем пользователей напрямую через тот же метод, что используется в /api/admin/users
+      const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${userToken}` },
         params: {
-          fields: 'id,last_access,status',
+          fields: 'id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status',
           limit: -1
         }
       });
 
-      const users = usersResponse.data.data;
+      const users = usersResponse.data.data || [];
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const stats = {
-        total: users.length,
-        active_today: 0,
-        active_week: 0,
-        active_month: 0,
-        admins: 2, // Фиксированное значение из предыдущих успешных запросов
-        expired: 0,
-        suspended: users.filter((u: any) => u.status === 'suspended').length
-      };
+      let activeToday = 0;
+      let activeWeek = 0; 
+      let activeMonth = 0;
 
       users.forEach((user: any) => {
         if (user.last_access) {
           const lastAccess = new Date(user.last_access);
-          if (lastAccess >= today) stats.active_today++;
-          if (lastAccess >= weekAgo) stats.active_week++;
-          if (lastAccess >= monthAgo) stats.active_month++;
+          if (lastAccess >= today) activeToday++;
+          if (lastAccess >= weekAgo) activeWeek++;
+          if (lastAccess >= monthAgo) activeMonth++;
         }
       });
+
+      const stats = {
+        total: users.length,
+        active_today: activeToday,
+        active_week: activeWeek,
+        active_month: activeMonth,
+        admins: users.filter((u: any) => u.is_smm_admin === true).length,
+        expired: users.filter((u: any) => u.expire_date && new Date(u.expire_date) < now).length,
+        suspended: users.filter((u: any) => u.status === 'suspended').length
+      };
 
       res.json({
         success: true,
