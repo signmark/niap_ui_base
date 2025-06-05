@@ -35,47 +35,16 @@ router.get('/admin/users', async (req: any, res: Response) => {
       });
     }
 
-    // Используем токен текущего авторизованного администратора
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации');
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
+    // Получаем список всех пользователей через DirectusCrud с токеном текущего пользователя
+    console.log('[admin-users] Получаем список пользователей через DirectusCrud');
     
-    const adminToken = authHeader.substring(7);
-    console.log('[admin-users] Используем токен текущего администратора для получения пользователей');
-    console.log('[admin-users] Токен начинается с:', adminToken.substring(0, 10) + '...');
-
-    // Получаем список всех пользователей напрямую через Directus API
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
-    const requestUrl = `${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`;
-    console.log('[admin-users] Запрос к URL:', requestUrl);
-    
-    const usersResponse = await fetch(requestUrl, {
-      headers: {
-        'Authorization': `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      }
+    const users = await directusCrud.readMany('users', {
+      fields: ['id', 'email', 'first_name', 'last_name', 'is_smm_admin', 'expire_date', 'last_access', 'status'],
+      sort: ['-last_access'],
+      limit: 100
     });
 
-    console.log('[admin-users] Статус ответа:', usersResponse.status);
-    console.log('[admin-users] Статус текст:', usersResponse.statusText);
-
-    if (!usersResponse.ok) {
-      const errorText = await usersResponse.text();
-      console.log('[admin-users] Текст ошибки:', errorText);
-      console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
-      return res.status(500).json({ 
-        error: 'Ошибка получения списка пользователей',
-        status: usersResponse.status,
-        details: errorText
-      });
-    }
-
-    const usersData = await usersResponse.json();
-    const users = usersData.data || [];
-
-    console.log(`[admin-users] Получено ${users.length} пользователей`);
+    console.log(`[admin-users] Получено ${users?.length || 0} пользователей`);
 
     res.json({
       success: true,
