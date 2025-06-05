@@ -10817,34 +10817,38 @@ ${datesText}
   // API управления пользователями
   app.get('/api/admin/users', authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userToken = (req as any).user?.token;
       const userId = (req as any).user?.id;
       
-      if (!userToken || !userId) {
+      if (!userId) {
         return res.status(401).json({
           success: false,
           error: 'Не авторизован'
         });
       }
 
-      // Проверяем администраторские права
-      const userResponse = await axios.get(`${DIRECTUS_URL}/users/me`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
-      });
-
-      const currentUser = userResponse.data.data;
-      if (!currentUser.is_smm_manager && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+      // Проверяем администраторские права через внутреннюю функцию
+      const isAdmin = await isUserAdmin(userId);
+      if (!isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Недостаточно прав доступа'
         });
       }
 
+      // Используем административный токен для получения пользователей
+      const adminToken = await getDirectusAdminToken();
+      if (!adminToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка получения административного токена'
+        });
+      }
+
       // Получаем список всех пользователей
       const usersResponse = await axios.get(`${DIRECTUS_URL}/users`, {
-        headers: { 'Authorization': `Bearer ${userToken}` },
+        headers: { 'Authorization': `Bearer ${adminToken}` },
         params: {
-          fields: 'id,email,first_name,last_name,is_smm_manager,expire_date,last_access,status'
+          fields: 'id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status'
         }
       });
 
@@ -10879,7 +10883,7 @@ ${datesText}
       });
 
       const currentUser = userResponse.data.data;
-      if (!currentUser.is_smm_manager && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
+      if (!currentUser.is_smm_admin && userId !== '53921f16-f51d-4591-80b9-8caa4fde4d13') {
         return res.status(403).json({
           success: false,
           error: 'Недостаточно прав доступа'
