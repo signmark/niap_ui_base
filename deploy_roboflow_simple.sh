@@ -112,6 +112,59 @@ cat > smm/smmniap_static/index.html << EOF
 </html>
 EOF
 
+# Создание недостающего Dockerfile
+if [ ! -f "Dockerfile" ]; then
+    log "Создаем недостающий Dockerfile..."
+    cat > Dockerfile << 'DOCKERFILE_EOF'
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+
+# Устанавливаем зависимости
+RUN npm ci --only=production
+
+# Копируем исходный код
+COPY . .
+
+# Создаем директории для uploads и logs
+RUN mkdir -p uploads logs
+
+# Устанавливаем права
+RUN chown -R node:node /app
+
+USER node
+
+EXPOSE 5000
+
+CMD ["npm", "run", "dev"]
+DOCKERFILE_EOF
+fi
+
+# Создание Dockerfile-n8n если отсутствует
+if [ ! -f "Dockerfile-n8n" ]; then
+    log "Создаем Dockerfile-n8n..."
+    cat > Dockerfile-n8n << 'N8N_DOCKERFILE_EOF'
+FROM n8nio/n8n:latest
+
+USER root
+
+# Устанавливаем дополнительные пакеты если нужно
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    build-base
+
+USER node
+
+WORKDIR /home/node
+
+EXPOSE 5678
+N8N_DOCKERFILE_EOF
+fi
+
 # Копирование docker-compose конфигурации
 if [ -f "../docker-compose.roboflow.yml" ]; then
     cp ../docker-compose.roboflow.yml docker-compose.yml

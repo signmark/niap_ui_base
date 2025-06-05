@@ -1,0 +1,42 @@
+root@jycuzxsrys:~/smm# # Обновить репозиторий
+git pull origin roboflow
+
+# Сделать скрипт исполняемым
+chmod +x deploy_roboflow_simple.sh
+
+# Запустить развертывание
+sudo ./deploy_roboflow_simple.sh
+remote: Enumerating objects: 10, done.
+remote: Counting objects: 100% (10/10), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 6 (delta 3), reused 6 (delta 3), pack-reused 0 (from 0)
+Unpacking objects: 100% (6/6), 1.34 KiB | 344.00 KiB/s, done.
+From github.com:signmark/niap_ui_base
+ * branch              roboflow   -> FETCH_HEAD
+   635c03d6..302accb0  roboflow   -> origin/roboflow
+Updating 635c03d6..302accb0
+error: Your local changes to the following files would be overwritten by merge:
+        deploy_roboflow_simple.sh
+Please commit your changes or stash them before you merge.
+Aborting
+🚀 Развертывание SMM системы на roboflow.tech
+[11:42:41] Создаем директорию: /opt/smm-system
+[11:42:41] Копируем файлы из: /root/smm
+sending incremental file list
+./
+
+sent 88,246 bytes  received 150 bytes  176,792.00 bytes/sec
+total size is 152,423,178  speedup is 1,724.32
+[11:42:41] Создаем конфигурацию...
+[11:42:41] Создаем директории...
+[11:42:41] Используем конфигурацию docker-compose.roboflow.yml
+[11:42:41] Запускаем систему...
+WARN[0000] The "PGADMIN_SUBDOMAIN" variable is not set. Defaulting to a blank string.
+WARN[0000] /opt/smm-system/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Building 0.1s (2/2) FINISHED                                                                                                                                                                  docker:default
+ => [smm internal] load build definition from Dockerfile                                                                                                                                                    0.0s
+ => => transferring dockerfile: 2B                                                                                                                                                                          0.0s
+ => [n8n internal] load build definition from Dockerfile-n8n                                                                                                                                                0.0s
+ => => transferring dockerfile: 2B                                                                                                                                                                          0.0s
+failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory
+root@jycuzxsrys:~/smm#
