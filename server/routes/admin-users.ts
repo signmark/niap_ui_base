@@ -24,16 +24,29 @@ router.get('/admin/users', async (req: any, res: Response) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем список всех пользователей с ролью SMM Manager User
-    const users = await directusCrud.list('users', {
-      filter: {
-        role: {
-          name: { _eq: 'SMM Manager User' }
-        }
-      },
-      sort: ['-last_access'],
-      limit: 100
+    // Используем административный статический токен из переменных окружения
+    const adminToken = process.env.DIRECTUS_TOKEN;
+    if (!adminToken) {
+      console.log('[admin-users] Отсутствует административный токен в переменных окружения');
+      return res.status(500).json({ error: 'Ошибка получения административного доступа' });
+    }
+
+    // Получаем список всех пользователей напрямую через Directus API
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const usersResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
     });
+
+    if (!usersResponse.ok) {
+      console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
+      return res.status(500).json({ error: 'Ошибка получения списка пользователей' });
+    }
+
+    const usersData = await usersResponse.json();
+    const users = usersData.data || [];
 
     console.log(`[admin-users] Получено ${users.length} пользователей`);
 
@@ -125,12 +138,29 @@ router.get('/admin/users/activity', async (req, res) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем статистику пользователей
-    const users = await directusCrud.readMany('users', {
-      fields: ['id', 'email', 'first_name', 'last_name', 'last_access', 'status', 'is_smm_admin', 'expire_date'],
-      filter: {},
-      sort: ['-last_access']
+    // Получаем административный токен для доступа к статистике пользователей
+    const adminToken = await directusCrud.getAdminToken();
+    if (!adminToken) {
+      console.log('[admin-users] Не удалось получить административный токен для статистики');
+      return res.status(500).json({ error: 'Ошибка получения административного доступа' });
+    }
+
+    // Получаем статистику пользователей напрямую через Directus API
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const statsResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,last_access,status,is_smm_admin,expire_date&sort=-last_access`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
     });
+
+    if (!statsResponse.ok) {
+      console.log(`[admin-users] Ошибка получения статистики: ${statsResponse.status}`);
+      return res.status(500).json({ error: 'Ошибка получения статистики пользователей' });
+    }
+
+    const statsData = await statsResponse.json();
+    const users = statsData.data || [];
 
     // Подсчитываем статистику
     const now = new Date();

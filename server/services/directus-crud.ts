@@ -287,6 +287,66 @@ export class DirectusCrud {
   }
 
   /**
+   * Получает административный токен для доступа к системным функциям Directus
+   * @returns Административный токен или null
+   */
+  async getAdminToken(): Promise<string | null> {
+    try {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+      const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+
+      if (!adminEmail || !adminPassword) {
+        log('Отсутствуют учетные данные администратора в переменных окружения', this.logPrefix);
+        return null;
+      }
+
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email: adminEmail,
+        password: adminPassword
+      });
+
+      if (response.data?.data?.access_token) {
+        log('Получен административный токен для Directus', this.logPrefix);
+        return response.data.data.access_token;
+      }
+
+      log('Неверный формат ответа при получении административного токена', this.logPrefix);
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении административного токена: ${error.message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
+   * Авторизуется в Directus как администратор
+   * @param email Email администратора
+   * @param password Пароль администратора
+   * @returns Результат авторизации
+   */
+  async login(email: string, password: string): Promise<DirectusAuthResult> {
+    return this.executeOperation<DirectusAuthResult>('custom', 'auth/login', async () => {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      
+      const response = await axios.post(`${directusUrl}/auth/login`, {
+        email,
+        password
+      });
+
+      if (!response.data?.data?.access_token) {
+        throw new Error('Неверный формат ответа при авторизации');
+      }
+
+      return {
+        access_token: response.data.data.access_token,
+        refresh_token: response.data.data.refresh_token,
+        expires: response.data.data.expires
+      };
+    });
+  }
+
+  /**
    * Получает данные пользователя по токену авторизации
    * @param token Токен авторизации
    * @returns Данные пользователя или null
