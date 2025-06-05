@@ -4,7 +4,7 @@ import { DirectusCrud } from '../services/directus-crud.js';
 const router = Router();
 
 // Получить список всех пользователей (только для админов)
-router.get('/admin/users', async (req, res) => {
+router.get('/admin/users', async (req: any, res: Response) => {
   try {
     console.log('[admin-users] Запрос списка пользователей от администратора');
     
@@ -17,18 +17,22 @@ router.get('/admin/users', async (req, res) => {
 
     // Получаем информацию о текущем пользователе
     const directusCrud = new DirectusCrud();
-    const currentUser = await directusCrud.read('users', userId);
+    const currentUser = await directusCrud.getById('users', userId);
     
     if (!currentUser?.is_smm_admin) {
       console.log('[admin-users] Пользователь не является администратором SMM');
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Получаем список всех пользователей
-    const users = await directusCrud.readMany('users', {
-      fields: ['id', 'email', 'first_name', 'last_name', 'is_smm_admin', 'expire_date', 'last_access', 'status'],
-      filter: {},
-      sort: ['-last_access']
+    // Получаем список всех пользователей с ролью SMM Manager User
+    const users = await directusCrud.list('users', {
+      filter: {
+        role: {
+          name: { _eq: 'SMM Manager User' }
+        }
+      },
+      sort: ['-last_access'],
+      limit: 100
     });
 
     console.log(`[admin-users] Получено ${users.length} пользователей`);
@@ -48,7 +52,7 @@ router.get('/admin/users', async (req, res) => {
 });
 
 // Обновить права пользователя (только для админов)
-router.patch('/admin/users/:userId', async (req, res) => {
+router.patch('/admin/users/:userId', async (req: any, res: Response) => {
   try {
     const { userId: targetUserId } = req.params;
     const { is_smm_admin, expire_date, status } = req.body;
@@ -63,7 +67,7 @@ router.patch('/admin/users/:userId', async (req, res) => {
     }
 
     const directusCrud = new DirectusCrud();
-    const currentUser = await directusCrud.read('users', currentUserId);
+    const currentUser = await directusCrud.getById('users', currentUserId);
     
     if (!currentUser?.is_smm_admin) {
       console.log('[admin-users] Пользователь не является администратором SMM');

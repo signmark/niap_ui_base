@@ -11043,3 +11043,5 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   return contentPlan;
 }
 
+// Регистрация API управления пользователями будет выполнена в основной функции setupRoutes
+

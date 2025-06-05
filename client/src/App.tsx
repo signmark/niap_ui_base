@@ -25,6 +25,7 @@ import ApiKeysTest from "@/pages/test/api-keys";
 import UniversalImageGenTest from "@/pages/test/universal-image-gen";
 import TimeDisplayTest from "@/pages/test/time-display-test";
 import GlobalApiKeysPage from "@/pages/admin/global-api-keys";
+import UserManagement from "@/pages/admin/UserManagement";
 import TestImgur from "./pages/test-imgur";
 import TestPage from "@/pages/test/index";
 import HtmlTagsTestPage from "@/pages/HtmlTagsTestPage";
