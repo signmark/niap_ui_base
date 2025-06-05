@@ -19,9 +19,20 @@ router.get('/admin/users', async (req: any, res: Response) => {
     const directusCrud = new DirectusCrud();
     const currentUser = await directusCrud.getById('users', userId);
     
+    console.log('[admin-users] Данные текущего пользователя:', {
+      id: currentUser?.id,
+      email: currentUser?.email,
+      is_smm_admin: currentUser?.is_smm_admin,
+      first_name: currentUser?.first_name,
+      last_name: currentUser?.last_name
+    });
+    
     if (!currentUser?.is_smm_admin) {
-      console.log('[admin-users] Пользователь не является администратором SMM');
-      return res.status(403).json({ error: 'Недостаточно прав доступа' });
+      console.log(`[admin-users] Пользователь ${currentUser?.email} (${userId}) не является администратором SMM (is_smm_admin: ${currentUser?.is_smm_admin})`);
+      return res.status(403).json({ 
+        error: 'Недостаточно прав доступа', 
+        details: `Пользователь ${currentUser?.email} не имеет прав администратора`
+      });
     }
 
     // Используем токен текущего авторизованного администратора
