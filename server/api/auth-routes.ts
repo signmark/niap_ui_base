@@ -65,17 +65,27 @@ export function registerAuthRoutes(app: Express): void {
       let adminToken: string;
       
       try {
-        // Пробуем авторизоваться как администратор
-        const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
-        const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+        // Используем административный токен из переменных окружения
+        adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
         
-        if (!adminEmail || !adminPassword) {
-          throw new Error('Учетные данные администратора не настроены');
+        if (!adminToken) {
+          // Fallback: пробуем авторизоваться как администратор напрямую через API
+          const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
+          const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'lbrspb2024';
+          
+          console.log('No admin token, attempting admin auth for user registration:', adminEmail);
+          
+          const adminLoginResponse = await directusApiManager.post('/auth/login', {
+            email: adminEmail,
+            password: adminPassword
+          });
+          
+          adminToken = adminLoginResponse.data.data.access_token;
         }
         
-        const adminAuth = await directusAuthManager.login(adminEmail, adminPassword);
-        adminToken = adminAuth.token;
+        console.log('Admin token obtained successfully for user registration');
       } catch (error) {
+        console.error('Admin auth error for registration:', error.response?.data || error.message);
         throw new Error('Не удалось получить токен администратора для создания пользователя');
       }
 
