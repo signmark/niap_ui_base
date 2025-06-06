@@ -248,7 +248,7 @@ export class DirectusCrud {
       
       try {
         // Используем прямой запрос через axios, минуя directusApiManager
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
         const response = await axios.get(`${directusUrl}/users/me`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -292,7 +292,7 @@ export class DirectusCrud {
    */
   async getAdminToken(): Promise<string | null> {
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
       const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
 
@@ -327,7 +327,7 @@ export class DirectusCrud {
    */
   async login(email: string, password: string): Promise<DirectusAuthResult> {
     return this.executeOperation<DirectusAuthResult>('custom', 'auth/login', async () => {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       
       const response = await axios.post(`${directusUrl}/auth/login`, {
         email,
@@ -353,7 +353,7 @@ export class DirectusCrud {
    */
   async getUserByToken(token: string): Promise<any | null> {
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const response = await axios.get(`${directusUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -377,8 +377,8 @@ export class DirectusCrud {
    * @param password Пароль пользователя
    * @returns Результат авторизации
    */
-  async login(email: string, password: string): Promise<DirectusAuthResult> {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+  async authenticateUser(email: string, password: string): Promise<DirectusAuthResult> {
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     
     try {
       log(`Попытка авторизации пользователя ${email}`, this.logPrefix);
