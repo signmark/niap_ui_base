@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 
-const OLD_DIRECTUS_URL = 'https://45.130.212.62:8055';
+const OLD_DIRECTUS_URL = 'https://directus.nplanner.ru';
 const NEW_DIRECTUS_URL = 'https://directus.roboflow.tech';
 
 // Admin credentials for old server
@@ -19,10 +19,6 @@ async function authenticateOldServer() {
     const response = await axios.post(`${OLD_DIRECTUS_URL}/auth/login`, {
       email: OLD_ADMIN_EMAIL,
       password: OLD_ADMIN_PASSWORD
-    }, {
-      httpsAgent: new (await import('https')).Agent({
-        rejectUnauthorized: false
-      })
     });
     
     return response.data.data.access_token;
@@ -37,10 +33,7 @@ async function getRolesFromOldServer(token) {
     const response = await axios.get(`${OLD_DIRECTUS_URL}/roles`, {
       headers: {
         'Authorization': `Bearer ${token}`
-      },
-      httpsAgent: new (await import('https')).Agent({
-        rejectUnauthorized: false
-      })
+      }
     });
     
     return response.data.data;
