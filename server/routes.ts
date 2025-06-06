@@ -4052,21 +4052,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Используем DeepSeek для генерации ключевых слов
       try {
-        // Получаем DeepSeek ключ из глобальных API ключей
+        // Получаем DeepSeek ключ напрямую из Directus используя системный токен
         console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
-        const { globalApiKeysService } = await import('./services/global-api-keys');
-        const deepseekKey = await globalApiKeysService.getGlobalApiKey('deepseek');
         
-        if (!deepseekKey) {
+        // Импортируем directusApiManager для прямого доступа к Directus API
+        const { directusApiManager } = await import('./directus');
+        
+        // Получаем системный токен администратора
+        const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || process.env.DIRECTUS_TOKEN;
+        
+        if (!systemToken) {
+          return res.status(500).json({
+            error: "Системный токен не настроен"
+          });
+        }
+        
+        // Получаем DeepSeek ключ из global_api_keys
+        const response = await directusApiManager.instance.get('/items/global_api_keys', {
+          params: {
+            fields: ['service_name', 'key_value'],
+            filter: {
+              service_name: { _eq: 'deepseek' },
+              is_active: { _eq: true }
+            }
+          },
+          headers: {
+            Authorization: `Bearer ${systemToken}`
+          }
+        });
+        
+        const deepseekData = response.data?.data?.[0];
+        
+        if (!deepseekData || !deepseekData.key_value) {
           return res.status(400).json({
             key_missing: true,
             service: "DeepSeek",
-            error: "DeepSeek API ключ не настроен в системе. Обратитесь к администратору."
+            error: "DeepSeek API ключ не найден в глобальных настройках системы."
           });
         }
         
         // Обновляем API ключ в сервисе напрямую
-        deepseekService.updateApiKey(deepseekKey);
+        deepseekService.updateApiKey(deepseekData.key_value);
         console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
         
         console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
