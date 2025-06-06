@@ -31,14 +31,13 @@ export const apiKeys = pgTable('api_keys', {
 export const userCampaigns = pgTable('user_campaigns', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
+  name: varchar('name', { length: 255 }),
   link: text('link'),
-  status: varchar('status', { length: 50 }).default('draft'),
-  socialMediaSettings: json('social_media_settings'),
-  trendAnalysisSettings: json('trend_analysis_settings'),
-  createdAt: timestamp('date_created').defaultNow(),
-  updatedAt: timestamp('date_updated').defaultNow()
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  trendAnalysisSettings: json('trend_analysis_settings').default('{}'),
+  socialMediaSettings: json('social_media_settings').default('{}')
 });
 
 // Таблица для бизнес-анкеты
