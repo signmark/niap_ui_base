@@ -27,6 +27,20 @@ export const apiKeys = pgTable('api_keys', {
   updatedAt: timestamp('updated_at')
 });
 
+// Таблица кампаний пользователей
+export const userCampaigns = pgTable('user_campaigns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  link: text('link'),
+  status: varchar('status', { length: 50 }).default('draft'),
+  socialMediaSettings: json('social_media_settings'),
+  trendAnalysisSettings: json('trend_analysis_settings'),
+  createdAt: timestamp('date_created').defaultNow(),
+  updatedAt: timestamp('date_updated').defaultNow()
+});
+
 // Таблица для бизнес-анкеты
 export const businessQuestionnaires = pgTable('business_questionnaires', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -61,6 +75,12 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
   updatedAt: true
 });
 
+export const insertUserCampaignSchema = createInsertSchema(userCampaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertBusinessQuestionnaireSchema = createInsertSchema(businessQuestionnaires).omit({
   id: true,
   createdAt: true,
@@ -73,6 +93,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+
+export type UserCampaign = typeof userCampaigns.$inferSelect;
+export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
 
 export type BusinessQuestionnaire = typeof businessQuestionnaires.$inferSelect;
 export type InsertBusinessQuestionnaire = z.infer<typeof insertBusinessQuestionnaireSchema>;
