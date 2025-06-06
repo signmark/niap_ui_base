@@ -86,6 +86,42 @@ PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
   --schema-only \
   --file="$BACKUP_DIR/schema_only.sql"
 
+# Экспорт конкретных важных таблиц
+echo "📥 Экспорт важных таблиц..."
+mkdir -p "$BACKUP_DIR/individual_tables"
+
+for table in "${IMPORTANT_TABLES[@]}"; do
+    echo "  Экспорт таблицы: $table"
+    PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
+      -h "$POSTGRES_HOST" \
+      -p "$POSTGRES_PORT" \
+      -U "$POSTGRES_USER" \
+      -d "$POSTGRES_DB" \
+      --verbose \
+      --no-password \
+      --data-only \
+      --table="$table" \
+      --file="$BACKUP_DIR/individual_tables/${table}.sql" 2>/dev/null || echo "    Таблица $table не найдена"
+done
+
+# Объединить все важные таблицы в один файл
+echo "📦 Объединение данных важных таблиц..."
+cat "$BACKUP_DIR/individual_tables"/*.sql > "$BACKUP_DIR/important_tables_data.sql" 2>/dev/null || echo "Некоторые таблицы отсутствуют"
+
+# Проверка содержимого важных таблиц
+echo "📊 Проверка содержимого таблиц..."
+cat > "$BACKUP_DIR/table_stats.txt" << EOF
+Статистика таблиц на $(date)
+================================
+
+EOF
+
+for table in "${IMPORTANT_TABLES[@]}"; do
+    echo "Проверка таблицы: $table"
+    ROW_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM $table;" 2>/dev/null || echo "0")
+    echo "$table: $(echo $ROW_COUNT | xargs) записей" >> "$BACKUP_DIR/table_stats.txt"
+done
+
 # Создать информационный файл
 echo "📝 Создание информационного файла..."
 cat > "$BACKUP_DIR/backup_info.txt" << EOF
@@ -102,6 +138,28 @@ cat > "$BACKUP_DIR/backup_info.txt" << EOF
 - full_database.sql - полный бэкап в SQL формате (читаемый)
 - data_only.sql - только данные без схемы
 - schema_only.sql - только структура без данных
+- important_tables_data.sql - данные важных таблиц SMM системы
+- table_stats.txt - статистика по количеству записей в таблицах
+
+Важные таблицы включают:
+- business_questionnaire
+- campaign_content
+- campaign_content_sources
+- campaign_keywords
+- campaign_trend_topics
+- global_api_keys
+- post_comment
+- source_posts
+- user_api_keys
+- user_campaigns
+- user_keywords_user_campaigns
+- directus_users
+- directus_roles
+- directus_permissions
+- directus_settings
+- directus_collections
+- directus_fields
+- directus_relations
 
 Для восстановления на новом сервере используйте:
 pg_restore -h localhost -p 5432 -U postgres -d smm_manager --verbose --clean --if-exists full_database.dump

@@ -84,13 +84,29 @@ TABLE_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POST
 echo "📊 Восстановлено таблиц: $(echo $TABLE_COUNT | xargs)"
 
 # Показать список основных таблиц
-echo "📋 Основные таблицы Directus:"
+echo "📋 Восстановленные таблицы SMM системы:"
 PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "
 SELECT table_name, 
+       (SELECT COUNT(*) FROM \"$table_name\") as records,
        (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name) as columns
 FROM information_schema.tables t 
 WHERE table_schema = 'public' 
-  AND table_name IN ('directus_users', 'campaigns', 'campaign_content', 'global_api_keys', 'directus_roles', 'directus_permissions')
+  AND table_name IN (
+    'business_questionnaire',
+    'campaign_content', 
+    'campaign_content_sources',
+    'campaign_keywords',
+    'campaign_trend_topics',
+    'global_api_keys',
+    'post_comment',
+    'source_posts',
+    'user_api_keys',
+    'user_campaigns',
+    'user_keywords_user_campaigns',
+    'directus_users',
+    'directus_roles',
+    'directus_permissions'
+  )
 ORDER BY table_name;
 "
 
