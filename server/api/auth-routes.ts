@@ -61,63 +61,58 @@ export function registerAuthRoutes(app: Express): void {
         });
       }
 
+      // Используем ID роли SMM Manager User напрямую
+      const smmUserRoleId = 'b3a6187c-8004-4d2c-91d7-417ecc0b113e';
+
       // Получаем токен администратора для создания пользователя
       let adminToken: string;
       
       try {
-        // Используем существующий токен администратора из DirectusAuthManager
-        const { directusAuthManager } = await import('../services/directus-auth-manager.js');
-        const adminSession = await directusAuthManager.getAdminSession();
+        // Пробуем использовать токен из активной сессии admin@roboflow.tech
+        const { directusApiManager } = await import('../directus.js');
+        const adminUserId = '61941d89-55c2-4def-83a3-bc8bfbd21d6f'; // ID admin@roboflow.tech
         
-        if (adminSession && adminSession.token) {
-          adminToken = adminSession.token;
-          console.log('Using existing admin session token for user registration');
+        const cachedToken = directusApiManager.getCachedToken(adminUserId);
+        
+        if (cachedToken && cachedToken.token) {
+          adminToken = cachedToken.token;
+          console.log('Using cached admin@roboflow.tech token for user creation');
         } else {
-          // Fallback: получаем токен через планировщик
+          // Пробуем получить токен через планировщик
           const { publishScheduler } = await import('../services/publish-scheduler.js');
-          adminToken = await publishScheduler.getSystemToken();
+          const systemToken = await publishScheduler.getSystemToken();
           
-          if (!adminToken) {
+          if (!systemToken) {
             throw new Error('Не удалось получить токен администратора');
           }
-          console.log('Using system token from scheduler for user registration');
+          adminToken = systemToken;
+          console.log('Using system token from scheduler for user creation');
         }
-      } catch (error) {
-        console.error('Admin auth error for registration:', error.response?.data || error.message);
-        throw new Error('Не удалось получить токен администратора для создания пользователя');
+        
+        // Создаем пользователя через directusApiManager с админским токеном
+        const response = await directusApiManager.post('/users', {
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          role: smmUserRoleId,
+          status: 'active'
+        }, {
+          authToken: adminToken
+        });
+
+        console.log('User created successfully via directusApiManager:', response.data.data.id);
+        
+        return res.status(201).json({
+          success: true,
+          message: 'Пользователь успешно зарегистрирован',
+          userId: response.data.data.id
+        });
+        
+      } catch (createError: any) {
+        console.error('User creation error:', createError.response?.data || createError.message);
+        throw new Error('Не удалось создать пользователя');
       }
-
-      // Используем ID роли SMM Manager User напрямую
-      const smmUserRoleId = 'b3a6187c-8004-4d2c-91d7-417ecc0b113e';
-
-      // Создаем пользователя
-      const userResponse = await directusApiManager.post('/users', {
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        role: smmUserRoleId,
-        status: 'active'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      });
-
-      const newUser = userResponse.data.data;
-      log(`Создан новый пользователь: ${newUser.email} (${newUser.id}) с ролью SMM Manager User`, 'auth');
-
-      res.status(201).json({ 
-        success: true,
-        message: 'Пользователь успешно создан',
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          role: 'SMM Manager User'
-        }
-      });
     } catch (error) {
       console.error('Error during registration:', error.response?.data || error.message);
       
