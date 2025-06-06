@@ -2,7 +2,7 @@
 -- Выполнить на старом сервере в PGAdmin
 
 -- 1. Показать все роли
-SELECT id, name, icon, description, admin_access, app_access 
+SELECT id, name, icon, description 
 FROM directus_roles 
 ORDER BY name;
 
@@ -37,10 +37,8 @@ COPY (
         'ROLE' as type,
         id,
         name,
-        icon,
-        description,
-        admin_access::text,
-        app_access::text,
+        COALESCE(icon, '') as icon,
+        COALESCE(description, '') as description,
         '' as collection,
         '' as action,
         '' as permissions
@@ -52,8 +50,6 @@ COPY (
         r.name,
         p.collection,
         p.action,
-        '',
-        '',
         p.collection,
         p.action,
         COALESCE(p.permissions::text, '')

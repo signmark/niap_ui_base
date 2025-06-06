@@ -3,14 +3,12 @@
 
 -- 1. Экспорт ролей
 SELECT 
-    'INSERT INTO directus_roles (id, name, icon, description, admin_access, app_access) VALUES (' ||
+    'INSERT INTO directus_roles (id, name, icon, description) VALUES (' ||
     quote_literal(id) || ', ' ||
     quote_literal(name) || ', ' ||
     quote_literal(COALESCE(icon, 'person')) || ', ' ||
-    quote_literal(COALESCE(description, '')) || ', ' ||
-    COALESCE(admin_access, false) || ', ' ||
-    COALESCE(app_access, true) ||
-    ') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, icon = EXCLUDED.icon, description = EXCLUDED.description, admin_access = EXCLUDED.admin_access, app_access = EXCLUDED.app_access;'
+    quote_literal(COALESCE(description, '')) ||
+    ') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, icon = EXCLUDED.icon, description = EXCLUDED.description;'
 FROM directus_roles
 ORDER BY name;
 
