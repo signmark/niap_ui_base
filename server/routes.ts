@@ -1908,7 +1908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Получаем данные кампании через авторизованный токен
       const directusApi = axios.create({
-        baseURL: 'https://directus.roboflow.tech',
+        baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
         timeout: 10000
       });
       
@@ -2596,7 +2596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Получаем информацию о пользователе через API /users/me
         const directusApi = axios.create({
-          baseURL: 'https://directus.roboflow.tech',
+          baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
           timeout: 10000
         });
         

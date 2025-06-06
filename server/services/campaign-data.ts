@@ -7,7 +7,7 @@ import { directusAuthManager } from './directus-auth-manager';
  */
 export class CampaignDataService {
   private directusApi = axios.create({
-    baseURL: 'https://directus.roboflow.tech',
+    baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
     timeout: 10000
   });
 
