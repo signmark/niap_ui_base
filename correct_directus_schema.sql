@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS user_api_keys (
 );
 
 -- 10. user_campaigns
-CREATE TABLE user_campaigns (
+CREATE TABLE IF NOT EXISTS user_campaigns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -208,7 +208,7 @@ CREATE TABLE user_campaigns (
 );
 
 -- 11. user_keywords_user_campaigns (связующая таблица many-to-many)
-CREATE TABLE user_keywords_user_campaigns (
+CREATE TABLE IF NOT EXISTS user_keywords_user_campaigns (
     id SERIAL PRIMARY KEY,
     user_keywords_id UUID,
     user_campaigns_id UUID REFERENCES user_campaigns(id) ON DELETE CASCADE
