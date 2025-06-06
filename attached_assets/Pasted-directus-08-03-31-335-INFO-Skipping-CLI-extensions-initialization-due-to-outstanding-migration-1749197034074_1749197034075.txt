@@ -1,0 +1,34 @@
+directus  | [08:03:31.335] INFO: Skipping CLI extensions initialization due to outstanding migrations.
+directus  | [08:03:31.347] INFO: Initializing bootstrap...
+directus  | [08:03:31.353] INFO: Database already initialized, skipping install
+directus  | [08:03:31.354] INFO: Running migrations...
+directus  | [08:03:31.362] INFO: Applying Remove Collection Foreign Keys...
+directus  | error: alter table "directus_fields" drop constraint "directus_fields_collection_foreign" - constraint "directus_fields_collection_foreign" of relation "directus_fields" does not exist
+directus  |     at Parser.parseErrorMessage (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:283:98)
+directus  |     at Parser.handlePacket (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:122:29)
+directus  |     at Parser.parse (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:35:38)
+directus  |     at Socket.<anonymous> (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/index.js:11:42)
+directus  |     at Socket.emit (node:events:518:28)
+directus  |     at addChunk (node:internal/streams/readable:561:12)
+directus  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+directus  |     at Readable.push (node:internal/streams/readable:392:5)
+directus  |     at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+directus  |   length: 162,
+directus  |   severity: 'ERROR',
+directus  |   code: '42704',
+directus  |   detail: undefined,
+directus  |   hint: undefined,
+directus  |   position: undefined,
+directus  |   internalPosition: undefined,
+directus  |   internalQuery: undefined,
+directus  |   where: undefined,
+directus  |   schema: undefined,
+directus  |   table: undefined,
+directus  |   column: undefined,
+directus  |   dataType: undefined,
+directus  |   constraint: undefined,
+directus  |   file: 'tablecmds.c',
+directus  |   line: '12276',
+directus  |   routine: 'ATExecDropConstraint'
+directus  | }
+directus exited with code 1
