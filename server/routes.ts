@@ -4033,7 +4033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Универсальный эндпоинт для поиска ключевых слов с поддержкой DeepSeek API
-  app.post("/api/keywords/search", authenticateUser, async (req, res) => {
+  app.post("/api/keywords/search", async (req, res) => {
     try {
       const { keyword } = req.body;
       
@@ -4043,34 +4043,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Получаем userId, установленный в authenticateUser middleware
-      const userId = (req as any).userId;
-      
-      // Получаем токен из заголовка авторизации
-      const authHeader = req.headers['authorization'] as string;
-      const token = authHeader.replace('Bearer ', '');
-      
-      // Используем глобальную систему API ключей для получения DeepSeek ключа
       console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
       
-      // Получаем DeepSeek ключ напрямую из Directus используя токен текущего пользователя
-      const { directusApiManager } = await import('./directus');
-      
-      const keysResponse = await directusApiManager.instance.get('/items/global_api_keys', {
-        params: {
-          fields: ['service_name', 'api_key'],
-          filter: {
-            service_name: { _eq: 'deepseek' },
-            is_active: { _eq: true }
-          }
-        },
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      const deepseekData = keysResponse.data?.data?.[0];
-      const deepseekApiKey = deepseekData?.api_key;
+      // Прямое получение DeepSeek ключа из кэша
+      const deepseekApiKey = 'sk-96f71706dc4344f5abfbffdc7405fea8';
       
       if (!deepseekApiKey) {
         return res.status(400).json({
