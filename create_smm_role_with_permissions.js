@@ -10,11 +10,14 @@ async function createSMMRoleWithPermissions() {
   try {
     console.log('Creating SMM Manager User role with specific permissions...');
     
-    // Use the admin token from environment
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
-    if (!adminToken) {
-      throw new Error('DIRECTUS_ADMIN_TOKEN not found in environment');
-    }
+    // First authenticate with admin credentials
+    const authResponse = await axios.post(`${DIRECTUS_URL}/auth/login`, {
+      email: 'lbrspb@gmail.com',
+      password: 'Qtp23dh7'
+    });
+    
+    const adminToken = authResponse.data.data.access_token;
+    console.log('Successfully authenticated as admin');
 
     const headers = {
       'Authorization': `Bearer ${adminToken}`,
@@ -165,9 +168,5 @@ async function createSMMRoleWithPermissions() {
   }
 }
 
-// Check if we have the admin token and run
-if (process.env.DIRECTUS_ADMIN_TOKEN) {
-  createSMMRoleWithPermissions().catch(console.error);
-} else {
-  console.log('Please set DIRECTUS_ADMIN_TOKEN environment variable');
-}
+// Run the function
+createSMMRoleWithPermissions().catch(console.error);
