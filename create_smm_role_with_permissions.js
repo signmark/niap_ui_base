@@ -12,7 +12,7 @@ async function createSMMRoleWithPermissions() {
     
     // First authenticate with admin credentials
     const authResponse = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-      email: 'lbrspb@gmail.com',
+      email: 'admin@roboflow.tech',
       password: 'Qtp23dh7'
     });
     
