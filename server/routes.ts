@@ -4052,25 +4052,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Используем DeepSeek для генерации ключевых слов
       try {
-        // Инициализируем DeepSeek сервис с ключом из apiKeyService
-        console.log(`Инициализация DeepSeek сервиса для поиска ключевых слов: ${keyword}`);
-        const initialized = await deepseekService.initialize(userId, token);
+        // Получаем DeepSeek ключ из глобальных API ключей
+        console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
+        const { globalApiKeysService } = await import('./services/global-api-keys');
+        const deepseekKey = await globalApiKeysService.getGlobalApiKey('deepseek');
         
-        if (!initialized || !deepseekService.hasApiKey()) {
-          // Пробуем получить ключ напрямую
-          const deepseekKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
-          
-          if (!deepseekKey) {
-            return res.status(400).json({
-              key_missing: true,
-              service: "DeepSeek",
-              error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
-            });
-          }
-          
-          // Обновляем API ключ в сервисе напрямую
-          deepseekService.updateApiKey(deepseekKey);
+        if (!deepseekKey) {
+          return res.status(400).json({
+            key_missing: true,
+            service: "DeepSeek",
+            error: "DeepSeek API ключ не настроен в системе. Обратитесь к администратору."
+          });
         }
+        
+        // Обновляем API ключ в сервисе напрямую
+        deepseekService.updateApiKey(deepseekKey);
+        console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
         
         console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
         
