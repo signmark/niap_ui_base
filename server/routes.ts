@@ -10928,6 +10928,179 @@ ${datesText}
     }
   });
 
+  // Admin endpoint to create SMM Manager User role
+  app.post('/api/admin/create-smm-role', async (req: Request, res: Response) => {
+    try {
+      console.log('[admin] Creating SMM Manager User role via Directus API...');
+      
+      // Get admin token from DirectusAuthManager
+      const adminToken = await directusAuthManager.getValidAdminToken();
+      if (!adminToken) {
+        return res.status(500).json({
+          success: false,
+          error: 'Не удалось получить токен администратора'
+        });
+      }
+
+      const roleId = 'b3a6187c-8004-4d2c-91d7-417ecc0b113e';
+      
+      // Check if role already exists
+      try {
+        const existingRoleResponse = await directusApiManager.get(`/roles/${roleId}`, {
+          headers: { Authorization: `Bearer ${adminToken}` }
+        });
+        
+        console.log('[admin] SMM Manager User role already exists');
+        return res.json({
+          success: true,
+          message: 'Роль SMM Manager User уже существует',
+          role: existingRoleResponse.data.data
+        });
+      } catch (error: any) {
+        if (error.response?.status !== 403 && error.response?.status !== 404) {
+          throw error;
+        }
+        // Role doesn't exist, continue with creation
+      }
+
+      // Create the role
+      const roleData = {
+        id: roleId,
+        name: 'SMM Manager User',
+        description: 'Обычный пользователь SMM системы с базовыми правами',
+        admin_access: false,
+        app_access: true
+      };
+
+      const createRoleResponse = await directusApiManager.post('/roles', roleData, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+
+      console.log('[admin] SMM Manager User role created successfully');
+
+      // Create permissions
+      const permissions = [
+        // Business questionnaire permissions
+        { collection: 'business_questionnaire', action: 'create' },
+        { collection: 'business_questionnaire', action: 'read' },
+        { collection: 'business_questionnaire', action: 'update' },
+        { collection: 'business_questionnaire', action: 'delete' },
+        { collection: 'business_questionnaire', action: 'share' },
+        
+        // Campaign content permissions
+        { collection: 'campaign_content', action: 'create' },
+        { collection: 'campaign_content', action: 'read' },
+        { collection: 'campaign_content', action: 'update' },
+        { collection: 'campaign_content', action: 'delete' },
+        { collection: 'campaign_content', action: 'share' },
+        
+        // Campaign content sources permissions
+        { collection: 'campaign_content_sources', action: 'create' },
+        { collection: 'campaign_content_sources', action: 'read' },
+        { collection: 'campaign_content_sources', action: 'update' },
+        { collection: 'campaign_content_sources', action: 'delete' },
+        { collection: 'campaign_content_sources', action: 'share' },
+        
+        // Campaign keywords permissions
+        { collection: 'campaign_keywords', action: 'create' },
+        { collection: 'campaign_keywords', action: 'read' },
+        { collection: 'campaign_keywords', action: 'update' },
+        { collection: 'campaign_keywords', action: 'delete' },
+        { collection: 'campaign_keywords', action: 'share' },
+        
+        // Campaign trend topics permissions
+        { collection: 'campaign_trend_topics', action: 'create' },
+        { collection: 'campaign_trend_topics', action: 'read' },
+        { collection: 'campaign_trend_topics', action: 'update' },
+        { collection: 'campaign_trend_topics', action: 'delete' },
+        { collection: 'campaign_trend_topics', action: 'share' },
+        
+        // Post comment permissions
+        { collection: 'post_comment', action: 'create' },
+        { collection: 'post_comment', action: 'read' },
+        { collection: 'post_comment', action: 'update' },
+        { collection: 'post_comment', action: 'delete' },
+        { collection: 'post_comment', action: 'share' },
+        
+        // Source posts permissions
+        { collection: 'source_posts', action: 'create' },
+        { collection: 'source_posts', action: 'read' },
+        { collection: 'source_posts', action: 'update' },
+        { collection: 'source_posts', action: 'delete' },
+        { collection: 'source_posts', action: 'share' },
+        
+        // User API keys permissions
+        { collection: 'user_api_keys', action: 'create' },
+        { collection: 'user_api_keys', action: 'read' },
+        { collection: 'user_api_keys', action: 'update' },
+        { collection: 'user_api_keys', action: 'delete' },
+        { collection: 'user_api_keys', action: 'share' },
+        
+        // User campaigns permissions
+        { collection: 'user_campaigns', action: 'create' },
+        { collection: 'user_campaigns', action: 'read' },
+        { collection: 'user_campaigns', action: 'update' },
+        { collection: 'user_campaigns', action: 'delete' },
+        { collection: 'user_campaigns', action: 'share' },
+        
+        // User keywords user campaigns permissions
+        { collection: 'user_keywords_user_campaigns', action: 'create' },
+        { collection: 'user_keywords_user_campaigns', action: 'read' },
+        { collection: 'user_keywords_user_campaigns', action: 'update' },
+        { collection: 'user_keywords_user_campaigns', action: 'delete' },
+        { collection: 'user_keywords_user_campaigns', action: 'share' },
+        
+        // Directus system collections - read only
+        { collection: 'directus_activity', action: 'read' },
+        { collection: 'directus_collections', action: 'read' },
+        { collection: 'directus_comments', action: 'read' },
+        { collection: 'directus_fields', action: 'read' },
+        { collection: 'directus_notifications', action: 'read' },
+        { collection: 'directus_presets', action: 'read' },
+        { collection: 'directus_relations', action: 'read' },
+        { collection: 'directus_roles', action: 'read' },
+        { collection: 'directus_settings', action: 'read' },
+        { collection: 'directus_shares', action: 'read' },
+        { collection: 'directus_translations', action: 'read' },
+        { collection: 'directus_users', action: 'read' }
+      ];
+
+      let createdPermissions = 0;
+      for (const permission of permissions) {
+        try {
+          await directusApiManager.post('/permissions', {
+            role: roleId,
+            collection: permission.collection,
+            action: permission.action
+          }, {
+            headers: { Authorization: `Bearer ${adminToken}` }
+          });
+          createdPermissions++;
+        } catch (permError: any) {
+          console.log(`[admin] Warning: Failed to create permission ${permission.collection}:${permission.action}:`, permError.response?.data?.errors?.[0]?.message || permError.message);
+        }
+      }
+
+      console.log(`[admin] Created ${createdPermissions}/${permissions.length} permissions`);
+
+      return res.json({
+        success: true,
+        message: 'Роль SMM Manager User создана успешно',
+        role: createRoleResponse.data.data,
+        permissionsCreated: createdPermissions,
+        totalPermissions: permissions.length
+      });
+
+    } catch (error: any) {
+      console.error('[admin] Error creating SMM Manager User role:', error.response?.data || error.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка при создании роли',
+        details: error.response?.data || error.message
+      });
+    }
+  });
+
   // Vertex AI эндпоинт для улучшения текста с моделями Gemini 2.5
   app.post('/api/vertex-ai/improve-text', async (req: Request, res: Response) => {
     try {
