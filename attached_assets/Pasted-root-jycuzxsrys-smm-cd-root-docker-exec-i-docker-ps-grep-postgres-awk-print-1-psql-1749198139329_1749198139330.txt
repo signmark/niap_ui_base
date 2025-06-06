@@ -1,0 +1,23 @@
+root@jycuzxsrys:~/smm# cd /root
+docker exec -i $(docker ps | grep postgres | awk '{print $1}') psql -U postgres -c "DROP DATABASE IF EXISTS directus; CREATE DATABASE directus; GRANT ALL PRIVILEGES ON DATABASE directus TO postgres;"
+tar -xzf directus_complete_*.tar.gz
+docker exec -i $(docker ps | grep postgres | awk '{print $1}') psql -U postgres -d directus < directus_full_schema.sql
+docker exec -i $(docker ps | grep postgres | awk '{print $1}') psql -U postgres -d directus < directus_full_data.sql
+docker-compose up -d directus
+ERROR:  DROP DATABASE cannot run inside a transaction block
+tar: directus_complete_20250606_082119.tar.gz: Not found in archive
+tar: Exiting with failure status due to previous errors
+-bash: directus_full_schema.sql: No such file or directory
+-bash: directus_full_data.sql: No such file or directory
+WARN[0000] The "GENERIC_TIMEZONE" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Running 2/2
+ ✔ Container postgres  Running                                                                                                                                                                              0.0s
+ ✔ Container directus  Started                                                                                                                                                                              0.4s
+root@jycuzxsrys:~# docker exec -i $(docker ps | grep postgres | awk '{print $1}') psql -U postgres -d directus -c "SELECT email, first_name, last_name FROM directus_users;"
+psql: error: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  database "directus" does not exist
+root@jycuzxsrys:~# ls
+db                        directus_complete_20250606_081825.tar.gz  directus_migration_20250606_080110.tar.gz  docker-compose.yml  n8n_data      smm
+deploy_roboflow_fixed.sh  directus_complete_20250606_082119.tar.gz  directus_schema_export.sql                 Dockerfile-n8n      pgadmin_data  traefik_data
+directus_auth_export.sql  directus_data                             directus_user_data_export.sql              local-files         postgres
+root@jycuzxsrys:~#
