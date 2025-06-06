@@ -102,7 +102,7 @@ export default function Keywords() {
 
     try {
       // Используем новый универсальный API endpoint для поиска ключевых слов
-      const authToken = localStorage.getItem('token');
+      const authToken = localStorage.getItem('auth_token');
       const response = await fetch('/api/keywords/search', {
         method: 'POST',
         headers: {

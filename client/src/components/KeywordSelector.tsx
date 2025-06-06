@@ -98,8 +98,8 @@ export function KeywordSelector({
     setKeywords([]);
     
     try {
-      // Получаем токен авторизации
-      const authToken = getAuthToken();
+      // Получаем токен авторизации из localStorage
+      const authToken = localStorage.getItem('auth_token');
       
       // Используем новый универсальный API endpoint для поиска ключевых слов
       const response = await fetch('/api/keywords/search', {
