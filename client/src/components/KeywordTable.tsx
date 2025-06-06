@@ -213,7 +213,7 @@ export function KeywordTable({
               {sortedKeywords.map((keyword) => (
                 <TableRow key={keyword.id}>
                   <TableCell>{keyword.keyword}</TableCell>
-                  <TableCell>{parseFloat(keyword.trend_score).toString()}</TableCell>
+                  <TableCell>{keyword.trend_score}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
