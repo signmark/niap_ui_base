@@ -1,8 +1,8 @@
--- Создание схемы для SMM системы в Directus
+-- Создание схемы для SMM системы в Directus (точные названия коллекций)
 -- Выполнить в PGAdmin для базы directus
 
--- 1. Таблица кампаний
-CREATE TABLE campaigns (
+-- 1. user_campaigns (кампании пользователей)
+CREATE TABLE user_campaigns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -12,7 +12,7 @@ CREATE TABLE campaigns (
     date_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     
     -- Основные поля
-    name VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
     description TEXT,
     link TEXT,
     user_id UUID NOT NULL REFERENCES directus_users(id),
