@@ -101,13 +101,17 @@ export default function Keywords() {
     setIsSearching(true);
 
     try {
-      // Используем новый XMLRiver API endpoint
+      // Используем новый универсальный API endpoint для поиска ключевых слов
       const authToken = localStorage.getItem('token');
-      const response = await fetch(`/api/xmlriver/keywords/${encodeURIComponent(searchQuery.trim())}`, {
+      const response = await fetch('/api/keywords/search', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          keyword: searchQuery.trim()
+        })
       });
       
       const data = await response.json();
@@ -117,15 +121,15 @@ export default function Keywords() {
           toast({
             variant: "destructive",
             title: "Требуется API ключ",
-            description: "API ключ XMLRiver не найден. Добавьте его в настройках профиля."
+            description: `API ключ ${data.service} не найден. Добавьте его в настройках профиля.`
           });
           return;
         }
         
-        throw new Error(data.message || "Ошибка при поиске ключевых слов");
+        throw new Error(data.message || data.error || "Ошибка при поиске ключевых слов");
       }
 
-      if (!data?.success || !data?.data?.keywords?.length) {
+      if (!data?.data?.keywords?.length) {
         toast({ 
           title: "Результаты",
           description: "Не найдено ключевых слов" 
@@ -135,7 +139,7 @@ export default function Keywords() {
 
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        trend: parseInt(kw.frequency) || 0,
+        trend: parseInt(kw.trend) || 0,
         competition: parseInt(kw.competition || 0),
         selected: false
       }));

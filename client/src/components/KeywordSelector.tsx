@@ -101,13 +101,16 @@ export function KeywordSelector({
       // Получаем токен авторизации
       const authToken = getAuthToken();
       
-      // Добавляем случайный параметр для предотвращения кеширования
-      const nocache = Date.now();
-      // Используем тот же API-маршрут, что и в разделе "Ключевые слова"
-      const response = await fetch(`/api/xmlriver/keywords/${encodeURIComponent(searchTerm.trim())}?nocache=${nocache}`, {
+      // Используем новый универсальный API endpoint для поиска ключевых слов
+      const response = await fetch('/api/keywords/search', {
+        method: 'POST',
         headers: {
-          'Authorization': authToken ? `Bearer ${authToken}` : ''
-        }
+          'Authorization': authToken ? `Bearer ${authToken}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          keyword: searchTerm.trim()
+        })
       });
       
       if (!response.ok) {
@@ -133,8 +136,8 @@ export function KeywordSelector({
       // Форматируем результаты и преобразуем данные
       const formattedResults = data.data.keywords.map((kw: any) => ({
         keyword: kw.keyword,
-        frequency: kw.frequency || parseInt(kw.trend) || 0, // Поддерживаем оба формата
-        competition: kw.competition || parseInt(kw.competition) || 0,
+        frequency: kw.trend || kw.frequency || 0, // Используем trend из нового API
+        competition: kw.competition || 0,
       }));
 
       // Удаляем дубликаты по ключевому слову, оставляя версию с наибольшей частотой

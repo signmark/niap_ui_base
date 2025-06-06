@@ -1,0 +1,43 @@
+KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+index.tsx:106 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/xmlriver/keywords/%D1%85%D0%B5%D1%80%D0%B0%D1%82%D0%B0 400 (Bad Request)
+handleSearch @ index.tsx:106
+callCallback2 @ chunk-RPCDYKBN.js?v=188b6ffb:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=188b6ffb:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=188b6ffb:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=188b6ffb:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=188b6ffb:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=188b6ffb:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=188b6ffb:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=188b6ffb:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=188b6ffb:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=188b6ffb:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=188b6ffb:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=188b6ffb:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=188b6ffb:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5449
+index.tsx:150 Search error: Error: Не удалось получить ключевые слова из-за некорректного формата ответа.
+    at handleSearch (index.tsx:125:15)
+overrideMethod @ hook.js:608
+handleSearch @ index.tsx:150
+await in handleSearch
+callCallback2 @ chunk-RPCDYKBN.js?v=188b6ffb:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=188b6ffb:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=188b6ffb:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=188b6ffb:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=188b6ffb:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=188b6ffb:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=188b6ffb:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=188b6ffb:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=188b6ffb:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=188b6ffb:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=188b6ffb:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=188b6ffb:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=188b6ffb:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5449
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
