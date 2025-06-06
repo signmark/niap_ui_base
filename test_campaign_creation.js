@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 const DIRECTUS_URL = 'https://directus.roboflow.tech';
-const ADMIN_EMAIL = 'lbrspb@gmail.com';
+const ADMIN_EMAIL = 'admin@roboflow.tech';
 const ADMIN_PASSWORD = 'roboflow_admin_2025';
 
 async function authenticate() {
