@@ -50,7 +50,7 @@ async function testCampaignCreation(token) {
     console.log('Тестирование создания кампании...');
     
     const campaignData = {
-      title: 'Test Campaign',
+      name: 'Test Campaign',
       description: 'Test Description',
       user_id: '2b4812a5-5b7f-4cef-b762-30cc4379431d'
     };
