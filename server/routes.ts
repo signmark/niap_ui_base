@@ -8079,9 +8079,10 @@ Return your response as a JSON array in this exact format:
         
         // Создаем кампанию через Directus API
         const response = await directusApi.post('/items/user_campaigns', {
-          name,
+          title: name,
           description: description || null,
-          user_id: userId
+          user_id: userId,
+          status: 'published'
         }, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -8093,10 +8094,10 @@ Return your response as a JSON array in this exact format:
         // Преобразуем ответ в нужный формат
         const newCampaign = {
           id: response.data.data.id,
-          name: response.data.data.name,
+          name: response.data.data.title,
           description: cleanupText(response.data.data.description),
           userId: response.data.data.user_id,
-          createdAt: response.data.data.created_at
+          createdAt: response.data.data.date_created
         };
         
         console.log(`[CAMPAIGN_CREATE] Created new campaign for user ${userId}:`, newCampaign);
