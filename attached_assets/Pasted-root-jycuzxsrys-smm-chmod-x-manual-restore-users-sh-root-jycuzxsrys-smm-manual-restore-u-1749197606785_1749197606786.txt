@@ -1,0 +1,79 @@
+root@jycuzxsrys:~/smm# chmod +x ./manual_restore_users.sh
+root@jycuzxsrys:~/smm# ./manual_restore_users.sh
+Ручное восстановление пользователей Directus
+Проверка содержимого файла авторизации...
+INSERT INTO public.directus_policies (id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access) VALUES ('abf8a154-5b1c-4a46-ac9c-7300570f4f17', '$t:public_label', 'public', '$t:public_description', NULL, false, false, false);
+INSERT INTO public.directus_policies (id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access) VALUES ('b985af53-8e1e-4944-92e9-a96a8fd8f37f', 'Administrator', 'verified', '$t:admin_description', NULL, false, true, true);
+INSERT INTO public.directus_policies (id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access) VALUES ('3e349827-7fde-4338-a6c0-782949900f53', 'SMM Manager User', 'badge', NULL, NULL, false, false, true);
+INSERT INTO public.directus_permissions (id, collection, action, permissions, validation, presets, fields, policy) VALUES (2, 'directus_files', 'share', NULL, NULL, NULL, '*', 'abf8a154-5b1c-4a46-ac9c-7300570f4f17');
+INSERT INTO public.directus_permissions (id, collection, action, permissions, validation, presets, fields, policy) VALUES (3, 'directus_files', 'create', NULL, NULL, NULL, '*', 'abf8a154-5b1c-4a46-ac9c-7300570f4f17');
+
+Попытка восстановления пользователей...
+DELETE 0
+Применение дампа авторизации...
+SET
+SET
+SET
+SET
+SET
+ set_config
+------------
+
+(1 row)
+
+SET
+SET
+SET
+SET
+ERROR:  duplicate key value violates unique constraint "directus_policies_pkey"
+ERROR:  duplicate key value violates unique constraint "directus_policies_pkey"
+ERROR:  duplicate key value violates unique constraint "directus_policies_pkey"
+ERROR:  duplicate key value violates unique constraint "directus_permissions_pkey"
+ERROR:  duplicate key value violates unique constraint "directus_permissions_pkey"
+ERROR:  duplicate key value violates unique constraint "directus_permissions_pkey"
+
+Проверка пользователей после восстановления:
+                  id                  |        email        | first_name | last_name | status
+--------------------------------------+---------------------+------------+-----------+--------
+ f3d64152-c012-46cb-9b42-1125a99aba6f | admin@roboflow.tech | Admin      | User      | active
+(1 row)
+
+
+Попытка восстановления пользовательских данных...
+SET
+SET
+SET
+SET
+SET
+ set_config
+------------
+
+(1 row)
+
+SET
+SET
+SET
+SET
+ERROR:  relation "public.user_campaigns" does not exist
+LINE 1: INSERT INTO public.user_campaigns (id, user_id, name, descri...
+                    ^
+ERROR:  relation "public.user_campaigns" does not exist
+LINE 1: INSERT INTO public.user_campaigns (id, user_id, name, descri...
+                    ^
+
+Финальная проверка пользователей:
+                  id                  |        email        | first_name | last_name | status
+--------------------------------------+---------------------+------------+-----------+--------
+ f3d64152-c012-46cb-9b42-1125a99aba6f | admin@roboflow.tech | Admin      | User      | active
+(1 row)
+
+
+Проверка кампаний пользователей:
+Таблица user_campaigns не найдена
+
+Перезапуск Directus...
+WARN[0000] The "GENERIC_TIMEZONE" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion
+[+] Restarting 1/1
+ ✔ Container directus  Started                                                                                                                                                                              0.9s
+Ожидание запуска...
