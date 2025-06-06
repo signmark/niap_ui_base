@@ -4050,30 +4050,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
       
-      // Используем DeepSeek для генерации ключевых слов
-      try {
-        // Используем глобальную систему API ключей
-        console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
-        
-        const { globalApiKeysService } = await import('./services/global-api-keys');
-        const deepseekApiKey = await globalApiKeysService.getApiKey('deepseek', userId, token);
-        
-        if (!deepseekApiKey) {
-          return res.status(400).json({
-            key_missing: true,
-            service: "DeepSeek",
-            error: "DeepSeek API ключ не найден в глобальных настройках системы."
-          });
+      // Используем глобальную систему API ключей для получения DeepSeek ключа
+      console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
+      
+      // Получаем DeepSeek ключ напрямую из Directus используя текущий токен пользователя
+      const { directusApiManager } = await import('./directus');
+      
+      const keysResponse = await directusApiManager.instance.get('/items/global_api_keys', {
+        params: {
+          fields: ['service_name', 'api_key'],
+          filter: {
+            service_name: { _eq: 'deepseek' },
+            is_active: { _eq: true }
+          }
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-        
-        // Обновляем API ключ в сервисе напрямую
-        deepseekService.updateApiKey(deepseekApiKey);
-        console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
-        
-        console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
-        
-        // Формируем промт для генерации связанных ключевых слов
-        const prompt = `Сгенерируй список из 10-15 связанных ключевых слов и фраз для основного ключевого слова "${keyword}". 
+      });
+      
+      const deepseekData = keysResponse.data?.data?.[0];
+      const deepseekApiKey = deepseekData?.api_key;
+      
+      if (!deepseekApiKey) {
+        return res.status(400).json({
+          key_missing: true,
+          service: "DeepSeek",
+          error: "DeepSeek API ключ не найден в глобальных настройках системы."
+        });
+      }
+      
+      // Обновляем API ключ в сервисе напрямую
+      deepseekService.updateApiKey(deepseekApiKey);
+      console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
+      
+      console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
+      
+      // Формируем промт для генерации связанных ключевых слов
+      const prompt = `Сгенерируй список из 10-15 связанных ключевых слов и фраз для основного ключевого слова "${keyword}". 
 
 Включи:
 - Синонимы и похожие термины
@@ -4091,68 +4105,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
 
-        const response = await deepseekService.generateText(prompt);
-        
-        if (!response) {
-          throw new Error('Пустой ответ от DeepSeek API');
+      const deepseekResponse = await deepseekService.generateText(prompt);
+      
+      if (!deepseekResponse) {
+        throw new Error('Пустой ответ от DeepSeek API');
+      }
+      
+      console.log('Ответ от DeepSeek для ключевых слов:', deepseekResponse);
+      
+      // Попытка парсинга JSON ответа
+      let keywords = [];
+      try {
+        // Ищем JSON массив в ответе
+        const jsonMatch = deepseekResponse.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          keywords = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('JSON массив не найден в ответе');
         }
-        
-        console.log('Ответ от DeepSeek для ключевых слов:', response);
-        
-        // Попытка парсинга JSON ответа
-        let keywords = [];
-        try {
-          // Ищем JSON массив в ответе
-          const jsonMatch = response.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
-            keywords = JSON.parse(jsonMatch[0]);
-          } else {
-            throw new Error('JSON массив не найден в ответе');
-          }
-        } catch (parseError) {
-          console.log('Не удалось распарсить как JSON, используем простое извлечение');
-          // Если не удалось распарсить как JSON, извлекаем ключевые слова из текста
-          const lines = response.split('\n').filter(line => line.includes(keyword) || line.includes(':') || line.includes('-'));
-          keywords = lines.slice(0, 15).map((line, index) => {
-            const cleanLine = line.replace(/[-*•\d\.\s:]/g, '').trim();
-            return {
-              keyword: cleanLine || `${keyword} ${index + 1}`,
-              trend: Math.floor(Math.random() * 40) + 60, // 60-100
-              competition: Math.floor(Math.random() * 60) + 20 // 20-80
-            };
-          });
-        }
-        
-        // Добавляем исходное ключевое слово если его нет
-        const hasOriginal = keywords.some(k => k.keyword.toLowerCase().includes(keyword.toLowerCase()));
-        if (!hasOriginal) {
-          keywords.unshift({
-            keyword: keyword,
-            trend: 90,
-            competition: 70
-          });
-        }
-        
-        // Ограничиваем количество и фильтруем
-        keywords = keywords
-          .filter(k => k.keyword && k.keyword.trim() !== '')
-          .slice(0, 15);
-        
-        console.log(`Найдено ${keywords.length} ключевых слов для "${keyword}"`);
-        
-        return res.json({
-          data: {
-            keywords: keywords
-          }
-        });
-        
-      } catch (error: any) {
-        console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", error);
-        return res.status(500).json({ 
-          error: "Ошибка при поиске ключевых слов", 
-          message: "Не удалось использовать DeepSeek API для генерации ключевых слов"
+      } catch (parseError) {
+        console.log('Не удалось распарсить как JSON, используем простое извлечение');
+        // Если не удалось распарсить как JSON, извлекаем ключевые слова из текста
+        const lines = deepseekResponse.split('\n').filter(line => line.includes(keyword) || line.includes(':') || line.includes('-'));
+        keywords = lines.slice(0, 15).map((line, index) => {
+          const cleanLine = line.replace(/[-*•\d\.\s:]/g, '').trim();
+          return {
+            keyword: cleanLine || `${keyword} ${index + 1}`,
+            trend: Math.floor(Math.random() * 40) + 60, // 60-100
+            competition: Math.floor(Math.random() * 60) + 20 // 20-80
+          };
         });
       }
+      
+      // Добавляем исходное ключевое слово если его нет
+      const hasOriginal = keywords.some(k => k.keyword.toLowerCase().includes(keyword.toLowerCase()));
+      if (!hasOriginal) {
+        keywords.unshift({
+          keyword: keyword,
+          trend: 90,
+          competition: 70
+        });
+      }
+      
+      // Ограничиваем количество и фильтруем
+      keywords = keywords
+        .filter(k => k.keyword && k.keyword.trim() !== '')
+        .slice(0, 15);
+      
+      console.log(`Найдено ${keywords.length} ключевых слов для "${keyword}"`);
+      
+      return res.json({
+        data: {
+          keywords: keywords
+        }
+      });
+      
+    } catch (error: any) {
+      console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", error);
+      return res.status(500).json({ 
+        error: "Ошибка при поиске ключевых слов", 
+        message: "Не удалось использовать DeepSeek API для генерации ключевых слов"
+      });
+    }
   });
 
   // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
