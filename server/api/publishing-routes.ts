@@ -102,7 +102,7 @@ export function registerPublishingRoutes(app: Express): void {
       try {
         // Получаем системный токен
         const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
         
         // Пробуем получить токен из активных сессий
         const sessions = directusAuthManager.getAllActiveSessions();
@@ -753,7 +753,7 @@ export function registerPublishingRoutes(app: Express): void {
             try {
               log(`Запрос всех запланированных публикаций через API (без фильтрации по userId)`, 'api');
               
-              const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+              const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
               const response = await axios.get(`${directusUrl}/items/campaign_content`, {
                 params: {
                   filter: { status: { _eq: 'scheduled' } }

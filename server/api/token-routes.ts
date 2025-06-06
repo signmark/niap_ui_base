@@ -11,7 +11,7 @@ import { directusApiManager } from '../directus';
 import { directusAuthManager } from '../services/directus-auth-manager';
 
 // URL Directus API
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
 // ID администратора из env
 const ADMIN_USER_ID = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
 // Путь к файлу .env
@@ -471,7 +471,7 @@ export function registerTokenRoutes(app: Express) {
       }
       
       // Проверяем доступ к различным коллекциям
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const collections = [
         'campaign_content',
         'user_campaigns',

@@ -13,7 +13,7 @@ export const adminApiRoutes = express.Router();
 // API для получения актуального токена администратора
 adminApiRoutes.get('/current-admin-token', async (req: Request, res: Response) => {
   try {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
     const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
     

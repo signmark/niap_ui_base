@@ -32,7 +32,7 @@ createFieldsRoute.post('/create-additional-media-field', async (req: Request, re
 
     // Проверяем наличие поля additional_media в схеме
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const checkResponse = await axios.get(
         `${directusUrl}/fields/campaign_content/additional_media`,
         {
@@ -67,7 +67,7 @@ createFieldsRoute.post('/create-additional-media-field', async (req: Request, re
     }
 
     // Создаем новое поле через API
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     const fieldData = {
       collection: 'campaign_content',
       field: 'additional_media',

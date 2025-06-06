@@ -28,7 +28,7 @@ class DirectusApiManager {
   private maxRefreshAttempts: number = 3; // максимальное количество попыток обновления токена
 
   constructor(baseURL?: string) {
-    this.baseURL = baseURL || process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    this.baseURL = baseURL || process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     
     // Создаем Axios инстанс
     this.axiosInstance = axios.create({

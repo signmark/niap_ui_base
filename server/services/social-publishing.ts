@@ -1529,7 +1529,7 @@ export class SocialPublishingService {
         
         // Прямой запрос к API для получения контента
         try {
-          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.roboflow.tech';
           const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
             headers: {
               'Authorization': `Bearer ${systemToken}`
@@ -1640,7 +1640,7 @@ export class SocialPublishingService {
         
         // Пробуем прямой запрос к API для обновления статуса
         try {
-          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+          const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.roboflow.tech';
           const updateData: Record<string, any> = {
             socialPlatforms,
             status: allPublished ? 'published' : 'scheduled'
@@ -2196,7 +2196,7 @@ export class SocialPublishingService {
         return null;
       }
       
-      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_API_URL || 'https://directus.roboflow.tech';
       
       const response = await axios.post(`${directusUrl}/auth/login`, {
         email,

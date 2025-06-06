@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
         log.info(`[Facebook v3] Авторизация администратора с учетными данными из env`);
         
         // Используем нативный axios для авторизации, так как мы не можем использовать directusCrud.login напрямую
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
         const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
           email: adminEmail,
           password: adminPassword
@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
     let content;
     try {
       // Используем прямой запрос к Directus API, так как не можем использовать directusCrud.read напрямую
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -146,7 +146,7 @@ router.post('/', async (req, res) => {
     let campaign;
     try {
       // Используем прямой запрос к Directus API
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const campaignResponse = await axios.get(`${directusUrl}/items/user_campaigns/${content.campaign_id}`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -624,7 +624,7 @@ async function publishVideoPost(
 async function updatePublicationStatus(contentId: string, token: string, postUrl?: string) {
   try {
     // Используем прямой запрос к Directus API
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     
     // Получаем текущие данные контента
     const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {

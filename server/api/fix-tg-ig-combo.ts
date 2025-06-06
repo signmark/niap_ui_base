@@ -23,7 +23,7 @@ router.post('/fix-tg-ig-combo', async (req: Request, res: Response) => {
       if (!authToken) {
         // Если токен не найден, пытаемся авторизоваться через логин/пароль
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
           const loginResponse = await axios.post(`${directusUrl}/auth/login`, {
             email: process.env.DIRECTUS_ADMIN_EMAIL,
             password: process.env.DIRECTUS_ADMIN_PASSWORD
@@ -48,7 +48,7 @@ router.post('/fix-tg-ig-combo', async (req: Request, res: Response) => {
       authToken = authToken.substring(7);
     }
     
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     const headers = {
       'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json'

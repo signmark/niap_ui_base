@@ -17,7 +17,7 @@ export function registerFalAiTestRoutes(app: Express) {
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await axios.get('https://directus.nplanner.ru/users/me', {
+          const userResponse = await axios.get('https://directus.roboflow.tech/users/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           userId = userResponse?.data?.data?.id;
