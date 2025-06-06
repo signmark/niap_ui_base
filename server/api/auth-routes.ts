@@ -98,7 +98,9 @@ export function registerAuthRoutes(app: Express): void {
           role: smmUserRoleId,
           status: 'active'
         }, {
-          authToken: adminToken
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
         });
 
         console.log('User created successfully via directusApiManager:', response.data.data.id);
