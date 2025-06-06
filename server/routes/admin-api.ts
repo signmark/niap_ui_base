@@ -14,8 +14,8 @@ export const adminApiRoutes = express.Router();
 adminApiRoutes.get('/current-admin-token', async (req: Request, res: Response) => {
   try {
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
-    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
-    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
+    const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
+    const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'roboflow_admin_2025';
     
     // Получаем новый токен администратора
     const authResponse = await axios.post(`${directusUrl}/auth/login`, {

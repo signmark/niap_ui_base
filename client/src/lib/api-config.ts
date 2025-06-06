@@ -3,9 +3,9 @@
  */
 
 export function getApiBaseUrl(): string {
-  // Если мы на продакшене smm.nplanner.ru, используем полный URL
-  if (typeof window !== 'undefined' && window.location.hostname === 'smm.nplanner.ru') {
-    return 'https://smm.nplanner.ru';
+  // Если мы на продакшене smm.roboflow.tech, используем полный URL
+  if (typeof window !== 'undefined' && window.location.hostname === 'smm.roboflow.tech') {
+    return 'https://smm.roboflow.tech';
   }
   
   // Для локальной разработки используем относительные пути
