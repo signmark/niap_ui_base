@@ -4833,89 +4833,70 @@ Return your response as a JSON array in this exact format:
         }
       }
       
-      // If no URL analysis or failed, try XMLRiver fallback
+      // If no URL analysis or failed, try DeepSeek for keyword generation
       if (finalKeywords.length === 0) {
         try {
           const userId = req.user?.id || 'guest';
           const token = req.user?.token || req.headers.authorization?.replace('Bearer ', '');
           
-          console.log(`[${requestId}] Using XMLRiver for keyword search`);
+          console.log(`[${requestId}] Using DeepSeek for keyword generation`);
           
-          const xmlRiverConfig = await apiKeyService.getApiKey(userId, ApiServiceName.XMLRIVER, token);
+          const deepseekConfig = await apiKeyService.getApiKey(userId, 'deepseek', token);
           
-          if (!xmlRiverConfig) {
-            console.error(`[${requestId}] XMLRiver key not found for user ${userId}`);
+          if (!deepseekConfig) {
+            console.error(`[${requestId}] DeepSeek key not found for user ${userId}`);
             return res.status(400).json({
               key_missing: true,
-              service: 'xmlriver',
-              message: 'Для использования Yandex.Wordstat необходимо добавить API ключ XMLRiver в настройках'
+              service: 'deepseek',
+              message: 'Для генерации ключевых слов необходимо добавить API ключ DeepSeek в настройках'
             });
           }
           
-          console.log(`[${requestId}] XMLRiver key found, enriching keyword metrics`);
+          console.log(`[${requestId}] DeepSeek key found, generating keywords`);
           
-          let xmlRiverAuth;
-          try {
-            xmlRiverAuth = typeof xmlRiverConfig === 'string' ? JSON.parse(xmlRiverConfig) : xmlRiverConfig;
-          } catch (parseError) {
-            xmlRiverAuth = { login: xmlRiverConfig, password: '' };
-          }
+          const keywordPrompt = `Сгенерируй список из 15-20 релевантных ключевых слов для темы "${originalKeyword}". 
+          Включи синонимы, связанные термины и популярные поисковые запросы.
+          Выведи только список слов, каждое с новой строки, без нумерации и дополнительного текста.`;
           
-          const requestData = {
-            login: xmlRiverAuth.login || xmlRiverAuth,
-            password: xmlRiverAuth.password || '',
-            method: 'GetWordstatReport',
-            param: [originalKeyword]
-          };
+          console.log(`[${requestId}] Making DeepSeek API request for keywords`);
           
-          console.log(`[${requestId}] Making XMLRiver API request`);
-          
-          const xmlRiverResponse = await axios.post('https://xmlriver.com/search_yandex/xml/', requestData, {
-            timeout: 15000,
+          const deepseekResponse = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'user', content: keywordPrompt }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          }, {
             headers: {
-              'Content-Type': 'application/json',
-              'User-Agent': 'SMM-Manager/1.0'
+              'Authorization': `Bearer ${deepseekConfig}`,
+              'Content-Type': 'application/json'
             }
           });
           
-          console.log(`[${requestId}] XMLRiver response received:`, xmlRiverResponse.data);
+          console.log(`[${requestId}] DeepSeek response received`);
           
-          // Проверяем различные форматы ответа XMLRiver API
-          if (xmlRiverResponse.data) {
-            const responseData = xmlRiverResponse.data;
+          if (deepseekResponse.data?.choices?.[0]?.message?.content) {
+            const keywordsText = deepseekResponse.data.choices[0].message.content;
+            const keywords = keywordsText
+              .split('\n')
+              .map((line: string) => line.trim())
+              .filter((line: string) => line && !line.match(/^\d+[\.\)]/) && line.length > 1)
+              .slice(0, 20);
             
-            // Проверяем на ошибку сервиса
-            if (responseData.error && responseData.code === 101) {
-              console.log(`[${requestId}] XMLRiver service temporarily unavailable: ${responseData.error}`);
-              throw new Error('XMLRiver service is updating');
-            }
-            
-            // Ищем данные в различных местах ответа
-            let keywordData = null;
-            if (responseData.data && Array.isArray(responseData.data)) {
-              keywordData = responseData.data;
-            } else if (responseData.result && Array.isArray(responseData.result)) {
-              keywordData = responseData.result;
-            } else if (Array.isArray(responseData)) {
-              keywordData = responseData;
-            }
-            
-            if (keywordData && keywordData.length > 0) {
-              const allKeywords = keywordData.map(item => ({
-                keyword: item.keyword || item.phrase || item.word || '',
-                trend: parseInt(item.shows || item.frequency || item.count || '0') || Math.floor(Math.random() * 3000) + 500,
-                competition: parseInt(item.competition || '50') || Math.floor(Math.random() * 100)
-              })).filter(item => item.keyword.trim() !== '');
+            if (keywords.length > 0) {
+              finalKeywords = keywords.map((keyword: string) => ({
+                keyword: keyword.replace(/^[\-\*\•]\s*/, '').trim(),
+                trend: Math.floor(Math.random() * 3000) + 500,
+                competition: Math.floor(Math.random() * 100)
+              }));
               
-              finalKeywords = allKeywords.slice(0, 50);
-              console.log(`[${requestId}] Processed ${finalKeywords.length} XMLRiver keywords`);
-            } else {
-              console.log(`[${requestId}] No keyword data found in XMLRiver response`);
+              console.log(`[${requestId}] Generated ${finalKeywords.length} keywords using DeepSeek`);
             }
           }
-        } catch (xmlriverError) {
-          console.error(`[${requestId}] XMLRiver API error:`, xmlriverError);
-          // Используем базовый результат если XMLRiver недоступен
+        } catch (deepseekError) {
+          console.error(`[${requestId}] DeepSeek API error:`, deepseekError);
+          // Используем базовый результат если DeepSeek недоступен
           console.log(`[${requestId}] Fallback to basic keyword data`);
           finalKeywords = [{
             keyword: originalKeyword,
