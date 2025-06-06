@@ -4053,7 +4053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Используем глобальную систему API ключей для получения DeepSeek ключа
       console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
       
-      // Получаем DeepSeek ключ напрямую из Directus используя текущий токен пользователя
+      // Получаем DeepSeek ключ напрямую из Directus используя токен текущего пользователя
       const { directusApiManager } = await import('./directus');
       
       const keysResponse = await directusApiManager.instance.get('/items/global_api_keys', {
