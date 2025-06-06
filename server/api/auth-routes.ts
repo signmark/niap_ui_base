@@ -65,44 +65,26 @@ export function registerAuthRoutes(app: Express): void {
       let adminToken: string;
       
       try {
-        // Используем административный токен из переменных окружения
-        adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+        // Получаем токен администратора для регистрации пользователя
+        const adminEmail = 'admin@roboflow.tech';
+        const adminPassword = 'Qtp23dh7';
         
-        if (!adminToken) {
-          // Fallback: пробуем авторизоваться как администратор напрямую через API
-          const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'lbrspb@gmail.com';
-          const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'lbrspb2024';
-          
-          console.log('No admin token, attempting admin auth for user registration:', adminEmail);
-          
-          const adminLoginResponse = await directusApiManager.post('/auth/login', {
-            email: adminEmail,
-            password: adminPassword
-          });
-          
-          adminToken = adminLoginResponse.data.data.access_token;
-        }
+        console.log('Obtaining admin token for user registration');
         
+        const adminLoginResponse = await directusApiManager.post('/auth/login', {
+          email: adminEmail,
+          password: adminPassword
+        });
+        
+        adminToken = adminLoginResponse.data.data.access_token;
         console.log('Admin token obtained successfully for user registration');
       } catch (error) {
         console.error('Admin auth error for registration:', error.response?.data || error.message);
         throw new Error('Не удалось получить токен администратора для создания пользователя');
       }
 
-      // Ищем роль "SMM Manager User"
-      const rolesResponse = await directusApiManager.get('/roles', {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        },
-        params: {
-          'filter[name][_eq]': 'SMM Manager User'
-        }
-      });
-
-      const smmUserRole = rolesResponse.data.data[0];
-      if (!smmUserRole) {
-        throw new Error('Роль "SMM Manager User" не найдена в системе');
-      }
+      // Используем ID роли SMM Manager User напрямую
+      const smmUserRoleId = 'b3a6187c-8004-4d2c-91d7-417ecc0b113e';
 
       // Создаем пользователя
       const userResponse = await directusApiManager.post('/users', {
@@ -110,7 +92,7 @@ export function registerAuthRoutes(app: Express): void {
         password,
         first_name: firstName,
         last_name: lastName,
-        role: smmUserRole.id,
+        role: smmUserRoleId,
         status: 'active'
       }, {
         headers: {
@@ -129,23 +111,23 @@ export function registerAuthRoutes(app: Express): void {
           email: newUser.email,
           first_name: newUser.first_name,
           last_name: newUser.last_name,
-          role: smmUserRole.name
+          role: 'SMM Manager User'
         }
       });
     } catch (error) {
-      console.error('Error during registration:', error);
+      console.error('Error during registration:', error.response?.data || error.message);
       
       // Обрабатываем ошибку регистрации
       if (error.response && error.response.status === 400) {
         const errorMessage = error.response.data?.errors?.[0]?.message || 'Ошибка валидации данных';
         return res.status(400).json({ 
-          error: 'Ошибка регистрации',
+          success: false,
           message: errorMessage
         });
       }
 
       res.status(500).json({ 
-        error: 'Ошибка сервера',
+        success: false,
         message: 'Произошла ошибка при регистрации пользователя'
       });
     }
