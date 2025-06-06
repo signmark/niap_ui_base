@@ -4052,38 +4052,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Используем DeepSeek для генерации ключевых слов
       try {
-        // Получаем DeepSeek ключ напрямую из Directus используя системный токен
+        // Используем глобальную систему API ключей
         console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
         
-        // Импортируем directusApiManager для прямого доступа к Directus API
-        const { directusApiManager } = await import('./directus');
+        const { globalApiKeysService } = await import('./services/global-api-keys');
+        const deepseekApiKey = await globalApiKeysService.getApiKey('deepseek', userId, token);
         
-        // Получаем системный токен администратора
-        const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || process.env.DIRECTUS_TOKEN;
-        
-        if (!systemToken) {
-          return res.status(500).json({
-            error: "Системный токен не настроен"
-          });
-        }
-        
-        // Получаем DeepSeek ключ из global_api_keys
-        const response = await directusApiManager.instance.get('/items/global_api_keys', {
-          params: {
-            fields: ['service_name', 'key_value'],
-            filter: {
-              service_name: { _eq: 'deepseek' },
-              is_active: { _eq: true }
-            }
-          },
-          headers: {
-            Authorization: `Bearer ${systemToken}`
-          }
-        });
-        
-        const deepseekData = response.data?.data?.[0];
-        
-        if (!deepseekData || !deepseekData.key_value) {
+        if (!deepseekApiKey) {
           return res.status(400).json({
             key_missing: true,
             service: "DeepSeek",
@@ -4092,7 +4067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Обновляем API ключ в сервисе напрямую
-        deepseekService.updateApiKey(deepseekData.key_value);
+        deepseekService.updateApiKey(deepseekApiKey);
         console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
         
         console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
@@ -4171,20 +4146,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
-      } catch (aiError) {
-        console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", aiError);
+      } catch (error: any) {
+        console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", error);
         return res.status(500).json({ 
           error: "Ошибка при поиске ключевых слов", 
           message: "Не удалось использовать DeepSeek API для генерации ключевых слов"
         });
       }
-    } catch (error: any) {
-      console.error("Error searching keywords:", error);
-      return res.status(500).json({ 
-        error: "Ошибка при поиске ключевых слов", 
-        message: error.message 
-      });
-    }
   });
 
   // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
