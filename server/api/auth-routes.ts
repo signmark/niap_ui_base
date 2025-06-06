@@ -62,7 +62,7 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       // Используем ID роли SMM Manager User напрямую
-      const smmUserRoleId = 'b3a6187c-8004-4d2c-91d7-417ecc0b113e';
+      const smmUserRoleId = 'c971fd93-1abc-4a40-9ab7-6cddb78e491c';
 
       // Получаем токен администратора для создания пользователя
       let adminToken: string;
