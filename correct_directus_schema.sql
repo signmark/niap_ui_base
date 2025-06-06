@@ -2,7 +2,7 @@
 -- Выполнить в PGAdmin для базы directus
 
 -- 1. business_questionnaire
-CREATE TABLE business_questionnaire (
+CREATE TABLE IF NOT EXISTS business_questionnaire (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -29,7 +29,7 @@ CREATE TABLE business_questionnaire (
 );
 
 -- 2. campaign_content
-CREATE TABLE campaign_content (
+CREATE TABLE IF NOT EXISTS campaign_content (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -58,7 +58,7 @@ CREATE TABLE campaign_content (
 );
 
 -- 3. campaign_content_sources
-CREATE TABLE campaign_content_sources (
+CREATE TABLE IF NOT EXISTS campaign_content_sources (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -79,7 +79,7 @@ CREATE TABLE campaign_content_sources (
 );
 
 -- 4. campaign_keywords
-CREATE TABLE campaign_keywords (
+CREATE TABLE IF NOT EXISTS campaign_keywords (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -96,7 +96,7 @@ CREATE TABLE campaign_keywords (
 );
 
 -- 5. campaign_trend_topics
-CREATE TABLE campaign_trend_topics (
+CREATE TABLE IF NOT EXISTS campaign_trend_topics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -117,7 +117,7 @@ CREATE TABLE campaign_trend_topics (
 );
 
 -- 6. global_api_keys
-CREATE TABLE global_api_keys (
+CREATE TABLE IF NOT EXISTS global_api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -134,7 +134,7 @@ CREATE TABLE global_api_keys (
 );
 
 -- 7. post_comment
-CREATE TABLE post_comment (
+CREATE TABLE IF NOT EXISTS post_comment (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -151,7 +151,7 @@ CREATE TABLE post_comment (
 );
 
 -- 8. source_posts
-CREATE TABLE source_posts (
+CREATE TABLE IF NOT EXISTS source_posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
@@ -171,7 +171,7 @@ CREATE TABLE source_posts (
 );
 
 -- 9. user_api_keys
-CREATE TABLE user_api_keys (
+CREATE TABLE IF NOT EXISTS user_api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status VARCHAR(255) DEFAULT 'draft',
     sort INTEGER,
