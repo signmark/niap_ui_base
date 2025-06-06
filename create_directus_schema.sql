@@ -189,16 +189,12 @@ COMMENT ON TABLE campaign_keywords IS 'Ключевые слова для кам
 
 -- 13. Вставка тестовых данных
 -- Создание роли для обычных пользователей (если не существует)
-INSERT INTO directus_roles (id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access)
+INSERT INTO directus_roles (id, name, icon, description)
 SELECT 
     '285bde69-2f04-4f3f-989c-f7dfec3dd405',
     'SMM User',
     'person',
-    'Роль для обычных пользователей SMM системы',
-    null,
-    false,
-    false,
-    true
+    'Роль для обычных пользователей SMM системы'
 WHERE NOT EXISTS (SELECT 1 FROM directus_roles WHERE id = '285bde69-2f04-4f3f-989c-f7dfec3dd405');
 
 COMMIT;
