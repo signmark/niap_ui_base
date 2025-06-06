@@ -220,42 +220,8 @@ export default function Keywords() {
           continue;
         }
 
-        // Сначала создаем или получаем ключевое слово в справочнике
-        let keywordId;
-        try {
-          // Пытаемся найти существующее ключевое слово
-          const existingKeywordResponse = await directusApi.get('/items/keywords', {
-            params: {
-              filter: {
-                keyword: {
-                  _eq: keyword.keyword
-                }
-              },
-              limit: 1
-            }
-          });
-
-          if (existingKeywordResponse.data?.data?.length > 0) {
-            keywordId = existingKeywordResponse.data.data[0].id;
-          } else {
-            // Создаем новое ключевое слово
-            const newKeywordResponse = await directusApi.post('items/keywords', {
-              keyword: keyword.keyword
-            });
-            keywordId = newKeywordResponse.data?.data?.id;
-          }
-        } catch (keywordError) {
-          console.error(`Ошибка при работе с ключевым словом "${keyword.keyword}":`, keywordError);
-          continue;
-        }
-
-        if (!keywordId) {
-          console.error(`Не удалось получить ID для ключевого слова "${keyword.keyword}"`);
-          continue;
-        }
-
         const data = {
-          keyword: keywordId, // Используем UUID ключевого слова
+          keyword: keyword.keyword,
           campaign_id: campaignId,
           trend_score: keyword.trend,
           mentions_count: keyword.competition,
