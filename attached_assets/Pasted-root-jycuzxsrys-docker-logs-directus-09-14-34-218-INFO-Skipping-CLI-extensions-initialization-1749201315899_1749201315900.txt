@@ -1,0 +1,101 @@
+root@jycuzxsrys:~# docker logs directus
+[09:14:34.218] INFO: Skipping CLI extensions initialization due to outstanding migrations.
+[09:14:34.228] INFO: Initializing bootstrap...
+[09:14:34.232] INFO: Database already initialized, skipping install
+[09:14:34.232] INFO: Running migrations...
+[09:14:34.240] INFO: Applying Remove Collection Foreign Keys...
+error: alter table "directus_fields" drop constraint "directus_fields_collection_foreign" - constraint "directus_fields_collection_foreign" of relation "directus_fields" does not exist
+    at Parser.parseErrorMessage (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:283:98)
+    at Parser.handlePacket (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  length: 162,
+  severity: 'ERROR',
+  code: '42704',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'tablecmds.c',
+  line: '12276',
+  routine: 'ATExecDropConstraint'
+}
+[09:14:41.373] INFO: Skipping CLI extensions initialization due to outstanding migrations.
+[09:14:41.385] INFO: Initializing bootstrap...
+[09:14:41.390] INFO: Database already initialized, skipping install
+[09:14:41.390] INFO: Running migrations...
+[09:14:41.416] INFO: Applying Remove Collection Foreign Keys...
+error: alter table "directus_fields" drop constraint "directus_fields_collection_foreign" - constraint "directus_fields_collection_foreign" of relation "directus_fields" does not exist
+    at Parser.parseErrorMessage (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:283:98)
+    at Parser.handlePacket (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  length: 162,
+  severity: 'ERROR',
+  code: '42704',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'tablecmds.c',
+  line: '12276',
+  routine: 'ATExecDropConstraint'
+}
+[09:14:48.623] INFO: Skipping CLI extensions initialization due to outstanding migrations.
+[09:14:48.632] INFO: Initializing bootstrap...
+[09:14:48.635] INFO: Database already initialized, skipping install
+[09:14:48.636] INFO: Running migrations...
+[09:14:48.641] INFO: Applying Remove Collection Foreign Keys...
+error: alter table "directus_fields" drop constraint "directus_fields_collection_foreign" - constraint "directus_fields_collection_foreign" of relation "directus_fields" does not exist
+    at Parser.parseErrorMessage (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:283:98)
+    at Parser.handlePacket (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/directus/node_modules/.pnpm/pg-protocol@1.7.1/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  length: 162,
+  severity: 'ERROR',
+  code: '42704',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'tablecmds.c',
+  line: '12276',
+  routine: 'ATExecDropConstraint'
+}
+root@jycuzxsrys:~#

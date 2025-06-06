@@ -6,7 +6,7 @@ echo "Создание пользователей через API Directus"
 echo "Получение токена администратора..."
 ADMIN_TOKEN=$(curl -s -X POST https://directus.roboflow.tech/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@roboflow.tech","password":"admin123456"}' | \
+  -d '{"email":"admin@example.com","password":"d1r3ctu5"}' | \
   jq -r '.data.access_token')
 
 if [ "$ADMIN_TOKEN" = "null" ] || [ -z "$ADMIN_TOKEN" ]; then
