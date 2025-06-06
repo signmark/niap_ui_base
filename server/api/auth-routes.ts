@@ -65,19 +65,23 @@ export function registerAuthRoutes(app: Express): void {
       let adminToken: string;
       
       try {
-        // Получаем токен администратора для регистрации пользователя
-        const adminEmail = 'admin@roboflow.tech';
-        const adminPassword = 'Qtp23dh7';
+        // Используем существующий токен администратора из DirectusAuthManager
+        const { directusAuthManager } = await import('../services/directus-auth-manager.js');
+        const adminSession = await directusAuthManager.getAdminSession();
         
-        console.log('Obtaining admin token for user registration');
-        
-        const adminLoginResponse = await directusApiManager.post('/auth/login', {
-          email: adminEmail,
-          password: adminPassword
-        });
-        
-        adminToken = adminLoginResponse.data.data.access_token;
-        console.log('Admin token obtained successfully for user registration');
+        if (adminSession && adminSession.token) {
+          adminToken = adminSession.token;
+          console.log('Using existing admin session token for user registration');
+        } else {
+          // Fallback: получаем токен через планировщик
+          const { publishScheduler } = await import('../services/publish-scheduler.js');
+          adminToken = await publishScheduler.getSystemToken();
+          
+          if (!adminToken) {
+            throw new Error('Не удалось получить токен администратора');
+          }
+          console.log('Using system token from scheduler for user registration');
+        }
       } catch (error) {
         console.error('Admin auth error for registration:', error.response?.data || error.message);
         throw new Error('Не удалось получить токен администратора для создания пользователя');
