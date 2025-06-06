@@ -8073,7 +8073,9 @@ Return your response as a JSON array in this exact format:
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        console.log(`Creating new campaign for user ${userId}`);
+        console.log(`[CAMPAIGN_CREATE] Creating new campaign for user ${userId}`);
+        console.log(`[CAMPAIGN_CREATE] Campaign data:`, { name, description });
+        console.log(`[CAMPAIGN_CREATE] Using token:`, token ? `${token.substring(0, 10)}...` : 'NO_TOKEN');
         
         // Создаем кампанию через Directus API
         const response = await directusApi.post('/items/user_campaigns', {
@@ -8086,6 +8088,8 @@ Return your response as a JSON array in this exact format:
           }
         });
         
+        console.log(`[CAMPAIGN_CREATE] Directus response:`, response.data);
+        
         // Преобразуем ответ в нужный формат
         const newCampaign = {
           id: response.data.data.id,
@@ -8095,7 +8099,7 @@ Return your response as a JSON array in this exact format:
           createdAt: response.data.data.created_at
         };
         
-        console.log(`Created new campaign for user ${userId}:`, newCampaign);
+        console.log(`[CAMPAIGN_CREATE] Created new campaign for user ${userId}:`, newCampaign);
         
         // Возвращаем результат
         return res.status(201).json({ 
@@ -8103,14 +8107,24 @@ Return your response as a JSON array in this exact format:
           data: newCampaign
         });
       } catch (error) {
-        console.error("Error creating campaign:", error);
+        console.error("[CAMPAIGN_CREATE] Error creating campaign:", error);
         if (axios.isAxiosError(error)) {
-          console.error('Directus API error details:', {
+          console.error('[CAMPAIGN_CREATE] Directus API error details:', {
             status: error.response?.status,
-            data: error.response?.data
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            url: error.config?.url,
+            method: error.config?.method
+          });
+          
+          // Возвращаем более детальную ошибку
+          return res.status(error.response?.status || 500).json({ 
+            error: "Не удалось создать кампанию", 
+            details: error.response?.data || error.message,
+            status: error.response?.status
           });
         }
-        return res.status(500).json({ error: "Не удалось создать кампанию" });
+        return res.status(500).json({ error: "Не удалось создать кампанию", details: error.message });
       }
     } catch (error) {
       console.error("Error creating campaign:", error);
