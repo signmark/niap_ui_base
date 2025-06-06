@@ -5,8 +5,8 @@
 import axios from 'axios';
 
 const DIRECTUS_URL = 'https://directus.roboflow.tech';
-const ADMIN_EMAIL = 'admin@roboflow.tech';
-const ADMIN_PASSWORD = 'roboflow_admin_2025';
+const ADMIN_EMAIL = 'lbrspb@gmail.com';
+const ADMIN_PASSWORD = 'QtpZ3dh7';
 
 async function authenticate() {
   try {
@@ -50,7 +50,7 @@ async function testCampaignCreation(token) {
     console.log('Тестирование создания кампании...');
     
     const campaignData = {
-      name: 'Test Campaign',
+      title: 'Test Campaign',
       description: 'Test Description',
       user_id: '2b4812a5-5b7f-4cef-b762-30cc4379431d'
     };
