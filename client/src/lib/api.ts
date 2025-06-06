@@ -3,7 +3,7 @@ import { refreshAccessToken } from './auth';
 
 // Create an instance of axios for Directus API
 export const directusApi = axios.create({
-  baseURL: 'https://directus.nplanner.ru',
+  baseURL: 'https://directus.roboflow.tech',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*'

@@ -417,7 +417,7 @@ export class DirectusCrud {
    * @returns Новый токен доступа и информация об истечении
    */
   async refreshToken(refreshToken: string): Promise<DirectusAuthResult> {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
     
     try {
       log('Обновление токена доступа', this.logPrefix);
