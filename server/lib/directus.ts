@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
 
 export const directusApi = axios.create({
   baseURL: DIRECTUS_URL,
