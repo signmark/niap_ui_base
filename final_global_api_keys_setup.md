@@ -1,25 +1,15 @@
-# Финальная настройка Global API Keys
+# Финальная настройка всех основных таблиц системы
 
 ## Шаг 1: Выполните SQL
-Выполните SQL из файла `simple_global_api_keys.sql` в PostgreSQL админке:
+Выполните SQL из файла `create_essential_tables.sql` в PostgreSQL админке.
 
-```sql
-CREATE TABLE IF NOT EXISTS global_api_keys (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    service_name VARCHAR(100) NOT NULL UNIQUE,
-    api_key TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    description TEXT
-);
-
-CREATE INDEX IF NOT EXISTS idx_global_api_keys_service ON global_api_keys(service_name);
-
-COMMENT ON TABLE global_api_keys IS 'Глобальные API ключи для AI сервисов';
-COMMENT ON COLUMN global_api_keys.service_name IS 'Сервис';
-COMMENT ON COLUMN global_api_keys.api_key IS 'API Ключ';
-COMMENT ON COLUMN global_api_keys.is_active IS 'Активен';
-COMMENT ON COLUMN global_api_keys.description IS 'Описание';
-```
+Этот файл создает все основные таблицы:
+1. **user_campaigns** - кампании пользователей
+2. **global_api_keys** - глобальные API ключи со всеми реальными ключами
+3. **campaign_content** - контент кампаний  
+4. **user_api_keys** - персональные API ключи пользователей
+5. **campaign_trend_topics** - трендовые темы кампаний
+6. **campaign_keywords** - ключевые слова кампаний
 
 ## Шаг 2: Обновите схему Directus
 ```bash
@@ -27,11 +17,16 @@ node refresh_directus_schema.js
 ```
 
 ## Результат
-В Directus админке появится таблица Global API Keys с только нужными полями:
-- ID
-- Сервис  
-- API Ключ
-- Активен
-- Описание
+В Directus админке появятся все таблицы с только нужными полями, без лишних полей.
 
-Никаких лишних полей (created_at, updated_at и прочее) не будет.
+Global API Keys будет содержать все реальные ключи:
+- Claude
+- FAL AI
+- XMLRiver
+- Qwen
+- DeepSeek
+- Gemini
+- Perplexity
+- Apify
+
+Система готова к работе с полным набором таблиц и данных.
