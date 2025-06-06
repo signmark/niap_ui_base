@@ -1,0 +1,92 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+auth.ts:93 Токен успешно обновлен через API
+store.ts:41 Сохранение авторизации: token=true, userId=2b4812a5-5b7f-4cef-b762-30cc4379431d
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:109 Токен успешно обновлен, длина нового токена: 321
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 67d5a90d-c907-46d1-a11c-ca7e2f7f9a47
+index.tsx:42 Проверка принадлежности кампании пользователю: {campaignId: '67d5a90d-c907-46d1-a11c-ca7e2f7f9a47', userId: '2b4812a5-5b7f-4cef-b762-30cc4379431d'}
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '67d5a90d-c907-46d1-a11c-ca7e2f7f9a47', userId: '2b4812a5-5b7f-4cef-b762-30cc4379431d'}
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+index.tsx:65 Используем глобально выбранную кампанию: Test Campaign
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Test Campaign
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: false, timestamp: 1749210022590}
+store.ts:121 Пользователь не является администратором
+store.ts:81 Устанавливаем статус администратора: false
+CampaignSelector.tsx:69 Campaigns loaded: 2
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "Test Campaign"
+campaignStore.ts:88 Установлена активная кампания: id=67d5a90d-c907-46d1-a11c-ca7e2f7f9a47, name=Test Campaign
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+SettingsDialog.tsx:105 Successfully fetched 0 API keys
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+index.tsx:233 
+            
+            
+           POST https://directus.roboflow.tech/items/campaign_keywords 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=188b6ffb:1637
+xhr @ axios.js?v=188b6ffb:1517
+dispatchRequest @ axios.js?v=188b6ffb:1992
+Promise.then
+_request @ axios.js?v=188b6ffb:2195
+request @ axios.js?v=188b6ffb:2104
+httpMethod @ axios.js?v=188b6ffb:2242
+wrap @ axios.js?v=188b6ffb:8
+handleSaveSelected @ index.tsx:233
+await in handleSaveSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=188b6ffb:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=188b6ffb:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=188b6ffb:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=188b6ffb:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=188b6ffb:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=188b6ffb:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=188b6ffb:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=188b6ffb:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=188b6ffb:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=188b6ffb:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=188b6ffb:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=188b6ffb:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=188b6ffb:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5449
+index.tsx:264 Error saving keywords: Error: insert into "campaign_keywords" ("campaign_id", "date_created", "keyword", "last_checked", "mentions_count", "trend_score") values ($1, $2, $3, $4, $5, $6) returning "id" - invalid input syntax for type uuid: "хуйло"
+    at directus.ts:71:11
+    at async Axios.request (axios.js?v=188b6ffb:2104:14)
+    at async handleSaveSelected (index.tsx:233:11)
+    at Axios.request (axios.js?v=188b6ffb:2108:41)
+    at async handleSaveSelected (index.tsx:233:11)
+overrideMethod @ hook.js:608
+handleSaveSelected @ index.tsx:264
+await in handleSaveSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=188b6ffb:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=188b6ffb:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=188b6ffb:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=188b6ffb:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=188b6ffb:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=188b6ffb:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=188b6ffb:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=188b6ffb:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=188b6ffb:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=188b6ffb:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=188b6ffb:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=188b6ffb:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=188b6ffb:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=188b6ffb:5449
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(0), searchResults: Array(14)}
