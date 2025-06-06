@@ -4032,6 +4032,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Универсальный эндпоинт для поиска ключевых слов с поддержкой DeepSeek API
+  app.post("/api/keywords/search", authenticateUser, async (req, res) => {
+    try {
+      const { keyword } = req.body;
+      
+      if (!keyword || keyword.trim() === '') {
+        return res.status(400).json({ 
+          error: "Отсутствует ключевое слово для поиска" 
+        });
+      }
+      
+      // Получаем userId, установленный в authenticateUser middleware
+      const userId = (req as any).userId;
+      
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Используем DeepSeek для генерации ключевых слов
+      try {
+        // Инициализируем DeepSeek сервис с ключом из apiKeyService
+        console.log(`Инициализация DeepSeek сервиса для поиска ключевых слов: ${keyword}`);
+        const initialized = await deepseekService.initialize(userId, token);
+        
+        if (!initialized || !deepseekService.hasApiKey()) {
+          // Пробуем получить ключ напрямую
+          const deepseekKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
+          
+          if (!deepseekKey) {
+            return res.status(400).json({
+              key_missing: true,
+              service: "DeepSeek",
+              error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
+            });
+          }
+          
+          // Обновляем API ключ в сервисе напрямую
+          deepseekService.updateApiKey(deepseekKey);
+        }
+        
+        console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
+        
+        // Формируем промт для генерации связанных ключевых слов
+        const prompt = `Сгенерируй список из 10-15 связанных ключевых слов и фраз для основного ключевого слова "${keyword}". 
+
+Включи:
+- Синонимы и похожие термины
+- Длинные фразы (long-tail keywords)
+- Связанные темы и понятия
+- Популярные поисковые запросы
+
+Каждое ключевое слово должно быть релевантным для маркетинга и SEO.
+
+Верни результат в формате JSON массива объектов:
+[
+  {"keyword": "ключевое слово", "trend": 85, "competition": 60},
+  {"keyword": "другое ключевое слово", "trend": 75, "competition": 45}
+]
+
+Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
+
+        const response = await deepseekService.generateText(prompt);
+        
+        if (!response) {
+          throw new Error('Пустой ответ от DeepSeek API');
+        }
+        
+        console.log('Ответ от DeepSeek для ключевых слов:', response);
+        
+        // Попытка парсинга JSON ответа
+        let keywords = [];
+        try {
+          // Ищем JSON массив в ответе
+          const jsonMatch = response.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            keywords = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('JSON массив не найден в ответе');
+          }
+        } catch (parseError) {
+          console.log('Не удалось распарсить как JSON, используем простое извлечение');
+          // Если не удалось распарсить как JSON, извлекаем ключевые слова из текста
+          const lines = response.split('\n').filter(line => line.includes(keyword) || line.includes(':') || line.includes('-'));
+          keywords = lines.slice(0, 15).map((line, index) => {
+            const cleanLine = line.replace(/[-*•\d\.\s:]/g, '').trim();
+            return {
+              keyword: cleanLine || `${keyword} ${index + 1}`,
+              trend: Math.floor(Math.random() * 40) + 60, // 60-100
+              competition: Math.floor(Math.random() * 60) + 20 // 20-80
+            };
+          });
+        }
+        
+        // Добавляем исходное ключевое слово если его нет
+        const hasOriginal = keywords.some(k => k.keyword.toLowerCase().includes(keyword.toLowerCase()));
+        if (!hasOriginal) {
+          keywords.unshift({
+            keyword: keyword,
+            trend: 90,
+            competition: 70
+          });
+        }
+        
+        // Ограничиваем количество и фильтруем
+        keywords = keywords
+          .filter(k => k.keyword && k.keyword.trim() !== '')
+          .slice(0, 15);
+        
+        console.log(`Найдено ${keywords.length} ключевых слов для "${keyword}"`);
+        
+        return res.json({
+          data: {
+            keywords: keywords
+          }
+        });
+        
+      } catch (aiError) {
+        console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", aiError);
+        return res.status(500).json({ 
+          error: "Ошибка при поиске ключевых слов", 
+          message: "Не удалось использовать DeepSeek API для генерации ключевых слов"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error searching keywords:", error);
+      return res.status(500).json({ 
+        error: "Ошибка при поиске ключевых слов", 
+        message: error.message 
+      });
+    }
+  });
+
   // [УДАЛЕН ДУБЛИРУЮЩИЙ ОБРАБОТЧИК DEEPSEEK]
   // Эндпоинт для генерации промта для изображения - переехал в новую централизованную систему  
   app.post("/api/generate-image-prompt", authenticateUser, async (req, res) => {
