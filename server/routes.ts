@@ -7293,7 +7293,6 @@ Return your response as a JSON array in this exact format:
             },
             ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
           }),
-          sort: ['-created_at'],
           meta: 'total_count,filter_count',
           limit: limit > 0 ? limit : 10000  // Устанавливаем большой лимит вместо -1
         };
