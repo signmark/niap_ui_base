@@ -25,7 +25,7 @@ fi
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
-POSTGRES_DB="smm_manager"
+POSTGRES_DB="directus"
 POSTGRES_PASSWORD="QtpZ3dh7"
 
 echo "📍 Восстановление из файла: $BACKUP_FILE"

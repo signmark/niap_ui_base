@@ -8,7 +8,7 @@ echo "🗄️ Создание полного бэкапа данных Directus
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
-POSTGRES_DB="smm_manager"
+POSTGRES_DB="directus"
 POSTGRES_PASSWORD="QtpZ3dh7"
 
 # Список важных таблиц для бэкапа
@@ -162,10 +162,10 @@ cat > "$BACKUP_DIR/backup_info.txt" << EOF
 - directus_relations
 
 Для восстановления на новом сервере используйте:
-pg_restore -h localhost -p 5432 -U postgres -d smm_manager --verbose --clean --if-exists full_database.dump
+pg_restore -h localhost -p 5432 -U postgres -d directus --verbose --clean --if-exists full_database.dump
 
 Или в SQL формате:
-psql -h localhost -p 5432 -U postgres -d smm_manager < full_database.sql
+psql -h localhost -p 5432 -U postgres -d directus < full_database.sql
 EOF
 
 # Проверить размеры файлов

@@ -8,7 +8,7 @@ echo "📋 Экспорт схемы коллекций Directus (без дан�
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
-POSTGRES_DB="smm_manager"
+POSTGRES_DB="directus"
 POSTGRES_PASSWORD="QtpZ3dh7"
 
 # Создать директорию для схемы
@@ -125,11 +125,11 @@ cat > "$SCHEMA_DIR/schema_info.txt" << EOF
 
 Для создания структуры на новом сервере:
 1. Создайте пустую базу данных
-2. Выполните: psql -d smm_manager < full_schema.sql
+2. Выполните: psql -d directus < full_schema.sql
 
 Или поэтапно:
-1. psql -d smm_manager < directus_system_schema.sql
-2. psql -d smm_manager < user_tables_schema.sql
+1. psql -d directus < directus_system_schema.sql
+2. psql -d directus < user_tables_schema.sql
 EOF
 
 # Создание скрипта импорта
@@ -143,7 +143,7 @@ echo "Импорт схемы Directus на новый сервер"
 POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
-POSTGRES_DB="smm_manager"
+POSTGRES_DB="directus"
 POSTGRES_PASSWORD="QtpZ3dh7"
 
 # Проверить аргументы
