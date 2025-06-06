@@ -9,7 +9,7 @@ POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
 POSTGRES_DB="smm_manager"
-POSTGRES_PASSWORD="roboflow_postgres_2025"
+POSTGRES_PASSWORD="QtpZ3dh7"
 
 # Список важных таблиц для бэкапа
 IMPORTANT_TABLES=(

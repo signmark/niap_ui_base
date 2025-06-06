@@ -26,7 +26,7 @@ POSTGRES_HOST="localhost"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
 POSTGRES_DB="smm_manager"
-POSTGRES_PASSWORD="roboflow_postgres_2025"
+POSTGRES_PASSWORD="QtpZ3dh7"
 
 echo "📍 Восстановление из файла: $BACKUP_FILE"
 echo "📍 База данных: $POSTGRES_DB"
