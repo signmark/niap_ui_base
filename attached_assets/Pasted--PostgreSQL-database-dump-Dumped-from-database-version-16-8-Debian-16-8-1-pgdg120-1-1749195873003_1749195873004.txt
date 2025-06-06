@@ -1,0 +1,45 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.8 (Debian 16.8-1.pgdg120+1)
+-- Dumped by pg_dump version 16.8 (Debian 16.8-1.pgdg120+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Data for Name: directus_users; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, appearance, theme_dark, theme_light, theme_light_overrides, theme_dark_overrides, is_smm_admin, is_smm_super, expire_date) FROM stdin;
+a372c227-923f-4221-b713-6c3d3b6977d3	Sog	Been	cgitt55@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$97ZMbiSEXzoLfOGlC0EYIg$MVFbpqXFSbYIvvtkXM489SWintdb/8w2xQAlHgOcxGU	\N	\N	\N	\N	\N	\N	\N	active	346bbfe5-c0b5-451b-b2bb-b8596e57c3e8	\N	2025-05-30 13:47:48.32+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	2025-07-03 12:00:00
+11cd81e7-471c-43bd-9202-de05058ab95e	Павел	Крюков	kryukov.p@nplanner.ru	$argon2id$v=19$m=65536,t=3,p=4$OIBRyzX/9ZjbCfYR3hLWjg$Gfm3uZJkSPzKFPERJ9uJQzra8KItIVHXnOtO5O44kfU	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-06-04 10:39:53.484+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+2d48e263-f562-4e3f-a235-e597fd62d4d8	Dmitry	Zhdanov	signmark@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$r1zeGFpdG1KEK+hkT/rpVw$1MZZyBqtkPkRpt5HKUFDoiFjij8bHXWglo8jUJJb2VA	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	trfSEkP0FeLeZGj-PtflsGz-n3sTnOd8	2025-06-05 15:30:33.065+00	/users/2d48e263-f562-4e3f-a235-e597fd62d4d8	default	Admin	\N	t	\N	\N	\N	\N	\N	f	f	2025-06-08 00:00:00
+df0a82dc-5922-4917-beef-3d2013112cc4	НИАП	\N	i.zelenin@nplanner.ru	$argon2id$v=19$m=65536,t=3,p=4$WK5l7WdVsuDTVoJtdelymg$6Zmh1vvlwIs/ZczO8qVbPUtVzFfA7XWyxY6yMBLEv98	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-06-05 16:59:04.744+00	/users/a372c227-923f-4221-b713-6c3d3b6977d3	default	\N	\N	t	\N	\N	\N	\N	\N	t	t	\N
+cfc2c181-d982-40f0-911b-b503cedc27ad	RomanG	\N	grib20@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$DEj3ezA2mRbKfXS2xBdrKw$mAEOmmKlmP4MYTa7FUPQAGDcdAZ4SBnl6Om4JSVBEBs	\N	\N	\N	\N	\N	ru-RU	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	OxMn1fpsUchI0Gg0Iqp1Gg5aQHoSOUwN	2025-06-05 15:31:34.081+00	/content/campaign_content/55476130-576f-4fba-97f9-2d814e951de0	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+53921f16-f51d-4591-80b9-8caa4fde4d13	Антон	\N	lbrspb@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$r1zeGFpdG1KEK+hkT/rpVw$1MZZyBqtkPkRpt5HKUFDoiFjij8bHXWglo8jUJJb2VA	\N	\N	Лаборатория бизнес решений	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	wj9Z9srRD0QVROTOC3BNSfY97yKKu-vF	2025-06-06 07:42:53.956+00	/settings/data-model	default	\N	\N	t	\N	\N	\N	\N	\N	t	t	\N
+e873dfb1-1bf2-48f3-8300-7332575dc283	Мурат	Каде	murat.kade@nplanner.ru	$argon2id$v=19$m=65536,t=3,p=4$R7uQ6DekN3SdyhcDwdkVzQ$oVCD4FDUmFRirRMD5fW9BKGEGeNjk8C4IjnF1DWJbD8	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-30 15:46:39.912+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+24d1aef6-9e35-40a1-9101-ef3597287f06	Елена	Панкова	elena_pankova@nplanner.ru	$argon2id$v=19$m=65536,t=3,p=4$YPC0PCdRfwstaPkLtWy25w$+65m0g1bXA7Fw0vNYyg491BHy7+jWvGAM9yNHgbk3r0	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-12 15:26:18.351+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+ec9abe0f-f133-4d14-b311-9600208b284a	Юлия	Щеголева 	Shegolevau@mail.ru	$argon2id$v=19$m=65536,t=3,p=4$F7hob7deuY1yPdV6D+mU0w$VcfpmSP5FleUFCyraGNg1jD8ghNdk0uyFnp8SCsFR7g	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-16 10:40:23.857+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	\N
+9c059554-f823-4331-8038-2f144bb47c5d	Вадим	Киселев	vadim.k@nplanner.ru	$argon2id$v=19$m=65536,t=3,p=4$C6RDy7/tLAbAzogSO+LDKw$yFl7/QPS9UjphJwUG2om47UBahQzS9e38hhPfh2GVK0	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-06-04 10:40:10.34+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+8f75cc7c-2ea6-43b2-813a-9ddab0c57e0e	Наталья	Мастерских	natalya5518@mail.ru	$argon2id$v=19$m=65536,t=3,p=4$mwDYmu+E2YrIUndlL/Ou8A$TI8iA32t5NQ//TZtjAMyoFW/DN3/kD6lMlBKI+UcMKg	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-12 13:03:50.019+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	\N	f	\N
+3f384fc4-232d-4be2-a72e-ee7375939545	Вадим	Тестер	vpmail86@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$imH2sC3vTUYi2mG+48K+ww$X5mCSRs7bAdrwhiyxB0+OSrIiyPPikt9a7fp6lUknyQ	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-26 08:30:03.743+00	/content/campaign_content/5fea8180-f9c4-4efa-bb43-1e6dd1e6104a	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	2025-07-05 00:00:00
+3c437aa4-167b-4818-ae69-842f5a521237	Тестовый	\N	testuser@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$jDahznnUA9cGkIy9SxrY5w$yMBPvftbP2jLQmgWZtV3PIIaL4ZtHXUN7pCrI0qYqfA	\N	\N	\N	\N	\N	\N	\N	active	285bde69-2f04-4f3f-989c-f7dfec3dd405	\N	2025-05-21 08:26:50.971+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	\N
+7638fea6-21ba-4fa2-8ccb-76b6043bed77	Roman	G	romzes-tayga@inbox.ru	$argon2id$v=19$m=65536,t=3,p=4$uLQD7dBHv5SelrWGIMI/JQ$+piYB0qrRhy2xV9MYRUVVw2PWfjsipQmrMvwiIkjKlA	\N	\N	\N	\N	\N	\N	\N	active	346bbfe5-c0b5-451b-b2bb-b8596e57c3e8	\N	2025-05-23 13:33:55.28+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	\N
+6ad4b956-f096-4d42-ab92-fcfdc291d576	Dmitry	Zhdanov	it.zhdanov@gmail.com	$argon2id$v=19$m=65536,t=3,p=4$1bcXhzijDTXyZQK7yUeUSw$JsnCnpvG+180Dc8xOPg/KgLZ7r9zDuYFkPU5kvgMhI4	\N	\N	\N	\N	\N	\N	\N	active	346bbfe5-c0b5-451b-b2bb-b8596e57c3e8	\N	2025-05-22 10:12:18.249+00	\N	default	\N	\N	t	\N	\N	\N	\N	\N	f	f	\N
+\.
+
+
+--
+-- PostgreSQL database dump complete
+--
+
