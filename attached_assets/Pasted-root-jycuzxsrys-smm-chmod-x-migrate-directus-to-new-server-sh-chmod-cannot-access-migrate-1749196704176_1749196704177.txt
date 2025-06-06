@@ -1,0 +1,35 @@
+root@jycuzxsrys:~/smm# chmod +x ./migrate_directus_to_new_server.sh
+chmod: cannot access './migrate_directus_to_new_server.sh': No such file or directory
+root@jycuzxsrys:~/smm# ls
+attached_assets              Dockerfile-n8n              node_modules                      test-campaign-context-demo.js             test-gemini-proxy.cjs              test-vertex-ai-gemini-2.5.js
+AUTHORIZATION_GUIDE.md       docs                        package.json                      test-campaign-data-direct.js              test-gemini-proxy.js               test-vertex-ai-simple.js
+aws-package.json             drizzle.config.ts           package-lock.json                 test-campaign-data-integration.js         test-gemini-proxy-success.cjs      theme.json
+backup                       enable-vertex-ai.js         postcss.config.js                 test-campaign-data.js                     test-gemini-service.cjs            tsconfig.json
+backup_directus_data.sh      export_directus_schema.sh   project_docs                      test-claude-campaign-final.js             test-gemini-simple.cjs             update-claude-key.js
+client                       fix-analytics.ts            quick-test-remaining-services.js  test-claude-campaign-integration.js       test-gemini-socks.cjs              update-qwen-direct.js
+config                       fix-claude-api-key.js       README.md                         test-content-generation-with-campaign.js  test-gemini-vertex-fixed.js        update-qwen-key-direct.js
+custom_modules               fixed-analytics-service.ts  replit_agent                      test-content-response.json                test-http-proxy.cjs                update-qwen-working-key.js
+debug-env.js                 fix-env-update.js           replit.nix                        test-direct-vertex-ai.js                  test-new-qwen-key.js               uploads
+demo-campaign-function.js    fix-qwen-api-key.js         restore-app.mjs                   test-gemini-25-correct-names.js           test-real-campaign-generation.js   vite.config.ts
+deploy                       fix-qwen-production-key.js  restore_directus_data.sh          test-gemini-25-direct.js                  test_scripts                       План_работ_SMM_Manager.md
+deploy_from_root.sh          fix-site-analysis.js        scripts                           test-gemini-2-flash.js                    test-socks-proxy.cjs               ТЗ_доработки_SMM_Manager.md
+deploy_roboflow_fixed.sh     generated-icon.png          server                            test-gemini-api.js                        test-socks-proxy-server.js         ТЗ_Новая_Аналитика_SMM_Manager.md
+deploy_roboflow.sh           implementation_docs         shared                            test-gemini-campaign-data.js              test-socks-proxy-server.mjs        ТЗ_Система_Аналитики.md
+deploy_roboflow_simple.sh    install-xray.sh             smmniap_static                    test-gemini-campaign-fix.js               test-socks-proxy-server-v2.mjs     ТЗ_Фикс_Бага_Публикации.md
+docker-compose.roboflow.yml  layout_update.js            tailwind.config.ts                test-gemini-clean-service.js              test-text-enhancement-complete.js
+Dockerfile                   log.txt                     test-available-models.js          test-gemini-connection.js                 test-vertex-ai-direct.js
+root@jycuzxsrys:~/smm# ./migrate_directus_to_new_server.sh
+-bash: ./migrate_directus_to_new_server.sh: No such file or directory
+root@jycuzxsrys:~/smm# git status
+On branch roboflow
+Your branch is up to date with 'origin/roboflow'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   deploy_roboflow_fixed.sh
+        modified:   package-lock.json
+        modified:   package.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+root@jycuzxsrys:~/smm#
