@@ -24,7 +24,7 @@ echo "🗄️ Создание новой базы данных..."
 docker exec root-postgres-1 psql -U postgres -c "CREATE DATABASE directus;"
 
 echo "📥 Восстановление данных из бэкапа..."
-docker exec -i root-postgres-1 psql -U postgres < /root/backup/all_databases_20250608_020001.sql
+docker exec -i root-postgres-1 psql -U postgres < /root/backup/all_databases_20250606_020001.sql
 
 # Запустить Directus
 echo "🚀 Запуск Directus..."
