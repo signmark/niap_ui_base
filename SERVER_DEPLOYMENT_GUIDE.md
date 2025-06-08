@@ -17,8 +17,8 @@ git pull origin main
 ### Step 2: Run Deployment Script
 ```bash
 # Make script executable and run
-chmod +x deploy.sh
-./deploy.sh
+chmod +x deploy_simple.sh
+./deploy_simple.sh
 ```
 
 ### Step 3: Verify Deployment

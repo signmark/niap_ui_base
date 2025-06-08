@@ -19,10 +19,11 @@ export function detectEnvironment(): EnvironmentConfig {
   const envPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
   const envUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
   
-  // Check if we're in Docker environment
+  // Check if we're in Docker environment or production server
   const isDocker = process.env.DOCKER_ENV === 'true' || 
                    process.env.NODE_ENV === 'production' ||
-                   process.platform === 'linux' && process.env.HOME === '/root';
+                   (process.platform === 'linux' && process.env.HOME === '/root') ||
+                   process.cwd().includes('/root/smm');
                    
   // Check if we're in Replit environment
   const isReplit = process.env.REPL_ID !== undefined || 
