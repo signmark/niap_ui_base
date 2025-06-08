@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from './store';
 
-export const DIRECTUS_URL = 'https://directus.roboflow.tech';
+export const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055';
 
 export const directusApi = axios.create({
   baseURL: DIRECTUS_URL,
