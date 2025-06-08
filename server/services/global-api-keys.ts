@@ -6,6 +6,7 @@
 import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 import { directusCrud } from './directus-crud';
+import { directusAuthManager } from './directus-auth-manager';
 import { ApiServiceName } from './api-keys';
 
 /**
@@ -121,17 +122,14 @@ export class GlobalApiKeysService {
    */
   private async getSystemToken(): Promise<string | null> {
     try {
-      // Используем directusCrud для авторизации, так как /auth/login endpoint недоступен
-      const authResult = await directusCrud.login(
-        process.env.DIRECTUS_ADMIN_EMAIL || '',
-        process.env.DIRECTUS_ADMIN_PASSWORD || ''
-      );
+      // Используем directusAuthManager для получения рабочего токена администратора
+      const adminSession = await directusAuthManager.getAdminSession();
       
-      if (authResult?.access_token) {
-        log('Системный токен получен через directusCrud', 'global-api-keys');
-        return authResult.access_token;
+      if (adminSession?.token) {
+        log('Системный токен получен через directusAuthManager', 'global-api-keys');
+        return adminSession.token;
       } else {
-        console.error('Некорректный ответ при авторизации через directusCrud:', authResult);
+        console.error('Не удалось получить сессию администратора через directusAuthManager');
         return null;
       }
     } catch (error) {
