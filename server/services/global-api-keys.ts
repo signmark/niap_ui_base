@@ -121,16 +121,17 @@ export class GlobalApiKeysService {
    */
   private async getSystemToken(): Promise<string | null> {
     try {
-      // Используем учетные данные администратора из переменных окружения
-      const response = await this.directusApi.post('/auth/login', {
-        email: process.env.DIRECTUS_ADMIN_EMAIL,
-        password: process.env.DIRECTUS_ADMIN_PASSWORD
-      });
+      // Используем directusCrud для авторизации, так как /auth/login endpoint недоступен
+      const authResult = await directusCrud.login(
+        process.env.DIRECTUS_ADMIN_EMAIL || '',
+        process.env.DIRECTUS_ADMIN_PASSWORD || ''
+      );
       
-      if (response.data?.data?.access_token) {
-        return response.data.data.access_token;
+      if (authResult?.access_token) {
+        log('Системный токен получен через directusCrud', 'global-api-keys');
+        return authResult.access_token;
       } else {
-        console.error('Некорректный ответ при авторизации в Directus:', response.data);
+        console.error('Некорректный ответ при авторизации через directusCrud:', authResult);
         return null;
       }
     } catch (error) {
