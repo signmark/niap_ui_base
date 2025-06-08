@@ -16,7 +16,7 @@
     "@aws-sdk/client-s3": "^3.787.0",
     "@aws-sdk/lib-storage": "^3.787.0",
     "@aws-sdk/s3-request-presigner": "^3.787.0",
-    "@directus/sdk": "^18.0.3",
+    "@directus/sdk": "^17.0.0",
     "@fal-ai/client": "^1.4.0",
     "@fal-ai/serverless-client": "^0.15.0",
     "@google/generative-ai": "^0.24.0",
