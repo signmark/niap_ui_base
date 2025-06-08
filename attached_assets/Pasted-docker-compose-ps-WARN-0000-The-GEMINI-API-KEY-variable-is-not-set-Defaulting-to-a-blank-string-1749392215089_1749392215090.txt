@@ -1,0 +1,38 @@
+docker-compose ps
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Stopping 8/8
+ ✔ Container root-directus-1  Stopped                                                                                                                                                                       0.8s
+ ✔ Container root-smmniap-1   Stopped                                                                                                                                                                       0.4s
+ ✔ Container root-stage-1     Stopped                                                                                                                                                                       1.0s
+ ✔ Container root-n8n-1       Stopped                                                                                                                                                                       0.9s
+ ✔ Container root-smm-1       Stopped                                                                                                                                                                       1.0s
+ ✔ Container root-pgadmin-1   Stopped                                                                                                                                                                       2.0s
+ ✔ Container root-traefik-1   Stopped                                                                                                                                                                      10.4s
+ ✔ Container root-postgres-1  Stopped                                                                                                                                                                       0.2s
+Error response from daemon: container beadd374b0c84b931b3fc8d5a77ac343433359b5ff443a717ee5fb0bb6134df2 is not running
+Error response from daemon: container beadd374b0c84b931b3fc8d5a77ac343433359b5ff443a717ee5fb0bb6134df2 is not running
+Error response from daemon: container beadd374b0c84b931b3fc8d5a77ac343433359b5ff443a717ee5fb0bb6134df2 is not running
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+[+] Running 8/8
+ ✔ Container root-postgres-1  Started                                                                                                                                                                       0.7s
+ ✔ Container root-stage-1     Started                                                                                                                                                                       0.7s
+ ✔ Container root-smmniap-1   Started                                                                                                                                                                       0.7s
+ ✔ Container root-directus-1  Started                                                                                                                                                                       1.2s
+ ✔ Container root-traefik-1   Started                                                                                                                                                                       0.8s
+ ✔ Container root-pgadmin-1   Started                                                                                                                                                                       1.2s
+ ✔ Container root-n8n-1       Started                                                                                                                                                                       1.2s
+ ✔ Container root-smm-1       Started                                                                                                                                                                       0.7s
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string.
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+NAME              IMAGE                      COMMAND                  SERVICE    CREATED         STATUS                  PORTS
+root-directus-1   directus/directus:latest   "docker-entrypoint.s…"   directus   2 weeks ago     Up Less than a second   8055/tcp
+root-n8n-1        root-n8n                   "tini -- /docker-ent…"   n8n        3 days ago      Up Less than a second   127.0.0.1:5678->5678/tcp
+root-pgadmin-1    dpage/pgadmin4             "/entrypoint.sh"         pgadmin    2 weeks ago     Up Less than a second   80/tcp, 443/tcp
+root-postgres-1   postgres:16                "docker-entrypoint.s…"   postgres   2 weeks ago     Up 1 second             5432/tcp
+root-smm-1        root-smm                   "docker-entrypoint.s…"   smm        5 minutes ago   Up 1 second             5000/tcp
+root-smmniap-1    nginx:alpine               "/docker-entrypoint.…"   smmniap    2 weeks ago     Up 1 second             80/tcp
+root-stage-1      root-stage                 "docker-entrypoint.s…"   stage      3 days ago      Up 1 second             5000/tcp
+root-traefik-1    traefik:v3.3               "/entrypoint.sh --ap…"   traefik    2 weeks ago     Up 1 second             0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp
+root@oladaymbzh:~#
