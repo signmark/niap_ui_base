@@ -1,0 +1,102 @@
+ERROR:  multiple primary keys for table "n8n_user_api_keys" are not allowed
+ERROR:  multiple primary keys for table "n8n_execution_annotations" are not allowed
+ERROR:  multiple primary keys for table "n8n_shared_workflow" are not allowed
+ERROR:  multiple primary keys for table "n8n_insights_raw" are not allowed
+ERROR:  multiple primary keys for table "n8n_folder" are not allowed
+ERROR:  multiple primary keys for table "n8n_insights_metadata" are not allowed
+ERROR:  multiple primary keys for table "n8n_insights_by_period" are not allowed
+ERROR:  multiple primary keys for table "n8n_test_run" are not allowed
+ERROR:  multiple primary keys for table "n8n_invalid_auth_token" are not allowed
+ERROR:  multiple primary keys for table "n8n_annotation_tag_entity" are not allowed
+ERROR:  multiple primary keys for table "n8n_execution_metadata" are not allowed
+ERROR:  multiple primary keys for table "n8n_folder_tag" are not allowed
+ERROR:  multiple primary keys for table "n8n_migrations" are not allowed
+ERROR:  multiple primary keys for table "n8n_workflow_history" are not allowed
+ERROR:  multiple primary keys for table "n8n_project_relation" are not allowed
+ERROR:  multiple primary keys for table "n8n_processed_data" are not allowed
+ERROR:  multiple primary keys for table "n8n_shared_credentials" are not allowed
+ERROR:  multiple primary keys for table "n8n_project" are not allowed
+ERROR:  multiple primary keys for table "n8n_execution_annotation_tags" are not allowed
+ERROR:  multiple primary keys for table "n8n_test_case_execution" are not allowed
+ERROR:  multiple primary keys for table "n8n_installed_packages" are not allowed
+ERROR:  multiple primary keys for table "n8n_installed_nodes" are not allowed
+ERROR:  multiple primary keys for table "n8n_webhook_entity" are not allowed
+ERROR:  multiple primary keys for table "n8n_settings" are not allowed
+ERROR:  multiple primary keys for table "n8n_user" are not allowed
+ERROR:  relation "UQ_n8n_e12875dfb3b1d92d7d7c5377e2" already exists
+ERROR:  multiple primary keys for table "n8n_auth_identity" are not allowed
+ERROR:  multiple primary keys for table "n8n_auth_provider_sync_history" are not allowed
+ERROR:  multiple primary keys for table "n8n_credentials_entity" are not allowed
+ERROR:  multiple primary keys for table "n8n_event_destinations" are not allowed
+ERROR:  multiple primary keys for table "n8n_execution_data" are not allowed
+ERROR:  multiple primary keys for table "n8n_tag_entity" are not allowed
+ERROR:  relation "n8n_variables_key_key" already exists
+ERROR:  multiple primary keys for table "n8n_variables" are not allowed
+ERROR:  multiple primary keys for table "n8n_workflow_entity" are not allowed
+ERROR:  multiple primary keys for table "n8n_execution_entity" are not allowed
+ERROR:  multiple primary keys for table "n8n_workflow_statistics" are not allowed
+ERROR:  multiple primary keys for table "n8n_workflows_tags" are not allowed
+ERROR:  relation "IDX_014f0e31025588f483caaa33a6" already exists
+ERROR:  relation "IDX_26bf5281b6cc20bb560186df6a" already exists
+ERROR:  relation "IDX_2cb31c081c23811bc50e05d52c" already exists
+ERROR:  relation "IDX_42ac5f23bc7e2406eca4edf77e" already exists
+ERROR:  relation "IDX_43a0251cf7a6c3a3b013a47941" already exists
+ERROR:  relation "IDX_8391afd12e55274b8ccd2c9f9e" already exists
+ERROR:  relation "IDX_847d227f8d64685d15cf069f3e" already exists
+ERROR:  relation "IDX_a248403c2dc457fbfce5ceb2f0" already exists
+ERROR:  relation "IDX_a3e09b045e9f0cda79e0d5e504" already exists
+ERROR:  relation "IDX_aa7e8ac1d980b38f9661f046ea" already exists
+ERROR:  relation "IDX_be73b755e714e97de8954386e7" already exists
+ERROR:  relation "IDX_ca95e303cf3e22671fe013c9d3" already exists
+ERROR:  relation "IDX_dcc03d2f488128fb82d276c994" already exists
+ERROR:  relation "IDX_e3b4b30c8de00a305c55a2088f" already exists
+ERROR:  relation "IDX_fdbda01fc0a7c7c513cf2bcb8f" already exists
+ERROR:  relation "IDX_n8n_85b981df7b444f905f8bf50747" already exists
+ERROR:  relation "IDX_n8n_execution_entity_deletedAt" already exists
+ERROR:  relation "IDX_n8n_workflow_entity_name" already exists
+ERROR:  relation "idx_execution_entity_stopped_at_status_deleted_at" already exists
+ERROR:  relation "idx_execution_entity_wait_till_status_deleted_at" already exists
+ERROR:  relation "idx_execution_entity_workflow_id_started_at" already exists
+ERROR:  relation "idx_n8n_07fde106c0b471d8cc80a64fc8" already exists
+ERROR:  relation "idx_n8n_16f4436789e804e3e1c9eeb240" already exists
+ERROR:  relation "idx_n8n_812eb05f7451ca757fb98444ce" already exists
+ERROR:  relation "idx_n8n_execution_entity_workflow_id_id" already exists
+ERROR:  relation "idx_n8n_workflows_tags_workflow_id" already exists
+ERROR:  relation "pk_n8n_credentials_entity_id" already exists
+ERROR:  relation "pk_n8n_tag_entity_id" already exists
+ERROR:  relation "pk_n8n_variables_id" already exists
+ERROR:  relation "pk_n8n_workflow_entity_id" already exists
+ERROR:  constraint "FK_027258f273f6a3154ffb1870164" for relation "n8n_insights_by_period" already exists
+ERROR:  constraint "FK_04647f9762e85e5ed52a07a9237" for relation "n8n_shared_workflow" already exists
+ERROR:  constraint "FK_0e74786345edce55f584f261d9e" for relation "n8n_folder" already exists
+ERROR:  constraint "FK_26bf5281b6cc20bb560186df6ae" for relation "n8n_insights_metadata" already exists
+ERROR:  constraint "FK_2cb31c081c23811bc50e05d52c3" for relation "n8n_project_relation" already exists
+ERROR:  constraint "FK_42ac5f23bc7e2406eca4edf77e6" for relation "n8n_test_case_execution" already exists
+ERROR:  constraint "FK_5d0ab94f1793f36e17525e90e86" for relation "n8n_folder_tag" already exists
+ERROR:  constraint "FK_5dab88f195c5f8714738fe6f2cb" for relation "n8n_processed_data" already exists
+ERROR:  constraint "FK_6af66647dfe6f3dc0a555ea5b83" for relation "n8n_test_case_execution" already exists
+ERROR:  constraint "FK_a129f5039224af52757a803d726" for relation "n8n_shared_credentials" already exists
+ERROR:  constraint "FK_a248403c2dc457fbfce5ceb2f00" for relation "n8n_execution_annotation_tags" already exists
+ERROR:  constraint "FK_aca3e793587fa20e881d08abc52" for relation "n8n_folder_tag" already exists
+ERROR:  constraint "FK_afd0e7755aafe1b601875bd3546" for relation "n8n_folder" already exists
+ERROR:  constraint "FK_baad93e50af4837d020c7e170f9" for relation "n8n_shared_credentials" already exists
+ERROR:  constraint "FK_bcc7afc40a976478466c59ef99b" for relation "n8n_insights_raw" already exists
+ERROR:  constraint "FK_be73b755e714e97de8954386e7c" for relation "n8n_execution_annotation_tags" already exists
+ERROR:  constraint "FK_be818f02aad7b2659e0b62e663e" for relation "n8n_insights_metadata" already exists
+ERROR:  constraint "FK_c7a35bcdce3e355871c3ce11b25" for relation "n8n_user_api_keys" already exists
+ERROR:  constraint "FK_ca95e303cf3e22671fe013c9d30" for relation "n8n_test_run" already exists
+ERROR:  constraint "FK_dcc03d2f488128fb82d276c9945" for relation "n8n_project_relation" already exists
+ERROR:  constraint "FK_e3b4b30c8de00a305c55a2088fe" for relation "n8n_execution_annotations" already exists
+ERROR:  constraint "FK_ea59e8bd757e45bea4084aecaaa" for relation "n8n_execution_metadata" already exists
+ERROR:  constraint "FK_f380a47651b746f977183b4ed7d" for relation "n8n_shared_workflow" already exists
+ERROR:  constraint "FK_fdbda01fc0a7c7c513cf2bcb8f4" for relation "n8n_workflow_history" already exists
+ERROR:  constraint "FK_n8n_73f857fc5dce682cef8a99c11dbddbc969618951" for relation "n8n_installed_nodes" already exists
+ERROR:  constraint "fk_n8n_execution_entity_workflow_id" for relation "n8n_execution_entity" already exists
+ERROR:  constraint "fk_n8n_webhook_entity_workflow_id" for relation "n8n_webhook_entity" already exists
+ERROR:  constraint "fk_n8n_workflow_statistics_workflow_id" for relation "n8n_workflow_statistics" already exists
+ERROR:  constraint "fk_n8n_workflows_tags_tag_id" for relation "n8n_workflows_tags" already exists
+ERROR:  constraint "fk_n8n_workflows_tags_workflow_id" for relation "n8n_workflows_tags" already exists
+ERROR:  constraint "fk_workflow_parent_folder" for relation "n8n_workflow_entity" already exists
+ERROR:  constraint "n8n_auth_identity_userId_fkey" for relation "n8n_auth_identity" already exists
+ERROR:  constraint "n8n_execution_data_fk" for relation "n8n_execution_data" already exists
+You are now connected to database "postgres" as user "postgres".
