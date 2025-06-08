@@ -1,43 +1,33 @@
-# SMM Multi-Server Deployment Guide
+# SMM Self-Hosted Multi-Server Deployment Guide
 
 ## Current Status
 - **Replit Environment**: ✅ Fully operational
 - **Docker Container**: ✅ Running with correct credentials  
 - **New Server (31.128.43.113)**: ❌ SMM app not deployed
 
-## Quick Deployment for New Server
+## Git-Based Deployment for Production Servers
 
-### Step 1: Prepare Deployment Package
+### Step 1: Navigate to Application Directory
 ```bash
-# Run on Replit to create deployment package
-./multi_server_sync.sh
+# On production server
+cd /root/smm
+git pull origin main
 ```
 
-### Step 2: Deploy to New Server
+### Step 2: Run Deployment Script
 ```bash
-# Copy files to server
-scp smm-deployment.tar.gz deploy_universal.sh root@31.128.43.113:/tmp/
-
-# Deploy on server
-ssh root@31.128.43.113
-cd /tmp && chmod +x deploy_universal.sh && ./deploy_universal.sh
+# Make script executable and run
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-### Step 3: Configure Nginx
+### Step 3: Verify Deployment
 ```bash
-# Copy nginx config to server
-scp nginx_smm_config.conf root@31.128.43.113:/etc/nginx/sites-available/smm.roboflow.tech
+# Check health endpoint
+curl http://localhost:5000/health
 
-# Enable site
-ssh root@31.128.43.113
-ln -s /etc/nginx/sites-available/smm.roboflow.tech /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
-```
-
-### Step 4: Setup SSL Certificate
-```bash
-# Install Let's Encrypt certificate
-certbot --nginx -d smm.roboflow.tech
+# Check application status
+docker logs smm-production --tail 20
 ```
 
 ## Environment Configurations
@@ -76,14 +66,15 @@ curl -I http://localhost:5000
 docker logs smm-1 --tail 20
 ```
 
-## Multi-Server Architecture
+## Self-Hosted Architecture
 
 ```
-Internet
-    ↓
-Nginx (SSL Termination)
+Internet (HTTPS/SSL via Let's Encrypt)
     ↓
 SMM Application (Docker:5000)
+    ├── Frontend (React/Vite)
+    ├── Backend (Express.js)
+    └── Static Assets
     ↓
 Directus API (directus.roboflow.tech)
     ↓

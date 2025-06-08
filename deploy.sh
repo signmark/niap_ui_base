@@ -1,16 +1,17 @@
 #!/bin/bash
 
-# Git-based deployment script for SMM application
+# Git-based deployment script for SMM self-hosted application
 # Run this script on the production server after git pull
 
 set -e
 
-echo "=== SMM Production Deployment ==="
+echo "=== SMM Self-Hosted Production Deployment ==="
 
 # Configuration
-PROJECT_DIR="/root/smm-project"
+PROJECT_DIR="/root/smm"
 BACKUP_DIR="/root/smm-backups"
 COMPOSE_FILE="docker-compose.production.yml"
+APP_PORT="5000"
 
 # Create backup of current version
 if [ -d "$PROJECT_DIR" ]; then
@@ -87,16 +88,29 @@ echo "Performing health check..."
 if docker ps | grep -q smm-production; then
     echo "✓ Container is running"
     
-    # Check application response
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 | grep -q "200\|404"; then
-        echo "✓ Application is responding"
+    # Check application response via health endpoint
+    echo "Testing health endpoint..."
+    sleep 5
+    
+    if curl -s -f "http://localhost:$APP_PORT/health" > /dev/null; then
+        echo "✓ Health check passed"
+        echo "✓ Application is responding on port $APP_PORT"
         echo "✓ Deployment successful"
+        
+        # Show health status
+        curl -s "http://localhost:$APP_PORT/health" | python3 -m json.tool 2>/dev/null || echo "Health endpoint responded"
         
         # Show recent logs
         echo "Recent logs:"
         docker logs smm-production --tail 10
     else
-        echo "✗ Application not responding"
+        echo "✗ Health check failed"
+        echo "Testing basic HTTP response..."
+        if curl -s -o /dev/null -w "%{http_code}" "http://localhost:$APP_PORT" | grep -q "200\|404"; then
+            echo "✓ Basic HTTP response working"
+        else
+            echo "✗ No HTTP response"
+        fi
         docker logs smm-production --tail 20
         exit 1
     fi
