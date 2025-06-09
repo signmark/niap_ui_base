@@ -636,17 +636,17 @@ export default function Trends() {
     
     console.log('Starting automatic data refresh intervals');
     
-    // Создаем интервал обновления трендов
+    // Создаем интервал обновления трендов (реже)
     trendsRefreshInterval.current = setInterval(() => {
       console.log('Refreshing trends data...');
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
-    }, 3000); // Обновление трендов каждые 3 секунды
+    }, 15000); // Обновление трендов каждые 15 секунд
     
-    // Создаем интервал обновления источников
+    // Создаем интервал обновления источников (реже)
     sourcesRefreshInterval.current = setInterval(() => {
       console.log('Refreshing sources data...');
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-    }, 3000); // Обновление источников каждые 3 секунды
+    }, 10000); // Обновление источников каждые 10 секунд
     
     return () => {
       // Очищаем интервалы при размонтировании компонента или смене кампании
@@ -657,7 +657,7 @@ export default function Trends() {
         clearInterval(sourcesRefreshInterval.current);
       }
     };
-  }, [selectedCampaignId, queryClient]);
+  }, [selectedCampaignId]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["trends", selectedPeriod, selectedCampaignId],
@@ -876,14 +876,12 @@ export default function Trends() {
     setIsSocialNetworkDialogOpen(true);
   };
 
-  // Мониторинг данных о постах из источников
+  // Мониторинг данных о постах из источников (только для диагностики)
   useEffect(() => {
-    console.log("sourcePosts data changed:", {
-      length: sourcePosts?.length || 0, 
-      isLoading: isLoadingSourcePosts,
-      firstPost: sourcePosts?.[0] || null
-    });
-  }, [sourcePosts, isLoadingSourcePosts]);
+    if (sourcePosts?.length > 0) {
+      console.log("sourcePosts loaded:", sourcePosts.length, "posts");
+    }
+  }, [sourcePosts?.length]);
 
   // Отслеживаем активные источники для стабильного отображения статуса
   const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());

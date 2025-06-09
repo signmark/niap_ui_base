@@ -1,0 +1,2119 @@
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Campaigns loaded: 7
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ Auto-selected campaign: "Нерудстрой"
+ Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+ Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+ Используем глобально выбранную кампанию: "Нерудстрой"
+ sourcePosts data changed: Object
+ Проверка принадлежности кампании пользователю: Object
+ Fetching sources for campaign: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+ Starting automatic data refresh intervals
+ Fetching source posts with params: Object
+ Using exact API URL format that works
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Fetched trends data: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. 
+overrideMethod @ installHook.js:1
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+ sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at Trends (index.tsx:151:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:24:26)
+    at WithLayout (App.tsx:42:23)
+    at _c12 (<anonymous>)
+    at Route (wouter.js?v=5204a545:323:16)
+    at Switch (wouter.js?v=5204a545:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=b0a61d81:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+directus.roboflow.tech/items/source_posts?fields[]=id&fields[]=post_content&fields[]=image_url&fields[]=likes&fields[]=views&fields[]=comments&fields[]=shares&fields[]=source_id&fields[]=campaign_id&fields[]=url&fields[]=post_type&fields[]=video_url&fields[]=date&fields[]=metadata&limit=50&sort[]=-date&filter[campaign_id][_eq]=8bde5bf9-ebf8-4cac-8269-785d7eca06e1&filter[date][_gte]=2025-06-02T14:48:36.676Z:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching source posts: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:741:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:741:26)
+overrideMethod @ hook.js:608
+directus.roboflow.tech/items/campaign_keywords?filter[campaign_id][_eq]=8bde5bf9-ebf8-4cac-8269-785d7eca06e1:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=8bde5bf9-ebf8-4cac-8269-785d7eca06e1&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+directus.roboflow.tech/users/me:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching user data: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:270:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:270:26)
+overrideMethod @ hook.js:608
+directus.roboflow.tech/items/user_campaigns?filter[id][_eq]=8bde5bf9-ebf8-4cac-8269-785d7eca06e1&filter[user_id][_eq]=53921f16-f51d-4591-80b9-8caa4fde4d13:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Ошибка при проверке кампании: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async checkCampaignOwnership (useCampaignOwnershipCheck.tsx:22:28)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async checkCampaignOwnership (useCampaignOwnershipCheck.tsx:22:28)
+overrideMethod @ hook.js:608
+campaignStore.ts:98 Очистка данных о выбранной кампании
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at span (<anonymous>)
+    at chunk-RLTE5R7I.js?v=210fbd31:41:13
+    at @radix-ui_react-select.js?v=14d97ae9:952:13
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=210fbd31:41:13
+    at chunk-UACHJROW.js?v=210fbd31:52:11
+    at chunk-UACHJROW.js?v=210fbd31:33:11
+    at chunk-MRB2OOEX.js?v=210fbd31:109:15
+    at Provider (chunk-7X6RRC7I.js?v=210fbd31:38:15)
+    at @radix-ui_react-select.js?v=14d97ae9:845:7
+    at _c11 (select.tsx:115:6)
+    at div (<anonymous>)
+    at chunk-RLTE5R7I.js?v=210fbd31:41:13
+    at chunk-UACHJROW.js?v=210fbd31:52:11
+    at chunk-UACHJROW.js?v=210fbd31:33:11
+    at chunk-MRB2OOEX.js?v=210fbd31:98:15
+    at @radix-ui_react-select.js?v=14d97ae9:756:13
+    at div (<anonymous>)
+    at chunk-UACHJROW.js?v=210fbd31:52:11
+    at chunk-UACHJROW.js?v=210fbd31:33:11
+    at chunk-MRB2OOEX.js?v=210fbd31:98:15
+    at Provider (chunk-7X6RRC7I.js?v=210fbd31:38:15)
+    at @radix-ui_react-select.js?v=14d97ae9:300:58
+    at chunk-UACHJROW.js?v=210fbd31:52:11
+    at chunk-UACHJROW.js?v=210fbd31:33:11
+    at chunk-RLTE5R7I.js?v=210fbd31:41:13
+    at chunk-T7WS74FN.js?v=210fbd31:260:22
+    at SelectPortal (<anonymous>)
+    at _c7 (select.tsx:71:6)
+    at Provider (chunk-7X6RRC7I.js?v=210fbd31:38:15)
+    at Provider (chunk-MRB2OOEX.js?v=210fbd31:28:15)
+    at CollectionProvider (chunk-MRB2OOEX.js?v=210fbd31:89:13)
+    at Provider (chunk-7X6RRC7I.js?v=210fbd31:38:15)
+    at Provider (chunk-EYZBUH3S.js?v=210fbd31:1917:15)
+    at Popper (chunk-EYZBUH3S.js?v=210fbd31:1974:11)
+    at Select (@radix-ui_react-select.js?v=14d97ae9:88:5)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at _c9 (card.tsx:62:6)
+    at div (<anonymous>)
+    at _c (card.tsx:8:6)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at Trends (index.tsx:151:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:24:26)
+    at WithLayout (App.tsx:42:23)
+    at _c12 (<anonymous>)
+    at Route (wouter.js?v=5204a545:323:16)
+    at Switch (wouter.js?v=5204a545:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=b0a61d81:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=8bde5bf9-ebf8-4cac-8269-785d7eca06e1&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+index.tsx:686 Fetched trends data: Object
+CampaignSelector.tsx:116 Выбрана кампания: "NPlanner.ru" (id: 46868c44-c6a4-4bed-accf-9ad07bba790e)
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: Object
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:637 Starting automatic data refresh intervals
+index.tsx:714 Fetching source posts with params: Object
+index.tsx:720 Using exact API URL format that works
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:686 Fetched trends data: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+directus.roboflow.tech/items/user_campaigns?filter[id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&filter[user_id][_eq]=53921f16-f51d-4591-80b9-8caa4fde4d13:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Ошибка при проверке кампании: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async checkCampaignOwnership (useCampaignOwnershipCheck.tsx:22:28)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async checkCampaignOwnership (useCampaignOwnershipCheck.tsx:22:28)
+overrideMethod @ hook.js:608
+campaignStore.ts:98 Очистка данных о выбранной кампании
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:881 sourcePosts data changed: Object
+directus.roboflow.tech/items/campaign_keywords?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+directus.roboflow.tech/items/source_posts?fields[]=id&fields[]=post_content&fields[]=image_url&fields[]=likes&fields[]=views&fields[]=comments&fields[]=shares&fields[]=source_id&fields[]=campaign_id&fields[]=url&fields[]=post_type&fields[]=video_url&fields[]=date&fields[]=metadata&limit=50&sort[]=-date&filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&filter[date][_gte]=2025-06-02T14:48:40.680Z:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching source posts: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:741:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:741:26)
+overrideMethod @ hook.js:608
+directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+index.tsx:881 sourcePosts data changed: Object
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status:1 
+            
+            
+           Failed to load resource: the server responded with a status of 403 ()
+hook.js:608 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+index.tsx:686 Fetched trends data: Object
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:338
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:686 Fetched trends data: {success: true, data: Array(0)}
+index.tsx:361 
+            
+            
+           GET https://directus.roboflow.tech/items/campaign_content_sources?filter[campaign_id][_eq]=46868c44-c6a4-4bed-accf-9ad07bba790e&fields[]=id&fields[]=name&fields[]=url&fields[]=type&fields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=b578d8d2:1637
+xhr @ axios.js?v=b578d8d2:1517
+dispatchRequest @ axios.js?v=b578d8d2:1992
+Promise.then
+_request @ axios.js?v=b578d8d2:2195
+request @ axios.js?v=b578d8d2:2104
+Axios.<computed> @ axios.js?v=b578d8d2:2232
+wrap @ axios.js?v=b578d8d2:8
+queryFn @ index.tsx:361
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:387 Error fetching sources: Error: Invalid token.
+    at directus.ts:69:11
+    at async Axios.request (axios.js?v=b578d8d2:2104:14)
+    at async queryFn (index.tsx:361:26)
+    at Axios.request (axios.js?v=b578d8d2:2108:41)
+    at async queryFn (index.tsx:361:26)
+overrideMethod @ hook.js:608
+queryFn @ index.tsx:387
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=b0a61d81:840
+run @ @tanstack_react-query.js?v=b0a61d81:494
+start @ @tanstack_react-query.js?v=b0a61d81:536
+fetch @ @tanstack_react-query.js?v=b0a61d81:926
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1726
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1725
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+refetchQueries @ @tanstack_react-query.js?v=b0a61d81:1724
+(anonymous) @ @tanstack_react-query.js?v=b0a61d81:1716
+batch @ @tanstack_react-query.js?v=b0a61d81:583
+invalidateQueries @ @tanstack_react-query.js?v=b0a61d81:1705
+(anonymous) @ index.tsx:648
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e

@@ -52,10 +52,20 @@ export function detectEnvironment(): EnvironmentConfig {
     environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
   }
 
+  // Determine correct Directus URL based on environment
+  let directusUrl = envUrl;
+  if (!directusUrl) {
+    if (isDocker || environment === 'production') {
+      directusUrl = 'https://directus.nplanner.ru';
+    } else {
+      directusUrl = 'https://directus.roboflow.tech';
+    }
+  }
+
   return {
     adminEmail: adminEmail!,
     adminPassword: adminPassword!,
-    directusUrl: envUrl || 'https://directus.roboflow.tech',
+    directusUrl,
     environment
   };
 }
