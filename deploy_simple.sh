@@ -7,6 +7,24 @@ set -e
 
 echo "=== SMM Simple Deployment ==="
 
+# Fix Directus URL configuration for production
+fix_directus_config() {
+    local smm_dir="$1"
+    echo "Fixing Directus URL configuration..."
+    
+    # Add VITE_DIRECTUS_URL to .env if missing
+    if [ -f "$smm_dir/../.env" ] && ! grep -q "VITE_DIRECTUS_URL" "$smm_dir/../.env"; then
+        echo 'VITE_DIRECTUS_URL="https://directus.nplanner.ru"' >> "$smm_dir/../.env"
+        echo "✓ Added VITE_DIRECTUS_URL to .env"
+    fi
+    
+    # Fix client code fallback URL
+    if [ -f "$smm_dir/client/src/lib/directus.ts" ]; then
+        sed -i "s|'http://localhost:8055'|'https://directus.nplanner.ru'|g" "$smm_dir/client/src/lib/directus.ts"
+        echo "✓ Fixed client Directus URL fallback"
+    fi
+}
+
 # Auto-detect project structure
 if [ -f "package.json" ] && [ -f "../docker-compose.yml" ]; then
     # We're in the SMM folder, parent has docker-compose.yml
@@ -26,6 +44,9 @@ else
     echo "Expected: docker-compose.yml in root and smm/package.json"
     exit 1
 fi
+
+# Apply Directus configuration fixes
+fix_directus_config "$SMM_DIR"
 
 # Stop existing SMM service if running
 echo "Stopping existing SMM service..."
