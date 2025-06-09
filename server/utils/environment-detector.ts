@@ -29,13 +29,23 @@ export function detectEnvironment(): EnvironmentConfig {
   const isReplit = process.env.REPL_ID !== undefined || 
                    process.env.REPLIT_DB_URL !== undefined;
 
+  // Check if we're in staging environment
+  const isStaging = process.env.NODE_ENV === 'staging' || 
+                    process.env.STAGING === 'true' ||
+                    process.cwd().includes('staging') ||
+                    (process.env.DOMAIN && process.env.DOMAIN.includes('smm.roboflow.tech'));
+
   let environment = 'unknown';
   let adminEmail = envEmail;
   let adminPassword = envPassword;
   
   // Environment-specific defaults if env vars are not available
   if (!adminEmail || !adminPassword) {
-    if (isDocker) {
+    if (isStaging) {
+      environment = 'staging';
+      adminEmail = adminEmail || 'admin@roboflow.tech';
+      adminPassword = adminPassword || 'QtpZ3dh7';
+    } else if (isDocker) {
       environment = 'docker';
       adminEmail = adminEmail || 'lbrspb@gmail.com';
       adminPassword = adminPassword || 'QtpZ3dh7';
@@ -49,7 +59,11 @@ export function detectEnvironment(): EnvironmentConfig {
       adminPassword = adminPassword || 'QtpZ3dh7';
     }
   } else {
-    environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
+    if (isStaging) {
+      environment = 'staging';
+    } else {
+      environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
+    }
   }
 
   // Determine correct Directus URL based on environment

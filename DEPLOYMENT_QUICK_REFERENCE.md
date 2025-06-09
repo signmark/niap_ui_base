@@ -9,6 +9,14 @@ Directus: https://directus.roboflow.tech
 Admin: admin@roboflow.tech / QtpZ3dh7
 ```
 
+### Staging (VPS)
+```
+URL: https://smm.roboflow.tech
+Directus: https://directus.roboflow.tech
+Admin: admin@roboflow.tech / QtpZ3dh7
+Environment: NODE_ENV=staging или STAGING=true
+```
+
 ### Production (VPS)
 ```
 URL: https://smm.nplanner.ru
