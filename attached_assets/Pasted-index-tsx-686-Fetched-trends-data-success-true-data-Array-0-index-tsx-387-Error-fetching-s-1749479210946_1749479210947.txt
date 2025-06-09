@@ -1,0 +1,62 @@
+index.tsx:686 Fetched trends data: 
+{success: true, data: Array(0)}
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:686 Fetched trends data: 
+{success: true, data: Array(0)}
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:686 Fetched trends data: 
+{success: true, data: Array(0)}
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:686 Fetched trends data: 
+{success: true, data: Array(0)}
+index.tsx:387 Error fetching sources: Error: Network Error
+    at directus.ts:71:11
+    at async queryFn (index.tsx:361:26)
+    at async queryFn (index.tsx:361:26)
+index.tsx:361 
+ GET http://localhost:8055/items/campaign_content_sources?filter[campaign_id][_e…ields[]=is_active&fields[]=campaign_id&fields[]=created_at&fields[]=status net::ERR_CONNECTION_REFUSED
+index.tsx:641 Refreshing trends data...
+index.tsx:647 Refreshing sources data...
+index.tsx:356 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:686 Fetched trends data: 
+{success: true, data: Array(0)}
+﻿
+

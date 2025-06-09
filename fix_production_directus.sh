@@ -1,3 +1,13 @@
+#!/bin/bash
+# Quick fix for production Directus URL issue
+
+echo "=== Fixing Production Directus URL ==="
+
+# Copy the fixed directus.ts file to production server
+echo "Updating client/src/lib/directus.ts..."
+
+# Create the fix content
+cat > /tmp/directus_fix.ts << 'EOF'
 import axios from 'axios';
 import { useAuthStore } from './store';
 
@@ -15,8 +25,10 @@ directusApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      config.headers = config.headers || {};
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
     }
     return config;
   },
@@ -69,3 +81,8 @@ directusApi.interceptors.response.use(
     throw new Error(message);
   }
 );
+EOF
+
+echo "✓ Fix prepared"
+echo "Now run: scp /tmp/directus_fix.ts root@nplanner.ru:/root/smm/client/src/lib/directus.ts"
+echo "Then: docker-compose restart smm"
