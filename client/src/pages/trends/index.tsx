@@ -657,7 +657,7 @@ export default function Trends() {
         clearInterval(sourcesRefreshInterval.current);
       }
     };
-  }, [selectedCampaignId]);
+  }, [selectedCampaignId, selectedPeriod, queryClient]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["trends", selectedPeriod, selectedCampaignId],
