@@ -7,16 +7,23 @@ set -e
 
 echo "=== SMM Simple Deployment ==="
 
-# Auto-detect project root
-if [ -f "package.json" ] && [ -f "docker-compose.production.yml" ]; then
-    PROJECT_ROOT=$(pwd)
-    echo "Project detected in current directory: $PROJECT_ROOT"
-elif [ -f "../package.json" ] && [ -f "../docker-compose.production.yml" ]; then
+# Auto-detect project structure
+if [ -f "package.json" ] && [ -f "../docker-compose.yml" ]; then
+    # We're in the SMM folder, parent has docker-compose.yml
+    SMM_DIR=$(pwd)
     PROJECT_ROOT=$(cd .. && pwd)
-    echo "Project detected in parent directory: $PROJECT_ROOT"
+    echo "SMM project detected in: $SMM_DIR"
+    echo "Docker Compose root: $PROJECT_ROOT"
     cd "$PROJECT_ROOT"
+elif [ -f "docker-compose.yml" ] && [ -d "smm" ] && [ -f "smm/package.json" ]; then
+    # We're in the root with docker-compose.yml
+    PROJECT_ROOT=$(pwd)
+    SMM_DIR="$PROJECT_ROOT/smm"
+    echo "Project root detected: $PROJECT_ROOT"
+    echo "SMM folder: $SMM_DIR"
 else
-    echo "Error: Cannot find project files (package.json, docker-compose.production.yml)"
+    echo "Error: Cannot find SMM project structure"
+    echo "Expected: docker-compose.yml in root and smm/package.json"
     exit 1
 fi
 
