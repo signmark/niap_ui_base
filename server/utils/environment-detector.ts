@@ -33,10 +33,24 @@ export function detectEnvironment(): EnvironmentConfig {
   let adminEmail = envEmail;
   let adminPassword = envPassword;
   
-  // Force production credentials for now
-  adminEmail = 'lbrspb@gmail.com';
-  adminPassword = 'QtpZ3dh7';
-  environment = 'production';
+  // Environment-specific defaults if env vars are not available
+  if (!adminEmail || !adminPassword) {
+    if (isDocker) {
+      environment = 'docker';
+      adminEmail = adminEmail || 'lbrspb@gmail.com';
+      adminPassword = adminPassword || 'QtpZ3dh7';
+    } else if (isReplit) {
+      environment = 'replit';
+      adminEmail = adminEmail || 'admin@roboflow.tech';
+      adminPassword = adminPassword || 'QtpZ3dh7';
+    } else {
+      environment = 'local';
+      adminEmail = adminEmail || 'lbrspb@gmail.com';
+      adminPassword = adminPassword || 'QtpZ3dh7';
+    }
+  } else {
+    environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
+  }
 
   // Determine correct Directus URL based on environment
   let directusUrl = envUrl;
