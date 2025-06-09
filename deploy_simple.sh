@@ -50,17 +50,16 @@ docker-compose up -d smm
 echo "Waiting for application to start..."
 sleep 15
 
-# Check health with retries
-echo "Checking application health..."
+# Check health with retries via Traefik
+echo "Checking application health via Traefik..."
 for i in {1..6}; do
-    if curl -s -f http://localhost:5000/health > /dev/null; then
+    if curl -s -f https://smm.nplanner.ru/health > /dev/null; then
         echo "✓ Application is healthy"
-        echo "✓ Available at https://smm.nplanner.ru (via Traefik)"
-        echo "✓ Local access: http://localhost:5000"
+        echo "✓ Available at https://smm.nplanner.ru"
         
         # Show status
         echo "Application status:"
-        curl -s http://localhost:5000/health | python3 -m json.tool 2>/dev/null || echo "Health check passed"
+        curl -s https://smm.nplanner.ru/health | python3 -m json.tool 2>/dev/null || echo "Health check passed via Traefik"
         
         echo "Container status:"
         docker ps | grep smm
@@ -68,7 +67,7 @@ for i in {1..6}; do
         echo "=== Deployment Complete ==="
         exit 0
     else
-        echo "Health check attempt $i/6 failed, waiting 10 seconds..."
+        echo "Health check attempt $i/6 failed (via Traefik), waiting 10 seconds..."
         sleep 10
     fi
 done
