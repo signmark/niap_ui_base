@@ -7,6 +7,7 @@ import { directusApiManager } from '../directus';
 import { directusAuthManager } from '../services/directus-auth-manager';
 import { log } from '../utils/logger';
 import { isUserAdmin } from '../routes-global-api-keys';
+import { detectEnvironment } from '../utils/environment-detector';
 
 /**
  * Регистрирует маршруты для авторизации
@@ -237,6 +238,15 @@ export function registerAuthRoutes(app: Express): void {
         message: 'Произошла ошибка при обновлении токена'
       });
     }
+  });
+
+  // Маршрут для получения конфигурации окружения
+  app.get('/api/config', (req: Request, res: Response) => {
+    const envConfig = detectEnvironment();
+    res.json({
+      directusUrl: envConfig.directusUrl,
+      environment: envConfig.environment
+    });
   });
 
   // Маршрут для проверки статуса администратора

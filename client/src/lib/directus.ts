@@ -1,10 +1,34 @@
 import axios from 'axios';
 import { useAuthStore } from './store';
 
-export const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://directus.roboflow.tech';
+// Динамическое получение URL Directus с сервера
+let directusUrl = import.meta.env.VITE_DIRECTUS_URL || 'https://directus.roboflow.tech';
+
+// Функция для получения конфигурации с сервера
+async function getServerConfig() {
+  try {
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    return config.directusUrl;
+  } catch (error) {
+    console.warn('Failed to get server config, using default:', error);
+    return directusUrl;
+  }
+}
+
+// Обновляем URL при загрузке
+getServerConfig().then(url => {
+  if (url && url !== directusUrl) {
+    directusUrl = url;
+    directusApi.defaults.baseURL = url;
+    console.log('Updated Directus URL to:', url);
+  }
+});
+
+export const DIRECTUS_URL = directusUrl;
 
 export const directusApi = axios.create({
-  baseURL: DIRECTUS_URL,
+  baseURL: directusUrl,
   headers: {
     'Content-Type': 'application/json',
   }
