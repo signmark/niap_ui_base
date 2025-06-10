@@ -345,7 +345,8 @@ export default function Posts() {
                       </div>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        <p>Нет публикаций на выбранную дату</p>
+                        <p>Нет опубликованных постов на выбранную дату</p>
+                        <p className="text-sm mt-2">Показываются только посты со статусом "опубликован" и валидными ссылками</p>
                       </div>
                     )}
                   </>
