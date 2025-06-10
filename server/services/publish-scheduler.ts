@@ -509,6 +509,7 @@ export class PublishScheduler {
           const selectedPublishedPlatforms = [];
           const selectedErrorPlatforms = [];
           const selectedPendingPlatforms = [];
+          let needsStatusCorrection = false;
           
           for (const [platform, data] of Object.entries(item.social_platforms || {})) {
             // Платформа считается опубликованной только если есть статус 'published' И есть postUrl
@@ -518,9 +519,14 @@ export class PublishScheduler {
               selectedErrorPlatforms.push(platform);
             } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status || 
                        (data?.status === 'published' && !data?.postUrl)) {
-              // Если статус 'published' но нет postUrl, считаем как pending
+              // Если статус 'published' но нет postUrl, сбрасываем статус на pending
               if (data?.status === 'published' && !data?.postUrl) {
-                console.log(`[scheduled] ОБНАРУЖЕНА ПРОБЛЕМА: платформа ${platform} имеет статус 'published' но отсутствует postUrl`);
+                console.log(`[scheduled] ИСПРАВЛЕНИЕ: платформа ${platform} имела статус 'published' без postUrl - сброшено на 'pending'`);
+                // Исправляем некорректный статус в объекте
+                if (item.social_platforms && item.social_platforms[platform]) {
+                  item.social_platforms[platform].status = 'pending';
+                  needsStatusCorrection = true;
+                }
               }
               selectedPendingPlatforms.push(platform);
             }
@@ -595,8 +601,23 @@ export class PublishScheduler {
               log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
             }
           }
+          // Если были исправлены некорректные статусы платформ, сохраняем изменения
+          if (needsStatusCorrection) {
+            log(`Сохранение исправленных статусов платформ для контента ${item.id}`, 'scheduler');
+            try {
+              await axios.patch(
+                `${directusUrl}/items/campaign_content/${item.id}`,
+                { social_platforms: item.social_platforms },
+                { headers }
+              );
+              log(`Статусы платформ успешно исправлены для контента ${item.id}`, 'scheduler');
+            } catch (error) {
+              log(`Ошибка при сохранении исправленных статусов: ${error}`, 'scheduler');
+            }
+          }
+
           // Если есть ожидающие платформы
-          else if (hasSelectedPending) {
+          if (hasSelectedPending) {
             // Если контент был "published", но появились платформы в ожидании, переводим обратно в "scheduled"
             if (item.status === 'published') {
               log(`Обновление статуса контента ${item.id} с 'published' на 'scheduled' (появились платформы в ожидании: ${selectedPendingPlatforms.join(', ')})`, 'scheduler');
