@@ -1270,6 +1270,7 @@ export class PublishScheduler {
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
+                const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
                 await axios.patch(
                   `${baseDirectusUrl}/items/campaign_content/${content.id}`,
                   { 
