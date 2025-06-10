@@ -123,7 +123,7 @@ export default function ScheduledPublications() {
       console.log('Загружено запланированных публикаций:', (result.data || []).length);
       return result.data;
     },
-    enabled: !!userId && !!selectedCampaign?.id,
+    enabled: !!userId, // Загружаем для всех кампаний пользователя
     refetchOnMount: true,
     staleTime: 60000, // Считаем данные свежими в течение 1 минуты
     refetchInterval: 60000, // Автоматически обновляем данные только раз в минуту
