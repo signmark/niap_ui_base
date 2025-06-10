@@ -524,12 +524,12 @@ export class PublishScheduler {
           const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
           
           // Всегда выводим информацию о проверке статусов для отладки
-          log(`Проверка статусов платформ для контента ${item.id}:`, 'scheduler');
-          log(`  - Всего платформ в JSON: ${selectedPlatforms.length} (${selectedPlatforms.join(', ')})`, 'scheduler');
-          log(`  - Опубликовано: ${selectedPublishedPlatforms.length} (${selectedPublishedPlatforms.join(', ')})`, 'scheduler');
-          log(`  - С ошибками: ${selectedErrorPlatforms.length} (${selectedErrorPlatforms.join(', ')})`, 'scheduler');
-          log(`  - В ожидании: ${selectedPendingPlatforms.length} (${selectedPendingPlatforms.join(', ')})`, 'scheduler');
-          log(`  - Все опубликованы: ${allSelectedPublished}`, 'scheduler');
+          log(`Проверка статусов платформ для контента ${item.id}:`, 'scheduled');
+          log(`  - Всего платформ в JSON: ${selectedPlatforms.length} (${selectedPlatforms.join(', ')})`, 'scheduled');
+          log(`  - Опубликовано: ${selectedPublishedPlatforms.length} (${selectedPublishedPlatforms.join(', ')})`, 'scheduled');
+          log(`  - С ошибками: ${selectedErrorPlatforms.length} (${selectedErrorPlatforms.join(', ')})`, 'scheduled');
+          log(`  - В ожидании: ${selectedPendingPlatforms.length} (${selectedPendingPlatforms.join(', ')})`, 'scheduled');
+          log(`  - Все опубликованы: ${allSelectedPublished}`, 'scheduled');
           
           const hasSelectedErrors = selectedErrorPlatforms.length > 0;
           const hasSelectedPending = selectedPendingPlatforms.length > 0;
