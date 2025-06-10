@@ -55,22 +55,33 @@ export default function PublicationCalendar({
   // Получаем публикации для выбранной даты
   const getContentForSelectedDate = () => {
     const filteredContentMap = new Map<string, CampaignContent>();
+    const today = new Date();
+    const isSelectedDateToday = isSameDay(startOfDay(selectedDate), startOfDay(today));
     
     // Фильтруем содержимое для выбранной даты
     content.forEach(post => {
       // Пропускаем посты без social_platforms
       if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
+        // Если выбрана сегодняшняя дата, показываем также контент без платформ (черновики)
+        if (isSelectedDateToday) {
+          // Проверяем фильтр платформ - если фильтр не установлен, показываем
+          if (filteredPlatforms.length === 0) {
+            filteredContentMap.set(post.id, post);
+          }
+        }
         return;
       }
       
       // 1. Формируем массив дат, которые относятся к этому посту
       let relevantDates: Date[] = [];
       let platformsWithDates: Set<SocialPlatform> = new Set();
+      let hasAnyDates = false;
       
       // Проверяем publishedAt
       if (post.publishedAt) {
         try {
           relevantDates.push(new Date(post.publishedAt));
+          hasAnyDates = true;
         } catch (e) {}
       }
       
@@ -78,6 +89,7 @@ export default function PublicationCalendar({
       if (post.scheduledAt) {
         try {
           relevantDates.push(new Date(post.scheduledAt));
+          hasAnyDates = true;
         } catch (e) {}
       }
       
@@ -94,6 +106,7 @@ export default function PublicationCalendar({
                 platformsWithDates.add(platform as SocialPlatform);
               }
               relevantDates.push(publishDate);
+              hasAnyDates = true;
             } catch (e) {}
           }
           
@@ -105,6 +118,7 @@ export default function PublicationCalendar({
                 platformsWithDates.add(platform as SocialPlatform);
               }
               relevantDates.push(scheduledDate);
+              hasAnyDates = true;
             } catch (e) {}
           }
         }
@@ -115,8 +129,11 @@ export default function PublicationCalendar({
         isSameDay(startOfDay(selectedDate), startOfDay(date))
       );
       
-      // 3. Применяем фильтрацию по платформам, если необходимо
-      if (hasMatchingDate) {
+      // 3. Если нет дат, но выбрана сегодняшняя дата - показываем контент (черновики)
+      const shouldShowAsToday = !hasAnyDates && isSelectedDateToday;
+      
+      // 4. Применяем фильтрацию по платформам, если необходимо
+      if (hasMatchingDate || shouldShowAsToday) {
         if (filteredPlatforms.length === 0) {
           // Если фильтр не выбран, показываем пост
           filteredContentMap.set(post.id, post);
@@ -128,6 +145,8 @@ export default function PublicationCalendar({
           // Если платформы фильтруются, проверяем, есть ли выбранные платформы среди тех, что имеют даты на выбранный день
           const hasFilteredPlatform = Array.from(platformsWithDates).some(platform => 
             filteredPlatforms.includes(platform)
+          ) || Object.keys(post.socialPlatforms).some(platform => 
+            filteredPlatforms.includes(platform as SocialPlatform)
           );
           
           if (hasFilteredPlatform) {
@@ -192,16 +211,23 @@ export default function PublicationCalendar({
   const getDayContent = (day: Date) => {
     // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
     const uniquePostsMap = new Map<string, CampaignContent>();
+    const today = new Date();
+    const isDayToday = isSameDay(startOfDay(day), startOfDay(today));
     
     // Проходим по всем постам и собираем только уникальные на эту дату
     content.forEach((post, index) => {
-      // Проверяем наличие socialPlatforms - если его нет, пост не отображаем в календаре
-      if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
-        return; // Пропускаем посты без social_platforms
-      }
-      
       // Формируем массив дат, которые относятся к этому посту
       let relevantDates: Date[] = [];
+      let hasAnyDates = false;
+      
+      // Проверяем наличие socialPlatforms
+      if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
+        // Если сегодняшний день и нет платформ - показываем как черновик
+        if (isDayToday) {
+          uniquePostsMap.set(post.id, post);
+        }
+        return;
+      }
       
       // Отладка для первых 5 постов
       if (index < 5 && day.getDate() <= 3) {
@@ -213,6 +239,7 @@ export default function PublicationCalendar({
         try {
           const pubDate = new Date(post.publishedAt);
           relevantDates.push(pubDate);
+          hasAnyDates = true;
           if (index < 5 && day.getDate() <= 3) {
             console.log(`  - publishedAt date: ${pubDate.toDateString()}`);
           }
@@ -224,6 +251,7 @@ export default function PublicationCalendar({
         try {
           const schedDate = new Date(post.scheduledAt);
           relevantDates.push(schedDate);
+          hasAnyDates = true;
           if (index < 5 && day.getDate() <= 3) {
             console.log(`  - scheduledAt date: ${schedDate.toDateString()}`);
           }
@@ -239,6 +267,7 @@ export default function PublicationCalendar({
           if (platformData && platformData.publishedAt) {
             try {
               relevantDates.push(new Date(platformData.publishedAt));
+              hasAnyDates = true;
             } catch (e) {}
           }
           
@@ -246,6 +275,7 @@ export default function PublicationCalendar({
           if (platformData && platformData.scheduledAt) {
             try {
               relevantDates.push(new Date(platformData.scheduledAt));
+              hasAnyDates = true;
             } catch (e) {}
           }
         }
@@ -256,8 +286,11 @@ export default function PublicationCalendar({
         isSameDay(startOfDay(day), startOfDay(date))
       );
       
+      // 5. Если нет дат, но это сегодняшний день - показываем как черновик
+      const shouldShowAsToday = !hasAnyDates && isDayToday;
+      
       // Если пост относится к этому дню, добавляем его в Map
-      if (isRelevantForDay) {
+      if (isRelevantForDay || shouldShowAsToday) {
         uniquePostsMap.set(post.id, post);
       }
     });
