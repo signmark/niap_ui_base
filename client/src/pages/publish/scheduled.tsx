@@ -101,7 +101,8 @@ export default function ScheduledPublications() {
   } = useQuery<CampaignContent[]>({
     queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
     queryFn: async () => {
-      const url = `/api/publish/scheduled?userId=${userId}${selectedCampaign?.id ? `&campaignId=${selectedCampaign.id}` : ''}`;
+      // Загружаем ВСЕ запланированные публикации пользователя, без фильтрации по кампании
+      const url = `/api/publish/scheduled?userId=${userId}`;
       
       // Получаем токен авторизации из хранилища авторизации
       const authToken = getAuthToken();
@@ -112,8 +113,8 @@ export default function ScheduledPublications() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      console.log('Загрузка запланированных публикаций для кампании:', selectedCampaign?.id);
-      console.log('Используется userId:', userId);
+      console.log('Загрузка ВСЕХ запланированных публикаций для пользователя:', userId);
+      console.log('Выбранная кампания для фильтрации:', selectedCampaign?.id);
       
       const result = await apiRequest(url, { 
         method: 'GET',
@@ -121,6 +122,7 @@ export default function ScheduledPublications() {
       });
       
       console.log('Загружено запланированных публикаций:', (result.data || []).length);
+      console.log('Данные запланированных публикаций:', result.data);
       return result.data;
     },
     enabled: !!userId, // Загружаем для всех кампаний пользователя
@@ -137,11 +139,16 @@ export default function ScheduledPublications() {
     }
   }, [selectedCampaign?.id, userId, refetchScheduled]);
   
-  // Фильтрация контента по поисковому запросу и платформе
+  // Фильтрация контента по поисковому запросу, платформе и выбранной кампании
   const filteredContent = React.useMemo(() => {
     if (!scheduledContent) return [];
     
     return scheduledContent.filter((content: CampaignContent) => {
+      // Фильтрация по выбранной кампании
+      if (selectedCampaign?.id && content.campaignId !== selectedCampaign.id) {
+        return false;
+      }
+      
       // Фильтрация по поисковому запросу
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -168,7 +175,7 @@ export default function ScheduledPublications() {
       
       return true;
     });
-  }, [scheduledContent, searchQuery, selectedPlatform]);
+  }, [scheduledContent, searchQuery, selectedPlatform, selectedCampaign?.id]);
   
   // Разделение контента на предстоящие и прошедшие публикации
   const upcomingContent = React.useMemo(() => {
