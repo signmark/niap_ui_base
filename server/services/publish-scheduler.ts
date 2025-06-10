@@ -507,10 +507,10 @@ export class PublishScheduler {
           const selectedPlatforms = [];
           const selectedPublishedPlatforms = [];
           
-          for (const [platform, data] of Object.entries(socialPlatforms)) {
-            if (data.selected === true) {
+          for (const [platform, data] of Object.entries(item.social_platforms || {})) {
+            if (data?.selected === true) {
               selectedPlatforms.push(platform);
-              if (data.status === 'published') {
+              if (data?.status === 'published') {
                 selectedPublishedPlatforms.push(platform);
               }
             }
@@ -529,11 +529,11 @@ export class PublishScheduler {
           const selectedErrorPlatforms = [];
           const selectedPendingPlatforms = [];
           
-          for (const [platform, data] of Object.entries(socialPlatforms)) {
-            if (data.selected === true) {
-              if (data.status === 'failed' || data.status === 'error') {
+          for (const [platform, data] of Object.entries(item.social_platforms || {})) {
+            if (data?.selected === true) {
+              if (data?.status === 'failed' || data?.status === 'error') {
                 selectedErrorPlatforms.push(platform);
-              } else if (data.status === 'pending' || data.status === 'scheduled' || !data.status) {
+              } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status) {
                 selectedPendingPlatforms.push(platform);
               }
             }
@@ -553,13 +553,13 @@ export class PublishScheduler {
           }
           
           // Обновляем статус
-          if (allPublished || isTelegramInstagramCombo) {
-            // ТАК КАК ВСЕ платформы были опубликованы, устанавливаем статус "published"
+          if (allSelectedPublished || isTelegramInstagramCombo) {
+            // ТАК КАК ВСЕ ВЫБРАННЫЕ платформы были опубликованы, устанавливаем статус "published"
             if (item.status !== 'published') {
               if (isTelegramInstagramCombo) {
                 log(`Обновление статуса контента ${item.id} на 'published' (СПЕЦИАЛЬНЫЙ СЛУЧАЙ TG+IG)`, 'scheduler');
               } else {
-                log(`Обновление статуса контента ${item.id} на 'published' (ВСЕ платформы опубликованы)`, 'scheduler');
+                log(`Обновление статуса контента ${item.id} на 'published' (ВСЕ ВЫБРАННЫЕ платформы опубликованы: ${selectedPublishedPlatforms.join(', ')})`, 'scheduler');
               }
               
               try {
@@ -583,7 +583,7 @@ export class PublishScheduler {
             }
           }
           // Если есть только ошибки и нет пендингов, можем установить статус 'failed'
-          else if (onlyErrorsRemain && item.status === 'scheduled') {
+          else if (onlySelectedErrorsRemain && item.status === 'scheduled') {
             log(`Обновление статуса контента ${item.id} на 'failed' (содержит только платформы с ошибками)`, 'scheduler');
             
             try {
@@ -598,11 +598,11 @@ export class PublishScheduler {
             }
           }
           // Если есть ожидающие платформы, пропускаем - публикация еще не завершена
-          else if (hasPending) {
+          else if (hasSelectedPending) {
             log(`Контент ${item.id} имеет платформы в ожидании - статус не обновляется`, 'scheduler');
           }
           // Смешанный случай: есть опубликованные и ошибки, но нет пендингов
-          else if (publishedPlatforms.length > 0 && errorPlatforms.length > 0 && !hasPending) {
+          else if (selectedPublishedPlatforms.length > 0 && selectedErrorPlatforms.length > 0 && !hasSelectedPending) {
             log(`Контент ${item.id} частично опубликован, имеет и успешные публикации, и ошибки`, 'scheduler');
             if (item.status === 'scheduled') {
               try {
