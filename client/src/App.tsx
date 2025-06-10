@@ -9,7 +9,7 @@ import Campaigns from "@/pages/campaigns";
 import CampaignDetails from "@/pages/campaigns/[id]";
 import Keywords from "@/pages/keywords";
 import Posts from "@/pages/posts";
-import Publications from "@/pages/publications";
+
 import Analytics from "@/pages/analytics";
 import Trends from "@/pages/trends";
 import Content from "@/pages/content";
@@ -52,7 +52,7 @@ const LayoutCampaignDetails = React.memo(() => <WithLayout Component={CampaignDe
 const LayoutKeywords = React.memo(() => <WithLayout Component={Keywords} />);
 const LayoutContent = React.memo(() => <WithLayout Component={Content} />);
 const LayoutPosts = React.memo(() => <WithLayout Component={Posts} />);
-const LayoutPublications = React.memo(() => <WithLayout Component={Publications} />);
+
 const LayoutTrends = React.memo(() => <WithLayout Component={Trends} />);
 const LayoutAnalytics = React.memo(() => <WithLayout Component={Analytics} />);
 const LayoutTasks = React.memo(() => <WithLayout Component={Tasks} />);
@@ -86,7 +86,7 @@ function Router() {
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
       <Route path="/posts" component={LayoutPosts} />
-      <Route path="/publications" component={LayoutPublications} />
+
       <Route path="/trends" component={LayoutTrends} />
       <Route path="/analytics" component={LayoutAnalytics} />
       <Route path="/tasks" component={LayoutTasks} />

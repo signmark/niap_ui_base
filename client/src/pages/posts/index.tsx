@@ -64,7 +64,7 @@ export default function Posts() {
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
 
-  // Получение количества публикаций для каждой платформы
+  // Получение количества опубликованных публикаций для каждой платформы (только со ссылками)
   useEffect(() => {
     if (campaignContent && campaignContent.length > 0) {
       const counts: Record<SocialPlatform, number> = {
@@ -75,9 +75,11 @@ export default function Posts() {
       };
 
       campaignContent.forEach(content => {
-        if (content.socialPlatforms) {
+        // Учитываем только посты со статусом "published"
+        if (content.status === 'published' && content.socialPlatforms) {
           Object.entries(content.socialPlatforms).forEach(([platform, info]) => {
-            if (info.status === 'published' && platform in counts) {
+            // Учитываем только опубликованные платформы с валидными ссылками
+            if (info.status === 'published' && info.postUrl && platform in counts) {
               counts[platform as SocialPlatform]++;
             }
           });
@@ -94,7 +96,7 @@ export default function Posts() {
     return campaignContent;
   };
 
-  // Вспомогательная функция для определения уникальных постов на день
+  // Вспомогательная функция для определения уникальных опубликованных постов на день
   const getUniquePostsForDay = (day: Date) => {
     // Создаем карту идентификаторов постов, чтобы избежать дублирования
     const uniquePosts = new Map<string, CampaignContent>();
@@ -102,31 +104,54 @@ export default function Posts() {
     // Получаем весь контент
     const allContent = getContent();
     
-    // Проходим по всем постам и находим те, которые относятся к указанному дню
+    // Проходим по всем постам и находим только опубликованные
     for (const post of allContent) {
-      // Массив всех дат, связанных с этим постом
-      const allDates: Date[] = [];
+      // КРИТИЧЕСКИ ВАЖНО: показываем только посты со статусом "published"
+      if (post.status !== 'published') {
+        continue;
+      }
       
-      // Добавляем основные даты поста
-      if (post.publishedAt) try { allDates.push(new Date(post.publishedAt)); } catch (e) {}
-      if (post.scheduledAt) try { allDates.push(new Date(post.scheduledAt)); } catch (e) {}
+      // Проверяем что у поста есть хотя бы одна опубликованная платформа с postUrl
+      let hasPublishedPlatform = false;
+      const publishedDates: Date[] = [];
       
-      // Добавляем даты из платформ
       if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
         for (const platform in post.socialPlatforms) {
           const platformData = post.socialPlatforms[platform as SocialPlatform];
-          if (platformData?.publishedAt) try { allDates.push(new Date(platformData.publishedAt)); } catch (e) {}
-          if (platformData?.scheduledAt) try { allDates.push(new Date(platformData.scheduledAt)); } catch (e) {}
+          
+          // Проверяем что платформа опубликована И имеет ссылку
+          if (platformData?.status === 'published' && platformData?.postUrl) {
+            hasPublishedPlatform = true;
+            
+            // Добавляем дату публикации платформы
+            if (platformData.publishedAt) {
+              try { 
+                publishedDates.push(new Date(platformData.publishedAt)); 
+              } catch (e) {}
+            }
+          }
         }
       }
       
-      // Если хотя бы одна из дат совпадает с указанным днем, добавляем пост в карту
-      if (allDates.some(date => isSameDay(day, date))) {
+      // Если нет опубликованных платформ с ссылками, пропускаем пост
+      if (!hasPublishedPlatform) {
+        continue;
+      }
+      
+      // Добавляем основную дату публикации поста
+      if (post.publishedAt) {
+        try { 
+          publishedDates.push(new Date(post.publishedAt)); 
+        } catch (e) {}
+      }
+      
+      // Если хотя бы одна дата публикации совпадает с указанным днем, добавляем пост
+      if (publishedDates.some(date => isSameDay(day, date))) {
         uniquePosts.set(post.id, post);
       }
     }
     
-    // Возвращаем массив уникальных постов
+    // Возвращаем массив уникальных опубликованных постов
     return Array.from(uniquePosts.values());
   };
 
@@ -170,9 +195,9 @@ export default function Posts() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">Календарь публикаций</h1>
+        <h1 className="text-2xl font-bold">Опубликованные посты</h1>
         <p className="text-muted-foreground mt-2">
-          Просмотр и управление постами в календарном виде
+          Календарь всех опубликованных постов со ссылками на социальные сети
         </p>
       </div>
 
