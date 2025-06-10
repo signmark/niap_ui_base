@@ -102,7 +102,7 @@ declare global {
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
   try {
-    const n8nUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru';
+    const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
     const n8nApiKey = process.env.N8N_API_KEY;
     
     if (!n8nApiKey) {
@@ -5549,7 +5549,8 @@ Return your response as a JSON array in this exact format:
           collectSources: req.body.collectSources,
         });
         
-        webhookResponse = await axios.post('https://n8n.nplanner.ru/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439', {
+        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        webhookResponse = await axios.post(`${n8nUrl}/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439`, {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
           platforms: selectedPlatforms,
@@ -6051,7 +6052,8 @@ Return your response as a JSON array in this exact format:
       
       try {
         // Отправляем запрос на n8n webhook для сбора постов из источника
-        const webhookUrl = 'https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c';
+        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        const webhookUrl = `${n8nUrl}/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c`;
         
         // Отправляем только sourceId и campaignId без авторизации
         const webhookResponse = await axios.post(webhookUrl, {
@@ -7888,7 +7890,8 @@ Return your response as a JSON array in this exact format:
             };
             
             // Отправляем запрос на n8n webhook для публикации
-            await axios.post('https://n8n.nplanner.ru/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c', webhookPayload, {
+            const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+            await axios.post(`${n8nUrl}/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c`, webhookPayload, {
               headers: {
                 'Content-Type': 'application/json',
                 'X-N8N-Authorization': n8nApiKey
@@ -8689,7 +8692,7 @@ Return your response as a JSON array in this exact format:
   async function checkPublishingStatus(contentId: string, n8nApiKey: string): Promise<any> {
     try {
       const response = await axios.get(
-        `https://n8n.nplanner.ru/webhook/status/${contentId}`,
+        `${process.env.N8N_URL || 'https://n8n.roboflow.tech'}/webhook/status/${contentId}`,
         {
           headers: {
             'X-N8N-Authorization': n8nApiKey
@@ -10168,7 +10171,8 @@ ${datesText}
 
       // Вызываем n8n webhook напрямую
       try {
-        const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK || 'https://n8n.nplanner.ru/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b';
+        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK || `${n8nUrl}/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b`;
         const apiKey = process.env.N8N_API_KEY;
         
         if (!webhookUrl) {
