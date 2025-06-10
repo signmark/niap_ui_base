@@ -1232,6 +1232,85 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getScheduledCampaignContent(campaignId: string, userId: string, token?: string): Promise<CampaignContent[]> {
+    try {
+      console.log(`[Scheduled] Получение запланированных публикаций для кампании ${campaignId}, пользователя ${userId}`);
+      
+      let authToken = token;
+      
+      // Если токен не передан, пытаемся получить из кэша
+      if (!authToken) {
+        authToken = await this.getAuthToken(userId);
+        console.log(`Получен токен из кэша для пользователя ${userId}: ${authToken ? 'Токен найден' : 'Токен не найден'}`);
+      }
+      
+      if (!authToken) {
+        console.warn(`[Scheduled] Токен не найден для пользователя ${userId}`);
+        return [];
+      }
+      
+      const filter: any = {
+        status: {
+          _eq: 'scheduled'
+        },
+        scheduled_at: {
+          _nnull: true
+        },
+        campaign_id: {
+          _eq: campaignId
+        },
+        user_id: {
+          _eq: userId
+        }
+      };
+      
+      const headers = {
+        'Authorization': `Bearer ${authToken}`
+      };
+      
+      console.log(`[Scheduled] Выполняется запрос к Directus с фильтром:`, JSON.stringify(filter, null, 2));
+      
+      const response = await directusApi.get('/items/campaign_content', {
+        params: {
+          filter,
+          sort: ['scheduled_at']
+        },
+        headers
+      });
+      
+      const items = response.data?.data || [];
+      console.log(`[Scheduled] Получено ${items.length} элементов из Directus`);
+      
+      const content = items.map((item: any) => ({
+        id: item.id,
+        content: item.content,
+        userId: item.user_id,
+        campaignId: item.campaign_id,
+        status: item.status,
+        contentType: item.content_type || "text",
+        title: item.title || null,
+        imageUrl: item.image_url,
+        prompt: item.prompt || "",
+        videoUrl: item.video_url,
+        scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+        createdAt: new Date(item.created_at),
+        socialPlatforms: item.social_platforms,
+        keywords: item.keywords || [],
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : []
+      }));
+      
+      console.log(`[Scheduled] Возвращается ${content.length} запланированных публикаций`);
+      return content;
+    } catch (error: any) {
+      console.error(`[Scheduled] Ошибка при получении запланированных публикаций:`, error);
+      if (error.response) {
+        console.error(`[Scheduled] Статус ошибки: ${error.response.status}`);
+        console.error(`[Scheduled] Данные ошибки: ${JSON.stringify(error.response.data || {})}`);
+      }
+      return [];
+    }
+  }
+
   // Business Questionnaire методы
   async getBusinessQuestionnaire(campaignId: string, authToken?: string): Promise<BusinessQuestionnaire | null> {
     console.log('Getting business questionnaire for campaign:', campaignId);
