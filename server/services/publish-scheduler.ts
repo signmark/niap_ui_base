@@ -511,11 +511,14 @@ export class PublishScheduler {
           const selectedPendingPlatforms = [];
           
           for (const [platform, data] of Object.entries(item.social_platforms || {})) {
-            if (data?.status === 'published') {
+            // Платформа считается опубликованной только если есть статус 'published' И есть postUrl
+            if (data?.status === 'published' && data?.postUrl) {
               selectedPublishedPlatforms.push(platform);
             } else if (data?.status === 'failed' || data?.status === 'error') {
               selectedErrorPlatforms.push(platform);
-            } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status) {
+            } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status || 
+                       (data?.status === 'published' && !data?.postUrl)) {
+              // Если статус 'published' но нет postUrl, считаем как pending
               selectedPendingPlatforms.push(platform);
             }
           }

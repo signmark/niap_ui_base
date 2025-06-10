@@ -254,12 +254,16 @@ router.post('/update-status/:platform', async (req: Request, res: Response) => {
       // Все платформы заносим в общий список
       platformsArray.push(platform);
       
-      if (data.status === 'published') {
+      if (data.status === 'published' && data.postUrl) {
         publishedPlatforms.push(platform);
-      } else if (data.status === 'pending' || data.status === 'scheduled') {
+      } else if (data.status === 'pending' || data.status === 'scheduled' || 
+                 (data.status === 'published' && !data.postUrl)) {
         pendingPlatforms.push(platform);
         hasPendingStatusAnyPlatform = true;
-        log.info(`[ОтЛАДКА] Обнаружена платформа ${platform} в статусе '${data.status}', блокируем обновление до published`);
+        const reason = data.status === 'published' && !data.postUrl ? 
+          `статус 'published' но отсутствует postUrl` : 
+          `статус '${data.status}'`;
+        log.info(`[ОтЛАДКА] Обнаружена платформа ${platform} в ${reason}, блокируем обновление до published`);
       } else if (data.status === 'failed' || data.status === 'error') {
         errorPlatforms.push(platform);
       }
