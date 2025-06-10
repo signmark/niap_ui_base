@@ -434,6 +434,10 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
         // Формируем URL вебхука с учетом N8N_URL
     let baseUrl = process.env.N8N_URL || "https://n8n.nplanner.ru";
     
+    // Логируем какой URL используется
+    log(`[Social Publishing] N8N_URL из переменной окружения: ${process.env.N8N_URL}`);
+    log(`[Social Publishing] Используемый базовый URL для n8n: ${baseUrl}`);
+    
     // Всегда добавляем /webhook если его нет
     if (!baseUrl.includes("/webhook")) {
       // Если baseUrl заканчивается на /, убираем его перед добавлением /webhook
