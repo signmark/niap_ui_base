@@ -1409,6 +1409,11 @@ export class PublishScheduler {
       }
     } catch (error: any) {
       log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'scheduler');
+    } finally {
+      // КРИТИЧЕСКИ ВАЖНО: Всегда сбрасываем блокировку в конце
+      this.isProcessing = false;
+      const processingDuration = Date.now() - this.processingStartTime;
+      log(`РАЗБЛОКИРОВКА: Планировщик завершил работу за ${Math.round(processingDuration/1000)}с`, 'scheduler');
     }
   }
 
