@@ -8688,6 +8688,46 @@ Return your response as a JSON array in this exact format:
     }
   });
   
+  // Получение запланированных публикаций для кампании
+  app.get('/api/publish/scheduled', authenticateUser, async (req, res) => {
+    try {
+      const { userId, campaignId } = req.query;
+      const authHeader = req.headers['authorization'];
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'Не указан userId' });
+      }
+      
+      if (!campaignId) {
+        return res.status(400).json({ error: 'Не указан campaignId' });
+      }
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: 'Не авторизован' });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`[Scheduled] Получение запланированных публикаций для кампании ${campaignId}, пользователя ${userId}`);
+      
+      // Получаем запланированные публикации из хранилища
+      const scheduledContent = await storage.getScheduledCampaignContent(campaignId as string, userId as string, token);
+      
+      console.log(`[Scheduled] Найдено ${scheduledContent.length} запланированных публикаций`);
+      
+      return res.json({
+        success: true,
+        data: scheduledContent
+      });
+    } catch (error: any) {
+      console.error('Error getting scheduled publications:', error);
+      return res.status(500).json({ 
+        error: 'Ошибка при получении запланированных публикаций',
+        details: error.message 
+      });
+    }
+  });
+
   // Проверяет статус публикации контента в n8n
   async function checkPublishingStatus(contentId: string, n8nApiKey: string): Promise<any> {
     try {

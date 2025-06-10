@@ -101,8 +101,8 @@ export default function ScheduledPublications() {
   } = useQuery<CampaignContent[]>({
     queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
     queryFn: async () => {
-      // Загружаем ВСЕ запланированные публикации пользователя, без фильтрации по кампании
-      const url = `/api/publish/scheduled?userId=${userId}`;
+      // Загружаем запланированные публикации для выбранной кампании
+      const url = `/api/publish/scheduled?userId=${userId}&campaignId=${selectedCampaign?.id}`;
       
       // Получаем токен авторизации из хранилища авторизации
       const authToken = getAuthToken();
@@ -113,8 +113,8 @@ export default function ScheduledPublications() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      console.log('Загрузка ВСЕХ запланированных публикаций для пользователя:', userId);
-      console.log('Выбранная кампания для фильтрации:', selectedCampaign?.id);
+      console.log('Загрузка запланированных публикаций для кампании:', selectedCampaign?.id);
+      console.log('Используется userId:', userId);
       
       const result = await apiRequest(url, { 
         method: 'GET',
@@ -125,7 +125,7 @@ export default function ScheduledPublications() {
       console.log('Данные запланированных публикаций:', result.data);
       return result.data;
     },
-    enabled: !!userId, // Загружаем для всех кампаний пользователя
+    enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
     refetchOnMount: true,
     staleTime: 60000, // Считаем данные свежими в течение 1 минуты
     refetchInterval: 60000, // Автоматически обновляем данные только раз в минуту
@@ -139,16 +139,11 @@ export default function ScheduledPublications() {
     }
   }, [selectedCampaign?.id, userId, refetchScheduled]);
   
-  // Фильтрация контента по поисковому запросу, платформе и выбранной кампании
+  // Фильтрация контента по поисковому запросу и платформе (кампания уже отфильтрована на сервере)
   const filteredContent = React.useMemo(() => {
     if (!scheduledContent) return [];
     
     return scheduledContent.filter((content: CampaignContent) => {
-      // Фильтрация по выбранной кампании
-      if (selectedCampaign?.id && content.campaignId !== selectedCampaign.id) {
-        return false;
-      }
-      
       // Фильтрация по поисковому запросу
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -175,7 +170,7 @@ export default function ScheduledPublications() {
       
       return true;
     });
-  }, [scheduledContent, searchQuery, selectedPlatform, selectedCampaign?.id]);
+  }, [scheduledContent, searchQuery, selectedPlatform]);
   
   // Разделение контента на предстоящие и прошедшие публикации
   const upcomingContent = React.useMemo(() => {
