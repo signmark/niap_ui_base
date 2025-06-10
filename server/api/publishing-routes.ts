@@ -5,7 +5,8 @@ import { socialPublishingService } from '../services/social/index';
 
 // Не используем старый сервис, заменив его на новый модульный
 import { publishScheduler } from '../services/publish-scheduler';
-import { SocialPlatform } from '@shared/schema';
+// Определяем тип SocialPlatform локально
+type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
 import { directusStorageAdapter } from '../services/directus';
@@ -694,6 +695,10 @@ export function registerPublishingRoutes(app: Express): void {
       const campaignId = req.query.campaignId as string;
       const authHeader = req.headers.authorization;
       
+      log(`=== ЗАПРОС ЗАПЛАНИРОВАННЫХ ПУБЛИКАЦИЙ ===`, 'api');
+      log(`userId: ${userId}, campaignId: ${campaignId}`, 'api');
+      log(`authHeader присутствует: ${!!authHeader}`, 'api');
+      
       // Получаем запланированные публикации из базы данных
       let scheduledContent: any[] = [];
       
@@ -803,20 +808,25 @@ export function registerPublishingRoutes(app: Express): void {
           const allContent = await storage.getCampaignContent(userId, campaignId);
           log(`Получено ${allContent.length} единиц контента для поиска запланированных`, 'api');
           
-          // Фильтруем только те, у которых статус scheduled или есть socialPlatforms с pending/scheduled
+          // ИСПРАВЛЕНО: Упрощенная и более надежная логика фильтрации запланированных постов
           scheduledContent = allContent.filter(content => {
-            // Проверяем статус
-            if (content.status === 'scheduled' && content.scheduledAt) return true;
+            // Основной критерий: статус 'scheduled'
+            if (content.status === 'scheduled') {
+              log(`Найден запланированный пост: ${content.id} (статус: ${content.status})`, 'api');
+              return true;
+            }
             
-            // Проверяем socialPlatforms
+            // Дополнительная проверка: есть платформы в состоянии 'pending' или 'scheduled'
             if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
-              for (const platform of Object.keys(content.socialPlatforms)) {
-                const platformData = content.socialPlatforms[platform];
-                if (platformData && 
-                   (platformData.status === 'pending' || platformData.status === 'scheduled') && 
-                    platformData.scheduledAt) {
-                  return true;
-                }
+              const hasPendingPlatforms = Object.values(content.socialPlatforms).some(platformData => {
+                return platformData && 
+                       typeof platformData === 'object' && 
+                       ((platformData as any).status === 'pending' || (platformData as any).status === 'scheduled');
+              });
+              
+              if (hasPendingPlatforms) {
+                log(`Найден пост с запланированными платформами: ${content.id}`, 'api');
+                return true;
               }
             }
             
