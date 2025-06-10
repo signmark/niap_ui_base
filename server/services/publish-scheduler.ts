@@ -524,7 +524,7 @@ export class PublishScheduler {
           const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
           
           // Всегда выводим информацию о проверке статусов для отладки
-          log(`Проверка статусов платформ для контента ${item.id}:`, 'scheduled');
+          log(`Проверка статусов платформ для контента ${item.id} (текущий статус: ${item.status}):`, 'scheduled');
           log(`  - Всего платформ в JSON: ${selectedPlatforms.length} (${selectedPlatforms.join(', ')})`, 'scheduled');
           log(`  - Опубликовано: ${selectedPublishedPlatforms.length} (${selectedPublishedPlatforms.join(', ')})`, 'scheduled');
           log(`  - С ошибками: ${selectedErrorPlatforms.length} (${selectedErrorPlatforms.join(', ')})`, 'scheduled');
@@ -589,9 +589,25 @@ export class PublishScheduler {
               log(`Ошибка при обновлении статуса: ${error}`, 'scheduler');
             }
           }
-          // Если есть ожидающие платформы, пропускаем - публикация еще не завершена
+          // Если есть ожидающие платформы
           else if (hasSelectedPending) {
-            log(`Контент ${item.id} имеет платформы в ожидании - статус не обновляется`, 'scheduler');
+            // Если контент был "published", но появились платформы в ожидании, переводим обратно в "scheduled"
+            if (item.status === 'published') {
+              log(`Обновление статуса контента ${item.id} с 'published' на 'scheduled' (появились платформы в ожидании: ${selectedPendingPlatforms.join(', ')})`, 'scheduler');
+              
+              try {
+                await axios.patch(
+                  `${directusUrl}/items/campaign_content/${item.id}`,
+                  { status: 'scheduled' },
+                  { headers }
+                );
+                updatedCount++;
+              } catch (error) {
+                log(`Ошибка при обновлении статуса на 'scheduled': ${error}`, 'scheduler');
+              }
+            } else {
+              log(`Контент ${item.id} имеет платформы в ожидании - статус остается '${item.status}'`, 'scheduler');
+            }
           }
           // Смешанный случай: есть опубликованные и ошибки, но нет пендингов
           else if (selectedPublishedPlatforms.length > 0 && selectedErrorPlatforms.length > 0 && !hasSelectedPending) {
