@@ -1760,7 +1760,7 @@ export class PublishScheduler {
         // Передаем имя платформы как строку, чтобы избежать ошибки "Platform [object Object] is not supported yet"
         const platformName = typeof platform === 'string' ? platform : String(platform);
         
-        // Для Facebook используем специальный прямой URL, для остальных - стандартный
+        // ИСПРАВЛЕНИЕ: Все платформы используют прямые API вызовы, избегая n8n webhook
         let publishUrl;
         let logMessage;
         
@@ -1770,17 +1770,20 @@ export class PublishScheduler {
           logMessage = `Вызов прямого API публикации Facebook для запланированного контента ${content.id}`;
           log(logMessage, 'scheduler');
         } else {
-          // Используем route /api/publish для остальных платформ, которые маршрутизирует запросы через n8n
-          publishUrl = `${appUrl}/api/publish`;
-          logMessage = `Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platformName}`;
+          // ИСПРАВЛЕНИЕ: Используем прямые API маршруты для всех платформ, избегая /api/publish который может вызывать n8n
+          publishUrl = `${appUrl}/api/publish/content`;
+          logMessage = `Вызов прямого API публикации для запланированного контента ${content.id} на платформе ${platformName} (без n8n webhook)`;
           log(logMessage, 'scheduler');
         }
         
         try {
           // Параметры различаются в зависимости от платформы
           const requestData = platformName.toLowerCase() === 'facebook' 
-            ? { contentId: content.id } // для Facebook
-            : { contentId: content.id, platform: platformName }; // для остальных платформ
+            ? { contentId: content.id } // для Facebook webhook
+            : { 
+                contentId: content.id, 
+                platforms: [platformName] // для /api/publish/content нужен массив платформ
+              };
           
           // Логируем что именно отправляем
           log(`Отправляем в ${platformName}: contentId=${content.id}, platform=${platformName}`, 'scheduler');
