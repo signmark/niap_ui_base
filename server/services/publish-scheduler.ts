@@ -23,6 +23,10 @@ export class PublishScheduler {
   // Публикации активированы
   public disablePublishing = false;
   
+  // КРИТИЧЕСКИ ВАЖНО: Защита от параллельного выполнения планировщика
+  private isProcessing = false;
+  private processingStartTime: number = 0;
+  
   // Флаг для вывода информационных сообщений и детального логирования
   // Управляется переменной окружения DEBUG_SCHEDULER
   private verboseLogging = false;
@@ -674,6 +678,23 @@ export class PublishScheduler {
    */
   async checkScheduledContent() {
     try {
+      // КРИТИЧЕСКИ ВАЖНО: Проверяем блокировку для предотвращения двойной публикации
+      if (this.isProcessing) {
+        const processingDuration = Date.now() - this.processingStartTime;
+        if (processingDuration < 60000) { // Если процесс идет менее минуты - ждем
+          log(`БЛОКИРОВКА: Планировщик уже выполняется (${Math.round(processingDuration/1000)}с), пропускаем итерацию`, 'scheduler');
+          return;
+        } else {
+          // Если процесс идет больше минуты - возможно зависание, сбрасываем блокировку
+          log(`ПРЕДУПРЕЖДЕНИЕ: Принудительный сброс блокировки планировщика (зависание ${Math.round(processingDuration/1000)}с)`, 'scheduler');
+          this.isProcessing = false;
+        }
+      }
+      
+      // Устанавливаем блокировку
+      this.isProcessing = true;
+      this.processingStartTime = Date.now();
+      
       log('Проверка запланированных публикаций', 'scheduler');
       
       // Проверяем, не отключены ли публикации глобально
