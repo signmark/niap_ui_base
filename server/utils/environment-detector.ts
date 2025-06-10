@@ -62,14 +62,24 @@ export function detectEnvironment(): EnvironmentConfig {
     if (isStaging) {
       environment = 'staging';
     } else {
-      environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
+      // ИСПРАВЛЕНО: Определяем окружение на основе DIRECTUS_URL, а не email
+      if (envUrl && envUrl.includes('roboflow.tech')) {
+        environment = 'development';
+      } else if (envUrl && envUrl.includes('nplanner.ru')) {
+        environment = 'production';
+      } else {
+        environment = envEmail === 'lbrspb@gmail.com' ? 'production' : 'development';
+      }
     }
   }
 
   // Determine correct Directus URL based on environment
   let directusUrl = envUrl;
   if (!directusUrl) {
-    if (isDocker || environment === 'production') {
+    // Приоритет для dev окружения - всегда используем roboflow.tech
+    if (isReplit || environment === 'replit' || environment === 'development') {
+      directusUrl = 'https://directus.roboflow.tech';
+    } else if (isDocker || environment === 'production') {
       directusUrl = 'https://directus.nplanner.ru';
     } else {
       directusUrl = 'https://directus.roboflow.tech';

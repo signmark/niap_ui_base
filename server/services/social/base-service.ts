@@ -241,7 +241,7 @@ export abstract class BaseSocialService {
     }
 
     // Если переменных нет, используем значения по умолчанию, в зависимости от среды
-    const productionUrl = 'https://smm.nplanner.ru';
+    const productionUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
     
     // Проверка продакшн-режима
     const isProduction = process.env.NODE_ENV === 'production';

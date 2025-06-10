@@ -1884,7 +1884,7 @@ export class PublishScheduler {
         
         // Определяем URL для webhook запроса н8н
         // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
-        let n8nBaseUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru';
+        let n8nBaseUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
         
         // Всегда добавляем /webhook если его нет
         if (!n8nBaseUrl.includes('/webhook')) {
