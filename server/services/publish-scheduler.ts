@@ -519,6 +519,9 @@ export class PublishScheduler {
             } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status || 
                        (data?.status === 'published' && !data?.postUrl)) {
               // Если статус 'published' но нет postUrl, считаем как pending
+              if (data?.status === 'published' && !data?.postUrl) {
+                console.log(`[scheduled] ОБНАРУЖЕНА ПРОБЛЕМА: платформа ${platform} имеет статус 'published' но отсутствует postUrl`);
+              }
               selectedPendingPlatforms.push(platform);
             }
           }
