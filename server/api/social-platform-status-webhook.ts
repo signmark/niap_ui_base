@@ -132,6 +132,14 @@ async function updateContentStatus(contentId: string, updates: any, token: strin
         } catch (updateError) {
           log.error(`Ошибка при обновлении общего статуса контента ${contentId}: ${updateError.message}`);
         }
+      } else if (allSelectedPublished && hasErrors && !hasPending) {
+        // Если все выбранные платформы обработаны, но есть ошибки - статус остается как есть
+        log.info(`Все выбранные платформы обработаны, но есть ошибки. Статус контента ${contentId} остается без изменений`);
+      } else if (hasPending) {
+        // Если есть платформы в ожидании - не меняем статус
+        log.info(`Есть платформы в ожидании для контента ${contentId}. Статус остается без изменений`);
+      } else {
+        log.info(`Условия для обновления статуса контента ${contentId} не выполнены: allSelected=${allSelectedPublished}, hasErrors=${hasErrors}, hasPending=${hasPending}, currentStatus=${updatedContentData.status}`);
       }
     }
     

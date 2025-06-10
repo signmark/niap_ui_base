@@ -501,24 +501,50 @@ export class PublishScheduler {
           }
 
           // Выполняем проверку по правилам из документа
-          // 1. Если ВСЕ платформы в JSON имеют статус 'published'
-          const allPublished = allPlatforms.length > 0 && allPlatforms.length === publishedPlatforms.length;
+          // ВАЖНО: Проверяем только ВЫБРАННЫЕ платформы, а не все платформы в JSON
+          
+          // Получаем список выбранных платформ (selected: true)
+          const selectedPlatforms = [];
+          const selectedPublishedPlatforms = [];
+          
+          for (const [platform, data] of Object.entries(socialPlatforms)) {
+            if (data.selected === true) {
+              selectedPlatforms.push(platform);
+              if (data.status === 'published') {
+                selectedPublishedPlatforms.push(platform);
+              }
+            }
+          }
+          
+          // 1. Если ВСЕ ВЫБРАННЫЕ платформы имеют статус 'published'
+          const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
           
           if (this.verboseLogging) {
-            log(`DEBUG: Проверка всех опубликованных платформ: Всего=${allPlatforms.length}, Опубликовано=${publishedPlatforms.length}, Результат=${allPublished}`, 'scheduler');
-          }
-          if (this.verboseLogging) {
-            log(`DEBUG: Платформы: ${allPlatforms.join(', ')}`, 'scheduler');
-            log(`DEBUG: Опубликованные: ${publishedPlatforms.join(', ')}`, 'scheduler');
+            log(`DEBUG: Проверка выбранных платформ: Выбрано=${selectedPlatforms.length}, Опубликовано=${selectedPublishedPlatforms.length}, Результат=${allSelectedPublished}`, 'scheduler');
+            log(`DEBUG: Выбранные платформы: ${selectedPlatforms.join(', ')}`, 'scheduler');
+            log(`DEBUG: Опубликованные выбранные: ${selectedPublishedPlatforms.join(', ')}`, 'scheduler');
           }
           
-          // 2. Если есть ошибки и нет ожидающих платформ
-          const hasErrors = errorPlatforms.length > 0;
-          const hasPending = pendingPlatforms.length > 0 || scheduledPlatforms.length > 0;
-          const onlyErrorsRemain = hasErrors && !hasPending;
+          // 2. Если есть ошибки и нет ожидающих платформ среди выбранных
+          const selectedErrorPlatforms = [];
+          const selectedPendingPlatforms = [];
+          
+          for (const [platform, data] of Object.entries(socialPlatforms)) {
+            if (data.selected === true) {
+              if (data.status === 'failed' || data.status === 'error') {
+                selectedErrorPlatforms.push(platform);
+              } else if (data.status === 'pending' || data.status === 'scheduled' || !data.status) {
+                selectedPendingPlatforms.push(platform);
+              }
+            }
+          }
+          
+          const hasSelectedErrors = selectedErrorPlatforms.length > 0;
+          const hasSelectedPending = selectedPendingPlatforms.length > 0;
+          const onlySelectedErrorsRemain = hasSelectedErrors && !hasSelectedPending;
           
           // Дополнительная проверка для случая с TG+IG
-          const isTelegramInstagramCombo = hasTelegram && hasInstagram && allPlatforms.length === 2 && 
+          const isTelegramInstagramCombo = hasTelegram && hasInstagram && selectedPlatforms.length === 2 && 
                                       telegramPublished && instagramPublished && item.status === 'scheduled';
           
           if (isTelegramInstagramCombo) {
