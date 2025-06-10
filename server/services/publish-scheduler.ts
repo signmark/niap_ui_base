@@ -961,23 +961,43 @@ export class PublishScheduler {
         let anyPlatformPending = false;
         let logMessages = [];
         
-        // Быстрая проверка на пендинги - результаты сохраняем для логирования
+        // Проверка на пендинги с учетом времени публикации
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
-          // Если платформа выбрана и статус pending/scheduled - публикуем немедленно
+          // Если платформа выбрана и статус pending/scheduled
           if (platformData?.selected === true && 
               (platformData?.status === 'pending' || platformData?.status === 'scheduled')) {
-            // Сохраняем информацию для отладки
-            if (this.verboseLogging) {
-              logMessages.push(`${platform}: статус ${platformData?.status} - ГОТОВ К ПУБЛИКАЦИИ`);
+            
+            // КРИТИЧЕСКИ ВАЖНО: Проверяем время публикации даже для pending/scheduled
+            const scheduleTime = content.scheduledAt || (platformData?.scheduledAt ? new Date(platformData.scheduledAt) : null);
+            
+            if (scheduleTime) {
+              const timeUntilPublish = scheduleTime.getTime() - now.getTime();
+              const minutesDiff = Math.floor(timeUntilPublish / 1000 / 60);
+              
+              // Публикуем только если время пришло (с допуском 1 минута назад)
+              if (timeUntilPublish <= 60000) { // 1 минута = 60000 мс
+                if (this.verboseLogging) {
+                  logMessages.push(`${platform}: статус ${platformData?.status}, время пришло (${minutesDiff} мин.) - ГОТОВ К ПУБЛИКАЦИИ`);
+                }
+                anyPlatformPending = true;
+              } else {
+                if (this.verboseLogging) {
+                  logMessages.push(`${platform}: статус ${platformData?.status}, но время еще не пришло (${minutesDiff} мин.) - ОЖИДАНИЕ`);
+                }
+              }
+            } else {
+              // Если нет времени публикации, публикуем немедленно (обратная совместимость)
+              if (this.verboseLogging) {
+                logMessages.push(`${platform}: статус ${platformData?.status}, нет времени публикации - ГОТОВ К ПУБЛИКАЦИИ`);
+              }
+              anyPlatformPending = true;
             }
-            anyPlatformPending = true;
           }
         }
         
-        // Если есть хотя бы одна платформа в pending или scheduled, сразу возвращаем true
+        // Если есть хотя бы одна платформа готовая к публикации (с учетом времени)
         if (anyPlatformPending) {
-            // Минимальное логирование - только ID контента
-            log(`Контент ID ${content.id} имеет платформы в статусе pending/scheduled - обрабатываем`, 'scheduler');
+            log(`Контент ID ${content.id} имеет платформы готовые к публикации - обрабатываем`, 'scheduler');
             return true;
         }
         
