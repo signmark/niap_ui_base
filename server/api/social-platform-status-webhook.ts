@@ -81,24 +81,20 @@ async function updateContentStatus(contentId: string, updates: any, token: strin
       const updatedPlatforms = updatedContentData.social_platforms;
       
       // Получаем списки платформ по их статусам
-      const selectedPlatforms = [];
+      // ВАЖНО: Все платформы из JSON считаются выбранными
+      const selectedPlatforms = Object.keys(updatedPlatforms);
       const publishedPlatforms = [];
       const pendingPlatforms = [];
       const failedPlatforms = [];
       
-      // Проходим по всем платформам и проверяем их статусы
+      // Проходим по всем платформам из JSON
       for (const [platform, data] of Object.entries(updatedPlatforms)) {
-        // Проверяем только выбранные платформы
-        if (data.selected === true) {
-          selectedPlatforms.push(platform);
-          
-          if (data.status === 'published') {
-            publishedPlatforms.push(platform);
-          } else if (data.status === 'pending' || data.status === 'scheduled') {
-            pendingPlatforms.push(platform);
-          } else if (data.status === 'failed' || data.status === 'error') {
-            failedPlatforms.push(platform);
-          }
+        if (data.status === 'published') {
+          publishedPlatforms.push(platform);
+        } else if (data.status === 'pending' || data.status === 'scheduled') {
+          pendingPlatforms.push(platform);
+        } else if (data.status === 'failed' || data.status === 'error') {
+          failedPlatforms.push(platform);
         }
       }
       

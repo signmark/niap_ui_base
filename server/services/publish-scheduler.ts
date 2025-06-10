@@ -501,43 +501,35 @@ export class PublishScheduler {
           }
 
           // Выполняем проверку по правилам из документа
-          // ВАЖНО: Проверяем только ВЫБРАННЫЕ платформы, а не все платформы в JSON
+          // ВАЖНО: ВЫБРАННЫЕ платформы = ВСЕ платформы из JSON
+          // Если платформа присутствует в JSON, значит она выбрана для публикации
           
-          // Получаем список выбранных платформ (selected: true)
-          const selectedPlatforms = [];
+          // Получаем все платформы из JSON (это и есть выбранные)
+          const selectedPlatforms = Object.keys(item.social_platforms || {});
           const selectedPublishedPlatforms = [];
-          
-          for (const [platform, data] of Object.entries(item.social_platforms || {})) {
-            if (data?.selected === true) {
-              selectedPlatforms.push(platform);
-              if (data?.status === 'published') {
-                selectedPublishedPlatforms.push(platform);
-              }
-            }
-          }
-          
-          // 1. Если ВСЕ ВЫБРАННЫЕ платформы имеют статус 'published'
-          const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
-          
-          if (this.verboseLogging) {
-            log(`DEBUG: Проверка выбранных платформ: Выбрано=${selectedPlatforms.length}, Опубликовано=${selectedPublishedPlatforms.length}, Результат=${allSelectedPublished}`, 'scheduler');
-            log(`DEBUG: Выбранные платформы: ${selectedPlatforms.join(', ')}`, 'scheduler');
-            log(`DEBUG: Опубликованные выбранные: ${selectedPublishedPlatforms.join(', ')}`, 'scheduler');
-          }
-          
-          // 2. Если есть ошибки и нет ожидающих платформ среди выбранных
           const selectedErrorPlatforms = [];
           const selectedPendingPlatforms = [];
           
           for (const [platform, data] of Object.entries(item.social_platforms || {})) {
-            if (data?.selected === true) {
-              if (data?.status === 'failed' || data?.status === 'error') {
-                selectedErrorPlatforms.push(platform);
-              } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status) {
-                selectedPendingPlatforms.push(platform);
-              }
+            if (data?.status === 'published') {
+              selectedPublishedPlatforms.push(platform);
+            } else if (data?.status === 'failed' || data?.status === 'error') {
+              selectedErrorPlatforms.push(platform);
+            } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status) {
+              selectedPendingPlatforms.push(platform);
             }
           }
+          
+          // 1. Если ВСЕ платформы из JSON имеют статус 'published'
+          const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
+          
+          // Всегда выводим информацию о проверке статусов для отладки
+          log(`Проверка статусов платформ для контента ${item.id}:`, 'scheduler');
+          log(`  - Всего платформ в JSON: ${selectedPlatforms.length} (${selectedPlatforms.join(', ')})`, 'scheduler');
+          log(`  - Опубликовано: ${selectedPublishedPlatforms.length} (${selectedPublishedPlatforms.join(', ')})`, 'scheduler');
+          log(`  - С ошибками: ${selectedErrorPlatforms.length} (${selectedErrorPlatforms.join(', ')})`, 'scheduler');
+          log(`  - В ожидании: ${selectedPendingPlatforms.length} (${selectedPendingPlatforms.join(', ')})`, 'scheduler');
+          log(`  - Все опубликованы: ${allSelectedPublished}`, 'scheduler');
           
           const hasSelectedErrors = selectedErrorPlatforms.length > 0;
           const hasSelectedPending = selectedPendingPlatforms.length > 0;
