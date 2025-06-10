@@ -1581,9 +1581,10 @@ export class PublishScheduler {
             return false;
           }
           
-          // КРИТИЧЕСКАЯ ЗАЩИТА #2: Проверяем timestamp публикации
-          if (platformData.publishedAt) {
-            log(`  - ${platform}: УЖЕ ОПУБЛИКОВАН, найден publishedAt: ${platformData.publishedAt}, ПРОПУСКАЕМ`, 'scheduler');
+          // КРИТИЧЕСКАЯ ЗАЩИТА #2: Проверяем что платформа действительно опубликована
+          // Платформа считается опубликованной только если есть И статус 'published' И postUrl
+          if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+            log(`  - ${platform}: УЖЕ ОПУБЛИКОВАН (статус: published, postUrl: ${platformData.postUrl}), ПРОПУСКАЕМ`, 'scheduler');
             return false;
           }
           
