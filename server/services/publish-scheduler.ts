@@ -1691,6 +1691,9 @@ export class PublishScheduler {
             ? { contentId: content.id } // для Facebook
             : { contentId: content.id, platform: platformName }; // для остальных платформ
           
+          // Логируем что именно отправляем
+          log(`Отправляем в ${platformName}: contentId=${content.id}, platform=${platformName}`, 'scheduler');
+          
           const apiResponse = await axios.post(publishUrl, requestData, {
             headers: {
               'Authorization': `Bearer ${authToken}`,

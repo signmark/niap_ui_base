@@ -437,6 +437,7 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     // Логируем какой URL используется
     log(`[Social Publishing] N8N_URL из переменной окружения: ${process.env.N8N_URL}`);
     log(`[Social Publishing] Используемый базовый URL для n8n: ${baseUrl}`);
+    log(`[Social Publishing] Реальный contentId отправляемый в n8n: ${contentId}`);
     
     // Всегда добавляем /webhook если его нет
     if (!baseUrl.includes("/webhook")) {
