@@ -34,16 +34,15 @@ export default function Login() {
     try {
       console.log('Attempting login with:', values.email);
 
-      // Прямой запрос к Directus API вместо использования клиента
-      const response = await fetch('https://directus.nplanner.ru/auth/login', {
+      // Используем локальный API endpoint для авторизации
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: values.email,
-          password: values.password,
-          mode: 'json'
+          password: values.password
         })
       });
 
