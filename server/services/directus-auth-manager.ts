@@ -196,6 +196,47 @@ export class DirectusAuthManager {
   }
 
   /**
+   * Авторизует администратора и возвращает токен
+   * @param email Email администратора
+   * @param password Пароль администратора
+   * @returns Токен администратора
+   */
+  async authenticateAdmin(email: string, password: string): Promise<{ token: string; userId: string } | null> {
+    try {
+      log(`Authenticating admin: ${email}`, this.logPrefix);
+      
+      const authResult = await directusCrud.login(email, password);
+      
+      // Получаем информацию о пользователе
+      const user = await directusCrud.getCurrentUser({
+        authToken: authResult.access_token
+      });
+      
+      // Кэшируем сессию администратора
+      this.sessionCache[user.id] = {
+        userId: user.id,
+        token: authResult.access_token,
+        refreshToken: authResult.refresh_token,
+        expiresAt: Date.now() + (authResult.expires * 1000),
+        user
+      };
+      
+      // Кэшируем токен в Directus API Manager
+      directusApiManager.cacheAuthToken(user.id, authResult.access_token, authResult.expires);
+      
+      log(`Admin ${email} (${user.id}) successfully authenticated`, this.logPrefix);
+      
+      return {
+        token: authResult.access_token,
+        userId: user.id
+      };
+    } catch (error) {
+      log(`Error during admin authentication for ${email}: ${(error as Error).message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
    * Авторизует пользователя и сохраняет информацию о сессии
    * @param email Email пользователя
    * @param password Пароль пользователя
