@@ -105,35 +105,18 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     log(`[Social Publishing] Выбранные платформы: ${selectedPlatforms.join(', ')}`);
     
-    // Получаем действующий токен администратора с автоматическим обновлением
-    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    // Используем постоянный DIRECTUS_TOKEN для публикации
+    const adminToken = process.env.DIRECTUS_TOKEN;
     
-    let adminToken = null;
-    
-    try {
-      // ПРИНУДИТЕЛЬНАЯ АВТОРИЗАЦИЯ - всегда получаем свежий токен
-      log(`[Social Publishing] Принудительная авторизация администратора для публикации`);
-      
-      const adminCredentials = {
-        email: process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech',
-        password: process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7'
-      };
-      
-      const authResult = await directusAuthManager.authenticateAdmin(adminCredentials.email, adminCredentials.password);
-      
-      if (authResult && authResult.token) {
-        adminToken = authResult.token;
-        log(`[Social Publishing] Свежий токен администратора получен: ${adminToken.substring(0, 20)}...`);
-      } else {
-        throw new Error('Не удалось получить токен администратора');
-      }
-    } catch (authError: any) {
-      log(`[Social Publishing] Ошибка получения токена: ${authError.message}`);
+    if (!adminToken) {
+      log(`[Social Publishing] DIRECTUS_TOKEN не найден в переменных окружения`);
       return res.status(500).json({
         success: false,
-        error: 'Ошибка авторизации: ' + authError.message
+        error: 'Отсутствует токен для публикации'
       });
     }
+    
+    log(`[Social Publishing] Используем DIRECTUS_TOKEN для публикации: ${adminToken.substring(0, 20)}...`);
     
     // Сначала сохраняем информацию о выбранных платформах в контент
     // Это очень важно - сохраняем структуру платформ перед публикацией
@@ -147,50 +130,17 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     });
     
     try {
-      log(`[Social Publishing] Обновляем статусы платформ для контента ${contentId} с токеном администратора`);
+      log(`[Social Publishing] Обновляем статусы платформ для контента ${contentId} с DIRECTUS_TOKEN`);
       
-      // КРИТИЧЕСКИЙ ФИКС: Попытка обновления с повторной авторизацией при 401 ошибке
-      let updatedContent = null;
-      let updateAttempts = 0;
-      const maxAttempts = 2;
-      
-      while (updateAttempts < maxAttempts && !updatedContent) {
-        try {
-          // Обновляем контент, чтобы сохранить выбранные платформы и сразу переводим в статус 'scheduled'
-          updatedContent = await storage.updateCampaignContent(
-            contentId,
-            { 
-              status: 'scheduled', // Устанавливаем статус 'scheduled' сразу при запуске публикации "Опубликовать сейчас"
-              socialPlatforms: platformsData 
-            },
-            adminToken
-          );
-          break; // Успешно обновили, выходим из цикла
-        } catch (updateError: any) {
-          updateAttempts++;
-          
-          if (updateError.response?.status === 401 && updateAttempts < maxAttempts) {
-            log(`[Social Publishing] Токен истёк (попытка ${updateAttempts}), получаем новый токен`);
-            
-            // Принудительно получаем новый токен
-            const adminCredentials = {
-              email: process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech',
-              password: process.env.DIRECTUS_ADMIN_PASSWORD || 'admin123!'
-            };
-            
-            const authResult = await directusAuthManager.authenticateAdmin(adminCredentials.email, adminCredentials.password);
-            
-            if (authResult && authResult.token) {
-              adminToken = authResult.token;
-              log(`[Social Publishing] Новый токен получен, повторяем обновление`);
-            } else {
-              throw new Error('Не удалось получить новый токен администратора');
-            }
-          } else {
-            throw updateError; // Если не 401 ошибка или превышены попытки
-          }
-        }
-      }
+      // Обновляем контент, чтобы сохранить выбранные платформы и сразу переводим в статус 'scheduled'
+      const updatedContent = await storage.updateCampaignContent(
+        contentId,
+        { 
+          status: 'scheduled', // Устанавливаем статус 'scheduled' сразу при запуске публикации "Опубликовать сейчас"
+          socialPlatforms: platformsData 
+        },
+        adminToken
+      );
     
       if (!updatedContent) {
         log(`[Social Publishing] Ошибка при сохранении выбранных платформ для контента ${contentId}`);
@@ -519,7 +469,7 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       
       // Получаем токен администратора
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
-      let adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      let adminToken = process.env.DIRECTUS_TOKEN;
       const sessions = directusAuthManager.getAllActiveSessions();
       
       if (sessions.length > 0) {
