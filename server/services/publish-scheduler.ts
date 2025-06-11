@@ -118,11 +118,10 @@ export class PublishScheduler {
    */
   public async getSystemToken(): Promise<string | null> {
     try {
-      // Сначала проверяем кэш внутри планировщика
+      // Проверяем кэш планировщика
       const now = Date.now();
       if (this.adminTokenCache && (now - this.adminTokenTimestamp < this.tokenExpirationMs)) {
-        // У нас есть кэшированный токен, который не истек по времени
-        log('Используем кэшированный токен администратора из планировщика', 'scheduler');
+        log('Использование кэшированного токена администратора', 'scheduler');
         
         // Проверяем валидность токена, даже если он не истек по времени
         try {

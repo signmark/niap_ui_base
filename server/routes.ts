@@ -3742,13 +3742,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Регистрируем маршруты для работы с админским токеном
   registerTokenRoutes(app);
   
-  // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем глобальный флаг ПЕРЕД запуском планировщика
-  if ((global as any).publishSchedulerActive) {
-    console.log('⚠️ БЛОКИРОВКА: Планировщик уже активен в другом процессе, пропускаем запуск');
-  } else {
-    // Запускаем планировщик публикаций
-    publishScheduler.start();
-  }
+  // Планировщик уже запущен при импорте через синглтон
+  console.log('✅ Планировщик публикаций инициализирован через синглтон');
   
   // Запускаем сервис проверки статусов публикаций
   publicationStatusChecker.start();
