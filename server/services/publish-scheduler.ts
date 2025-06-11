@@ -3,11 +3,12 @@ import { log } from '../utils/logger';
 import { storage } from '../storage';
 // Не используем старый сервис, заменив его на новый модульный
 import { socialPublishingService } from './social/index';
-import { CampaignContent, SocialPlatform, Campaign } from '@shared/schema';
 import { directusStorageAdapter } from './directus';
 import { directusApiManager } from '../directus';
 import { directusCrud } from './directus-crud';
 import { checkTokenExtractionRequest } from './token-extractor';
+import fs from 'fs';
+import path from 'path';
 import { publicationLockManager } from './publication-lock-manager';
 
 /**
@@ -55,14 +56,55 @@ export class PublishScheduler {
       return;
     }
 
-    // КРИТИЧЕСКАЯ ЗАЩИТА: Глобальная проверка на множественные экземпляры
-    if ((global as any).publishSchedulerActive) {
-      log('БЛОКИРОВКА: Обнаружен активный планировщик в другом процессе/экземпляре', 'scheduler');
+    // КРИТИЧЕСКАЯ ЗАЩИТА: Файловая блокировка от множественных экземпляров
+    const lockFilePath = path.join(process.cwd(), '.scheduler-lock');
+    
+    try {
+      // Проверяем наличие файла блокировки
+      if (fs.existsSync(lockFilePath)) {
+        const lockData = fs.readFileSync(lockFilePath, 'utf8');
+        const lockInfo = JSON.parse(lockData);
+        const timeDiff = Date.now() - lockInfo.timestamp;
+        
+        // Если блокировка свежая (менее 2 минут), не запускаем
+        if (timeDiff < 120000) {
+          log('🚫 ФАЙЛОВАЯ БЛОКИРОВКА: Обнаружен активный планировщик (файл блокировки)', 'scheduler');
+          return;
+        }
+        
+        // Если блокировка старая, удаляем её (возможно, процесс завершился аварийно)
+        fs.unlinkSync(lockFilePath);
+        log('Удален устаревший файл блокировки планировщика', 'scheduler');
+      }
+      
+      // Создаем файл блокировки
+      const lockInfo = {
+        pid: process.pid,
+        timestamp: Date.now(),
+        startTime: new Date().toISOString()
+      };
+      fs.writeFileSync(lockFilePath, JSON.stringify(lockInfo, null, 2));
+      log('Создан файл блокировки планировщика', 'scheduler');
+      
+    } catch (error: any) {
+      log(`Ошибка при работе с файлом блокировки: ${error.message}`, 'scheduler');
       return;
     }
     
-    // Устанавливаем глобальный флаг
+    // Дополнительные проверки для надежности
+    if ((global as any).publishSchedulerActive) {
+      log('🚫 ГЛОБАЛЬНАЯ БЛОКИРОВКА: Обнаружен активный планировщик', 'scheduler');
+      return;
+    }
+    
+    if ((process as any).schedulerRunning) {
+      log('🚫 ПРОЦЕССНАЯ БЛОКИРОВКА: Обнаружен активный планировщик', 'scheduler');
+      return;
+    }
+    
+    // Устанавливаем флаги
     (global as any).publishSchedulerActive = true;
+    (process as any).schedulerRunning = true;
 
     // Инициализация планировщика после исправления критических ошибок
     log('Запуск планировщика публикаций с исправлениями', 'scheduler');
@@ -2176,4 +2218,17 @@ export class PublishScheduler {
   }
 }
 
-export const publishScheduler = new PublishScheduler();
+// КРИТИЧЕСКАЯ ЗАЩИТА: Глобальный синглтон планировщика
+let globalSchedulerInstance: PublishScheduler | null = null;
+
+// Проверяем глобальное хранилище на наличие экземпляра
+if ((global as any).publishSchedulerInstance) {
+  globalSchedulerInstance = (global as any).publishSchedulerInstance;
+  log('Использование существующего глобального экземпляра планировщика', 'scheduler');
+} else {
+  globalSchedulerInstance = new PublishScheduler();
+  (global as any).publishSchedulerInstance = globalSchedulerInstance;
+  log('Создан новый глобальный экземпляр планировщика', 'scheduler');
+}
+
+export const publishScheduler = globalSchedulerInstance;
