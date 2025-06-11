@@ -1617,8 +1617,28 @@ export class PublishScheduler {
       log(`Проверка платформ для публикации контента ${content.id} "${content.title || ''}":`, 'scheduler');
       
       // Отфильтруем только те платформы, время публикации которых уже наступило
+      // КРИТИЧЕСКАЯ ЗАЩИТА: НЕ ДОБАВЛЯЕМ ОБРАТНО УДАЛЕННЫЕ ПЛАТФОРМЫ
+      // Получаем свежие данные из БД чтобы проверить актуальный список платформ
+      let actualPlatforms = socialPlatforms;
+      try {
+        const freshDataResponse = await axios.get(
+          `${process.env.DIRECTUS_URL || 'https://directus.roboflow.tech'}/items/campaign_content/${content.id}`,
+          { headers: { 'Authorization': `Bearer ${authToken}` } }
+        );
+        if (freshDataResponse.data?.data?.social_platforms) {
+          actualPlatforms = freshDataResponse.data.data.social_platforms;
+          if (typeof actualPlatforms === 'string') {
+            actualPlatforms = JSON.parse(actualPlatforms);
+          }
+          log(`ЗАЩИТА ОТ ВОССТАНОВЛЕНИЯ: Используем актуальные платформы из БД для контента ${content.id}`, 'scheduler');
+          log(`Актуальные платформы: ${Object.keys(actualPlatforms).join(', ')}`, 'scheduler');
+        }
+      } catch (e) {
+        log(`Ошибка получения свежих данных платформ для ${content.id}: ${e.message}`, 'scheduler');
+      }
+      
       // или они находятся в статусе pending
-      const platformsToPublish = Object.entries(socialPlatforms)
+      const platformsToPublish = Object.entries(actualPlatforms)
         .filter(([platform, platformData]) => {
           // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы с postUrl
           if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {

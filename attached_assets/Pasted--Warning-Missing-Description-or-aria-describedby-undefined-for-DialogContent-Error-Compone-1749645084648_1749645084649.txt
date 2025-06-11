@@ -1,0 +1,95 @@
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. Error Component Stack
+    at DescriptionWarning (chunk-DMFJI7XL.js:330:29)
+    at chunk-DMFJI7XL.js:234:13
+    at chunk-DMFJI7XL.js:157:58
+    at Presence (chunk-67VZ6NIO.js:24:11)
+    at chunk-DMFJI7XL.js:148:64
+    at chunk-UACHJROW.js:52:11
+    at chunk-UACHJROW.js:33:11
+    at chunk-RLTE5R7I.js:41:13
+    at chunk-T7WS74FN.js:260:22
+    at Presence (chunk-67VZ6NIO.js:24:11)
+    at Provider (chunk-7X6RRC7I.js:38:15)
+    at DialogPortal (chunk-DMFJI7XL.js:111:11)
+    at _c3 (/src/components/ui/dialog.tsx:51:12)
+    at Provider (chunk-7X6RRC7I.js:38:15)
+    at Dialog (chunk-DMFJI7XL.js:52:5)
+    at ScheduledPublicationDetails (/src/components/ScheduledPublicationDetails.tsx:47:3)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ScheduledPublications (/src/pages/publish/scheduled.tsx:50:21)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (/src/components/ThemeProvider.tsx:20:33)
+    at Layout (/src/components/Layout.tsx:34:26)
+    at WithLayout (App.tsx:43:23)
+    at _c18 (<anonymous>)
+    at Route (wouter.js:323:16)
+    at Switch (wouter.js:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (@tanstack_react-query.js:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+(anonymous) @ chunk-DMFJI7XL.js:338
+commitHookEffectListMount @ chunk-RPCDYKBN.js:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js:19447
+commitRootImpl @ chunk-RPCDYKBN.js:19416
+commitRoot @ chunk-RPCDYKBN.js:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js:9119
+(anonymous) @ chunk-RPCDYKBN.js:18627
+ Platform facebook changed to: false
+ Updated selectedPlatforms: {instagram: false, telegram: true, vk: true, facebook: false}
+refreshAuth.ts:24 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/auth/refresh 401 (Unauthorized)
+refreshAuthToken @ refreshAuth.ts:24
+onSubmit @ /src/components/Edit…Publication.tsx:137
+await in onSubmit
+(anonymous) @ chunk-YABUFNLM.js:1675
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js:3736
+executeDispatch @ chunk-RPCDYKBN.js:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js:7034
+processDispatchQueue @ chunk-RPCDYKBN.js:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js:7051
+(anonymous) @ chunk-RPCDYKBN.js:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js:18913
+batchedUpdates @ chunk-RPCDYKBN.js:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js:5478
+dispatchEvent @ chunk-RPCDYKBN.js:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js:5449
+refreshAuth.ts:42 Не удалось обновить токен через refresh token, пробуем прямую авторизацию
+ Попытка обновления токена выполнена
+ Добавлен токен авторизации в заголовки запроса: eyJhbGciOi...
+ 📤 API Запрос: POST /api/direct-schedule/4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b
+ 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+ 📤 Заголовки запроса: {hasAuthHeader: true, contentType: 'application/json', userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Загрузка запланированных публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используется userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+ 📤 API Запрос: GET /api/publish/scheduled?userId=53921f16-f51d-4591-80b9-8caa4fde4d13&campaignId=46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+ 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Загрузка запланированных публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используется userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+ 📤 API Запрос: GET /api/publish/scheduled?userId=53921f16-f51d-4591-80b9-8caa4fde4d13&campaignId=46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+ 📤 Заголовки запроса: {hasAuthHeader: true, contentType: undefined, userIdHeader: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Загружено запланированных публикаций: 1
+ Данные запланированных публикаций: [{…}]
+ Загружено запланированных публикаций: 1
+ Данные запланированных публикаций: [{…}]
