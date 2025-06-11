@@ -390,7 +390,7 @@ export class PublishScheduler {
 
       // Обрабатываем полученные записи
       const contentItems = response.data.data;
-      log(`Получено ${contentItems.length} элементов контента для проверки статусов платформ`, 'scheduler');
+      // Тихая работа планировщика
 
       let updatedCount = 0;
 
@@ -536,13 +536,7 @@ export class PublishScheduler {
           // 1. Если ВСЕ платформы из JSON имеют статус 'published'
           const allSelectedPublished = selectedPlatforms.length > 0 && selectedPlatforms.length === selectedPublishedPlatforms.length;
           
-          // Всегда выводим информацию о проверке статусов для отладки
-          log(`Проверка статусов платформ для контента ${item.id} (текущий статус: ${item.status}):`, 'scheduled');
-          log(`  - Всего платформ в JSON: ${selectedPlatforms.length} (${selectedPlatforms.join(', ')})`, 'scheduled');
-          log(`  - Опубликовано: ${selectedPublishedPlatforms.length} (${selectedPublishedPlatforms.join(', ')})`, 'scheduled');
-          log(`  - С ошибками: ${selectedErrorPlatforms.length} (${selectedErrorPlatforms.join(', ')})`, 'scheduled');
-          log(`  - В ожидании: ${selectedPendingPlatforms.length} (${selectedPendingPlatforms.join(', ')})`, 'scheduled');
-          log(`  - Все опубликованы: ${allSelectedPublished}`, 'scheduled');
+          // Убрано избыточное логирование - система работает тихо
           
           const hasSelectedErrors = selectedErrorPlatforms.length > 0;
           const hasSelectedPending = selectedPendingPlatforms.length > 0;
@@ -660,8 +654,10 @@ export class PublishScheduler {
         }
       }
 
-      // Выводим результаты
-      log(`Завершена проверка статусов. Обновлено статусов: ${updatedCount}`, 'scheduler');
+      // Логируем только при фактических изменениях
+      if (updatedCount > 0) {
+        log(`Обновлено статусов контента: ${updatedCount}`, 'scheduler');
+      }
       
     } catch (error) {
       log(`Ошибка при проверке статусов контента: ${error}`, 'scheduler');
