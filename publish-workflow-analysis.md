@@ -43,7 +43,7 @@
 ### N8n воркфлоу адреса
 - **Telegram**: `https://n8n.nplanner.ru/webhook/publish-telegram`
 - **VK**: `https://n8n.nplanner.ru/webhook/publish-vk` 
-- **Instagram**: `https://n8n.nplanner.ru/webhook/instagram`
+- **Instagram**: `https://n8n.nplanner.ru/webhook/publish-instagram`
 - **Facebook**: обрабатывается напрямую без n8n
 
 ### Как обрабатываются ошибки?
