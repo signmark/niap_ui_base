@@ -93,16 +93,16 @@ export default function ScheduledPublications() {
     enabled: !!userId,
   });
   
-  // Получаем запланированные публикации для текущей кампании
+  // Получаем все запланированные публикации пользователя
   const { 
     data: scheduledContent = [], 
     isLoading: scheduledLoading,
     refetch: refetchScheduled,
   } = useQuery<CampaignContent[]>({
-    queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
+    queryKey: ['/api/publish/scheduled', userId],
     queryFn: async () => {
-      // Загружаем запланированные публикации для выбранной кампании
-      const url = `/api/publish/scheduled?userId=${userId}&campaignId=${selectedCampaign?.id}`;
+      // Загружаем все запланированные публикации пользователя (без фильтрации по кампании)
+      const url = `/api/publish/scheduled?userId=${userId}`;
       
       // Получаем токен авторизации из хранилища авторизации
       const authToken = getAuthToken();
@@ -113,8 +113,7 @@ export default function ScheduledPublications() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      console.log('Загрузка запланированных публикаций для кампании:', selectedCampaign?.id);
-      console.log('Используется userId:', userId);
+      console.log('Загрузка всех запланированных публикаций для пользователя:', userId);
       
       const result = await apiRequest(url, { 
         method: 'GET',
@@ -125,19 +124,19 @@ export default function ScheduledPublications() {
       console.log('Данные запланированных публикаций:', result.data);
       return result.data;
     },
-    enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
+    enabled: !!userId, // Загружаем если есть авторизованный пользователь
     refetchOnMount: true,
     staleTime: 60000, // Считаем данные свежими в течение 1 минуты
     refetchInterval: 60000, // Автоматически обновляем данные только раз в минуту
     refetchIntervalInBackground: false // Не обновляем данные, если вкладка не активна
   });
   
-  // Обновляем данные при изменении выбранной кампании или пользователя
+  // Обновляем данные при изменении пользователя
   useEffect(() => {
-    if (selectedCampaign?.id && userId) {
+    if (userId) {
       refetchScheduled();
     }
-  }, [selectedCampaign?.id, userId, refetchScheduled]);
+  }, [userId, refetchScheduled]);
   
   // Фильтрация контента по поисковому запросу и платформе (кампания уже отфильтрована на сервере)
   const filteredContent = React.useMemo(() => {
