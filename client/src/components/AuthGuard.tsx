@@ -93,7 +93,7 @@ export function AuthGuard({ children }: Props) {
         }
       }
       
-      // Пробуем обновить токен
+      // Если refresh token есть, пробуем обновить токен
       if (storedRefreshToken) {
         try {
           console.log('AuthGuard: Attempting to refresh token with refresh_token');
@@ -117,19 +117,8 @@ export function AuthGuard({ children }: Props) {
           console.error('AuthGuard: Token refresh failed:', error);
           setIsRefreshing(false);
           
-          // Очищаем любые устаревшие токены
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user_id');
-          localStorage.removeItem('is_admin'); // Важно очистить и статус админа
-          clearAuth();
-          
-          // Если обновление не удалось, перенаправляем на страницу входа
-          if (!isLoginPage) {
-            navigate('/auth/login');
-          }
-          setIsSessionChecked(true);
-          return;
+          // При ошибке refresh, не очищаем токены сразу - просто пропускаем на страницу входа
+          console.log('AuthGuard: Refresh failed, but keeping stored tokens for potential restore');
         }
       }
       
