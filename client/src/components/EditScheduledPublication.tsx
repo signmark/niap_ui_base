@@ -40,7 +40,7 @@ import PlatformSelector from './PlatformSelector';
 // Создаем схему валидации
 const scheduledPublicationSchema = z.object({
   scheduledAt: z.date().nullable(),
-  selectedPlatforms: z.record(z.string(), z.boolean()),
+  selectedPlatforms: z.record(z.boolean()),
   platformTimes: z.record(z.string(), z.object({
     hour: z.string(),
     minute: z.string()
@@ -252,7 +252,9 @@ export default function EditScheduledPublication({
 
   // Обработчик изменения выбора платформы
   const handlePlatformChange = (platform: SafeSocialPlatform, isSelected: boolean) => {
+    console.log(`Platform ${platform} changed to: ${isSelected}`);
     form.setValue(`selectedPlatforms.${platform}`, isSelected);
+    console.log('Updated selectedPlatforms:', form.getValues('selectedPlatforms'));
   };
 
   return (

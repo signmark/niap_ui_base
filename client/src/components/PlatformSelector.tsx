@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 interface PlatformSelectorProps {
-  selectedPlatforms: Record<SafeSocialPlatform, boolean>;
+  selectedPlatforms: Record<string, boolean>;
   onChange: (platform: SafeSocialPlatform, isSelected: boolean) => void;
 }
 
