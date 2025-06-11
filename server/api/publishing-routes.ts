@@ -204,6 +204,46 @@ export function registerPublishingRoutes(app: Express): void {
       
       log(`Публикация контента ${content.id || 'без ID'} в платформы: ${JSON.stringify(selectedPlatforms)}`, 'api');
       
+      // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы
+      const alreadyPublishedPlatforms: string[] = [];
+      const platformsToPublish: string[] = [];
+      
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        for (const platform of platformsArray) {
+          const platformData = content.socialPlatforms[platform];
+          
+          // Платформа считается уже опубликованной, если есть статус 'published' И postUrl
+          if (platformData && platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+            alreadyPublishedPlatforms.push(platform);
+            log(`БЛОКИРОВКА: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl}), пропускаем`, 'api');
+          } else {
+            platformsToPublish.push(platform);
+            
+            // Сбрасываем некорректные published статусы без postUrl
+            if (platformData && platformData.status === 'published' && (!platformData.postUrl || platformData.postUrl.trim() === '')) {
+              log(`ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform} в /api/publish/content`, 'api');
+            }
+          }
+        }
+      } else {
+        // Если нет данных о платформах, публикуем во все выбранные
+        platformsToPublish.push(...platformsArray);
+      }
+
+      // Если все выбранные платформы уже опубликованы
+      if (platformsToPublish.length === 0) {
+        return res.status(409).json({
+          error: 'Все выбранные платформы уже опубликованы',
+          alreadyPublished: alreadyPublishedPlatforms,
+          message: `Контент уже опубликован в: ${alreadyPublishedPlatforms.join(', ')}`
+        });
+      }
+
+      // Информируем о частичной публикации
+      if (alreadyPublishedPlatforms.length > 0) {
+        log(`Частичная публикация: ${platformsToPublish.join(', ')} (уже опубликовано: ${alreadyPublishedPlatforms.join(', ')})`, 'api');
+      }
+      
       // Получаем настройки кампании
       const campaign = await storage.getCampaignById(content.campaignId);
       if (!campaign) {
@@ -236,8 +276,8 @@ export function registerPublishingRoutes(app: Express): void {
           
           const updatedPlatforms: Record<string, any> = {};
           
-          // Обновляем статус только для выбранных платформ
-          for (const platform of platformsArray) {
+          // Обновляем статус только для платформ, которые нужно опубликовать
+          for (const platform of platformsToPublish) {
             updatedPlatforms[platform] = {
               ...(socialPlatforms[platform] || {}),
               status: 'pending',
@@ -256,8 +296,8 @@ export function registerPublishingRoutes(app: Express): void {
           log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
         }
         
-        // Публикуем на каждую платформу
-        for (const platformName of platformsArray) {
+        // Публикуем ТОЛЬКО на платформы, которые нужно опубликовать
+        for (const platformName of platformsToPublish) {
           const platform = platformName as SocialPlatform;
           
           try {
@@ -384,6 +424,67 @@ export function registerPublishingRoutes(app: Express): void {
       // Заменяем оригинальные platforms на преобразованный массив, чтобы не менять остальной код
       const platformsArray = selectedPlatforms;
 
+      // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем наличие уже опубликованного контента
+      const existingContent = await storage.getCampaignContentById(contentId);
+      if (!existingContent) {
+        log(`Контент ${contentId} не найден при попытке публикации`, 'api');
+        return res.status(404).json({ error: 'Контент не найден' });
+      }
+
+      // Проверяем статусы выбранных платформ на предмет уже выполненной публикации
+      const alreadyPublishedPlatforms: string[] = [];
+      const platformsToPublish: string[] = [];
+      
+      if (existingContent.socialPlatforms && typeof existingContent.socialPlatforms === 'object') {
+        for (const platform of platformsArray) {
+          const platformData = existingContent.socialPlatforms[platform];
+          
+          // Платформа считается уже опубликованной, если есть статус 'published' И postUrl
+          if (platformData && platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+            alreadyPublishedPlatforms.push(platform);
+            log(`БЛОКИРОВКА: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl}), пропускаем`, 'api');
+          } else {
+            platformsToPublish.push(platform);
+            
+            // Сбрасываем некорректные published статусы без postUrl
+            if (platformData && platformData.status === 'published' && (!platformData.postUrl || platformData.postUrl.trim() === '')) {
+              log(`ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform}`, 'api');
+              try {
+                await storage.updateCampaignContent(contentId, {
+                  socialPlatforms: {
+                    ...existingContent.socialPlatforms,
+                    [platform]: {
+                      ...(existingContent.socialPlatforms[platform] || {}),
+                      status: 'pending',
+                      error: null
+                    }
+                  }
+                });
+              } catch (updateError: any) {
+                log(`Ошибка при сбросе статуса платформы ${platform}: ${updateError.message}`, 'api');
+              }
+            }
+          }
+        }
+      } else {
+        // Если нет данных о платформах, публикуем во все выбранные
+        platformsToPublish.push(...platformsArray);
+      }
+
+      // Если все выбранные платформы уже опубликованы
+      if (platformsToPublish.length === 0) {
+        return res.status(409).json({
+          error: 'Все выбранные платформы уже опубликованы',
+          alreadyPublished: alreadyPublishedPlatforms,
+          message: `Контент уже опубликован в: ${alreadyPublishedPlatforms.join(', ')}`
+        });
+      }
+
+      // Информируем о том, какие платформы будут опубликованы
+      if (alreadyPublishedPlatforms.length > 0) {
+        log(`Частичная публикация: ${platformsToPublish.join(', ')} (уже опубликовано: ${alreadyPublishedPlatforms.join(', ')})`, 'api');
+      }
+
       // Получаем контент
       const content = await storage.getCampaignContentById(contentId);
       if (!content) {
@@ -417,8 +518,8 @@ export function registerPublishingRoutes(app: Express): void {
         
         const updatedPlatforms: Record<string, any> = {};
         
-        // Обновляем статус только для выбранных платформ
-        for (const platform of platformsArray) {
+        // Обновляем статус только для платформ, которые нужно опубликовать
+        for (const platform of platformsToPublish) {
           updatedPlatforms[platform] = {
             ...(socialPlatforms[platform] || {}),
             status: 'pending',
@@ -436,8 +537,8 @@ export function registerPublishingRoutes(app: Express): void {
         
         log(`Статус публикации установлен в pending для контента ${content.id}`, 'api');
         
-        // Публикуем на каждую платформу
-        for (const platformName of platformsArray) {
+        // Публикуем ТОЛЬКО на платформы, которые нужно опубликовать
+        for (const platformName of platformsToPublish) {
           const platform = platformName as SocialPlatform;
           
           try {

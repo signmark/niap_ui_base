@@ -984,9 +984,26 @@ export class PublishScheduler {
         
         // Проверка на пендинги с учетом времени публикации
         for (const [platform, platformData] of Object.entries(content.socialPlatforms)) {
+          
+          // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы
+          if (platformData?.status === 'published' && platformData?.postUrl && platformData?.postUrl.trim() !== '') {
+            // Платформа уже опубликована с postUrl - пропускаем
+            if (this.verboseLogging) {
+              logMessages.push(`${platform}: уже опубликована (postUrl: ${platformData.postUrl})`);
+            }
+            continue;
+          }
+          
+          // Сбрасываем некорректные published статусы без postUrl
+          if (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')) {
+            log(`ПЛАНИРОВЩИК ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform} (контент ${content.id})`, 'scheduler');
+            // Сброс будет выполнен при обработке этого контента
+          }
+          
           // Если платформа выбрана и статус pending/scheduled
           if (platformData?.selected === true && 
-              (platformData?.status === 'pending' || platformData?.status === 'scheduled')) {
+              (platformData?.status === 'pending' || platformData?.status === 'scheduled' || 
+               (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')))) {
             
             // КРИТИЧЕСКИ ВАЖНО: Проверяем время публикации даже для pending/scheduled
             const scheduleTime = content.scheduledAt || (platformData?.scheduledAt ? new Date(platformData.scheduledAt) : null);
