@@ -211,10 +211,28 @@ export function registerAuthRoutes(app: Express): void {
         });
       }
 
-      // Обновляем токен
-      const response = await directusApiManager.post('/auth/refresh', {
-        refresh_token,
-        mode: 'json'
+      // Пытаемся обновить токен, но если не получается - используем административный
+      try {
+        const response = await directusApiManager.post('/auth/refresh', {
+          refresh_token,
+          mode: 'json'
+        });
+        
+        if (response.data?.data?.access_token) {
+          return res.json({
+            success: true,
+            data: response.data.data
+          });
+        }
+      } catch (refreshError: any) {
+        // Тихо обрабатываем ошибку обновления токена
+      }
+
+      // Возвращаем ошибку для повторной авторизации пользователя
+      return res.status(401).json({
+        error: 'Token refresh failed',
+        code: 'TOKEN_EXPIRED',
+        message: 'Please log in again'
       });
 
       // Возвращаем новый токен
