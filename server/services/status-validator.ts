@@ -50,31 +50,8 @@ export class StatusValidator {
    * Выполняет валидацию всех статусов публикаций
    */
   public async validateAllStatuses(): Promise<void> {
-    try {
-      log('Начало валидации статусов публикаций', 'status-validator');
-
-      // Получаем весь контент с социальными платформами
-      const allContent = await this.getAllContentWithSocialPlatforms();
-      
-      if (!allContent || allContent.length === 0) {
-        log('Контент для валидации не найден', 'status-validator');
-        return;
-      }
-
-      let totalChecked = 0;
-      let totalCorrected = 0;
-
-      for (const content of allContent) {
-        const corrections = await this.validateContentStatuses(content);
-        totalChecked++;
-        totalCorrected += corrections;
-      }
-
-      log(`Валидация завершена: проверено ${totalChecked} элементов, исправлено ${totalCorrected} статусов`, 'status-validator');
-
-    } catch (error: any) {
-      log(`Ошибка при валидации статусов: ${error.message}`, 'status-validator');
-    }
+    // Валидатор отключен - планировщик уже обеспечивает правильную валидацию
+    return;
   }
 
   /**

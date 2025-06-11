@@ -353,7 +353,7 @@ export class PublishScheduler {
    */
   async checkAndUpdateContentStatuses() {
     try {
-      log('Запуск проверки статусов контента', 'scheduler');
+      // Тихая проверка статусов
       
       // Получаем системный токен для доступа к API
       const authToken = await this.getSystemToken();
