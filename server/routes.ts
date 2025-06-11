@@ -7871,19 +7871,35 @@ Return your response as a JSON array in this exact format:
           };
         });
         
-        console.log(`Обновление платформ для контента ${contentId}:`);
-        console.log(`- Было платформ: ${Object.keys(currentSocialPlatforms).join(', ')}`);
-        console.log(`- Будет платформ: ${Object.keys(updatedSocialPlatforms).join(', ')}`);
-        console.log(`- Удалены платформы: ${Object.keys(currentSocialPlatforms).filter(p => !selectedPlatforms.includes(p)).join(', ')}`);
+        console.log(`\n=== ОБНОВЛЕНИЕ ПЛАТФОРМ ДЛЯ КОНТЕНТА ${contentId} ===`);
+        console.log(`Исходные платформы:`, JSON.stringify(currentSocialPlatforms, null, 2));
+        console.log(`Новые платформы из запроса:`, JSON.stringify(socialPlatforms, null, 2));
+        console.log(`Список выбранных платформ:`, selectedPlatforms);
+        console.log(`Обновленные платформы:`, JSON.stringify(updatedSocialPlatforms, null, 2));
+        
+        const removedPlatforms = Object.keys(currentSocialPlatforms).filter(p => !selectedPlatforms.includes(p));
+        console.log(`Удаленные платформы: [${removedPlatforms.join(', ')}]`);
         
         // Обновляем social_platforms в Directus (теперь только с выбранными платформами)
-        await directusApi.patch(`/items/campaign_content/${contentId}`, {
+        const updateResult = await directusApi.patch(`/items/campaign_content/${contentId}`, {
           social_platforms: updatedSocialPlatforms
         }, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
+        
+        console.log(`Результат обновления в Directus:`, updateResult.status === 200 ? 'SUCCESS' : 'FAILED');
+        
+        // Проверяем что данные действительно сохранились
+        const verificationResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log(`Проверка после сохранения - платформы в БД:`, Object.keys(verificationResponse.data.data.social_platforms || {}));
+        console.log(`=== КОНЕЦ ОБНОВЛЕНИЯ ПЛАТФОРМ ===\n`);
         
         // Получаем ID кампании и информацию о пользователе для отправки в webhook
         const campaignId = content.campaign_id;
