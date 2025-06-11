@@ -52,73 +52,12 @@ export class PublishScheduler {
    */
   start() {
     if (this.isRunning) {
-      log('Планировщик публикаций уже запущен', 'scheduler');
+      log('⚠️ Планировщик уже запущен, пропускаем повторный запуск', 'scheduler');
       return;
     }
 
-    // КРИТИЧЕСКАЯ ЗАЩИТА: Файловая блокировка от множественных экземпляров
-    const lockFilePath = path.join(process.cwd(), '.scheduler-lock');
-    
-    try {
-      // Проверяем наличие файла блокировки
-      if (fs.existsSync(lockFilePath)) {
-        const lockData = fs.readFileSync(lockFilePath, 'utf8');
-        const lockInfo = JSON.parse(lockData);
-        const timeDiff = Date.now() - lockInfo.timestamp;
-        
-        // Если блокировка свежая (менее 2 минут), не запускаем
-        if (timeDiff < 120000) {
-          log('🚫 ФАЙЛОВАЯ БЛОКИРОВКА: Обнаружен активный планировщик (файл блокировки)', 'scheduler');
-          return;
-        }
-        
-        // Если блокировка старая, удаляем её (возможно, процесс завершился аварийно)
-        fs.unlinkSync(lockFilePath);
-        log('Удален устаревший файл блокировки планировщика', 'scheduler');
-      }
-      
-      // Создаем файл блокировки
-      const lockInfo = {
-        pid: process.pid,
-        timestamp: Date.now(),
-        startTime: new Date().toISOString()
-      };
-      fs.writeFileSync(lockFilePath, JSON.stringify(lockInfo, null, 2));
-      log('Создан файл блокировки планировщика', 'scheduler');
-      
-    } catch (error: any) {
-      log(`Ошибка при работе с файлом блокировки: ${error.message}`, 'scheduler');
-      return;
-    }
-    
-    // Дополнительные проверки для надежности
-    if ((global as any).publishSchedulerActive) {
-      log('🚫 ГЛОБАЛЬНАЯ БЛОКИРОВКА: Обнаружен активный планировщик', 'scheduler');
-      return;
-    }
-    
-    if ((process as any).schedulerRunning) {
-      log('🚫 ПРОЦЕССНАЯ БЛОКИРОВКА: Обнаружен активный планировщик', 'scheduler');
-      return;
-    }
-    
-    // Устанавливаем флаги
-    (global as any).publishSchedulerActive = true;
-    (process as any).schedulerRunning = true;
-
-    // Инициализация планировщика после исправления критических ошибок
-    log('✅ ЕДИНСТВЕННЫЙ ПЛАНИРОВЩИК: Запуск планировщика публикаций с исправлениями', 'scheduler');
     this.isRunning = true;
-    
-    // Очистка интервала при выходе из процесса
-    process.on('exit', () => {
-      const lockFilePath = path.join(process.cwd(), '.scheduler-lock');
-      try {
-        if (fs.existsSync(lockFilePath)) {
-          fs.unlinkSync(lockFilePath);
-        }
-      } catch (e) {}
-    });
+    log('✅ ЕДИНСТВЕННЫЙ ПЛАНИРОВЩИК: Запуск планировщика публикаций', 'scheduler');
     
     // Сразу выполняем первую проверку
     this.checkScheduledContent();
@@ -2228,17 +2167,41 @@ export class PublishScheduler {
   }
 }
 
-// КРИТИЧЕСКАЯ ЗАЩИТА: Глобальный синглтон планировщика
+// КРИТИЧЕСКАЯ ЗАЩИТА: Строгий синглтон планировщика
 let globalSchedulerInstance: PublishScheduler | null = null;
+let isSchedulerStarted = false;
 
-// Проверяем глобальное хранилище на наличие экземпляра
-if ((global as any).publishSchedulerInstance) {
-  globalSchedulerInstance = (global as any).publishSchedulerInstance;
-  log('Использование существующего глобального экземпляра планировщика', 'scheduler');
-} else {
-  globalSchedulerInstance = new PublishScheduler();
-  (global as any).publishSchedulerInstance = globalSchedulerInstance;
-  log('Создан новый глобальный экземпляр планировщика', 'scheduler');
+function getSchedulerInstance(): PublishScheduler {
+  if (!globalSchedulerInstance) {
+    // Проверяем глобальное хранилище
+    if ((global as any).publishSchedulerInstance) {
+      globalSchedulerInstance = (global as any).publishSchedulerInstance;
+      isSchedulerStarted = (global as any).isSchedulerStarted || false;
+      log('Использование существующего глобального экземпляра планировщика', 'scheduler');
+    } else {
+      globalSchedulerInstance = new PublishScheduler();
+      (global as any).publishSchedulerInstance = globalSchedulerInstance;
+      (global as any).isSchedulerStarted = false;
+      log('Создан новый глобальный экземпляр планировщика', 'scheduler');
+    }
+  }
+  return globalSchedulerInstance;
 }
 
-export const publishScheduler = globalSchedulerInstance;
+// Безопасный запуск планировщика (только один раз)
+function startSchedulerOnce(): PublishScheduler {
+  const scheduler = getSchedulerInstance();
+  
+  if (!isSchedulerStarted && !(global as any).isSchedulerStarted) {
+    scheduler.start();
+    isSchedulerStarted = true;
+    (global as any).isSchedulerStarted = true;
+    log('✅ ЕДИНСТВЕННЫЙ ПЛАНИРОВЩИК: Запущен впервые', 'scheduler');
+  } else {
+    log('⚠️ Планировщик уже запущен, пропускаем повторный запуск', 'scheduler');
+  }
+  
+  return scheduler;
+}
+
+export const publishScheduler = startSchedulerOnce();
