@@ -474,7 +474,18 @@ class FacebookService {
       log.info(`[${operationId}] [Facebook] Публикация успешно создана: ${permalink}`);
       log.info(`[${operationId}] [Facebook] Время выполнения публикации: ${executionTime}ms, размер кэша токенов: ${this.pageTokenCache.size}`);
       
-      // Возвращаем результат публикации
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем наличие postUrl перед установкой статуса published
+      if (!permalink || permalink.trim() === '') {
+        log.error(`[${operationId}] [Facebook] ОШИБКА: Публикация создана, но permalink пустой - помечаем как failed`);
+        return {
+          platform: 'facebook',
+          status: 'failed',
+          publishedAt: null,
+          error: 'Публикация создана, но не получен permalink - возможна проблема с Facebook API'
+        };
+      }
+      
+      // Возвращаем результат публикации только если есть postUrl
       return {
         platform: 'facebook',
         status: 'published',

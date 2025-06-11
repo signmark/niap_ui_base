@@ -510,12 +510,13 @@ export class PublishScheduler {
               selectedErrorPlatforms.push(platform);
             } else if (data?.status === 'pending' || data?.status === 'scheduled' || !data?.status || 
                        (data?.status === 'published' && !data?.postUrl)) {
-              // Если статус 'published' но нет postUrl, сбрасываем статус на pending
+              // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: НЕ СБРАСЫВАЕМ НА PENDING - это создает бесконечный цикл
               if (data?.status === 'published' && !data?.postUrl) {
-                console.log(`[scheduled] ИСПРАВЛЕНИЕ: платформа ${platform} имела статус 'published' без postUrl - сброшено на 'pending'`);
-                // Исправляем некорректный статус в объекте
+                console.log(`[scheduled] ИСПРАВЛЕНИЕ: платформа ${platform} имела статус 'published' без postUrl - помечено как failed`);
+                // Помечаем как failed вместо pending, чтобы избежать повторной публикации
                 if (item.social_platforms && item.social_platforms[platform]) {
-                  item.social_platforms[platform].status = 'pending';
+                  item.social_platforms[platform].status = 'failed';
+                  item.social_platforms[platform].error = 'Published without postUrl - preventing republication loop';
                   needsStatusCorrection = true;
                 }
               }
