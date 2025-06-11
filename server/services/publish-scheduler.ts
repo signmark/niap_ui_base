@@ -687,12 +687,12 @@ export class PublishScheduler {
       this.isProcessing = true;
       this.processingStartTime = Date.now();
       
-      log('Проверка запланированных публикаций', 'scheduler');
+      // Тихая проверка запланированных публикаций
       
       // Проверяем, не отключены ли публикации глобально
       if (this.disablePublishing) {
-        log('ПРЕДУПРЕЖДЕНИЕ: Публикации отключены глобальным флагом disablePublishing=true', 'scheduler');
-        log('Контент будет обнаружен, но не будет опубликован', 'scheduler');
+        // Публикации отключены глобально
+        return;
       }
       
       // Сбрасываем кэшированный токен для принудительного обновления
@@ -1052,22 +1052,7 @@ export class PublishScheduler {
           }
         }
         
-        // Логируем результаты проверки времени только если есть готовые к публикации платформы
-        if (anyPlatformReady) {
-          // Детальное логирование, только когда есть готовые платформы или включен режим подробных логов
-          log(`Проверка времени публикации для контента ID ${content.id} "${content.title}": ГОТОВ К ПУБЛИКАЦИИ ПО ВРЕМЕНИ`, 'scheduler');
-          // Подробная информация только в вербозном режиме
-          if (this.verboseLogging) {
-            logMessages.forEach(msg => log(`  - ${msg}`, 'scheduler'));
-            
-            // Если общее поле scheduledAt указано, логируем его тоже
-            if (content.scheduledAt) {
-              const scheduledTime = new Date(content.scheduledAt);
-              const timeUntilPublish = scheduledTime.getTime() - now.getTime();
-              log(`  - Общее время: ${scheduledTime.toISOString()} (через ${Math.floor(timeUntilPublish / 1000 / 60)} мин.) - ИГНОРИРУЕТСЯ`, 'scheduler');
-            }
-          }
-        }
+        // Тихая проверка времени публикации без логирования
         
         // Возвращаем true, если хотя бы одна платформа готова к публикации по времени
         return anyPlatformReady;
