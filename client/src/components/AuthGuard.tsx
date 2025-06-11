@@ -31,8 +31,16 @@ export function AuthGuard({ children }: Props) {
       hasToken: !!token, 
       hasStoredToken: !!storedToken, 
       isLoginPage,
-      userId
+      userId,
+      currentLocation: location
     });
+
+    // Если мы уже на странице входа, просто разрешаем доступ
+    if (isLoginPage) {
+      console.log('AuthGuard: On login page, allowing access');
+      setIsSessionChecked(true);
+      return;
+    }
 
     const validateToken = async (accessToken: string): Promise<boolean> => {
       try {
@@ -62,34 +70,33 @@ export function AuthGuard({ children }: Props) {
     };
 
     const checkSession = async () => {
-      // Если есть токен в store и userId, проверяем его действительность
-      if (token && userId) {
-        console.log('AuthGuard: Validating token from store');
-        const isValid = await validateToken(token);
-        
-        if (isValid) {
-          console.log('AuthGuard: Token validation successful');
-          setIsSessionChecked(true);
-          return;
-        } else {
-          console.log('AuthGuard: Token from store is invalid, attempting to restore from localStorage');
-          // Токен недействителен, пробуем взять из localStorage
-        }
-      }
-      
-      // Если есть сохраненный токен, проверяем его
+      // Приоритет: сначала проверяем сохраненный токен из localStorage
       if (storedToken && storedUserId) {
-        console.log('AuthGuard: Validating token from localStorage');
+        console.log('AuthGuard: Found stored credentials, validating token');
         const isValid = await validateToken(storedToken);
         
         if (isValid) {
-          console.log('AuthGuard: Stored token is valid, restoring session');
+          console.log('AuthGuard: Stored token is valid, setting session');
           setAuth(storedToken, storedUserId);
           setIsSessionChecked(true);
           return;
         } else {
-          console.log('AuthGuard: Stored token is invalid, attempting to refresh');
-          // Сохраненный токен недействителен, пробуем обновить
+          console.log('AuthGuard: Stored token is invalid, will try refresh');
+        }
+      }
+      
+      // Если есть токен в store, но нет в localStorage, проверяем store токен
+      if (token && userId && !storedToken) {
+        console.log('AuthGuard: Validating token from store (no localStorage token)');
+        const isValid = await validateToken(token);
+        
+        if (isValid) {
+          console.log('AuthGuard: Store token validation successful');
+          setIsSessionChecked(true);
+          return;
+        } else {
+          console.log('AuthGuard: Store token is invalid');
+          clearAuth();
         }
       }
       
