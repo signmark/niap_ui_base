@@ -679,6 +679,36 @@ export class DirectusAuthManager {
   }
 
   /**
+   * Получает административный токен для доступа к системным коллекциям
+   * @returns Административный токен или null
+   */
+  async getAdminAuthToken(): Promise<string | null> {
+    try {
+      // Ищем админскую сессию в кэше
+      const adminSessions = Object.values(this.sessionCache).filter(session => 
+        session.user?.email === 'admin@roboflow.tech'
+      );
+      
+      if (adminSessions.length > 0) {
+        const adminSession = adminSessions[0];
+        if (adminSession.expiresAt > Date.now()) {
+          return adminSession.token;
+        }
+      }
+      
+      // Если нет действующей админской сессии, создаем новую
+      const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
+      const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'asdASD123!@#';
+      
+      const loginResult = await this.login(adminEmail, adminPassword);
+      return loginResult.token;
+    } catch (error) {
+      log(`Error getting admin auth token: ${(error as Error).message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
    * Останавливает интервал обновления сессий
    */
   dispose(): void {
