@@ -674,12 +674,11 @@ export class PublishScheduler {
       // КРИТИЧЕСКИ ВАЖНО: Проверяем блокировку для предотвращения двойной публикации
       if (this.isProcessing) {
         const processingDuration = Date.now() - this.processingStartTime;
-        if (processingDuration < 60000) { // Если процесс идет менее минуты - ждем
-          log(`БЛОКИРОВКА: Планировщик уже выполняется (${Math.round(processingDuration/1000)}с), пропускаем итерацию`, 'scheduler');
+        if (processingDuration < 60000) {
+          // Планировщик уже выполняется, тихо пропускаем итерацию
           return;
         } else {
-          // Если процесс идет больше минуты - возможно зависание, сбрасываем блокировку
-          log(`ПРЕДУПРЕЖДЕНИЕ: Принудительный сброс блокировки планировщика (зависание ${Math.round(processingDuration/1000)}с)`, 'scheduler');
+          // Принудительный сброс блокировки при зависании
           this.isProcessing = false;
         }
       }
@@ -697,13 +696,14 @@ export class PublishScheduler {
       }
       
       // Сбрасываем кэшированный токен для принудительного обновления
-      log('Принудительное обновление токена администратора', 'scheduler');
+      // Принудительное обновление токена администратора
       this.adminTokenCache = null; // Очищаем кэш токена, чтобы получить новый
 
       // Добавляем проверку и обновление статусов контента со всеми опубликованными платформами
       // Функция выполняется в фоновом режиме, чтобы не блокировать публикацию нового контента
-      this.checkAndUpdateContentStatuses().catch(error => {
-        log(`Ошибка при проверке статусов контента: ${error.message}`, 'scheduler');
+      // Тихая проверка статусов контента
+      this.checkAndUpdateContentStatuses().catch(() => {
+        // Тихо обрабатываем ошибки
       });
       
       // Проверяем запросы на извлечение токена
@@ -713,7 +713,7 @@ export class PublishScheduler {
       const authToken = await this.getSystemToken();
       
       if (!authToken) {
-        log('Ошибка: системный токен не получен, запланированные публикации не могут быть обработаны', 'scheduler');
+        // Системный токен не получен, тихо завершаем работу
         return;
       }
       
@@ -982,7 +982,7 @@ export class PublishScheduler {
           
           // Сбрасываем некорректные published статусы без postUrl
           if (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')) {
-            log(`ПЛАНИРОВЩИК ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform} (контент ${content.id})`, 'scheduler');
+            // Тихо сбрасываем некорректный статус
             // Сброс будет выполнен при обработке этого контента
           }
           

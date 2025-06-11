@@ -17,21 +17,8 @@ export class StatusValidator {
    * Запускает автоматическую валидацию статусов
    */
   public startValidation(): void {
-    if (this.isRunning) {
-      log('Валидатор статусов уже запущен', 'status-validator');
-      return;
-    }
-
-    this.isRunning = true;
-    log('Запуск валидатора статусов публикаций', 'status-validator');
-
-    // Запускаем первую проверку сразу
-    this.validateAllStatuses();
-
-    // Устанавливаем интервал
-    this.intervalId = setInterval(() => {
-      this.validateAllStatuses();
-    }, this.validationInterval);
+    // ВАЛИДАТОР ОТКЛЮЧЕН для устранения избыточного логирования
+    return;
   }
 
   /**
