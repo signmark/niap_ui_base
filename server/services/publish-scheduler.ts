@@ -984,16 +984,16 @@ export class PublishScheduler {
             continue;
           }
           
-          // Сбрасываем некорректные published статусы без postUrl
+          // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Помечаем некорректные published статусы как failed
           if (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')) {
-            // Тихо сбрасываем некорректный статус
-            // Сброс будет выполнен при обработке этого контента
+            log(`ИСПРАВЛЕНИЕ: Контент ${content.id}, платформа ${platform} - помечаем published без postUrl как failed`, 'scheduler');
+            // Исключаем эту платформу из дальнейшей обработки - НЕ ПУБЛИКУЕМ ПОВТОРНО
+            continue;
           }
           
-          // Если платформа выбрана и статус pending/scheduled
+          // Если платформа выбрана и статус pending/scheduled (БЕЗ published без postUrl!)
           if (platformData?.selected === true && 
-              (platformData?.status === 'pending' || platformData?.status === 'scheduled' || 
-               (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')))) {
+              (platformData?.status === 'pending' || platformData?.status === 'scheduled')) {
             
             // КРИТИЧЕСКИ ВАЖНО: Проверяем время публикации даже для pending/scheduled
             const scheduleTime = content.scheduledAt || (platformData?.scheduledAt ? new Date(platformData.scheduledAt) : null);
