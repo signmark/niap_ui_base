@@ -138,7 +138,7 @@ export class StatusValidator {
   private async getAllContentWithSocialPlatforms(): Promise<any[]> {
     try {
       // Получаем весь контент через существующий метод storage
-      const allContent = await storage.getCampaignContent();
+      const allContent = await storage.getCampaignContent(undefined, {});
       
       // Фильтруем только контент с социальными платформами
       const contentWithPlatforms = allContent.filter(content => 

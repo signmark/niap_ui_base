@@ -345,6 +345,12 @@ app.use((req, res, next) => {
       
       // Инициализируем тяжелые сервисы после успешного запуска сервера
       initializeHeavyServices();
+      
+      // Запускаем валидатор статусов публикаций для автоматического исправления некорректных статусов
+      setTimeout(() => {
+        log('Запуск валидатора статусов публикаций', 'status-validator');
+        statusValidator.startValidation();
+      }, 30000); // Задержка 30 секунд для завершения инициализации всех сервисов
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {
