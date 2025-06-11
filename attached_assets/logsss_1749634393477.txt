@@ -1,0 +1,4195 @@
+smm-1  | 
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  | 
+smm-1  | 9:28:39 AM [directus-auth] DirectusAuthManager initialized
+smm-1  | 9:28:39 AM [directus-auth] Session refresh interval started (300000ms)
+smm-1  | Global API Keys Service initialized
+smm-1  | 9:28:39 AM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 9:28:39 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+smm-1  | API Key Service initialized
+smm-1  | DeepSeek service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | 9:28:39 AM [fal-ai] FalAiClient создан
+smm-1  | 9:28:39 AM [vertex-ai] [vertex-ai-auth] Инициализирован для проекта laboratory-449308
+smm-1  | 9:28:39 AM [gemini] [gemini-proxy] Инициализирован SOCKS5 прокси: socks5://PGjuJV:***@138.219.123.68:9710
+smm-1  | 9:28:39 AM [gemini] [gemini-proxy] Инициализирован с API ключом: AIzaSyDaYt...
+smm-1  | 9:28:40 AM [imgur-uploader] ImgurUploaderService инициализирован
+smm-1  | 9:28:40 AM [beget-s3-storage] Beget S3 Storage service initialized
+smm-1  | 9:28:40 AM [directus-storage] DirectusStorageAdapter initialized
+smm-1  | Global API Keys Service initialized
+smm-1  | 9:28:40 AM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 9:28:40 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+smm-1  | 9:28:40 AM [beget-s3-api] Created temporary directory for S3 uploads: /tmp/beget-s3-uploads
+smm-1  | 9:28:40 AM [beget-s3-video-api] Created temporary directory for video uploads: /tmp/beget-s3-video-uploads
+smm-1  | [Simple Analytics] 🚀 Регистрируем API эндпоинт /server-api/analytics
+smm-1  | 9:28:40 AM [express] Global API keys routes registered early to avoid Vite middleware interception
+smm-1  | 9:28:40 AM [api-keys-routes] Маршруты для работы с личными API ключами успешно зарегистрированы
+smm-1  | 9:28:40 AM [express] User API keys routes registered early to avoid Vite middleware interception
+smm-1  | === SERVER INITIALIZATION START ===
+smm-1  | 9:28:40 AM [express] Starting server initialization...
+smm-1  | Registering test API routes...
+smm-1  | 9:28:40 AM [express] Registering test API routes first...
+smm-1  | Test API routes registered
+smm-1  | 9:28:40 AM [express] Test API routes registered successfully
+smm-1  | Registering Claude AI routes...
+smm-1  | 9:28:40 AM [express] Registering Claude AI routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude AI routes registered
+smm-1  | 9:28:40 AM [express] Claude AI routes registered successfully
+smm-1  | Registering DeepSeek routes...
+smm-1  | 9:28:40 AM [express] Registering DeepSeek routes...
+smm-1  | DeepSeek routes registered
+smm-1  | 9:28:40 AM [express] DeepSeek routes registered successfully
+smm-1  | Registering Qwen routes...
+smm-1  | 9:28:40 AM [express] Registering Qwen routes...
+smm-1  | Qwen routes registered
+smm-1  | Qwen routes registered
+smm-1  | 9:28:40 AM [express] Qwen routes registered successfully
+smm-1  | Registering Gemini routes...
+smm-1  | 9:28:40 AM [express] Registering Gemini routes...
+smm-1  | API Key Service initialized
+smm-1  | 9:28:40 AM [gemini] Gemini routes registered successfully
+smm-1  | Gemini routes registered
+smm-1  | 9:28:40 AM [express] Gemini routes registered successfully
+smm-1  | 9:28:40 AM [express] Registering Claude routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude routes registered
+smm-1  | 9:28:40 AM [express] Claude routes registered successfully
+smm-1  | 9:28:40 AM [express] Registering routes...
+smm-1  | Starting route registration...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | [express] FAL.AI redirect routes registered
+smm-1  | Starting route registration...
+smm-1  | Creating HTTP server...
+smm-1  | HTTP server created successfully
+smm-1  | Registering validation routes...
+smm-1  | 9:28:40 AM [api-validation] API валидационные маршруты зарегистрированы
+smm-1  | Registering content generation routes...
+smm-1  | Registering direct webhook routes for social platforms...
+smm-1  | Social publishing router registered successfully
+smm-1  | Registering publishing routes...
+smm-1  | [publishing-routes] Регистрация маршрутов управления публикациями...
+smm-1  | API routes registered successfully
+smm-1  | Gemini API test routes registered successfully
+smm-1  | Регистрация тестового маршрута для Instagram
+smm-1  | Тестовый маршрут для Instagram зарегистрирован
+smm-1  | 9:28:40 AM [express] Тестовый маршрут для Instagram карусели зарегистрирован
+smm-1  | Test Instagram routes registered
+smm-1  | Social platform webhook routes registered successfully
+smm-1  | 9:28:40 AM [token-routes] Регистрация маршрутов для работы с админским токеном...
+smm-1  | 9:28:40 AM [token-routes] Маршруты для работы с админским токеном зарегистрированы
+smm-1  | 9:28:40 AM [scheduler] 🚨 ЭКСТРЕННАЯ ОСТАНОВКА: Планировщик отключен для предотвращения массовых публикаций
+smm-1  | 9:28:40 AM [scheduler] 🛑 Система заблокирована до устранения проблемы
+smm-1  | 9:28:40 AM [status-checker] Запуск сервиса проверки статусов публикаций (интервал: 1 минут)
+smm-1  | 9:28:40 AM [status-checker] Проверка статусов публикаций
+smm-1  | 9:28:40 AM [directus-auth] Found 0 active sessions
+smm-1  | 9:28:40 AM [directus-auth] Attempting to login as admin (lbrspb@gmail.com)
+smm-1  | 9:28:40 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+smm-1  | 9:28:40 AM [status-checker] Следующая проверка статусов через 1 минуту
+smm-1  | Route registration completed
+smm-1  | 9:28:40 AM [express] Registering XMLRiver API routes...
+smm-1  | 9:28:40 AM [express] XMLRiver API routes registered successfully
+smm-1  | 9:28:40 AM [express] Registering FAL.AI Universal Image Generation routes...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | 9:28:40 AM [express] FAL.AI Universal Image Generation routes registered successfully
+smm-1  | 9:28:40 AM [express] Registering Imgur Uploader routes...
+smm-1  | Imgur routes registered
+smm-1  | 9:28:40 AM [express] Imgur Uploader routes registered successfully
+smm-1  | 9:28:40 AM [express] Registering DeepSeek Models route...
+smm-1  | 9:28:40 AM [express] DeepSeek Models route registered successfully
+smm-1  | 9:28:40 AM [express] Registering Beget S3 routes...
+smm-1  | 9:28:40 AM [beget-s3-routes] Registering Beget S3 storage routes...
+smm-1  | 9:28:40 AM [beget-s3-routes] Beget S3 basic storage routes registered
+smm-1  | 9:28:40 AM [beget-s3-routes] Beget S3 video routes registered
+smm-1  | 9:28:40 AM [beget-s3-routes] All Beget S3 routes registered successfully
+smm-1  | 9:28:40 AM [express] Beget S3 routes registered successfully
+smm-1  | 9:28:40 AM [express] User API keys routes already registered early
+smm-1  | Route registration completed
+smm-1  | 9:28:40 AM [express] Routes registered successfully
+smm-1  | 9:28:40 AM [express] Setting up Vite in development mode...
+smm-1  | 9:28:40 AM [imgur-uploader] Временная директория создана: /app/uploads/temp
+smm-1  | Директория для загрузки изображений создана: /app/uploads/images
+smm-1  | 9:28:41 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+smm-1  | 9:28:41 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 9:28:41 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+smm-1  | 9:28:41 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 9:28:41 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+smm-1  | 9:28:41 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 9:28:41 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 9:28:41 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 9:28:41 AM [directus-auth] Admin session for user 53921f16-f51d-4591-80b9-8caa4fde4d13 added to cache
+smm-1  | 9:28:41 AM [directus-auth] Admin login successful (53921f16-f51d-4591-80b9-8caa4fde4d13)
+smm-1  | 9:28:41 AM [global-api-keys] Системный токен получен через directusAuthManager
+smm-1  | Re-optimizing dependencies because lockfile has changed
+smm-1  | 9:28:41 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 9:28:41 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 9:28:41 AM [directus-auth] Admin session for user 53921f16-f51d-4591-80b9-8caa4fde4d13 added to cache
+smm-1  | 9:28:41 AM [directus-auth] Admin login successful (53921f16-f51d-4591-80b9-8caa4fde4d13)
+smm-1  | 9:28:41 AM [global-api-keys] Системный токен получен через directusAuthManager
+smm-1  | 9:28:41 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 9:28:41 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 9:28:41 AM [directus-auth] Admin session for user 53921f16-f51d-4591-80b9-8caa4fde4d13 added to cache
+smm-1  | 9:28:41 AM [directus-auth] Admin login successful (53921f16-f51d-4591-80b9-8caa4fde4d13)
+smm-1  | 9:28:41 AM [status-checker] Использование токена из сессии администратора 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:28:41 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+smm-1  | Загружено 8 глобальных API ключей
+smm-1  | 9:28:41 AM [global-api-keys] Global API keys cache refreshed with 8 keys
+smm-1  | 9:28:41 AM [express] Vite setup completed
+smm-1  | === STARTING SERVER ON PORT 5000 ===
+smm-1  | 9:28:41 AM [express] Attempting to start server on port 5000...
+smm-1  | === SERVER SUCCESSFULLY STARTED ON PORT 5000 ===
+smm-1  | 9:28:41 AM [express] Server successfully started on port 5000
+smm-1  | === SERVER URL: http://0.0.0.0:5000 ===
+smm-1  | 9:28:41 AM [express] Начало инициализации тяжелых сервисов после успешного запуска сервера...
+smm-1  | Загружено 8 глобальных API ключей
+smm-1  | 9:28:41 AM [global-api-keys] Global API keys cache refreshed with 8 keys
+smm-1  | Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+smm-1  |   npx update-browserslist-db@latest
+smm-1  |   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+smm-1  | 9:28:51 AM [express] Планировщик аналитики отключен
+smm-1  | 9:28:51 AM [express] Все тяжелые сервисы успешно инициализированы
+smm-1  | 🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥
+smm-1  | 🔥 URL: /api/auth/refresh
+smm-1  | 🔥 PATH: /api/auth/refresh
+smm-1  | 🔥 BODY: {
+smm-1  |   "refresh_token": "4tk6xXEsZOwKRtqFsVsTePLkBpLAHR0-DcW04GzCeF1QA4mqz_tJ6pVIU2nbzlMi",
+smm-1  |   "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13"
+smm-1  | }
+smm-1  | 9:28:54 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:54 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:54 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e, page: 1, limit: -1
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:28:54 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:28:54 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User API Keys request received, req.user: undefined
+smm-1  | Token for API keys check: eyJhbGciOi...
+smm-1  | Полезная нагрузка токена: {
+smm-1  |   id: '53921f16-f51d-4591-80b9-8caa4fde4d13',
+smm-1  |   role: '285bde69-2f04-4f3f-989c-f7dfec3dd405',
+smm-1  |   app_access: true,
+smm-1  |   admin_access: true,
+smm-1  |   iat: 1749633741,
+smm-1  |   exp: 1749634641,
+smm-1  |   iss: 'directus'
+smm-1  | }
+smm-1  | 9:28:54 AM [api-keys-routes] Запрос личных API ключей для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:28:54 AM [express] GET /api/api/fal-ai-models 200 in 21ms
+smm-1  | User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+smm-1  | Fetching campaigns for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Sending request to Directus with filter user_id = 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:28:54 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:28:54 AM [express] GET /api/keywords 304 in 141ms :: {"data":[{"id":"08454b75-fe25-4c66-99d4-3d026…
+smm-1  | 9:28:54 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:28:54 AM [api-keys-routes] Получено 8 API ключей для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:54 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:54 AM [auth] Результат проверки администратора: true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:54 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:54 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:55 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:55 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | Filtering server-side for userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Found 6 campaigns for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (filtered from 6 total)
+smm-1  | All campaign user_ids in response: 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | User ID from request: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Types - userId: string first db userId: string
+smm-1  | 9:28:55 AM [express] GET /api/campaigns 304 in 277ms :: {"data":[{"id":"2ea50372-f772-4cbd-8c8d-1723…
+smm-1  | 9:28:55 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:28:55 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:28:55 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | No token provided in header or cookie
+smm-1  | 9:28:55 AM [express] GET /api/campaigns 401 in 2ms :: {"error":"Не авторизован: Отсутствует токен ав…
+smm-1  | Found 766 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e (page 1)
+smm-1  | Sample keywords being sent to client: array length: 3 ["вайб","на чиле","чилю на чиле"]
+smm-1  | Pagination info: total items 962, current page 1/-962
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:55 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:55 AM [auth] Результат проверки администратора: true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:55 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:55 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | 9:28:55 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:28:55 AM [express] GET /api/campaign-content 200 in 485ms :: {"data":[{"id":"006c2b56-ebd6-475b-a6…
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:28:55 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:28:55 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Принудительная проверка контента ID 1cf8078e-c280-4aee-9f86-01fc89c2f976
+smm-1  | 9:28:55 AM [status-checker] Использование кэшированного токена администратора
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Успешно получен токен администратора
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Получены данные контента "Нехватка ферментов: скрытая угроза для здоровья" (статус: draft)
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Анализ данных платформ: {"instagram":{"error":"Контент не найден или отсутствует изображение","status":"failed","platform":"instagram","updatedAt":"2025-05-13T07:41:52.163Z"}}
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Выбрано: 1 платформ: instagram
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Опубликовано: 0 платформ: 
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: В ожидании: 0 платформ: 
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: allPublished = false
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: allFinalized = true
+smm-1  | 9:28:55 AM [status-checker] СПЕЦИАЛЬНАЯ ПРОВЕРКА: Условия для обновления статуса не выполнены
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | 9:29:05 AM [express] GET /api/keywords 304 in 31ms :: {"data":[{"id":"08454b75-fe25-4c66-99d4-3d026b…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e, page: 1, limit: -1
+smm-1  | Found 766 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e (page 1)
+smm-1  | Sample keywords being sent to client: array length: 3 ["вайб","на чиле","чилю на чиле"]
+smm-1  | Pagination info: total items 962, current page 1/-962
+smm-1  | 9:29:07 AM [express] GET /api/campaign-content 304 in 267ms :: {"data":[{"id":"006c2b56-ebd6-475b-a6…
+smm-1  | 9:29:11 AM [status-validator] Запуск валидатора статусов публикаций
+smm-1  | 🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥
+smm-1  | 🔥 URL: /api/direct-schedule/42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | 🔥 PATH: /api/direct-schedule/42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | 🔥 BODY: {
+smm-1  |   "scheduledAt": "2025-06-11T09:30:00.000Z",
+smm-1  |   "status": "scheduled",
+smm-1  |   "socialPlatforms": {
+smm-1  |     "telegram": {
+smm-1  |       "status": "pending",
+smm-1  |       "publishedAt": null,
+smm-1  |       "postId": null,
+smm-1  |       "postUrl": null,
+smm-1  |       "error": null
+smm-1  |     },
+smm-1  |     "vk": {
+smm-1  |       "status": "pending",
+smm-1  |       "publishedAt": null,
+smm-1  |       "postId": null,
+smm-1  |       "postUrl": null,
+smm-1  |       "error": null
+smm-1  |     },
+smm-1  |     "facebook": {
+smm-1  |       "status": "pending",
+smm-1  |       "publishedAt": null,
+smm-1  |       "postId": null,
+smm-1  |       "postUrl": null,
+smm-1  |       "error": null
+smm-1  |     }
+smm-1  |   }
+smm-1  | }
+smm-1  | 9:29:15 AM [api] Получен запрос на планирование публикации 42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | 9:29:15 AM [api] Отправляем запрос к Directus API с токеном: eyJhbGciOiJIUzI...
+smm-1  | 9:29:15 AM [api] Получаем контент с ID 42268290-4691-4b74-9cb3-8a528c7cc523 через хранилище, с токеном авторизации
+smm-1  | Запрос контента по ID: 42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | Используем переданный токен авторизации для запроса контента 42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | Успешно получен контент с использованием переданного токена
+smm-1  | ✅ Контент найден в Directus: 42268290-4691-4b74-9cb3-8a528c7cc523, user_id: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:29:15 AM [api] Прямое обновление контента 42268290-4691-4b74-9cb3-8a528c7cc523 через API для планирования
+smm-1  | 9:29:15 AM [api] Установлено общее время публикации: 2025-06-11T09:30:00.000Z
+smm-1  | 9:29:15 AM [api] Установлено время для платформы vk: 2025-06-11T09:30:00.000Z
+smm-1  | 9:29:15 AM [api] Установлено время для платформы facebook: 2025-06-11T09:30:00.000Z
+smm-1  | 9:29:15 AM [api] Установлено время для платформы telegram: 2025-06-11T09:30:00.000Z
+smm-1  | 9:29:15 AM [api] Существующие платформы: {"vk":{"error":null,"postId":null,"status":"pending","postUrl":null,"publishedAt":null,"scheduledAt":"2025-06-11T09:25:00.000Z","scheduled_at":"2025-06-11T09:25:00.000Z"},"facebook":{"error":null,"postId":null,"status":"pending","postUrl":null,"publishedAt":null,"scheduledAt":"2025-06-11T09:25:00.000Z","scheduled_at":"2025-06-11T09:25:00.000Z"},"telegram":{"error":null,"postId":null,"status":"pending","postUrl":null,"publishedAt":null,"scheduledAt":"2025-06-11T09:25:00.000Z","scheduled_at":"2025-06-11T09:25:00.000Z"}}
+smm-1  | 9:29:15 AM [api] Новые платформы из запроса: {"telegram":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"vk":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"facebook":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"}}
+smm-1  | 9:29:15 AM [api] Объединенные платформы с временем публикации: {"vk":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"facebook":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"telegram":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"}}
+smm-1  | 9:29:15 AM [api] Планирование контента 42268290-4691-4b74-9cb3-8a528c7cc523 через API успешно
+smm-1  | Используем переданный токен авторизации для обновления контента 42268290-4691-4b74-9cb3-8a528c7cc523
+smm-1  | Отправляем обновление в Directus для контента 42268290-4691-4b74-9cb3-8a528c7cc523: {"status":"scheduled","scheduled_at":"2025-06-11T09:30:00.000Z","social_platforms":{"vk":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"facebook":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"},"telegram":{"status":"pending","publishedAt":null,"postId":null,"postUrl":null,"error":null,"scheduledAt":"2025-06-11T09:30:00.000Z","scheduled_at":"2025-06-11T09:30:00.000Z"}}}
+smm-1  | 9:29:15 AM [api] Контент 42268290-4691-4b74-9cb3-8a528c7cc523 также обновлен через storage
+smm-1  | 9:29:15 AM [express] POST /api/direct-schedule/42268290-4691-4b74-9cb3-8a528c7cc523 200 in 240ms :: …
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e, page: 1, limit: -1
+smm-1  | Found 766 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e (page 1)
+smm-1  | Sample keywords being sent to client: array length: 3 ["вайб","на чиле","чилю на чиле"]
+smm-1  | Pagination info: total items 962, current page 1/-962
+smm-1  | 9:29:16 AM [express] GET /api/campaign-content 200 in 255ms :: {"data":[{"id":"006c2b56-ebd6-475b-a6…
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | 9:29:16 AM [express] GET /api/keywords 304 in 33ms :: {"data":[{"id":"08454b75-fe25-4c66-99d4-3d026b…
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e, page: 1, limit: -1
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:29:27 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:29:27 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:29:27 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:27 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:27 AM [auth] Результат проверки администратора: true
+smm-1  | 9:29:27 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:27 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:27 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:27 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:27 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | Found 766 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e (page 1)
+smm-1  | Sample keywords being sent to client: array length: 3 ["вайб","на чиле","чилю на чиле"]
+smm-1  | Pagination info: total items 962, current page 1/-962
+smm-1  | 9:29:28 AM [express] GET /api/campaign-content 304 in 305ms :: {"data":[{"id":"006c2b56-ebd6-475b-a6…
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:29:28 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:29:28 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:29:28 AM [api] === ЗАПРОС ЗАПЛАНИРОВАННЫХ ПУБЛИКАЦИЙ ===
+smm-1  | 9:29:28 AM [api] userId: 53921f16-f51d-4591-80b9-8caa4fde4d13, campaignId: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | 9:29:28 AM [api] authHeader присутствует: true
+smm-1  | 9:29:28 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 9:29:28 AM [api] Токен для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 кэширован
+smm-1  | 9:29:28 AM [api] Запрос запланированных публикаций с токеном авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:29:28 AM [directus-storage] Fetching scheduled content for user: 53921f16-f51d-4591-80b9-8caa4fde4d13, campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | 9:29:28 AM [directus-auth] Attempting to log in user: lbrspb@gmail.com
+smm-1  | 9:29:28 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+smm-1  | User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+smm-1  | Fetching campaigns for user: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Sending request to Directus with filter user_id = 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:29:28 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:28 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:28 AM [auth] Результат проверки администратора: true
+smm-1  | 9:29:28 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | Filtering server-side for userId: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Found 6 campaigns for user 53921f16-f51d-4591-80b9-8caa4fde4d13 (filtered from 6 total)
+smm-1  | All campaign user_ids in response: 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13, 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | User ID from request: 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | Types - userId: string first db userId: string
+smm-1  | 9:29:28 AM [express] GET /api/campaigns 304 in 117ms :: {"data":[{"id":"2ea50372-f772-4cbd-8c8d-1723…
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:28 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:28 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:29:29 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:29:29 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | 9:29:29 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+smm-1  | 9:29:29 AM [directus-crud] Выполнение операции read для коллекции users/me
+smm-1  | 9:29:29 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+smm-1  | 9:29:29 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+smm-1  | 9:29:29 AM [directus-auth] User lbrspb@gmail.com (53921f16-f51d-4591-80b9-8caa4fde4d13) successfully logged in
+smm-1  | 9:29:29 AM [directus-storage] Using admin token for campaign_content access
+smm-1  | 9:29:29 AM [directus-storage] Requesting scheduled content with options: {"hasToken":true,"filterKeys":["status","scheduled_at","campaign_id","user_id"],"userId":"53921f16-f51d-4591-80b9-8caa4fde4d13","campaignId":"46868c44-c6a4-4bed-accf-9ad07bba790e"}
+smm-1  | 9:29:29 AM [directus-crud] Выполнение операции list для коллекции campaign_content
+smm-1  | 9:29:29 AM [directus] Directus API Error: 403 - Forbidden - /items/campaign_content
+smm-1  | 9:29:29 AM [directus-crud] Ошибка при выполнении операции list для коллекции campaign_content: Request failed with status code 403
+smm-1  | 9:29:29 AM [directus-crud] Статус ошибки: 403
+smm-1  | 9:29:29 AM [directus-crud] Детали ошибки: [{"message":"You don't have permission to access collection \"campaign_content\" or it does not exist. Queried in root.","extensions":{"reason":"You don't have permission to access collection \"campaign_content\" or it does not exist. Queried in root.","code":"FORBIDDEN"}}]
+smm-1  | 9:29:29 AM [directus-storage] Error fetching from Directus: Request failed with status code 403. Trying fallback method.
+smm-1  | 9:29:29 AM [directus-storage] Received 2 items using fallback method
+smm-1  | 9:29:29 AM [directus-storage] Found 2 scheduled content items after filtering
+smm-1  | 9:29:29 AM [api] Получено 2 запланированных публикаций из улучшенного адаптера для 53921f16-f51d-4591-80b9-8caa4fde4d13
+smm-1  | 9:29:29 AM [express] GET /api/publish/scheduled 200 in 689ms :: {"success":true,"data":[{"id":"03be0…
+smm-1  | User authenticated: df0a82dc-5922-4917-beef-3d2013112cc4 (i.zelenin@nplanner.ru)
+smm-1  | [GET /api/campaign-trends] Запрос трендов для кампании 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period=7days
+smm-1  | [GET /api/campaign-trends] Получен токен авторизации: eyJhbGciOi...
+smm-1  | [GET /api/campaign-trends] Fetching trend topics for campaign: 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period: 7days
+smm-1  | [GET /api/campaign-trends] Using date filter: 2025-06-04T09:29:32.918Z
+smm-1  | [GET /api/campaign-trends] Directus API filter: {"campaign_id":{"_eq":"7aba8a40-d4d8-48b8-a992-f1b5b0627a63"},"created_at":{"_gte":"2025-06-04T09:29:32.918Z"}}
+smm-1  | [GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics
+smm-1  | [GET /api/campaign-trends] Directus API response status: 200
+smm-1  | [GET /api/campaign-trends] Directus API response contains: 100 items
+smm-1  | Raw trend item fields for df62b813-328c-4cfe-9c53-95581db01cf9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | ДАТА created_at: 2025-06-09T14:29:46.000Z
+smm-1  | ТИП ДАТЫ: string
+smm-1  | ВАЛИДНОСТЬ ДАТЫ: Mon Jun 09 2025 14:29:46 GMT+0000 (Coordinated Universal Time)
+smm-1  | Raw trend item fields for 58ef840d-9977-4bd6-a8e9-620a19243c7b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 984dad01-aadf-48f3-87a0-6d889479800e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db61e0e6-ff10-4c93-9fec-b6b443b040a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e1738968-37fe-4cb8-86b1-1ec3aa554785: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 633ff3b1-9baa-4941-a442-60fc1aebfc29: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fcc527e5-aa2f-464c-9558-0bfa759d5ef7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 15a05950-ec84-454a-857f-f3b03286cef2: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4856041f-faa8-48e9-9127-e91becc72d01: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b1c60d78-db3d-4aa6-a15f-0dc825ae4ac9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 7befec13-7f04-49e7-a423-253c5f50afb8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3323ecab-a86c-4e6c-b86e-79bfd59f9c9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a049331a-8d5c-466b-947f-a3726df10033: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8a8da712-d96f-4e72-9fe3-9398b1a19721: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10afb8f7-bbdc-4289-863c-a0193c136f99: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e2be7d52-b3d0-4720-982a-bce85368f9ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4da59a78-b291-4997-8d67-1ee0b406eb3e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db5b8b6f-57e7-449c-b905-704bad4b8276: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ffcc9ab2-c9c8-4318-860b-df0cdced0a77: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e9930d64-4261-4482-a034-f49a54722d75: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 6dc65e67-9eff-476c-80e1-43e005bfd32e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3e227029-9356-4227-8ecd-d246e1e924ed: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2fb603c5-e5ee-4676-a8a0-1a5030625b02: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 54c37c20-2bf2-4ea9-be8b-9587713d1e41: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c9198cf6-6838-4c49-98eb-24b9772e4b00: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a559007b-7a8a-4368-9c13-ac9bf7e602ba: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 92facb9a-eafd-4b3d-a0c4-38947a0cd2b3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51d3fd7b-a324-461c-a37a-7517a8491daf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27c6c2c2-cbc0-4b34-a7de-bf0ba6702c48: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 77e4652d-63d8-460c-b2a7-e183314e34ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72fbbfa6-7471-4030-b366-f2758f2bcfd5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f12280eb-19bb-4e00-be7b-57e84fd818ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27b6a43d-7c49-47c3-b297-db0542f98f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2ebfc305-5712-4ef9-99e6-ad8f8d842191: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 305b4591-a4bf-4c66-8cd2-b2397b4f9756: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81f5c898-26bb-4e27-8afe-fbc1660eb488: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ae16e241-aaea-45a7-bffb-e90700c1859f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 60013353-c98d-49b8-a4db-e68acc247e07: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ff5396a5-3c42-4eb3-8c29-99cd51bd432f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 053553a3-637b-4772-bf1f-81d8f1580876: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 61591aa3-1b5b-4dbe-a56a-7cbeffe999be: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 222c98d1-348b-4eae-9d1f-48b4a4abd970: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 362984df-11da-4add-960b-69d2424b54c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10f3ac26-bf99-4745-83eb-c4ce258e9530: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 285c688b-43a2-426f-9eef-ac91a8bb28f9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 68a7192d-bc93-4562-a0cd-d123df3b0597: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8a3be3a-9b1a-49d7-810f-7d48566a22b0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81686071-4a19-470b-9188-032f9de39394: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 83b63fe7-a0aa-4c25-ace5-20b73ed3d5ae: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 001e1444-1b3f-4ba3-b304-e2f2627710c0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c520bbae-65b6-4e29-a39d-b768ff94b4eb: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 824f0828-1a8e-4bb0-8167-89aa02337af3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for edf2d314-e34b-47b4-bafe-86274e156d1c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a8d6131d-3d60-460c-a8e1-a95a62a6a53c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0113544d-1c86-4141-a099-2f43877daeb5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cc9e0263-03ea-4c4d-996c-d5d5fdd388ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 1ab359d9-4bf1-4beb-a030-128586000404: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for bcc9ade4-7196-476a-8261-4b4ce73f8f33: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 600b65f2-a79d-4732-b88e-55e32383cdbf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72729e8b-dfef-4001-9e95-a1ef6e25c01b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c3662084-76c1-429f-ae50-6f7cb0a21956: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 41d97a07-8424-48af-9ffd-f31a4a1a6451: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 53b4d202-556f-4c0b-880b-2ce083e6099b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f09f7899-ebba-4678-bf78-440a2e8cb95a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cfa3271a-da08-4f85-b4ab-633f62b98ec8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for df38cbfb-b911-4112-8274-7d4694723d31: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 745c1bed-4918-4379-afce-88a13651b976: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c37a107d-6a2a-4179-9f03-92b96053d4d5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for be910f9f-5a82-44c1-90e9-a12d3901fa9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f35f7258-7c2e-4acd-a396-6358b56b2f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3ca85f90-ec44-4a84-b7f9-6622ea2a88b9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e0676c69-ecbf-4c2f-801d-6d52e6946ec0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for eec3d967-3ddf-46bc-8b86-936c0da4a0bf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 12cd4d6c-4eb9-4758-bf2f-5a7162587902: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c2fd6022-e733-410d-967d-ec9bbd9f4aa7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5ce4cb99-be80-4b94-aff5-36ee0916de08: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 667cf326-7988-4087-a495-5cdd7410cc2b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a771a645-4314-44be-9d69-69191478bca8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 22067e94-5dcd-41b5-b84d-dec67c780d91: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2e5e2250-ad33-4f89-9a09-929ad4f07896: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8fb5630-cc0e-4d4a-bc51-cca1c1c3cd8b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for d3dcb930-6731-4e96-811f-d4cd4d8a924e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 841b030f-564c-41de-986a-d4d61d52c0c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51e46359-9ff1-4bda-8210-18072f6b83a7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 9ce19c0e-c99e-4789-bb6b-f7ac8f4d828a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b00963a9-624d-47e3-858d-02b0d8b77e83: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0e3e79d4-6af5-4a2f-9d34-0133cd242a5d: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a0865d32-629a-497e-96c0-b736291a0169: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8d1f6aaf-8acf-452d-9772-3ab18dadb8a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 67827180-34fe-4872-86ee-4b3c09d1e77c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5d0965a4-6d3b-4b63-bf9a-561421c900ab: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3bf78b82-9380-4f85-955b-d0c8f06a4980: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a96b570b-a78d-4029-97fb-06d0035a73e7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72c3aee1-1e8d-46c4-bfd5-a9ce4cc13c2f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 42502050-7384-4f89-b377-dd215299a48f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 79eb8ee8-d92e-49e7-ad30-769b57b3559b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fd29caba-ea39-4819-8dd1-6b9d76e726e6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8e81915b-ce66-495e-bb89-9f621393b06c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for aa8f7a42-9839-4ab1-8ac3-ef30dc470487: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a3d75db3-aae2-4c37-bd65-9a14b1f45ed4: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Found 100 trend topics for campaign 7aba8a40-d4d8-48b8-a992-f1b5b0627a63
+smm-1  | 9:29:32 AM [express] GET /api/campaign-trends 304 in 111ms :: {"success":true,"data":[{"id":"df62b81…
+smm-1  | 9:29:40 AM [status-checker] Проверка статусов публикаций
+smm-1  | 9:29:40 AM [status-checker] Использование кэшированного токена администратора
+smm-1  | 9:29:40 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+smm-1  | 🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥
+smm-1  | 🔥 URL: /api/auth/refresh
+smm-1  | 🔥 PATH: /api/auth/refresh
+smm-1  | 🔥 BODY: {
+smm-1  |   "refresh_token": "ZWQtZFyOIeoVLvb6NOQ_6NgocSA6aTdQkGJzZnCJ3Hz1fgyHsXz7KXZAUo5q7-9l",
+smm-1  |   "user_id": "df0a82dc-5922-4917-beef-3d2013112cc4"
+smm-1  | }
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:30:23 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:30:23 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'i.zelenin@nplanner.ru',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:23 AM [admin] Пользователь i.zelenin@nplanner.ru: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:23 AM [auth] Результат проверки администратора: true
+smm-1  | 9:30:23 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:30:23 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | User data for admin check: {
+smm-1  |   email: 'i.zelenin@nplanner.ru',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:23 AM [admin] Пользователь i.zelenin@nplanner.ru: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:23 AM [auth] Пользователь i.zelenin@nplanner.ru: статус администратора = true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'i.zelenin@nplanner.ru',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:23 AM [admin] Пользователь i.zelenin@nplanner.ru: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:23 AM [auth] Пользователь i.zelenin@nplanner.ru: статус администратора = true
+smm-1  | User authenticated: df0a82dc-5922-4917-beef-3d2013112cc4 (i.zelenin@nplanner.ru)
+smm-1  | [GET /api/campaign-trends] Запрос трендов для кампании 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period=7days
+smm-1  | [GET /api/campaign-trends] Получен токен авторизации: eyJhbGciOi...
+smm-1  | [GET /api/campaign-trends] Fetching trend topics for campaign: 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period: 7days
+smm-1  | [GET /api/campaign-trends] Using date filter: 2025-06-04T09:30:32.961Z
+smm-1  | [GET /api/campaign-trends] Directus API filter: {"campaign_id":{"_eq":"7aba8a40-d4d8-48b8-a992-f1b5b0627a63"},"created_at":{"_gte":"2025-06-04T09:30:32.961Z"}}
+smm-1  | [GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics
+smm-1  | [GET /api/campaign-trends] Directus API response status: 200
+smm-1  | [GET /api/campaign-trends] Directus API response contains: 100 items
+smm-1  | Raw trend item fields for df62b813-328c-4cfe-9c53-95581db01cf9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | ДАТА created_at: 2025-06-09T14:29:46.000Z
+smm-1  | ТИП ДАТЫ: string
+smm-1  | ВАЛИДНОСТЬ ДАТЫ: Mon Jun 09 2025 14:29:46 GMT+0000 (Coordinated Universal Time)
+smm-1  | Raw trend item fields for 58ef840d-9977-4bd6-a8e9-620a19243c7b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 984dad01-aadf-48f3-87a0-6d889479800e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db61e0e6-ff10-4c93-9fec-b6b443b040a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e1738968-37fe-4cb8-86b1-1ec3aa554785: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 633ff3b1-9baa-4941-a442-60fc1aebfc29: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fcc527e5-aa2f-464c-9558-0bfa759d5ef7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 15a05950-ec84-454a-857f-f3b03286cef2: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4856041f-faa8-48e9-9127-e91becc72d01: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b1c60d78-db3d-4aa6-a15f-0dc825ae4ac9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 7befec13-7f04-49e7-a423-253c5f50afb8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3323ecab-a86c-4e6c-b86e-79bfd59f9c9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a049331a-8d5c-466b-947f-a3726df10033: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8a8da712-d96f-4e72-9fe3-9398b1a19721: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10afb8f7-bbdc-4289-863c-a0193c136f99: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e2be7d52-b3d0-4720-982a-bce85368f9ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4da59a78-b291-4997-8d67-1ee0b406eb3e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db5b8b6f-57e7-449c-b905-704bad4b8276: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ffcc9ab2-c9c8-4318-860b-df0cdced0a77: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e9930d64-4261-4482-a034-f49a54722d75: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 6dc65e67-9eff-476c-80e1-43e005bfd32e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3e227029-9356-4227-8ecd-d246e1e924ed: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2fb603c5-e5ee-4676-a8a0-1a5030625b02: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 54c37c20-2bf2-4ea9-be8b-9587713d1e41: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c9198cf6-6838-4c49-98eb-24b9772e4b00: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a559007b-7a8a-4368-9c13-ac9bf7e602ba: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 92facb9a-eafd-4b3d-a0c4-38947a0cd2b3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51d3fd7b-a324-461c-a37a-7517a8491daf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27c6c2c2-cbc0-4b34-a7de-bf0ba6702c48: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 77e4652d-63d8-460c-b2a7-e183314e34ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72fbbfa6-7471-4030-b366-f2758f2bcfd5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f12280eb-19bb-4e00-be7b-57e84fd818ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27b6a43d-7c49-47c3-b297-db0542f98f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2ebfc305-5712-4ef9-99e6-ad8f8d842191: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 305b4591-a4bf-4c66-8cd2-b2397b4f9756: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81f5c898-26bb-4e27-8afe-fbc1660eb488: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ae16e241-aaea-45a7-bffb-e90700c1859f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 60013353-c98d-49b8-a4db-e68acc247e07: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ff5396a5-3c42-4eb3-8c29-99cd51bd432f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 053553a3-637b-4772-bf1f-81d8f1580876: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 61591aa3-1b5b-4dbe-a56a-7cbeffe999be: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 222c98d1-348b-4eae-9d1f-48b4a4abd970: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 362984df-11da-4add-960b-69d2424b54c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10f3ac26-bf99-4745-83eb-c4ce258e9530: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 285c688b-43a2-426f-9eef-ac91a8bb28f9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 68a7192d-bc93-4562-a0cd-d123df3b0597: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8a3be3a-9b1a-49d7-810f-7d48566a22b0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81686071-4a19-470b-9188-032f9de39394: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 83b63fe7-a0aa-4c25-ace5-20b73ed3d5ae: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 001e1444-1b3f-4ba3-b304-e2f2627710c0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c520bbae-65b6-4e29-a39d-b768ff94b4eb: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 824f0828-1a8e-4bb0-8167-89aa02337af3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for edf2d314-e34b-47b4-bafe-86274e156d1c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a8d6131d-3d60-460c-a8e1-a95a62a6a53c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0113544d-1c86-4141-a099-2f43877daeb5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cc9e0263-03ea-4c4d-996c-d5d5fdd388ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 1ab359d9-4bf1-4beb-a030-128586000404: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for bcc9ade4-7196-476a-8261-4b4ce73f8f33: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 600b65f2-a79d-4732-b88e-55e32383cdbf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72729e8b-dfef-4001-9e95-a1ef6e25c01b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c3662084-76c1-429f-ae50-6f7cb0a21956: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 41d97a07-8424-48af-9ffd-f31a4a1a6451: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 53b4d202-556f-4c0b-880b-2ce083e6099b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f09f7899-ebba-4678-bf78-440a2e8cb95a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cfa3271a-da08-4f85-b4ab-633f62b98ec8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for df38cbfb-b911-4112-8274-7d4694723d31: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 745c1bed-4918-4379-afce-88a13651b976: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c37a107d-6a2a-4179-9f03-92b96053d4d5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for be910f9f-5a82-44c1-90e9-a12d3901fa9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f35f7258-7c2e-4acd-a396-6358b56b2f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3ca85f90-ec44-4a84-b7f9-6622ea2a88b9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e0676c69-ecbf-4c2f-801d-6d52e6946ec0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for eec3d967-3ddf-46bc-8b86-936c0da4a0bf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 12cd4d6c-4eb9-4758-bf2f-5a7162587902: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c2fd6022-e733-410d-967d-ec9bbd9f4aa7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5ce4cb99-be80-4b94-aff5-36ee0916de08: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 667cf326-7988-4087-a495-5cdd7410cc2b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a771a645-4314-44be-9d69-69191478bca8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 22067e94-5dcd-41b5-b84d-dec67c780d91: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2e5e2250-ad33-4f89-9a09-929ad4f07896: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8fb5630-cc0e-4d4a-bc51-cca1c1c3cd8b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for d3dcb930-6731-4e96-811f-d4cd4d8a924e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 841b030f-564c-41de-986a-d4d61d52c0c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51e46359-9ff1-4bda-8210-18072f6b83a7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 9ce19c0e-c99e-4789-bb6b-f7ac8f4d828a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b00963a9-624d-47e3-858d-02b0d8b77e83: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0e3e79d4-6af5-4a2f-9d34-0133cd242a5d: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a0865d32-629a-497e-96c0-b736291a0169: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8d1f6aaf-8acf-452d-9772-3ab18dadb8a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 67827180-34fe-4872-86ee-4b3c09d1e77c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5d0965a4-6d3b-4b63-bf9a-561421c900ab: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3bf78b82-9380-4f85-955b-d0c8f06a4980: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a96b570b-a78d-4029-97fb-06d0035a73e7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72c3aee1-1e8d-46c4-bfd5-a9ce4cc13c2f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 42502050-7384-4f89-b377-dd215299a48f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 79eb8ee8-d92e-49e7-ad30-769b57b3559b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fd29caba-ea39-4819-8dd1-6b9d76e726e6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8e81915b-ce66-495e-bb89-9f621393b06c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for aa8f7a42-9839-4ab1-8ac3-ef30dc470487: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a3d75db3-aae2-4c37-bd65-9a14b1f45ed4: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Found 100 trend topics for campaign 7aba8a40-d4d8-48b8-a992-f1b5b0627a63
+smm-1  | 9:30:33 AM [express] GET /api/campaign-trends 304 in 152ms :: {"success":true,"data":[{"id":"df62b81…
+smm-1  | 9:30:40 AM [status-checker] Проверка статусов публикаций
+smm-1  | 9:30:40 AM [status-checker] Использование кэшированного токена администратора
+smm-1  | 9:30:40 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+smm-1  | Fetching keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | IS-ADMIN ROUTE CALLED
+smm-1  | 9:30:56 AM [auth] Проверка статуса админа с токеном: eyJhbGciOi...
+smm-1  | 9:30:56 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | Fetching content for campaign ID: 46868c44-c6a4-4bed-accf-9ad07bba790e, page: 1, limit: -1
+smm-1  | 9:30:56 AM [express] GET /api/api/fal-ai-models 200 in 30ms
+smm-1  | 9:30:56 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:30:56 AM [admin] Проверка прав администратора с токеном: eyJhbGciOi...
+smm-1  | 9:30:56 AM [express] GET /api/keywords 304 in 99ms :: {"data":[{"id":"08454b75-fe25-4c66-99d4-3d026b…
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:56 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:56 AM [auth] Результат проверки администратора: true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:56 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:56 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | User data for admin check: {
+smm-1  |   email: 'lbrspb@gmail.com',
+smm-1  |   is_smm_admin: true,
+smm-1  |   role: undefined,
+smm-1  |   roleName: undefined,
+smm-1  |   roleAdmin: undefined
+smm-1  | }
+smm-1  | Admin check results: { isSmmAdmin: true, finalResult: true }
+smm-1  | 9:30:56 AM [admin] Пользователь lbrspb@gmail.com: итоговый статус админа = true. Значение is_smm_admin = true, тип: boolean. Роль = undefined
+smm-1  | 9:30:56 AM [auth] Пользователь lbrspb@gmail.com: статус администратора = true
+smm-1  | Found 766 content items for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e (page 1)
+smm-1  | Sample keywords being sent to client: array length: 3 ["вайб","на чиле","чилю на чиле"]
+smm-1  | Pagination info: total items 962, current page 1/-962
+smm-1  | 9:30:56 AM [express] GET /api/campaign-content 304 in 408ms :: {"data":[{"id":"006c2b56-ebd6-475b-a6…
+smm-1  | User authenticated: df0a82dc-5922-4917-beef-3d2013112cc4 (i.zelenin@nplanner.ru)
+smm-1  | [GET /api/campaign-trends] Запрос трендов для кампании 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period=7days
+smm-1  | [GET /api/campaign-trends] Получен токен авторизации: eyJhbGciOi...
+smm-1  | [GET /api/campaign-trends] Fetching trend topics for campaign: 7aba8a40-d4d8-48b8-a992-f1b5b0627a63, period: 7days
+smm-1  | [GET /api/campaign-trends] Using date filter: 2025-06-04T09:31:33.121Z
+smm-1  | [GET /api/campaign-trends] Directus API filter: {"campaign_id":{"_eq":"7aba8a40-d4d8-48b8-a992-f1b5b0627a63"},"created_at":{"_gte":"2025-06-04T09:31:33.121Z"}}
+smm-1  | [GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics
+smm-1  | [GET /api/campaign-trends] Directus API response status: 200
+smm-1  | [GET /api/campaign-trends] Directus API response contains: 100 items
+smm-1  | Raw trend item fields for df62b813-328c-4cfe-9c53-95581db01cf9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | ДАТА created_at: 2025-06-09T14:29:46.000Z
+smm-1  | ТИП ДАТЫ: string
+smm-1  | ВАЛИДНОСТЬ ДАТЫ: Mon Jun 09 2025 14:29:46 GMT+0000 (Coordinated Universal Time)
+smm-1  | Raw trend item fields for 58ef840d-9977-4bd6-a8e9-620a19243c7b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 984dad01-aadf-48f3-87a0-6d889479800e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db61e0e6-ff10-4c93-9fec-b6b443b040a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e1738968-37fe-4cb8-86b1-1ec3aa554785: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 633ff3b1-9baa-4941-a442-60fc1aebfc29: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fcc527e5-aa2f-464c-9558-0bfa759d5ef7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 15a05950-ec84-454a-857f-f3b03286cef2: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4856041f-faa8-48e9-9127-e91becc72d01: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b1c60d78-db3d-4aa6-a15f-0dc825ae4ac9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 7befec13-7f04-49e7-a423-253c5f50afb8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3323ecab-a86c-4e6c-b86e-79bfd59f9c9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a049331a-8d5c-466b-947f-a3726df10033: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8a8da712-d96f-4e72-9fe3-9398b1a19721: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10afb8f7-bbdc-4289-863c-a0193c136f99: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e2be7d52-b3d0-4720-982a-bce85368f9ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 4da59a78-b291-4997-8d67-1ee0b406eb3e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for db5b8b6f-57e7-449c-b905-704bad4b8276: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ffcc9ab2-c9c8-4318-860b-df0cdced0a77: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e9930d64-4261-4482-a034-f49a54722d75: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 6dc65e67-9eff-476c-80e1-43e005bfd32e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3e227029-9356-4227-8ecd-d246e1e924ed: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2fb603c5-e5ee-4676-a8a0-1a5030625b02: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 54c37c20-2bf2-4ea9-be8b-9587713d1e41: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c9198cf6-6838-4c49-98eb-24b9772e4b00: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a559007b-7a8a-4368-9c13-ac9bf7e602ba: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 92facb9a-eafd-4b3d-a0c4-38947a0cd2b3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51d3fd7b-a324-461c-a37a-7517a8491daf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27c6c2c2-cbc0-4b34-a7de-bf0ba6702c48: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 77e4652d-63d8-460c-b2a7-e183314e34ef: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72fbbfa6-7471-4030-b366-f2758f2bcfd5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f12280eb-19bb-4e00-be7b-57e84fd818ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 27b6a43d-7c49-47c3-b297-db0542f98f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2ebfc305-5712-4ef9-99e6-ad8f8d842191: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 305b4591-a4bf-4c66-8cd2-b2397b4f9756: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81f5c898-26bb-4e27-8afe-fbc1660eb488: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ae16e241-aaea-45a7-bffb-e90700c1859f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 60013353-c98d-49b8-a4db-e68acc247e07: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for ff5396a5-3c42-4eb3-8c29-99cd51bd432f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 053553a3-637b-4772-bf1f-81d8f1580876: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 61591aa3-1b5b-4dbe-a56a-7cbeffe999be: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 222c98d1-348b-4eae-9d1f-48b4a4abd970: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 362984df-11da-4add-960b-69d2424b54c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 10f3ac26-bf99-4745-83eb-c4ce258e9530: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 285c688b-43a2-426f-9eef-ac91a8bb28f9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 68a7192d-bc93-4562-a0cd-d123df3b0597: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8a3be3a-9b1a-49d7-810f-7d48566a22b0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 81686071-4a19-470b-9188-032f9de39394: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 83b63fe7-a0aa-4c25-ace5-20b73ed3d5ae: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 001e1444-1b3f-4ba3-b304-e2f2627710c0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c520bbae-65b6-4e29-a39d-b768ff94b4eb: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 824f0828-1a8e-4bb0-8167-89aa02337af3: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for edf2d314-e34b-47b4-bafe-86274e156d1c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a8d6131d-3d60-460c-a8e1-a95a62a6a53c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0113544d-1c86-4141-a099-2f43877daeb5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cc9e0263-03ea-4c4d-996c-d5d5fdd388ad: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 1ab359d9-4bf1-4beb-a030-128586000404: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for bcc9ade4-7196-476a-8261-4b4ce73f8f33: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 600b65f2-a79d-4732-b88e-55e32383cdbf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72729e8b-dfef-4001-9e95-a1ef6e25c01b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c3662084-76c1-429f-ae50-6f7cb0a21956: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 41d97a07-8424-48af-9ffd-f31a4a1a6451: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 53b4d202-556f-4c0b-880b-2ce083e6099b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f09f7899-ebba-4678-bf78-440a2e8cb95a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for cfa3271a-da08-4f85-b4ab-633f62b98ec8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for df38cbfb-b911-4112-8274-7d4694723d31: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 745c1bed-4918-4379-afce-88a13651b976: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c37a107d-6a2a-4179-9f03-92b96053d4d5: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for be910f9f-5a82-44c1-90e9-a12d3901fa9b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for f35f7258-7c2e-4acd-a396-6358b56b2f6b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3ca85f90-ec44-4a84-b7f9-6622ea2a88b9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for e0676c69-ecbf-4c2f-801d-6d52e6946ec0: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for eec3d967-3ddf-46bc-8b86-936c0da4a0bf: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 12cd4d6c-4eb9-4758-bf2f-5a7162587902: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for c2fd6022-e733-410d-967d-ec9bbd9f4aa7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5ce4cb99-be80-4b94-aff5-36ee0916de08: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 667cf326-7988-4087-a495-5cdd7410cc2b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a771a645-4314-44be-9d69-69191478bca8: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 22067e94-5dcd-41b5-b84d-dec67c780d91: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 2e5e2250-ad33-4f89-9a09-929ad4f07896: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b8fb5630-cc0e-4d4a-bc51-cca1c1c3cd8b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for d3dcb930-6731-4e96-811f-d4cd4d8a924e: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 841b030f-564c-41de-986a-d4d61d52c0c6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 51e46359-9ff1-4bda-8210-18072f6b83a7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 9ce19c0e-c99e-4789-bb6b-f7ac8f4d828a: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for b00963a9-624d-47e3-858d-02b0d8b77e83: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 0e3e79d4-6af5-4a2f-9d34-0133cd242a5d: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a0865d32-629a-497e-96c0-b736291a0169: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8d1f6aaf-8acf-452d-9772-3ab18dadb8a9: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 67827180-34fe-4872-86ee-4b3c09d1e77c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 5d0965a4-6d3b-4b63-bf9a-561421c900ab: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 3bf78b82-9380-4f85-955b-d0c8f06a4980: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a96b570b-a78d-4029-97fb-06d0035a73e7: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 72c3aee1-1e8d-46c4-bfd5-a9ce4cc13c2f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 42502050-7384-4f89-b377-dd215299a48f: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 79eb8ee8-d92e-49e7-ad30-769b57b3559b: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for fd29caba-ea39-4819-8dd1-6b9d76e726e6: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for 8e81915b-ce66-495e-bb89-9f621393b06c: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for aa8f7a42-9839-4ab1-8ac3-ef30dc470487: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Raw trend item fields for a3d75db3-aae2-4c37-bd65-9a14b1f45ed4: [
+smm-1  |   'id',             'title',
+smm-1  |   'source_id',      'reactions',
+smm-1  |   'comments',       'views',
+smm-1  |   'is_bookmarked',  'created_at',
+smm-1  |   'campaign_id',    'media_links',
+smm-1  |   'description',    'urlPost',
+smm-1  |   'accountUrl',     'post',
+smm-1  |   'type',           'trendScore',
+smm-1  |   'sourceType',     'reposts',
+smm-1  |   'media_analysis'
+smm-1  | ]
+smm-1  | Found 100 trend topics for campaign 7aba8a40-d4d8-48b8-a992-f1b5b0627a63
+smm-1  | 9:31:33 AM [express] GET /api/campaign-trends 304 in 167ms :: {"success":true,"data":[{"id":"df62b81…
+smm-1  | 9:31:40 AM [status-checker] Проверка статусов публикаций
+smm-1  | 9:31:40 AM [status-checker] Использование кэшированного токена администратора
+smm-1  | 9:31:40 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+smm-1  | 9:32:40 AM [status-checker] Проверка статусов публикаций
+smm-1  | 9:32:40 AM [status-checker] Использование кэшированного токена администратора
+smm-1  | 9:32:40 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
