@@ -663,7 +663,7 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     // Автоматически вызываем обновление статуса после публикации
     try {
       const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const adminToken = process.env.DIRECTUS_TOKEN;
       const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
       
       log(`[Social Publishing] Автоматический вызов обновления статуса после асинхронной публикации в ${platform}`);
@@ -740,7 +740,7 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
     
     // Автоматически вызываем обновление статуса после публикации карусели
     try {
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+      const adminToken = process.env.DIRECTUS_TOKEN;
       const appBaseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`;
       
       log(`[Social Publishing] Автоматический вызов обновления статуса после публикации карусели в Instagram`);
@@ -803,7 +803,7 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
     log(`[Social Publishing] Запрос на автоматическое обновление статуса публикации для контента ${contentId}`);
     
     // Получаем токен для работы с Directus API
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    const adminToken = process.env.DIRECTUS_TOKEN;
     
     // Получаем текущие данные контента через storage
     const content = await storage.getCampaignContentById(contentId, adminToken);
@@ -925,7 +925,7 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
     log(`[Social Publishing] Запрос на обновление статуса публикации для контента ${contentId}`);
     
     // Получаем токен для работы с Directus API
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || 'zQJK4b84qrQeuTYS2-x9QqpEyDutJGsb';
+    const adminToken = process.env.DIRECTUS_TOKEN;
     
     // Получаем текущие данные контента через storage
     const content = await storage.getCampaignContentById(contentId, adminToken);
