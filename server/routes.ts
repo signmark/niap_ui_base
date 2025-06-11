@@ -7856,9 +7856,34 @@ Return your response as a JSON array in this exact format:
           return res.status(404).json({ error: "Content not found" });
         }
         
-        // Обновляем social_platforms в Directus
+        // Правильная логика обновления social_platforms с учетом удаления платформ
+        const currentSocialPlatforms = content.social_platforms || {};
+        
+        // Получаем список выбранных платформ из запроса
+        const selectedPlatforms = Object.keys(socialPlatforms);
+        
+        // Создаем новый объект социальных платформ
+        const updatedSocialPlatforms = {};
+        
+        // Добавляем/обновляем только выбранные платформы
+        selectedPlatforms.forEach(platform => {
+          // Сохраняем существующие данные платформы (статус, URL и т.д.)
+          const existingPlatformData = currentSocialPlatforms[platform] || {};
+          updatedSocialPlatforms[platform] = {
+            ...existingPlatformData,
+            ...socialPlatforms[platform],
+            selected: true // Отмечаем как выбранную
+          };
+        });
+        
+        console.log(`Обновление платформ для контента ${contentId}:`);
+        console.log(`- Было платформ: ${Object.keys(currentSocialPlatforms).join(', ')}`);
+        console.log(`- Будет платформ: ${Object.keys(updatedSocialPlatforms).join(', ')}`);
+        console.log(`- Удалены платформы: ${Object.keys(currentSocialPlatforms).filter(p => !selectedPlatforms.includes(p)).join(', ')}`);
+        
+        // Обновляем social_platforms в Directus (теперь только с выбранными платформами)
         await directusApi.patch(`/items/campaign_content/${contentId}`, {
-          social_platforms: socialPlatforms
+          social_platforms: updatedSocialPlatforms
         }, {
           headers: {
             'Authorization': `Bearer ${token}`
