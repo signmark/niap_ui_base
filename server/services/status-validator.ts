@@ -61,15 +61,16 @@ export class StatusValidator {
       const typedData = platformData as any;
 
       // КРИТИЧЕСКАЯ ПРОВЕРКА: published статус должен иметь postUrl
+      // ИСПРАВЛЕНИЕ: НЕ сбрасываем на pending - это создает бесконечный цикл!
       if (typedData.status === 'published' && (!typedData.postUrl || typedData.postUrl.trim() === '')) {
-        log(`ИСПРАВЛЕНИЕ: Контент ${content.id}, платформа ${platform} - сброс published без postUrl на pending`, 'status-validator');
+        log(`ИСПРАВЛЕНИЕ: Контент ${content.id}, платформа ${platform} - помечаем published без postUrl как failed`, 'status-validator');
         
         correctedPlatforms[platform] = {
           ...typedData,
-          status: 'pending',
-          error: null,
+          status: 'failed',
+          error: 'Published without postUrl - invalid state',
           correctedAt: new Date().toISOString(),
-          correctionReason: 'published status without postUrl'
+          correctionReason: 'published status without postUrl - marked as failed to prevent infinite loop'
         };
         
         correctedCount++;
