@@ -426,10 +426,7 @@ export class PublishScheduler {
           const errorPlatforms = [];
 
           // Проходим по всем платформам и распределяем по статусам
-          if (this.verboseLogging) {
-            log(`DEBUG: Детальная проверка платформ для контента ${item.id}:`, 'scheduler');
-            log(`DEBUG: Исходная структура social_platforms: ${JSON.stringify(platforms)}`, 'scheduler');
-          }
+          // Удалено избыточное логирование
           
           // Счетчики для проверки проблемы с 2 платформами
           let totalPlatformsWithData = 0;

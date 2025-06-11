@@ -133,12 +133,42 @@ export class StatusValidator {
   }
 
   /**
+   * Получает админский токен для операций валидации
+   */
+  private async getAdminToken(): Promise<string | null> {
+    try {
+      const directusAuthManager = (global as any).directusAuthManager;
+      if (directusAuthManager) {
+        const adminSessions = directusAuthManager.getAllSessions();
+        const adminSession = adminSessions.find((session: any) => 
+          session.user?.email === 'admin@roboflow.tech'
+        );
+        
+        if (adminSession?.token) {
+          return adminSession.token;
+        }
+      }
+      
+      // Если нет токена в кэше, пропускаем валидацию
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Получает весь контент с социальными платформами
    */
   private async getAllContentWithSocialPlatforms(): Promise<any[]> {
     try {
-      // Получаем весь контент через существующий метод storage
-      const allContent = await storage.getCampaignContent(undefined, {});
+      // Получаем админский токен для получения всего контента
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        // Тихо пропускаем валидацию если нет токена
+        return [];
+      }
+      
+      const allContent = await storage.getCampaignContent(adminToken, {});
       
       // Фильтруем только контент с социальными платформами
       const contentWithPlatforms = allContent.filter(content => 
