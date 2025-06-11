@@ -55,6 +55,15 @@ export class PublishScheduler {
       return;
     }
 
+    // КРИТИЧЕСКАЯ ЗАЩИТА: Глобальная проверка на множественные экземпляры
+    if ((global as any).publishSchedulerActive) {
+      log('БЛОКИРОВКА: Обнаружен активный планировщик в другом процессе/экземпляре', 'scheduler');
+      return;
+    }
+    
+    // Устанавливаем глобальный флаг
+    (global as any).publishSchedulerActive = true;
+
     // Инициализация планировщика после исправления критических ошибок
     log('Запуск планировщика публикаций с исправлениями', 'scheduler');
     this.isRunning = true;
@@ -83,6 +92,9 @@ export class PublishScheduler {
     clearInterval(this.intervalId);
     this.intervalId = null;
     this.isRunning = false;
+    
+    // КРИТИЧЕСКАЯ ЗАЩИТА: Очищаем глобальный флаг при остановке
+    (global as any).publishSchedulerActive = false;
   }
   
   /**
