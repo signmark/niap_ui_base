@@ -1147,17 +1147,13 @@ export function registerPublishingRoutes(app: Express): void {
         try {
           log(`Прямое обновление контента ${contentId} через API для планирования`, 'api');
           
-          // Формируем данные для обновления
-          // Сохраняем все существующие платформы, которые могли быть, но не указаны в текущем запросе
-          const existingSocialPlatforms = content.socialPlatforms || {};
+          // ИСПРАВЛЕНИЕ: ПОЛНАЯ ЗАМЕНА ПЛАТФОРМ, А НЕ ОБЪЕДИНЕНИЕ
+          // Используем только те платформы, которые пришли в запросе
+          // Это позволит корректно удалять неотмеченные платформы
+          const mergedSocialPlatforms = { ...socialPlatforms };
           
-          // Объединяем существующие и новые данные о платформах
-          const mergedSocialPlatforms = { ...existingSocialPlatforms };
-          
-          // Обновляем значения для платформ из запроса
-          Object.entries(socialPlatforms).forEach(([platform, data]) => {
-            mergedSocialPlatforms[platform] = data;
-          });
+          log(`КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем только выбранные платформы`, 'api');
+          log(`Платформы из запроса: ${Object.keys(socialPlatforms).join(', ')}`, 'api');
           
           // Если поля socialPlatforms пустое или не содержит данных о времени публикации,
           // но указано общее время scheduledAt, применяем это время ко всем платформам
@@ -1193,9 +1189,8 @@ export function registerPublishingRoutes(app: Express): void {
           });
           
           // Добавляем подробное логирование для отладки
-          log(`Существующие платформы: ${JSON.stringify(existingSocialPlatforms)}`, 'api');
-          log(`Новые платформы из запроса: ${JSON.stringify(socialPlatforms)}`, 'api');
-          log(`Объединенные платформы с временем публикации: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
+          log(`Платформы из запроса: ${JSON.stringify(socialPlatforms)}`, 'api');
+          log(`Итоговые платформы с временем публикации: ${JSON.stringify(mergedSocialPlatforms)}`, 'api');
           
           const updateData = {
             status: 'scheduled',
