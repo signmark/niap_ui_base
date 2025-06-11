@@ -186,19 +186,9 @@ export default function EditScheduledPublication({
             scheduledAt: localISOString,
             publishedAt: null
           };
-        } else {
-          // Если платформа НЕ выбрана, но существует в текущих данных - помечаем как отмененную
-          const existingData = content.socialPlatforms?.[platform as SafeSocialPlatform];
-          if (existingData) {
-            socialPlatforms[platform] = {
-              ...existingData,
-              status: 'cancelled',
-              scheduledAt: null,
-              publishedAt: null
-            };
-          }
-          // Если платформы не было в исходных данных, просто не включаем ее в итоговый объект
         }
+        // Если платформа НЕ выбрана - просто не включаем ее в socialPlatforms
+        // Это приведет к полному удалению платформы из объекта в базе данных
       });
       
       // Проверяем, есть ли хотя бы одна активная платформа (не cancelled)
