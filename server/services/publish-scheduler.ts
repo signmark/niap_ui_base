@@ -107,8 +107,18 @@ export class PublishScheduler {
     (process as any).schedulerRunning = true;
 
     // Инициализация планировщика после исправления критических ошибок
-    log('Запуск планировщика публикаций с исправлениями', 'scheduler');
+    log('✅ ЕДИНСТВЕННЫЙ ПЛАНИРОВЩИК: Запуск планировщика публикаций с исправлениями', 'scheduler');
     this.isRunning = true;
+    
+    // Очистка интервала при выходе из процесса
+    process.on('exit', () => {
+      const lockFilePath = path.join(process.cwd(), '.scheduler-lock');
+      try {
+        if (fs.existsSync(lockFilePath)) {
+          fs.unlinkSync(lockFilePath);
+        }
+      } catch (e) {}
+    });
     
     // Сразу выполняем первую проверку
     this.checkScheduledContent();
@@ -118,7 +128,7 @@ export class PublishScheduler {
       this.checkScheduledContent();
     }, this.checkIntervalMs);
     
-    log(`Планировщик запущен с интервалом ${this.checkIntervalMs}мс`, 'scheduler');
+    log(`✅ ЕДИНСТВЕННЫЙ ПЛАНИРОВЩИК: Запущен с интервалом ${this.checkIntervalMs}мс`, 'scheduler');
   }
 
   /**
