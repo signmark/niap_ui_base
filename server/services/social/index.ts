@@ -35,6 +35,29 @@ export class SocialPublishingService {
     log(`Публикация контента в ${platform}`, 'social-publishing');
     
     try {
+      // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем, не опубликована ли уже платформа
+      if (content.socialPlatforms && content.socialPlatforms[platform]) {
+        const platformData = content.socialPlatforms[platform];
+        
+        // Если статус published И есть postUrl - блокируем повторную публикацию
+        if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+          log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl})`, 'social-publishing');
+          return {
+            platform,
+            status: 'published',
+            publishedAt: platformData.publishedAt || new Date().toISOString(),
+            messageId: platformData.messageId || null,
+            url: platformData.postUrl,
+            error: null
+          };
+        }
+        
+        // Сбрасываем некорректные published статусы без postUrl
+        if (platformData.status === 'published' && (!platformData.postUrl || platformData.postUrl.trim() === '')) {
+          log(`ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform}`, 'social-publishing');
+        }
+      }
+      
       // Получаем настройки социальных сетей из объекта кампании
       const settings = campaign.socialMediaSettings || campaign.settings || {};
       

@@ -1229,6 +1229,22 @@ export class PublishScheduler {
                 
                 // Проверяем все платформы на статус "pending"
                 for (const [platform, data] of Object.entries(platforms)) {
+                  
+                  // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы
+                  if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
+                    // Платформа уже опубликована с postUrl - пропускаем
+                    if (this.verboseLogging) {
+                      log(`ПЛАНИРОВЩИК БЛОКИРОВКА: Платформа ${platform} уже опубликована (postUrl: ${data.postUrl}) в контенте ID ${content.id}`, 'scheduler');
+                    }
+                    continue;
+                  }
+                  
+                  // Сбрасываем некорректные published статусы без postUrl
+                  if (data.status === 'published' && (!data.postUrl || data.postUrl.trim() === '')) {
+                    log(`ПЛАНИРОВЩИК ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform} в контенте ID ${content.id}`, 'scheduler');
+                    data.status = 'pending'; // Исправляем статус локально
+                  }
+                  
                   // Детальный лог для всех платформ только в вербозном режиме
                   if (this.verboseLogging) {
                     log(`Платформа ${platform} имеет статус: ${data.status} в контенте ID ${content.id}`, 'scheduler');
@@ -1627,10 +1643,16 @@ export class PublishScheduler {
       // или они находятся в статусе pending
       const platformsToPublish = Object.entries(socialPlatforms)
         .filter(([platform, platformData]) => {
-          // Если платформа уже опубликована, пропускаем
-          if (platformData.status === 'published') {
-            log(`  - ${platform}: статус "published", пропускаем`, 'scheduler');
+          // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы с postUrl
+          if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+            log(`  - ${platform}: уже опубликована с postUrl (${platformData.postUrl}), пропускаем`, 'scheduler');
             return false;
+          }
+          
+          // Сбрасываем некорректные published статусы без postUrl
+          if (platformData.status === 'published' && (!platformData.postUrl || platformData.postUrl.trim() === '')) {
+            log(`  - ${platform}: ИСПРАВЛЕНИЕ - сброс published без postUrl на pending`, 'scheduler');
+            platformData.status = 'pending'; // Исправляем статус локально
           }
           
           // КРИТИЧЕСКАЯ ЗАЩИТА #1: Проверяем признаки уже выполненной публикации

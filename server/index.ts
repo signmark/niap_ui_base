@@ -23,6 +23,8 @@ import testRouter from './api/test-routes';
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
 // Импортируем API аналитики
 import analyticsRouter from './analytics-api';
+// Импортируем валидатор статусов публикаций
+import { statusValidator } from './services/status-validator';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
