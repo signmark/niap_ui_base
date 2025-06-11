@@ -27,22 +27,59 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Проверяем валидность токена
-      const response = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Используем directusAuthManager для проверки токена
+      const user = await directusAuthManager.validateToken(token);
       
-      res.status(200).json({
-        valid: true,
-        user: response.data.data
-      });
+      if (user) {
+        res.status(200).json({
+          valid: true,
+          user: user
+        });
+      } else {
+        res.status(401).json({ 
+          valid: false,
+          error: 'Недействительный токен'
+        });
+      }
     } catch (error) {
       console.error('Error checking token:', error);
       res.status(401).json({ 
         valid: false,
         error: 'Недействительный токен'
+      });
+    }
+  });
+
+  // Маршрут для обновления токена
+  app.post('/api/auth/refresh', async (req: Request, res: Response) => {
+    try {
+      const { refresh_token } = req.body;
+
+      if (!refresh_token) {
+        return res.status(400).json({ 
+          error: 'Неверные данные',
+          message: 'Требуется refresh_token'
+        });
+      }
+
+      // Обновляем токен через Directus API
+      const response = await directusApiManager.post('/auth/refresh', {
+        refresh_token,
+        mode: 'json'
+      });
+
+      const { access_token, refresh_token: new_refresh_token, expires } = response.data.data;
+
+      res.status(200).json({ 
+        token: access_token,
+        refresh_token: new_refresh_token,
+        expires
+      });
+    } catch (error) {
+      console.error('Error during token refresh:', error);
+      res.status(401).json({ 
+        error: 'Ошибка обновления токена',
+        message: 'Не удалось обновить токен'
       });
     }
   });

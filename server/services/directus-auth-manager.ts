@@ -297,6 +297,40 @@ export class DirectusAuthManager {
   }
   
   /**
+   * Проверяет валидность токена
+   * @param token JWT токен для проверки
+   * @returns Информация о пользователе или null, если токен невалиден
+   */
+  async validateToken(token: string): Promise<DirectusUser | null> {
+    try {
+      // Проверяем токен через прямой запрос к Directus API
+      const response = await directusApiManager.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response?.data?.data) {
+        const userData = response.data.data;
+        log(`Token validation successful for user: ${userData.email}`, this.logPrefix);
+        
+        return {
+          id: userData.id,
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          role: userData.role
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      log(`Token validation failed: ${(error as Error).message}`, this.logPrefix);
+      return null;
+    }
+  }
+
+  /**
    * Интерфейс для авторизации администратора и получения токена
    * @returns Результат авторизации
    */
