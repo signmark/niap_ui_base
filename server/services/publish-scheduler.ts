@@ -748,7 +748,6 @@ export class PublishScheduler {
 
         // Получаем также публикации со статусом 'draft' или 'scheduled', чтобы проверить пендинги в платформах
         // Это контент, для которого уже нажали 'Опубликовать сейчас', но еще не опубликовали во всех платформах
-        log(`Поиск контента со статусом 'draft' или 'scheduled', у которого есть платформы в статусе 'pending'`, 'scheduler');
         const pendingResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
           headers,
           params: {
@@ -765,7 +764,6 @@ export class PublishScheduler {
         // Специальный запрос для фикса проблемы с TG+IG
         // Ищем контент со статусом 'scheduled', но у которого есть платформы
         // Дополнительный запрос для контента с published платформами
-        log('Дополнительный запрос по контенту со статусом scheduled и платформами', 'scheduler');
         const allPlatformsResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
           headers,
           params: {
@@ -785,7 +783,6 @@ export class PublishScheduler {
         let allItems = [];
         
         if (scheduledResponse?.data?.data) {
-          log(`Получено ${scheduledResponse.data.data.length} запланированных публикаций со статусом 'scheduled'`, 'scheduler');
           allItems = allItems.concat(scheduledResponse.data.data);
         }
         
@@ -822,7 +819,7 @@ export class PublishScheduler {
             return false;
           });
           
-          log(`Получено ${pendingResponse.data.data.length} публикаций со статусом 'draft', из них ${pendingItems.length} с платформами в статусе 'pending'`, 'scheduler');
+          // Тихо обрабатываем публикации со статусом 'draft' и платформами в статусе 'pending'
           allItems = allItems.concat(pendingItems);
         }
 
@@ -914,7 +911,7 @@ export class PublishScheduler {
         
         if (response?.data?.data) {
           const items = response.data.data;
-          log(`Получено ${items.length} запланированных публикаций через API`, 'scheduler');
+          // Тихо обрабатываем запланированные публикации
           
           const contentItems = items.map((item: any) => ({
             id: item.id,
@@ -941,20 +938,16 @@ export class PublishScheduler {
           scheduledContent = contentItems;
         }
       } catch (error: any) {
-        log(`Ошибка при запросе запланированных публикаций: ${error.message}`, 'scheduler');
-        
-        if (error.response?.data) {
-          log(`Ошибка API: ${JSON.stringify(error.response.data)}`, 'scheduler');
-        }
+        // Тихо обрабатываем ошибки запроса
         return; // Прерываем выполнение, так как эти данные критичны
       }
       
       if (scheduledContent.length === 0) {
-        log('Запланированные публикации не найдены', 'scheduler');
+        // Запланированные публикации не найдены
         return;
       }
       
-      log(`Найдено ${scheduledContent.length} запланированных публикаций`, 'scheduler');
+      // Тихо обрабатываем найденные публикации
       
       // Текущее время
       const now = new Date();
