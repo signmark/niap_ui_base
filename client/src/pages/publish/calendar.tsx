@@ -121,8 +121,9 @@ export default function CalendarView() {
       {selectedCampaign ? (
         <>
           {isLoadingContent ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Загрузка публикаций...</p>
+            <div className="flex flex-col items-center justify-center py-16 space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Загружаем публикации для календаря...</p>
             </div>
           ) : (
             <PublicationCalendar 
