@@ -326,21 +326,16 @@ export default function Trends() {
     
     // Создаем интервал обновления для всех источников
     const refreshInterval = setInterval(() => {
-      if (activeSourceId) {
-        // Если есть активный источник, обновление будет происходить через checkSourceStatus
-        return;
-      }
-      
-      // Иначе помечаем, что нужно обновить данные
+      // Помечаем, что нужно обновить данные
       shouldRefreshSources.current = true;
       // И запускаем обновление запроса
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-    }, 5000); // Обновляем каждые 5 секунд если нет активного источника
+    }, 5000); // Обновляем каждые 5 секунд
     
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [selectedCampaignId, activeSourceId, queryClient]);
+  }, [selectedCampaignId, queryClient]);
 
   const { data: sources = [], isLoading: isLoadingSources } = useQuery<ContentSource[]>({
     queryKey: ["campaign_content_sources", selectedCampaignId],
@@ -1025,7 +1020,20 @@ export default function Trends() {
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                    {sources.map((source) => (
+                    {sources
+                      .sort((a, b) => {
+                        // Сортировка по типу источника в алфавитном порядке
+                        const typeA = a.type === 'website' ? 'Веб-сайт' :
+                          a.type === 'telegram' ? 'Telegram канал' :
+                            a.type === 'vk' ? 'VK группа' :
+                              a.type === 'instagram' ? 'Instagram аккаунт' : a.type;
+                        const typeB = b.type === 'website' ? 'Веб-сайт' :
+                          b.type === 'telegram' ? 'Telegram канал' :
+                            b.type === 'vk' ? 'VK группа' :
+                              b.type === 'instagram' ? 'Instagram аккаунт' : b.type;
+                        return typeA.localeCompare(typeB);
+                      })
+                      .map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div className="flex items-center gap-2">
                           <div>
@@ -1046,7 +1054,8 @@ export default function Trends() {
                           <div className="text-sm text-muted-foreground">
                             {source.type === 'website' ? 'Веб-сайт' :
                               source.type === 'telegram' ? 'Telegram канал' :
-                                source.type === 'vk' ? 'VK группа' : source.type}
+                                source.type === 'vk' ? 'VK группа' :
+                                  source.type === 'instagram' ? 'Instagram аккаунт' : source.type}
                           </div>
 
                           <Button
