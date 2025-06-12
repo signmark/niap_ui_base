@@ -208,7 +208,7 @@ export default function CampaignDetails() {
         });
       }
       setUrlSaveStatus('saved');
-      setTimeout(() => setUrlSaveStatus('idle'), 2000); // Скрываем галочку через 2 секунды
+      setTimeout(() => setUrlSaveStatus('idle'), 3000); // Скрываем галочку через 3 секунды
       setSilentUpdate(false); // Сбрасываем флаг
     },
     onError: () => {
@@ -691,10 +691,10 @@ export default function CampaignDetails() {
                   className="max-w-md pr-10"
                 />
                 {urlSaveStatus === 'saving' && (
-                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-blue-500" />
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-blue-500 transition-all duration-200" />
                 )}
                 {urlSaveStatus === 'saved' && (
-                  <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                  <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500 animate-pulse transition-all duration-200" />
                 )}
               </div>
               <Button
