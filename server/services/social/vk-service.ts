@@ -4,7 +4,9 @@ import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication
 import { BaseSocialService } from './base-service';
 
 /**
- * Сервис для публикации контента в ВКонтакте
+ * КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: ВК-сервис больше НЕ публикует напрямую
+ * Все публикации ВК должны идти только через n8n webhook
+ * Этот сервис теперь заблокирован для прямых публикаций
  */
 export class VkService extends BaseSocialService {
   /**
