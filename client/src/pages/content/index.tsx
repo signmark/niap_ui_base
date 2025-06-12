@@ -2523,7 +2523,6 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      )}
     </div>
   );
 }

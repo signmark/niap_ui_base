@@ -199,9 +199,28 @@ export default function Posts() {
         <p className="text-muted-foreground mt-2">
           Календарь всех опубликованных постов со ссылками на социальные сети
         </p>
+        
+        {/* Индикатор загрузки */}
+        {isLoadingContent && (
+          <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Загрузка публикаций...</span>
+          </div>
+        )}
       </div>
 
-      {selectedCampaign ? (
+      {!selectedCampaign ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">Выберите кампанию</h3>
+              <p className="text-sm text-muted-foreground">
+                Для просмотра публикаций выберите кампанию в селекторе выше
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
         <Card>
 
           <CardContent className="pt-6">
@@ -355,10 +374,6 @@ export default function Posts() {
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="text-center py-10 text-muted-foreground">
-          Пожалуйста, выберите кампанию в селекторе сверху
-        </div>
       )}
     </div>
   );
