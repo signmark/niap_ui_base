@@ -103,7 +103,7 @@ export default function CampaignDetails() {
     queryKey: ["campaign-trends", id],
     queryFn: async () => {
       try {
-        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        const token = localStorage.getItem('user_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
         console.log('Trends API: Запрос трендов для кампании', id, 'с токеном:', token ? 'есть' : 'нет');
         
         const response = await fetch(`/api/campaign-trends?campaignId=${id}`, {
