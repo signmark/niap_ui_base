@@ -328,15 +328,20 @@ export function BusinessQuestionnaireForm({
         console.log('Setting businessDescription:', data.businessDescription, 'fallback:', prevValues.businessDescription);
         console.log('Setting productsServices:', data.productsServices, 'fallback:', prevValues.productsServices);
         
+        // Заполняем все поля, которые могут прийти от API
         form.setValue('companyName', data.companyName || prevValues.companyName);
+        form.setValue('contactInfo', data.contactInfo || prevValues.contactInfo);
         form.setValue('businessDescription', data.businessDescription || prevValues.businessDescription);
+        form.setValue('mainDirections', data.mainDirections || prevValues.mainDirections);
+        form.setValue('brandImage', data.brandImage || prevValues.brandImage);
         form.setValue('productsServices', data.productsServices || prevValues.productsServices);
         form.setValue('targetAudience', data.targetAudience || prevValues.targetAudience);
-        form.setValue('businessValues', data.businessValues || prevValues.businessValues);
-        form.setValue('mainDirections', data.mainDirections || prevValues.mainDirections);
+        form.setValue('customerResults', data.customerResults || prevValues.customerResults);
         form.setValue('companyFeatures', data.companyFeatures || prevValues.companyFeatures);
+        form.setValue('businessValues', data.businessValues || prevValues.businessValues);
+        form.setValue('productBeliefs', data.productBeliefs || prevValues.productBeliefs);
         form.setValue('competitiveAdvantages', data.competitiveAdvantages || prevValues.competitiveAdvantages);
-        form.setValue('brandImage', data.brandImage || prevValues.brandImage);
+        form.setValue('marketingExpectations', data.marketingExpectations || prevValues.marketingExpectations);
         
         // Принудительно обновляем форму для отображения новых значений
         form.trigger();
