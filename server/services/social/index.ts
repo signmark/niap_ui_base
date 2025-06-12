@@ -1,10 +1,10 @@
-import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { facebookSocialService } from './facebook';
 import { log } from '../../utils/logger';
 import { publishScheduler } from '../publish-scheduler';
+import fetch from 'node-fetch';
 
 /**
  * Единый сервис для публикации контента в различные социальные сети
@@ -27,11 +27,11 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    platform: SocialPlatform,
-    content: CampaignContent,
+    platform: string,
+    content: any,
     campaign: any,
     authToken?: string
-  ): Promise<SocialPublication & { messageId?: string | null, url?: string | null }> {
+  ): Promise<any> {
     log(`Публикация контента в ${platform}`, 'social-publishing');
     
     try {
@@ -61,30 +61,8 @@ export class SocialPublishingService {
       // Получаем настройки социальных сетей из объекта кампании
       const settings = campaign.socialMediaSettings || campaign.settings || {};
       
-      // Выбираем соответствующий сервис в зависимости от платформы
-      switch (platform) {
-        case 'telegram':
-          return await telegramService.publishToPlatform(content, platform, settings);
-        
-        case 'vk':
-          return await vkService.publishToPlatform(content, platform, settings);
-        
-        case 'instagram':
-          return await instagramService.publishToPlatform(content, platform, settings);
-          
-        case 'facebook':
-          return await facebookSocialService.publish(content, settings.facebook || {});
-        
-        // Для остальных платформ возвращаем ошибку
-        default:
-          log(`Платформа ${platform} не поддерживается`, 'social-publishing');
-          return {
-            platform,
-            status: 'failed',
-            publishedAt: null,
-            error: `Platform ${platform} is not supported yet`
-          };
-      }
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Все публикации только через n8n webhooks
+      return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
       return {
@@ -92,6 +70,77 @@ export class SocialPublishingService {
         status: 'failed',
         publishedAt: null,
         error: `Error: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  /**
+   * Публикует контент через n8n webhook (ЕДИНСТВЕННЫЙ способ публикации)
+   */
+  private async publishThroughN8nWebhook(content: any, platform: string, settings: any): Promise<any> {
+    const webhookUrls = {
+      'vk': 'https://n8n.nplanner.ru/webhook/publish-vk',
+      'telegram': 'https://n8n.nplanner.ru/webhook/publish-telegram', 
+      'instagram': 'https://n8n.nplanner.ru/webhook/publish-instagram'
+    };
+
+    const webhookUrl = webhookUrls[platform as keyof typeof webhookUrls];
+    
+    if (!webhookUrl) {
+      log(`Платформа ${platform} не поддерживается через n8n webhook`, 'social-publishing');
+      return {
+        platform,
+        status: 'failed',
+        publishedAt: null,
+        error: `Platform ${platform} webhook not configured`
+      };
+    }
+
+    try {
+      log(`WEBHOOK ПУБЛИКАЦИЯ: Отправка запроса в ${platform} через n8n: ${webhookUrl}`, 'social-publishing');
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          contentId: content.id,
+          platform: platform,
+          settings: settings
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        log(`WEBHOOK ОШИБКА: ${platform} webhook вернул ${response.status}: ${errorText}`, 'social-publishing');
+        return {
+          platform,
+          status: 'failed',
+          publishedAt: null,
+          error: `Webhook error: ${response.status} - ${errorText}`
+        };
+      }
+
+      const result = await response.json();
+      log(`WEBHOOK УСПЕХ: ${platform} вернул результат: ${JSON.stringify(result)}`, 'social-publishing');
+      
+      return {
+        platform,
+        status: result.success ? 'published' : 'failed',
+        publishedAt: result.success ? new Date() : null,
+        postUrl: result.postUrl || result.url || null,
+        messageId: result.messageId || null,
+        error: result.success ? null : (result.error || 'Unknown webhook error')
+      };
+
+    } catch (error: any) {
+      log(`WEBHOOK ИСКЛЮЧЕНИЕ: ${platform} - ${error.message}`, 'social-publishing');
+      return {
+        platform,
+        status: 'failed',
+        publishedAt: null,
+        error: `Webhook exception: ${error.message}`
       };
     }
   }
