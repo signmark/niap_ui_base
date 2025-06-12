@@ -50,6 +50,7 @@ export default function CampaignDetails() {
   const [isSearchingKeywords, setIsSearchingKeywords] = useState(false);
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
   const [showContentGenerationDialog, setShowContentGenerationDialog] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState<string>("");
   
   // Получаем доступ к глобальному хранилищу кампаний
   const { setSelectedCampaign } = useCampaignStore();
@@ -177,6 +178,8 @@ export default function CampaignDetails() {
     onSuccess: (data) => {
       // Устанавливаем загруженную кампанию как активную в глобальном хранилище
       if (data && data.id && data.name) {
+        // Инициализируем currentUrl из данных кампании
+        setCurrentUrl(data.link || "");
         console.log(`Устанавливаем кампанию из страницы детализации: ${data.name} (${data.id})`);
         setSelectedCampaign(data.id, data.name);
       }
@@ -662,14 +665,15 @@ export default function CampaignDetails() {
             <div className="flex gap-4 items-center pt-2">
               <Input
                 placeholder="Введите URL сайта"
-                defaultValue={campaign.link || ""}
+                value={currentUrl}
+                onChange={(e) => setCurrentUrl(e.target.value)}
                 onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
                 className="max-w-md"
               />
               <Button
                 variant="secondary"
-                onClick={() => campaign.link && searchKeywords(campaign.link)}
-                disabled={isSearching || !campaign.link}
+                onClick={() => currentUrl && searchKeywords(currentUrl)}
+                disabled={isSearching || !currentUrl}
               >
                 {isSearching ? (
                   <>
