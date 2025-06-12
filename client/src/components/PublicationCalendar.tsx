@@ -406,13 +406,7 @@ export default function PublicationCalendar({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Календарь публикаций</CardTitle>
-        <CardDescription>
-          Управляйте публикациями для выбранной кампании
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
