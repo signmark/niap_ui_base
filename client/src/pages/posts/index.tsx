@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { PenLine, Send, Loader2, SortDesc, SortAsc } from "lucide-react";
+import { PenLine, Send, Loader2, SortDesc, SortAsc, Eye, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
@@ -355,70 +356,175 @@ export default function Posts() {
                 ) : (
                   <>
                     {getUniquePostsForDay(selectedDate).length > 0 ? (
-                      <div className="space-y-4">
-                        {/* Отображаем уникальные посты на выбранную дату */}
+                      <div className="grid gap-3">
+                        {/* Компактное отображение постов */}
                         {getUniquePostsForDay(selectedDate)
                           .map(content => (
-                            <Card key={content.id} className="overflow-hidden">
-                              <CardContent className="p-0">
-                                <div className="p-4">
-                                  <h4 className="font-medium text-base mb-1">{content.title}</h4>
-                                  <p className="text-sm text-muted-foreground line-clamp-2">
-                                    {content.content.replace(/<[^>]*>/g, '')}
-                                  </p>
-                                </div>
-                                
-                                {content.imageUrl && (
-                                  <div className="relative h-40 bg-muted border-t">
-                                    <img 
-                                      src={content.imageUrl}
-                                      alt={content.title}
-                                      className="object-cover w-full h-full"
-                                    />
-                                  </div>
-                                )}
-                                
-                                <div className="px-4 py-3 bg-muted/50 border-t">
-                                  <div className="flex flex-wrap gap-2">
-                                    {content.socialPlatforms && Object.entries(content.socialPlatforms).map(([platform, info]) => {
-                                      if (info.status === 'published') {
-                                        let Icon = SiInstagram;
-                                        let color = 'text-pink-600';
-                                        
-                                        if (platform === 'telegram') {
-                                          Icon = SiTelegram;
-                                          color = 'text-blue-500';
-                                        } else if (platform === 'vk') {
-                                          Icon = SiVk;
-                                          color = 'text-blue-600';
-                                        } else if (platform === 'facebook') {
-                                          Icon = SiFacebook;
-                                          color = 'text-indigo-600';
-                                        }
-                                        
-                                        return (
-                                          <div key={platform} className="flex items-center gap-1 text-xs">
-                                            <Icon className={`h-3 w-3 ${color}`} />
-                                            <span className="capitalize">{platform}</span>
-                                            {info.postUrl && (
-                                              <a 
-                                                href={info.postUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="text-blue-500 hover:underline ml-1"
-                                              >
-                                                Ссылка
-                                              </a>
-                                            )}
+                            <Dialog key={content.id}>
+                              <DialogTrigger asChild>
+                                <Card className="cursor-pointer hover:bg-muted/50 transition-colors border border-border/50">
+                                  <CardContent className="p-3">
+                                    <div className="flex items-start gap-3">
+                                      {/* Миниатюра изображения */}
+                                      {content.imageUrl && (
+                                        <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                                          <img 
+                                            src={content.imageUrl}
+                                            alt={content.title}
+                                            className="object-cover w-full h-full"
+                                          />
+                                        </div>
+                                      )}
+                                      
+                                      {/* Контент */}
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="font-medium text-sm leading-tight mb-1 truncate">{content.title}</h4>
+                                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                              {content.content.replace(/<[^>]*>/g, '').substring(0, 120)}...
+                                            </p>
                                           </div>
-                                        );
-                                      }
-                                      return null;
-                                    })}
+                                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                                            <Eye className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                        
+                                        {/* Платформы */}
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                          {content.socialPlatforms && Object.entries(content.socialPlatforms).map(([platform, info]) => {
+                                            if (info.status === 'published') {
+                                              let Icon = SiInstagram;
+                                              let color = 'text-pink-600';
+                                              
+                                              if (platform === 'telegram') {
+                                                Icon = SiTelegram;
+                                                color = 'text-blue-500';
+                                              } else if (platform === 'vk') {
+                                                Icon = SiVk;
+                                                color = 'text-blue-600';
+                                              } else if (platform === 'facebook') {
+                                                Icon = SiFacebook;
+                                                color = 'text-indigo-600';
+                                              }
+                                              
+                                              return (
+                                                <Badge key={platform} variant="secondary" className="h-6 px-2 text-xs">
+                                                  <Icon className={`h-3 w-3 mr-1 ${color}`} />
+                                                  <span className="capitalize">{platform}</span>
+                                                </Badge>
+                                              );
+                                            }
+                                            return null;
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </DialogTrigger>
+                              
+                              {/* Модальное окно предварительного просмотра */}
+                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle className="text-lg">{content.title}</DialogTitle>
+                                </DialogHeader>
+                                
+                                <div className="space-y-4">
+                                  {/* Изображение */}
+                                  {content.imageUrl && (
+                                    <div className="relative rounded-md overflow-hidden bg-muted">
+                                      <img 
+                                        src={content.imageUrl}
+                                        alt={content.title}
+                                        className="w-full h-auto max-h-96 object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  
+                                  {/* Текст контента */}
+                                  <div className="prose prose-sm max-w-none">
+                                    <div dangerouslySetInnerHTML={{ __html: content.content }} />
                                   </div>
+                                  
+                                  {/* Ключевые слова */}
+                                  {content.keywords && content.keywords.length > 0 && (
+                                    <div>
+                                      <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                                      <div className="flex flex-wrap gap-1">
+                                        {content.keywords.map((keyword, index) => (
+                                          <Badge key={index} variant="outline" className="text-xs">
+                                            {keyword}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Информация о публикации */}
+                                  <div className="border-t pt-4">
+                                    <h4 className="text-sm font-medium mb-3">Статус публикации:</h4>
+                                    <div className="space-y-2">
+                                      {content.socialPlatforms && Object.entries(content.socialPlatforms).map(([platform, info]) => {
+                                        if (info.status === 'published') {
+                                          let Icon = SiInstagram;
+                                          let color = 'text-pink-600';
+                                          let platformName = platform;
+                                          
+                                          if (platform === 'telegram') {
+                                            Icon = SiTelegram;
+                                            color = 'text-blue-500';
+                                            platformName = 'Telegram';
+                                          } else if (platform === 'vk') {
+                                            Icon = SiVk;
+                                            color = 'text-blue-600';
+                                            platformName = 'ВКонтакте';
+                                          } else if (platform === 'facebook') {
+                                            Icon = SiFacebook;
+                                            color = 'text-indigo-600';
+                                            platformName = 'Facebook';
+                                          } else if (platform === 'instagram') {
+                                            platformName = 'Instagram';
+                                          }
+                                          
+                                          return (
+                                            <div key={platform} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                                              <div className="flex items-center gap-2">
+                                                <Icon className={`h-4 w-4 ${color}`} />
+                                                <span className="font-medium">{platformName}</span>
+                                                <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                                                  Опубликовано
+                                                </Badge>
+                                              </div>
+                                              {info.postUrl && (
+                                                <Button asChild size="sm" variant="outline" className="h-8">
+                                                  <a 
+                                                    href={info.postUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                  >
+                                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                                    Открыть
+                                                  </a>
+                                                </Button>
+                                              )}
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      })}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Дата публикации */}
+                                  {content.publishedAt && (
+                                    <div className="text-sm text-muted-foreground border-t pt-4">
+                                      <strong>Дата публикации:</strong> {format(new Date(content.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                    </div>
+                                  )}
                                 </div>
-                              </CardContent>
-                            </Card>
+                              </DialogContent>
+                            </Dialog>
                           ))
                         }
                       </div>
