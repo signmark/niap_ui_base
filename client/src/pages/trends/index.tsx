@@ -657,7 +657,7 @@ export default function Trends() {
         clearInterval(sourcesRefreshInterval.current);
       }
     };
-  }, [selectedCampaignId, selectedPeriod, queryClient]);
+  }, [selectedCampaignId, selectedPeriod]);
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["trends", selectedPeriod, selectedCampaignId],
@@ -695,8 +695,60 @@ export default function Trends() {
           sourceUrl: trend.sourceUrl || trend.source_url || trend.source?.url
         };
       });
+
+      // Фильтруем тренды по выбранному периоду на клиентской стороне
+      const now = new Date();
+      const filterDate = new Date();
       
-      return processedTrends;
+      switch (selectedPeriod) {
+        case '3days':
+          filterDate.setDate(now.getDate() - 3);
+          break;
+        case '7days':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case '14days':
+          filterDate.setDate(now.getDate() - 14);
+          break;
+        case '30days':
+          filterDate.setDate(now.getDate() - 30);
+          break;
+        default:
+          filterDate.setDate(now.getDate() - 7);
+      }
+
+      // Специальная диагностика для проблемного тренда
+      const targetTrendId = "166eb032-3372-4807-926a-c6ca93a3db43";
+      const targetTrend = processedTrends.find((trend: any) => trend.id === targetTrendId);
+      
+      if (targetTrend) {
+        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} НАЙДЕН в данных:`, {
+          id: targetTrend.id,
+          title: targetTrend.title,
+          created_at: targetTrend.created_at,
+          createdAt: targetTrend.createdAt,
+          campaign_id: targetTrend.campaign_id
+        });
+      } else {
+        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} НЕ найден в ${processedTrends.length} трендах`);
+        console.log(`[ДИАГНОСТИКА] Все ID трендов:`, processedTrends.map((t: any) => t.id));
+      }
+
+      // Фильтруем тренды по дате
+      const filteredTrends = processedTrends.filter((trend: any) => {
+        if (!trend.created_at && !trend.createdAt) return true; // Показываем тренды без даты
+        
+        const trendDate = new Date(trend.created_at || trend.createdAt);
+        return trendDate >= filterDate;
+      });
+
+      // Проверяем, остался ли целевой тренд после фильтрации
+      const targetTrendAfterFilter = filteredTrends.find((trend: any) => trend.id === targetTrendId);
+      if (targetTrend && !targetTrendAfterFilter) {
+        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} исключён фильтром по дате. Дата тренда: ${targetTrend.created_at || targetTrend.createdAt}, фильтр от: ${filterDate.toISOString()}`);
+      }
+      
+      return filteredTrends;
     },
     enabled: !!selectedCampaignId
   });

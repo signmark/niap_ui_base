@@ -1,0 +1,348 @@
+ Начинаем обновление токена
+ Используем локальный API для обновления токена
+ Updated Directus URL to: https://directus.roboflow.tech/
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Trends API: Запрос трендов для кампании 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: есть
+ Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+ Fetching user API keys using the API route
+ Проверка принадлежности кампании пользователю: Object
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Токен успешно обновлен через API
+ Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+ Токен успешно обновлен, длина нового токена: 321
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Campaigns loaded: 7
+ Восстанавливаем сохраненную кампанию: "NPlanner.ru"
+ Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Успешно получены данные кампании: NPlanner.ru
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Successfully fetched 8 API keys
+ Загружено публикаций: 42
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Trends API: Статус ответа: 200
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Trends API: Получено данных: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: false url: undefined
+ Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+ Успешно получены данные кампании: NPlanner.ru
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Starting automatic data refresh intervals
+ Fetching source posts with params: Object
+ Using exact API URL format that works
+ Проверка принадлежности кампании пользователю: Object
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at Trends (src/pages/trends/index.tsx:67:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (src/components/ThemeProvider.tsx:20:33)
+    at Layout (src/components/Layout.tsx:34:26)
+    at WithLayout (App.tsx:43:23)
+    at _c12 (<anonymous>)
+    at Route (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at Trends (src/pages/trends/index.tsx:67:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (src/components/ThemeProvider.tsx:20:33)
+    at Layout (src/components/Layout.tsx:34:26)
+    at WithLayout (App.tsx:43:23)
+    at _c12 (<anonymous>)
+    at Route (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at Trends (src/pages/trends/index.tsx:67:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (src/components/ThemeProvider.tsx:20:33)
+    at Layout (src/components/Layout.tsx:34:26)
+    at WithLayout (App.tsx:43:23)
+    at _c12 (<anonymous>)
+    at Route (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+hook.js:608 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. Error Component Stack
+    at Trends (src/pages/trends/index.tsx:67:47)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (src/components/ThemeProvider.tsx:20:33)
+    at Layout (src/components/Layout.tsx:34:26)
+    at WithLayout (App.tsx:43:23)
+    at _c12 (<anonymous>)
+    at Route (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+ Sources API response: Object
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Source posts API response: Object
+ Returning posts array: Object
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Fetched trends data: {success: true, data: Array(100)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Refreshing sources data...
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Refreshing trends data...
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetched trends data: {success: true, data: Array(100)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Refreshing sources data...
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Sources API response: {status: 200, dataLength: 99, firstSource: {…}, allSources: Array(99)}
+ Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e

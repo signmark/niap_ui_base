@@ -6859,13 +6859,11 @@ Return your response as a JSON array in this exact format:
         const fromDateISO = fromDate.toISOString();
         console.log(`[GET /api/campaign-trends] Using date filter: ${fromDateISO}`);
         
-        // Создаем фильтр и логируем для отладки
+        // Создаем фильтр без жёсткого ограничения по дате
+        // Теперь показываем все тренды кампании, сортировка по периоду будет на фронтенде
         const filter = {
           campaign_id: {
             _eq: campaignId
-          },
-          created_at: {
-            _gte: fromDateISO
           }
         };
         
