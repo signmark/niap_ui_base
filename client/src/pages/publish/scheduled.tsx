@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScheduledPublicationDetails from '@/components/ScheduledPublicationDetails';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Search, RefreshCw, Filter, SortDesc, SortAsc } from 'lucide-react';
+import { Calendar, Clock, Search, RefreshCw, Filter, SortDesc, SortAsc, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -97,6 +97,7 @@ export default function ScheduledPublications() {
   const { 
     data: scheduledContent = [], 
     isLoading: scheduledLoading,
+    isFetching: scheduledFetching,
     refetch: refetchScheduled,
   } = useQuery<CampaignContent[]>({
     queryKey: ['/api/publish/scheduled', userId, selectedCampaign?.id],
@@ -307,7 +308,20 @@ export default function ScheduledPublications() {
   
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">Запланированные публикации</h1>
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Запланированные публикации</h1>
+        <p className="text-muted-foreground mb-4">
+          Управление запланированными к публикации материалами
+        </p>
+        
+        {/* Индикатор загрузки */}
+        {(scheduledLoading || scheduledFetching) && (
+          <div className="flex items-center gap-2 mb-6 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{scheduledLoading ? 'Загрузка публикаций...' : 'Обновление данных...'}</span>
+          </div>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="relative">
