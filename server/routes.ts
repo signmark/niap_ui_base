@@ -6887,6 +6887,48 @@ Return your response as a JSON array in this exact format:
         console.log(`[GET /api/campaign-trends] Directus API response status: ${response.status}`);
         console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
         
+        // Проверяем конкретный тренд 166eb032-3372-4807-926a-c6ca93a3db43
+        const missingTrendId = '166eb032-3372-4807-926a-c6ca93a3db43';
+        const missingTrend = response.data.data.find((item: any) => item.id === missingTrendId);
+        
+        if (missingTrend) {
+          console.log(`[ДИАГНОСТИКА] Тренд ${missingTrendId} НАЙДЕН в ответе Directus:`);
+          console.log(`[ДИАГНОСТИКА] created_at: ${missingTrend.created_at}`);
+          console.log(`[ДИАГНОСТИКА] campaign_id: ${missingTrend.campaign_id}`);
+          console.log(`[ДИАГНОСТИКА] title: ${missingTrend.title}`);
+        } else {
+          console.log(`[ДИАГНОСТИКА] Тренд ${missingTrendId} НЕ найден в ответе Directus`);
+          console.log(`[ДИАГНОСТИКА] Проверяем без фильтра по дате...`);
+          
+          // Делаем дополнительный запрос без фильтра по дате
+          try {
+            const unfilteredResponse = await directusApi.get('/items/campaign_trend_topics', {
+              params: {
+                filter: {
+                  campaign_id: { _eq: campaignId },
+                  id: { _eq: missingTrendId }
+                }
+              },
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (unfilteredResponse.data?.data?.length > 0) {
+              const trend = unfilteredResponse.data.data[0];
+              console.log(`[ДИАГНОСТИКА] Тренд найден БЕЗ фильтра по дате:`);
+              console.log(`[ДИАГНОСТИКА] created_at: ${trend.created_at}`);
+              console.log(`[ДИАГНОСТИКА] Дата создания была: ${new Date(trend.created_at).toISOString()}`);
+              console.log(`[ДИАГНОСТИКА] Фильтр использовал дату от: ${fromDateISO}`);
+              console.log(`[ДИАГНОСТИКА] Тренд старше фильтра: ${new Date(trend.created_at) < new Date(fromDateISO)}`);
+            } else {
+              console.log(`[ДИАГНОСТИКА] Тренд не найден даже без фильтра по дате`);
+            }
+          } catch (checkError) {
+            console.log(`[ДИАГНОСТИКА] Ошибка при проверке тренда:`, checkError);
+          }
+        }
+        
         // Преобразуем данные из формата Directus в наш формат
         const trendTopics = response.data.data.map((item: any) => {
           // Теперь мы используем поля account_url и url_post непосредственно из Directus
