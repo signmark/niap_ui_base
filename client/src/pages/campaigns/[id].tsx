@@ -693,6 +693,14 @@ export default function CampaignDetails() {
 
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
+    // Отладка для понимания структуры данных
+    console.log('Debug completion check:', {
+      campaignTrends: campaignTrends,
+      trendsLength: campaignTrends?.length,
+      socialMediaSettings: campaign?.social_media_settings,
+      campaign: campaign
+    });
+    
     const sections = {
       site: {
         completed: Boolean(campaign?.link && campaign.link.trim()),
