@@ -61,7 +61,13 @@ export class SocialPublishingService {
       // Получаем настройки социальных сетей из объекта кампании
       const settings = campaign.socialMediaSettings || campaign.settings || {};
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Все публикации только через n8n webhooks
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: ВК, Telegram, Instagram только через n8n webhooks
+      // Facebook публикуется напрямую
+      if (platform === 'facebook') {
+        return await facebookSocialService.publish(content, settings.facebook || {});
+      }
+      
+      // Все остальные платформы только через n8n webhook
       return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
@@ -122,7 +128,7 @@ export class SocialPublishingService {
         };
       }
 
-      const result = await response.json();
+      const result: any = await response.json();
       log(`WEBHOOK УСПЕХ: ${platform} вернул результат: ${JSON.stringify(result)}`, 'social-publishing');
       
       return {
@@ -154,18 +160,21 @@ export class SocialPublishingService {
    */
   public async updatePublicationStatus(
     contentId: string, 
-    platform: SocialPlatform, 
-    publicationResult: SocialPublication
+    platform: string, 
+    publicationResult: any
   ) {
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обновление статуса только для Facebook напрямую
+    // ВК, Telegram, Instagram обновляются через n8n webhook
     switch (platform) {
+      case 'facebook':
+        return await facebookSocialService.updatePublicationStatus(contentId, platform, publicationResult);
+      
       case 'telegram':
-        return await telegramService.updatePublicationStatus(contentId, platform, publicationResult);
-      
       case 'vk':
-        return await vkService.updatePublicationStatus(contentId, platform, publicationResult);
-      
       case 'instagram':
-        return await instagramService.updatePublicationStatus(contentId, platform, publicationResult);
+        // Эти платформы управляются через n8n webhook - статус обновляется автоматически
+        log(`WEBHOOK СТАТУС: Платформа ${platform} управляется через n8n - пропускаем прямое обновление статуса`, 'social-publishing');
+        return publicationResult;
       
       case 'facebook':
         // Добавлен специальный обработчик для Facebook
