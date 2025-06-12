@@ -97,6 +97,21 @@ export default function CampaignDetails() {
     refetchOnMount: true, // Обновляем данные при монтировании компонента
     refetchOnWindowFocus: true // Обновляем данные при фокусе на окне
   });
+
+  // Запрос для получения трендов кампании
+  const { data: campaignTrends } = useQuery({
+    queryKey: ["campaign-trends", id],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest(`/api/campaign-trends?campaignId=${id}`);
+        return response.data || [];
+      } catch (error) {
+        console.error("Ошибка при загрузке трендов:", error);
+        return [];
+      }
+    },
+    enabled: !!id
+  });
   
   // Запрос контента кампании для календаря публикаций
   const { data: campaignContent, isLoading: isLoadingContent } = useQuery({
@@ -678,9 +693,6 @@ export default function CampaignDetails() {
 
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
-    // Отладочная информация для проверки данных кампании
-    console.log('Campaign data for completion check:', campaign);
-    console.log('Campaign social_media_settings:', campaign?.social_media_settings);
     const sections = {
       site: {
         completed: Boolean(campaign?.link && campaign.link.trim()),
@@ -695,8 +707,8 @@ export default function CampaignDetails() {
         label: "Бизнес-анкета заполнена"
       },
       trends: {
-        completed: Boolean(selectedTrends && selectedTrends.length > 0),
-        label: `Выбрано ${selectedTrends?.length || 0} трендов`
+        completed: Boolean(campaignTrends && campaignTrends.length > 0),
+        label: `Собрано ${campaignTrends?.length || 0} трендов`
       },
       trendAnalysis: {
         completed: Boolean(campaign?.social_media_settings),
@@ -937,7 +949,17 @@ export default function CampaignDetails() {
 
         <AccordionItem value="trends" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="trends" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Тренды
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().trends.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Тренды</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().trends.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
