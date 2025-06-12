@@ -48,7 +48,9 @@ export default function CalendarView() {
     refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
   });
 
-  const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
+  // Фильтруем только запланированные публикации (status = 'scheduled')
+  const allContent: CampaignContent[] = campaignContentResponse?.data || [];
+  const campaignContent: CampaignContent[] = allContent.filter(content => content.status === 'scheduled');
 
   // Отладка данных календаря
   useEffect(() => {

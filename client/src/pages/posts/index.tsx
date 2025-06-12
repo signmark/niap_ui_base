@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { PenLine, Send, Loader2 } from "lucide-react";
+import { PenLine, Send, Loader2, SortDesc, SortAsc } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
@@ -19,6 +19,7 @@ export default function Posts() {
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   const [_, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
   const [platformCounts, setPlatformCounts] = useState<Record<SocialPlatform, number>>({
     instagram: 0,
     telegram: 0,
@@ -151,8 +152,45 @@ export default function Posts() {
       }
     }
     
-    // Возвращаем массив уникальных опубликованных постов
-    return Array.from(uniquePosts.values());
+    // Возвращаем массив уникальных опубликованных постов с сортировкой по времени публикации
+    const postsArray = Array.from(uniquePosts.values());
+    
+    return postsArray.sort((a, b) => {
+      // Получаем дату публикации для каждого поста
+      const getPublicationDate = (post: CampaignContent): Date => {
+        // Сначала проверяем общую дату публикации поста
+        if (post.publishedAt) {
+          try {
+            return new Date(post.publishedAt);
+          } catch (e) {}
+        }
+        
+        // Если нет общей даты, берем самую раннюю дату публикации из платформ
+        const platformDates: Date[] = [];
+        if (post.socialPlatforms) {
+          Object.values(post.socialPlatforms).forEach(platformInfo => {
+            if (platformInfo?.publishedAt && platformInfo.status === 'published') {
+              try {
+                platformDates.push(new Date(platformInfo.publishedAt));
+              } catch (e) {}
+            }
+          });
+        }
+        
+        // Возвращаем самую раннюю дату или текущую дату как fallback
+        return platformDates.length > 0 
+          ? new Date(Math.min(...platformDates.map(d => d.getTime()))) 
+          : new Date();
+      };
+      
+      const dateA = getPublicationDate(a);
+      const dateB = getPublicationDate(b);
+      
+      // Сортируем по времени публикации
+      return sortOrder === 'desc' 
+        ? dateB.getTime() - dateA.getTime() // Новые первыми
+        : dateA.getTime() - dateB.getTime(); // Старые первыми
+    });
   };
 
   const getDayContent = (day: Date) => {
@@ -194,19 +232,41 @@ export default function Posts() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">Опубликованные посты</h1>
-        <p className="text-muted-foreground mt-2">
-          Календарь всех опубликованных постов со ссылками на социальные сети
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold">Опубликованные посты</h1>
+          <p className="text-muted-foreground mt-2">
+            Календарь всех опубликованных постов со ссылками на социальные сети
+          </p>
+          
+          {/* Индикатор загрузки */}
+          {(isLoadingContent || isFetchingContent) && (
+            <div className="flex items-center gap-2 mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{isLoadingContent ? 'Загрузка публикаций...' : 'Обновление данных...'}</span>
+            </div>
+          )}
+        </div>
         
-        {/* Индикатор загрузки */}
-        {(isLoadingContent || isFetchingContent) && (
-          <div className="flex items-center gap-2 mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>{isLoadingContent ? 'Загрузка публикаций...' : 'Обновление данных...'}</span>
-          </div>
-        )}
+        {/* Кнопка сортировки */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+        >
+          {sortOrder === 'desc' ? (
+            <>
+              <SortDesc size={16} />
+              <span>Сначала новые</span>
+            </>
+          ) : (
+            <>
+              <SortAsc size={16} />
+              <span>Сначала старые</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {!selectedCampaign ? (
