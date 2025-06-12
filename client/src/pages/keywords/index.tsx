@@ -231,8 +231,9 @@ export default function Keywords() {
 
         try {
           console.log(`[KEYWORDS-SEARCH] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, data);
-          await directusApi.post('items/campaign_keywords', data);
-          console.log(`[KEYWORDS-SEARCH] Успешно добавлено ключевое слово "${keyword.keyword}"`);
+          console.log(`[KEYWORDS-SEARCH] Используемый токен:`, localStorage.getItem('auth_token')?.substring(0, 20) + '...');
+          const response = await directusApi.post('items/campaign_keywords', data);
+          console.log(`[KEYWORDS-SEARCH] Успешно добавлено ключевое слово "${keyword.keyword}", ответ:`, response.data);
           addedCount++;
         } catch (err) {
           // Проверяем, связана ли ошибка с дубликатом

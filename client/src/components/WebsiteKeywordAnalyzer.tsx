@@ -198,21 +198,20 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
           }
           
           try {
-            console.log(`[KEYWORDS-WEBSITE] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, {
-              keyword: keyword.keyword,
-              trendScore: keyword.trend,
-              mentionsCount: keyword.competition,
-              campaignId
-            });
-            await directusApi.post('items/campaign_keywords', {
+            const requestData = {
               keyword: keyword.keyword,
               campaign_id: campaignId,
               trend_score: keyword.trend,
               mentions_count: keyword.competition,
               date_created: new Date().toISOString(),
               last_checked: new Date().toISOString()
-            });
-            console.log(`[KEYWORDS-WEBSITE] Успешно добавлено ключевое слово "${keyword.keyword}"`);
+            };
+            console.log(`[KEYWORDS-WEBSITE] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, requestData);
+            console.log(`[KEYWORDS-WEBSITE] Используемый токен:`, localStorage.getItem('auth_token')?.substring(0, 20) + '...');
+            console.log(`[KEYWORDS-WEBSITE] Используемый URL:`, directusApi.defaults.baseURL);
+            
+            const response = await directusApi.post('items/campaign_keywords', requestData);
+            console.log(`[KEYWORDS-WEBSITE] Успешно добавлено ключевое слово "${keyword.keyword}", ответ:`, response.data);
             addedCount++;
           } catch (err) {
             // Если ошибка связана с дубликатом, просто пропускаем это ключевое слово
