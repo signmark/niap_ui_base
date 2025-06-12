@@ -1038,7 +1038,18 @@ export default function ContentPage() {
       {/* Используется глобальный выбор кампаний в верхней панели */}
 
       {/* Контент кампании */}
-      {selectedCampaignId && (
+      {!selectedCampaignId ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">Выберите кампанию</h3>
+              <p className="text-sm text-muted-foreground">
+                Для управления контентом выберите кампанию в селекторе выше
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center mb-4">
@@ -2512,6 +2523,7 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
     </div>
   );
 }
