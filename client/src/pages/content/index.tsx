@@ -259,6 +259,9 @@ export default function ContentPage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Отслеживание предыдущих статусов контента для показа тостов при изменении
+  const [previousStatuses, setPreviousStatuses] = useState<Record<string, string>>({});
 
   // Запрос списка кампаний
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
@@ -329,6 +332,32 @@ export default function ContentPage() {
     staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
     refetchInterval: 10000 // Автоматически обновлять данные каждые 10 секунд
   });
+
+  // Эффект для отслеживания изменений статуса контента и показа тостов
+  useEffect(() => {
+    if (!Array.isArray(campaignContent)) return;
+
+    campaignContent.forEach((content: any) => {
+      const contentId = content.id;
+      const currentStatus = content.status;
+      const previousStatus = previousStatuses[contentId];
+
+      // Если статус изменился с любого на "published", показываем тост
+      if (previousStatus && previousStatus !== 'published' && currentStatus === 'published') {
+        console.log(`Контент ${contentId} изменил статус с "${previousStatus}" на "published"`);
+        toast({
+          title: "Контент опубликован",
+          description: `"${content.title}" успешно опубликован во всех социальных сетях`,
+        });
+      }
+
+      // Обновляем предыдущие статусы
+      setPreviousStatuses(prev => ({
+        ...prev,
+        [contentId]: currentStatus
+      }));
+    });
+  }, [campaignContent, previousStatuses, toast]);
 
   // Мутация для создания контента
   const createContentMutation = useMutation({
@@ -557,41 +586,11 @@ export default function ContentPage() {
     onSuccess: async (data, variables) => {
       console.log("Результат публикации:", data);
       
-      // Вызываем API для обновления статуса после публикации на все выбранные платформы
-      try {
-        console.log("Вызов API для обновления статуса публикации...");
-        // Используем обновленный API в social-publishing-router, который не требует явного указания платформ
-        const updateResponse = await fetch('/api/publish/auto-update-status', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          },
-          body: JSON.stringify({
-            contentId: variables.id
-          })
-        });
-        
-        const updateResult = await updateResponse.json();
-        console.log("Результат обновления статуса:", updateResult);
-        
-        if (updateResult.success) {
-          console.log("Статус публикации успешно обновлен на 'published'");
-        } else {
-          console.log("Не все платформы опубликованы, статус не обновлен", updateResult.message);
-        }
-      } catch (error) {
-        console.error("Ошибка при обновлении статуса публикации:", error);
-      }
+      // Обновляем данные в интерфейсе БЕЗ тоста
+      // Тост покажется автоматически когда планировщик обновит статус на "published"
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       
-      // Обновляем данные в интерфейсе
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
-        .then(() => {
-          toast({
-            title: "Контент опубликован",
-            description: "Контент успешно отправлен в социальные сети",
-          });
-        });
+      console.log("Публикация отправлена в очередь. Тост появится когда все платформы будут опубликованы.");
     },
     onError: (error: Error) => {
       console.error("Ошибка публикации:", error);
