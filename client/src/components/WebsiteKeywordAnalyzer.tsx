@@ -214,8 +214,24 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
             console.log(`[KEYWORDS-WEBSITE] Успешно добавлено ключевое слово "${keyword.keyword}", ответ:`, response.data);
             addedCount++;
           } catch (err) {
+            console.log(`[KEYWORDS-WEBSITE] ПОЛНАЯ ОШИБКА для "${keyword.keyword}":`, {
+              status: err.response?.status,
+              statusText: err.response?.statusText,
+              data: err.response?.data,
+              config: {
+                url: err.config?.url,
+                method: err.config?.method,
+                headers: err.config?.headers
+              }
+            });
+            
             // Если ошибка связана с дубликатом, просто пропускаем это ключевое слово
-            console.log(`[KEYWORDS-WEBSITE] Ошибка при добавлении ключевого слова "${keyword.keyword}":`, err);
+            const errorMessage = err.response?.data?.errors?.[0]?.message || '';
+            if (errorMessage.includes('Дубликат ключевого слова') || 
+                errorMessage.includes('duplicate') || 
+                errorMessage.includes('unique')) {
+              console.log(`[KEYWORDS-WEBSITE] Ключевое слово "${keyword.keyword}" вызвало ошибку дубликата - пропускаем`);
+            }
             skippedCount++;
           }
         }

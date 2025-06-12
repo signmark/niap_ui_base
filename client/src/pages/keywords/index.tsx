@@ -236,6 +236,17 @@ export default function Keywords() {
           console.log(`[KEYWORDS-SEARCH] Успешно добавлено ключевое слово "${keyword.keyword}", ответ:`, response.data);
           addedCount++;
         } catch (err) {
+          console.log(`[KEYWORDS-SEARCH] ПОЛНАЯ ОШИБКА для "${keyword.keyword}":`, {
+            status: err.response?.status,
+            statusText: err.response?.statusText,
+            data: err.response?.data,
+            config: {
+              url: err.config?.url,
+              method: err.config?.method,
+              headers: err.config?.headers
+            }
+          });
+          
           // Проверяем, связана ли ошибка с дубликатом
           const errorMessage = err.response?.data?.errors?.[0]?.message || '';
           if (errorMessage.includes('Дубликат ключевого слова') || 
