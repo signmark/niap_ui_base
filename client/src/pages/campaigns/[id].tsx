@@ -699,14 +699,17 @@ export default function CampaignDetails() {
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
     // Отладка для понимания структуры данных
-    console.log('Debug completion check:', {
-      campaignTrends: campaignTrends,
-      trendsLength: campaignTrends?.length,
-      socialMediaSettings: campaign?.social_media_settings,
-      socialMediaSettingsKeys: campaign?.social_media_settings ? Object.keys(campaign.social_media_settings) : [],
-      socialMediaSettingsValues: campaign?.social_media_settings ? Object.values(campaign.social_media_settings) : [],
-      campaign: campaign
-    });
+    if (campaign?.social_media_settings) {
+      console.log('Social Media Settings Debug:', {
+        keys: Object.keys(campaign.social_media_settings),
+        values: Object.values(campaign.social_media_settings),
+        fullObject: campaign.social_media_settings,
+        hasEnabledPlatforms: Object.values(campaign.social_media_settings).some((setting: any) => 
+          setting && typeof setting === 'object' && 
+          (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
+        )
+      });
+    }
     
     const sections = {
       site: {
