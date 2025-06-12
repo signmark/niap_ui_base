@@ -152,9 +152,10 @@ export class SocialPublishingService {
   }
 
   /**
-   * Обновляет статус публикации контента в социальной сети
+   * КРИТИЧЕСКОЕ УПРОЩЕНИЕ: n8n сам обновляет статус и postUrl после публикации
+   * Этот метод больше не нужен для ВК, Telegram, Instagram
    * @param contentId ID контента
-   * @param platform Социальная платформа
+   * @param platform Социальная платформа  
    * @param publicationResult Результат публикации
    * @returns Обновленный контент или null в случае ошибки
    */
@@ -163,28 +164,15 @@ export class SocialPublishingService {
     platform: string, 
     publicationResult: any
   ) {
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обновление статуса только для Facebook напрямую
-    // ВК, Telegram, Instagram обновляются через n8n webhook
-    switch (platform) {
-      case 'facebook':
-        return await facebookSocialService.updatePublicationStatus(contentId, platform, publicationResult);
-      
-      case 'telegram':
-      case 'vk':
-      case 'instagram':
-        // Эти платформы управляются через n8n webhook - статус обновляется автоматически
-        log(`WEBHOOK СТАТУС: Платформа ${platform} управляется через n8n - пропускаем прямое обновление статуса`, 'social-publishing');
-        return publicationResult;
-      
-      case 'facebook':
-        // Добавлен специальный обработчик для Facebook
-        log(`Вызов специального обработчика для Facebook`, 'social-publishing');
-        return await facebookSocialService.updatePublicationStatus(contentId, platform, publicationResult);
-      
-      default:
-        log(`Платформа ${platform} не поддерживается для обновления статуса`, 'social-publishing');
-        return null;
+    // ТОЛЬКО Facebook публикуется напрямую и требует обновления статуса
+    // ВК, Telegram, Instagram: n8n сам обновляет статус и postUrl в базе
+    if (platform === 'facebook') {
+      return await facebookSocialService.updatePublicationStatus(contentId, platform, publicationResult);
     }
+    
+    // Для остальных платформ возвращаем результат как есть - n8n все сделает сам
+    log(`N8N АВТООБНОВЛЕНИЕ: Платформа ${platform} - статус и postUrl обновит n8n`, 'social-publishing');
+    return publicationResult;
   }
 }
 
