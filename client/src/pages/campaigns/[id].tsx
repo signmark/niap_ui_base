@@ -197,12 +197,16 @@ export default function CampaignDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", id] });
-      toast({
-        title: "Успешно",
-        description: "Данные кампании обновлены"
-      });
+      if (!silentUpdate) {
+        toast({
+          title: "Успешно",
+          description: "Данные кампании обновлены"
+        });
+      }
+      setSilentUpdate(false); // Сбрасываем флаг
     },
     onError: () => {
+      setSilentUpdate(false); // Сбрасываем флаг при ошибке
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -627,9 +631,12 @@ export default function CampaignDetails() {
     }
   };
 
-  const handleUrlUpdate = (newUrl: string) => {
+  const [silentUpdate, setSilentUpdate] = useState(false);
+
+  const handleUrlUpdate = (newUrl: string, silent: boolean = false) => {
     const normalizedUrl = normalizeUrl(newUrl);
     if (normalizedUrl && normalizedUrl !== campaign?.link) {
+      setSilentUpdate(silent);
       updateCampaign({ link: normalizedUrl });
     }
   };
@@ -679,8 +686,8 @@ export default function CampaignDetails() {
                 variant="secondary"
                 onClick={() => {
                   if (currentUrl) {
-                    // Сохраняем URL перед поиском ключевых слов
-                    handleUrlUpdate(currentUrl);
+                    // Сохраняем URL перед поиском ключевых слов (без toast)
+                    handleUrlUpdate(currentUrl, true);
                     searchKeywords(currentUrl);
                   }
                 }}
