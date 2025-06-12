@@ -29,7 +29,7 @@ export default function Posts() {
   // Состояние для хранения данных публикаций
   
   // Запрос контента кампании для календаря
-  const { data: campaignContentResponse, isLoading: isLoadingContent } = useQuery({
+  const { data: campaignContentResponse, isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery({
     queryKey: ['/api/campaign-content', selectedCampaign?.id],
     queryFn: async () => {
       if (!selectedCampaign?.id) return { data: [] };
@@ -201,10 +201,10 @@ export default function Posts() {
         </p>
         
         {/* Индикатор загрузки */}
-        {isLoadingContent && (
-          <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+        {(isLoadingContent || isFetchingContent) && (
+          <div className="flex items-center gap-2 mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Загрузка публикаций...</span>
+            <span>{isLoadingContent ? 'Загрузка публикаций...' : 'Обновление данных...'}</span>
           </div>
         )}
       </div>
