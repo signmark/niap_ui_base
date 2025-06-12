@@ -103,12 +103,25 @@ export default function CampaignDetails() {
     queryKey: ["campaign-trends", id],
     queryFn: async () => {
       try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        console.log('Trends API: Запрос трендов для кампании', id, 'с токеном:', token ? 'есть' : 'нет');
+        
         const response = await fetch(`/api/campaign-trends?campaignId=${id}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         });
+        
+        console.log('Trends API: Статус ответа:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Trends API: Ошибка ответа:', errorText);
+          return [];
+        }
+        
         const data = await response.json();
+        console.log('Trends API: Получено данных:', data);
         return data.data || [];
       } catch (error) {
         console.error("Ошибка при загрузке трендов:", error);
