@@ -85,7 +85,8 @@ export const refreshAccessToken = async () => {
     
     const data = await apiResponse.json();
     
-    if (!data.token) {
+    // Проверяем успешность ответа и наличие токена
+    if (!data.success || !data.token) {
       console.error('Неверный формат ответа при обновлении токена:', data);
       throw new Error('Неверный формат ответа при обновлении токена');
     }
@@ -100,10 +101,10 @@ export const refreshAccessToken = async () => {
     
     // Обновляем store
     const authStore = useAuthStore.getState();
-    authStore.setAuth(data.token, data.user_id || userId);
+    authStore.setAuth(data.token, userId);
     
     // Настраиваем следующее обновление
-    const expires = data.expires || 900000; // 15 минут по умолчанию
+    const expires = data.expires_at || 900000; // 15 минут по умолчанию
     setupTokenRefresh(expires);
     
     console.log('Токен успешно обновлен, длина нового токена:', data.token.length);

@@ -202,46 +202,50 @@ export function registerAuthRoutes(app: Express): void {
   // Маршрут для обновления токена
   app.post('/api/auth/refresh', async (req: Request, res: Response) => {
     try {
-      const { refresh_token } = req.body;
+      const { refresh_token, user_id } = req.body;
 
       if (!refresh_token) {
+        console.log('Refresh token request without refresh_token');
         return res.status(400).json({ 
           error: 'Неверные данные',
           message: 'Требуется указать refresh_token'
         });
       }
 
-      // Пытаемся обновить токен, но если не получается - используем административный
+      console.log(`Attempting to refresh token for user: ${user_id || 'unknown'}`);
+
+      // Пытаемся обновить токен через Directus API
       try {
         const response = await directusApiManager.post('/auth/refresh', {
           refresh_token,
           mode: 'json'
         });
         
+        console.log('Token refresh successful');
+        
         if (response.data?.data?.access_token) {
-          return res.json({
+          return res.status(200).json({
             success: true,
-            data: response.data.data
+            token: response.data.data.access_token,
+            refresh_token: response.data.data.refresh_token,
+            expires_at: response.data.data.expires_at
           });
+        } else {
+          console.error('Token refresh response missing access_token:', response.data);
+          throw new Error('Invalid refresh response');
         }
       } catch (refreshError: any) {
-        // Тихо обрабатываем ошибку обновления токена
+        console.error('Token refresh failed:', refreshError.response?.data || refreshError.message);
+        
+        // Возвращаем ошибку для повторной авторизации пользователя
+        return res.status(401).json({
+          error: 'Token refresh failed',
+          code: 'TOKEN_EXPIRED',
+          message: 'Please log in again'
+        });
       }
-
-      // Возвращаем ошибку для повторной авторизации пользователя
-      return res.status(401).json({
-        error: 'Token refresh failed',
-        code: 'TOKEN_EXPIRED',
-        message: 'Please log in again'
-      });
-
-      // Возвращаем новый токен
-      res.status(200).json({ 
-        token: response.data.data.access_token,
-        refresh_token: response.data.data.refresh_token
-      });
-    } catch (error) {
-      console.error('Error refreshing token:', error);
+    } catch (error: any) {
+      console.error('Error in refresh endpoint:', error);
       
       // Обрабатываем ошибку обновления токена
       if (error.response && (error.response.status === 401 || error.response.status === 400)) {
@@ -251,7 +255,7 @@ export function registerAuthRoutes(app: Express): void {
         });
       }
 
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: 'Ошибка сервера',
         message: 'Произошла ошибка при обновлении токена'
       });
