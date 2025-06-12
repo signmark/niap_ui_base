@@ -302,6 +302,8 @@ export function BusinessQuestionnaireForm({
         const { data } = response;
         
         console.log('Received analysis data:', data);
+        console.log('Analysis data keys:', Object.keys(data));
+        console.log('Full response structure:', response);
         
         // Сохраняем предыдущие значения, чтобы использовать их, если новые не заполнены
         const prevValues = {
@@ -322,6 +324,10 @@ export function BusinessQuestionnaireForm({
         
         // Обновляем поля формы данными, полученными из анализа сайта
         // Сохраняем старые значения, если новые отсутствуют
+        console.log('Setting companyName:', data.companyName, 'fallback:', prevValues.companyName);
+        console.log('Setting businessDescription:', data.businessDescription, 'fallback:', prevValues.businessDescription);
+        console.log('Setting productsServices:', data.productsServices, 'fallback:', prevValues.productsServices);
+        
         form.setValue('companyName', data.companyName || prevValues.companyName);
         form.setValue('businessDescription', data.businessDescription || prevValues.businessDescription);
         form.setValue('productsServices', data.productsServices || prevValues.productsServices);
@@ -331,6 +337,9 @@ export function BusinessQuestionnaireForm({
         form.setValue('companyFeatures', data.companyFeatures || prevValues.companyFeatures);
         form.setValue('competitiveAdvantages', data.competitiveAdvantages || prevValues.competitiveAdvantages);
         form.setValue('brandImage', data.brandImage || prevValues.brandImage);
+        
+        // Принудительно обновляем форму для отображения новых значений
+        form.trigger();
         
         toast({
           title: 'Анализ сайта завершен',

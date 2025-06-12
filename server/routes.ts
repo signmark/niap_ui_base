@@ -9307,12 +9307,18 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      console.log(`[WEBSITE-ANALYSIS] Запрос на анализ сайта: ${url} для кампании ${campaignId} от пользователя ${userId}`);
+      // Нормализуем URL перед обработкой
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        normalizedUrl = `https://${normalizedUrl}`;
+      }
+      
+      console.log(`[WEBSITE-ANALYSIS] Запрос на анализ сайта: ${normalizedUrl} для кампании ${campaignId} от пользователя ${userId}`);
       
       // Получаем содержимое сайта
       let websiteContent = '';
       try {
-        websiteContent = await extractFullSiteContent(url);
+        websiteContent = await extractFullSiteContent(normalizedUrl);
       } catch (error) {
         console.error("Ошибка при извлечении содержимого сайта:", error);
         return res.status(400).json({ 
