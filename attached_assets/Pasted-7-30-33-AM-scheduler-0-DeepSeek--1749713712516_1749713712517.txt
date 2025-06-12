@@ -1,0 +1,168 @@
+7:30:33 AM [scheduler] Готово к публикации 0 элементов контента
+Ответ от DeepSeek для ключевых слов: Вот список ключевых слов и фраз, связанных с "кач", в формате JSON:  
+
+```json
+[
+  {"keyword": "кач", "trend": 90, "competition": 70},
+  {"keyword": "качалка", "trend": 85, "competition": 65},
+  {"keyword": "прокачка мышц", "trend": 80, "competition": 60},
+  {"keyword": "как накачаться", "trend": 75, "competition": 55},
+  {"keyword": "тренировки на массу", "trend": 85, "competition": 65},
+  {"keyword": "бодибилдинг", "trend": 70, "competition": 50},
+  {"keyword": "упражнения для набора массы", "trend": 75, "competition": 60},
+  {"keyword": "кач дома", "trend": 65, "competition": 40},
+  {"keyword": "программа тренировок на массу", "trend": 80, "competition": 70},
+  {"keyword": "кач без химии", "trend": 60, "competition": 35},
+  {"keyword": "качаемся правильно", "trend": 70, "competition": 45},
+  {"keyword": "кач и питание", "trend": 75, "competition": 50},
+  {"keyword": "кач для начинающих", "trend": 65, "competition": 40},
+  {"keyword": "лучшие упражнения для кача", "trend": 70, "competition": 55},
+  {"keyword": "кач в зале", "trend": 80, "competition": 60}
+]
+```
+
+Параметры `trend` и `competition` приблизительные и могут варьироваться в зависимости от региона и времени. Если нужно уточнить данные под конкретный сегмент, можно использовать Google Keyword Planner или другие SEO-инструменты.
+Найдено 15 ключевых слов для "кач"
+7:30:51 AM [express] POST /api/keywords/search 200 in 25433ms :: {"data":{"keywords":[{"keyword":"ка…
+7:31:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:31:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:31:32 AM [status-checker] Проверка статусов публикаций
+7:31:32 AM [status-checker] Использование кэшированного токена администратора
+7:31:32 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+7:31:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:31:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:31:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:31:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:31:32 AM [scheduler] Прямой запрос axios к https://directus.roboflow.tech//items/campaign_content с фильтром по статусу scheduled
+7:31:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:31:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:31:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:31:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:31:33 AM [scheduler] Найдено 1 публикаций, готовых к публикации
+7:31:33 AM [scheduler] ПРОВЕРКА В БД: Контент ID 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b "Пидр ебучий" имеет статус draft, но нет платформ со статусом pending, пропускаем
+7:31:33 AM [scheduler] Готово к публикации 0 элементов контента
+7:31:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:31:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:31:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:31:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:31:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:31:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:31:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:31:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:31:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:31:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:31:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:31:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:31:33 AM [scheduler] Контент 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b имеет платформы в ожидании - статус остается 'draft'
+User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13 (lbrspb@gmail.com)
+Попытка инициализации DeepSeek сервиса для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Запрашивается ключ для сервиса: deepseek, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Тип userId: string, значение: "53921f16-f51d-4591-80b9-8caa4fde4d13"
+7:32:21 AM [global-api-keys] Using cached global deepseek API key
+[deepseek] Используется глобальный API ключ
+7:32:21 AM [api-keys] Using global deepseek API key
+DeepSeek API ключ получен из БД (длина: 35)
+DeepSeek API key updated from user settings
+7:32:21 AM [deepseek] DeepSeek API ключ успешно получен через API Key Service
+DeepSeek API ключ успешно получен через API Key Service
+Анализируем сайт: https://smmniap.pw с помощью DeepSeek
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Начат анализ сайта: https://smmniap.pw
+[ac5c17a3-a4cb-4c6c-a14b-717380e4eb0b] Начинаем глубокий парсинг сайта
+Выполняется глубокий парсинг сайта: https://smmniap.pw
+Успешно извлечено 6652 символов контента
+[92e14e3f-8f82-43d9-a559-b1b81b5f7c9f] Generating enhanced keywords with DeepSeek for domain: smmniap.pw, content length: 6652 chars
+Sending request to DeepSeek API (model: deepseek-chat, temp: 0.2)
+7:32:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:32:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:32:32 AM [status-checker] Проверка статусов публикаций
+7:32:32 AM [status-checker] Использование кэшированного токена администратора
+7:32:32 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+7:32:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:32:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:32:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:32:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:32:32 AM [scheduler] Прямой запрос axios к https://directus.roboflow.tech//items/campaign_content с фильтром по статусу scheduled
+7:32:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:32:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:32:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:32:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:32:33 AM [scheduler] Найдено 1 публикаций, готовых к публикации
+7:32:33 AM [scheduler] ПРОВЕРКА В БД: Контент ID 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b "Пидр ебучий" имеет статус draft, но нет платформ со статусом pending, пропускаем
+7:32:33 AM [scheduler] Готово к публикации 0 элементов контента
+7:32:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:32:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:32:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:32:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:32:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:32:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:32:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:32:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:32:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:32:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:32:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:32:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:32:33 AM [scheduler] Контент 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b имеет платформы в ожидании - статус остается 'draft'
+[92e14e3f-8f82-43d9-a559-b1b81b5f7c9f] Enhanced DeepSeek API response (first 150 chars): ```json
+[
+  {"keyword": "AI платформа для SMM", "trend": 8500, "competition": 75},
+  {"keyword": "автоматизация социальных сетей", "trend": 7200, "com...
+[92e14e3f-8f82-43d9-a559-b1b81b5f7c9f] Successfully extracted 20 enhanced keywords from DeepSeek API
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Получаем ключ XMLRiver для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Запрашивается ключ для сервиса: xmlriver, пользователя: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEBUG] API-KEYS: Тип userId: string, значение: "53921f16-f51d-4591-80b9-8caa4fde4d13"
+7:32:57 AM [global-api-keys] Using cached global xmlriver API key
+[xmlriver] Используется глобальный API ключ
+7:32:57 AM [api-keys] Using global xmlriver API key
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Получен ключ XMLRiver, обогащаем метрики ключевых слов
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver конфигурация успешно прочитана из JSON: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Отправляем запрос в XMLRiver API: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Sending XMLRiver API request to correct URL endpoint
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Отправляем запрос в XMLRiver API: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Sending XMLRiver API request to correct URL endpoint
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Отправляем запрос в XMLRiver API: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Sending XMLRiver API request to correct URL endpoint
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Отправляем запрос в XMLRiver API: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Sending XMLRiver API request to correct URL endpoint
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Отправляем запрос в XMLRiver API: user=16797, key=f7947...
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] Sending XMLRiver API request to correct URL endpoint
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver API response: {"code":101,"error":"Сервис сбора данных на обновлении. Попробуйте чуть позже."}
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver API response: {"code":101,"error":"Сервис сбора данных на обновлении. Попробуйте чуть позже."}
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver API response: {"code":101,"error":"Сервис сбора данных на обновлении. Попробуйте чуть позже."}
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver API response: {"code":101,"error":"Сервис сбора данных на обновлении. Попробуйте чуть позже."}
+[490b07a4-ef5f-4034-998b-f8ed261f24a9] XMLRiver API response: {"code":101,"error":"Сервис сбора данных на обновлении. Попробуйте чуть позже."}
+DeepSeek нашел 20 ключевых слов для: https://smmniap.pw
+7:32:57 AM [express] GET /api/analyze-site/https%3A%2F%2Fsmmniap.pw 200 in 35823ms :: {"success":tru…
+7:33:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:33:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:33:32 AM [status-checker] Проверка статусов публикаций
+7:33:32 AM [status-checker] Использование кэшированного токена администратора
+7:33:32 AM [status-checker] Ошибка при проверке статусов публикаций: Request failed with status code 400
+7:33:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:33:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:33:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:33:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:33:32 AM [scheduler] Авторизация администратора успешна через прямой API запрос
+7:33:32 AM [directus] Токен авторизации для пользователя 53921f16-f51d-4591-80b9-8caa4fde4d13 сохранен в кэше
+7:33:32 AM [directus-auth] Attempting to log in user: admin@roboflow.tech
+7:33:32 AM [directus-crud] Выполнение операции custom для коллекции auth/login
+7:33:32 AM [scheduler] Прямой запрос axios к https://directus.roboflow.tech//items/campaign_content с фильтром по статусу scheduled
+7:33:33 AM [scheduler] Контент 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b имеет платформы в ожидании - статус остается 'draft'
+7:33:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:33:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:33:33 AM [directus-crud] Операция custom для коллекции auth/login выполнена успешно
+7:33:33 AM [directus-crud] Выполнение операции read для коллекции users/me
+7:33:33 AM [scheduler] Найдено 1 публикаций, готовых к публикации
+7:33:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:33:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:33:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:33:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:33:33 AM [directus-crud] Операция read для коллекции users/me выполнена успешно
+7:33:33 AM [directus] Токен авторизации для пользователя fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4 сохранен в кэше
+7:33:33 AM [directus-auth] User admin@roboflow.tech (fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4) successfully logged in
+7:33:33 AM [scheduler] Сессия администратора добавлена в DirectusAuthManager
+7:33:33 AM [scheduler] ПРОВЕРКА В БД: Контент ID 4c4a3667-9b2f-43a4-bfcd-f633fc5aa83b "Пидр ебучий" имеет статус draft, но нет платформ со статусом pending, пропускаем
+7:33:33 AM [scheduler] Готово к публикации 0 элементов контента
+7:34:31 AM [directus-auth] Checking for expiring sessions
+7:34:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:34:31 AM [scheduler] Попытка авторизации администратора с учетными данными из env
+7:34:32 AM [status-checker] Проверка статусов публикаций

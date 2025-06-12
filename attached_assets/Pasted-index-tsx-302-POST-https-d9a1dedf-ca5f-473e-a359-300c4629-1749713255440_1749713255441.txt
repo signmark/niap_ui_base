@@ -1,0 +1,50 @@
+index.tsx:302 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/keywords/save 401 (Unauthorized)
+dispatchXhrRequest @ axios.js?v=99a15625:1637
+xhr @ axios.js?v=99a15625:1517
+dispatchRequest @ axios.js?v=99a15625:1992
+_request @ axios.js?v=99a15625:2213
+request @ axios.js?v=99a15625:2104
+httpMethod @ axios.js?v=99a15625:2242
+wrap @ axios.js?v=99a15625:8
+handleWebsiteKeywordsSelected @ index.tsx:302
+handleSaveSelected @ WebsiteKeywordAnalyzer.tsx:170
+callCallback2 @ chunk-RPCDYKBN.js?v=99a15625:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=99a15625:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=99a15625:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=99a15625:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=99a15625:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=99a15625:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=99a15625:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=99a15625:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=99a15625:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=99a15625:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=99a15625:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=99a15625:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=99a15625:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=99a15625:5449
+index.tsx:361 Error saving website keywords: AxiosError {message: 'Request failed with status code 401', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+overrideMethod @ hook.js:608
+handleWebsiteKeywordsSelected @ index.tsx:361
+await in handleWebsiteKeywordsSelected
+handleSaveSelected @ WebsiteKeywordAnalyzer.tsx:170
+callCallback2 @ chunk-RPCDYKBN.js?v=99a15625:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=99a15625:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=99a15625:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=99a15625:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=99a15625:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=99a15625:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=99a15625:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=99a15625:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=99a15625:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=99a15625:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=99a15625:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=99a15625:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=99a15625:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=99a15625:5449
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(17), searchResults: Array(0)}
+KeywordTable.tsx:36 KeywordTable props: {keywords: Array(17), searchResults: Array(0)}
