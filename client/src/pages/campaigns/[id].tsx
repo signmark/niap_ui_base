@@ -680,7 +680,7 @@ export default function CampaignDetails() {
   const getSectionCompletionStatus = () => {
     // Отладочная информация для проверки данных кампании
     console.log('Campaign data for completion check:', campaign);
-    console.log('Campaign trend_analysis_settings:', campaign?.trend_analysis_settings);
+    console.log('Campaign social_media_settings:', campaign?.social_media_settings);
     const sections = {
       site: {
         completed: Boolean(campaign?.link && campaign.link.trim()),
@@ -699,8 +699,8 @@ export default function CampaignDetails() {
         label: `Выбрано ${selectedTrends?.length || 0} трендов`
       },
       trendAnalysis: {
-        completed: Boolean(campaign?.trend_analysis_settings),
-        label: campaign?.trend_analysis_settings ? "Настройки сохранены" : "Настройки не заданы"
+        completed: Boolean(campaign?.social_media_settings),
+        label: campaign?.social_media_settings ? "Соцсети настроены" : "Соцсети не настроены"
       },
       content: {
         completed: Boolean(campaignContent && campaignContent.length > 0),
@@ -898,14 +898,14 @@ export default function CampaignDetails() {
         <AccordionItem value="trend-analysis" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="trend-analysis" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             <div className="flex items-center gap-3">
-              {campaign?.trend_analysis_settings ? (
+              {campaign?.social_media_settings ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : (
                 <Circle className="h-5 w-5 text-gray-400" />
               )}
               <span>Настройки анализа трендов</span>
               <span className="text-sm text-muted-foreground ml-auto">
-                {campaign?.trend_analysis_settings ? "Настройки сохранены" : "Настройки не заданы"}
+                {campaign?.social_media_settings ? "Соцсети настроены" : "Соцсети не настроены"}
               </span>
             </div>
           </AccordionTrigger>
