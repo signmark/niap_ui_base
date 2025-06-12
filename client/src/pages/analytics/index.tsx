@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
     mutationFn: async () => {
       const days = selectedPeriod === '30days' ? 30 : 7;
       
-      const response = await fetch('https://n8n.nplanner.ru/webhook/posts-to-analytics', {
+      const response = await fetch('https://n8n.roboflow.tech/webhook/posts-to-analytics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
       
       console.log(`📅 Период: ${selectedPeriod}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
       
-      const directusUrl = `https://directus.nplanner.ru/items/campaign_content`;
+      const directusUrl = `https://directus.roboflow.tech/items/campaign_content`;
       const params = new URLSearchParams({
         'filter[campaign_id][_eq]': selectedCampaign,
         'filter[status][_eq]': 'published',
@@ -148,6 +148,7 @@ export default function AnalyticsPage() {
       const content = result.data || [];
       
       console.log('📄 Получено контента из Directus:', content.length);
+      console.log('📋 Полный список контента:', content);
 
       // Подсчет постов по платформам
       let totalPosts = 0;
@@ -159,17 +160,25 @@ export default function AnalyticsPage() {
       };
 
       content.forEach(item => {
+        console.log('📊 Обрабатываем контент:', item.id, 'social_platforms:', item.social_platforms);
+        
         if (item.social_platforms) {
           const platforms = typeof item.social_platforms === 'string' 
             ? JSON.parse(item.social_platforms) 
             : item.social_platforms;
 
+          console.log('🔍 Платформы для контента', item.id, ':', platforms);
+
           Object.keys(platforms).forEach(platformKey => {
             const platform = platforms[platformKey];
+            console.log(`📱 Платформа ${platformKey}:`, platform);
+            
             if (platform.status === 'published') {
               totalPosts++;
               
               const platformName = platform.platform || platformKey;
+              console.log(`✅ Опубликованный пост на ${platformName}, аналитика:`, platform.analytics);
+              
               if (platformStats[platformName]) {
                 platformStats[platformName].posts++;
                 
@@ -178,6 +187,13 @@ export default function AnalyticsPage() {
                   platformStats[platformName].likes += platform.analytics.likes || 0;
                   platformStats[platformName].comments += platform.analytics.comments || 0;
                   platformStats[platformName].shares += platform.analytics.shares || 0;
+                  
+                  console.log(`📈 Добавлена аналитика для ${platformName}:`, {
+                    views: platform.analytics.views || 0,
+                    likes: platform.analytics.likes || 0,
+                    comments: platform.analytics.comments || 0,
+                    shares: platform.analytics.shares || 0
+                  });
                 }
               }
             }
@@ -194,6 +210,10 @@ export default function AnalyticsPage() {
       const engagementRate = totalViews > 0 
         ? Math.round(((totalLikes + totalComments + totalShares) / totalViews) * 100)
         : 0;
+
+      console.log('📊 Итоговая статистика:');
+      console.log('📋 Общие данные:', { totalPosts, totalViews, totalLikes, totalComments, totalShares, engagementRate });
+      console.log('📱 Статистика по платформам:', platformStats);
 
       return {
         success: true,
