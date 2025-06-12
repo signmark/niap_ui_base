@@ -230,7 +230,9 @@ export default function Keywords() {
         };
 
         try {
+          console.log(`[KEYWORDS-SEARCH] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, data);
           await directusApi.post('items/campaign_keywords', data);
+          console.log(`[KEYWORDS-SEARCH] Успешно добавлено ключевое слово "${keyword.keyword}"`);
           addedCount++;
         } catch (err) {
           // Проверяем, связана ли ошибка с дубликатом

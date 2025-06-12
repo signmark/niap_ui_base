@@ -172,7 +172,16 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
       // В противном случае сохраняем ключевые слова сами
       else {
         // Сначала получаем список существующих ключевых слов для проверки дубликатов
-        const existingKeywordsResponse = await api.get(`/campaign-keywords/${campaignId}`);
+        const existingKeywordsResponse = await directusApi.get('/items/campaign_keywords', {
+          params: {
+            filter: {
+              campaign_id: {
+                _eq: campaignId
+              }
+            },
+            fields: ['keyword']
+          }
+        });
         const existingKeywords = existingKeywordsResponse.data?.data || [];
         const existingKeywordsLower = existingKeywords.map(k => k.keyword.toLowerCase());
         
@@ -189,16 +198,25 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
           }
           
           try {
-            await api.post("/user-keywords", {
+            console.log(`[KEYWORDS-WEBSITE] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, {
               keyword: keyword.keyword,
               trendScore: keyword.trend,
               mentionsCount: keyword.competition,
-              campaignId,
+              campaignId
             });
+            await directusApi.post('items/campaign_keywords', {
+              keyword: keyword.keyword,
+              campaign_id: campaignId,
+              trend_score: keyword.trend,
+              mentions_count: keyword.competition,
+              date_created: new Date().toISOString(),
+              last_checked: new Date().toISOString()
+            });
+            console.log(`[KEYWORDS-WEBSITE] Успешно добавлено ключевое слово "${keyword.keyword}"`);
             addedCount++;
           } catch (err) {
             // Если ошибка связана с дубликатом, просто пропускаем это ключевое слово
-            console.log(`Ошибка при добавлении ключевого слова "${keyword.keyword}":`, err);
+            console.log(`[KEYWORDS-WEBSITE] Ошибка при добавлении ключевого слова "${keyword.keyword}":`, err);
             skippedCount++;
           }
         }
