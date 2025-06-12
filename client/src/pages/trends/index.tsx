@@ -162,8 +162,7 @@ export default function Trends() {
   // Используем глобальный стор кампаний
   const { selectedCampaign } = useCampaignStore();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
-  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
-  const statusCheckInterval = useRef<NodeJS.Timeout>();
+
   const [activeTab, setActiveTab] = useState('trends');
   const [isSocialNetworkDialogOpen, setIsSocialNetworkDialogOpen] = useState(false);
   const [isSourceSearchDialogOpen, setIsSourceSearchDialogOpen] = useState(false);
@@ -397,90 +396,7 @@ export default function Trends() {
     refetchInterval: 3000 // Обновляем каждые 3 секунды автоматически
   });
 
-  const { mutate: launchWebhook } = useMutation({
-    mutationFn: async (sourceId: string) => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
-      
-      // Отправляем запрос на запуск сбора постов из источника
-      console.log(`Starting post collection for source ${sourceId} in campaign ${selectedCampaignId}`);
-      
-      // Найдем имя источника для передачи на сервер
-      const source = sources.find(s => s.id === sourceId);
-      
-      return await fetch(`/api/sources/${sourceId}/crawl`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          campaignId: selectedCampaignId,
-          sourceName: source?.name || 'Источник' // Передаем имя источника в запросе
-        })
-      }).then(response => {
-        if (!response.ok) {
-          return response.json().then(data => {
-            throw new Error(data.message || 'Ошибка при запуске задачи');
-          });
-        }
-        return response.json();
-      });
-    },
-    onSuccess: (data) => {
-      console.log('Webhook success response:', data);
-      // Используем имя источника, полученное от сервера, или ищем в текущем списке
-      const sourceName = data.sourceName || sources.find(s => s.id === data.sourceId)?.name || data.sourceId;
-      const sourceId = data.sourceId;
-      
-      toast({
-        title: "Запущено!",
-        description: `Задача по сбору постов из источника ${sourceName} запущена`,
-        variant: "default",
-      });
-      
-      // Устанавливаем активный источник для проверки статуса
-      setActiveSourceId(sourceId);
-      
-      // Добавляем источник в список активных процессов
-      setProcessingSourceIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(sourceId);
-        return newSet;
-      });
-      
-      // Сразу же устанавливаем статус "processing" для мгновенной обратной связи
-      queryClient.setQueryData(
-        ["campaign_content_sources", selectedCampaignId],
-        (old: any[]) => old?.map(source =>
-          source.id === sourceId
-            ? { ...source, status: 'processing' }
-            : source
-        )
-      );
-      
-      // Запускаем интервал проверки статуса каждые 3 секунды
-      if (statusCheckInterval.current) {
-        clearInterval(statusCheckInterval.current);
-      }
-      
-      statusCheckInterval.current = setInterval(() => {
-        checkSourceStatus(sourceId);
-      }, 3000);
-      
-      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-    },
-    onError: (error: Error) => {
-      console.error("Error launching source crawl:", error);
-      toast({
-        title: "Ошибка!",
-        description: error.message || "Не удалось запустить задачу",
-        variant: "destructive",
-      });
-    }
-  });
+
 
   const { mutate: deleteSource } = useMutation({
     mutationFn: async (sourceId: string) => {
@@ -935,22 +851,7 @@ export default function Trends() {
     }
   }, [sourcePosts?.length]);
 
-  // Отслеживаем активные источники для стабильного отображения статуса
-  const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
-  
-  // Обновляем список активных источников при изменении статуса
-  useEffect(() => {
-    if (!sources) return;
-    
-    const newProcessingSources = new Set<string>();
-    sources.forEach(source => {
-      if (source.status === 'start' || source.status === 'processing' || source.status === 'running' || source.id === activeSourceId) {
-        newProcessingSources.add(source.id);
-      }
-    });
-    
-    setProcessingSourceIds(newProcessingSources);
-  }, [sources, activeSourceId]);
+
   
 
 
