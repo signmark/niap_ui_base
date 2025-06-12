@@ -172,7 +172,7 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
       // В противном случае сохраняем ключевые слова сами
       else {
         // Сначала получаем список существующих ключевых слов для проверки дубликатов
-        const existingKeywordsResponse = await directusApi.get('/items/campaign_keywords', {
+        const existingKeywordsResponse = await directusApi.get('items/campaign_keywords', {
           params: {
             filter: {
               campaign_id: {
