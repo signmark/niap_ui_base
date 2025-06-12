@@ -278,7 +278,7 @@ export default function ContentPage() {
   const campaigns = campaignsResponse?.data || [];
 
   // Запрос списка контента для выбранной кампании
-  const { data: campaignContent = [], isLoading: isLoadingContent } = useQuery<CampaignContent[]>({
+  const { data: campaignContent = [], isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery<CampaignContent[]>({
     queryKey: ["/api/campaign-content", selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
@@ -1006,7 +1006,20 @@ export default function ContentPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Управление контентом</h1>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold">Управление контентом</h1>
+          <p className="text-muted-foreground mt-2">
+            Создание, редактирование и публикация контента для социальных сетей
+          </p>
+          
+          {/* Индикатор загрузки */}
+          {(isLoadingContent || isFetchingContent) && (
+            <div className="flex items-center gap-2 mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{isLoadingContent ? 'Загрузка контента...' : 'Обновление данных...'}</span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button 
             onClick={() => setIsContentPlanDialogOpen(true)}
