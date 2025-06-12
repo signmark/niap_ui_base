@@ -57,10 +57,10 @@ export default function CampaignDetails() {
 
   // Синхронизируем currentUrl с данными кампании
   useEffect(() => {
-    if (campaign?.link) {
+    if (campaign && campaign.link) {
       setCurrentUrl(campaign.link);
     }
-  }, [campaign?.link]);
+  }, [campaign]);
   
   // Для хранения выбранных трендов - изменяем тип на конкретный с правильными полями для улучшения типизации
   const [selectedTrends, setSelectedTrends] = useState<Array<{
