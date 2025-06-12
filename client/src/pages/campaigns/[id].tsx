@@ -196,12 +196,16 @@ export default function CampaignDetails() {
       await directusApi.patch(`/items/user_campaigns/${id}`, values);
     },
     onSuccess: () => {
+      console.log("updateCampaign onSuccess called, silentUpdate:", silentUpdate);
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns", id] });
       if (!silentUpdate) {
+        console.log("Showing updateCampaign toast");
         toast({
           title: "Успешно",
           description: "Данные кампании обновлены"
         });
+      } else {
+        console.log("Skipping updateCampaign toast (silent)");
       }
       setSilentUpdate(false); // Сбрасываем флаг
     },
@@ -291,6 +295,7 @@ export default function CampaignDetails() {
       }
     },
     onSuccess: (data) => {
+      console.log("searchKeywords onSuccess called");
       const formattedKeywords = data.map((keyword: string) => ({
         keyword,
         isSelected: false
