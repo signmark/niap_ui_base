@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
     mutationFn: async () => {
       const days = selectedPeriod === '30days' ? 30 : 7;
       
-      const response = await fetch('https://n8n.roboflow.tech/webhook/posts-to-analytics', {
+      const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/posts-to-analytics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
       
       console.log(`📅 Период: ${selectedPeriod}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
       
-      const directusUrl = `https://directus.roboflow.tech/items/campaign_content`;
+      const directusUrl = `${import.meta.env.VITE_DIRECTUS_URL}/items/campaign_content`;
       const params = new URLSearchParams({
         'filter[campaign_id][_eq]': selectedCampaign,
         'filter[status][_eq]': 'published',
