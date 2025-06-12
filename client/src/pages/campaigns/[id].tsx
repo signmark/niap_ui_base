@@ -837,7 +837,17 @@ export default function CampaignDetails() {
         
         <AccordionItem value="business-questionnaire" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="business-questionnaire" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Бизнес-анкета
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().questionnaire.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Бизнес-анкета</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().questionnaire.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <BusinessQuestionnaireForm 
@@ -851,7 +861,10 @@ export default function CampaignDetails() {
 
         <AccordionItem value="trend-analysis" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="trend-analysis" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Настройки анализа трендов
+            <div className="flex items-center gap-3">
+              <Circle className="h-5 w-5 text-gray-400" />
+              <span>Настройки анализа трендов</span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
@@ -903,7 +916,17 @@ export default function CampaignDetails() {
 
         <AccordionItem value="content" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="content" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Генерация контента
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().content.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Генерация контента</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().content.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
@@ -956,7 +979,17 @@ export default function CampaignDetails() {
 
         <AccordionItem value="social-media" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="social-media" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Настройки публикации
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().socialMedia.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Настройки публикации</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().socialMedia.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
@@ -986,7 +1019,10 @@ export default function CampaignDetails() {
             
         <AccordionItem value="schedule" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="schedule" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Календарь публикаций
+            <div className="flex items-center gap-3">
+              <Circle className="h-5 w-5 text-gray-400" />
+              <span>Календарь публикаций</span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="space-y-4">
