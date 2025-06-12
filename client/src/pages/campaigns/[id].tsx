@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
 import PublicationCalendar from "@/components/PublicationCalendar";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Search, Wand2 } from "lucide-react";
+import { Loader2, Search, Wand2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
@@ -51,6 +51,7 @@ export default function CampaignDetails() {
   const [suggestedKeywords, setSuggestedKeywords] = useState<SuggestedKeyword[]>([]);
   const [showContentGenerationDialog, setShowContentGenerationDialog] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
+  const [urlSaveStatus, setUrlSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   
   // Получаем доступ к глобальному хранилищу кампаний
   const { setSelectedCampaign } = useCampaignStore();
@@ -193,6 +194,9 @@ export default function CampaignDetails() {
 
   const { mutate: updateCampaign } = useMutation({
     mutationFn: async (values: { name?: string; link?: string }) => {
+      if (values.link) {
+        setUrlSaveStatus('saving');
+      }
       await directusApi.patch(`/items/user_campaigns/${id}`, values);
     },
     onSuccess: () => {
@@ -203,9 +207,12 @@ export default function CampaignDetails() {
           description: "Данные кампании обновлены"
         });
       }
+      setUrlSaveStatus('saved');
+      setTimeout(() => setUrlSaveStatus('idle'), 2000); // Скрываем галочку через 2 секунды
       setSilentUpdate(false); // Сбрасываем флаг
     },
     onError: () => {
+      setUrlSaveStatus('idle');
       setSilentUpdate(false); // Сбрасываем флаг при ошибке
       toast({
         variant: "destructive",
@@ -291,7 +298,6 @@ export default function CampaignDetails() {
       }
     },
     onSuccess: (data) => {
-      console.log("searchKeywords onSuccess called");
       const formattedKeywords = data.map((keyword: string) => ({
         keyword,
         isSelected: false
@@ -676,13 +682,21 @@ export default function CampaignDetails() {
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="flex gap-4 items-center pt-2">
-              <Input
-                placeholder="Введите URL сайта"
-                value={currentUrl}
-                onChange={(e) => setCurrentUrl(e.target.value)}
-                onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
-                className="max-w-md"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Введите URL сайта"
+                  value={currentUrl}
+                  onChange={(e) => setCurrentUrl(e.target.value)}
+                  onBlur={(e) => handleUrlUpdate(e.target.value.trim())}
+                  className="max-w-md pr-10"
+                />
+                {urlSaveStatus === 'saving' && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-blue-500" />
+                )}
+                {urlSaveStatus === 'saved' && (
+                  <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                )}
+              </div>
               <Button
                 variant="secondary"
                 onClick={() => {
