@@ -712,6 +712,14 @@ export default function CampaignDetails() {
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
     // Отладка для понимания структуры данных
+    console.log('Trends Debug:', {
+      campaignTrends: campaignTrends,
+      length: campaignTrends?.length,
+      type: typeof campaignTrends,
+      isArray: Array.isArray(campaignTrends),
+      completed: Boolean(campaignTrends && campaignTrends.length > 0)
+    });
+
     if (campaign?.social_media_settings) {
       console.log('Social Media Settings Debug:', {
         keys: Object.keys(campaign.social_media_settings),
