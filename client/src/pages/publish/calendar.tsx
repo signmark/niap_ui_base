@@ -6,7 +6,7 @@ import { CampaignContent } from '@/types';
 import PublicationCalendar from '@/components/PublicationCalendar';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { PenLine, ArrowLeft, SortDesc, SortAsc } from 'lucide-react';
+import { PenLine, ArrowLeft, SortDesc, SortAsc, Loader2 } from 'lucide-react';
 
 export default function CalendarView() {
   const { selectedCampaign } = useCampaignStore();
