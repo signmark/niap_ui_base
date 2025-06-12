@@ -987,7 +987,21 @@ export class PublishScheduler {
           }
           
           // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Помечаем некорректные published статусы как failed
+          // НО: для Facebook даем 2 минуты на сохранение postUrl после публикации
           if (platformData?.status === 'published' && (!platformData?.postUrl || platformData?.postUrl.trim() === '')) {
+            // Проверяем время публикации для Facebook
+            if (platform === 'facebook' && platformData?.publishedAt) {
+              const publishedTime = new Date(platformData.publishedAt).getTime();
+              const currentTime = Date.now();
+              const minutesSincePublished = (currentTime - publishedTime) / (1000 * 60);
+              
+              if (minutesSincePublished < 2) {
+                // Для Facebook даем 2 минуты на сохранение postUrl
+                log(`Facebook: недавно опубликован (${minutesSincePublished.toFixed(1)} мин назад), ждем postUrl`, 'scheduler');
+                continue;
+              }
+            }
+            
             log(`ИСПРАВЛЕНИЕ: Контент ${content.id}, платформа ${platform} - помечаем published без postUrl как failed`, 'scheduler');
             // Исключаем эту платформу из дальнейшей обработки - НЕ ПУБЛИКУЕМ ПОВТОРНО
             continue;
@@ -1117,7 +1131,31 @@ export class PublishScheduler {
             
             for (const [platform, data] of Object.entries(socialPlatforms)) {
               if (data.status === 'published') {
-                publishedPlatforms.push(platform);
+                // Для Facebook проверяем наличие postUrl - если нет, считаем как pending
+                if (platform === 'facebook' && (!data.postUrl || data.postUrl.trim() === '')) {
+                  // Facebook опубликован но без postUrl - проверяем время публикации
+                  if (data.publishedAt) {
+                    const publishedTime = new Date(data.publishedAt).getTime();
+                    const currentTime = Date.now();
+                    const minutesSincePublished = (currentTime - publishedTime) / (1000 * 60);
+                    
+                    if (minutesSincePublished < 2) {
+                      // Недавно опубликован - считаем как pending
+                      pendingPlatforms.push(platform);
+                      hasPendingStatusAnyPlatform = true;
+                    } else {
+                      // Слишком давно без postUrl - считаем как failed, не включаем в published
+                      log(`Facebook ${content.id}: статус published без postUrl более 2 минут - игнорируем`, 'scheduler');
+                    }
+                  } else {
+                    // Нет времени публикации - не считаем как published
+                    pendingPlatforms.push(platform);
+                    hasPendingStatusAnyPlatform = true;
+                  }
+                } else {
+                  // Обычная платформа с postUrl или не Facebook
+                  publishedPlatforms.push(platform);
+                }
               } else if (data.status === 'pending') {
                 pendingPlatforms.push(platform);
                 hasPendingStatusAnyPlatform = true;
