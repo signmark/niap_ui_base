@@ -131,6 +131,35 @@ export default function CampaignDetails() {
     staleTime: 0
   });
 
+  // Запрос бизнес-анкеты для отображения статуса завершенности
+  const { data: businessQuestionnaire } = useQuery({
+    queryKey: ['business-questionnaire', id],
+    queryFn: async () => {
+      if (!id) return null;
+      
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(`/api/campaigns/${id}/questionnaire`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          return null;
+        }
+        
+        const responseData = await response.json();
+        return responseData.data || null;
+      } catch (error) {
+        console.error('Ошибка при загрузке анкеты:', error);
+        return null;
+      }
+    },
+    enabled: !!id,
+    staleTime: 0
+  });
+
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
