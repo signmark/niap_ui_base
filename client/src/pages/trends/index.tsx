@@ -952,29 +952,7 @@ export default function Trends() {
     setProcessingSourceIds(newProcessingSources);
   }, [sources, activeSourceId]);
   
-  // Функция определения иконки для текущего статуса
-  const getStatusIcon = (status: string | null, sourceId: string) => {
-    // Если источник в списке обрабатываемых, показываем анимацию
-    if (processingSourceIds.has(sourceId)) {
-      return <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />;
-    }
-    
-    // Иначе показываем статус из базы данных
-    switch (status) {
-      case 'start':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
-      case 'processing':
-        return <RefreshCw className="h-4 w-4 animate-spin text-yellow-500" />;
-      case 'running':
-        return <Clock className="h-4 w-4 animate-spin text-blue-500" />;
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'finished':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      default:
-        return null;
-    }
-  };
+
 
   const toggleTopicSelection = (topic: TrendTopic) => {
     setSelectedTopics(prev => {
@@ -1149,7 +1127,6 @@ export default function Trends() {
                     {sources.map((source) => (
                       <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(source.status, source.id)}
                           <div>
                             <h3 className="font-medium">{source.name}</h3>
                             <p className="text-sm text-muted-foreground">
@@ -1170,15 +1147,7 @@ export default function Trends() {
                               source.type === 'telegram' ? 'Telegram канал' :
                                 source.type === 'vk' ? 'VK группа' : source.type}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => launchWebhook(source.id)}
-                            disabled={false} 
-                            title="Запустить сбор данных из источника"
-                          >
-                            <Bot className="h-4 w-4" />
-                          </Button>
+
                           <Button
                             variant="ghost"
                             size="icon"
