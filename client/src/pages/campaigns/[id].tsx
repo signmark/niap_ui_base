@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
 import PublicationCalendar from "@/components/PublicationCalendar";
 import { directusApi } from "@/lib/directus";
-import { Loader2, Search, Wand2, Check } from "lucide-react";
+import { Loader2, Search, Wand2, Check, CheckCircle, Circle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { TrendsList } from "@/components/TrendsList";
@@ -207,8 +207,7 @@ export default function CampaignDetails() {
           description: "Данные кампании обновлены"
         });
       }
-      setUrlSaveStatus('saved');
-      setTimeout(() => setUrlSaveStatus('idle'), 3000); // Скрываем галочку через 3 секунды
+      setUrlSaveStatus('saved'); // Галочка остается навсегда
       setSilentUpdate(false); // Сбрасываем флаг
     },
     onError: () => {
@@ -648,6 +647,42 @@ export default function CampaignDetails() {
     }
   };
 
+  // Функция для проверки завершенности разделов
+  const getSectionCompletionStatus = () => {
+    const sections = {
+      site: {
+        completed: Boolean(campaign?.link && campaign.link.trim()),
+        label: "URL сайта указан"
+      },
+      keywords: {
+        completed: Boolean(keywordList && keywordList.length > 0),
+        label: `Добавлено ${keywordList?.length || 0} ключевых слов`
+      },
+      questionnaire: {
+        completed: Boolean(businessQuestionnaire && Object.keys(businessQuestionnaire).length > 0),
+        label: "Бизнес-анкета заполнена"
+      },
+      trends: {
+        completed: Boolean(selectedTrends && selectedTrends.length > 0),
+        label: `Выбрано ${selectedTrends?.length || 0} трендов`
+      },
+      content: {
+        completed: Boolean(campaignContent && campaignContent.length > 0),
+        label: `Создано ${campaignContent?.length || 0} публикаций`
+      },
+      socialMedia: {
+        completed: Boolean(campaign?.social_media_settings && 
+          Object.values(campaign.social_media_settings).some((setting: any) => 
+            setting && typeof setting === 'object' && setting.enabled
+          )
+        ),
+        label: "Соцсети настроены"
+      }
+    };
+    
+    return sections;
+  };
+
 
   if (isLoading) {
     return (
@@ -678,7 +713,17 @@ export default function CampaignDetails() {
       <Accordion type="single" defaultValue="site">
         <AccordionItem value="site" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="site" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Сайт
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().site.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Сайт</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().site.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div className="flex gap-4 items-center pt-2">
@@ -694,7 +739,7 @@ export default function CampaignDetails() {
                   <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-blue-500 transition-all duration-200" />
                 )}
                 {urlSaveStatus === 'saved' && (
-                  <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500 animate-pulse transition-all duration-200" />
+                  <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500 transition-all duration-200" />
                 )}
               </div>
               <Button
@@ -723,7 +768,17 @@ export default function CampaignDetails() {
         </AccordionItem>
         <AccordionItem value="keywords" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="keywords" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
-            Ключевые слова
+            <div className="flex items-center gap-3">
+              {getSectionCompletionStatus().keywords.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
+              <span>Ключевые слова</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().keywords.label}
+              </span>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
             <div>
