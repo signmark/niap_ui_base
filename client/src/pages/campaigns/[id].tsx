@@ -103,8 +103,13 @@ export default function CampaignDetails() {
     queryKey: ["campaign-trends", id],
     queryFn: async () => {
       try {
-        const response = await apiRequest(`/api/campaign-trends?campaignId=${id}`);
-        return response.data || [];
+        const response = await fetch(`/api/campaign-trends?campaignId=${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const data = await response.json();
+        return data.data || [];
       } catch (error) {
         console.error("Ошибка при загрузке трендов:", error);
         return [];
@@ -698,6 +703,8 @@ export default function CampaignDetails() {
       campaignTrends: campaignTrends,
       trendsLength: campaignTrends?.length,
       socialMediaSettings: campaign?.social_media_settings,
+      socialMediaSettingsKeys: campaign?.social_media_settings ? Object.keys(campaign.social_media_settings) : [],
+      socialMediaSettingsValues: campaign?.social_media_settings ? Object.values(campaign.social_media_settings) : [],
       campaign: campaign
     });
     
@@ -719,20 +726,32 @@ export default function CampaignDetails() {
         label: `Собрано ${campaignTrends?.length || 0} трендов`
       },
       trendAnalysis: {
-        completed: Boolean(campaign?.social_media_settings),
-        label: campaign?.social_media_settings ? "Соцсети настроены" : "Соцсети не настроены"
+        completed: Boolean(
+          campaign?.social_media_settings && 
+          typeof campaign.social_media_settings === 'object' &&
+          Object.keys(campaign.social_media_settings).length > 0 &&
+          Object.values(campaign.social_media_settings).some((setting: any) => 
+            setting && typeof setting === 'object' && 
+            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
+          )
+        ),
+        label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
       },
       content: {
         completed: Boolean(campaignContent && campaignContent.length > 0),
         label: `Создано ${campaignContent?.length || 0} публикаций`
       },
       socialMedia: {
-        completed: Boolean(campaign?.social_media_settings && 
+        completed: Boolean(
+          campaign?.social_media_settings && 
+          typeof campaign.social_media_settings === 'object' &&
+          Object.keys(campaign.social_media_settings).length > 0 &&
           Object.values(campaign.social_media_settings).some((setting: any) => 
-            setting && typeof setting === 'object' && setting.enabled
+            setting && typeof setting === 'object' && 
+            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
           )
         ),
-        label: "Соцсети настроены"
+        label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
       }
     };
     

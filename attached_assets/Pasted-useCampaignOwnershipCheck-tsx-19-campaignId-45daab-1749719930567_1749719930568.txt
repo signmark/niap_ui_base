@@ -1,0 +1,185 @@
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '45daab2a-4c6f-4578-8665-3a049458c0c8', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Личная
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1749719915280}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+index.tsx:281 Выбрана кампания: NPlanner.ru (46868c44-c6a4-4bed-accf-9ad07bba790e)
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "NPlanner.ru"
+[id].tsx:85 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:109 Ошибка при загрузке трендов: ReferenceError: apiRequest is not defined
+    at queryFn ([id].tsx:106:26)
+    at Object.fetchFn [as fn] (@tanstack_react-query.js?v=99a15625:840:14)
+    at run (@tanstack_react-query.js?v=99a15625:494:49)
+    at Object.start (@tanstack_react-query.js?v=99a15625:536:9)
+    at _a4.fetch (@tanstack_react-query.js?v=99a15625:926:41)
+    at _a9.executeFetch_fn (@tanstack_react-query.js?v=99a15625:2211:51)
+    at _a9.onSubscribe (@tanstack_react-query.js?v=99a15625:1898:74)
+    at _a9.subscribe (@tanstack_react-query.js?v=99a15625:24:10)
+    at @tanstack_react-query.js?v=99a15625:3022:60
+    at subscribeToStore (chunk-RPCDYKBN.js?v=99a15625:11984:18) Error Component Stack
+    at CampaignDetails ([id].tsx:46:18)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:24:26)
+    at WithLayout (App.tsx:43:23)
+    at _c4 (<anonymous>)
+    at Route (wouter.js?v=99a15625:323:16)
+    at Switch (wouter.js?v=99a15625:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=99a15625:2805:3)
+    at App (<anonymous>)
+overrideMethod @ hook.js:608
+queryFn @ [id].tsx:109
+fetchFn @ @tanstack_react-query.js?v=99a15625:840
+run @ @tanstack_react-query.js?v=99a15625:494
+start @ @tanstack_react-query.js?v=99a15625:536
+fetch @ @tanstack_react-query.js?v=99a15625:926
+executeFetch_fn @ @tanstack_react-query.js?v=99a15625:2211
+onSubscribe @ @tanstack_react-query.js?v=99a15625:1898
+subscribe @ @tanstack_react-query.js?v=99a15625:24
+(anonymous) @ @tanstack_react-query.js?v=99a15625:3022
+subscribeToStore @ chunk-RPCDYKBN.js?v=99a15625:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=99a15625:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=99a15625:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=99a15625:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=99a15625:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=99a15625:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=99a15625:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=99a15625:19416
+commitRoot @ chunk-RPCDYKBN.js?v=99a15625:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:18627
+[id].tsx:123 Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:182 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:184 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+[id].tsx:192 Успешно получены данные кампании: NPlanner.ru
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+store.ts:113 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1749719918139}
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+[id].tsx:137 Загружено публикаций: 35
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+[id].tsx:697 Debug completion check: {campaignTrends: Array(0), trendsLength: 0, socialMediaSettings: {…}, campaign: {…}}
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'business-questionnaire']
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
