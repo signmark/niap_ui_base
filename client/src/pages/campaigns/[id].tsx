@@ -185,8 +185,6 @@ export default function CampaignDetails() {
     onSuccess: (data) => {
       // Устанавливаем загруженную кампанию как активную в глобальном хранилище
       if (data && data.id && data.name) {
-        // Инициализируем currentUrl из данных кампании
-        setCurrentUrl(data.link || "");
         console.log(`Устанавливаем кампанию из страницы детализации: ${data.name} (${data.id})`);
         setSelectedCampaign(data.id, data.name);
       }
@@ -631,7 +629,7 @@ export default function CampaignDetails() {
 
   const handleUrlUpdate = (newUrl: string) => {
     const normalizedUrl = normalizeUrl(newUrl);
-    if (normalizedUrl !== campaign.link) {
+    if (normalizedUrl && normalizedUrl !== campaign?.link) {
       updateCampaign({ link: normalizedUrl });
     }
   };
@@ -679,7 +677,13 @@ export default function CampaignDetails() {
               />
               <Button
                 variant="secondary"
-                onClick={() => currentUrl && searchKeywords(currentUrl)}
+                onClick={() => {
+                  if (currentUrl) {
+                    // Сохраняем URL перед поиском ключевых слов
+                    handleUrlUpdate(currentUrl);
+                    searchKeywords(currentUrl);
+                  }
+                }}
                 disabled={isSearching || !currentUrl}
               >
                 {isSearching ? (
