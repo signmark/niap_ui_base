@@ -54,6 +54,13 @@ export default function CampaignDetails() {
   
   // Получаем доступ к глобальному хранилищу кампаний
   const { setSelectedCampaign } = useCampaignStore();
+
+  // Синхронизируем currentUrl с данными кампании
+  useEffect(() => {
+    if (campaign?.link) {
+      setCurrentUrl(campaign.link);
+    }
+  }, [campaign?.link]);
   
   // Для хранения выбранных трендов - изменяем тип на конкретный с правильными полями для улучшения типизации
   const [selectedTrends, setSelectedTrends] = useState<Array<{
