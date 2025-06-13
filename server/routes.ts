@@ -101,8 +101,12 @@ declare global {
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
   try {
-    const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
+    const n8nUrl = process.env.N8N_URL;
     const n8nApiKey = process.env.N8N_API_KEY;
+    
+    if (!n8nUrl) {
+      throw new Error('N8N_URL не настроен в переменных окружения');
+    }
     
     if (!n8nApiKey) {
       throw new Error('N8N API ключ не настроен');
