@@ -223,10 +223,20 @@ export default function ScheduledPublicationDetails({
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
-      // Добавляем 3 часа для московского времени (+3 UTC)
-      const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
+      // JavaScript автоматически отображает время в локальном часовом поясе пользователя
+      const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
       
-      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      return `${formattedDate}, ${formattedTime}`;
     } catch (error) {
       console.error("Ошибка форматирования даты:", error);
       return "Некорректная дата";
