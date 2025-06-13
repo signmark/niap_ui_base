@@ -6881,7 +6881,7 @@ Return your response as a JSON array in this exact format:
         if (period !== 'all') {
           params.limit = 100; // Ограничиваем для конкретных периодов
         } else {
-          params.limit = 10000; // Для "все периоды" устанавливаем большой лимит
+          params.limit = -1; // Для "все периоды" загружаем ВСЕ записи
         }
         
         const response = await directusApi.get('/items/campaign_trend_topics', {
@@ -6895,35 +6895,15 @@ Return your response as a JSON array in this exact format:
         console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
         console.log(`[GET /api/campaign-trends] Period: ${period}, Limit applied: ${period !== 'all' ? '100' : 'NONE (все записи)'}`);
         
-        // Показываем информацию о загруженных данных
-        if (response.data?.data?.length > 0) {
-          const trends = response.data.data;
-          console.log(`Found ${trends.length} trend topics for campaign ${campaignId}`);
-          
-        }
+        console.log(`Found ${response.data?.data?.length || 0} trend topics for campaign ${campaignId}`);
         
         // Преобразуем данные из формата Directus в наш формат
         const trendTopics = response.data.data.map((item: any) => {
-          // Теперь мы используем поля account_url и url_post непосредственно из Directus
-          // Поскольку я вижу, что они уже существуют в базе данных
-          
-          // Log для отладки полей
-          console.log(`Raw trend item fields for ${item.id}:`, Object.keys(item));
-          
-          // Добавляем логи для отладки дат
-          if (item.id === response.data.data[0].id) {
-            console.log("ДАТА created_at:", item.created_at);
-            console.log("ТИП ДАТЫ:", typeof item.created_at);
-            if (item.created_at) {
-              console.log("ВАЛИДНОСТЬ ДАТЫ:", new Date(item.created_at).toString());
-            }
-          }
-
           return {
             id: item.id,
             title: item.title,
             sourceId: item.source_id,
-            sourceName: item.source_name || 'Источник', // Возможно в Directus это поле названо иначе
+            sourceName: item.source_name || 'Источник',
             // Сохраняем оригинальные имена полей из базы данных
             accountUrl: item.accountUrl || null,
             urlPost: item.urlPost || null,
@@ -6942,7 +6922,9 @@ Return your response as a JSON array in this exact format:
             created_at: item.created_at ? new Date(item.created_at).toISOString() : null, // Дублируем для Snake Case
             isBookmarked: item.is_bookmarked,
             campaignId: item.campaign_id,
-            media_links: item.media_links // Добавляем поле media_links
+            media_links: item.media_links,
+            // Добавляем поле sourceType для корректной фильтрации платформ
+            sourceType: item.sourceType || null
           };
         });
         
