@@ -1350,22 +1350,34 @@ export default function Trends() {
                             return finalResult;
                           })
                           .filter((topic, index, array) => {
-                            // Логируем итоговое количество отфильтрованных результатов
+                            // Диагностика подсчета трендов по периодам
                             if (index === 0) {
-                              console.log('Total trends after filtering:', array.length);
-                              const instagramCount = array.filter(t => {
-                                const source = sources.find(s => s.id === t.source_id || s.id === t.sourceId);
-                                const sourceType = (t as any).sourceType || (t as any).type || '';
-                                const mediaLinks = t.media_links;
-                                let isInstagram = false;
+                              const now = new Date();
+                              
+                              // Подсчитываем тренды для каждого периода
+                              const periods = [
+                                { name: '3 дня', days: 3 },
+                                { name: '7 дней', days: 7 },
+                                { name: '14 дней', days: 14 },
+                                { name: '30 дней', days: 30 }
+                              ];
+                              
+                              console.log(`📊 ДИАГНОСТИКА ПЕРИОДОВ (выбран: ${selectedPeriod}):`);
+                              
+                              periods.forEach(period => {
+                                const filterDate = new Date();
+                                filterDate.setDate(now.getDate() - period.days);
                                 
-                                if (sourceType && sourceType.toLowerCase() === 'instagram') isInstagram = true;
-                                if (mediaLinks && JSON.stringify(mediaLinks).toLowerCase().includes('fbcdn.net')) isInstagram = true;
-                                if (source && source.url.toLowerCase().includes('instagram.com')) isInstagram = true;
+                                const count = array.filter(t => {
+                                  const trendDate = new Date(t.created_at || t.createdAt || 0);
+                                  return trendDate >= filterDate;
+                                }).length;
                                 
-                                return isInstagram;
-                              }).length;
-                              console.log('Instagram posts in filtered results:', instagramCount);
+                                console.log(`  ${period.name}: ${count} трендов (с ${filterDate.toLocaleDateString()})`);
+                              });
+                              
+                              console.log(`  Все периоды: ${array.length} трендов`);
+                              console.log(`📈 Итого показано: ${array.length} трендов для периода "${selectedPeriod}"`);
                             }
                             return true;
                           })
