@@ -776,6 +776,26 @@ export default function CampaignDetails() {
           )
         ),
         label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
+      },
+      schedule: {
+        completed: Boolean(
+          campaignContent && campaignContent.length > 0 && 
+          campaignContent.some(post => post.status === 'scheduled' || post.status === 'published')
+        ),
+        label: (() => {
+          if (!campaignContent || campaignContent.length === 0) return "Нет публикаций";
+          const scheduledCount = campaignContent.filter(post => post.status === 'scheduled').length;
+          const publishedCount = campaignContent.filter(post => post.status === 'published').length;
+          if (scheduledCount > 0 && publishedCount > 0) {
+            return `${publishedCount} опубликовано, ${scheduledCount} запланировано`;
+          } else if (publishedCount > 0) {
+            return `${publishedCount} опубликовано`;
+          } else if (scheduledCount > 0) {
+            return `${scheduledCount} запланировано`;
+          } else {
+            return "Только черновики";
+          }
+        })()
       }
     };
     

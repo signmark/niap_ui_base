@@ -1,0 +1,647 @@
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:154 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 42
+PublicationCalendar.tsx?t=1749798681117:155 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 42
+PublicationCalendar.tsx?t=1749798681117:156 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx?t=1749798681117:157 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 39
+PublicationCalendar.tsx?t=1749798681117:159 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx?t=1749798681117:161   1. ID: 3fcee2a6-6e71-4b34-8bf2-d55212782e74, status: scheduled, scheduledAt: 2025-06-13T09:00:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798681117:164     Platform vk: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798681117:164     Platform facebook: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798681117:164     Platform telegram: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798681117:170 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx?t=1749798681117:172   1. publishedAt: 2025-06-11T11:11:33, scheduledAt: 2025-06-11T11:09:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798681117:172   2. publishedAt: 2025-06-10T17:30:19, scheduledAt: 2025-06-10T14:30:00, platforms: vk, telegram
+PublicationCalendar.tsx?t=1749798681117:172   3. publishedAt: 2025-06-12T16:39:50, scheduledAt: null, platforms: telegram
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798681117:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798681117:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798681117:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798751250:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798751250:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798751250:154 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 42
+PublicationCalendar.tsx?t=1749798751250:155 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 42
+PublicationCalendar.tsx?t=1749798751250:156 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx?t=1749798751250:157 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 39
+PublicationCalendar.tsx?t=1749798751250:159 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx?t=1749798751250:161   1. ID: 3fcee2a6-6e71-4b34-8bf2-d55212782e74, status: scheduled, scheduledAt: 2025-06-13T09:00:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798751250:164     Platform vk: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798751250:164     Platform facebook: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798751250:164     Platform telegram: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798751250:170 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx?t=1749798751250:172   1. publishedAt: 2025-06-11T11:11:33, scheduledAt: 2025-06-11T11:09:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798751250:172   2. publishedAt: 2025-06-10T17:30:19, scheduledAt: 2025-06-10T14:30:00, platforms: vk, telegram
+PublicationCalendar.tsx?t=1749798751250:172   3. publishedAt: 2025-06-12T16:39:50, scheduledAt: null, platforms: telegram
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:154 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 42
+PublicationCalendar.tsx?t=1749798759612:155 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 42
+PublicationCalendar.tsx?t=1749798759612:156 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx?t=1749798759612:157 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 39
+PublicationCalendar.tsx?t=1749798759612:159 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx?t=1749798759612:161   1. ID: 3fcee2a6-6e71-4b34-8bf2-d55212782e74, status: scheduled, scheduledAt: 2025-06-13T09:00:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798759612:164     Platform vk: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798759612:164     Platform facebook: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798759612:164     Platform telegram: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx?t=1749798759612:170 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx?t=1749798759612:172   1. publishedAt: 2025-06-11T11:11:33, scheduledAt: 2025-06-11T11:09:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx?t=1749798759612:172   2. publishedAt: 2025-06-10T17:30:19, scheduledAt: 2025-06-10T14:30:00, platforms: vk, telegram
+PublicationCalendar.tsx?t=1749798759612:172   3. publishedAt: 2025-06-12T16:39:50, scheduledAt: null, platforms: telegram
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:248 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx?t=1749798759612:191 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx?t=1749798759612:199   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx?t=1749798759612:210   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:330 КАЛЕНДАРЬ 13 ИЮНЯ: Post 3fcee2a6 - status: scheduled, type: text-image
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 0: publishedAt=2025-06-11T11:11:33, scheduledAt=2025-06-11T11:09:00, socialPlatforms= (3) ['vk', 'facebook', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 1: publishedAt=2025-06-10T17:30:19, scheduledAt=2025-06-10T14:30:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:253 Post 2: publishedAt=2025-06-12T16:39:50, scheduledAt=null, socialPlatforms= ['telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Thu Jun 12 2025
+PublicationCalendar.tsx:253 Post 3: publishedAt=2025-06-11T08:55:13, scheduledAt=2025-06-11T08:53:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Wed Jun 11 2025
+PublicationCalendar.tsx:253 Post 4: publishedAt=2025-06-10T17:32:17, scheduledAt=2025-06-10T14:32:00, socialPlatforms= (2) ['vk', 'telegram']
+PublicationCalendar.tsx:263   - publishedAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:275   - scheduledAt date: Tue Jun 10 2025
+PublicationCalendar.tsx:201 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 42
+PublicationCalendar.tsx:202 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 42
+PublicationCalendar.tsx:203 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx:204 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 39
+PublicationCalendar.tsx:207 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx:209   1. ID: 3fcee2a6-6e71-4b34-8bf2-d55212782e74, status: scheduled, scheduledAt: 2025-06-13T09:00:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx:214     Platform vk: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx:214     Platform facebook: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx:214     Platform telegram: status=pending, scheduledAt=2025-06-13T09:00:00.000Z
+PublicationCalendar.tsx:221 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx:223   1. publishedAt: 2025-06-11T11:11:33, scheduledAt: 2025-06-11T11:09:00, platforms: vk, facebook, telegram
+PublicationCalendar.tsx:223   2. publishedAt: 2025-06-10T17:30:19, scheduledAt: 2025-06-10T14:30:00, platforms: vk, telegram
+PublicationCalendar.tsx:223   3. publishedAt: 2025-06-12T16:39:50, scheduledAt: null, platforms: telegram
