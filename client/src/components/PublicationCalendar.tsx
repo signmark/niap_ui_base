@@ -10,8 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc, Maximize2, Minimize2, Check } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useToast } from '@/hooks/use-toast';
 
 interface PublicationCalendarProps {
@@ -24,119 +22,11 @@ interface PublicationCalendarProps {
   onReschedulePost?: (postId: string, newDate: Date, newTime: string) => void;
 }
 
-// Типы для drag and drop
-const ItemTypes = {
-  POST: 'post'
-};
-
-// Компонент перетаскиваемого поста
-interface DraggablePostProps {
-  post: CampaignContent;
-  children: React.ReactNode;
-}
-
-const DraggablePost: React.FC<DraggablePostProps> = ({ post, children }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: ItemTypes.POST,
-    item: { id: post.id, post },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  }));
-
-  return (
-    <div
-      ref={drag}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'move',
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-// Компонент зоны сброса для календарной ячейки
-interface DroppableCalendarCellProps {
-  date: Date;
-  children: React.ReactNode;
-  onDropPost: (postId: string, newDate: Date) => void;
-  canDrop?: boolean;
-}
-
-const DroppableCalendarCell: React.FC<DroppableCalendarCellProps> = ({ 
-  date, 
-  children, 
-  onDropPost,
-  canDrop = true 
-}) => {
-  const [{ isOver, canDropHere }, drop] = useDrop(() => ({
-    accept: ItemTypes.POST,
-    drop: (item: { id: string; post: CampaignContent }) => {
-      if (canDrop) {
-        onDropPost(item.id, date);
-      }
-    },
-    canDrop: () => canDrop,
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-      canDropHere: monitor.canDrop(),
-    }),
-  }));
-
-  return (
-    <div
-      ref={drop}
-      className={`
-        ${isOver && canDropHere ? 'bg-blue-50 border-blue-200' : ''}
-        ${isOver && !canDropHere ? 'bg-red-50 border-red-200' : ''}
-        ${canDropHere ? 'border-dashed border-2 border-transparent' : ''}
-        transition-colors duration-200
-      `}
-    >
-      {children}
-    </div>
-  );
-};
 
 
 
-// Компонент для зоны сброса (дня в календаре)
-const DroppableDay = ({ 
-  day, 
-  children, 
-  onDropPost 
-}: { 
-  day: Date; 
-  children: React.ReactNode;
-  onDropPost: (postId: string, newDate: Date) => void;
-}) => {
-  const [{ isOver }, drop] = useDrop({
-    accept: ItemTypes.POST,
-    drop: (item: DraggedPost) => {
-      onDropPost(item.id, day);
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
 
-  return (
-    <div
-      ref={drop}
-      style={{
-        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-        border: isOver ? '2px dashed #3b82f6' : '2px dashed transparent',
-        borderRadius: '4px',
-        minHeight: '80px',
-        padding: '4px'
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+
 
 export default function PublicationCalendar({
   content,
@@ -576,8 +466,7 @@ export default function PublicationCalendar({
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <Card>
+    <Card>
         <CardContent className="pt-6">
           <div className="grid gap-6 md:grid-cols-[300px_1fr]">
             <div className="space-y-4">
@@ -610,12 +499,10 @@ export default function PublicationCalendar({
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => (
-                  <DroppableDay day={date} onDropPost={handleDropPost}>
-                    <div className="flex flex-col items-center">
-                      <span>{date.getDate()}</span>
-                      {getDayContent(date)}
-                    </div>
-                  </DroppableDay>
+                  <div className="flex flex-col items-center">
+                    <span>{date.getDate()}</span>
+                    {getDayContent(date)}
+                  </div>
                 )
               }}
               initialFocus
@@ -821,6 +708,5 @@ export default function PublicationCalendar({
         </DialogContent>
       </Dialog>
       </Card>
-    </DndProvider>
   );
 }
