@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
@@ -100,7 +100,7 @@ export default function CalendarView() {
   };
 
   // Функция для обновления расписания поста
-  const handleReschedulePost = async (postId: string, newDate: Date, newTime: string) => {
+  const handleReschedulePost = useCallback(async (postId: string, newDate: Date, newTime: string) => {
     try {
       console.log('=== DRAG AND DROP DEBUG ===');
       console.log('Post ID:', postId);
@@ -149,7 +149,7 @@ export default function CalendarView() {
         variant: "destructive"
       });
     }
-  };
+  }, [selectedCampaign?.id, getAuthToken, queryClient, toast]);
 
   return (
     <div className="space-y-4">
