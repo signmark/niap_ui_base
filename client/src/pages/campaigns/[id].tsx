@@ -152,7 +152,7 @@ export default function CampaignDetails() {
 
   // Фильтруем только действительно запланированный контент для календаря
   const campaignContent = useMemo(() => {
-    if (!allCampaignContent) return [];
+    if (!allCampaignContent || !Array.isArray(allCampaignContent)) return [];
     
     return allCampaignContent.filter(content => {
       // Только статус 'scheduled'
@@ -769,9 +769,9 @@ export default function CampaignDetails() {
         label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
       },
       content: {
-        completed: Boolean(allCampaignContent && allCampaignContent.length > 0),
+        completed: Boolean(allCampaignContent && Array.isArray(allCampaignContent) && allCampaignContent.length > 0),
         label: (() => {
-          if (!allCampaignContent || allCampaignContent.length === 0) return "Создано 0 публикаций";
+          if (!allCampaignContent || !Array.isArray(allCampaignContent) || allCampaignContent.length === 0) return "Создано 0 публикаций";
           const draftCount = allCampaignContent.filter(post => post.status === 'draft').length;
           const totalCount = allCampaignContent.length;
           if (draftCount === totalCount) {
