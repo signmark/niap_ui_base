@@ -7615,36 +7615,63 @@ Return your response as a JSON array in this exact format:
       const contentId = req.params.id;
       const authHeader = req.headers['authorization'];
       
-      log(`Перенаправление запроса с устаревшего маршрута /api/campaign-content/${contentId} на /api/publish/update-content/${contentId}`, 'api');
-      
       if (!authHeader) {
         return res.status(401).json({ error: "Не авторизован: Отсутствует заголовок авторизации" });
       }
       
-      // Получаем токен авторизации
-      let token = '';
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7);
-      } else {
-        token = authHeader;
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        console.log(`Обновление контента ${contentId} с данными:`, req.body);
+        
+        // Получаем ID пользователя из токена для проверки прав доступа
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        console.log(`Пользователь ${userId} обновляет контент ${contentId}`);
+        
+        // Проверяем что контент существует и принадлежит пользователю
+        const existingContent = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!existingContent.data.data) {
+          return res.status(404).json({ error: "Контент не найден" });
+        }
+        
+        // Обновляем контент через Directus API
+        const updateResponse = await directusApi.patch(`/items/campaign_content/${contentId}`, req.body, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log(`Контент ${contentId} успешно обновлен`);
+        
+        return res.status(200).json({
+          success: true,
+          data: updateResponse.data.data
+        });
+        
+      } catch (error: any) {
+        console.error('Ошибка при обновлении контента:', error);
+        if (error.response) {
+          console.error('Детали ошибки API:', error.response.data);
+          return res.status(error.response.status).json({ 
+            error: error.response.data.errors?.[0]?.message || "Ошибка при обновлении контента"
+          });
+        }
+        return res.status(500).json({ error: "Внутренняя ошибка сервера" });
       }
-      
-      // Получаем контент для проверки его существования
-      const content = await storage.getCampaignContentById(contentId, token);
-      
-      if (!content) {
-        return res.status(404).json({ error: "Контент не найден" });
-      }
-      
-      // Обновляем контент напрямую через storage API
-      const updatedContent = await storage.updateCampaignContent(contentId, req.body, token);
-      
-      return res.status(200).json({
-        success: true,
-        data: updatedContent
-      });
     } catch (error: any) {
-      log(`Ошибка при обработке запроса на обновление контента: ${error.message}`, 'api');
+      console.error('Критическая ошибка при обработке запроса:', error);
       res.status(500).json({ 
         error: "Ошибка при обновлении контента кампании",
         message: error.message
