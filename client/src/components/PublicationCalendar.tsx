@@ -70,6 +70,7 @@ export default function PublicationCalendar({
   onSortOrderChange,
   onReschedulePost
 }: PublicationCalendarProps) {
+  console.log('PublicationCalendar received onReschedulePost:', typeof onReschedulePost);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
