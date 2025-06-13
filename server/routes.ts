@@ -6872,11 +6872,18 @@ Return your response as a JSON array in this exact format:
         console.log(`[GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics`);
         
         // Получаем темы напрямую из Directus API
+        // Если период "all", загружаем все записи без ограничения
+        const params: any = {
+          filter: filter,
+          sort: ['-created_at']
+        };
+        
+        if (period !== 'all') {
+          params.limit = 100; // Ограничиваем только для конкретных периодов
+        }
+        
         const response = await directusApi.get('/items/campaign_trend_topics', {
-          params: {
-            filter: filter,
-            sort: ['-created_at']
-          },
+          params,
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -6884,6 +6891,7 @@ Return your response as a JSON array in this exact format:
         
         console.log(`[GET /api/campaign-trends] Directus API response status: ${response.status}`);
         console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
+        console.log(`[GET /api/campaign-trends] Period: ${period}, Limit applied: ${period !== 'all' ? '100' : 'NONE (все записи)'}`);
         
         // Проверяем конкретный тренд 166eb032-3372-4807-926a-c6ca93a3db43
         const missingTrendId = '166eb032-3372-4807-926a-c6ca93a3db43';

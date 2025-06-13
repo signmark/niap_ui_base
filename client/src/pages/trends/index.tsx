@@ -1270,41 +1270,20 @@ export default function Trends() {
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         <div className="text-xs text-gray-500 mb-2">
                           Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform}
+                          {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
                         </div>
                         {trends
                           .filter((topic: TrendTopic) => {
-                            // Определяем платформу по нескольким критериям
+                            // Определяем платформу ТОЛЬКО по полю sourceType
                             const detectPlatform = () => {
-                              const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
+                              const sourceType = (topic as any).sourceType || '';
+                              if (!sourceType) return 'unknown';
                               
-                              // 1. Проверяем поле sourceType или type напрямую из данных
-                              const sourceType = (topic as any).sourceType || (topic as any).type || '';
-                              if (sourceType) {
-                                const typeStr = sourceType.toLowerCase();
-                                if (typeStr === 'instagram') return 'instagram';
-                                if (typeStr === 'vk') return 'vk';
-                                if (typeStr === 'telegram') return 'telegram';
-                                if (typeStr === 'facebook') return 'facebook';
-                              }
-                              
-                              // 2. Проверяем медиа-ссылки
-                              const mediaLinks = topic.media_links;
-                              if (mediaLinks) {
-                                const mediaStr = JSON.stringify(mediaLinks).toLowerCase();
-                                if (mediaStr.includes('instagram.com') || mediaStr.includes('fbcdn.net')) return 'instagram';
-                                if (mediaStr.includes('vk.com') || mediaStr.includes('userapi.com')) return 'vk';
-                                if (mediaStr.includes('t.me') || mediaStr.includes('telegram')) return 'telegram';
-                                if (mediaStr.includes('facebook.com') || mediaStr.includes('fb.com')) return 'facebook';
-                              }
-                              
-                              // 3. Проверяем URL источника
-                              if (source) {
-                                const url = source.url.toLowerCase();
-                                if (url.includes('instagram.com')) return 'instagram';
-                                if (url.includes('vk.com') || url.includes('vkontakte.ru')) return 'vk';
-                                if (url.includes('t.me') || url.includes('telegram.org')) return 'telegram';
-                                if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
-                              }
+                              const normalized = sourceType.toLowerCase().trim();
+                              if (normalized === 'instagram') return 'instagram';
+                              if (normalized === 'vk' || normalized === 'vkontakte') return 'vk';
+                              if (normalized === 'telegram') return 'telegram';
+                              if (normalized === 'facebook') return 'facebook';
                               
                               return 'unknown';
                             };
@@ -1354,16 +1333,13 @@ export default function Trends() {
                             
                             const finalResult = withinPeriod && matchesSearch && platformMatches;
                             
-                            // Отладочная информация для всех Instagram постов
-                            if (detectedPlatform === 'instagram' || (topic as any).sourceType === 'instagram') {
-                              const postDate = topic.created_at || topic.createdAt;
-                              console.log(`Instagram post ${topic.id}: ${postDate} - ${finalResult ? 'ПОКАЗАН' : 'СКРЫТ'}`);
-                            }
-                            
-                            // Ищем посты 2023 года
+                            // Ищем посты 2023 года (включая Instagram от 24 мая 2023)
                             const postDate = new Date(topic.created_at || topic.createdAt || 0);
                             if (postDate.getFullYear() === 2023) {
-                              console.log(`Пост 2023 года: ${topic.id} - ${postDate.toLocaleDateString()} - платформа: ${detectedPlatform} - показан: ${finalResult}`);
+                              console.log(`📅 Пост 2023 года: ${topic.id} | ${postDate.toLocaleDateString()} | платформа: ${detectedPlatform} | показан: ${finalResult ? '✅' : '❌'}`);
+                              if (postDate.getMonth() === 4 && postDate.getDate() === 24) { // май = месяц 4
+                                console.log(`🎯 НАЙДЕН ПОСТ ОТ 24 МАЯ 2023: ${topic.id} | заголовок: ${topic.title.substring(0, 50)}...`);
+                              }
                             }
                             
                             return finalResult;
