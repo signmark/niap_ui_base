@@ -230,86 +230,44 @@ export default function PublicationCalendar({
   const getDayContent = (day: Date) => {
     // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
     const uniquePostsMap = new Map<string, CampaignContent>();
-    const today = new Date();
-    const isDayToday = isSameDay(startOfDay(day), startOfDay(today));
     
-    // Проходим по всем постам и собираем только уникальные на эту дату
-    content.forEach((post, index) => {
+    // Проходим ТОЛЬКО по запланированным постам
+    const scheduledPosts = content.filter(post => post.status === 'scheduled');
+    
+    scheduledPosts.forEach((post, index) => {
       // Формируем массив дат, которые относятся к этому посту
       let relevantDates: Date[] = [];
       let hasAnyDates = false;
       
       // Проверяем наличие socialPlatforms
       if (!post.socialPlatforms || typeof post.socialPlatforms !== 'object' || Object.keys(post.socialPlatforms).length === 0) {
-        // Если сегодняшний день и нет платформ - показываем как черновик
-        if (isDayToday) {
-          uniquePostsMap.set(post.id, post);
-        }
         return;
       }
       
-      // Отладка для первых 5 постов
-      if (index < 5 && day.getDate() <= 3) {
-        console.log(`Post ${index}: publishedAt=${post.publishedAt}, scheduledAt=${post.scheduledAt}, socialPlatforms=`, Object.keys(post.socialPlatforms || {}));
+      // Отладка для запланированных постов на 13 июня
+      if (day.getDate() === 13 && index < 5) {
+        console.log(`КАЛЕНДАРЬ 13 ИЮНЯ: Post ${post.id} - status: ${post.status}`);
       }
       
-      // 1. Проверяем publishedAt
-      if (post.publishedAt) {
-        try {
-          const pubDate = new Date(post.publishedAt);
-          relevantDates.push(pubDate);
-          hasAnyDates = true;
-          if (index < 5 && day.getDate() <= 3) {
-            console.log(`  - publishedAt date: ${pubDate.toDateString()}`);
-          }
-        } catch (e) {}
-      }
-      
-      // 2. Проверяем scheduledAt
+      // Проверяем ТОЛЬКО scheduledAt для запланированных постов
       if (post.scheduledAt) {
         try {
           const schedDate = new Date(post.scheduledAt);
           relevantDates.push(schedDate);
           hasAnyDates = true;
-          if (index < 5 && day.getDate() <= 3) {
-            console.log(`  - scheduledAt date: ${schedDate.toDateString()}`);
-          }
         } catch (e) {}
       }
       
-      // 3. Проверяем даты из платформ социальных сетей
-      if (post.socialPlatforms) {
-        for (const platform in post.socialPlatforms) {
-          const platformData = post.socialPlatforms[platform as SocialPlatform];
-          
-          // Проверяем дату публикации
-          if (platformData && platformData.publishedAt) {
-            try {
-              relevantDates.push(new Date(platformData.publishedAt));
-              hasAnyDates = true;
-            } catch (e) {}
-          }
-          
-          // Проверяем запланированную дату для платформы
-          if (platformData && platformData.scheduledAt) {
-            try {
-              relevantDates.push(new Date(platformData.scheduledAt));
-              hasAnyDates = true;
-            } catch (e) {}
-          }
-        }
-      }
+      // Для запланированных постов проверяем только основную дату scheduledAt
+      // Даты из платформ не используем, так как они могут быть разными
       
       // 4. Проверяем совпадение любой даты с указанным днем
       const isRelevantForDay = relevantDates.some(date => 
         isSameDay(startOfDay(day), startOfDay(date))
       );
       
-      // 5. Если нет дат, но это сегодняшний день - показываем как черновик
-      const shouldShowAsToday = !hasAnyDates && isDayToday;
-      
       // Если пост относится к этому дню, добавляем его в Map
-      if (isRelevantForDay || shouldShowAsToday) {
+      if (isRelevantForDay) {
         uniquePostsMap.set(post.id, post);
       }
     });
