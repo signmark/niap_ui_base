@@ -48,9 +48,25 @@ export default function CalendarView() {
     refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
   });
 
-  // Фильтруем только запланированные публикации (status = 'scheduled')
+  // Фильтруем только действительно запланированные публикации
   const allContent: CampaignContent[] = campaignContentResponse?.data || [];
-  const campaignContent: CampaignContent[] = allContent.filter(content => content.status === 'scheduled');
+  const campaignContent: CampaignContent[] = allContent.filter(content => {
+    // Только статус 'scheduled'
+    if (content.status !== 'scheduled') return false;
+    
+    // Дополнительная проверка: исключаем контент с опубликованными платформами
+    if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+      const platforms = Object.values(content.socialPlatforms);
+      const hasPublishedPlatforms = platforms.some(platform => platform?.status === 'published');
+      
+      // Если есть опубликованные платформы - не показываем в календаре запланированных
+      if (hasPublishedPlatforms) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
 
   // Отладка данных календаря
   useEffect(() => {
