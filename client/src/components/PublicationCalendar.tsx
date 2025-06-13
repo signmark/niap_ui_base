@@ -233,12 +233,16 @@ export default function PublicationCalendar({
                     }`}
                     onDragOver={(e) => {
                       e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
                       handleDragOver(date);
                     }}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => {
                       e.preventDefault();
-                      handleDrop(date);
+                      const draggedId = e.dataTransfer.getData('text/plain');
+                      if (draggedId) {
+                        handleDrop(date);
+                      }
                     }}
                   >
                     <span>{date.getDate()}</span>
@@ -299,15 +303,25 @@ export default function PublicationCalendar({
             {!isLoading && displayedContent.length > 0 && (
               <div className={`grid gap-4 ${isFullscreen ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                 {displayedContent.map((post) => (
-                  <Card 
-                    key={post.id} 
-                    className={`overflow-hidden hover:shadow-md transition-shadow cursor-move ${
-                      draggedPost === post.id ? 'opacity-50 scale-95' : ''
-                    }`}
+                  <div
+                    key={post.id}
+                    className={`${
+                      post.status === 'scheduled' ? 'cursor-move' : 'cursor-default'
+                    } ${draggedPost === post.id ? 'opacity-50 scale-95' : ''}`}
                     draggable={post.status === 'scheduled'}
-                    onDragStart={() => handleDragStart(post.id)}
+                    onDragStart={(e) => {
+                      if (post.status === 'scheduled') {
+                        handleDragStart(post.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', post.id);
+                      } else {
+                        e.preventDefault();
+                      }
+                    }}
                     onDragEnd={handleDragEnd}
                   >
+                    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
@@ -363,7 +377,12 @@ export default function PublicationCalendar({
                         </Button>
                         {post.status === 'scheduled' && (
                           <div className="flex items-center gap-1">
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <div 
+                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded flex items-center"
+                              title="Перетащите для изменения даты"
+                            >
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </div>
                             {onReschedulePost && (
                               <Button
                                 variant="ghost"
@@ -381,7 +400,8 @@ export default function PublicationCalendar({
                         )}
                       </div>
                     </CardContent>
-                  </Card>
+                    </Card>
+                  </div>
                 ))}
               </div>
             )}
