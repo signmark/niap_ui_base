@@ -383,12 +383,28 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
-      // Преобразуем UTC дату к локальному часовому поясу пользователя
-      // без прибавления смещения, которое JavaScript делает автоматически
-      // для дат в ISO формате
-      const utcDate = new Date(dateObj.toUTCString());
-      
-      return format(utcDate, showFullDate ? 'dd MMMM yyyy, HH:mm' : 'HH:mm', { locale: ru });
+      // JavaScript автоматически отображает время в локальном часовом поясе пользователя
+      if (showFullDate) {
+        const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric'
+        });
+        
+        const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        
+        return `${formattedDate}, ${formattedTime}`;
+      } else {
+        return dateObj.toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+      }
     } catch (error) {
       return "--:--";
     }
