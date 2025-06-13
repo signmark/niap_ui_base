@@ -3,23 +3,25 @@ import { SocialPlatform } from '@/types';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
 
 interface SocialMediaFilterProps {
-  onFilterChange: (selected: SocialPlatform[]) => void;
-  initialSelected?: SocialPlatform[];
+  platforms: string[];
+  onPlatformChange: (selected: string[]) => void;
+  availablePlatforms: string[];
   showCounts?: boolean;
-  platformCounts?: Record<SocialPlatform, number>;
+  platformCounts?: Record<string, number>;
   className?: string;
 }
 
 export default function SocialMediaFilter({
-  onFilterChange,
-  initialSelected = [],
+  platforms,
+  onPlatformChange,
+  availablePlatforms,
   showCounts = false,
   platformCounts = {},
   className = ''
 }: SocialMediaFilterProps) {
-  const [selected, setSelected] = useState<SocialPlatform[]>(initialSelected);
+  const [selected, setSelected] = useState<string[]>(platforms);
 
-  const platforms = [
+  const platformOptions = [
     {
       id: 'instagram' as SocialPlatform,
       name: 'Instagram',
@@ -54,13 +56,13 @@ export default function SocialMediaFilter({
     }
   ];
 
-  const handleToggle = (platform: SocialPlatform) => {
+  const handleToggle = (platform: string) => {
     const newSelected = selected.includes(platform)
       ? selected.filter(p => p !== platform)
       : [...selected, platform];
     
     setSelected(newSelected);
-    onFilterChange(newSelected);
+    onPlatformChange(newSelected);
   };
 
   return (
@@ -70,7 +72,7 @@ export default function SocialMediaFilter({
       </div>
       
       <div className="flex flex-wrap gap-2">
-        {platforms.map(platform => (
+        {platformOptions.filter(opt => availablePlatforms.includes(opt.id)).map(platform => (
           <button
             key={platform.id}
             onClick={() => handleToggle(platform.id)}

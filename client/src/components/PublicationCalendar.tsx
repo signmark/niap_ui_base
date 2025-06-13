@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Clock, Maximize2, Minimize2, ArrowUpDown, GripVertical } from 'lucide-react';
 import { isSameDay } from 'date-fns';
 import SocialMediaIcon from '@/components/SocialMediaIcon';
-import SocialMediaFilter from '@/components/SocialMediaFilter';
+
 import { useToast } from '@/hooks/use-toast';
 
 // Временный тип для совместимости
@@ -247,11 +247,29 @@ export default function PublicationCalendar({
               initialFocus
             />
             
-            <SocialMediaFilter 
-              platforms={selectedPlatforms}
-              onPlatformChange={handlePlatformChange}
-              availablePlatforms={availablePlatforms}
-            />
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Фильтр по платформам</div>
+              <div className="flex flex-wrap gap-2">
+                {availablePlatforms.map(platform => (
+                  <button
+                    key={platform}
+                    onClick={() => {
+                      const newSelected = selectedPlatforms.includes(platform)
+                        ? selectedPlatforms.filter(p => p !== platform)
+                        : [...selectedPlatforms, platform];
+                      setSelectedPlatforms(newSelected);
+                    }}
+                    className={`px-3 py-1.5 rounded-md border transition-colors ${
+                      selectedPlatforms.includes(platform)
+                        ? 'bg-blue-100 text-blue-600 border-blue-300'
+                        : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/60'
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
