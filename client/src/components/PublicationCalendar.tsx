@@ -530,11 +530,11 @@ export default function PublicationCalendar({
       
       {/* Диалог с деталями поста */}
       <Dialog open={isPostDetailOpen} onOpenChange={setIsPostDetailOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] w-[95vw] overflow-y-auto overflow-x-hidden">
           {selectedPost && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedPost.title || 'Без названия'}</DialogTitle>
+                <DialogTitle className="text-lg font-semibold break-words">{selectedPost.title || 'Без названия'}</DialogTitle>
                 <DialogDescription>
                   <div className="flex items-center mt-1">
                     <CalendarIcon className="h-4 w-4 mr-2" />
@@ -583,20 +583,34 @@ export default function PublicationCalendar({
                 </div>
               )}
               
-              <div className="mt-4 prose prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: selectedPost.content || '' }} />
+              <div className="mt-4 prose prose-sm max-w-none overflow-hidden">
+                <div 
+                  className="break-words overflow-wrap-anywhere"
+                  dangerouslySetInnerHTML={{ __html: selectedPost.content || '' }} 
+                />
               </div>
               
               {selectedPost.imageUrl && (
-                <div className="mt-4">
-                  <img 
-                    src={selectedPost.imageUrl} 
-                    alt={selectedPost.title || 'Content image'} 
-                    className="rounded-md max-h-[300px] w-auto mx-auto"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-                    }}
-                  />
+                <div className="mt-4 flex justify-center w-full">
+                  <div className="max-w-full max-h-[300px] overflow-hidden rounded-md border">
+                    <img 
+                      src={selectedPost.imageUrl} 
+                      alt={selectedPost.title || 'Content image'} 
+                      className="w-full h-auto max-h-[300px] object-contain"
+                      style={{ maxWidth: '100%', height: 'auto' }}
+                      onLoad={(e) => {
+                        // Принудительно ограничиваем размер после загрузки
+                        const img = e.target as HTMLImageElement;
+                        if (img.naturalWidth > 600) {
+                          img.style.width = '100%';
+                          img.style.maxWidth = '600px';
+                        }
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                      }}
+                    />
+                  </div>
                 </div>
               )}
               
