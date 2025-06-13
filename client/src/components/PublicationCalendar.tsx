@@ -12,6 +12,7 @@ import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useToast } from '@/hooks/use-toast';
 
 interface PublicationCalendarProps {
   content: CampaignContent[];
@@ -107,6 +108,7 @@ export default function PublicationCalendar({
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
+  const { toast } = useToast();
 
   // Обработчик перетаскивания поста на новую дату
   const handleDropPost = (postId: string, newDate: Date) => {
@@ -529,8 +531,9 @@ export default function PublicationCalendar({
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
+    <DndProvider backend={HTML5Backend}>
+      <Card>
+        <CardContent className="pt-6">
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -562,10 +565,12 @@ export default function PublicationCalendar({
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => (
-                  <div className="flex flex-col items-center">
-                    <span>{date.getDate()}</span>
-                    {getDayContent(date)}
-                  </div>
+                  <DroppableDay day={date} onDropPost={handleDropPost}>
+                    <div className="flex flex-col items-center">
+                      <span>{date.getDate()}</span>
+                      {getDayContent(date)}
+                    </div>
+                  </DroppableDay>
                 )
               }}
               initialFocus
@@ -770,6 +775,7 @@ export default function PublicationCalendar({
           )}
         </DialogContent>
       </Dialog>
-    </Card>
+      </Card>
+    </DndProvider>
   );
 }
