@@ -1278,23 +1278,54 @@ export default function Trends() {
                             }
                             
                             const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
-                            if (!source) return false;
                             
-                            const url = source.url.toLowerCase();
                             let platformMatches = false;
+                            
+                            // Определяем платформу по нескольким критериям
+                            const detectPlatform = () => {
+                              // 1. Проверяем медиа-ссылки
+                              const mediaLinks = topic.media_links;
+                              if (mediaLinks) {
+                                const mediaStr = JSON.stringify(mediaLinks).toLowerCase();
+                                if (mediaStr.includes('instagram.com') || mediaStr.includes('fbcdn.net')) return 'instagram';
+                                if (mediaStr.includes('vk.com') || mediaStr.includes('userapi.com')) return 'vk';
+                                if (mediaStr.includes('t.me') || mediaStr.includes('telegram')) return 'telegram';
+                                if (mediaStr.includes('facebook.com') || mediaStr.includes('fb.com')) return 'facebook';
+                              }
+                              
+                              // 2. Проверяем URL источника
+                              if (source) {
+                                const url = source.url.toLowerCase();
+                                if (url.includes('instagram.com')) return 'instagram';
+                                if (url.includes('vk.com') || url.includes('vkontakte.ru')) return 'vk';
+                                if (url.includes('t.me') || url.includes('telegram.org')) return 'telegram';
+                                if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
+                              }
+                              
+                              // 3. Проверяем поле sourceType или type
+                              const sourceType = (topic.sourceType || topic.type || '').toLowerCase();
+                              if (sourceType === 'instagram') return 'instagram';
+                              if (sourceType === 'vk') return 'vk';
+                              if (sourceType === 'telegram') return 'telegram';
+                              if (sourceType === 'facebook') return 'facebook';
+                              
+                              return 'unknown';
+                            };
+                            
+                            const detectedPlatform = detectPlatform();
                             
                             switch (selectedPlatform) {
                               case 'instagram':
-                                platformMatches = url.includes('instagram.com');
+                                platformMatches = detectedPlatform === 'instagram';
                                 break;
                               case 'vk':
-                                platformMatches = url.includes('vk.com') || url.includes('vkontakte.ru');
+                                platformMatches = detectedPlatform === 'vk';
                                 break;
                               case 'telegram':
-                                platformMatches = url.includes('t.me') || url.includes('telegram.org');
+                                platformMatches = detectedPlatform === 'telegram';
                                 break;
                               case 'facebook':
-                                platformMatches = url.includes('facebook.com') || url.includes('fb.com');
+                                platformMatches = detectedPlatform === 'facebook';
                                 break;
                               default:
                                 platformMatches = true;
