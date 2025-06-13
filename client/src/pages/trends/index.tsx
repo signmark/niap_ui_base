@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -156,7 +156,7 @@ export default function Trends() {
   const [selectedTopics, setSelectedTopics] = useState<TrendTopic[]>([]);
   
   // Состояния для сортировки
-  type SortField = 'reactions' | 'comments' | 'views' | 'trendScore' | 'date' | 'none';
+  type SortField = 'reactions' | 'comments' | 'views' | 'trendScore' | 'date' | 'platform' | 'none';
   const [sortField, setSortField] = useState<SortField>('none');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   // Используем глобальный стор кампаний
@@ -1158,6 +1158,12 @@ export default function Trends() {
                                   <span>По дате</span>
                                 </div>
                               )}
+                              {sortField === 'platform' && (
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-4 w-4 text-indigo-500" />
+                                  <span>По соцсетям</span>
+                                </div>
+                              )}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -1197,6 +1203,12 @@ export default function Trends() {
                               <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-gray-500" />
                                 <span>По дате</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="platform">
+                              <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-indigo-500" />
+                                <span>По соцсетям</span>
                               </div>
                             </SelectItem>
                           </SelectContent>
@@ -1262,6 +1274,28 @@ export default function Trends() {
                                 valueA = new Date(a.created_at || a.createdAt || 0).getTime();
                                 valueB = new Date(b.created_at || b.createdAt || 0).getTime();
                                 break;
+                              case 'platform':
+                                // Определяем платформу по источнику
+                                const sourceA = sources.find(s => s.id === a.source_id || s.id === a.sourceId);
+                                const sourceB = sources.find(s => s.id === b.source_id || s.id === b.sourceId);
+                                
+                                const getPlatform = (source: any) => {
+                                  if (!source) return 'zz_unknown'; // Неизвестные в конце
+                                  const url = source.url.toLowerCase();
+                                  if (url.includes('instagram.com')) return 'instagram';
+                                  if (url.includes('vk.com') || url.includes('vkontakte.ru')) return 'vk';
+                                  if (url.includes('t.me') || url.includes('telegram.org')) return 'telegram';
+                                  if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
+                                  return 'zz_other';
+                                };
+                                
+                                valueA = getPlatform(sourceA);
+                                valueB = getPlatform(sourceB);
+                                
+                                // Для строковых значений используем localeCompare
+                                return sortDirection === 'asc' 
+                                  ? valueA.localeCompare(valueB) 
+                                  : valueB.localeCompare(valueA);
                               default:
                                 return 0;
                             }
