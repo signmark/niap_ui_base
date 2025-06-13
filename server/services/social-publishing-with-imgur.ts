@@ -34,6 +34,10 @@ export class SocialPublishingWithImgurService {
         try {
           // Прямая авторизация через REST API
           const directusUrl = process.env.DIRECTUS_URL;
+          if (!directusUrl) {
+            console.log(`[social-publishing] DIRECTUS_URL не настроен в переменных окружения`);
+            return null;
+          }
           const response = await axios.post(`${directusUrl}/auth/login`, {
             email,
             password
@@ -2536,6 +2540,10 @@ export class SocialPublishingWithImgurService {
     
     // Получаем URL Directus
     const directusUrl = process.env.DIRECTUS_URL;
+    if (!directusUrl) {
+      console.log(`[social-publishing] DIRECTUS_URL не настроен в переменных окружения`);
+      return null;
+    }
     
     try {
       // 1. Получаем токен администратора
