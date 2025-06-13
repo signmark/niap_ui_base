@@ -152,7 +152,10 @@ export default function CalendarView() {
     }
   }, [selectedCampaign?.id, getAuthToken, queryClient, toast]);
 
-  console.log('calendar.tsx: handleReschedulePost defined:', typeof handleReschedulePost, handleReschedulePost);
+  console.log('🔥 CALENDAR.TSX RENDER: handleReschedulePost defined:', typeof handleReschedulePost, handleReschedulePost);
+  console.log('🔥 CALENDAR.TSX: Component is rendering!');
+  console.log('🔥 CALENDAR.TSX: selectedCampaign:', selectedCampaign?.id);
+  console.log('🔥 CALENDAR.TSX: campaignContent length:', campaignContent?.length);
 
   return (
     <div className="space-y-4">
