@@ -152,6 +152,8 @@ export default function CalendarView() {
     }
   }, [selectedCampaign?.id, getAuthToken, queryClient, toast]);
 
+  console.log('calendar.tsx: handleReschedulePost defined:', typeof handleReschedulePost, handleReschedulePost);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -216,11 +218,7 @@ export default function CalendarView() {
               onViewPost={(post) => console.log('View post details:', post)}
               initialSortOrder={sortOrder}
               onSortOrderChange={setSortOrder}
-              onReschedulePost={(() => {
-                console.log('calendar.tsx: Preparing onReschedulePost, handleReschedulePost type:', typeof handleReschedulePost);
-                console.log('calendar.tsx: handleReschedulePost function:', handleReschedulePost);
-                return handleReschedulePost;
-              })()}
+              onReschedulePost={handleReschedulePost}
             />
           )}
         </>
