@@ -223,6 +223,12 @@ export default function ScheduledPublicationDetails({
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
+      // Отладочная информация
+      console.log("DEBUG formatScheduledDate - input date:", date);
+      console.log("DEBUG formatScheduledDate - dateObj:", dateObj);
+      console.log("DEBUG formatScheduledDate - dateObj.getTime():", dateObj.getTime());
+      console.log("DEBUG formatScheduledDate - dateObj.toISOString():", dateObj.toISOString());
+      
       // JavaScript автоматически отображает время в локальном часовом поясе пользователя
       const formattedDate = dateObj.toLocaleDateString('ru-RU', {
         day: '2-digit',
@@ -235,6 +241,8 @@ export default function ScheduledPublicationDetails({
         minute: '2-digit',
         hour12: false
       });
+      
+      console.log("DEBUG formatScheduledDate - formattedTime:", formattedTime);
       
       return `${formattedDate}, ${formattedTime}`;
     } catch (error) {
