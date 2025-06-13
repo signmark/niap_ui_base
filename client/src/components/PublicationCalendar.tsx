@@ -231,8 +231,27 @@ export default function PublicationCalendar({
     // Используем Map для хранения уникальных постов по ID, чтобы избежать дублирования
     const uniquePostsMap = new Map<string, CampaignContent>();
     
-    // Проходим ТОЛЬКО по запланированным постам
-    const scheduledPosts = content.filter(post => post.status === 'scheduled');
+    // Проходим ТОЛЬКО по запланированным постам, исключая частично опубликованные
+    const scheduledPosts = content.filter(post => {
+      if (post.status !== 'scheduled') return false;
+      
+      // Дополнительная проверка: исключаем контент с частично опубликованными платформами
+      if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
+        const platforms = Object.values(post.socialPlatforms);
+        const hasPublishedPlatforms = platforms.some(platform => platform?.status === 'published');
+        const hasFailedPlatforms = platforms.some(platform => 
+          platform?.status === 'failed' || platform?.status === 'error'
+        );
+        
+        // Если есть как опубликованные, так и неуспешные платформы - это частично опубликованный контент
+        // Не показываем его в календаре как запланированный
+        if (hasPublishedPlatforms && hasFailedPlatforms) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
     
     scheduledPosts.forEach((post, index) => {
       // Формируем массив дат, которые относятся к этому посту
