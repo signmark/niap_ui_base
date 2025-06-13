@@ -535,8 +535,8 @@ export default function PublicationCalendar({
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
               <Button 
                 variant="outline" 
                 size="icon"
@@ -671,7 +671,7 @@ export default function PublicationCalendar({
                 ))}
               </div>
             )}
-          </div>
+            </div>
           </div>
         </CardContent>
       
