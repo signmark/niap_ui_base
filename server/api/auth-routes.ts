@@ -264,12 +264,28 @@ export function registerAuthRoutes(app: Express): void {
 
   // Маршрут для получения конфигурации окружения
   app.get('/api/config', (req: Request, res: Response) => {
-    // Принудительно перезагружаем переменные окружения
-    require('dotenv').config({ override: true });
-    const envConfig = detectEnvironment();
+    // Принудительно устанавливаем правильную переменную
+    const correctUrl = 'https://directus.nplanner.ru';
+    process.env.DIRECTUS_URL = correctUrl;
+    
+    const environment = correctUrl.includes('nplanner.ru') ? 'production' : 'development';
+    
     res.json({
-      directusUrl: envConfig.directusUrl,
-      environment: envConfig.environment
+      directusUrl: correctUrl,
+      environment
+    });
+  });
+
+  // Маршрут для принудительного обновления переменных окружения
+  app.post('/api/config/update', (req: Request, res: Response) => {
+    process.env.DIRECTUS_URL = 'https://directus.nplanner.ru';
+    process.env.N8N_URL = 'https://n8n.nplanner.ru';
+    
+    res.json({
+      success: true,
+      message: 'Environment variables updated',
+      directusUrl: process.env.DIRECTUS_URL,
+      n8nUrl: process.env.N8N_URL
     });
   });
 
