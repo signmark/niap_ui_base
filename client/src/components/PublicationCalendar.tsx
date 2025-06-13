@@ -383,30 +383,14 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
-      // Отладочная информация для понимания проблемы
-      console.log("formatScheduledTime - input:", date);
-      console.log("formatScheduledTime - dateObj:", dateObj);
-      console.log("formatScheduledTime - dateObj.toISOString():", dateObj.toISOString());
-      console.log("formatScheduledTime - dateObj.getTimezoneOffset():", dateObj.getTimezoneOffset());
+      // Отладка: проверим что происходит с временем
+      console.log("🕐 formatScheduledTime input:", date);
+      console.log("🕐 dateObj:", dateObj.toString());
+      console.log("🕐 ISO:", dateObj.toISOString());
       
-      // Проверим что приходит и как отображается
-      const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-      
-      console.log("formatScheduledTime - formattedTime:", formattedTime);
-      
-      // Попробуем принудительно добавить 3 часа если это UTC время
+      // Принудительно добавляем 3 часа к UTC времени для получения московского времени
       const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
-      const moscowFormattedTime = moscowTime.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-      
-      console.log("formatScheduledTime - moscowFormattedTime:", moscowFormattedTime);
+      console.log("🕐 moscowTime:", moscowTime.toString());
       
       // JavaScript автоматически отображает время в локальном часовом поясе пользователя
       if (showFullDate) {
@@ -416,11 +400,25 @@ export default function PublicationCalendar({
           year: 'numeric'
         });
         
-        return `${formattedDate}, ${moscowFormattedTime}`;
+        const formattedTime = moscowTime.toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        
+        console.log("🕐 result (full):", `${formattedDate}, ${formattedTime}`);
+        return `${formattedDate}, ${formattedTime}`;
       } else {
-        return moscowFormattedTime;
+        const timeResult = moscowTime.toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        console.log("🕐 result (time only):", timeResult);
+        return timeResult;
       }
     } catch (error) {
+      console.error("🕐 formatScheduledTime error:", error);
       return "--:--";
     }
   };
