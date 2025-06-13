@@ -223,12 +223,8 @@ export default function ScheduledPublicationDetails({
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
-      // Преобразуем UTC дату к локальному часовому поясу пользователя
-      // без прибавления смещения, которое JavaScript делает автоматически
-      // для дат в ISO формате
-      const utcDate = new Date(dateObj.toUTCString());
-      
-      return format(utcDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // Используем локальное время пользователя без преобразования в UTC
+      return format(dateObj, 'dd MMMM yyyy, HH:mm', { locale: ru });
     } catch (error) {
       console.error("Ошибка форматирования даты:", error);
       return "Некорректная дата";
