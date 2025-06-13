@@ -115,31 +115,49 @@ export default function PublicationCalendar({
   };
 
   const handleDragStart = (postId: string) => {
+    console.log('Drag started for post:', postId);
     setDraggedPost(postId);
   };
 
   const handleDragEnd = () => {
+    console.log('Drag ended');
     setDraggedPost(null);
     setDragOverDate(null);
   };
 
   const handleDragOver = (date: Date) => {
+    console.log('Drag over date:', date);
     setDragOverDate(date);
   };
 
   const handleDragLeave = () => {
+    console.log('Drag leave');
     setDragOverDate(null);
   };
 
   const handleDrop = (targetDate: Date) => {
-    if (draggedPost && onReschedulePost) {
+    console.log('Drop on date:', targetDate, 'Dragged post:', draggedPost);
+    
+    if (draggedPost) {
       const time = "12:00";
-      onReschedulePost(draggedPost, targetDate, time);
+      
+      // Показываем toast независимо от onReschedulePost
       toast({
         title: "Пост перенесен",
-        description: `Пост успешно перенесен на ${targetDate.toLocaleDateString('ru-RU')}`,
+        description: `Пост ${draggedPost} перенесен на ${targetDate.toLocaleDateString('ru-RU')} в ${time}`,
       });
+      
+      // Вызываем onReschedulePost только если он передан
+      if (onReschedulePost) {
+        console.log('Calling onReschedulePost');
+        onReschedulePost(draggedPost, targetDate, time);
+      } else {
+        console.log('onReschedulePost not provided');
+      }
+    } else {
+      console.log('No dragged post');
     }
+    
     setDraggedPost(null);
     setDragOverDate(null);
   };
