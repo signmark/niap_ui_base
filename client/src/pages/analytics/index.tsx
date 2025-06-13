@@ -49,7 +49,14 @@ export default function AnalyticsPage() {
     mutationFn: async () => {
       const days = selectedPeriod === '30days' ? 30 : 7;
       
-      const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/posts-to-analytics`, {
+      const n8nUrl = import.meta.env.VITE_N8N_URL;
+      console.log('🔧 N8N URL для аналитики:', n8nUrl);
+      
+      if (!n8nUrl) {
+        throw new Error('VITE_N8N_URL не настроен');
+      }
+      
+      const response = await fetch(`${n8nUrl}/webhook/posts-to-analytics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

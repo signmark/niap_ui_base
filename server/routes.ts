@@ -5562,7 +5562,12 @@ Return your response as a JSON array in this exact format:
           collectSources: req.body.collectSources,
         });
         
-        const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
+        const n8nUrl = process.env.N8N_URL;
+        if (!n8nUrl) {
+          console.log('N8N_URL не настроен в переменных окружения');
+          return res.status(500).json({ success: false, error: 'N8N_URL не настроен' });
+        }
+        
         webhookResponse = await axios.post(`${n8nUrl}/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439`, {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
