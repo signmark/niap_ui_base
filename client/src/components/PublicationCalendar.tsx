@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc, Maximize2, Minimize2, Check } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
-import { DndProvider } from 'react-dnd';
+import { DndProvider, useDrop, useDrag } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,6 +28,10 @@ interface PublicationCalendarProps {
 const ItemTypes = {
   POST: 'post'
 };
+
+interface DraggedPost {
+  id: string;
+}
 
 // Компонент перетаскиваемого поста
 interface DraggablePostProps {
