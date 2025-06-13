@@ -1008,7 +1008,10 @@ export class SocialPublishingWithImgurService {
     // 3. Резервный URL (если ничего не сработало)
     
     // Основной URL продакшена
-    const productionUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+    const productionUrl = process.env.N8N_URL;
+    if (!productionUrl) {
+      throw new Error('N8N_URL не настроен в переменных окружения');
+    }
     
     // URL для разработки на Replit
     const developmentUrl = 'https://b97f8d4a-3eb5-439c-9956-3cacfdeb3f2a-00-30nikq0wek8gj.picard.replit.dev';
