@@ -149,7 +149,12 @@ export default function PublicationCalendar({
       
       // Вызываем onReschedulePost
       console.log('Calling onReschedulePost with:', { postId: draggedPost, targetDate, time });
-      onReschedulePost(draggedPost, targetDate, time);
+      console.log('onReschedulePost type:', typeof onReschedulePost);
+      if (typeof onReschedulePost === 'function') {
+        onReschedulePost(draggedPost, targetDate, time);
+      } else {
+        console.error('onReschedulePost is not a function:', onReschedulePost);
+      }
     } else {
       console.log('No dragged post');
     }

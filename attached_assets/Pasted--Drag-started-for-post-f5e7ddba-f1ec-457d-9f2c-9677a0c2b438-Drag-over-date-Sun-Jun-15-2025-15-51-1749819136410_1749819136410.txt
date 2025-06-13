@@ -1,0 +1,159 @@
+ Drag started for post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+ Drag over date: Sun Jun 15 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ Drag over date: Sun Jun 15 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:56 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время)
+ Drop on date: Sat Jun 14 2025 15:51:57 GMT+0300 (Москва, стандартное время) Dragged post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+ Calling onReschedulePost with: Object
+/src/components/Publ…ionCalendar.tsx:125 Uncaught TypeError: onReschedulePost is not a function
+    at handleDrop (/src/components/PublicationCalendar.tsx:125:7)
+    at onDrop (/src/components/PublicationCalendar.tsx:300:21)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=24e5b1ec:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=24e5b1ec:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=24e5b1ec:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=24e5b1ec:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=24e5b1ec:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=24e5b1ec:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=24e5b1ec:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=24e5b1ec:7051:11)
+chunk-RPCDYKBN.js?v=24e5b1ec:3750 Uncaught TypeError: onReschedulePost is not a function
+    at handleDrop (/src/components/PublicationCalendar.tsx:125:7)
+    at onDrop (/src/components/PublicationCalendar.tsx:300:21)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=24e5b1ec:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=24e5b1ec:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=24e5b1ec:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=24e5b1ec:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=24e5b1ec:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=24e5b1ec:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=24e5b1ec:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=24e5b1ec:7051:11)
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+ Drag ended
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+ Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+ Успешно получены данные кампании: NPlanner.ru
