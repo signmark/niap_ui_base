@@ -34,25 +34,17 @@ function formatScheduledTime(scheduledAt: string): string {
   if (!scheduledAt) return 'Не запланировано';
   
   try {
-    let date: Date;
-    
-    // Если дата приходит без временной зоны, интерпретируем как московское время
-    if (!scheduledAt.includes('Z') && !scheduledAt.includes('+')) {
-      // Добавляем смещение UTC+3 для московского времени
-      const moscowTime = new Date(scheduledAt + '+03:00');
-      date = moscowTime;
-    } else {
-      date = new Date(scheduledAt);
-    }
+    // Сервер отправляет время как "2025-06-13T11:55:00" (без Z)
+    // Это уже московское время, просто парсим как локальное
+    const date = new Date(scheduledAt);
     
     // Проверяем на валидность даты
     if (isNaN(date.getTime())) {
       return 'Некорректная дата';
     }
     
-    // Форматируем в московском времени
+    // Форматируем как московское время (уже локальное)
     return date.toLocaleString('ru-RU', {
-      timeZone: 'Europe/Moscow',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -217,35 +209,57 @@ export default function PublicationCalendar({
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               className="rounded-md border"
-              components={{
-                DayContent: ({ date }) => (
-                  <div 
-                    className={`flex flex-col items-center transition-colors ${
-                      dragOverDate && isSameDay(dragOverDate, date) 
-                        ? 'bg-blue-100 border-2 border-blue-300 border-dashed rounded' 
-                        : ''
-                    }`}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = 'move';
-                      handleDragOver(date);
-                    }}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const draggedId = e.dataTransfer.getData('text/plain');
-                      if (draggedId) {
-                        handleDrop(date);
-                      }
-                    }}
-                  >
-                    <span>{date.getDate()}</span>
-                    {getDayContent(date)}
-                  </div>
-                )
-              }}
               initialFocus
             />
+            
+            {/* Drop zones for each day */}
+            <div className="mt-4 p-4 border rounded-md bg-gray-50">
+              <div className="text-sm text-muted-foreground mb-2">
+                {draggedPost ? (
+                  <span className="text-blue-600 font-medium">Перетащите пост на нужную дату ↓</span>
+                ) : (
+                  'Зоны для перетаскивания запланированных постов:'
+                )}
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 7 }, (_, i) => {
+                  const today = new Date();
+                  const targetDate = new Date(today);
+                  targetDate.setDate(today.getDate() + i);
+                  
+                  return (
+                    <div
+                      key={i}
+                      className={`p-3 border-2 border-dashed rounded-lg transition-colors min-h-[60px] flex flex-col items-center justify-center ${
+                        dragOverDate && isSameDay(dragOverDate, targetDate)
+                          ? 'border-blue-500 bg-blue-100'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        handleDragOver(targetDate);
+                      }}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const draggedId = e.dataTransfer.getData('text/plain');
+                        if (draggedId) {
+                          handleDrop(targetDate);
+                        }
+                      }}
+                    >
+                      <div className="text-xs text-center">
+                        <div className="font-medium">{targetDate.getDate()}</div>
+                        <div className="text-muted-foreground">
+                          {targetDate.toLocaleDateString('ru-RU', { month: 'short' })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">Фильтр по платформам</div>
