@@ -125,7 +125,13 @@ export class PublishScheduler {
         
         // Проверяем валидность токена, даже если он не истек по времени
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+          const directusUrl = process.env.DIRECTUS_URL;
+          if (!directusUrl) {
+            console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
+            this.adminTokenCache = null;
+            this.adminTokenTimestamp = 0;
+            return null;
+          }
           const testResponse = await axios.get(`${directusUrl}/users/me`, {
             headers: {
               'Authorization': `Bearer ${this.adminTokenCache}`,
@@ -165,7 +171,11 @@ export class PublishScheduler {
         
         try {
           // Прямая авторизация через REST API
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+          const directusUrl = process.env.DIRECTUS_URL;
+          if (!directusUrl) {
+            console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
+            return null;
+          }
           const response = await axios.post(`${directusUrl}/auth/login`, {
             email,
             password

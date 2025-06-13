@@ -1910,8 +1910,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userToken = token;
       
       // Получаем данные кампании через авторизованный токен
+      const directusUrl = process.env.DIRECTUS_URL;
+      if (!directusUrl) {
+        return res.status(500).json({ error: 'DIRECTUS_URL не настроен в переменных окружения' });
+      }
+      
       const directusApi = axios.create({
-        baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
+        baseURL: directusUrl,
         timeout: 10000
       });
       
@@ -2598,8 +2603,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let userId: string;
       try {
         // Получаем информацию о пользователе через API /users/me
+        const directusUrl = process.env.DIRECTUS_URL;
+        if (!directusUrl) {
+          return res.status(500).json({ error: 'DIRECTUS_URL не настроен в переменных окружения' });
+        }
+        
         const directusApi = axios.create({
-          baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
+          baseURL: directusUrl,
           timeout: 10000
         });
         
