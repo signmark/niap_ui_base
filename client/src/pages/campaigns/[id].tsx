@@ -769,8 +769,19 @@ export default function CampaignDetails() {
         label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
       },
       content: {
-        completed: Boolean(campaignContent && campaignContent.length > 0),
-        label: `Создано ${campaignContent?.length || 0} публикаций`
+        completed: Boolean(allCampaignContent && allCampaignContent.length > 0),
+        label: (() => {
+          if (!allCampaignContent || allCampaignContent.length === 0) return "Создано 0 публикаций";
+          const draftCount = allCampaignContent.filter(post => post.status === 'draft').length;
+          const totalCount = allCampaignContent.length;
+          if (draftCount === totalCount) {
+            return `Создано ${draftCount} черновиков`;
+          } else if (draftCount > 0) {
+            return `Создано ${totalCount} публикаций (${draftCount} черновиков)`;
+          } else {
+            return `Создано ${totalCount} публикаций`;
+          }
+        })()
       },
       socialMedia: {
         completed: Boolean(
