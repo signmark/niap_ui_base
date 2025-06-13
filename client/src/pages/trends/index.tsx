@@ -127,7 +127,7 @@ interface SourcePost {
   metadata: any | null;
 }
 
-type Period = "3days" | "7days" | "14days" | "30days";
+type Period = "3days" | "7days" | "14days" | "30days" | "all";
 
 const isValidPeriod = (period: string): period is Period => {
   return ['3days', '7days', '14days', '30days'].includes(period);
@@ -1268,8 +1268,47 @@ export default function Trends() {
                       </div>
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                        {console.log('Total trends before filtering:', trends.length)}
                         {trends
                           .filter((topic: TrendTopic) => {
+                            // Определяем платформу по нескольким критериям
+                            const detectPlatform = () => {
+                              const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
+                              
+                              // 1. Проверяем поле sourceType или type напрямую из данных
+                              const sourceType = (topic as any).sourceType || (topic as any).type || '';
+                              if (sourceType) {
+                                const typeStr = sourceType.toLowerCase();
+                                if (typeStr === 'instagram') return 'instagram';
+                                if (typeStr === 'vk') return 'vk';
+                                if (typeStr === 'telegram') return 'telegram';
+                                if (typeStr === 'facebook') return 'facebook';
+                              }
+                              
+                              // 2. Проверяем медиа-ссылки
+                              const mediaLinks = topic.media_links;
+                              if (mediaLinks) {
+                                const mediaStr = JSON.stringify(mediaLinks).toLowerCase();
+                                if (mediaStr.includes('instagram.com') || mediaStr.includes('fbcdn.net')) return 'instagram';
+                                if (mediaStr.includes('vk.com') || mediaStr.includes('userapi.com')) return 'vk';
+                                if (mediaStr.includes('t.me') || mediaStr.includes('telegram')) return 'telegram';
+                                if (mediaStr.includes('facebook.com') || mediaStr.includes('fb.com')) return 'facebook';
+                              }
+                              
+                              // 3. Проверяем URL источника
+                              if (source) {
+                                const url = source.url.toLowerCase();
+                                if (url.includes('instagram.com')) return 'instagram';
+                                if (url.includes('vk.com') || url.includes('vkontakte.ru')) return 'vk';
+                                if (url.includes('t.me') || url.includes('telegram.org')) return 'telegram';
+                                if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
+                              }
+                              
+                              return 'unknown';
+                            };
+
+                            const detectedPlatform = detectPlatform();
+                            
                             // Фильтр по периоду времени
                             let withinPeriod = true;
                             if (selectedPeriod !== 'all') {
@@ -1289,65 +1328,75 @@ export default function Trends() {
                             const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
                             
                             // Фильтр по соцсети
-                            if (selectedPlatform === 'all') {
-                              return withinPeriod && matchesSearch;
-                            }
-                            
-                            const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
-                            
                             let platformMatches = false;
-                            
-                            // Определяем платформу по нескольким критериям
-                            const detectPlatform = () => {
-                              // 1. Проверяем медиа-ссылки
-                              const mediaLinks = topic.media_links;
-                              if (mediaLinks) {
-                                const mediaStr = JSON.stringify(mediaLinks).toLowerCase();
-                                if (mediaStr.includes('instagram.com') || mediaStr.includes('fbcdn.net')) return 'instagram';
-                                if (mediaStr.includes('vk.com') || mediaStr.includes('userapi.com')) return 'vk';
-                                if (mediaStr.includes('t.me') || mediaStr.includes('telegram')) return 'telegram';
-                                if (mediaStr.includes('facebook.com') || mediaStr.includes('fb.com')) return 'facebook';
+                            if (selectedPlatform === 'all') {
+                              platformMatches = true;
+                            } else {
+                              switch (selectedPlatform) {
+                                case 'instagram':
+                                  platformMatches = detectedPlatform === 'instagram';
+                                  break;
+                                case 'vk':
+                                  platformMatches = detectedPlatform === 'vk';
+                                  break;
+                                case 'telegram':
+                                  platformMatches = detectedPlatform === 'telegram';
+                                  break;
+                                case 'facebook':
+                                  platformMatches = detectedPlatform === 'facebook';
+                                  break;
+                                default:
+                                  platformMatches = true;
                               }
-                              
-                              // 2. Проверяем URL источника
-                              if (source) {
-                                const url = source.url.toLowerCase();
-                                if (url.includes('instagram.com')) return 'instagram';
-                                if (url.includes('vk.com') || url.includes('vkontakte.ru')) return 'vk';
-                                if (url.includes('t.me') || url.includes('telegram.org')) return 'telegram';
-                                if (url.includes('facebook.com') || url.includes('fb.com')) return 'facebook';
-                              }
-                              
-                              // 3. Проверяем поле sourceType или type
-                              const sourceType = (topic.sourceType || topic.type || '').toLowerCase();
-                              if (sourceType === 'instagram') return 'instagram';
-                              if (sourceType === 'vk') return 'vk';
-                              if (sourceType === 'telegram') return 'telegram';
-                              if (sourceType === 'facebook') return 'facebook';
-                              
-                              return 'unknown';
-                            };
-                            
-                            const detectedPlatform = detectPlatform();
-                            
-                            switch (selectedPlatform) {
-                              case 'instagram':
-                                platformMatches = detectedPlatform === 'instagram';
-                                break;
-                              case 'vk':
-                                platformMatches = detectedPlatform === 'vk';
-                                break;
-                              case 'telegram':
-                                platformMatches = detectedPlatform === 'telegram';
-                                break;
-                              case 'facebook':
-                                platformMatches = detectedPlatform === 'facebook';
-                                break;
-                              default:
-                                platformMatches = true;
                             }
                             
-                            return withinPeriod && matchesSearch && platformMatches;
+                            // Отладочная информация для всех Instagram постов
+                            if (detectedPlatform === 'instagram' || (topic as any).sourceType === 'instagram') {
+                              console.log('=== DEBUG: Instagram post ===');
+                              console.log('Topic ID:', topic.id);
+                              console.log('Topic title:', topic.title);
+                              console.log('Topic created_at:', topic.created_at);
+                              console.log('Topic createdAt:', (topic as any).createdAt);
+                              console.log('Topic sourceType:', (topic as any).sourceType);
+                              console.log('Topic type:', (topic as any).type);
+                              console.log('Topic media_links:', topic.media_links);
+                              console.log('Detected platform:', detectedPlatform);
+                              console.log('Selected platform:', selectedPlatform);
+                              console.log('Selected period:', selectedPeriod);
+                              console.log('Within period:', withinPeriod);
+                              console.log('Matches search:', matchesSearch);
+                              console.log('Platform matches:', platformMatches);
+                              console.log('Final result:', withinPeriod && matchesSearch && platformMatches);
+                            }
+                            
+                            const finalResult = withinPeriod && matchesSearch && platformMatches;
+                            
+                            // Подсчитываем Instagram посты
+                            if (detectedPlatform === 'instagram') {
+                              console.log(`Instagram post ${topic.id}: final=${finalResult}, platform=${platformMatches}, period=${withinPeriod}, search=${matchesSearch}`);
+                            }
+                            
+                            return finalResult;
+                          })
+                          .filter((topic, index, array) => {
+                            // Логируем итоговое количество отфильтрованных результатов
+                            if (index === 0) {
+                              console.log('Total trends after filtering:', array.length);
+                              const instagramCount = array.filter(t => {
+                                const source = sources.find(s => s.id === t.source_id || s.id === t.sourceId);
+                                const sourceType = (t as any).sourceType || (t as any).type || '';
+                                const mediaLinks = t.media_links;
+                                let isInstagram = false;
+                                
+                                if (sourceType && sourceType.toLowerCase() === 'instagram') isInstagram = true;
+                                if (mediaLinks && JSON.stringify(mediaLinks).toLowerCase().includes('fbcdn.net')) isInstagram = true;
+                                if (source && source.url.toLowerCase().includes('instagram.com')) isInstagram = true;
+                                
+                                return isInstagram;
+                              }).length;
+                              console.log('Instagram posts in filtered results:', instagramCount);
+                            }
+                            return true;
                           })
                           // Сортировка трендов
                           .sort((a, b) => {

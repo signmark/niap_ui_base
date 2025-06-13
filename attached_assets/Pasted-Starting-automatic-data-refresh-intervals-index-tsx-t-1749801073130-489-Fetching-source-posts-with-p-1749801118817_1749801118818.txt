@@ -1,0 +1,344 @@
+Starting automatic data refresh intervals
+index.tsx?t=1749801073130:489 Fetching source posts with params: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: 'all'}
+index.tsx?t=1749801073130:494 Using exact API URL format that works
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:525 Source posts API response: {status: 200, dataLength: 50, firstPost: {…}, fullResponse: {…}}
+index.tsx?t=1749801073130:532 Returning posts array: {length: 50, isEmpty: false, campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: 'all'}
+index.tsx?t=1749801073130:628 sourcePosts loaded: 50 posts
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:427 Fetched trends data: {success: true, data: Array(100)}
+index.tsx?t=1749801073130:465 [ДИАГНОСТИКА] Тренд 166eb032-3372-4807-926a-c6ca93a3db43 НЕ найден в 100 трендах
+index.tsx?t=1749801073130:466 [ДИАГНОСТИКА] Все ID трендов: (100) ['75a1eb4c-463b-43f5-abcd-0c5c75f92068', '9a5782f8-66e6-4cc7-ae6f-3ad740ea06da', '7923008d-cd28-4282-a64f-96fc9072c97a', '125c4926-7c46-40e8-92a6-c5bbc6602a96', 'ab2bc560-a52a-41e0-acfb-a5bd3e60b25d', 'be4dae2d-eb6b-4e62-b9db-f756332b80f0', 'fabe61b8-100e-4081-a561-7287df39b967', '8a5057d9-6ff2-4011-8255-fe3c0eb8ddf5', '643f3ee2-12ee-48d8-be2c-483e831176ca', 'f78160d1-2293-4942-84ed-67ed81cc2c53', 'd981e23d-b709-406a-95eb-4576544f472d', 'fc4da80c-22d9-46cc-ac6b-d11435d20adf', 'c6e3e046-08f5-458e-ab06-9aa274c8b768', 'ba6151cb-6850-49d7-9c84-7fdcb33220aa', '39ee418c-3cde-461c-8fc4-6eea05b549e5', 'b0658776-0c51-40ba-8dd5-637483a55d8b', '5f4ec1cd-7e55-445b-8e28-0c45c9da183c', 'a626ef3f-6df7-4d76-a57a-5dfa470d3752', '4fc27f31-b59c-4ec5-970b-398898dce041', '7953eb5a-1461-4f43-8270-62513635f8f6', '170eb735-dc99-4d3a-a9b4-4845380d89a3', 'e9e2e197-0f6c-4cd1-ad6a-12e6e41a2787', 'ba4308dc-cd33-4a74-aae6-04cbe0cd73e1', 'dc6adea5-7dcb-4f9e-bd56-840b82b14871', '19ff1b6b-ff22-4ff3-82b3-91978184262b', '1a76093e-abdc-455c-999f-aca6fa59de4b', '0cba7687-256b-49ec-a9d3-24795c84aad8', '2a991fb8-327b-4222-b01f-953a327ed5f9', '244c7221-e218-4bbd-b290-467e131f2be3', '788e24de-e062-4c58-b02a-0375a472da01', 'fa34bb91-d23d-473a-8d37-aa73ea755278', '9595c9ea-e7f8-44bc-8a55-043838b26496', '4fabf96f-e925-49cb-9266-e9813ebb2798', 'e1b2771e-f5aa-4940-81dc-4aa9207e8ccd', '76dd8898-eb91-4b83-b44f-ec63844294e6', 'c162156d-07bd-4056-9aee-361b9c07cc08', '90ff6928-c82f-4455-ad38-fb261738b974', 'f8112cae-e890-4e2e-97cd-0d1971e6809b', '0690b698-5c90-461d-ad01-1ef7e92e88a5', '94511a7d-8e4d-4242-b6ee-258af753303b', '889da64b-995c-4b5f-834a-806138170ba6', 'dbbb7c01-59e2-471a-9ab2-0cb40190dac3', 'c613bacd-ed3d-4226-9f1a-e2364d4e54af', '297a2c1b-a328-4778-b50a-d86ffb06fc55', 'dfc463e4-4ba6-46f4-af78-25656cb8d64c', 'a3fc5a23-49a9-411c-9e71-68ecb4cded05', 'e33f01a4-6927-4510-8d96-8c9a50e298c5', '9feefba0-eac4-48f0-8a53-2829a57db6f5', 'dabddf2a-b5f8-4c80-ad35-7430fee496dc', 'c7912e70-b8c0-4e4a-8870-82ab00b4fa53', 'bf5a01b3-a537-47fd-9675-c4e20132b012', '1ef995d0-0883-4b1b-a2d4-7078cbcfd046', '59b25077-e47b-4dae-8119-13042b51067e', 'e4a4d547-7daa-40a8-b610-daf5f71b81fc', 'f66371ec-26f8-41cd-a8a7-d71516838568', 'aea1673f-ffd4-4ea3-8de0-8fbeedd6535c', 'cbe3b133-c309-430a-8cfd-e56ed7b7ea08', 'e3fac085-cb30-4034-a537-221ad94f3111', '2a0bbcbe-e0e3-46d4-96f1-a590e786de21', 'd8e35078-f83d-4669-a846-e57e28a0e82d', 'fd0b9da0-eb5b-4205-8500-9fd342253849', '062795bc-f9f0-4af5-955a-7aa3c6a94d6c', '51ed022c-927b-450d-898d-42a7f99db86c', '02d78e8c-7526-4457-bae9-ae95f8b61950', '5b0538c6-fce6-4306-a441-b3787702fef2', 'bf47d289-906a-4b6b-8e8b-848406ec5598', '848b6bae-3344-4266-87b3-7714876d31f3', '11cc0833-ee45-496b-b684-6d220d60e070', '792d8398-2b69-46fd-a9a4-b4e26bf1c8f2', 'fa5185ec-0d4f-41e1-b487-9f685fdfe7a5', '7d5bf6fc-e02b-48ac-b374-d29e1168780b', 'dd5a2acf-34e2-43f5-856f-e01d5f9f46b9', '489f0bcb-11da-4a4d-8faa-00541fd7adf4', 'c9d0a47a-eeaf-4d43-9ef6-be199a7c2498', '216aa820-19b6-447b-8166-f1910a3f1128', '17c54dc1-2816-4b78-8203-dc22a6cb4c87', '3b6a7900-c61a-4776-928b-ee892b62dafe', '279e4f75-aa87-4909-b80c-75d2b67248fe', 'ca14224c-1dea-43e3-9a08-9c33203aedbb', '08724fdb-2877-4826-b682-0f79eb44338c', 'd1b80902-a9dc-4e42-8adb-7c559d963634', '1e2ad7f1-a080-45ee-a487-74dfb4ab3831', '5c3c728a-97ba-4d91-b582-6802de7a628f', '0e95e9e9-71b7-4a81-9282-b13f7e704144', '7eab81a5-4dfb-4b81-b5f6-10c99f2ea06e', '8937bc2a-c3c3-492b-9a0c-71f13e882044', 'a54950f6-d9e5-4eeb-809e-fccc48114df4', '945c3665-9cea-47e2-b115-62b53662ead6', '519dd986-7fe4-410b-aa3d-1a9fc8f214fd', 'b79396c2-13a7-4382-8d3a-cb2b092fb4bb', '3d3a03ef-e6f9-44bf-b2ca-fe7451a76193', '92bc1b65-a8db-4bb2-8921-3b88f4ad3cf8', '76745e84-6724-420a-84a0-6480d536b2af', 'bbef6551-bfdf-4ea8-9349-d8bf61b359bb', '29c09f77-f1b3-4d16-9929-5d9910af1a85', '2a2fab4c-fd7c-470b-b686-d8d05c37b9d9', 'bf05533e-56c9-4a34-875b-bb46f9827e36', 'c82b35d1-615f-4d5e-a8d1-bfc5d654fa27', '4086e8ff-62b6-438c-98f6-f3ff83bea359', 'f719fe89-2f0a-4159-9d74-434d91ad0550']
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:396 Refreshing sources data...
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:1602 === DEBUG: Instagram post ===
+index.tsx?t=1749801073130:1603 Topic ID: fa34bb91-d23d-473a-8d37-aa73ea755278
+index.tsx?t=1749801073130:1604 Topic title: Пост от 12.06.2025 01:06 
+siga @rescignificou
+index.tsx?t=1749801073130:1605 Topic created_at: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1606 Topic createdAt: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1607 Topic sourceType: undefined
+index.tsx?t=1749801073130:1608 Topic type: undefined
+index.tsx?t=1749801073130:1609 Topic media_links: {"images":["https://instagram.fmvd4-1.fna.fbcdn.net/v/t51.2885-15/506301938_1069850898594600_6447482152329464763_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fmvd4-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QE6_dEqaBs2lFLQEwmevAoSmIvtgo160jdpIWnfex5OqpQ-vkyZ36UHfeCndXorVx2TzNjSLCLnRzorUih4BFII&_nc_ohc=Rc01IF0uEYcQ7kNvwGKJAG3&_nc_gid=YqHkdIBVL4ANc4FgPtqmrA&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfNiigV4wzlWhriapjBC652qPWprzT0GqpNedKvfEosL4w&oe=6850C81C&_nc_sid=10d13b"],"videos":["https://instagram.fmvd4-1.fna.fbcdn.net/o1/v/t16/f2/m86/AQNm6pbhprbBgMGwIQdH_LYumOi_LVcpZF5vYsLcp4-e5jucmCNwQMC8jgL3qeOPO1QpqY3MdYnBVighPTsfl6zhlpwAOuGR_zTfZsY.mp4?stp=dst-mp4&efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2xpcHMuYzIuNzIwLmJhc2VsaW5lIn0&_nc_cat=110&vs=1182704656987570_3750124988&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC82NDRGNzVFQ0U2QzlBRDNFNkRENjdDMDkxQ0IyN0Y5OF92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HTlE4S1I2N0tLVEU4M3dHQU5mS1pYUlpNNlpWYnFfRUFBQUYVAgLIARIAKAAYABsAFQAAJrSo15LDwptAFQIoAkMzLBdARjMzMzMzMxgSZGFzaF9iYXNlbGluZV8xX3YxEQB1%2Fgdl5p0BAA%3D%3D&_nc_rid=668787e534&ccb=9-4&oh=00_AfMC_JNFRKCd6yFfT9Rk_NHOBj7_gEG7yzkCIu1XmWsNNA&oe=684CDC4B&_nc_sid=10d13b"]}
+index.tsx?t=1749801073130:1610 Source: undefined
+index.tsx?t=1749801073130:1611 Detected platform: instagram
+index.tsx?t=1749801073130:1612 Selected platform: instagram
+index.tsx?t=1749801073130:1613 Selected period: all
+index.tsx?t=1749801073130:1614 Within period: true
+index.tsx?t=1749801073130:1615 Matches search: true
+index.tsx?t=1749801073130:392 Refreshing trends data...
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:1602 === DEBUG: Instagram post ===
+index.tsx?t=1749801073130:1603 Topic ID: fa34bb91-d23d-473a-8d37-aa73ea755278
+index.tsx?t=1749801073130:1604 Topic title: Пост от 12.06.2025 01:06 
+siga @rescignificou
+index.tsx?t=1749801073130:1605 Topic created_at: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1606 Topic createdAt: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1607 Topic sourceType: undefined
+index.tsx?t=1749801073130:1608 Topic type: undefined
+index.tsx?t=1749801073130:1609 Topic media_links: {"images":["https://instagram.fmvd4-1.fna.fbcdn.net/v/t51.2885-15/506301938_1069850898594600_6447482152329464763_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fmvd4-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QE6_dEqaBs2lFLQEwmevAoSmIvtgo160jdpIWnfex5OqpQ-vkyZ36UHfeCndXorVx2TzNjSLCLnRzorUih4BFII&_nc_ohc=Rc01IF0uEYcQ7kNvwGKJAG3&_nc_gid=YqHkdIBVL4ANc4FgPtqmrA&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfNiigV4wzlWhriapjBC652qPWprzT0GqpNedKvfEosL4w&oe=6850C81C&_nc_sid=10d13b"],"videos":["https://instagram.fmvd4-1.fna.fbcdn.net/o1/v/t16/f2/m86/AQNm6pbhprbBgMGwIQdH_LYumOi_LVcpZF5vYsLcp4-e5jucmCNwQMC8jgL3qeOPO1QpqY3MdYnBVighPTsfl6zhlpwAOuGR_zTfZsY.mp4?stp=dst-mp4&efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2xpcHMuYzIuNzIwLmJhc2VsaW5lIn0&_nc_cat=110&vs=1182704656987570_3750124988&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC82NDRGNzVFQ0U2QzlBRDNFNkRENjdDMDkxQ0IyN0Y5OF92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HTlE4S1I2N0tLVEU4M3dHQU5mS1pYUlpNNlpWYnFfRUFBQUYVAgLIARIAKAAYABsAFQAAJrSo15LDwptAFQIoAkMzLBdARjMzMzMzMxgSZGFzaF9iYXNlbGluZV8xX3YxEQB1%2Fgdl5p0BAA%3D%3D&_nc_rid=668787e534&ccb=9-4&oh=00_AfMC_JNFRKCd6yFfT9Rk_NHOBj7_gEG7yzkCIu1XmWsNNA&oe=684CDC4B&_nc_sid=10d13b"]}
+index.tsx?t=1749801073130:1610 Source: undefined
+index.tsx?t=1749801073130:1611 Detected platform: instagram
+index.tsx?t=1749801073130:1612 Selected platform: instagram
+index.tsx?t=1749801073130:1613 Selected period: all
+index.tsx?t=1749801073130:1614 Within period: true
+index.tsx?t=1749801073130:1615 Matches search: true
+index.tsx?t=1749801073130:427 Fetched trends data: {success: true, data: Array(100)}
+index.tsx?t=1749801073130:465 [ДИАГНОСТИКА] Тренд 166eb032-3372-4807-926a-c6ca93a3db43 НЕ найден в 100 трендах
+index.tsx?t=1749801073130:466 [ДИАГНОСТИКА] Все ID трендов: (100) ['75a1eb4c-463b-43f5-abcd-0c5c75f92068', '9a5782f8-66e6-4cc7-ae6f-3ad740ea06da', '7923008d-cd28-4282-a64f-96fc9072c97a', '125c4926-7c46-40e8-92a6-c5bbc6602a96', 'ab2bc560-a52a-41e0-acfb-a5bd3e60b25d', 'be4dae2d-eb6b-4e62-b9db-f756332b80f0', 'fabe61b8-100e-4081-a561-7287df39b967', '8a5057d9-6ff2-4011-8255-fe3c0eb8ddf5', '643f3ee2-12ee-48d8-be2c-483e831176ca', 'f78160d1-2293-4942-84ed-67ed81cc2c53', 'd981e23d-b709-406a-95eb-4576544f472d', 'fc4da80c-22d9-46cc-ac6b-d11435d20adf', 'c6e3e046-08f5-458e-ab06-9aa274c8b768', 'ba6151cb-6850-49d7-9c84-7fdcb33220aa', '39ee418c-3cde-461c-8fc4-6eea05b549e5', 'b0658776-0c51-40ba-8dd5-637483a55d8b', '5f4ec1cd-7e55-445b-8e28-0c45c9da183c', 'a626ef3f-6df7-4d76-a57a-5dfa470d3752', '4fc27f31-b59c-4ec5-970b-398898dce041', '7953eb5a-1461-4f43-8270-62513635f8f6', '170eb735-dc99-4d3a-a9b4-4845380d89a3', 'e9e2e197-0f6c-4cd1-ad6a-12e6e41a2787', 'ba4308dc-cd33-4a74-aae6-04cbe0cd73e1', 'dc6adea5-7dcb-4f9e-bd56-840b82b14871', '19ff1b6b-ff22-4ff3-82b3-91978184262b', '1a76093e-abdc-455c-999f-aca6fa59de4b', '0cba7687-256b-49ec-a9d3-24795c84aad8', '2a991fb8-327b-4222-b01f-953a327ed5f9', '244c7221-e218-4bbd-b290-467e131f2be3', '788e24de-e062-4c58-b02a-0375a472da01', 'fa34bb91-d23d-473a-8d37-aa73ea755278', '9595c9ea-e7f8-44bc-8a55-043838b26496', '4fabf96f-e925-49cb-9266-e9813ebb2798', 'e1b2771e-f5aa-4940-81dc-4aa9207e8ccd', '76dd8898-eb91-4b83-b44f-ec63844294e6', 'c162156d-07bd-4056-9aee-361b9c07cc08', '90ff6928-c82f-4455-ad38-fb261738b974', 'f8112cae-e890-4e2e-97cd-0d1971e6809b', '0690b698-5c90-461d-ad01-1ef7e92e88a5', '94511a7d-8e4d-4242-b6ee-258af753303b', '889da64b-995c-4b5f-834a-806138170ba6', 'dbbb7c01-59e2-471a-9ab2-0cb40190dac3', 'c613bacd-ed3d-4226-9f1a-e2364d4e54af', '297a2c1b-a328-4778-b50a-d86ffb06fc55', 'dfc463e4-4ba6-46f4-af78-25656cb8d64c', 'a3fc5a23-49a9-411c-9e71-68ecb4cded05', 'e33f01a4-6927-4510-8d96-8c9a50e298c5', '9feefba0-eac4-48f0-8a53-2829a57db6f5', 'dabddf2a-b5f8-4c80-ad35-7430fee496dc', 'c7912e70-b8c0-4e4a-8870-82ab00b4fa53', 'bf5a01b3-a537-47fd-9675-c4e20132b012', '1ef995d0-0883-4b1b-a2d4-7078cbcfd046', '59b25077-e47b-4dae-8119-13042b51067e', 'e4a4d547-7daa-40a8-b610-daf5f71b81fc', 'f66371ec-26f8-41cd-a8a7-d71516838568', 'aea1673f-ffd4-4ea3-8de0-8fbeedd6535c', 'cbe3b133-c309-430a-8cfd-e56ed7b7ea08', 'e3fac085-cb30-4034-a537-221ad94f3111', '2a0bbcbe-e0e3-46d4-96f1-a590e786de21', 'd8e35078-f83d-4669-a846-e57e28a0e82d', 'fd0b9da0-eb5b-4205-8500-9fd342253849', '062795bc-f9f0-4af5-955a-7aa3c6a94d6c', '51ed022c-927b-450d-898d-42a7f99db86c', '02d78e8c-7526-4457-bae9-ae95f8b61950', '5b0538c6-fce6-4306-a441-b3787702fef2', 'bf47d289-906a-4b6b-8e8b-848406ec5598', '848b6bae-3344-4266-87b3-7714876d31f3', '11cc0833-ee45-496b-b684-6d220d60e070', '792d8398-2b69-46fd-a9a4-b4e26bf1c8f2', 'fa5185ec-0d4f-41e1-b487-9f685fdfe7a5', '7d5bf6fc-e02b-48ac-b374-d29e1168780b', 'dd5a2acf-34e2-43f5-856f-e01d5f9f46b9', '489f0bcb-11da-4a4d-8faa-00541fd7adf4', 'c9d0a47a-eeaf-4d43-9ef6-be199a7c2498', '216aa820-19b6-447b-8166-f1910a3f1128', '17c54dc1-2816-4b78-8203-dc22a6cb4c87', '3b6a7900-c61a-4776-928b-ee892b62dafe', '279e4f75-aa87-4909-b80c-75d2b67248fe', 'ca14224c-1dea-43e3-9a08-9c33203aedbb', '08724fdb-2877-4826-b682-0f79eb44338c', 'd1b80902-a9dc-4e42-8adb-7c559d963634', '1e2ad7f1-a080-45ee-a487-74dfb4ab3831', '5c3c728a-97ba-4d91-b582-6802de7a628f', '0e95e9e9-71b7-4a81-9282-b13f7e704144', '7eab81a5-4dfb-4b81-b5f6-10c99f2ea06e', '8937bc2a-c3c3-492b-9a0c-71f13e882044', 'a54950f6-d9e5-4eeb-809e-fccc48114df4', '945c3665-9cea-47e2-b115-62b53662ead6', '519dd986-7fe4-410b-aa3d-1a9fc8f214fd', 'b79396c2-13a7-4382-8d3a-cb2b092fb4bb', '3d3a03ef-e6f9-44bf-b2ca-fe7451a76193', '92bc1b65-a8db-4bb2-8921-3b88f4ad3cf8', '76745e84-6724-420a-84a0-6480d536b2af', 'bbef6551-bfdf-4ea8-9349-d8bf61b359bb', '29c09f77-f1b3-4d16-9929-5d9910af1a85', '2a2fab4c-fd7c-470b-b686-d8d05c37b9d9', 'bf05533e-56c9-4a34-875b-bb46f9827e36', 'c82b35d1-615f-4d5e-a8d1-bfc5d654fa27', '4086e8ff-62b6-438c-98f6-f3ff83bea359', 'f719fe89-2f0a-4159-9d74-434d91ad0550']
+index.tsx?t=1749801073130:224 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx?t=1749801073130:235 Sources API response: {status: 200, dataLength: 97, firstSource: {…}, allSources: Array(97)}
+index.tsx?t=1749801073130:1602 === DEBUG: Instagram post ===
+index.tsx?t=1749801073130:1603 Topic ID: fa34bb91-d23d-473a-8d37-aa73ea755278
+index.tsx?t=1749801073130:1604 Topic title: Пост от 12.06.2025 01:06 
+siga @rescignificou
+index.tsx?t=1749801073130:1605 Topic created_at: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1606 Topic createdAt: 2025-06-12T01:41:18.000Z
+index.tsx?t=1749801073130:1607 Topic sourceType: undefined
+index.tsx?t=1749801073130:1608 Topic type: undefined
+index.tsx?t=1749801073130:1609 Topic media_links: {"images":["https://instagram.fmvd4-1.fna.fbcdn.net/v/t51.2885-15/506301938_1069850898594600_6447482152329464763_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fmvd4-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QE6_dEqaBs2lFLQEwmevAoSmIvtgo160jdpIWnfex5OqpQ-vkyZ36UHfeCndXorVx2TzNjSLCLnRzorUih4BFII&_nc_ohc=Rc01IF0uEYcQ7kNvwGKJAG3&_nc_gid=YqHkdIBVL4ANc4FgPtqmrA&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfNiigV4wzlWhriapjBC652qPWprzT0GqpNedKvfEosL4w&oe=6850C81C&_nc_sid=10d13b"],"videos":["https://instagram.fmvd4-1.fna.fbcdn.net/o1/v/t16/f2/m86/AQNm6pbhprbBgMGwIQdH_LYumOi_LVcpZF5vYsLcp4-e5jucmCNwQMC8jgL3qeOPO1QpqY3MdYnBVighPTsfl6zhlpwAOuGR_zTfZsY.mp4?stp=dst-mp4&efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2xpcHMuYzIuNzIwLmJhc2VsaW5lIn0&_nc_cat=110&vs=1182704656987570_3750124988&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC82NDRGNzVFQ0U2QzlBRDNFNkRENjdDMDkxQ0IyN0Y5OF92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HTlE4S1I2N0tLVEU4M3dHQU5mS1pYUlpNNlpWYnFfRUFBQUYVAgLIARIAKAAYABsAFQAAJrSo15LDwptAFQIoAkMzLBdARjMzMzMzMxgSZGFzaF9iYXNlbGluZV8xX3YxEQB1%2Fgdl5p0BAA%3D%3D&_nc_rid=668787e534&ccb=9-4&oh=00_AfMC_JNFRKCd6yFfT9Rk_NHOBj7_gEG7yzkCIu1XmWsNNA&oe=684CDC4B&_nc_sid=10d13b"]}
+index.tsx?t=1749801073130:1610 Source: undefined
+index.tsx?t=1749801073130:1611 Detected platform: instagram
+index.tsx?t=1749801073130:1612 Selected platform: instagram
+index.tsx?t=1749801073130:1613 Selected period: all
+index.tsx?t=1749801073130:1614 Within period: true
+index.tsx?t=1749801073130:1615 Matches search: true
+index.tsx:1354 === DEBUG: Instagram post ===
+index.tsx:1355 Topic ID: fa34bb91-d23d-473a-8d37-aa73ea755278
+index.tsx:1356 Topic title: Пост от 12.06.2025 01:06 
+siga @rescignificou
+index.tsx:1357 Topic created_at: 2025-06-12T01:41:18.000Z
+index.tsx:1358 Topic createdAt: 2025-06-12T01:41:18.000Z
+index.tsx:1359 Topic sourceType: undefined
+index.tsx:1360 Topic type: undefined
+index.tsx:1361 Topic media_links: {"images":["https://instagram.fmvd4-1.fna.fbcdn.net/v/t51.2885-15/506301938_1069850898594600_6447482152329464763_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fmvd4-1.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QE6_dEqaBs2lFLQEwmevAoSmIvtgo160jdpIWnfex5OqpQ-vkyZ36UHfeCndXorVx2TzNjSLCLnRzorUih4BFII&_nc_ohc=Rc01IF0uEYcQ7kNvwGKJAG3&_nc_gid=YqHkdIBVL4ANc4FgPtqmrA&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfNiigV4wzlWhriapjBC652qPWprzT0GqpNedKvfEosL4w&oe=6850C81C&_nc_sid=10d13b"],"videos":["https://instagram.fmvd4-1.fna.fbcdn.net/o1/v/t16/f2/m86/AQNm6pbhprbBgMGwIQdH_LYumOi_LVcpZF5vYsLcp4-e5jucmCNwQMC8jgL3qeOPO1QpqY3MdYnBVighPTsfl6zhlpwAOuGR_zTfZsY.mp4?stp=dst-mp4&efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2xpcHMuYzIuNzIwLmJhc2VsaW5lIn0&_nc_cat=110&vs=1182704656987570_3750124988&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC82NDRGNzVFQ0U2QzlBRDNFNkRENjdDMDkxQ0IyN0Y5OF92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HTlE4S1I2N0tLVEU4M3dHQU5mS1pYUlpNNlpWYnFfRUFBQUYVAgLIARIAKAAYABsAFQAAJrSo15LDwptAFQIoAkMzLBdARjMzMzMzMxgSZGFzaF9iYXNlbGluZV8xX3YxEQB1%2Fgdl5p0BAA%3D%3D&_nc_rid=668787e534&ccb=9-4&oh=00_AfMC_JNFRKCd6yFfT9Rk_NHOBj7_gEG7yzkCIu1XmWsNNA&oe=684CDC4B&_nc_sid=10d13b"]}
+index.tsx:1362 Detected platform: instagram
+index.tsx:1363 Selected platform: instagram
+index.tsx:1364 Selected period: all
+index.tsx:1365 Within period: true
+index.tsx:1366 Matches search: true
+index.tsx:1367 Platform matches: true
+index.tsx:1368 Final result: true
+chunk-RPCDYKBN.js?v=99a15625:16670 Uncaught ReferenceError: statusCheckInterval is not defined
+    at index.tsx?t=1749801073130:93:7
+    at safelyCallDestroy (chunk-RPCDYKBN.js?v=99a15625:16748:13)
+    at commitHookEffectListUnmount (chunk-RPCDYKBN.js?v=99a15625:16875:19)
+    at commitPassiveUnmountOnFiber (chunk-RPCDYKBN.js?v=99a15625:18232:17)
+    at commitPassiveUnmountEffects_complete (chunk-RPCDYKBN.js?v=99a15625:18213:15)
+    at commitPassiveUnmountEffects_begin (chunk-RPCDYKBN.js?v=99a15625:18204:15)
+    at commitPassiveUnmountEffects (chunk-RPCDYKBN.js?v=99a15625:18169:11)
+    at flushPassiveEffectsImpl (chunk-RPCDYKBN.js?v=99a15625:19489:11)
+    at flushPassiveEffects (chunk-RPCDYKBN.js?v=99a15625:19447:22)
+    at commitRootImpl (chunk-RPCDYKBN.js?v=99a15625:19416:13)
+(anonymous) @ index.tsx?t=1749801073130:93
+safelyCallDestroy @ chunk-RPCDYKBN.js?v=99a15625:16748
+commitHookEffectListUnmount @ chunk-RPCDYKBN.js?v=99a15625:16875
+commitPassiveUnmountOnFiber @ chunk-RPCDYKBN.js?v=99a15625:18232
+commitPassiveUnmountEffects_complete @ chunk-RPCDYKBN.js?v=99a15625:18213
+commitPassiveUnmountEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:18204
+commitPassiveUnmountEffects @ chunk-RPCDYKBN.js?v=99a15625:18169
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=99a15625:19489
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=99a15625:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=99a15625:19416
+commitRoot @ chunk-RPCDYKBN.js?v=99a15625:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+flushSync @ chunk-RPCDYKBN.js?v=99a15625:18959
+scheduleRefresh @ chunk-RPCDYKBN.js?v=99a15625:20004
+p.scheduleRefresh @ renderer.js:963
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+index.tsx:551 Starting automatic data refresh intervals
+index.tsx:848 sourcePosts loaded: 50 posts
+@react-refresh:267 The above error occurred in the <Trends> component:
+
+    at Trends (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/pages/trends/index.tsx?t=1749801113555:67:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/Layout.tsx:34:26)
+    at WithLayout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/App.tsx?t=1749801073130&v=c3Y4f8DrNuhW_BATwf31H:55:23)
+    at _c12
+    at Route (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router
+    at AuthGuard (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+overrideMethod @ hook.js:608
+logCapturedError @ chunk-RPCDYKBN.js?v=99a15625:14032
+update.callback @ chunk-RPCDYKBN.js?v=99a15625:14052
+callCallback @ chunk-RPCDYKBN.js?v=99a15625:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=99a15625:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=99a15625:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=99a15625:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=99a15625:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=99a15625:19353
+commitRoot @ chunk-RPCDYKBN.js?v=99a15625:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+flushSync @ chunk-RPCDYKBN.js?v=99a15625:18959
+scheduleRefresh @ chunk-RPCDYKBN.js?v=99a15625:20004
+p.scheduleRefresh @ renderer.js:963
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+chunk-RPCDYKBN.js?v=99a15625:16670 Uncaught ReferenceError: statusCheckInterval is not defined
+    at index.tsx:188:7
+    at safelyCallDestroy (chunk-RPCDYKBN.js?v=99a15625:16748:13)
+    at commitHookEffectListUnmount (chunk-RPCDYKBN.js?v=99a15625:16875:19)
+    at commitPassiveUnmountInsideDeletedTreeOnFiber (chunk-RPCDYKBN.js?v=99a15625:18283:17)
+    at commitPassiveUnmountEffectsInsideOfDeletedTree_begin (chunk-RPCDYKBN.js?v=99a15625:18245:13)
+    at commitPassiveUnmountEffects_begin (chunk-RPCDYKBN.js?v=99a15625:18181:19)
+    at commitPassiveUnmountEffects (chunk-RPCDYKBN.js?v=99a15625:18169:11)
+    at flushPassiveEffectsImpl (chunk-RPCDYKBN.js?v=99a15625:19489:11)
+    at flushPassiveEffects (chunk-RPCDYKBN.js?v=99a15625:19447:22)
+    at performSyncWorkOnRoot (chunk-RPCDYKBN.js?v=99a15625:18868:11)
+(anonymous) @ index.tsx:188
+safelyCallDestroy @ chunk-RPCDYKBN.js?v=99a15625:16748
+commitHookEffectListUnmount @ chunk-RPCDYKBN.js?v=99a15625:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-RPCDYKBN.js?v=99a15625:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-RPCDYKBN.js?v=99a15625:18245
+commitPassiveUnmountEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:18181
+commitPassiveUnmountEffects @ chunk-RPCDYKBN.js?v=99a15625:18169
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=99a15625:19489
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=99a15625:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:18627
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+@react-refresh:666 The above error occurred in the <Trends> component:
+
+    at Trends (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/pages/trends/index.tsx?t=1749801113555:67:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/Layout.tsx:34:26)
+    at WithLayout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/App.tsx?t=1749801073130&v=c3Y4f8DrNuhW_BATwf31H:55:23)
+    at _c12
+    at Route (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:323:16)
+    at Switch (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=99a15625:379:17)
+    at Router
+    at AuthGuard (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=99a15625:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+overrideMethod @ hook.js:608
+logCapturedError @ chunk-RPCDYKBN.js?v=99a15625:14032
+update.callback @ chunk-RPCDYKBN.js?v=99a15625:14052
+callCallback @ chunk-RPCDYKBN.js?v=99a15625:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=99a15625:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=99a15625:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=99a15625:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=99a15625:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=99a15625:19353
+commitRoot @ chunk-RPCDYKBN.js?v=99a15625:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:18627
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+chunk-RPCDYKBN.js?v=99a15625:9129 Uncaught ReferenceError: statusCheckInterval is not defined
+    at index.tsx:188:7
+    at safelyCallDestroy (chunk-RPCDYKBN.js?v=99a15625:16748:13)
+    at commitHookEffectListUnmount (chunk-RPCDYKBN.js?v=99a15625:16875:19)
+    at commitPassiveUnmountInsideDeletedTreeOnFiber (chunk-RPCDYKBN.js?v=99a15625:18283:17)
+    at commitPassiveUnmountEffectsInsideOfDeletedTree_begin (chunk-RPCDYKBN.js?v=99a15625:18245:13)
+    at commitPassiveUnmountEffects_begin (chunk-RPCDYKBN.js?v=99a15625:18181:19)
+    at commitPassiveUnmountEffects (chunk-RPCDYKBN.js?v=99a15625:18169:11)
+    at flushPassiveEffectsImpl (chunk-RPCDYKBN.js?v=99a15625:19489:11)
+    at flushPassiveEffects (chunk-RPCDYKBN.js?v=99a15625:19447:22)
+    at performSyncWorkOnRoot (chunk-RPCDYKBN.js?v=99a15625:18868:11)
+(anonymous) @ index.tsx:188
+safelyCallDestroy @ chunk-RPCDYKBN.js?v=99a15625:16748
+commitHookEffectListUnmount @ chunk-RPCDYKBN.js?v=99a15625:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-RPCDYKBN.js?v=99a15625:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-RPCDYKBN.js?v=99a15625:18245
+commitPassiveUnmountEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:18181
+commitPassiveUnmountEffects @ chunk-RPCDYKBN.js?v=99a15625:18169
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=99a15625:19489
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=99a15625:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+(anonymous) @ chunk-RPCDYKBN.js?v=99a15625:18627
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+@react-refresh:678 Uncaught (in promise) ReferenceError: statusCheckInterval is not defined
+    at index.tsx?t=1749801073130:93:7
+    at safelyCallDestroy (chunk-RPCDYKBN.js?v=99a15625:16748:13)
+    at commitHookEffectListUnmount (chunk-RPCDYKBN.js?v=99a15625:16875:19)
+    at commitPassiveUnmountOnFiber (chunk-RPCDYKBN.js?v=99a15625:18232:17)
+    at commitPassiveUnmountEffects_complete (chunk-RPCDYKBN.js?v=99a15625:18213:15)
+    at commitPassiveUnmountEffects_begin (chunk-RPCDYKBN.js?v=99a15625:18204:15)
+    at commitPassiveUnmountEffects (chunk-RPCDYKBN.js?v=99a15625:18169:11)
+    at flushPassiveEffectsImpl (chunk-RPCDYKBN.js?v=99a15625:19489:11)
+    at flushPassiveEffects (chunk-RPCDYKBN.js?v=99a15625:19447:22)
+    at commitRootImpl (chunk-RPCDYKBN.js?v=99a15625:19416:13)
+(anonymous) @ index.tsx?t=1749801073130:93
+safelyCallDestroy @ chunk-RPCDYKBN.js?v=99a15625:16748
+commitHookEffectListUnmount @ chunk-RPCDYKBN.js?v=99a15625:16875
+commitPassiveUnmountOnFiber @ chunk-RPCDYKBN.js?v=99a15625:18232
+commitPassiveUnmountEffects_complete @ chunk-RPCDYKBN.js?v=99a15625:18213
+commitPassiveUnmountEffects_begin @ chunk-RPCDYKBN.js?v=99a15625:18204
+commitPassiveUnmountEffects @ chunk-RPCDYKBN.js?v=99a15625:18169
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=99a15625:19489
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=99a15625:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=99a15625:19416
+commitRoot @ chunk-RPCDYKBN.js?v=99a15625:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=99a15625:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=99a15625:9119
+flushSync @ chunk-RPCDYKBN.js?v=99a15625:18959
+scheduleRefresh @ chunk-RPCDYKBN.js?v=99a15625:20004
+p.scheduleRefresh @ renderer.js:963
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ index.tsx?t=1749801073130:2199
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
