@@ -1,0 +1,278 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:85 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:107 Trends API: Запрос трендов для кампании 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: есть
+[id].tsx:141 Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:200 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:202 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: Object
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+auth.ts:94 Токен успешно обновлен через API
+store.ts:41 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+store.ts:91 Проверка статуса администратора
+store.ts:101 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+[id].tsx:210 Успешно получены данные кампании: NPlanner.ru
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+CampaignSelector.tsx:69 Campaigns loaded: 7
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "NPlanner.ru"
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+store.ts:113 Ответ сервера на запрос проверки админа: Object
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+SettingsDialog.tsx:105 Successfully fetched 8 API keys
+[id].tsx:155 Загружено публикаций: 42
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+[id].tsx:115 Trends API: Статус ответа: 200
+[id].tsx:124 Trends API: Получено данных: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+[id].tsx:715 Trends Debug: Object
+[id].tsx:724 Social Media Settings Debug: Object
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: business-questionnaire exists: true url: /business-questionnaire
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:102 Available expandable pages: Array(5)
+accordion.tsx:105 Checking fullscreen page for value: schedule exists: false url: undefined
+store.ts:113 Ответ сервера на запрос проверки админа: Object
+store.ts:116 Пользователь является администратором
+store.ts:81 Устанавливаем статус администратора: true
+[id].tsx:85 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:200 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:202 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+[id].tsx:210 Успешно получены данные кампании: NPlanner.ru

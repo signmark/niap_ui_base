@@ -325,6 +325,11 @@ export default function PublicationCalendar({
       const status = post.status || 'draft';
       const type = post.contentType || 'text';
       
+      // Отладочная информация для первых 5 постов
+      if (postsForDay.length <= 5 && day.getDate() === 13) {
+        console.log(`КАЛЕНДАРЬ 13 ИЮНЯ: Post ${post.id.substring(0, 8)} - status: ${status}, type: ${type}`);
+      }
+      
       // Инициализация записи, если она еще не существует
       if (!result[status]) {
         result[status] = {};
@@ -351,9 +356,9 @@ export default function PublicationCalendar({
     const getStatusStyle = (status: string): { opacity: string, ring?: string } => {
       switch (status) {
         case 'published': 
-          return { opacity: '1', ring: 'ring-1 ring-green-500' }; // Опубликованные с зеленой рамкой
+          return { opacity: '1', ring: 'ring-2 ring-green-500' }; // Опубликованные с зеленой рамкой
         case 'scheduled': 
-          return { opacity: '0.7', ring: 'ring-1 ring-blue-400' }; // Запланированные с синей рамкой
+          return { opacity: '1', ring: 'ring-2 ring-green-400' }; // Запланированные тоже с зеленой рамкой (немного светлее)
         case 'draft': 
           return { opacity: '0.4' }; // Черновики полупрозрачные
         default: 
