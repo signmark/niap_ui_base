@@ -151,10 +151,16 @@ export default function TestPublish() {
       // Обновляем данные в кэше
       queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
       
-      toast({
-        title: "Публикация отправлена",
-        description: "Результаты публикации отображены в диалоге"
-      });
+      // Показываем toast только если весь контент опубликован
+      if (result.overallStatus === 'published') {
+        toast({
+          title: "Контент опубликован",
+          description: "Контент успешно опубликован во всех выбранных платформах"
+        });
+      } else {
+        // Показываем статус в диалоге, но не в toast
+        console.log("Публикация в процессе, результаты отображены в диалоге");
+      }
     } catch (error: any) {
       console.error("Ошибка при публикации:", error);
       toast({

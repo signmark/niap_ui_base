@@ -266,18 +266,20 @@ export default function TestImgur() {
       
       setResult(response.data);
       
-      if (response.data.success) {
+      // Показываем toast только если публикация полностью завершена
+      if (response.data.success && response.data.status === 'published') {
         toast({
           title: 'Успешно',
-          description: `Контент опубликован в ${platform}`,
+          description: `Контент полностью опубликован в ${platform}`,
         });
-      } else {
+      } else if (!response.data.success) {
         toast({
           title: 'Ошибка',
           description: response.data.error || 'Неизвестная ошибка',
           variant: 'destructive'
         });
       }
+      // Если публикация в процессе - не показываем toast
     } catch (error: any) {
       setResult(error.response?.data || error.message);
       toast({

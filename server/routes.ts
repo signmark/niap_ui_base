@@ -8154,7 +8154,7 @@ Return your response as a JSON array in this exact format:
             // Используем правильный сервис: VK/Telegram/Instagram через n8n webhooks, Facebook напрямую
             if (userSettings) {
               // Используем сервис с правильной маршрутизацией через n8n webhooks
-              result = await socialPublishingService.publishToPlatform(platform, campaignContent, { socialMediaSettings: userSettings });
+              result = await socialPublishingService.publishToPlatform(platform, campaignContent, { socialMediaSettings: userSettings }, token);
             } else {
               result = {
                 platform: platform as any,
