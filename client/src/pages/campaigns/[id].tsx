@@ -1186,15 +1186,23 @@ export default function CampaignDetails() {
               <div className="h-full w-full">
                 {/* Получаем контент кампании и передаем в PublicationCalendar */}
                 {campaign && (
-                  <PublicationCalendar 
-                    content={campaignContent || []} 
-                    isLoading={isLoadingContent}
-                    onCreateClick={() => window.location.href = '/content'}
-                    onViewPost={(post) => {
-                      console.log('View post:', post);
-                      // Здесь можно добавить дополнительную логику просмотра поста
-                    }}
-                  />
+                  <>
+                    {!isLoadingContent && campaignContent && campaignContent.length === 0 ? (
+                      <div className="text-center py-12 border rounded-lg">
+                        <p className="text-muted-foreground">Нет запланированных публикаций</p>
+                      </div>
+                    ) : (
+                      <PublicationCalendar 
+                        content={campaignContent || []} 
+                        isLoading={isLoadingContent}
+                        onCreateClick={() => window.location.href = '/content'}
+                        onViewPost={(post) => {
+                          console.log('View post:', post);
+                          // Здесь можно добавить дополнительную логику просмотра поста
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </div>
               <div className="mt-4 border-t pt-4">
