@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarIcon, Clock, ArrowLeft, ArrowRight, SortDesc, SortAsc, Maximize2, Minimize2, Check } from 'lucide-react';
 import SocialMediaFilter from './SocialMediaFilter';
 import SocialMediaIcon from './SocialMediaIcon';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 interface PublicationCalendarProps {
   content: CampaignContent[];
@@ -18,7 +20,77 @@ interface PublicationCalendarProps {
   onViewPost?: (post: CampaignContent) => void;
   initialSortOrder?: 'asc' | 'desc';
   onSortOrderChange?: (order: 'asc' | 'desc') => void;
+  onReschedulePost?: (postId: string, newDate: Date, newTime: string) => void;
 }
+
+// Типы для drag and drop
+const ItemTypes = {
+  POST: 'post'
+};
+
+interface DraggedPost {
+  id: string;
+  content: CampaignContent;
+}
+
+// Компонент для перетаскиваемого поста
+const DraggablePost = ({ post, children }: { post: CampaignContent; children: React.ReactNode }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.POST,
+    item: { id: post.id, content: post } as DraggedPost,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  return (
+    <div
+      ref={drag}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        cursor: 'move'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Компонент для зоны сброса (дня в календаре)
+const DroppableDay = ({ 
+  day, 
+  children, 
+  onDropPost 
+}: { 
+  day: Date; 
+  children: React.ReactNode;
+  onDropPost: (postId: string, newDate: Date) => void;
+}) => {
+  const [{ isOver }, drop] = useDrop({
+    accept: ItemTypes.POST,
+    drop: (item: DraggedPost) => {
+      onDropPost(item.id, day);
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+
+  return (
+    <div
+      ref={drop}
+      style={{
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+        border: isOver ? '2px dashed #3b82f6' : '2px dashed transparent',
+        borderRadius: '4px',
+        minHeight: '80px',
+        padding: '4px'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 export default function PublicationCalendar({
   content,
@@ -26,7 +98,8 @@ export default function PublicationCalendar({
   onCreateClick,
   onViewPost,
   initialSortOrder = 'desc',
-  onSortOrderChange
+  onSortOrderChange,
+  onReschedulePost
 }: PublicationCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredPlatforms, setFilteredPlatforms] = useState<SocialPlatform[]>([]);
@@ -34,6 +107,38 @@ export default function PublicationCalendar({
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
+
+  // Обработчик перетаскивания поста на новую дату
+  const handleDropPost = (postId: string, newDate: Date) => {
+    if (!onReschedulePost) {
+      toast({
+        title: "Ошибка",
+        description: "Функция перепланирования недоступна",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Используем время из существующего поста или устанавливаем время по умолчанию
+    const existingPost = content.find(post => post.id === postId);
+    let newTime = "12:00";
+    
+    if (existingPost?.scheduledAt) {
+      try {
+        const existingDate = new Date(existingPost.scheduledAt);
+        newTime = `${existingDate.getHours().toString().padStart(2, '0')}:${existingDate.getMinutes().toString().padStart(2, '0')}`;
+      } catch (e) {
+        newTime = "12:00"; // Время по умолчанию если не удалось извлечь
+      }
+    }
+
+    onReschedulePost(postId, newDate, newTime);
+    
+    toast({
+      title: "Публикация перенесена",
+      description: `Публикация перенесена на ${format(newDate, 'dd MMMM yyyy', { locale: ru })} в ${newTime}`,
+    });
+  };
 
   // Получаем количество постов для каждой платформы
   const platformCounts = content.reduce((counts, post) => {
@@ -383,16 +488,9 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
-      // Отладка: проверим что происходит с временем
-      console.log("🕐 formatScheduledTime input:", date);
-      console.log("🕐 dateObj:", dateObj.toString());
-      console.log("🕐 ISO:", dateObj.toISOString());
-      
       // Принудительно добавляем 3 часа к UTC времени для получения московского времени
       const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
-      console.log("🕐 moscowTime:", moscowTime.toString());
       
-      // JavaScript автоматически отображает время в локальном часовом поясе пользователя
       if (showFullDate) {
         const formattedDate = moscowTime.toLocaleDateString('ru-RU', {
           day: '2-digit',
@@ -406,19 +504,15 @@ export default function PublicationCalendar({
           hour12: false
         });
         
-        console.log("🕐 result (full):", `${formattedDate}, ${formattedTime}`);
         return `${formattedDate}, ${formattedTime}`;
       } else {
-        const timeResult = moscowTime.toLocaleTimeString('ru-RU', {
+        return moscowTime.toLocaleTimeString('ru-RU', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
         });
-        console.log("🕐 result (time only):", timeResult);
-        return timeResult;
       }
     } catch (error) {
-      console.error("🕐 formatScheduledTime error:", error);
       return "--:--";
     }
   };
