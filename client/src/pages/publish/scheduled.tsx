@@ -453,9 +453,9 @@ export default function ScheduledPublications() {
       
       {/* Диалог для просмотра деталей публикации */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] w-[95vw] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
-            <DialogTitle>{previewContent?.title || 'Без названия'}</DialogTitle>
+            <DialogTitle className="text-lg font-semibold break-words">{previewContent?.title || 'Без названия'}</DialogTitle>
             <DialogDescription>
               {previewContent?.campaignId ? getCampaignName(previewContent.campaignId) : 'Кампания не указана'}
             </DialogDescription>
@@ -471,30 +471,46 @@ export default function ScheduledPublications() {
               </div>
             )}
             
-            <div className="mt-4 prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: previewContent?.content || '' }} />
+            <div className="mt-4 prose max-w-none overflow-hidden">
+              <div 
+                className="break-words overflow-wrap-anywhere"
+                dangerouslySetInnerHTML={{ __html: previewContent?.content || '' }} 
+              />
             </div>
             
             {previewContent?.imageUrl && (
-              <div className="mt-4">
-                <img 
-                  src={previewContent.imageUrl || ''} 
-                  alt={previewContent.title || 'Content image'} 
-                  className="rounded-md max-h-[400px] w-auto mx-auto"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-                  }}
-                />
+              <div className="mt-4 flex justify-center w-full">
+                <div className="max-w-full max-h-[400px] overflow-hidden rounded-md border">
+                  <img 
+                    src={previewContent.imageUrl || ''} 
+                    alt={previewContent.title || 'Content image'} 
+                    className="w-full h-auto max-h-[400px] object-contain"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                    onLoad={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      if (img.naturalWidth > 700) {
+                        img.style.width = '100%';
+                        img.style.maxWidth = '700px';
+                      }
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                    }}
+                  />
+                </div>
               </div>
             )}
             
             {previewContent?.videoUrl && (
-              <div className="mt-4">
-                <video 
-                  src={previewContent.videoUrl || ''}
-                  controls
-                  className="rounded-md max-h-[400px] w-auto mx-auto"
-                />
+              <div className="mt-4 flex justify-center w-full">
+                <div className="max-w-full max-h-[400px] overflow-hidden rounded-md border">
+                  <video 
+                    src={previewContent.videoUrl || ''}
+                    controls
+                    className="w-full h-auto max-h-[400px] object-contain"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                </div>
               </div>
             )}
             
