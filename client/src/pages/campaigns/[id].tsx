@@ -779,11 +779,11 @@ export default function CampaignDetails() {
       },
       schedule: {
         completed: Boolean(
-          campaignContent && campaignContent.length > 0 && 
+          campaignContent && Array.isArray(campaignContent) && campaignContent.length > 0 && 
           campaignContent.some(post => post.status === 'scheduled' || post.status === 'published')
         ),
         label: (() => {
-          if (!campaignContent || campaignContent.length === 0) return "Нет публикаций";
+          if (!campaignContent || !Array.isArray(campaignContent) || campaignContent.length === 0) return "Нет публикаций";
           const scheduledCount = campaignContent.filter(post => post.status === 'scheduled').length;
           const publishedCount = campaignContent.filter(post => post.status === 'published').length;
           if (scheduledCount > 0 && publishedCount > 0) {
