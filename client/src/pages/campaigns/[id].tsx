@@ -26,21 +26,7 @@ interface SuggestedKeyword {
   isSelected: boolean;
 }
 
-// Add URL validation helper
-const normalizeUrl = (url: string): string => {
-  if (!url) return '';
 
-  try {
-    // Ensure URL has protocol
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
-    const urlObj = new URL(url);
-    return urlObj.toString();
-  } catch (e) {
-    return '';
-  }
-};
 
 export default function CampaignDetails() {
   const { id } = useParams<{ id: string }>();
@@ -292,8 +278,7 @@ export default function CampaignDetails() {
 
   const { mutate: searchKeywords, isPending: isSearching } = useMutation({
     mutationFn: async (url: string) => {
-      const normalizedUrl = normalizeUrl(url);
-      if (!normalizedUrl) {
+      if (!url || !url.trim()) {
         throw new Error('Пожалуйста, введите корректный URL сайта');
       }
 
@@ -311,7 +296,7 @@ export default function CampaignDetails() {
           },
           {
             role: "user",
-            content: `Пожалуйста, посетите сайт ${normalizedUrl}, определите его точную тематику, и сгенерируйте список из 10-15 самых релевантных ключевых слов, соответствующих именно ЭТОМУ конкретному сайту. Просто верните JSON-массив, без вступления и пояснений.`
+            content: `Пожалуйста, посетите сайт ${url}, определите его точную тематику, и сгенерируйте список из 10-15 самых релевантных ключевых слов, соответствующих именно ЭТОМУ конкретному сайту. Просто верните JSON-массив, без вступления и пояснений.`
           }
         ],
         max_tokens: 1000,
@@ -702,10 +687,9 @@ export default function CampaignDetails() {
   const [silentUpdate, setSilentUpdate] = useState(false);
 
   const handleUrlUpdate = (newUrl: string, silent: boolean = false) => {
-    const normalizedUrl = normalizeUrl(newUrl);
-    if (normalizedUrl && normalizedUrl !== campaign?.link) {
+    if (newUrl && newUrl !== campaign?.link) {
       setSilentUpdate(silent);
-      updateCampaign({ link: normalizedUrl });
+      updateCampaign({ link: newUrl });
     }
   };
 
