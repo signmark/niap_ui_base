@@ -9,7 +9,7 @@ import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
 
 // ID администратора из env
-const ADMIN_USER_ID = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+const ADMIN_USER_ID = '53921f16-f51d-4591-80b9-8caa4fde4d13';
 
 // Путь для логов и информации о сессии
 const LOGS_DIR = path.resolve(process.cwd(), 'logs');
@@ -103,17 +103,8 @@ function saveTokenToEnv(token: string) {
     // Читаем текущее содержимое .env файла
     let envContent = fs.readFileSync(envPath, 'utf8');
     
-    // Проверяем, существует ли переменная DIRECTUS_ADMIN_TOKEN
-    if (envContent.includes('DIRECTUS_ADMIN_TOKEN=')) {
-      // Заменяем существующую переменную новым значением
-      envContent = envContent.replace(
-        /DIRECTUS_ADMIN_TOKEN=".*"/g,
-        `DIRECTUS_ADMIN_TOKEN="${token}"`
-      );
-    } else {
-      // Добавляем новую переменную в конец файла
-      envContent += `\nDIRECTUS_ADMIN_TOKEN="${token}"\n`;
-    }
+    // Токены больше не сохраняются в .env файле
+    // Используется только внутренний кэш токенов
     
     // Записываем обновленное содержимое в .env файл
     fs.writeFileSync(envPath, envContent);

@@ -19,13 +19,10 @@ export abstract class BaseSocialService {
     try {
       const directusAuthManager = await import('../directus-auth-manager').then(m => m.directusAuthManager);
       const directusCrud = await import('../directus-crud').then(m => m.directusCrud);
-      const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      const adminUserId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
       
-      // 1. Приоритет - авторизация через логин/пароль (если есть учетные данные)
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      
-      if (email && password) {
+      // Используем только системную авторизацию через DirectusAuthManager
+      if (false) {
         log(`Попытка авторизации администратора с учетными данными из env`, 'social-publishing');
         try {
           // Используем метод login вместо loginUserWithCredentials
@@ -235,23 +232,14 @@ export abstract class BaseSocialService {
   protected getAppBaseUrl(): string {
     // Приоритет имеют явно указанные URL
     // Сначала проверяем наличие переменных окружения
-    const envBaseUrl = process.env.APP_URL || process.env.VITE_APP_URL;
-    if (envBaseUrl) {
-      return envBaseUrl.endsWith('/') ? envBaseUrl.slice(0, -1) : envBaseUrl;
+    // Используем только N8N_URL из переменных окружения
+    const n8nUrl = process.env.N8N_URL;
+    if (n8nUrl) {
+      return n8nUrl.endsWith('/') ? n8nUrl.slice(0, -1) : n8nUrl;
     }
-
-    // Если переменных нет, используем значения по умолчанию, в зависимости от среды
-    const productionUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
     
-    // Проверка продакшн-режима
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    if (isProduction) {
-      return productionUrl;
-    } else {
-      // Для локальной разработки
-      return 'http://localhost:3000';
-    }
+    // Если N8N_URL не настроен, возвращаем null
+    return null;
   }
   
   /**

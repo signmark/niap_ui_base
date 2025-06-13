@@ -84,10 +84,11 @@ export class SocialPublishingService {
    * Публикует контент через n8n webhook (ЕДИНСТВЕННЫЙ способ публикации)
    */
   private async publishThroughN8nWebhook(content: any, platform: string, settings: any): Promise<any> {
-    // Определяем базовый URL n8n на основе окружения
-    const baseN8nUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://n8n.nplanner.ru' 
-      : 'https://n8n.roboflow.tech';
+    // Используем только N8N_URL из переменных окружения
+    const baseN8nUrl = process.env.N8N_URL;
+    if (!baseN8nUrl) {
+      throw new Error('N8N_URL не настроен в переменных окружения');
+    }
     
     const webhookUrls = {
       'vk': `${baseN8nUrl}/webhook/publish-vk`,

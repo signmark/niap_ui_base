@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from './store';
 
 // Динамическое получение URL Directus с сервера
-let directusUrl = import.meta.env.VITE_DIRECTUS_URL || 'https://directus.roboflow.tech';
+let directusUrl = import.meta.env.VITE_DIRECTUS_URL;
 
 // Функция для получения конфигурации с сервера
 async function getServerConfig() {

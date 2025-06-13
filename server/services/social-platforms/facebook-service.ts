@@ -548,7 +548,7 @@ class FacebookService {
       
       // Находим активную сессию администратора для получения системного токена
       const directusAuthManager = await import('../directus-auth-manager').then(m => m.directusAuthManager);
-      let token = process.env.DIRECTUS_ADMIN_TOKEN || '';
+      let token = '';
       const sessions = directusAuthManager.getAllActiveSessions();
       
       if (sessions.length > 0) {
