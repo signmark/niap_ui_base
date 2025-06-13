@@ -102,36 +102,50 @@ export default function CalendarView() {
   // Функция для обновления расписания поста
   const handleReschedulePost = async (postId: string, newDate: Date, newTime: string) => {
     try {
-      console.log('Updating post schedule:', { postId, newDate, newTime });
+      console.log('=== DRAG AND DROP DEBUG ===');
+      console.log('Post ID:', postId);
+      console.log('New date:', newDate);
+      console.log('New time:', newTime);
+      console.log('Current token:', getAuthToken());
       
       // Форматируем новую дату в формате ISO
       const [hours, minutes] = newTime.split(':');
       const scheduledAt = new Date(newDate);
       scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       
+      console.log('Formatted scheduled date:', scheduledAt.toISOString());
+      
       // Отправляем запрос на обновление
-      await apiRequest(`/api/campaign-content/${postId}`, {
+      const response = await apiRequest(`/api/campaign-content/${postId}`, {
         method: 'PATCH',
         data: {
           scheduledAt: scheduledAt.toISOString().slice(0, 19) // Убираем Z и миллисекунды
         }
       });
       
+      console.log('Update response:', response);
+      
       // Обновляем кэш запросов
       await queryClient.invalidateQueries({
         queryKey: ['/api/campaign-content', selectedCampaign?.id]
       });
+      
+      console.log('Cache invalidated successfully');
       
       toast({
         title: "Расписание обновлено",
         description: `Пост перенесен на ${newDate.toLocaleDateString('ru-RU')} в ${newTime}`,
       });
       
-    } catch (error) {
-      console.error('Error updating post schedule:', error);
+    } catch (error: any) {
+      console.error('=== DRAG AND DROP ERROR ===');
+      console.error('Full error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
       toast({
         title: "Ошибка",
-        description: "Не удалось обновить расписание поста",
+        description: error.response?.data?.error || "Не удалось обновить расписание поста",
         variant: "destructive"
       });
     }
