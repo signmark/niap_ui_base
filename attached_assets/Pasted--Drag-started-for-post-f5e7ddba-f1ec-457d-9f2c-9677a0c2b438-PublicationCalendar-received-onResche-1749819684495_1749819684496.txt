@@ -1,0 +1,115 @@
+ Drag started for post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:09 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sat Jun 14 2025 16:01:10 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag leave
+ Drag ended
+ PublicationCalendar received onReschedulePost: undefined
+ PublicationCalendar received onReschedulePost: undefined

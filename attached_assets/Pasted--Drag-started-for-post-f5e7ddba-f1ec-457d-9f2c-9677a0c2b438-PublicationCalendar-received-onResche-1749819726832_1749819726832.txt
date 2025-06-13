@@ -1,0 +1,190 @@
+ Drag started for post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:50 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Mon Jun 16 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Mon Jun 16 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag leave
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:51 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drag over date: Sun Jun 15 2025 16:01:52 GMT+0300 (Москва, стандартное время)
+ PublicationCalendar received onReschedulePost: undefined
+ Drop on date: Sun Jun 15 2025 16:01:52 GMT+0300 (Москва, стандартное время) Dragged post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+ Calling onReschedulePost with: Object
+ onReschedulePost type: undefined
+hook.js:608 onReschedulePost is not a function: undefined
+overrideMethod @ hook.js:608
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: Array(5)
+ Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+ PublicationCalendar received onReschedulePost: undefined
+ Drag ended
+ PublicationCalendar received onReschedulePost: undefined
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: site exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: keywords exists: true url: /keywords
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: trend-analysis exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: trends exists: true url: /trends
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: content exists: true url: /content
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: social-media exists: false url: undefined
+ Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+ Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+ PublicationCalendar received onReschedulePost: undefined
