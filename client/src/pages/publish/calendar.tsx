@@ -101,6 +101,7 @@ export default function CalendarView() {
 
   // Функция для обновления расписания поста
   const handleReschedulePost = useCallback(async (postId: string, newDate: Date, newTime: string) => {
+    console.log('handleReschedulePost called with:', { postId, newDate, newTime });
     try {
       console.log('=== DRAG AND DROP DEBUG ===');
       console.log('Post ID:', postId);
@@ -215,7 +216,11 @@ export default function CalendarView() {
               onViewPost={(post) => console.log('View post details:', post)}
               initialSortOrder={sortOrder}
               onSortOrderChange={setSortOrder}
-              onReschedulePost={handleReschedulePost}
+              onReschedulePost={(() => {
+                console.log('calendar.tsx: Preparing onReschedulePost, handleReschedulePost type:', typeof handleReschedulePost);
+                console.log('calendar.tsx: handleReschedulePost function:', handleReschedulePost);
+                return handleReschedulePost;
+              })()}
             />
           )}
         </>
