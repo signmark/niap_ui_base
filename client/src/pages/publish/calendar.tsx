@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { CampaignContent } from '@/types';
@@ -7,12 +7,16 @@ import PublicationCalendar from '@/components/PublicationCalendar';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { PenLine, ArrowLeft, SortDesc, SortAsc, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function CalendarView() {
   const { selectedCampaign } = useCampaignStore();
   const userId = useAuthStore((state) => state.userId);
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery({
@@ -95,6 +99,44 @@ export default function CalendarView() {
     window.location.href = '/content';
   };
 
+  // Функция для обновления расписания поста
+  const handleReschedulePost = async (postId: string, newDate: Date, newTime: string) => {
+    try {
+      console.log('Updating post schedule:', { postId, newDate, newTime });
+      
+      // Форматируем новую дату в формате ISO
+      const [hours, minutes] = newTime.split(':');
+      const scheduledAt = new Date(newDate);
+      scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Отправляем запрос на обновление
+      await apiRequest(`/api/campaign-content/${postId}`, {
+        method: 'PATCH',
+        data: {
+          scheduledAt: scheduledAt.toISOString().slice(0, 19) // Убираем Z и миллисекунды
+        }
+      });
+      
+      // Обновляем кэш запросов
+      await queryClient.invalidateQueries({
+        queryKey: ['/api/campaign-content', selectedCampaign?.id]
+      });
+      
+      toast({
+        title: "Расписание обновлено",
+        description: `Пост перенесен на ${newDate.toLocaleDateString('ru-RU')} в ${newTime}`,
+      });
+      
+    } catch (error) {
+      console.error('Error updating post schedule:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить расписание поста",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -159,6 +201,7 @@ export default function CalendarView() {
               onViewPost={(post) => console.log('View post details:', post)}
               initialSortOrder={sortOrder}
               onSortOrderChange={setSortOrder}
+              onReschedulePost={handleReschedulePost}
             />
           )}
         </>
