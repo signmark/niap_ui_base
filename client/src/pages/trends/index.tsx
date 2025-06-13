@@ -85,6 +85,7 @@ interface ContentSource {
   campaign_id: string;
   created_at: string;
   status: string | null;
+  description?: string;
 }
 
 interface TrendTopic {
@@ -107,6 +108,10 @@ interface TrendTopic {
   media_links?: string;    // JSON строка с медиа-данными
   mediaLinks?: string;     // Альтернативное имя поля
   description?: string;    // Описание или контент тренда
+  accountUrl?: string;     // URL аккаунта источника
+  urlPost?: string;        // URL оригинального поста
+  sourceDescription?: string; // Описание источника
+  trendScore?: number;     // Оценка тренда
 }
 
 interface SourcePost {
@@ -174,10 +179,7 @@ export default function Trends() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Добавляем недостающие переменные для проверки статуса
-  const statusCheckInterval = useRef<NodeJS.Timeout | undefined>(undefined);
-  const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
-  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
@@ -187,84 +189,7 @@ export default function Trends() {
     }
   }, [selectedCampaign]);
 
-  // Эффект для очистки интервала при размонтировании
-  useEffect(() => {
-    return () => {
-      if (statusCheckInterval.current) {
-        clearInterval(statusCheckInterval.current);
-      }
-    };
-  }, []);
 
-  // Функция для проверки статуса конкретного источника
-  const checkSourceStatus = async (sourceId: string) => {
-    try {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) return;
-
-      const response = await directusApi.get(`/items/campaign_content_sources/${sourceId}`, {
-        params: {
-          fields: ['status']
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      const status = response.data?.data?.status;
-
-      // Если статус finished, error или null, останавливаем проверку
-      // Не удаляем источник из списка активных в случае ошибки или завершения
-      if (status === 'finished' || status === 'error' || !status) {
-        
-        // Удаляем источник из списка активных процессов только при завершении успешно или с ошибкой
-        setProcessingSourceIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(sourceId);
-          return newSet;
-        });
-        if (statusCheckInterval.current) {
-          clearInterval(statusCheckInterval.current);
-          statusCheckInterval.current = undefined;
-        }
-        setActiveSourceId(null);
-        
-        // Выводим уведомление о завершении или ошибке
-        if (status === 'error') {
-          toast({
-            title: "Ошибка",
-            description: "Произошла ошибка при сборе данных из источника",
-            variant: "destructive",
-          });
-        } else if (status === 'finished') {
-          toast({
-            title: "Готово",
-            description: "Сбор данных из источника завершен",
-          });
-        }
-      }
-
-      // Обновляем кеш с новым статусом, гарантируя немедленное обновление UI
-      queryClient.setQueryData(
-        ["campaign_content_sources", selectedCampaignId],
-        (old: any[]) => {
-          if (!old) return [];
-          return old.map(source =>
-            source.id === sourceId
-              ? { ...source, status: status || 'processing' }
-              : source
-          );
-        }
-      );
-      
-      // Перезапрашиваем данные для обновления отображения на UI
-      if (status === 'start' || status === 'running' || status === 'processing') {
-        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-      }
-    } catch (error) {
-      console.error('Error checking source status:', error);
-    }
-  };
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ["user_data"],
@@ -1336,11 +1261,11 @@ export default function Trends() {
                             
                             return finalResult;
                           })
-                          .filter((topic, index, array) => {
+                          .filter((topic: TrendTopic, index: number, array: TrendTopic[]) => {
                             return true;
                           })
                           // Сортировка трендов
-                          .sort((a, b) => {
+                          .sort((a: TrendTopic, b: TrendTopic) => {
                             if (sortField === 'none') return 0;
                             
                             let valueA, valueB;
@@ -1558,7 +1483,7 @@ export default function Trends() {
                       sortDirection={sortDirection}
                       setSortDirection={setSortDirection}
                       selectedPeriod={selectedPeriod}
-                      setSelectedPeriod={setSelectedPeriod}
+                      setSelectedPeriod={(value: string) => setSelectedPeriod(value as Period)}
                       isValidPeriod={isValidPeriod}
                     />
                     <div className="max-h-[400px] overflow-y-auto pr-2">
