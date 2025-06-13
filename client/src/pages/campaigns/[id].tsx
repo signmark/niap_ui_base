@@ -801,23 +801,13 @@ export default function CampaignDetails() {
           campaignContent.some(post => post.status === 'scheduled' || post.status === 'published')
         ),
         label: (() => {
-          if (!allCampaignContent || !Array.isArray(allCampaignContent) || allCampaignContent.length === 0) return "Нет публикаций";
-          
           // Используем отфильтрованный контент для подсчета запланированных
           const scheduledCount = campaignContent ? campaignContent.length : 0;
-          const publishedCount = allCampaignContent.filter(post => post.status === 'published').length;
-          const draftCount = allCampaignContent.filter(post => post.status === 'draft').length;
           
-          if (scheduledCount === 0 && publishedCount === 0 && draftCount > 0) {
+          if (scheduledCount === 0) {
             return "Нет запланированных публикаций";
-          } else if (scheduledCount > 0 && publishedCount > 0) {
-            return `${publishedCount} опубликовано, ${scheduledCount} запланировано`;
-          } else if (publishedCount > 0 && scheduledCount === 0) {
-            return `${publishedCount} опубликовано`;
-          } else if (scheduledCount > 0) {
-            return `${scheduledCount} запланировано`;
           } else {
-            return "Нет запланированных публикаций";
+            return `${scheduledCount} запланировано`;
           }
         })()
       }
