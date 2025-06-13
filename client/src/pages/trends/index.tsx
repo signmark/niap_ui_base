@@ -1115,6 +1115,7 @@ export default function Trends() {
 
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
+                        {/* Force update - platform sorting added */}
                         <Select 
                           defaultValue="none" 
                           value={sortField}
