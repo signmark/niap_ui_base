@@ -1,0 +1,41 @@
+accordion.tsx:98 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:98 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:98 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:98 hasFullscreenPage: value is undefined or not passed
+accordion.tsx:98 hasFullscreenPage: value is undefined or not passed
+PublicationCalendar.tsx:200 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf-14c3-4c40-b6e8-6d7ce753c246 - status: scheduled
+PublicationCalendar.tsx:223 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf - status: scheduled, type: text
+PublicationCalendar.tsx:154 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 1
+PublicationCalendar.tsx:155 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 1
+PublicationCalendar.tsx:156 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx:157 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 0
+PublicationCalendar.tsx:159 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx:161   1. ID: 296ceeaf-14c3-4c40-b6e8-6d7ce753c246, status: scheduled, scheduledAt: 2025-06-13T11:55:00, platforms: vk, telegram
+PublicationCalendar.tsx:164     Platform vk: status=pending, scheduledAt=2025-06-13T11:55:00.000Z
+PublicationCalendar.tsx:164     Platform telegram: status=pending, scheduledAt=2025-06-13T11:55:00.000Z
+PublicationCalendar.tsx:170 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx:172   1. publishedAt: null, scheduledAt: 2025-06-13T11:55:00, platforms: vk, telegram
+PublicationCalendar.tsx:200 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf-14c3-4c40-b6e8-6d7ce753c246 - status: scheduled
+PublicationCalendar.tsx:223 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf - status: scheduled, type: text
+PublicationCalendar.tsx:200 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf-14c3-4c40-b6e8-6d7ce753c246 - status: scheduled
+PublicationCalendar.tsx:223 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf - status: scheduled, type: text
+PublicationCalendar.tsx:200 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf-14c3-4c40-b6e8-6d7ce753c246 - status: scheduled
+PublicationCalendar.tsx:223 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf - status: scheduled, type: text
+PublicationCalendar.tsx:387 formatScheduledTime - input: 2025-06-13T11:55:00
+PublicationCalendar.tsx:388 formatScheduledTime - dateObj: Fri Jun 13 2025 11:55:00 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:389 formatScheduledTime - dateObj.toISOString(): 2025-06-13T08:55:00.000Z
+PublicationCalendar.tsx:390 formatScheduledTime - dateObj.getTimezoneOffset(): -180
+PublicationCalendar.tsx:399 formatScheduledTime - formattedTime: 11:55
+PublicationCalendar.tsx:409 formatScheduledTime - moscowFormattedTime: 14:55
+PublicationCalendar.tsx:268 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf-14c3-4c40-b6e8-6d7ce753c246 - status: scheduled
+PublicationCalendar.tsx:307 КАЛЕНДАРЬ 13 ИЮНЯ: Post 296ceeaf - status: scheduled, type: text
+PublicationCalendar.tsx:201 КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: 1
+PublicationCalendar.tsx:202 КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: 1
+PublicationCalendar.tsx:203 КАЛЕНДАРЬ ОТЛАДКА: Запланированных: 1
+PublicationCalendar.tsx:204 КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: 0
+PublicationCalendar.tsx:207 КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:
+PublicationCalendar.tsx:209   1. ID: 296ceeaf-14c3-4c40-b6e8-6d7ce753c246, status: scheduled, scheduledAt: 2025-06-13T11:55:00, platforms: vk, telegram
+PublicationCalendar.tsx:214     Platform vk: status=pending, scheduledAt=2025-06-13T11:55:00.000Z
+PublicationCalendar.tsx:214     Platform telegram: status=pending, scheduledAt=2025-06-13T11:55:00.000Z
+PublicationCalendar.tsx:221 КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:
+PublicationCalendar.tsx:223   1. publishedAt: null, scheduledAt: 2025-06-13T11:55:00, platforms: vk, telegram

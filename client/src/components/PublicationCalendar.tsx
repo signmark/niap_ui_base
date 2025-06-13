@@ -383,27 +383,42 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
+      // Отладочная информация для понимания проблемы
+      console.log("formatScheduledTime - input:", date);
+      console.log("formatScheduledTime - dateObj:", dateObj);
+      console.log("formatScheduledTime - dateObj.toISOString():", dateObj.toISOString());
+      console.log("formatScheduledTime - dateObj.getTimezoneOffset():", dateObj.getTimezoneOffset());
+      
+      // Проверим что приходит и как отображается
+      const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      console.log("formatScheduledTime - formattedTime:", formattedTime);
+      
+      // Попробуем принудительно добавить 3 часа если это UTC время
+      const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
+      const moscowFormattedTime = moscowTime.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      console.log("formatScheduledTime - moscowFormattedTime:", moscowFormattedTime);
+      
       // JavaScript автоматически отображает время в локальном часовом поясе пользователя
       if (showFullDate) {
-        const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+        const formattedDate = moscowTime.toLocaleDateString('ru-RU', {
           day: '2-digit',
           month: 'long',
           year: 'numeric'
         });
         
-        const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        
-        return `${formattedDate}, ${formattedTime}`;
+        return `${formattedDate}, ${moscowFormattedTime}`;
       } else {
-        return dateObj.toLocaleTimeString('ru-RU', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
+        return moscowFormattedTime;
       }
     } catch (error) {
       return "--:--";
