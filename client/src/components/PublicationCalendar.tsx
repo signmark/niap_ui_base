@@ -26,7 +26,7 @@ interface PublicationCalendarProps {
   onViewPost?: (post: CampaignContent) => void;
   initialSortOrder?: 'asc' | 'desc';
   onSortOrderChange?: (order: 'asc' | 'desc') => void;
-  onReschedulePost?: (postId: string, newDate: Date, newTime: string) => void;
+  onReschedulePost: (postId: string, newDate: Date, newTime: string) => void;
 }
 
 // Функция для форматирования времени в московской часовой зоне
@@ -147,13 +147,9 @@ export default function PublicationCalendar({
         description: `Пост ${draggedPost} перенесен на ${targetDate.toLocaleDateString('ru-RU')} в ${time}`,
       });
       
-      // Вызываем onReschedulePost только если он передан
-      if (onReschedulePost) {
-        console.log('Calling onReschedulePost');
-        onReschedulePost(draggedPost, targetDate, time);
-      } else {
-        console.log('onReschedulePost not provided');
-      }
+      // Вызываем onReschedulePost
+      console.log('Calling onReschedulePost with:', { postId: draggedPost, targetDate, time });
+      onReschedulePost(draggedPost, targetDate, time);
     } else {
       console.log('No dragged post');
     }
