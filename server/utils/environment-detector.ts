@@ -15,18 +15,18 @@ interface EnvironmentConfig {
  */
 export function detectEnvironment(): EnvironmentConfig {
   // Используем только переменные окружения DIRECTUS_URL и N8N_URL
-  const directusUrl = process.env.DIRECTUS_URL;
+  const directusUrl = process.env.DIRECTUS_URL || 'https://directus.nplanner.ru';
   
   // Определяем окружение на основе URL
-  let environment = 'development';
-  if (directusUrl && directusUrl.includes('nplanner.ru')) {
-    environment = 'production';
+  let environment = 'production';
+  if (directusUrl && directusUrl.includes('roboflow.tech')) {
+    environment = 'development';
   }
 
   return {
     adminEmail: 'admin@roboflow.tech',
     adminPassword: 'asdASD123!@#',
-    directusUrl: directusUrl || 'https://directus.roboflow.tech',
+    directusUrl: directusUrl,
     environment
   };
 }
