@@ -26,7 +26,7 @@ interface PublicationCalendarProps {
   onViewPost?: (post: CampaignContent) => void;
   initialSortOrder?: 'asc' | 'desc';
   onSortOrderChange?: (order: 'asc' | 'desc') => void;
-  onReschedulePost: (postId: string, newDate: Date, newTime: string) => void;
+  onReschedulePost?: (postId: string, newDate: Date, newTime: string) => void;
 }
 
 // Функция для форматирования времени в московской часовой зоне

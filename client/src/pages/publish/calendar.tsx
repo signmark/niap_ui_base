@@ -215,7 +215,10 @@ export default function CalendarView() {
               onViewPost={(post) => console.log('View post details:', post)}
               initialSortOrder={sortOrder}
               onSortOrderChange={setSortOrder}
-              onReschedulePost={handleReschedulePost}
+              onReschedulePost={(postId: string, newDate: Date, newTime: string) => {
+                console.log('onReschedulePost called from calendar.tsx with:', { postId, newDate, newTime });
+                return handleReschedulePost(postId, newDate, newTime);
+              }}
             />
           )}
         </>

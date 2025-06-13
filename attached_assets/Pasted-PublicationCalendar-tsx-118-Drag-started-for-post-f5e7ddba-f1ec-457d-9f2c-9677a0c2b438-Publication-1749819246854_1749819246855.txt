@@ -1,0 +1,139 @@
+PublicationCalendar.tsx:118 Drag started for post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:44 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:134 Drag leave
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:134 Drag leave
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:129 Drag over date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время)
+PublicationCalendar.tsx:139 Drop on date: Sat Jun 14 2025 15:53:45 GMT+0300 (Москва, стандартное время) Dragged post: f5e7ddba-f1ec-457d-9f2c-9677a0c2b438
+PublicationCalendar.tsx:151 Calling onReschedulePost with: Object
+PublicationCalendar.tsx:152 onReschedulePost type: undefined
+hook.js:608 onReschedulePost is not a function: undefined
+overrideMethod @ hook.js:608
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:103 Available expandable pages: Array(5)
+accordion.tsx:106 Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+PublicationCalendar.tsx:123 Drag ended
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(219), length: 219, type: 'object', isArray: true, completed: true}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: site exists: false url: undefined
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: keywords exists: true url: /keywords
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: business-questionnaire exists: false url: undefined
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: trend-analysis exists: false url: undefined
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: trends exists: true url: /trends
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: content exists: true url: /content
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: social-media exists: false url: undefined
+accordion.tsx:103 Available expandable pages: (5) ['keywords', 'trends', 'content', 'scheduled', 'schedule']
+accordion.tsx:106 Checking fullscreen page for value: schedule exists: true url: /publish/calendar
+[id].tsx:71 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:209 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:211 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+[id].tsx:219 Успешно получены данные кампании: NPlanner.ru
