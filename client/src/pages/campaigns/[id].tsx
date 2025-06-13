@@ -20,6 +20,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useCampaignStore } from "@/lib/campaignStore";
+import { useAuthStore } from "@/lib/store";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SuggestedKeyword {
   keyword: string;
@@ -41,6 +43,7 @@ export default function CampaignDetails() {
   
   // Получаем доступ к глобальному хранилищу кампаний
   const { setSelectedCampaign } = useCampaignStore();
+  const getAuthToken = useAuthStore((state) => state.getAuthToken);
   
   // Для хранения выбранных трендов - изменяем тип на конкретный с правильными полями для улучшения типизации
   const [selectedTrends, setSelectedTrends] = useState<Array<{
@@ -716,6 +719,70 @@ export default function CampaignDetails() {
     }
   };
 
+  // Обработчик переноса постов в календаре
+  const handleReschedulePost = useCallback(async (postId: string, newDate: Date, newTime: string) => {
+    console.log('campaigns/[id].tsx handleReschedulePost called:', { postId, newDate, newTime });
+    
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        toast({
+          title: "Ошибка авторизации",
+          description: "Не удалось получить токен доступа",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Формируем новую дату и время
+      const [hours, minutes] = newTime.split(':').map(Number);
+      const scheduledDateTime = new Date(newDate);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+      
+      // Форматируем для API (ISO string без миллисекунд)
+      const scheduledAt = scheduledDateTime.toISOString().slice(0, 19);
+      
+      console.log('Отправка запроса на перенос поста:', {
+        postId,
+        scheduledAt,
+        originalDate: newDate,
+        originalTime: newTime
+      });
+
+      // Выполняем запрос на обновление
+      await apiRequest(`/api/campaign-content/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scheduledAt: scheduledAt
+        })
+      });
+
+      // Обновляем кэш
+      queryClient.invalidateQueries({
+        queryKey: ['/api/campaign-content', id]
+      });
+      
+      console.log('Пост успешно перенесен');
+      
+      toast({
+        title: "Расписание обновлено",
+        description: `Пост перенесен на ${newDate.toLocaleDateString('ru-RU')} в ${newTime}`,
+      });
+      
+    } catch (error) {
+      console.error('Ошибка при переносе поста:', error);
+      toast({
+        title: "Ошибка переноса",
+        description: "Не удалось перенести пост. Попробуйте снова.",
+        variant: "destructive"
+      });
+    }
+  }, [getAuthToken, queryClient, toast, id]);
+
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
     // Отладка для понимания структуры данных
@@ -1207,6 +1274,7 @@ export default function CampaignDetails() {
                           console.log('View post:', post);
                           // Здесь можно добавить дополнительную логику просмотра поста
                         }}
+                        onReschedulePost={handleReschedulePost}
                       />
                     )}
                   </>
