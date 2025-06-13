@@ -14,6 +14,9 @@ interface EnvironmentConfig {
  * Detects current environment and returns appropriate admin credentials
  */
 export function detectEnvironment(): EnvironmentConfig {
+  // Принудительно перезагружаем переменные окружения из .env файла
+  require('dotenv').config({ override: true });
+  
   // Используем только переменные окружения DIRECTUS_URL и N8N_URL
   const directusUrl = process.env.DIRECTUS_URL;
   

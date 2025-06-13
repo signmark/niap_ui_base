@@ -264,6 +264,8 @@ export function registerAuthRoutes(app: Express): void {
 
   // Маршрут для получения конфигурации окружения
   app.get('/api/config', (req: Request, res: Response) => {
+    // Принудительно перезагружаем переменные окружения
+    require('dotenv').config({ override: true });
     const envConfig = detectEnvironment();
     res.json({
       directusUrl: envConfig.directusUrl,
