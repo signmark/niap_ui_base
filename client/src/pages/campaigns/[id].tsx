@@ -118,7 +118,7 @@ export default function CampaignDetails() {
   });
   
   // Запрос контента кампании для календаря публикаций
-  const { data: campaignContent, isLoading: isLoadingContent } = useQuery({
+  const { data: allCampaignContent, isLoading: isLoadingContent } = useQuery({
     queryKey: ['/api/campaign-content', id],
     queryFn: async () => {
       if (!id) return [];
@@ -149,6 +149,29 @@ export default function CampaignDetails() {
     refetchOnMount: true,
     staleTime: 0
   });
+
+  // Фильтруем только действительно запланированный контент для календаря
+  const campaignContent = useMemo(() => {
+    if (!allCampaignContent) return [];
+    
+    return allCampaignContent.filter(content => {
+      // Только статус 'scheduled'
+      if (content.status !== 'scheduled') return false;
+      
+      // Дополнительная проверка: исключаем контент с опубликованными платформами
+      if (content.socialPlatforms && typeof content.socialPlatforms === 'object') {
+        const platforms = Object.values(content.socialPlatforms);
+        const hasPublishedPlatforms = platforms.some(platform => platform?.status === 'published');
+        
+        // Если есть опубликованные платформы - не показываем в календаре запланированных
+        if (hasPublishedPlatforms) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [allCampaignContent]);
 
   // Запрос бизнес-анкеты для отображения статуса завершенности
   const { data: businessQuestionnaire } = useQuery({
