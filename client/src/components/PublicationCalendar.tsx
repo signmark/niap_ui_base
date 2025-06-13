@@ -324,39 +324,24 @@ export default function PublicationCalendar({
       }
     };
 
-    // Проверяем, есть ли опубликованные или запланированные посты
-    const hasPublishedOrScheduled = Object.keys(contentByStatus).some(status => 
-      status === 'published' || status === 'scheduled'
-    );
-
-    // Отображаем маркеры для типов контента, сгруппированные по статусу
+    // Отображаем только цветные точки для типов контента
     return (
-      <div className="flex flex-col items-center gap-0.5 mt-1">
-        {/* Зеленая галочка для опубликованных или запланированных постов */}
-        {hasPublishedOrScheduled && (
-          <div className="h-3 w-3 bg-green-500 rounded-full flex items-center justify-center">
-            <Check className="h-2 w-2 text-white" strokeWidth={3} />
+      <div className="flex justify-center gap-1 mt-1">
+        {Object.entries(contentByStatus).map(([status, typesCounts], statusIndex) => (
+          <div key={statusIndex} className="flex gap-0.5">
+            {Object.keys(typesCounts).map((type, typeIndex) => {
+              const { opacity, ring } = getStatusStyle(status);
+              return (
+                <div 
+                  key={`${statusIndex}-${typeIndex}`} 
+                  className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)} ${ring || ''}`}
+                  style={{ opacity }}
+                  title={`${status}: ${type}`}
+                ></div>
+              );
+            })}
           </div>
-        )}
-        
-        {/* Цветные точки для типов контента */}
-        <div className="flex justify-center gap-1">
-          {Object.entries(contentByStatus).map(([status, typesCounts], statusIndex) => (
-            <div key={statusIndex} className="flex gap-0.5">
-              {Object.keys(typesCounts).map((type, typeIndex) => {
-                const { opacity, ring } = getStatusStyle(status);
-                return (
-                  <div 
-                    key={`${statusIndex}-${typeIndex}`} 
-                    className={`h-1.5 w-1.5 rounded-full ${getColorForType(type)} ${ring || ''}`}
-                    style={{ opacity }}
-                    title={`${status}: ${type}`}
-                  ></div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     );
   };

@@ -1156,8 +1156,15 @@ export default function CampaignDetails() {
         <AccordionItem value="schedule" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="schedule" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             <div className="flex items-center gap-3">
-              <Circle className="h-5 w-5 text-gray-400" />
+              {getSectionCompletionStatus().schedule.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-400" />
+              )}
               <span>Календарь публикаций</span>
+              <span className="text-sm text-muted-foreground ml-auto">
+                {getSectionCompletionStatus().schedule.label}
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pt-2 pb-4">
