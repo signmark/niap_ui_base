@@ -101,7 +101,7 @@ declare global {
 // Функция для взаимодействия с n8n API
 async function triggerN8nWorkflow(workflowId: string, data: any): Promise<any> {
   try {
-    const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+    const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
     const n8nApiKey = process.env.N8N_API_KEY;
     
     if (!n8nApiKey) {
@@ -5548,7 +5548,7 @@ Return your response as a JSON array in this exact format:
           collectSources: req.body.collectSources,
         });
         
-        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
         webhookResponse = await axios.post(`${n8nUrl}/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439`, {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
