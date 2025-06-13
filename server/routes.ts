@@ -6070,7 +6070,12 @@ Return your response as a JSON array in this exact format:
       
       try {
         // Отправляем запрос на n8n webhook для сбора постов из источника
-        const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
+        const n8nUrl = process.env.N8N_URL;
+        if (!n8nUrl) {
+          console.log('N8N_URL не настроен в переменных окружения');
+          return res.status(500).json({ success: false, error: 'N8N_URL не настроен' });
+        }
+        
         const webhookUrl = `${n8nUrl}/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c`;
         
         // Отправляем только sourceId и campaignId без авторизации
