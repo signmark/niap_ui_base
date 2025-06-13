@@ -173,6 +173,11 @@ export default function Trends() {
   const [selectedTrendTopic, setSelectedTrendTopic] = useState<TrendTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Добавляем недостающие переменные для проверки статуса
+  const statusCheckInterval = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [processingSourceIds, setProcessingSourceIds] = useState<Set<string>>(new Set());
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
@@ -1295,20 +1300,9 @@ export default function Trends() {
 
                             const detectedPlatform = detectPlatform();
                             
-                            // Фильтр по периоду времени
-                            let withinPeriod = true;
-                            if (selectedPeriod !== 'all') {
-                              const periodDays = {
-                                '3days': 3,
-                                '7days': 7,
-                                '14days': 14,
-                                '30days': 30
-                              }[selectedPeriod] || 7;
-                              
-                              const cutoffDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
-                              const topicDate = new Date(topic.created_at || topic.createdAt || 0);
-                              withinPeriod = topicDate >= cutoffDate;
-                            }
+                            // Фильтр по периоду времени - сервер уже отфильтровал данные по периоду
+                            // Показываем ВСЕ полученные от сервера записи
+                            const withinPeriod = true;
                             
                             // Фильтр по поисковому запросу
                             const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
