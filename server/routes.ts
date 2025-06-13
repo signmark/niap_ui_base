@@ -16,7 +16,6 @@ import { registerFalAiImageRoutes } from './routes-fal-ai-images';
 // import { registerClaudeRoutes } from './routes-claude'; // ОТКЛЮЧЕНО: используем единый маршрут
 import { testFalApiConnection } from './services/fal-api-tester';
 import { socialPublishingService } from './services/social-publishing';
-import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
 import express, { Express, Request, Response, NextFunction } from "express";
 import { isUserAdmin } from "./routes-global-api-keys";
 import { createServer, Server } from "http";
@@ -8152,10 +8151,10 @@ Return your response as a JSON array in this exact format:
             log(`Публикация контента в ${platform}`, 'social-publish');
             
             let result;
-            // Используем новый сервис публикации с поддержкой Imgur для всех платформ
+            // Используем правильный сервис: VK/Telegram/Instagram через n8n webhooks, Facebook напрямую
             if (userSettings) {
-              // Универсальный метод публикации для всех типов платформ
-              result = await socialPublishingWithImgurService.publishToPlatform(campaignContent, platform as any, userSettings);
+              // Используем сервис с правильной маршрутизацией через n8n webhooks
+              result = await socialPublishingService.publishToPlatform(platform, campaignContent, { socialMediaSettings: userSettings });
             } else {
               result = {
                 platform: platform as any,
