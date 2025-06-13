@@ -501,7 +501,7 @@ export default function PublicationCalendar({
               </div>
             ) : filteredContent.length === 0 ? (
               <div className="text-center py-12 border rounded-lg">
-                <p className="text-muted-foreground">Нет публикаций на выбранную дату</p>
+                <p className="text-muted-foreground">Нет запланированных публикаций</p>
               </div>
             ) : (
               <div className="space-y-4">
