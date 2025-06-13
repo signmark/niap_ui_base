@@ -22,7 +22,7 @@ router.post('/force-update-all-content-statuses', async (req: Request, res: Resp
       return res.status(500).json({ success: false, error: 'Не удалось получить админский токен' });
     }
     
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     const headers = {
       'Authorization': `Bearer ${adminToken}`,
       'Content-Type': 'application/json'

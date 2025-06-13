@@ -18,7 +18,7 @@ export default function registerForceCheckRoute(app: any) {
       log(`Принудительная проверка статуса контента ${contentId}`, 'force-check');
       
       // Получаем токен администратора
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       const email = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
       const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'password';
       

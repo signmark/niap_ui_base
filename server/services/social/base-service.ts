@@ -274,7 +274,7 @@ export abstract class BaseSocialService {
     log(`[${operationId}] ➡️ НАЧАЛО ОБРАБОТКИ обновления статуса публикации для контента ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
     
     // Получаем URL Directus
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     try {
       // 1. Получаем токен администратора

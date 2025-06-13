@@ -217,7 +217,7 @@ export function registerTestInstagramRoute(app: express.Express) {
 // Вспомогательные функции
 async function getSystemToken(): Promise<string | null> {
   try {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
     const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
     
@@ -244,7 +244,7 @@ async function getSystemToken(): Promise<string | null> {
 
 async function fetchContent(contentId: string, token: string): Promise<CampaignContent | null> {
   try {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     const response = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
       headers: {
@@ -292,7 +292,7 @@ async function fetchContent(contentId: string, token: string): Promise<CampaignC
 
 async function fetchCampaign(campaignId: string, token: string): Promise<any | null> {
   try {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     const response = await axios.get(`${directusUrl}/items/user_campaigns/${campaignId}`, {
       headers: {

@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Directus API базовый URL
 const directusApi = axios.create({
-  baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.tech',
+  baseURL: process.env.DIRECTUS_URL,
   timeout: 30000,
 });
 

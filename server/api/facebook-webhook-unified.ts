@@ -48,7 +48,7 @@ router.post('/', async (req, res) => {
     }
     
     // Получаем данные контента с помощью adminToken
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     const directusApi = axios.create({
       baseURL: directusUrl
     });

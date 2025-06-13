@@ -769,7 +769,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`Получение токена администратора для ${email}`);
       
       // Пытаемся авторизоваться как администратор
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       const response = await axios.post(`${directusUrl}/auth/login`, {
         email,
         password

@@ -153,7 +153,7 @@ router.get('/admin/users/activity', async (req, res) => {
     console.log('[admin-users] Используем токен текущего администратора для получения статистики');
 
     // Получаем статистику пользователей напрямую через Directus API
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     const statsResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,last_access,status,is_smm_admin,expire_date&sort=-last_access`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,

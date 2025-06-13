@@ -24,7 +24,7 @@ forceUpdateStatusRouter.post('/publish/force-update-status/:contentId', async (r
   
   try {
     // Получаем API URL системы
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     // Получаем токен из заголовка Authorization или из переменных окружения
     const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
@@ -209,7 +209,7 @@ forceUpdateStatusRouter.get('/publish/content-status/:contentId', async (req, re
   
   try {
     // Получаем API URL системы
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     // Получаем токен из заголовка Authorization или из переменных окружения
     const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);

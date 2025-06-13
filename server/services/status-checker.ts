@@ -119,7 +119,7 @@ class PublicationStatusChecker {
     // Если не удалось получить токен через DirectusAuthManager, 
     // пытаемся выполнить авторизацию напрямую
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
@@ -202,7 +202,7 @@ class PublicationStatusChecker {
       }
       
       // Получаем контент со статусом 'scheduled' через API
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       
       // Для отладки включаем все статусы кроме 'published'
       const includeStatuses = ['scheduled', 'draft'];
@@ -374,7 +374,7 @@ class PublicationStatusChecker {
       }
       
       // Получаем контент со статусом 'published'
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       
       const response = await axios.get(
         `${directusUrl}/items/campaign_content?filter[status][_eq]=published&limit=100`, 
@@ -494,7 +494,7 @@ class PublicationStatusChecker {
     try {
       
       // Получаем данные о контенте напрямую
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       
       const response = await axios.get(
         `${directusUrl}/items/campaign_content/${contentId}`, 

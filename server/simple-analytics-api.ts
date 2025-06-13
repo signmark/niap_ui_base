@@ -32,7 +32,7 @@ export function registerSimpleAnalyticsAPI(app: Express) {
 
       try {
         // Прямой запрос к Directus API
-        const directusUrl = 'https://directus.roboflow.tech/items/campaign_content';
+        const directusUrl = '${process.env.DIRECTUS_URL}/items/campaign_content';
         const response = await axios.get(directusUrl, {
           headers: { 
             Authorization: `Bearer ${token}`,

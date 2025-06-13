@@ -78,11 +78,11 @@ export function detectEnvironment(): EnvironmentConfig {
   if (!directusUrl) {
     // Приоритет для dev окружения - всегда используем roboflow.tech
     if (isReplit || environment === 'replit' || environment === 'development') {
-      directusUrl = 'https://directus.roboflow.tech';
+      directusUrl = '${process.env.DIRECTUS_URL}';
     } else if (isDocker || environment === 'production') {
       directusUrl = 'https://directus.nplanner.ru';
     } else {
-      directusUrl = 'https://directus.roboflow.tech';
+      directusUrl = '${process.env.DIRECTUS_URL}';
     }
   }
 

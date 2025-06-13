@@ -31,7 +31,7 @@ app.get('/analytics', async (req, res) => {
     const daysBack = period === '30days' ? 30 : 7;
     const dateFilter = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
     
-    const directusUrl = `https://directus.roboflow.tech/items/campaign_content`;
+    const directusUrl = `${process.env.DIRECTUS_URL}/items/campaign_content`;
     const params = {
       'filter[campaign_id][_eq]': campaignId,
       'filter[status][_eq]': 'published',

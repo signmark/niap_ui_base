@@ -378,7 +378,11 @@ export class PublishScheduler {
       }
       
       // Получаем все контенты со статусом "scheduled" или "draft"
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
+      if (!directusUrl) {
+        console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
+        return;
+      }
       const headers = {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
@@ -738,7 +742,11 @@ export class PublishScheduler {
       
       try {
         // Прямой запрос с параметрами фильтрации
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+        const directusUrl = process.env.DIRECTUS_URL;
+        if (!directusUrl) {
+          console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
+          return;
+        }
         log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
         
         const headers = {
@@ -1103,7 +1111,7 @@ export class PublishScheduler {
           
           // Получаем актуальные данные контента из БД
           try {
-            const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+            const baseDirectusUrl = process.env.DIRECTUS_URL;
             const freshDataResponse = await axios.get(
               `${baseDirectusUrl}/items/campaign_content/${content.id}`,
               { headers: { 'Authorization': `Bearer ${authToken}` } }
@@ -1214,7 +1222,7 @@ export class PublishScheduler {
       for (const content of contentToPublish) {
         try {
           // Делаем прямой запрос к Directus API для получения свежих данных
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+          const directusUrl = process.env.DIRECTUS_URL;
           const response = await axios.get(
             `${directusUrl}/items/campaign_content/${content.id}`,
             {
@@ -1390,7 +1398,7 @@ export class PublishScheduler {
                 // Обновляем общий статус на published
                 log(`Обновление общего статуса на published для контента ${content.id}`, 'scheduler');
                 
-                const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+                const baseDirectusUrl = process.env.DIRECTUS_URL;
                 await axios.patch(
                   `${baseDirectusUrl}/items/campaign_content/${content.id}`,
                   { 
@@ -1406,7 +1414,7 @@ export class PublishScheduler {
                 
                 // Изменяем статус на scheduled, если он draft, чтобы показать что процесс публикации начался
                 if (freshData.status === 'draft') {
-                  const baseDirectusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+                  const baseDirectusUrl = process.env.DIRECTUS_URL;
                   await axios.patch(
                     `${baseDirectusUrl}/items/campaign_content/${content.id}`,
                     { status: 'scheduled' },
@@ -1438,7 +1446,7 @@ export class PublishScheduler {
         try {
           // Дополнительно проверяем существование контента непосредственно перед публикацией
           try {
-            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+            const directusUrl = process.env.DIRECTUS_URL;
             const checkResponse = await axios.get(
               `${directusUrl}/items/campaign_content/${content.id}`,
               {
@@ -1569,7 +1577,7 @@ export class PublishScheduler {
       // Если нет в кэше - получаем с сервера
       else if (systemToken) {
         try {
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+          const directusUrl = process.env.DIRECTUS_URL;
           log(`Прямой запрос для получения кампании: ${content.campaignId}`, 'scheduler');
           
           // Делаем прямой запрос без параметров
@@ -1670,7 +1678,7 @@ export class PublishScheduler {
       let actualPlatforms = socialPlatforms;
       try {
         const freshDataResponse = await axios.get(
-          `${process.env.DIRECTUS_URL || 'https://directus.roboflow.tech'}/items/campaign_content/${content.id}`,
+          `${process.env.DIRECTUS_URL}/items/campaign_content/${content.id}`,
           { headers: { 'Authorization': `Bearer ${authToken}` } }
         );
         if (freshDataResponse.data?.data?.social_platforms) {
@@ -1785,7 +1793,7 @@ export class PublishScheduler {
           
           // Отдельной операцией устанавливаем publishedAt через прямой запрос к API
           try {
-            const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+            const directusUrl = process.env.DIRECTUS_URL;
             await axios.patch(
               `${directusUrl}/items/campaign_content/${content.id}`,
               { published_at: new Date().toISOString() },

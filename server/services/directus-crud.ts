@@ -309,7 +309,7 @@ export class DirectusCrud {
       
       try {
         // Используем прямой запрос через axios, минуя directusApiManager
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+        const directusUrl = process.env.DIRECTUS_URL;
         const response = await axios.get(`${directusUrl}/users/me`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
@@ -353,7 +353,7 @@ export class DirectusCrud {
    */
   async getAdminToken(): Promise<string | null> {
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
       const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
 
@@ -388,7 +388,7 @@ export class DirectusCrud {
    */
   async login(email: string, password: string): Promise<DirectusAuthResult> {
     return this.executeOperation<DirectusAuthResult>('custom', 'auth/login', async () => {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       
       const response = await axios.post(`${directusUrl}/auth/login`, {
         email,
@@ -414,7 +414,7 @@ export class DirectusCrud {
    */
   async getUserByToken(token: string): Promise<any | null> {
     try {
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       const response = await axios.get(`${directusUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -439,7 +439,7 @@ export class DirectusCrud {
    * @returns Результат авторизации
    */
   async authenticateUser(email: string, password: string): Promise<DirectusAuthResult> {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     try {
       log(`Попытка авторизации пользователя ${email}`, this.logPrefix);
@@ -478,7 +478,7 @@ export class DirectusCrud {
    * @returns Новый токен доступа и информация об истечении
    */
   async refreshToken(refreshToken: string): Promise<DirectusAuthResult> {
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     try {
       log('Обновление токена доступа', this.logPrefix);

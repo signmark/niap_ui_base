@@ -33,7 +33,7 @@ export class SocialPublishingWithImgurService {
         
         try {
           // Прямая авторизация через REST API
-          const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+          const directusUrl = process.env.DIRECTUS_URL;
           const response = await axios.post(`${directusUrl}/auth/login`, {
             email,
             password
@@ -2535,7 +2535,7 @@ export class SocialPublishingWithImgurService {
     log(`[${operationId}] ➡️ НАЧАЛО ОБРАБОТКИ обновления статуса публикации для контента ${contentId}, платформа: ${platform}, статус: ${publicationResult.status}`, 'social-publishing');
     
     // Получаем URL Directus
-    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+    const directusUrl = process.env.DIRECTUS_URL;
     
     try {
       // 1. Получаем токен администратора

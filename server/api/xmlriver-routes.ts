@@ -304,7 +304,7 @@ export function registerXmlRiverRoutes(app: Express): void {
               if (keywordObj.trend_score !== frequency || keywordObj.mentions_count !== competition) {
                 // Здесь используем либо прямой запрос к Directus, либо специальный API-маршрут
                 if (token) {
-                  const directusUrl = 'https://directus.roboflow.tech/items/campaign_keywords';
+                  const directusUrl = '${process.env.DIRECTUS_URL}/items/campaign_keywords';
                   await axios.patch(
                     `${directusUrl}/${keywordObj.id}`,
                     {

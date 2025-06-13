@@ -10,7 +10,7 @@ import log from '../utils/logger';
 import { DirectusAuthManager } from '../services/directus-auth-manager';
 
 const router = Router();
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+const DIRECTUS_URL = process.env.DIRECTUS_URL;
 
 // Генерация уникального ID для каждого запроса для отслеживания в логах
 const generateRequestId = (): string => {

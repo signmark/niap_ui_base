@@ -544,7 +544,7 @@ class FacebookService {
     
     try {
       // Получаем API URL системы
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL;
       
       // Находим активную сессию администратора для получения системного токена
       const directusAuthManager = await import('../directus-auth-manager').then(m => m.directusAuthManager);
