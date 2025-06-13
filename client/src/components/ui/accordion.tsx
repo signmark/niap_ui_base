@@ -27,7 +27,8 @@ const expandablePages: Record<string, string> = {
   'keywords': '/keywords',
   'trends': '/trends',
   'content': '/content',
-  'scheduled': '/posts'
+  'scheduled': '/posts',
+  'schedule': '/publish/calendar'
   // business-questionnaire убран - у него нет отдельной страницы
 };
 
