@@ -610,6 +610,11 @@ export default function Trends() {
         };
       });
 
+      // Для периода "all" возвращаем все данные без дополнительной фильтрации
+      if (selectedPeriod === 'all') {
+        return processedTrends;
+      }
+
       // Фильтруем тренды по выбранному периоду на клиентской стороне
       const now = new Date();
       const filterDate = new Date();
@@ -628,7 +633,7 @@ export default function Trends() {
           filterDate.setDate(now.getDate() - 30);
           break;
         default:
-          filterDate.setDate(now.getDate() - 7);
+          return processedTrends; // Для неизвестных периодов возвращаем все данные
       }
 
       // Специальная диагностика для проблемного тренда
