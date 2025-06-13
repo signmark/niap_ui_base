@@ -1112,6 +1112,7 @@ export default function Trends() {
                             <SelectItem value="7days">За неделю</SelectItem>
                             <SelectItem value="14days">За 2 недели</SelectItem>
                             <SelectItem value="30days">За месяц</SelectItem>
+                            <SelectItem value="all">Все периоды</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1269,12 +1270,27 @@ export default function Trends() {
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {trends
                           .filter((topic: TrendTopic) => {
+                            // Фильтр по периоду времени
+                            let withinPeriod = true;
+                            if (selectedPeriod !== 'all') {
+                              const periodDays = {
+                                '3days': 3,
+                                '7days': 7,
+                                '14days': 14,
+                                '30days': 30
+                              }[selectedPeriod] || 7;
+                              
+                              const cutoffDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+                              const topicDate = new Date(topic.created_at || topic.createdAt || 0);
+                              withinPeriod = topicDate >= cutoffDate;
+                            }
+                            
                             // Фильтр по поисковому запросу
                             const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
                             
                             // Фильтр по соцсети
                             if (selectedPlatform === 'all') {
-                              return matchesSearch;
+                              return withinPeriod && matchesSearch;
                             }
                             
                             const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
@@ -1331,7 +1347,7 @@ export default function Trends() {
                                 platformMatches = true;
                             }
                             
-                            return matchesSearch && platformMatches;
+                            return withinPeriod && matchesSearch && platformMatches;
                           })
                           // Сортировка трендов
                           .sort((a, b) => {
