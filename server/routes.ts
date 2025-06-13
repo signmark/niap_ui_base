@@ -6051,7 +6051,7 @@ Return your response as a JSON array in this exact format:
       
       try {
         // Отправляем запрос на n8n webhook для сбора постов из источника
-        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
         const webhookUrl = `${n8nUrl}/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c`;
         
         // Отправляем только sourceId и campaignId без авторизации
@@ -7931,7 +7931,7 @@ Return your response as a JSON array in this exact format:
             };
             
             // Отправляем запрос на n8n webhook для публикации
-            const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+            const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
             await axios.post(`${n8nUrl}/webhook/0b4d5ad4-00bf-420a-b107-5f09a9ae913c`, webhookPayload, {
               headers: {
                 'Content-Type': 'application/json',
@@ -8773,7 +8773,7 @@ Return your response as a JSON array in this exact format:
   async function checkPublishingStatus(contentId: string, n8nApiKey: string): Promise<any> {
     try {
       const response = await axios.get(
-        `${process.env.N8N_URL || 'https://n8n.roboflow.tech'}/webhook/status/${contentId}`,
+        `${process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech')}/webhook/status/${contentId}`,
         {
           headers: {
             'X-N8N-Authorization': n8nApiKey
@@ -10261,7 +10261,7 @@ ${datesText}
 
       // Вызываем n8n webhook напрямую
       try {
-        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.tech';
+        const n8nUrl = process.env.N8N_URL || (process.env.NODE_ENV === 'production' ? 'https://n8n.nplanner.ru' : 'https://n8n.roboflow.tech');
         const webhookUrl = process.env.N8N_CONTENT_PLAN_WEBHOOK || `${n8nUrl}/webhook/ae581e17-651d-4b14-8fb1-ca16898bca1b`;
         const apiKey = process.env.N8N_API_KEY;
         
