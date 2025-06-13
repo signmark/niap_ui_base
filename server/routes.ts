@@ -6859,13 +6859,22 @@ Return your response as a JSON array in this exact format:
         const fromDateISO = fromDate.toISOString();
         console.log(`[GET /api/campaign-trends] Using date filter: ${fromDateISO}`);
         
-        // Создаем фильтр без жёсткого ограничения по дате
-        // Теперь показываем все тренды кампании, сортировка по периоду будет на фронтенде
-        const filter = {
+        // Создаем фильтр с учетом периода
+        const filter: any = {
           campaign_id: {
             _eq: campaignId
           }
         };
+        
+        // Применяем фильтрацию по дате для всех периодов кроме "all"
+        if (period !== 'all') {
+          console.log(`[GET /api/campaign-trends] Applying date filter for period: ${period}`);
+          filter.created_at = {
+            _gte: fromDateISO
+          };
+        } else {
+          console.log(`[GET /api/campaign-trends] No date filter applied for period: ${period}`);
+        }
         
         console.log(`[GET /api/campaign-trends] Directus API filter:`, JSON.stringify(filter));
         
