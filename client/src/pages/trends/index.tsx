@@ -1268,7 +1268,9 @@ export default function Trends() {
                       </div>
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        {console.log('Total trends before filtering:', trends.length)}
+                        <div className="text-xs text-gray-500 mb-2">
+                          Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform}
+                        </div>
                         {trends
                           .filter((topic: TrendTopic) => {
                             // Определяем платформу по нескольким критериям
@@ -1350,30 +1352,18 @@ export default function Trends() {
                               }
                             }
                             
-                            // Отладочная информация для всех Instagram постов
-                            if (detectedPlatform === 'instagram' || (topic as any).sourceType === 'instagram') {
-                              console.log('=== DEBUG: Instagram post ===');
-                              console.log('Topic ID:', topic.id);
-                              console.log('Topic title:', topic.title);
-                              console.log('Topic created_at:', topic.created_at);
-                              console.log('Topic createdAt:', (topic as any).createdAt);
-                              console.log('Topic sourceType:', (topic as any).sourceType);
-                              console.log('Topic type:', (topic as any).type);
-                              console.log('Topic media_links:', topic.media_links);
-                              console.log('Detected platform:', detectedPlatform);
-                              console.log('Selected platform:', selectedPlatform);
-                              console.log('Selected period:', selectedPeriod);
-                              console.log('Within period:', withinPeriod);
-                              console.log('Matches search:', matchesSearch);
-                              console.log('Platform matches:', platformMatches);
-                              console.log('Final result:', withinPeriod && matchesSearch && platformMatches);
-                            }
-                            
                             const finalResult = withinPeriod && matchesSearch && platformMatches;
                             
-                            // Подсчитываем Instagram посты
-                            if (detectedPlatform === 'instagram') {
-                              console.log(`Instagram post ${topic.id}: final=${finalResult}, platform=${platformMatches}, period=${withinPeriod}, search=${matchesSearch}`);
+                            // Отладочная информация для всех Instagram постов
+                            if (detectedPlatform === 'instagram' || (topic as any).sourceType === 'instagram') {
+                              const postDate = topic.created_at || topic.createdAt;
+                              console.log(`Instagram post ${topic.id}: ${postDate} - ${finalResult ? 'ПОКАЗАН' : 'СКРЫТ'}`);
+                            }
+                            
+                            // Ищем посты 2023 года
+                            const postDate = new Date(topic.created_at || topic.createdAt || 0);
+                            if (postDate.getFullYear() === 2023) {
+                              console.log(`Пост 2023 года: ${topic.id} - ${postDate.toLocaleDateString()} - платформа: ${detectedPlatform} - показан: ${finalResult}`);
                             }
                             
                             return finalResult;
