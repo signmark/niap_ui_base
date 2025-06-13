@@ -6881,17 +6881,12 @@ Return your response as a JSON array in this exact format:
         console.log(`[GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics`);
         
         // Получаем темы напрямую из Directus API
-        // Если период "all", загружаем все записи с большим лимитом
+        // Для всех периодов загружаем ВСЕ записи без ограничений
         const params: any = {
           filter: filter,
-          sort: ['-created_at']
+          sort: ['-created_at'],
+          limit: -1 // Всегда загружаем ВСЕ записи без ограничений
         };
-        
-        if (period !== 'all') {
-          params.limit = 100; // Ограничиваем для конкретных периодов
-        } else {
-          params.limit = -1; // Для "все периоды" загружаем ВСЕ записи
-        }
         
         const response = await directusApi.get('/items/campaign_trend_topics', {
           params,
@@ -6902,7 +6897,7 @@ Return your response as a JSON array in this exact format:
         
         console.log(`[GET /api/campaign-trends] Directus API response status: ${response.status}`);
         console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
-        console.log(`[GET /api/campaign-trends] Period: ${period}, Limit applied: ${period !== 'all' ? '100' : 'NONE (все записи)'}`);
+        console.log(`[GET /api/campaign-trends] Period: ${period}, Filter applied: ${period !== 'all' ? `date >= ${fromDateISO}` : 'NO DATE FILTER'}, Loading ALL matching records`);
         
         console.log(`Found ${response.data?.data?.length || 0} trend topics for campaign ${campaignId}`);
         

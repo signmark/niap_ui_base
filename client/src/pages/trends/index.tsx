@@ -1338,47 +1338,11 @@ export default function Trends() {
                             
                             const finalResult = withinPeriod && matchesSearch && platformMatches;
                             
-                            // Ищем посты 2023 года (включая Instagram от 24 мая 2023)
-                            const postDate = new Date(topic.created_at || topic.createdAt || 0);
-                            if (postDate.getFullYear() === 2023) {
-                              console.log(`📅 Пост 2023 года: ${topic.id} | ${postDate.toLocaleDateString()} | платформа: ${detectedPlatform} | показан: ${finalResult ? '✅' : '❌'}`);
-                              if (postDate.getMonth() === 4 && postDate.getDate() === 24) { // май = месяц 4
-                                console.log(`🎯 НАЙДЕН ПОСТ ОТ 24 МАЯ 2023: ${topic.id} | заголовок: ${topic.title.substring(0, 50)}...`);
-                              }
-                            }
+
                             
                             return finalResult;
                           })
                           .filter((topic, index, array) => {
-                            // Диагностика подсчета трендов по периодам
-                            if (index === 0) {
-                              const now = new Date();
-                              
-                              // Подсчитываем тренды для каждого периода
-                              const periods = [
-                                { name: '3 дня', days: 3 },
-                                { name: '7 дней', days: 7 },
-                                { name: '14 дней', days: 14 },
-                                { name: '30 дней', days: 30 }
-                              ];
-                              
-                              console.log(`📊 ДИАГНОСТИКА ПЕРИОДОВ (выбран: ${selectedPeriod}):`);
-                              
-                              periods.forEach(period => {
-                                const filterDate = new Date();
-                                filterDate.setDate(now.getDate() - period.days);
-                                
-                                const count = array.filter(t => {
-                                  const trendDate = new Date(t.created_at || t.createdAt || 0);
-                                  return trendDate >= filterDate;
-                                }).length;
-                                
-                                console.log(`  ${period.name}: ${count} трендов (с ${filterDate.toLocaleDateString()})`);
-                              });
-                              
-                              console.log(`  Все периоды: ${array.length} трендов`);
-                              console.log(`📈 Итого показано: ${array.length} трендов для периода "${selectedPeriod}"`);
-                            }
                             return true;
                           })
                           // Сортировка трендов
