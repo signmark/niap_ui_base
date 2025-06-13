@@ -534,7 +534,7 @@ export default function PublicationCalendar({
     <DndProvider backend={HTML5Backend}>
       <Card>
         <CardContent className="pt-6">
-        <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+          <div className="grid gap-6 md:grid-cols-[300px_1fr]">
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <Button 
@@ -672,8 +672,8 @@ export default function PublicationCalendar({
               </div>
             )}
           </div>
-        </div>
-      </CardContent>
+          </div>
+        </CardContent>
       
       {/* Диалог с деталями поста */}
       <Dialog open={isPostDetailOpen} onOpenChange={setIsPostDetailOpen}>
