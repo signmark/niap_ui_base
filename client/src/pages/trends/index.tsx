@@ -159,6 +159,9 @@ export default function Trends() {
   type SortField = 'reactions' | 'comments' | 'views' | 'trendScore' | 'date' | 'platform' | 'none';
   const [sortField, setSortField] = useState<SortField>('none');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Состояние для фильтра по соцсетям
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   // Используем глобальный стор кампаний
   const { selectedCampaign } = useCampaignStore();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
@@ -1114,6 +1117,25 @@ export default function Trends() {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground mr-1">Соцсеть:</div>
+                        <Select
+                          value={selectedPlatform}
+                          onValueChange={(value: string) => setSelectedPlatform(value)}
+                        >
+                          <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="Все соцсети" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Все соцсети</SelectItem>
+                            <SelectItem value="instagram">Instagram</SelectItem>
+                            <SelectItem value="vk">VKontakte</SelectItem>
+                            <SelectItem value="telegram">Telegram</SelectItem>
+                            <SelectItem value="facebook">Facebook</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
                         {/* Force update - platform sorting added */}
                         <Select 
@@ -1246,7 +1268,40 @@ export default function Trends() {
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {trends
-                          .filter((topic: TrendTopic) => topic.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .filter((topic: TrendTopic) => {
+                            // Фильтр по поисковому запросу
+                            const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
+                            
+                            // Фильтр по соцсети
+                            if (selectedPlatform === 'all') {
+                              return matchesSearch;
+                            }
+                            
+                            const source = sources.find(s => s.id === topic.source_id || s.id === topic.sourceId);
+                            if (!source) return false;
+                            
+                            const url = source.url.toLowerCase();
+                            let platformMatches = false;
+                            
+                            switch (selectedPlatform) {
+                              case 'instagram':
+                                platformMatches = url.includes('instagram.com');
+                                break;
+                              case 'vk':
+                                platformMatches = url.includes('vk.com') || url.includes('vkontakte.ru');
+                                break;
+                              case 'telegram':
+                                platformMatches = url.includes('t.me') || url.includes('telegram.org');
+                                break;
+                              case 'facebook':
+                                platformMatches = url.includes('facebook.com') || url.includes('fb.com');
+                                break;
+                              default:
+                                platformMatches = true;
+                            }
+                            
+                            return matchesSearch && platformMatches;
+                          })
                           // Сортировка трендов
                           .sort((a, b) => {
                             if (sortField === 'none') return 0;
