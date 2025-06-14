@@ -144,26 +144,10 @@ export function logMessage(message: string, source = "express", level = "info") 
     const isDebug = source.endsWith('-debug') || level === "debug";
     if (isDebug) {
       try {
-        const fs = require('fs');
-        const logDir = './logs';
-        
-        if (!fs.existsSync(logDir)) {
-          fs.mkdirSync(logDir, { recursive: true });
-        }
-        
-        const logData = {
-          timestamp: new Date().toISOString(),
-          source,
-          message,
-          level
-        };
-        
-        fs.appendFileSync(
-          `${logDir}/debug-${new Date().toISOString().split('T')[0]}.log`, 
-          JSON.stringify(logData) + '\n'
-        );
+        // Простое логирование в консоль для debug сообщений
+        console.log(`[DEBUG-LOG] ${new Date().toISOString()} [${source}] ${message}`);
       } catch (err) {
-        console.error(`Ошибка записи логов: ${err}`);
+        // Игнорируем ошибки
       }
     }
   }

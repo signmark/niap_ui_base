@@ -12,7 +12,7 @@ import { registerImgurRoutes } from "./routes-imgur";
 import { registerBegetS3Routes } from "./routes-beget-s3";
 import { registerUserApiKeysRoutes } from "./routes-user-api-keys";
 import { setupVite, serveStatic } from "./vite";
-import { log } from "./utils/logger";
+import { log, logEnvironmentInfo } from "./utils/logger";
 import { directusApiManager } from './directus';
 import { registerXmlRiverRoutes } from './api/xmlriver-routes';
 import { falAiUniversalService } from './services/fal-ai-universal';
@@ -342,6 +342,9 @@ app.use((req, res, next) => {
       
       // Печатаем URL-адрес приложения
       console.log(`=== SERVER URL: http://0.0.0.0:${PORT} ===`);
+      
+      // Логируем информацию об окружении
+      logEnvironmentInfo();
       
       // Инициализируем тяжелые сервисы после успешного запуска сервера
       initializeHeavyServices();
