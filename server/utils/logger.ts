@@ -1,22 +1,27 @@
 /**
- * Простая утилита для логирования сообщений
+ * Простая утилита для логирования сообщений с поддержкой ENV переменной
  * Не использует vite.config.ts напрямую или через импорты
  */
 
+import { detectEnvironment } from './environment-detector';
+
+// Получаем конфигурацию окружения
+const envConfig = detectEnvironment();
+
 /**
- * Режим отладки для всех модулей
+ * Режим отладки для всех модулей с учетом ENV переменной
  */
 export const DEBUG_LEVELS = {
   // Общий режим отладки для всех модулей
-  GLOBAL: false,
+  GLOBAL: envConfig.verboseLogs,
   // Отладка планировщика
-  SCHEDULER: false,
+  SCHEDULER: envConfig.debugScheduler,
   // Отладка публикаций
-  PUBLISHING: true,
+  PUBLISHING: envConfig.environment === 'development',
   // Отладка социальных платформ
-  SOCIAL: true,
+  SOCIAL: envConfig.environment === 'development',
   // Отладка сервиса проверки статусов
-  STATUS_CHECKER: true
+  STATUS_CHECKER: envConfig.environment === 'development'
 };
 
 /**
