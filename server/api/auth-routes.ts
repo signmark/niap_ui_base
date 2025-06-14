@@ -264,15 +264,14 @@ export function registerAuthRoutes(app: Express): void {
 
   // Маршрут для получения конфигурации окружения
   app.get('/api/config', (req: Request, res: Response) => {
-    // Принудительно устанавливаем правильную переменную
-    const correctUrl = 'https://directus.nplanner.ru';
-    process.env.DIRECTUS_URL = correctUrl;
-    
-    const environment = correctUrl.includes('nplanner.ru') ? 'production' : 'development';
+    const envConfig = detectEnvironment();
     
     res.json({
-      directusUrl: correctUrl,
-      environment
+      directusUrl: envConfig.directusUrl,
+      environment: envConfig.environment,
+      logLevel: envConfig.logLevel,
+      debugScheduler: envConfig.debugScheduler,
+      verboseLogs: envConfig.verboseLogs
     });
   });
 

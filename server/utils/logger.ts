@@ -10,26 +10,29 @@ const envConfig = detectEnvironment();
 
 /**
  * Режим отладки для всех модулей с учетом ENV переменной
+ * В production режиме отключаем почти все логи
  */
 export const DEBUG_LEVELS = {
-  // Общий режим отладки для всех модулей
-  GLOBAL: envConfig.verboseLogs,
-  // Отладка планировщика
-  SCHEDULER: envConfig.debugScheduler,
-  // Отладка публикаций
+  // Общий режим отладки для всех модулей - только в development
+  GLOBAL: envConfig.environment === 'development' && envConfig.verboseLogs,
+  // Отладка планировщика - только в development или с явным включением
+  SCHEDULER: envConfig.environment === 'development' ? envConfig.debugScheduler : false,
+  // Отладка публикаций - только в development
   PUBLISHING: envConfig.environment === 'development',
-  // Отладка социальных платформ
+  // Отладка социальных платформ - только в development
   SOCIAL: envConfig.environment === 'development',
-  // Отладка сервиса проверки статусов
+  // Отладка сервиса проверки статусов - только в development
   STATUS_CHECKER: envConfig.environment === 'development'
 };
 
 /**
- * Список сообщений, которые не нужно выводить в логи
+ * Список сообщений, которые не нужно выводить в логи в production
  */
 const FILTERED_MESSAGES = [
   // Ошибки авторизации
   "Request failed with status code 401",
+  "Request failed with status code 403",
+  "Request failed with status code 400",
   "Unauthorized",
   "Ошибка авторизации",
   "Не удалось получить токен",
@@ -48,9 +51,32 @@ const FILTERED_MESSAGES = [
   // Частые ошибки социальных сетей
   "API rate limit exceeded",
   "Too many requests",
-  "(#4) Application request limit reached", // Facebook API ошибка
-  "(#32) Page request limit reached", // Facebook API ошибка
-  "Flood control exceeded" // VK API ошибка
+  "(#4) Application request limit reached",
+  "(#32) Page request limit reached",
+  "Flood control exceeded",
+  
+  // Информационные сообщения в production
+  "successfully logged in",
+  "Admin session for user",
+  "успешно инициализированы",
+  "registered successfully",
+  "операция выполнена успешно",
+  "токен сохранен в кэше",
+  "cache refreshed",
+  "Использование токена",
+  "Системный токен получен"
+];
+
+/**
+ * Критические ошибки, которые всегда показываем пользователю
+ */
+const CRITICAL_ERROR_KEYWORDS = [
+  "КРИТИЧЕСКАЯ ОШИБКА",
+  "SYSTEM ERROR",
+  "DATABASE ERROR",
+  "FATAL ERROR",
+  "обратитесь к администрации",
+  "свяжитесь с поддержкой"
 ];
 
 /**
@@ -75,45 +101,102 @@ function shouldDebug(source: string): boolean {
  * @param level Уровень логирования (info, debug, error)
  */
 export function logMessage(message: string, source = "express", level = "info") {
-  // Проверка на отладочные сообщения
-  if (level === "debug" && !shouldDebug(source)) {
-    return; // Не выводим отладочные сообщения, если отладка выключена
+  // В production режиме строгая фильтрация
+  if (envConfig.environment === 'production') {
+    // Показываем только критические ошибки
+    const isCriticalError = level === "error" && CRITICAL_ERROR_KEYWORDS.some(keyword => message.includes(keyword));
+    
+    // Фильтруем все обычные сообщения в production
+    if (!isCriticalError && FILTERED_MESSAGES.some(msg => message.includes(msg))) {
+      return;
+    }
+    
+    // Показываем только критические ошибки и важные системные сообщения
+    if (level === "info" || level === "debug") {
+      return; // Отключаем все info и debug логи в production
+    }
+    
+    // Если не критическая ошибка, тоже скрываем
+    if (level === "error" && !isCriticalError) {
+      return;
+    }
   }
   
-  // Фильтруем ошибки авторизации и другие известные ошибки
-  if (level === "error" && FILTERED_MESSAGES.some(msg => message.includes(msg))) {
-    return; // Пропускаем фильтруемые ошибки
+  // Development режим - показываем в зависимости от debug уровней
+  if (envConfig.environment === 'development') {
+    // Проверка на отладочные сообщения
+    if (level === "debug" && !shouldDebug(source)) {
+      return;
+    }
+    
+    // Фильтруем известные ошибки даже в development
+    if (FILTERED_MESSAGES.some(msg => message.includes(msg))) {
+      return;
+    }
   }
   
   const time = new Date().toLocaleTimeString();
-  console.log(`${time} [${source}] ${message}`);
+  const envPrefix = envConfig.environment === 'development' ? '[DEV] ' : '';
+  console.log(`${time} ${envPrefix}[${source}] ${message}`);
   
-  // Добавляем детальное логирование для отладки
-  const isDebug = source.endsWith('-debug') || level === "debug";
-  if (isDebug) {
-    try {
-      const fs = require('fs');
-      const logDir = './logs';
-      
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
+  // Детальное логирование только в development
+  if (envConfig.environment === 'development') {
+    const isDebug = source.endsWith('-debug') || level === "debug";
+    if (isDebug) {
+      try {
+        const fs = require('fs');
+        const logDir = './logs';
+        
+        if (!fs.existsSync(logDir)) {
+          fs.mkdirSync(logDir, { recursive: true });
+        }
+        
+        const logData = {
+          timestamp: new Date().toISOString(),
+          source,
+          message,
+          level
+        };
+        
+        fs.appendFileSync(
+          `${logDir}/debug-${new Date().toISOString().split('T')[0]}.log`, 
+          JSON.stringify(logData) + '\n'
+        );
+      } catch (err) {
+        console.error(`Ошибка записи логов: ${err}`);
       }
-      
-      // Записываем в JSON-формате для удобного анализа
-      const logData = {
-        timestamp: new Date().toISOString(),
-        source,
-        message,
-        level
-      };
-      
-      fs.appendFileSync(
-        `${logDir}/debug-${new Date().toISOString().split('T')[0]}.log`, 
-        JSON.stringify(logData) + '\n'
-      );
-    } catch (err) {
-      console.error(`Ошибка записи логов: ${err}`);
     }
+  }
+}
+
+/**
+ * Выводит информацию о конфигурации окружения
+ */
+export function logEnvironmentInfo() {
+  logMessage(`Running in ${envConfig.environment} mode`, 'env', 'info');
+  logMessage(`Log level: ${envConfig.logLevel}`, 'env', 'info');
+  logMessage(`Directus URL: ${envConfig.directusUrl}`, 'env', 'info');
+  
+  if (envConfig.verboseLogs) {
+    logMessage(`Verbose logs: enabled`, 'env', 'debug');
+    logMessage(`Debug scheduler: ${envConfig.debugScheduler}`, 'env', 'debug');
+  }
+}
+
+/**
+ * Обновляет конфигурацию окружения
+ */
+export function refreshEnvironmentConfig() {
+  const newConfig = detectEnvironment();
+  
+  DEBUG_LEVELS.GLOBAL = newConfig.environment === 'development' && newConfig.verboseLogs;
+  DEBUG_LEVELS.SCHEDULER = newConfig.environment === 'development' ? newConfig.debugScheduler : false;
+  DEBUG_LEVELS.PUBLISHING = newConfig.environment === 'development';
+  DEBUG_LEVELS.SOCIAL = newConfig.environment === 'development';
+  DEBUG_LEVELS.STATUS_CHECKER = newConfig.environment === 'development';
+  
+  if (newConfig.environment === 'development') {
+    logMessage('Environment configuration refreshed', 'env', 'info');
   }
 }
 
@@ -139,61 +222,87 @@ export function info(message: string, source = "express") {
  * @param source Источник сообщения (по умолчанию "express")
  */
 export function error(message: string, error?: any, source = "express") {
-  // Фильтруем ошибки авторизации и другие известные ошибки
-  if (FILTERED_MESSAGES.some(msg => message.includes(msg) || (error && typeof error === 'string' && error.includes(msg)))) {
-    // Пропускаем фильтруемые ошибки
-    return;
+  // В production режиме применяем строгую фильтрацию
+  if (envConfig.environment === 'production') {
+    // Проверяем, является ли это критической ошибкой
+    const isCritical = CRITICAL_ERROR_KEYWORDS.some(keyword => message.includes(keyword));
+    if (!isCritical) {
+      return; // Скрываем все некритические ошибки в production
+    }
   }
 
-  // Дополнительная проверка ошибки axios
-  if (error && typeof error === 'object') {
-    // Проверка на axios ошибки
-    if (error.response) {
-      // Пропускаем ошибки 401 Unauthorized и лимиты API
-      if (error.response.status === 401) {
-        return;
-      }
-      
-      // Проверяем ошибки лимитов API (429 - Too Many Requests)
-      if (error.response.status === 429) {
-        return;
-      }
-      
-      // Проверяем сообщения об ошибках в data
-      if (error.response.data && typeof error.response.data === 'object') {
-        // Проверяем ошибки авторизации в сообщении
-        if (error.response.data.error && typeof error.response.data.error === 'string') {
-          if (FILTERED_MESSAGES.some(msg => error.response.data.error.includes(msg))) {
-            return;
-          }
+  // В development режиме фильтруем известные ошибки
+  if (envConfig.environment === 'development') {
+    if (FILTERED_MESSAGES.some(msg => message.includes(msg) || (error && typeof error === 'string' && error.includes(msg)))) {
+      return;
+    }
+
+    // Дополнительная проверка ошибки axios
+    if (error && typeof error === 'object') {
+      if (error.response) {
+        if (error.response.status === 401 || error.response.status === 403 || error.response.status === 429) {
+          return;
         }
         
-        // Проверяем сообщения об ошибках в формате Facebook API
-        if (error.response.data.error && typeof error.response.data.error === 'object' && error.response.data.error.message) {
-          if (FILTERED_MESSAGES.some(msg => error.response.data.error.message.includes(msg))) {
-            return;
+        if (error.response.data && typeof error.response.data === 'object') {
+          if (error.response.data.error && typeof error.response.data.error === 'string') {
+            if (FILTERED_MESSAGES.some(msg => error.response.data.error.includes(msg))) {
+              return;
+            }
+          }
+          
+          if (error.response.data.error && typeof error.response.data.error === 'object' && error.response.data.error.message) {
+            if (FILTERED_MESSAGES.some(msg => error.response.data.error.message.includes(msg))) {
+              return;
+            }
           }
         }
       }
-    }
-    
-    // Проверяем наличие сообщения в ошибке
-    if (error.message && typeof error.message === 'string') {
-      if (FILTERED_MESSAGES.some(msg => error.message.includes(msg))) {
-        return;
+      
+      if (error.message && typeof error.message === 'string') {
+        if (FILTERED_MESSAGES.some(msg => error.message.includes(msg))) {
+          return;
+        }
       }
-    }
-    
-    // Проверяем наличие кода ошибки
-    if (error.code && typeof error.code === 'string') {
-      if (FILTERED_MESSAGES.some(msg => error.code.includes(msg))) {
-        return;
+      
+      if (error.code && typeof error.code === 'string') {
+        if (FILTERED_MESSAGES.some(msg => error.code.includes(msg))) {
+          return;
+        }
       }
     }
   }
 
   const time = new Date().toLocaleTimeString();
-  console.error(`${time} [${source}] ${message}`, error || '');
+  const envPrefix = envConfig.environment === 'development' ? '[DEV] ' : '';
+  console.error(`${time} ${envPrefix}[${source}] ${message}`, error || '');
+}
+
+/**
+ * Логирует критическую ошибку, которая всегда показывается пользователю
+ * @param message Сообщение об ошибке
+ * @param source Источник сообщения
+ * @param userFriendlyMessage Понятное пользователю сообщение
+ */
+export function criticalError(message: string, source = "system", userFriendlyMessage?: string) {
+  const criticalMessage = userFriendlyMessage 
+    ? `КРИТИЧЕСКАЯ ОШИБКА: ${userFriendlyMessage}. Обратитесь к администрации. Детали: ${message}`
+    : `КРИТИЧЕСКАЯ ОШИБКА: ${message}. Обратитесь к администрации.`;
+  
+  const time = new Date().toLocaleTimeString();
+  console.error(`${time} [${source}] ${criticalMessage}`);
+}
+
+/**
+ * Логирует системную ошибку только в development режиме
+ * @param message Сообщение об ошибке
+ * @param source Источник сообщения
+ */
+export function systemError(message: string, source = "system") {
+  if (envConfig.environment === 'development') {
+    const time = new Date().toLocaleTimeString();
+    console.error(`${time} [DEV] [${source}] SYSTEM ERROR: ${message}`);
+  }
 }
 
 /**
