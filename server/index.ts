@@ -309,6 +309,12 @@ app.use((req, res, next) => {
     registerBegetS3Routes(app);
     log("Beget S3 routes registered successfully");
     
+    // Регистрируем маршрут для очистки кэша
+    log("Registering clear cache routes...");
+    const clearCacheRouter = (await import('./routes/clear-cache')).default;
+    app.use('/api', clearCacheRouter);
+    log("Clear cache routes registered successfully");
+    
     // Маршруты для работы с личными API ключами пользователя уже зарегистрированы в начале файла
     log("User API keys routes already registered early");
     
@@ -317,37 +323,7 @@ app.use((req, res, next) => {
     // app.use('/api/test', testRouter);
     // log("Telegram test routes registered successfully");
     
-    // Добавляем endpoint для очистки кэша токенов
-    app.post('/api/admin/clear-cache', (req, res) => {
-      try {
-        console.log('[clear-cache] Очистка кэшированных токенов');
-        
-        // Динамически импортируем и очищаем кэш
-        const { publishScheduler } = require('./services/publish-scheduler');
-        const { publicationStatusChecker } = require('./services/status-checker');
-        
-        if (publishScheduler && typeof publishScheduler.clearTokenCache === 'function') {
-          publishScheduler.clearTokenCache();
-          console.log('[clear-cache] Кэш токенов очищен в publish-scheduler');
-        }
-        
-        if (publicationStatusChecker && typeof publicationStatusChecker.clearTokenCache === 'function') {
-          publicationStatusChecker.clearTokenCache();
-          console.log('[clear-cache] Кэш токенов очищен в status-checker');
-        }
-        
-        res.json({
-          success: true,
-          message: 'Кэш токенов успешно очищен во всех сервисах'
-        });
-      } catch (error: any) {
-        console.error('[clear-cache] Ошибка при очистке кэша:', error);
-        res.status(500).json({
-          success: false,
-          error: 'Ошибка при очистке кэша токенов'
-        });
-      }
-    });
+    // Убираем старый неработающий endpoint
 
     console.log("Route registration completed");
     log("Routes registered successfully");
