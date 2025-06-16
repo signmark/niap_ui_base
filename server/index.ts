@@ -11,6 +11,7 @@ import { registerGeminiRoutes } from "./routes-gemini";
 import { registerImgurRoutes } from "./routes-imgur";
 import { registerBegetS3Routes } from "./routes-beget-s3";
 import { registerUserApiKeysRoutes } from "./routes-user-api-keys";
+import { registerAnalyticsRoutes } from "./routes/analytics";
 import { setupVite, serveStatic } from "./vite";
 import { log, logEnvironmentInfo } from "./utils/logger";
 import { directusApiManager } from './directus';
@@ -275,6 +276,11 @@ app.use((req, res, next) => {
     log("Registering routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
+    
+    // Регистрируем маршруты аналитики
+    log("Registering Analytics routes...");
+    registerAnalyticsRoutes(app);
+    log("Analytics routes registered successfully");
     
     // Регистрируем специальные маршруты для XMLRiver API
     log("Registering XMLRiver API routes...");

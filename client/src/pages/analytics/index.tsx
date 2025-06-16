@@ -122,123 +122,22 @@ export default function AnalyticsPage() {
     queryFn: async () => {
       console.log('🎯 Загружаем аналитику для кампании:', selectedCampaign, 'период:', selectedPeriod);
       
-      // Прямой запрос к Directus API
-      const daysBack = selectedPeriod === '30days' ? 30 : 7;
-      const dateFilter = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
+      // Используем новый backend API endpoint
+      const response = await apiRequest(`/api/analytics/${selectedCampaign}?period=${selectedPeriod}`);
       
-      console.log(`📅 Период: ${selectedPeriod}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
-      
-      const directusUrl = `${import.meta.env.VITE_DIRECTUS_URL}/items/campaign_content`;
-      const params = new URLSearchParams({
-        'filter[campaign_id][_eq]': selectedCampaign,
-        'filter[status][_eq]': 'published',
-        'filter[published_at][_gte]': dateFilter,
-        'fields': 'id,title,content,social_platforms,published_at,status',
-        'limit': '-1'  // Получаем ВСЕ записи, а не только первые 100
-      });
-
-      // Получаем токен текущего пользователя из localStorage
-      const userToken = localStorage.getItem('auth_token');
-      console.log('🔑 Используем токен пользователя для запроса к Directus:', userToken ? 'токен найден' : 'токен отсутствует');
-      
-      const response = await fetch(`${directusUrl}?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch data from Directus');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch analytics data');
       }
-
-      const result = await response.json();
-      const content = result.data || [];
       
-      console.log('📄 Получено контента из Directus:', content.length);
-      console.log('📋 Полный список контента:', content);
-
-      // Подсчет постов по платформам
-      let totalPosts = 0;
-      const platformStats = {
-        telegram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
-        instagram: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
-        vk: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 },
-        facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 }
-      };
-
-      content.forEach((item: any) => {
-        console.log('📊 Обрабатываем контент:', item.id, 'social_platforms:', item.social_platforms);
-        
-        if (item.social_platforms) {
-          const platforms = typeof item.social_platforms === 'string' 
-            ? JSON.parse(item.social_platforms) 
-            : item.social_platforms;
-
-          console.log('🔍 Платформы для контента', item.id, ':', platforms);
-
-          Object.keys(platforms).forEach(platformKey => {
-            const platform = platforms[platformKey];
-            console.log(`📱 Платформа ${platformKey}:`, platform);
-            
-            if (platform.status === 'published') {
-              totalPosts++;
-              
-              const platformName = platform.platform || platformKey;
-              console.log(`✅ Опубликованный пост на ${platformName}, аналитика:`, platform.analytics);
-              
-              if (platformStats[platformName as keyof typeof platformStats]) {
-                platformStats[platformName as keyof typeof platformStats].posts++;
-                
-                if (platform.analytics) {
-                  platformStats[platformName as keyof typeof platformStats].views += platform.analytics.views || 0;
-                  platformStats[platformName as keyof typeof platformStats].likes += platform.analytics.likes || 0;
-                  platformStats[platformName as keyof typeof platformStats].comments += platform.analytics.comments || 0;
-                  platformStats[platformName as keyof typeof platformStats].shares += platform.analytics.shares || 0;
-                  
-                  console.log(`📈 Добавлена аналитика для ${platformName}:`, {
-                    views: platform.analytics.views || 0,
-                    likes: platform.analytics.likes || 0,
-                    comments: platform.analytics.comments || 0,
-                    shares: platform.analytics.shares || 0
-                  });
-                }
-              }
-            }
-          });
-        }
-      });
-
-      // Агрегированная статистика
-      const totalViews = Object.values(platformStats).reduce((sum, p) => sum + p.views, 0);
-      const totalLikes = Object.values(platformStats).reduce((sum, p) => sum + p.likes, 0);
-      const totalComments = Object.values(platformStats).reduce((sum, p) => sum + p.comments, 0);
-      const totalShares = Object.values(platformStats).reduce((sum, p) => sum + p.shares, 0);
+      console.log('📊 Получена аналитика:', response);
       
-      const engagementRate = totalViews > 0 
-        ? Math.round(((totalLikes + totalComments + totalShares) / totalViews) * 100)
-        : 0;
-
-      console.log('📊 Итоговая статистика:');
-      console.log('📋 Общие данные:', { totalPosts, totalViews, totalLikes, totalComments, totalShares, engagementRate });
-      console.log('📱 Статистика по платформам:', platformStats);
-
       return {
-        success: true,
-        period: selectedPeriod,
-        totalPosts,
-        totalViews,
-        totalLikes,
-        totalComments,
-        totalShares,
-        engagementRate,
-        platforms: Object.entries(platformStats).map(([name, stats]) => ({
-          name,
-          posts: stats.posts,
-          views: stats.views,
-          likes: stats.likes,
-          comments: stats.comments,
-          shares: stats.shares
-        })).filter(p => p.posts > 0)
+        totalPosts: response.totalPosts,
+        totalViews: response.totalViews,
+        totalLikes: response.totalLikes,
+        totalShares: response.totalShares,
+        totalComments: response.totalComments,
+        platforms: response.platforms
       };
     },
     enabled: !!selectedCampaign,
