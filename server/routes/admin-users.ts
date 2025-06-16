@@ -3,21 +3,45 @@ import { DirectusCrud } from '../services/directus-crud.js';
 
 const router = Router();
 
+interface AuthenticatedRequest extends Request {
+  session?: {
+    userId?: string;
+    [key: string]: any;
+  };
+}
+
 // Получить список всех пользователей (только для админов)
-router.get('/admin/users', async (req: any, res: Response) => {
+router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
   try {
     console.log('[admin-users] Запрос списка пользователей от администратора');
     
-    // Проверяем права администратора
-    const userId = req.session?.userId;
-    if (!userId) {
-      console.log('[admin-users] Пользователь не авторизован');
+    // Получаем токен из заголовка авторизации
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации');
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
 
+    const userToken = authHeader.substring(7);
+    
+    // Проверяем права администратора через прямой запрос к Directus
+    const directusUrl = process.env.DIRECTUS_URL;
+    
     // Получаем информацию о текущем пользователе
-    const directusCrud = new DirectusCrud();
-    const currentUser = await directusCrud.getById('users', userId);
+    const userResponse = await fetch(`${directusUrl}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.log('[admin-users] Неверный токен авторизации');
+      return res.status(401).json({ error: 'Неверный токен авторизации' });
+    }
+
+    const userData = await userResponse.json();
+    const currentUser = userData.data;
     
     console.log('[admin-users] Данные текущего пользователя:', {
       id: currentUser?.id,
@@ -28,23 +52,36 @@ router.get('/admin/users', async (req: any, res: Response) => {
     });
     
     if (!currentUser?.is_smm_admin) {
-      console.log(`[admin-users] Пользователь ${currentUser?.email} (${userId}) не является администратором SMM (is_smm_admin: ${currentUser?.is_smm_admin})`);
+      console.log(`[admin-users] Пользователь ${currentUser?.email} не является администратором SMM`);
       return res.status(403).json({ 
         error: 'Недостаточно прав доступа', 
         details: `Пользователь ${currentUser?.email} не имеет прав администратора`
       });
     }
 
-    // Получаем список всех пользователей через DirectusCrud с токеном текущего пользователя
-    console.log('[admin-users] Получаем список пользователей через DirectusCrud');
+    // Получаем список всех пользователей через прямой запрос к Directus
+    console.log('[admin-users] Получаем список пользователей через Directus API');
     
-    const users = await directusCrud.list('users', {
-      fields: ['id', 'email', 'first_name', 'last_name', 'is_smm_admin', 'expire_date', 'last_access', 'status'],
-      sort: ['-last_access'],
-      limit: 100
+    const usersResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`, {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
     });
 
-    console.log(`[admin-users] Получено ${users?.length || 0} пользователей`);
+    if (!usersResponse.ok) {
+      console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка получения пользователей',
+        details: `HTTP ${usersResponse.status}`
+      });
+    }
+
+    const usersData = await usersResponse.json();
+    const users = usersData.data || [];
+
+    console.log(`[admin-users] Получено ${users.length} пользователей`);
 
     res.json({
       success: true,
@@ -53,13 +90,6 @@ router.get('/admin/users', async (req: any, res: Response) => {
 
   } catch (error: any) {
     console.error('[admin-users] Ошибка при получении списка пользователей:', error);
-    console.error('[admin-users] Детали ошибки:', {
-      message: error?.message,
-      stack: error?.stack,
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      responseData: error?.response?.data
-    });
     res.status(500).json({ 
       success: false,
       error: 'Ошибка получения пользователей',
@@ -76,6 +106,15 @@ router.patch('/admin/users/:userId', async (req: any, res: Response) => {
     
     console.log(`[admin-users] Обновление пользователя ${targetUserId}:`, { is_smm_admin, expire_date, status });
     
+    // Получаем токен из заголовка авторизации
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[admin-users] Отсутствует токен авторизации');
+      return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+
+    const userToken = authHeader.substring(7);
+    
     // Проверяем права администратора
     const currentUserId = req.session?.userId;
     if (!currentUserId) {
@@ -83,7 +122,7 @@ router.patch('/admin/users/:userId', async (req: any, res: Response) => {
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
 
-    const directusCrud = new DirectusCrud();
+    const directusCrud = new DirectusCrud(userToken);
     const currentUser = await directusCrud.getById('users', currentUserId);
     
     if (!currentUser?.is_smm_admin) {
