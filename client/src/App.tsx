@@ -69,6 +69,7 @@ const LayoutUniversalImageGenTest = React.memo(() => <WithLayout Component={Univ
 const LayoutTestImgur = React.memo(() => <WithLayout Component={TestImgur} />);
 const LayoutHtmlTagsTestPage = React.memo(() => <WithLayout Component={HtmlTagsTestPage} />);
 const LayoutAiImageTester = React.memo(() => <WithLayout Component={AiImageTester} />);
+const LayoutErrorHandlingTest = React.memo(() => <WithLayout Component={ErrorHandlingTest} />);
 const LayoutTestPage = React.memo(() => <WithLayout Component={TestPage} />);
 const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalApiKeysPage} />);
 const LayoutUserManagement = React.memo(() => <WithLayout Component={UserManagement} />);
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/test/html-tags" component={LayoutHtmlTagsTestPage} />
       <Route path="/test/telegram" component={TelegramTestPage} />
       <Route path="/test/ai-image" component={LayoutAiImageTester} />
+      <Route path="/test/error-handling" component={LayoutErrorHandlingTest} />
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />

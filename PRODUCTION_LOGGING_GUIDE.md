@@ -46,8 +46,8 @@ serviceError("Directus", "Временно недоступен");
 - console.info() - уведомления
 - console.warn() - предупреждения
 - HTTP ошибки (401, 403, 404, 429, 500)
-- GET /api/campaigns 401 (Unauthorized)
-- GET imgur.com/image.mp4 429 (Too Many Requests)
+- ✅ GET /api/campaigns 401 (Unauthorized) - СКРЫТО
+- ✅ GET imgur.com/image.mp4 429 (Too Many Requests) - СКРЫТО
 - Ошибки авторизации
 - Сетевые ошибки
 - Лимиты API
