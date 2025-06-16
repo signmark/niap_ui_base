@@ -106,6 +106,15 @@ export class PublishScheduler {
   }
 
   /**
+   * Очищает кэшированный токен администратора
+   */
+  clearTokenCache() {
+    this.adminTokenCache = null;
+    this.adminTokenTimestamp = 0;
+    log('Кэш токенов очищен в publish-scheduler', 'scheduler');
+  }
+
+  /**
    * Получает токен для доступа к API
    * Приоритеты получения токена:
    * 1. Авторизация через логин/пароль (admin)

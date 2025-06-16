@@ -66,6 +66,15 @@ class PublicationStatusChecker {
     
     log('Сервис проверки статусов публикаций остановлен', 'status-checker');
   }
+
+  /**
+   * Очищает кэшированный токен администратора
+   */
+  clearTokenCache() {
+    this.adminTokenCache = null;
+    this.adminTokenTimestamp = 0;
+    log('Кэш токенов очищен в status-checker', 'status-checker');
+  }
   
   /**
    * Получает токен администратора для API запросов
