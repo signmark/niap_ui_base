@@ -1,9 +1,8 @@
 import { Express, Request, Response } from 'express';
-import { DirectusCrud } from '../services/directus-crud.js';
+import { directusApiManager } from '../directus.js';
 import { directusAuthManager } from '../services/directus-auth-manager.js';
 
 export function registerAnalyticsRoutes(app: Express) {
-  const directusCrud = new DirectusCrud();
   
   // Get analytics data for a campaign
   app.get('/api/analytics/:campaignId', async (req: Request, res: Response) => {
@@ -19,18 +18,38 @@ export function registerAnalyticsRoutes(app: Express) {
       
       console.log(`📅 [Analytics] Период: ${period}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
       
-      // Get campaign content from Directus
-      const filter = {
-        campaign_id: { _eq: campaignId },
-        status: { _eq: 'published' },
-        published_at: { _gte: dateFilter }
+      // Get admin token for authentication
+      const adminToken = await directusAuthManager.getAdminAuthToken();
+      if (!adminToken) {
+        throw new Error('Не удалось получить токен администратора');
+      }
+
+      // Get campaign content from Directus using direct axios request
+      const axios = (await import('axios')).default;
+      
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
+      const url = `${directusUrl}items/campaign_content`;
+      
+      const params = {
+        'filter[campaign_id][_eq]': campaignId,
+        'filter[status][_eq]': 'published',
+        'filter[published_at][_gte]': dateFilter,
+        'fields[]': ['id', 'title', 'content', 'social_platforms', 'published_at', 'status'],
+        'limit': -1
       };
       
-      const content = await directusCrud.searchItems('campaign_content', {
-        filter,
-        fields: ['id', 'title', 'content', 'social_platforms', 'published_at', 'status'],
-        limit: -1
+      console.log(`🔐 [Analytics] Используем токен: ${adminToken.substring(0, 20)}...`);
+      
+      const response = await axios.get(url, {
+        params,
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
       });
+
+      const content = response.data.data || [];
       
       console.log(`📄 [Analytics] Получено контента из Directus: ${content.length}`);
       
