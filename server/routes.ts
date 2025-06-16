@@ -1063,6 +1063,10 @@ async function getDirectusAdminToken(): Promise<string | null> {
         const cachedToken = directusApiManager.getCachedToken(adminUserId);
         if (cachedToken) {
           console.log(`Используем кэшированный токен администратора (ID: ${adminUserId})`);
+          // Если cachedToken это объект с токеном, извлекаем строку
+          if (typeof cachedToken === 'object' && cachedToken.token) {
+            return cachedToken.token;
+          }
           return cachedToken;
         }
       }
@@ -11312,13 +11316,13 @@ ${datesText}
         });
       }
 
-      // Получаем список всех пользователей через админский токен
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      // Получаем админский токен через существующую функцию
+      const adminToken = await getAdminToken();
       if (!adminToken) {
-        console.log('[admin-users] Нет админского токена в env');
+        console.log('[admin-users] Не удалось получить админский токен');
         return res.status(500).json({ 
           success: false,
-          error: 'Ошибка конфигурации сервера'
+          error: 'Ошибка получения токена администратора'
         });
       }
       
@@ -11394,8 +11398,8 @@ ${datesText}
         return res.status(403).json({ error: 'Недостаточно прав доступа' });
       }
 
-      // Используем админский токен для получения статистики
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      // Получаем админский токен через существующую функцию
+      const adminToken = await getAdminToken();
       if (!adminToken) {
         return res.status(500).json({ 
           success: false,
@@ -11514,12 +11518,12 @@ ${datesText}
         updateData.status = status;
       }
 
-      // Используем админский токен для обновления
-      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      // Получаем админский токен через существующую функцию
+      const adminToken = await getAdminToken();
       if (!adminToken) {
         return res.status(500).json({ 
           success: false,
-          error: 'Ошибка конфигурации сервера'
+          error: 'Ошибка получения токена администратора'
         });
       }
 
