@@ -3,8 +3,37 @@ import { directusApiManager } from '../directus.js';
 
 export function registerAnalyticsRoutes(app: Express) {
   
+  // Simple authentication middleware - check for valid token
+  const authenticateAnalytics = async (req: Request, res: Response, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Токен авторизации не найден' });
+    }
+    
+    const token = authHeader.substring(7);
+    try {
+      // Verify token with Directus
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
+      const axios = (await import('axios')).default;
+      
+      const response = await axios.get(`${directusUrl}users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data?.data?.id) {
+        (req as any).userId = response.data.data.id;
+        (req as any).userToken = token;
+        next();
+      } else {
+        return res.status(401).json({ error: 'Недействительный токен' });
+      }
+    } catch (error) {
+      return res.status(401).json({ error: 'Ошибка проверки токена' });
+    }
+  };
+  
   // Get analytics data for a campaign
-  app.get('/api/analytics/:campaignId', async (req: Request, res: Response) => {
+  app.get('/api/analytics/:campaignId', authenticateAnalytics, async (req: Request & { userId?: string, userToken?: string }, res: Response) => {
     try {
       const { campaignId } = req.params;
       const { period = '7days' } = req.query;
@@ -17,14 +46,15 @@ export function registerAnalyticsRoutes(app: Express) {
       
       console.log(`📅 [Analytics] Период: ${period}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
       
-      // Get user token from session
-      const userToken = req.headers.authorization?.replace('Bearer ', '');
+      // Use authenticated user token from middleware
+      const userToken = req.userToken;
+      const userId = req.userId;
       
       if (!userToken) {
         throw new Error('Токен пользователя не найден');
       }
 
-      console.log(`🔐 [Analytics] Используем пользовательский токен: ${userToken.substring(0, 20)}...`);
+      console.log(`🔐 [Analytics] Используем пользовательский токен для пользователя ${userId}: ${userToken.substring(0, 20)}...`);
 
       // Try to get campaign content from Directus using user token
       const axios = (await import('axios')).default;
