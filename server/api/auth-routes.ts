@@ -114,17 +114,40 @@ export function registerAuthRoutes(app: Express): void {
         
       } catch (createError: any) {
         console.error('User creation error:', createError.response?.data || createError.message);
+        console.error('Full error object:', JSON.stringify(createError, null, 2));
         
-        // Обрабатываем специфичные ошибки Directus
-        if (createError.response?.data?.errors) {
+        // Обрабатываем специфичные ошибки Directus - проверяем разные структуры
+        let errorMessage = 'Не удалось создать пользователя';
+        
+        // Первый уровень: createError.response.data.errors
+        if (createError.response?.data?.errors && Array.isArray(createError.response.data.errors)) {
           const directusError = createError.response.data.errors[0];
-          if (directusError.message.includes('has to be unique')) {
-            throw new Error('Пользователь с таким email уже существует');
+          if (directusError.message && directusError.message.includes('has to be unique')) {
+            errorMessage = 'Пользователь с таким email уже существует';
+          } else {
+            errorMessage = directusError.message || 'Ошибка создания пользователя';
           }
-          throw new Error(directusError.message || 'Ошибка создания пользователя');
+        }
+        // Второй уровень: createError.data.errors
+        else if (createError.data?.errors && Array.isArray(createError.data.errors)) {
+          const directusError = createError.data.errors[0];
+          if (directusError.message && directusError.message.includes('has to be unique')) {
+            errorMessage = 'Пользователь с таким email уже существует';
+          } else {
+            errorMessage = directusError.message || 'Ошибка создания пользователя';
+          }
+        }
+        // Третий уровень: непосредственно в createError
+        else if (createError.errors && Array.isArray(createError.errors)) {
+          const directusError = createError.errors[0];
+          if (directusError.message && directusError.message.includes('has to be unique')) {
+            errorMessage = 'Пользователь с таким email уже существует';
+          } else {
+            errorMessage = directusError.message || 'Ошибка создания пользователя';
+          }
         }
         
-        throw new Error('Не удалось создать пользователя');
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
       console.error('Error during registration:', error.message);
