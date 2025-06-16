@@ -1,0 +1,121 @@
+🔧 N8N URL для аналитики: https://n8n.nplanner.ru
+index.tsx:123 🎯 Загружаем аналитику для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e период: 30days
+index.tsx:129 📅 Период: 30days, дней назад: 30, дата фильтра: 2025-05-17T08:09:27.032Z
+index.tsx:142 🔑 Используем токен пользователя для запроса к Directus: токен найден
+index.tsx:144 
+            
+            
+           GET https://directus.nplanner.ru/items/campaign_content?filter%5Bcampaign_id%5D%5B_eq%5D=46868c44-c6a4-4bed-accf-9ad07bba790e&filter%5Bstatus%5D%5B_eq%5D=published&filter%5Bpublished_at%5D%5B_gte%5D=2025-05-17T08%3A09%3A27.032Z&fields=id%2Ctitle%2Ccontent%2Csocial_platforms%2Cpublished_at%2Cstatus&limit=-1 403 (Forbidden)
+queryFn @ index.tsx:144
+fetchFn @ @tanstack_react-query.js?v=0aae9b8c:840
+run @ @tanstack_react-query.js?v=0aae9b8c:494
+start @ @tanstack_react-query.js?v=0aae9b8c:536
+fetch @ @tanstack_react-query.js?v=0aae9b8c:926
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1726
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1725
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+refetchQueries @ @tanstack_react-query.js?v=0aae9b8c:1724
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1716
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+invalidateQueries @ @tanstack_react-query.js?v=0aae9b8c:1705
+onSuccess @ index.tsx:78
+execute @ @tanstack_react-query.js?v=0aae9b8c:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=0aae9b8c:2630
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:3295
+onClick @ index.tsx:416
+callCallback2 @ chunk-RPCDYKBN.js?v=0aae9b8c:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=0aae9b8c:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=0aae9b8c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=0aae9b8c:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=0aae9b8c:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=0aae9b8c:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=0aae9b8c:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=0aae9b8c:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=0aae9b8c:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=0aae9b8c:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=0aae9b8c:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=0aae9b8c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=0aae9b8c:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5449
+logger.ts:118 Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Failed to fetch data from Directus
+    at queryFn (index.tsx:151:15)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:118
+systemError @ logger.ts:151
+handleError @ error-handler.ts:125
+globalErrorHandler @ queryClient.ts:105
+onError @ @tanstack_react-query.js?v=0aae9b8c:867
+reject @ @tanstack_react-query.js?v=0aae9b8c:465
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:508
+Promise.catch
+run @ @tanstack_react-query.js?v=0aae9b8c:498
+start @ @tanstack_react-query.js?v=0aae9b8c:536
+fetch @ @tanstack_react-query.js?v=0aae9b8c:926
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1726
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1725
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+refetchQueries @ @tanstack_react-query.js?v=0aae9b8c:1724
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1716
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+invalidateQueries @ @tanstack_react-query.js?v=0aae9b8c:1705
+onSuccess @ index.tsx:78
+execute @ @tanstack_react-query.js?v=0aae9b8c:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=0aae9b8c:2630
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:3295
+onClick @ index.tsx:416
+callCallback2 @ chunk-RPCDYKBN.js?v=0aae9b8c:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=0aae9b8c:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=0aae9b8c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=0aae9b8c:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=0aae9b8c:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=0aae9b8c:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=0aae9b8c:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=0aae9b8c:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=0aae9b8c:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=0aae9b8c:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=0aae9b8c:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=0aae9b8c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=0aae9b8c:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5449
+queryClient.ts:109 Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ queryClient.ts:109
+onError @ @tanstack_react-query.js?v=0aae9b8c:867
+reject @ @tanstack_react-query.js?v=0aae9b8c:465
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:508
+Promise.catch
+run @ @tanstack_react-query.js?v=0aae9b8c:498
+start @ @tanstack_react-query.js?v=0aae9b8c:536
+fetch @ @tanstack_react-query.js?v=0aae9b8c:926
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1726
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1725
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+refetchQueries @ @tanstack_react-query.js?v=0aae9b8c:1724
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:1716
+batch @ @tanstack_react-query.js?v=0aae9b8c:583
+invalidateQueries @ @tanstack_react-query.js?v=0aae9b8c:1705
+onSuccess @ index.tsx:78
+execute @ @tanstack_react-query.js?v=0aae9b8c:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=0aae9b8c:2630
+(anonymous) @ @tanstack_react-query.js?v=0aae9b8c:3295
+onClick @ index.tsx:416
+callCallback2 @ chunk-RPCDYKBN.js?v=0aae9b8c:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=0aae9b8c:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=0aae9b8c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=0aae9b8c:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=0aae9b8c:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=0aae9b8c:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=0aae9b8c:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=0aae9b8c:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=0aae9b8c:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=0aae9b8c:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=0aae9b8c:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=0aae9b8c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=0aae9b8c:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=0aae9b8c:5449
