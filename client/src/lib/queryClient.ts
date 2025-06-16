@@ -43,7 +43,7 @@ export async function apiRequest(
   config: ApiRequestConfig = {}
 ): Promise<any> {
   const { method = 'GET', data, params } = config;
-  let token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
   const userId = useAuthStore.getState().userId;
 
   // Логирование для отладки
@@ -56,49 +56,27 @@ export async function apiRequest(
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 
-  const makeRequest = async (authToken: string | null) => {
-    const headers: Record<string, string> = {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
-      "x-user-id": userId || ''
-    };
-
-    return fetch(url + queryString, {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+  const headers: Record<string, string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    "x-user-id": userId || ''
   };
 
-  try {
-    const res = await makeRequest(token);
-    await throwIfResNotOk(res);
-    
-    // Если статус 204 No Content, не пытаемся распарсить JSON
-    if (res.status === 204) {
-      return { success: true };
-    }
-    
-    return res.json();
-  } catch (error: any) {
-    // Если токен был обновлен, повторяем запрос
-    if (error.message === 'TOKEN_REFRESHED') {
-      const newToken = useAuthStore.getState().token;
-      console.log('Повторяем запрос с обновленным токеном');
-      
-      const retryRes = await makeRequest(newToken);
-      await throwIfResNotOk(retryRes);
-      
-      if (retryRes.status === 204) {
-        return { success: true };
-      }
-      
-      return retryRes.json();
-    }
-    
-    throw error;
+  const res = await fetch(url + queryString, {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
+  });
+
+  await throwIfResNotOk(res);
+  
+  // Если статус 204 No Content, не пытаемся распарсить JSON
+  if (res.status === 204) {
+    return { success: true };
   }
+  
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
