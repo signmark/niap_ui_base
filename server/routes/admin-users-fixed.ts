@@ -1,18 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { DirectusCrud } from '../services/directus-crud.js';
 
 const router = Router();
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    token: string;
-  };
-}
-
 // Получить список всех пользователей (только для админов)
-router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/admin/users', async (req: Request, res: Response) => {
   try {
     console.log('[admin-users] Запрос списка пользователей от администратора');
     
@@ -24,11 +15,9 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
     }
 
     const userToken = authHeader.substring(7);
-    
-    // Проверяем права администратора через прямой запрос к Directus
     const directusUrl = process.env.DIRECTUS_URL;
     
-    // Получаем информацию о текущем пользователе
+    // Проверяем права администратора через прямой запрос к Directus
     const userResponse = await fetch(`${directusUrl}/users/me`, {
       headers: {
         'Authorization': `Bearer ${userToken}`,
@@ -60,10 +49,9 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Получаем список всех пользователей через админский токен, поскольку пользовательские токены не имеют доступа к /users
+    // Получаем список всех пользователей через админский токен
     console.log('[admin-users] Получаем список пользователей через Directus API с админским токеном');
     
-    // Используем готовый админский токен из env
     const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
     if (!adminToken) {
       console.log('[admin-users] Нет админского токена в env');
@@ -84,8 +72,6 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
       const errorText = await usersResponse.text();
       console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
       console.log(`[admin-users] Детали ошибки: ${errorText}`);
-      console.log(`[admin-users] URL запроса: ${directusUrl}/users`);
-      console.log(`[admin-users] Токен: ${adminToken ? adminToken.substring(0, 10) + '...' : 'отсутствует'}`);
       return res.status(500).json({ 
         success: false,
         error: 'Ошибка получения пользователей',
@@ -114,72 +100,12 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
 });
 
 // Обновить права пользователя (только для админов)
-router.patch('/admin/users/:userId', async (req: any, res: Response) => {
+router.patch('/admin/users/:userId', async (req: Request, res: Response) => {
   try {
     const { userId: targetUserId } = req.params;
     const { is_smm_admin, expire_date, status } = req.body;
     
-    console.log(`[admin-users] Обновление пользователя ${targetUserId}:`, { is_smm_admin, expire_date, status });
-    
-    // Получаем токен из заголовка авторизации
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации');
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-
-    const userToken = authHeader.substring(7);
-    
-    // Проверяем права администратора
-    const currentUserId = req.session?.userId;
-    if (!currentUserId) {
-      console.log('[admin-users] Пользователь не авторизован');
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-
-    const directusCrud = new DirectusCrud(userToken);
-    const currentUser = await directusCrud.getById('users', currentUserId);
-    
-    if (!currentUser?.is_smm_admin) {
-      console.log('[admin-users] Пользователь не является администратором SMM');
-      return res.status(403).json({ error: 'Недостаточно прав доступа' });
-    }
-
-    // Подготавливаем данные для обновления
-    const updateData: any = {};
-    if (typeof is_smm_admin === 'boolean') {
-      updateData.is_smm_admin = is_smm_admin;
-    }
-    if (expire_date) {
-      updateData.expire_date = expire_date;
-    }
-    if (status) {
-      updateData.status = status;
-    }
-
-    // Обновляем пользователя
-    const updatedUser = await directusCrud.update('users', targetUserId, updateData);
-
-    console.log(`[admin-users] Пользователь ${targetUserId} успешно обновлен`);
-
-    res.json({
-      success: true,
-      data: updatedUser
-    });
-
-  } catch (error: any) {
-    console.error('[admin-users] Ошибка при обновлении пользователя:', error);
-    res.status(500).json({ 
-      error: 'Ошибка сервера при обновлении пользователя',
-      details: error.message 
-    });
-  }
-});
-
-// Получить статистику активности пользователей
-router.get('/admin/users/activity', async (req, res) => {
-  try {
-    console.log('[admin-users] Запрос статистики активности пользователей');
+    console.log(`[admin-users] Запрос на обновление пользователя ${targetUserId}`);
     
     // Получаем токен из заголовка авторизации
     const authHeader = req.headers.authorization;
@@ -191,7 +117,7 @@ router.get('/admin/users/activity', async (req, res) => {
     const userToken = authHeader.substring(7);
     const directusUrl = process.env.DIRECTUS_URL;
     
-    // Проверяем права администратора через прямой запрос к Directus
+    // Проверяем права администратора
     const userResponse = await fetch(`${directusUrl}/users/me`, {
       headers: {
         'Authorization': `Bearer ${userToken}`,
@@ -212,66 +138,167 @@ router.get('/admin/users/activity', async (req, res) => {
       return res.status(403).json({ error: 'Недостаточно прав доступа' });
     }
 
-    // Используем токен текущего авторизованного администратора
+    // Подготавливаем данные для обновления
+    const updateData: any = {};
+    if (typeof is_smm_admin === 'boolean') {
+      updateData.is_smm_admin = is_smm_admin;
+    }
+    if (expire_date) {
+      updateData.expire_date = expire_date;
+    }
+    if (status) {
+      updateData.status = status;
+    }
+
+    // Используем админский токен для обновления
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    if (!adminToken) {
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка конфигурации сервера'
+      });
+    }
+
+    const updateResponse = await fetch(`${directusUrl}/users/${targetUserId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updateData)
+    });
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      console.log(`[admin-users] Ошибка обновления пользователя: ${updateResponse.status}`);
+      return res.status(500).json({ 
+        error: 'Ошибка обновления пользователя',
+        details: `HTTP ${updateResponse.status}: ${errorText}`
+      });
+    }
+
+    const updatedUser = await updateResponse.json();
+
+    console.log(`[admin-users] Пользователь ${targetUserId} успешно обновлен`);
+
+    res.json({
+      success: true,
+      data: updatedUser.data
+    });
+
+  } catch (error: any) {
+    console.error('[admin-users] Ошибка при обновлении пользователя:', error);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при обновлении пользователя',
+      details: error.message 
+    });
+  }
+});
+
+// Получить статистику активности пользователей
+router.get('/admin/users/activity', async (req: Request, res: Response) => {
+  try {
+    console.log('[admin-users] Запрос статистики активности пользователей');
+    
+    // Получаем токен из заголовка авторизации
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации для статистики');
+      console.log('[admin-users] Отсутствует токен авторизации');
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
-    const adminToken = authHeader.substring(7);
-    console.log('[admin-users] Используем токен текущего администратора для получения статистики');
 
-    // Получаем статистику пользователей напрямую через Directus API
+    const userToken = authHeader.substring(7);
     const directusUrl = process.env.DIRECTUS_URL;
-    const statsResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,last_access,status,is_smm_admin,expire_date&sort=-last_access`, {
+    
+    // Проверяем права администратора
+    const userResponse = await fetch(`${directusUrl}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.log('[admin-users] Неверный токен авторизации');
+      return res.status(401).json({ error: 'Неверный токен авторизации' });
+    }
+
+    const userData = await userResponse.json();
+    const currentUser = userData.data;
+    
+    if (!currentUser?.is_smm_admin) {
+      console.log('[admin-users] Пользователь не является администратором SMM');
+      return res.status(403).json({ error: 'Недостаточно прав доступа' });
+    }
+
+    // Используем админский токен для получения статистики
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    if (!adminToken) {
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка конфигурации сервера'
+      });
+    }
+
+    // Получаем активных пользователей за последние 30 дней
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activityResponse = await fetch(`${directusUrl}/users?fields=id,email,last_access&filter[last_access][_gte]=${thirtyDaysAgo.toISOString()}&sort=-last_access`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
       }
     });
 
-    if (!statsResponse.ok) {
-      console.log(`[admin-users] Ошибка получения статистики: ${statsResponse.status}`);
-      return res.status(500).json({ error: 'Ошибка получения статистики пользователей' });
+    if (!activityResponse.ok) {
+      const errorText = await activityResponse.text();
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка получения статистики активности',
+        details: `HTTP ${activityResponse.status}: ${errorText}`
+      });
     }
 
-    const statsData = await statsResponse.json();
-    const users = statsData.data || [];
+    const activityData = await activityResponse.json();
+    const activeUsers = activityData.data || [];
 
-    // Подсчитываем статистику
-    const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Получаем общее количество пользователей
+    const totalUsersResponse = await fetch(`${directusUrl}/users?aggregate[count]=*`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-    const stats = {
-      total: users.length,
-      active_today: users.filter(u => u.last_access && new Date(u.last_access) > oneDayAgo).length,
-      active_week: users.filter(u => u.last_access && new Date(u.last_access) > oneWeekAgo).length,
-      active_month: users.filter(u => u.last_access && new Date(u.last_access) > oneMonthAgo).length,
-      admins: users.filter(u => u.is_smm_admin).length,
-      expired: users.filter(u => u.expire_date && new Date(u.expire_date) < now).length,
-      suspended: users.filter(u => u.status === 'suspended').length
+    let totalUsers = 0;
+    if (totalUsersResponse.ok) {
+      const totalData = await totalUsersResponse.json();
+      totalUsers = totalData.data?.[0]?.count || 0;
+    }
+
+    const activityStats = {
+      totalUsers,
+      activeUsers: activeUsers.length,
+      activityRate: totalUsers > 0 ? Math.round((activeUsers.length / totalUsers) * 100) : 0,
+      recentActivity: activeUsers.slice(0, 10) // Последние 10 активных пользователей
     };
 
-    console.log('[admin-users] Статистика активности:', stats);
+    console.log(`[admin-users] Статистика активности: ${activeUsers.length}/${totalUsers} активных пользователей`);
 
     res.json({
       success: true,
-      data: {
-        stats,
-        users: users.slice(0, 50) // Ограничиваем до 50 последних пользователей
-      }
+      data: activityStats
     });
 
   } catch (error: any) {
     console.error('[admin-users] Ошибка при получении статистики активности:', error);
     res.status(500).json({ 
-      error: 'Ошибка сервера при получении статистики активности',
-      details: error.message 
+      success: false,
+      error: 'Ошибка получения статистики активности',
+      details: error?.message || 'Unknown error'
     });
   }
 });
 
-export default router;
+export { router as adminUsersRouter };
