@@ -2,9 +2,27 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store";
 import { handleError } from "@/utils/error-handler";
 
+
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    
+    // Проверяем на истекший токен
+    if (res.status === 401 || res.status === 500) {
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.details && errorData.details.includes('TOKEN_EXPIRED')) {
+          console.log('Токен истек, перенаправляем на страницу входа...');
+          useAuthStore.getState().logout();
+          window.location.href = '/login';
+          return;
+        }
+      } catch (parseError) {
+        // Если не удалось распарсить JSON, продолжаем обычную обработку ошибки
+      }
+    }
+    
     const error = new Error(`${res.status}: ${text}`);
     (error as any).status = res.status;
     (error as any).response = { status: res.status, statusText: res.statusText };
@@ -25,7 +43,7 @@ export async function apiRequest(
   config: ApiRequestConfig = {}
 ): Promise<any> {
   const { method = 'GET', data, params } = config;
-  const token = useAuthStore.getState().token;
+  let token = useAuthStore.getState().token;
   const userId = useAuthStore.getState().userId;
 
   // Логирование для отладки
@@ -38,33 +56,49 @@ export async function apiRequest(
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 
-  const headers: Record<string, string> = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    "x-user-id": userId || ''
+  const makeRequest = async (authToken: string | null) => {
+    const headers: Record<string, string> = {
+      ...(data ? { "Content-Type": "application/json" } : {}),
+      ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
+      "x-user-id": userId || ''
+    };
+
+    return fetch(url + queryString, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
   };
 
-  console.log(`📤 Заголовки запроса:`, { 
-    hasAuthHeader: !!headers["Authorization"],
-    contentType: headers["Content-Type"],
-    userIdHeader: headers["x-user-id"]
-  });
-
-  const res = await fetch(url + queryString, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  
-  // Если статус 204 No Content, не пытаемся распарсить JSON
-  if (res.status === 204) {
-    return { success: true };
+  try {
+    const res = await makeRequest(token);
+    await throwIfResNotOk(res);
+    
+    // Если статус 204 No Content, не пытаемся распарсить JSON
+    if (res.status === 204) {
+      return { success: true };
+    }
+    
+    return res.json();
+  } catch (error: any) {
+    // Если токен был обновлен, повторяем запрос
+    if (error.message === 'TOKEN_REFRESHED') {
+      const newToken = useAuthStore.getState().token;
+      console.log('Повторяем запрос с обновленным токеном');
+      
+      const retryRes = await makeRequest(newToken);
+      await throwIfResNotOk(retryRes);
+      
+      if (retryRes.status === 204) {
+        return { success: true };
+      }
+      
+      return retryRes.json();
+    }
+    
+    throw error;
   }
-  
-  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

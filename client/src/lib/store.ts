@@ -13,6 +13,8 @@ interface AuthState {
   getAuthToken: () => string | null;
   setIsAdmin: (isAdmin: boolean) => void;
   checkIsAdmin: () => Promise<boolean>;
+  setToken: (token: string) => void;
+  logout: () => void;
 }
 
 import { api } from './api';
@@ -129,6 +131,15 @@ export const useAuthStore = create<AuthState>()(
           get().setIsAdmin(false);
           return false;
         }
+      },
+
+      setToken: (token: string) => {
+        localStorage.setItem('auth_token', token);
+        set({ token, isAuthenticated: !!token && !!get().userId });
+      },
+
+      logout: () => {
+        get().clearAuth();
       }
     }),
     {
