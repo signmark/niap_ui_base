@@ -24,32 +24,48 @@ export function registerAnalyticsRoutes(app: Express) {
         throw new Error('Не удалось получить токен администратора');
       }
 
-      // Get campaign content from Directus using direct axios request
-      const axios = (await import('axios')).default;
-      
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
-      const url = `${directusUrl}items/campaign_content`;
-      
-      const params = {
-        'filter[campaign_id][_eq]': campaignId,
-        'filter[status][_eq]': 'published',
-        'filter[published_at][_gte]': dateFilter,
-        'fields[]': ['id', 'title', 'content', 'social_platforms', 'published_at', 'status'],
-        'limit': -1
-      };
-      
       console.log(`🔐 [Analytics] Используем токен: ${adminToken.substring(0, 20)}...`);
-      
-      const response = await axios.get(url, {
-        params,
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 15000
-      });
 
-      const content = response.data.data || [];
+      // Try to get campaign content from Directus with detailed error logging
+      const axios = (await import('axios')).default;
+      let content = [];
+      
+      try {
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
+        const url = `${directusUrl}items/campaign_content`;
+        
+        const params = {
+          'filter[campaign_id][_eq]': campaignId,
+          'filter[status][_eq]': 'published',
+          'filter[published_at][_gte]': dateFilter,
+          'fields[]': ['id', 'title', 'content', 'social_platforms', 'published_at', 'status'],
+          'limit': -1
+        };
+        
+        const response = await axios.get(url, {
+          params,
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        });
+
+        content = response.data.data || [];
+        console.log(`📄 [Analytics] Получено контента из Directus: ${content.length}`);
+        
+      } catch (directusError: any) {
+        console.error(`❌ [Analytics] Ошибка получения данных из Directus:`, directusError.response?.data || directusError.message);
+        
+        // Check if it's a permissions issue and try to get the error details
+        if (directusError.response?.status === 403) {
+          console.log(`🚫 [Analytics] 403 Forbidden - возможно проблема с правами доступа к коллекции campaign_content`);
+          console.log(`🔍 [Analytics] Детали ошибки:`, directusError.response.data);
+        }
+        
+        // Return empty array if we can't get data from Directus
+        content = [];
+      }
       
       console.log(`📄 [Analytics] Получено контента из Directus: ${content.length}`);
       
