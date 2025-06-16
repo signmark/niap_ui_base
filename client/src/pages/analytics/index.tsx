@@ -44,39 +44,14 @@ export default function AnalyticsPage() {
     }
   }, [selectedCampaignId]);
 
-  // Мутация для обновления данных аналитики
+  // Мутация для обновления данных аналитики (через refresh кэша)
   const updateAnalyticsMutation = useMutation({
     mutationFn: async () => {
-      const days = selectedPeriod === '30days' ? 30 : 7;
-      
-      const n8nUrl = import.meta.env.VITE_N8N_URL;
-      console.log('🔧 N8N URL для аналитики:', n8nUrl);
-      
-      if (!n8nUrl) {
-        throw new Error('VITE_N8N_URL не настроен');
-      }
-      
-      const response = await fetch(`${n8nUrl}/webhook/posts-to-analytics`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          campaignId: selectedCampaign,
-          days: days
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Не удалось обновить данные');
-      }
-
-      return response.json();
+      // Просто инвалидируем кэш для перезагрузки данных
+      queryClient.invalidateQueries({ queryKey: ['analytics', selectedCampaign, selectedPeriod] });
+      return { success: true };
     },
     onSuccess: () => {
-      // Инвалидируем кэш аналитики для повторной загрузки
-      queryClient.invalidateQueries({ queryKey: ['analytics', selectedCampaign, selectedPeriod] });
-      
       toast({
         title: "✅ Данные обновлены",
         description: "Аналитика успешно обновлена из последних данных",

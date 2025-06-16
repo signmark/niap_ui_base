@@ -12,12 +12,16 @@ export function registerAnalyticsRoutes(app: Express) {
     
     const token = authHeader.substring(7);
     try {
-      // Verify token with Directus
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
+      // Verify token with Directus - use environment-specific URL
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
       const axios = (await import('axios')).default;
       
-      const response = await axios.get(`${directusUrl}users/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      console.log(`[Analytics Auth] Verifying token with Directus at: ${finalUrl}users/me`);
+      
+      const response = await axios.get(`${finalUrl}users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        timeout: 10000
       });
       
       if (response.data?.data?.id) {
@@ -27,8 +31,17 @@ export function registerAnalyticsRoutes(app: Express) {
       } else {
         return res.status(401).json({ error: 'Недействительный токен' });
       }
-    } catch (error) {
-      return res.status(401).json({ error: 'Ошибка проверки токена' });
+    } catch (error: any) {
+      console.error(`[Analytics Auth] Token verification failed:`, error.response?.data || error.message);
+      console.error(`[Analytics Auth] Error details:`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url
+      });
+      return res.status(401).json({ 
+        error: 'Ошибка проверки токена',
+        details: error.response?.data || error.message 
+      });
     }
   };
   
@@ -61,8 +74,9 @@ export function registerAnalyticsRoutes(app: Express) {
       let content = [];
       
       try {
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech/';
-        const url = `${directusUrl}items/campaign_content`;
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+        const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
+        const url = `${finalUrl}items/campaign_content`;
         
         const params = {
           'filter[campaign_id][_eq]': campaignId,
