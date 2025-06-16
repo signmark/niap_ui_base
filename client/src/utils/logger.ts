@@ -64,6 +64,15 @@ class BrowserLogger {
       console.error = (...args: any[]) => {
         const message = args.join(' ');
         
+        // Скрываем обычные HTTP ошибки (401, 403, 404, 429, 500) - они не критичны для пользователей
+        if (message.includes('401 (Unauthorized)') || 
+            message.includes('403 (Forbidden)') ||
+            message.includes('404 (Not Found)') ||
+            message.includes('429 (Too Many Requests)') ||
+            message.includes('500 (Internal Server Error)')) {
+          return; // Полностью скрываем эти ошибки в production
+        }
+        
         // Только ошибки, которые требуют обращения к администратору
         const isCriticalUserError = message.includes('КРИТИЧЕСКАЯ ОШИБКА') || 
                                    message.includes('SYSTEM ERROR') ||

@@ -1,10 +1,15 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/store";
+import { handleError } from "@/utils/error-handler";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const error = new Error(`${res.status}: ${text}`);
+    (error as any).status = res.status;
+    (error as any).response = { status: res.status, statusText: res.statusText };
+    (error as any).config = { url: res.url };
+    throw error;
   }
 }
 
@@ -95,6 +100,16 @@ export const getQueryFn: <T>(options: {
  * - refetchOnMount: false - не запрашивать данные при монтировании компонента
  * - refetchOnWindowFocus: false - не запрашивать данные при фокусе окна
  */
+// Глобальный обработчик ошибок для QueryClient
+const globalErrorHandler = (error: any) => {
+  const userError = handleError(error);
+  if (userError.showToUser) {
+    // В любом случае обрабатываем ошибку через наш logger
+    // В production будут показаны только критические
+    console.error(`Ошибка: ${userError.message}${userError.action ? ` ${userError.action}` : ''}`);
+  }
+};
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -112,3 +127,7 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Подписываемся на глобальные ошибки QueryClient
+queryClient.getQueryCache().config.onError = globalErrorHandler;
+queryClient.getMutationCache().config.onError = globalErrorHandler;
