@@ -11316,19 +11316,10 @@ ${datesText}
         });
       }
 
-      // Получаем админский токен через существующую функцию
-      const adminToken = await getAdminToken();
-      if (!adminToken) {
-        console.log('[admin-users] Не удалось получить админский токен');
-        return res.status(500).json({ 
-          success: false,
-          error: 'Ошибка получения токена администратора'
-        });
-      }
-      
+      // Используем токен администратора для получения списка пользователей
       const usersResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -11398,14 +11389,7 @@ ${datesText}
         return res.status(403).json({ error: 'Недостаточно прав доступа' });
       }
 
-      // Получаем админский токен через существующую функцию
-      const adminToken = await getAdminToken();
-      if (!adminToken) {
-        return res.status(500).json({ 
-          success: false,
-          error: 'Ошибка конфигурации сервера'
-        });
-      }
+      // Используем токен администратора для получения статистики
 
       // Получаем активных пользователей за последние 30 дней
       const thirtyDaysAgo = new Date();
@@ -11413,7 +11397,7 @@ ${datesText}
       
       const activityResponse = await fetch(`${directusUrl}/users?fields=id,email,last_access&filter[last_access][_gte]=${thirtyDaysAgo.toISOString()}&sort=-last_access`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -11433,7 +11417,7 @@ ${datesText}
       // Получаем общее количество пользователей
       const totalUsersResponse = await fetch(`${directusUrl}/users?aggregate[count]=*`, {
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -11518,19 +11502,11 @@ ${datesText}
         updateData.status = status;
       }
 
-      // Получаем админский токен через существующую функцию
-      const adminToken = await getAdminToken();
-      if (!adminToken) {
-        return res.status(500).json({ 
-          success: false,
-          error: 'Ошибка получения токена администратора'
-        });
-      }
-
+      // Используем токен администратора для обновления пользователя
       const updateResponse = await fetch(`${directusUrl}/users/${targetUserId}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(updateData)
