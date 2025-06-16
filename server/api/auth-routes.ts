@@ -63,7 +63,7 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       // Используем ID роли SMM Manager User напрямую
-      const smmUserRoleId = 'c971fd93-1abc-4a40-9ab7-6cddb78e491c';
+      const smmUserRoleId = '346bbfe5-c0b5-451b-b2bb-b8596e57c3e8';
 
       // Получаем токен администратора для создания пользователя
       let adminToken: string;
@@ -113,38 +113,33 @@ export function registerAuthRoutes(app: Express): void {
         });
         
       } catch (createError: any) {
-        console.error('User creation error:', createError.response?.data || createError.message);
-        console.error('Full error object:', JSON.stringify(createError, null, 2));
+        console.error('User creation error:', createError);
         
-        // Обрабатываем специфичные ошибки Directus - проверяем разные структуры
+        // Обрабатываем специфичные ошибки Directus
         let errorMessage = 'Не удалось создать пользователя';
         
-        // Первый уровень: createError.response.data.errors
-        if (createError.response?.data?.errors && Array.isArray(createError.response.data.errors)) {
-          const directusError = createError.response.data.errors[0];
-          if (directusError.message && directusError.message.includes('has to be unique')) {
-            errorMessage = 'Пользователь с таким email уже существует';
-          } else {
-            errorMessage = directusError.message || 'Ошибка создания пользователя';
+        // Ищем ошибку уникальности email в разных возможных структурах
+        const checkForUniqueError = (errors: any[]) => {
+          if (errors && errors.length > 0) {
+            const error = errors[0];
+            if (error.message && error.message.includes('has to be unique')) {
+              return 'Пользователь с таким email уже существует';
+            }
+            return error.message || 'Ошибка создания пользователя';
           }
-        }
-        // Второй уровень: createError.data.errors
-        else if (createError.data?.errors && Array.isArray(createError.data.errors)) {
-          const directusError = createError.data.errors[0];
-          if (directusError.message && directusError.message.includes('has to be unique')) {
-            errorMessage = 'Пользователь с таким email уже существует';
-          } else {
-            errorMessage = directusError.message || 'Ошибка создания пользователя';
-          }
-        }
-        // Третий уровень: непосредственно в createError
-        else if (createError.errors && Array.isArray(createError.errors)) {
-          const directusError = createError.errors[0];
-          if (directusError.message && directusError.message.includes('has to be unique')) {
-            errorMessage = 'Пользователь с таким email уже существует';
-          } else {
-            errorMessage = directusError.message || 'Ошибка создания пользователя';
-          }
+          return null;
+        };
+        
+        // Проверяем различные структуры ошибок
+        if (createError.response?.data?.errors) {
+          const message = checkForUniqueError(createError.response.data.errors);
+          if (message) errorMessage = message;
+        } else if (createError.data?.errors) {
+          const message = checkForUniqueError(createError.data.errors);
+          if (message) errorMessage = message;
+        } else if (createError.errors) {
+          const message = checkForUniqueError(createError.errors);
+          if (message) errorMessage = message;
         }
         
         throw new Error(errorMessage);
