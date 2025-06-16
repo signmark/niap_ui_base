@@ -3,13 +3,7 @@ import axios from 'axios';
 
 const router = Router();
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    token: string;
-  };
-}
+
 
 // Проверка прав администратора
 async function checkAdminRights(token: string): Promise<{ isAdmin: boolean; userData: any }> {
@@ -33,7 +27,7 @@ async function checkAdminRights(token: string): Promise<{ isAdmin: boolean; user
 }
 
 // Получить список всех пользователей (только для админов)
-router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/admin/users', async (req: Request, res: Response) => {
   try {
     console.log('[admin-users] Запрос списка пользователей от администратора');
     
@@ -195,41 +189,28 @@ router.get('/admin/users/activity', async (req, res) => {
     }
 
     const userToken = authHeader.substring(7);
-    const directusUrl = process.env.DIRECTUS_URL;
     
-    // Проверяем права администратора через прямой запрос к Directus
-    const userResponse = await fetch(`${directusUrl}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${userToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!userResponse.ok) {
-      console.log('[admin-users] Неверный токен авторизации');
-      return res.status(401).json({ error: 'Неверный токен авторизации' });
+    // Проверяем права администратора
+    const { isAdmin } = await checkAdminRights(userToken);
+    if (!isAdmin) {
+      console.log('[admin-users] Пользователь не является администратором');
+      return res.status(403).json({ error: 'Доступ запрещен: требуются права администратора' });
     }
 
-    const userData = await userResponse.json();
-    const currentUser = userData.data;
-    
-    if (!currentUser?.is_smm_admin) {
-      console.log('[admin-users] Пользователь не является администратором SMM');
-      return res.status(403).json({ error: 'Недостаточно прав доступа' });
-    }
-
-    // Используем токен текущего авторизованного администратора
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('[admin-users] Отсутствует токен авторизации для статистики');
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-    
-    const adminToken = authHeader.substring(7);
-    console.log('[admin-users] Используем токен текущего администратора для получения статистики');
+    console.log('[admin-users] Используем админский токен для получения статистики');
 
     // Получаем статистику пользователей напрямую через Directus API
     const directusUrl = process.env.DIRECTUS_URL;
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    
+    if (!adminToken) {
+      console.log('[admin-users] Нет админского токена для статистики');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка конфигурации сервера'
+      });
+    }
+    
     const statsResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,last_access,status,is_smm_admin,expire_date&sort=-last_access`, {
       headers: {
         'Authorization': `Bearer ${adminToken}`,
@@ -253,12 +234,12 @@ router.get('/admin/users/activity', async (req, res) => {
 
     const stats = {
       total: users.length,
-      active_today: users.filter(u => u.last_access && new Date(u.last_access) > oneDayAgo).length,
-      active_week: users.filter(u => u.last_access && new Date(u.last_access) > oneWeekAgo).length,
-      active_month: users.filter(u => u.last_access && new Date(u.last_access) > oneMonthAgo).length,
-      admins: users.filter(u => u.is_smm_admin).length,
-      expired: users.filter(u => u.expire_date && new Date(u.expire_date) < now).length,
-      suspended: users.filter(u => u.status === 'suspended').length
+      active_today: users.filter((u: any) => u.last_access && new Date(u.last_access) > oneDayAgo).length,
+      active_week: users.filter((u: any) => u.last_access && new Date(u.last_access) > oneWeekAgo).length,
+      active_month: users.filter((u: any) => u.last_access && new Date(u.last_access) > oneMonthAgo).length,
+      admins: users.filter((u: any) => u.is_smm_admin).length,
+      expired: users.filter((u: any) => u.expire_date && new Date(u.expire_date) < now).length,
+      suspended: users.filter((u: any) => u.status === 'suspended').length
     };
 
     console.log('[admin-users] Статистика активности:', stats);
