@@ -1,8 +1,10 @@
 import { Express, Request, Response } from 'express';
-import { directusCrud } from '../services/directus-crud.js';
+import { DirectusCrud } from '../services/directus-crud.js';
 import { directusAuthManager } from '../services/directus-auth-manager.js';
 
 export function registerAnalyticsRoutes(app: Express) {
+  const directusCrud = new DirectusCrud();
+  
   // Get analytics data for a campaign
   app.get('/api/analytics/:campaignId', async (req: Request, res: Response) => {
     try {
@@ -24,7 +26,7 @@ export function registerAnalyticsRoutes(app: Express) {
         published_at: { _gte: dateFilter }
       };
       
-      const content = await directusCrud.read('campaign_content', {
+      const content = await directusCrud.searchItems('campaign_content', {
         filter,
         fields: ['id', 'title', 'content', 'social_platforms', 'published_at', 'status'],
         limit: -1
