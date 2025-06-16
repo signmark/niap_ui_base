@@ -1,6 +1,5 @@
 import { Express, Request, Response } from 'express';
 import { directusApiManager } from '../directus.js';
-import { directusAuthManager } from '../services/directus-auth-manager.js';
 
 export function registerAnalyticsRoutes(app: Express) {
   
@@ -18,15 +17,16 @@ export function registerAnalyticsRoutes(app: Express) {
       
       console.log(`📅 [Analytics] Период: ${period}, дней назад: ${daysBack}, дата фильтра: ${dateFilter}`);
       
-      // Get admin token for authentication
-      const adminToken = await directusAuthManager.getAdminAuthToken();
-      if (!adminToken) {
-        throw new Error('Не удалось получить токен администратора');
+      // Get user token from session
+      const userToken = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (!userToken) {
+        throw new Error('Токен пользователя не найден');
       }
 
-      console.log(`🔐 [Analytics] Используем токен: ${adminToken.substring(0, 20)}...`);
+      console.log(`🔐 [Analytics] Используем пользовательский токен: ${userToken.substring(0, 20)}...`);
 
-      // Try to get campaign content from Directus with detailed error logging
+      // Try to get campaign content from Directus using user token
       const axios = (await import('axios')).default;
       let content = [];
       
@@ -45,7 +45,7 @@ export function registerAnalyticsRoutes(app: Express) {
         const response = await axios.get(url, {
           params,
           headers: {
-            'Authorization': `Bearer ${adminToken}`,
+            'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
           },
           timeout: 15000
@@ -56,12 +56,7 @@ export function registerAnalyticsRoutes(app: Express) {
         
       } catch (directusError: any) {
         console.error(`❌ [Analytics] Ошибка получения данных из Directus:`, directusError.response?.data || directusError.message);
-        
-        // Check if it's a permissions issue and try to get the error details
-        if (directusError.response?.status === 403) {
-          console.log(`🚫 [Analytics] 403 Forbidden - возможно проблема с правами доступа к коллекции campaign_content`);
-          console.log(`🔍 [Analytics] Детали ошибки:`, directusError.response.data);
-        }
+        console.log(`🔍 [Analytics] Детали ошибки:`, directusError.response?.data);
         
         // Return empty array if we can't get data from Directus
         content = [];
