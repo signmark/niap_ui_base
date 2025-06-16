@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { DirectusCrud } from '../services/directus-crud.js';
+import axios from 'axios';
 
 const router = Router();
 
@@ -11,12 +11,33 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+// Проверка прав администратора
+async function checkAdminRights(token: string): Promise<{ isAdmin: boolean; userData: any }> {
+  try {
+    const directusUrl = process.env.DIRECTUS_URL;
+    const response = await axios.get(`${directusUrl}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const userData = response.data.data;
+    const isAdmin = userData.is_smm_admin === true;
+    
+    return { isAdmin, userData };
+  } catch (error) {
+    console.error('[admin-users] Ошибка проверки прав:', error);
+    return { isAdmin: false, userData: null };
+  }
+}
+
 // Получить список всех пользователей (только для админов)
 router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
   try {
     console.log('[admin-users] Запрос списка пользователей от администратора');
     
-    // Получаем токен из заголовка авторизации
+    // Получаем токен из заголовка
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.log('[admin-users] Отсутствует токен авторизации');
@@ -25,43 +46,19 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
 
     const userToken = authHeader.substring(7);
     
-    // Проверяем права администратора через прямой запрос к Directus
-    const directusUrl = process.env.DIRECTUS_URL;
-    
-    // Получаем информацию о текущем пользователе
-    const userResponse = await fetch(`${directusUrl}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${userToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!userResponse.ok) {
-      console.log('[admin-users] Неверный токен авторизации');
-      return res.status(401).json({ error: 'Неверный токен авторизации' });
+    // Проверяем права администратора
+    const { isAdmin, userData } = await checkAdminRights(userToken);
+    if (!isAdmin) {
+      console.log('[admin-users] Пользователь не является администратором');
+      return res.status(403).json({ error: 'Доступ запрещен: требуются права администратора' });
     }
-
-    const userData = await userResponse.json();
-    const currentUser = userData.data;
     
-    console.log('[admin-users] Данные текущего пользователя:', {
-      id: currentUser?.id,
-      email: currentUser?.email,
-      is_smm_admin: currentUser?.is_smm_admin,
-      first_name: currentUser?.first_name,
-      last_name: currentUser?.last_name
-    });
-    
-    if (!currentUser?.is_smm_admin) {
-      console.log(`[admin-users] Пользователь ${currentUser?.email} не является администратором SMM`);
-      return res.status(403).json({ 
-        error: 'Недостаточно прав доступа', 
-        details: `Пользователь ${currentUser?.email} не имеет прав администратора`
-      });
-    }
+    console.log('[admin-users] Администратор подтвержден:', userData.email);
 
     // Получаем список всех пользователей через админский токен, поскольку пользовательские токены не имеют доступа к /users
     console.log('[admin-users] Получаем список пользователей через Directus API с админским токеном');
+    
+    const directusUrl = process.env.DIRECTUS_URL;
     
     // Используем готовый админский токен из env
     const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
@@ -131,18 +128,10 @@ router.patch('/admin/users/:userId', async (req: any, res: Response) => {
     const userToken = authHeader.substring(7);
     
     // Проверяем права администратора
-    const currentUserId = req.session?.userId;
-    if (!currentUserId) {
-      console.log('[admin-users] Пользователь не авторизован');
-      return res.status(401).json({ error: 'Требуется авторизация' });
-    }
-
-    const directusCrud = new DirectusCrud(userToken);
-    const currentUser = await directusCrud.getById('users', currentUserId);
-    
-    if (!currentUser?.is_smm_admin) {
-      console.log('[admin-users] Пользователь не является администратором SMM');
-      return res.status(403).json({ error: 'Недостаточно прав доступа' });
+    const { isAdmin } = await checkAdminRights(userToken);
+    if (!isAdmin) {
+      console.log('[admin-users] Пользователь не является администратором');
+      return res.status(403).json({ error: 'Доступ запрещен: требуются права администратора' });
     }
 
     // Подготавливаем данные для обновления
@@ -157,14 +146,31 @@ router.patch('/admin/users/:userId', async (req: any, res: Response) => {
       updateData.status = status;
     }
 
-    // Обновляем пользователя
-    const updatedUser = await directusCrud.update('users', targetUserId, updateData);
+    // Используем админский токен для обновления
+    const directusUrl = process.env.DIRECTUS_URL;
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    
+    if (!adminToken) {
+      console.log('[admin-users] Нет админского токена');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка конфигурации сервера'
+      });
+    }
+
+    // Обновляем пользователя через админский токен
+    const updateResponse = await axios.patch(`${directusUrl}/users/${targetUserId}`, updateData, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
     console.log(`[admin-users] Пользователь ${targetUserId} успешно обновлен`);
 
     res.json({
       success: true,
-      data: updatedUser
+      data: updateResponse.data.data
     });
 
   } catch (error: any) {
