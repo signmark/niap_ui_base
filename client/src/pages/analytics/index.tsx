@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
         facebook: { posts: 0, views: 0, likes: 0, comments: 0, shares: 0 }
       };
 
-      content.forEach(item => {
+      content.forEach((item: any) => {
         console.log('📊 Обрабатываем контент:', item.id, 'social_platforms:', item.social_platforms);
         
         if (item.social_platforms) {
@@ -186,14 +186,14 @@ export default function AnalyticsPage() {
               const platformName = platform.platform || platformKey;
               console.log(`✅ Опубликованный пост на ${platformName}, аналитика:`, platform.analytics);
               
-              if (platformStats[platformName]) {
-                platformStats[platformName].posts++;
+              if (platformStats[platformName as keyof typeof platformStats]) {
+                platformStats[platformName as keyof typeof platformStats].posts++;
                 
                 if (platform.analytics) {
-                  platformStats[platformName].views += platform.analytics.views || 0;
-                  platformStats[platformName].likes += platform.analytics.likes || 0;
-                  platformStats[platformName].comments += platform.analytics.comments || 0;
-                  platformStats[platformName].shares += platform.analytics.shares || 0;
+                  platformStats[platformName as keyof typeof platformStats].views += platform.analytics.views || 0;
+                  platformStats[platformName as keyof typeof platformStats].likes += platform.analytics.likes || 0;
+                  platformStats[platformName as keyof typeof platformStats].comments += platform.analytics.comments || 0;
+                  platformStats[platformName as keyof typeof platformStats].shares += platform.analytics.shares || 0;
                   
                   console.log(`📈 Добавлена аналитика для ${platformName}:`, {
                     views: platform.analytics.views || 0,
@@ -245,8 +245,8 @@ export default function AnalyticsPage() {
   });
 
   // Функции для анализа эффективности
-  const calculateEngagementRate = (platform: any) => {
-    if (platform.views === 0) return 0;
+  const calculateEngagementRate = (platform: any): string => {
+    if (platform.views === 0) return "0.0";
     const engagements = platform.likes + platform.comments + platform.shares;
     return ((engagements / platform.views) * 100).toFixed(1);
   };
