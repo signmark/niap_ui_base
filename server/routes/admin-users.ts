@@ -59,12 +59,22 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Получаем список всех пользователей через прямой запрос к Directus
-    console.log('[admin-users] Получаем список пользователей через Directus API');
+    // Получаем список всех пользователей через админский токен, поскольку пользовательские токены не имеют доступа к /users
+    console.log('[admin-users] Получаем список пользователей через Directus API с админским токеном');
+    
+    // Используем готовый админский токен из env
+    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    if (!adminToken) {
+      console.log('[admin-users] Нет админского токена в env');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Ошибка конфигурации сервера'
+      });
+    }
     
     const usersResponse = await fetch(`${directusUrl}/users?fields=id,email,first_name,last_name,is_smm_admin,expire_date,last_access,status&sort=-last_access&limit=100`, {
       headers: {
-        'Authorization': `Bearer ${userToken}`,
+        'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
       }
     });
