@@ -80,11 +80,15 @@ router.get('/admin/users', async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (!usersResponse.ok) {
+      const errorText = await usersResponse.text();
       console.log(`[admin-users] Ошибка получения пользователей: ${usersResponse.status}`);
+      console.log(`[admin-users] Детали ошибки: ${errorText}`);
+      console.log(`[admin-users] URL запроса: ${directusUrl}/users`);
+      console.log(`[admin-users] Токен: ${adminToken ? adminToken.substring(0, 10) + '...' : 'отсутствует'}`);
       return res.status(500).json({ 
         success: false,
         error: 'Ошибка получения пользователей',
-        details: `HTTP ${usersResponse.status}`
+        details: `HTTP ${usersResponse.status}: ${errorText}`
       });
     }
 
