@@ -114,23 +114,25 @@ export function registerAuthRoutes(app: Express): void {
         
       } catch (createError: any) {
         console.error('User creation error:', createError.response?.data || createError.message);
+        
+        // Обрабатываем специфичные ошибки Directus
+        if (createError.response?.data?.errors) {
+          const directusError = createError.response.data.errors[0];
+          if (directusError.message.includes('has to be unique')) {
+            throw new Error('Пользователь с таким email уже существует');
+          }
+          throw new Error(directusError.message || 'Ошибка создания пользователя');
+        }
+        
         throw new Error('Не удалось создать пользователя');
       }
-    } catch (error) {
-      console.error('Error during registration:', error.response?.data || error.message);
+    } catch (error: any) {
+      console.error('Error during registration:', error.message);
       
-      // Обрабатываем ошибку регистрации
-      if (error.response && error.response.status === 400) {
-        const errorMessage = error.response.data?.errors?.[0]?.message || 'Ошибка валидации данных';
-        return res.status(400).json({ 
-          success: false,
-          message: errorMessage
-        });
-      }
-
-      res.status(500).json({ 
+      // Возвращаем конкретное сообщение об ошибке
+      return res.status(400).json({ 
         success: false,
-        message: 'Произошла ошибка при регистрации пользователя'
+        message: error.message || 'Произошла ошибка при регистрации пользователя'
       });
     }
   });
