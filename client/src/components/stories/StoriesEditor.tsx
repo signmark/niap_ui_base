@@ -1,18 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Save, Eye, Pause } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import type { CampaignContent, StoryData, StorySlide, StoryElement } from '@/types';
-import { StoriesCanvas } from './StoriesCanvas';
-import { StoriesSidebar } from './StoriesSidebar';
-import { StoriesToolbar } from './StoriesToolbar';
+import type { StoryData, StorySlide, StoryElement } from '@/types';
+import { Plus, Type, Image, Square, Play, Eye } from 'lucide-react';
 
 interface StoriesEditorProps {
-  content: CampaignContent;
-  campaignId: string;
-  onChange: (content: CampaignContent) => void;
-  onSave: () => void;
+  value: StoryData;
+  onChange: (data: StoryData) => void;
 }
 
 // Генерация ID
@@ -24,7 +21,8 @@ const createEmptySlide = (order: number): StorySlide => ({
   order,
   background: {
     type: 'color',
-    value: '#4f46e5'
+    value: '#4f46e5',
+    color: '#4f46e5'
   },
   elements: [],
   duration: 5
@@ -38,31 +36,21 @@ const createInitialStoryData = (): StoryData => ({
   preview: undefined
 });
 
-export function StoriesEditor({ content, campaignId, onChange, onSave }: StoriesEditorProps) {
+export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   const { toast } = useToast();
   
   // Инициализируем данные Stories
   const [storyData, setStoryData] = useState<StoryData>(() => {
-    return content.storyData || createInitialStoryData();
+    return value || createInitialStoryData();
   });
   
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [previewSlideIndex, setPreviewSlideIndex] = useState(0);
 
   // Обновляем родительский компонент при изменении данных Stories
   useEffect(() => {
-    const updatedContent: CampaignContent = {
-      ...content,
-      storyData,
-      storyPreview: storyData.slides[0]?.background?.value || '',
-      content: storyData.slides.map((slide, index) => 
-        `Слайд ${index + 1}: ${slide.elements.filter(el => el.type === 'text').map(el => el.content).join(' ')}`
-      ).join('\n')
-    };
-    onChange(updatedContent);
-  }, [storyData, content, onChange]);
+    onChange(storyData);
+  }, [storyData, onChange]);
 
   // Получаем текущий слайд
   const currentSlide = storyData.slides[selectedSlideIndex] || storyData.slides[0];
@@ -80,125 +68,108 @@ export function StoriesEditor({ content, campaignId, onChange, onSave }: Stories
     
     setSelectedSlideIndex(updatedSlides.length - 1);
     toast({
-      title: 'Слайд добавлен',
-      description: `Создан слайд ${updatedSlides.length}`
+      title: "Слайд добавлен",
+      description: "Новый слайд добавлен в Stories"
     });
   }, [storyData.slides, toast]);
 
-  const handleDeleteSlide = useCallback((slideIndex: number) => {
-    if (storyData.slides.length <= 1) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Нельзя удалить последний слайд'
-      });
-      return;
-    }
-
-    const updatedSlides = storyData.slides.filter((_, index) => index !== slideIndex);
-    const reorderedSlides = updatedSlides.map((slide, index) => ({
-      ...slide,
-      order: index + 1
-    }));
-
-    setStoryData(prev => ({
-      ...prev,
-      slides: reorderedSlides,
-      totalDuration: reorderedSlides.reduce((sum, slide) => sum + slide.duration, 0)
-    }));
-
-    if (selectedSlideIndex >= reorderedSlides.length) {
-      setSelectedSlideIndex(reorderedSlides.length - 1);
-    }
-
-    toast({
-      title: 'Слайд удален',
-      description: `Удален слайд ${slideIndex + 1}`
-    });
-  }, [storyData.slides, selectedSlideIndex, toast]);
-
-  // Обработчики для элементов
-  const handleElementAdd = useCallback((elementType: StoryElement['type']) => {
+  // Добавление элемента
+  const handleAddElement = useCallback((type: StoryElement['type']) => {
     const newElement: StoryElement = {
       id: generateId(),
-      type: elementType,
+      type,
       position: { x: 50, y: 100 },
-      size: { width: 200, height: 60 },
+      size: { width: 200, height: 100 },
       rotation: 0,
-      content: elementType === 'text' ? 'Новый текст' : '',
-      style: elementType === 'text' ? {
-        fontSize: 24,
+      content: type === 'text' ? 'Новый текст' : type === 'image' ? 'https://placehold.co/200x200?text=Image' : '',
+      style: {
+        fontSize: 16,
         color: '#ffffff',
-        textAlign: 'center',
-        fontWeight: 'bold'
-      } : {}
+        backgroundColor: type === 'shape' ? '#000000' : 'transparent',
+        borderRadius: 0,
+        opacity: 1
+      }
     };
 
-    const updatedSlides = storyData.slides.map((slide, index) =>
-      index === selectedSlideIndex
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
         ? { ...slide, elements: [...slide.elements, newElement] }
         : slide
     );
 
-    setStoryData(prev => ({ ...prev, slides: updatedSlides }));
-    setSelectedElement(newElement.id);
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
 
+    setSelectedElement(newElement.id);
+    
     toast({
-      title: 'Элемент добавлен',
-      description: `Добавлен элемент "${elementType}"`
+      title: "Элемент добавлен",
+      description: `${type === 'text' ? 'Текст' : type === 'image' ? 'Изображение' : 'Фигура'} добавлен на слайд`
     });
   }, [storyData.slides, selectedSlideIndex, toast]);
 
-  const handleElementUpdate = useCallback((elementId: string, updates: Partial<StoryElement>) => {
-    const updatedSlides = storyData.slides.map((slide, index) =>
-      index === selectedSlideIndex
-        ? {
-            ...slide,
-            elements: slide.elements.map(element =>
-              element.id === elementId ? { ...element, ...updates } : element
+  // Обновление элемента
+  const handleUpdateElement = useCallback((elementId: string, updates: Partial<StoryElement>) => {
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? { 
+            ...slide, 
+            elements: slide.elements.map(el => 
+              el.id === elementId ? { ...el, ...updates } : el
             )
           }
         : slide
     );
 
-    setStoryData(prev => ({ ...prev, slides: updatedSlides }));
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
   }, [storyData.slides, selectedSlideIndex]);
 
-  const handleElementDelete = useCallback((elementId: string) => {
-    const updatedSlides = storyData.slides.map((slide, index) =>
-      index === selectedSlideIndex
-        ? {
-            ...slide,
-            elements: slide.elements.filter(element => element.id !== elementId)
+  // Удаление элемента
+  const handleDeleteElement = useCallback((elementId: string) => {
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? { 
+            ...slide, 
+            elements: slide.elements.filter(el => el.id !== elementId)
           }
         : slide
     );
 
-    setStoryData(prev => ({ ...prev, slides: updatedSlides }));
-    
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
+
     if (selectedElement === elementId) {
       setSelectedElement(null);
     }
+  }, [storyData.slides, selectedSlideIndex, selectedElement]);
 
-    toast({
-      title: 'Элемент удален',
-      description: 'Элемент удален со слайда'
-    });
-  }, [storyData.slides, selectedSlideIndex, selectedElement, toast]);
-
-  // Обработчик изменения фона слайда
+  // Обновление фона слайда
   const handleBackgroundChange = useCallback((background: StorySlide['background']) => {
-    const updatedSlides = storyData.slides.map((slide, index) =>
-      index === selectedSlideIndex ? { ...slide, background } : slide
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? { ...slide, background }
+        : slide
     );
 
-    setStoryData(prev => ({ ...prev, slides: updatedSlides }));
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
   }, [storyData.slides, selectedSlideIndex]);
 
-  // Обработчик изменения длительности слайда
+  // Обновление длительности слайда
   const handleDurationChange = useCallback((duration: number) => {
-    const updatedSlides = storyData.slides.map((slide, index) =>
-      index === selectedSlideIndex ? { ...slide, duration } : slide
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? { ...slide, duration }
+        : slide
     );
 
     setStoryData(prev => ({
@@ -208,140 +179,292 @@ export function StoriesEditor({ content, campaignId, onChange, onSave }: Stories
     }));
   }, [storyData.slides, selectedSlideIndex]);
 
-  // Превью режим
-  const handlePreviewToggle = useCallback(() => {
-    setIsPreviewMode(!isPreviewMode);
-    setPreviewSlideIndex(selectedSlideIndex);
-  }, [isPreviewMode, selectedSlideIndex]);
-
   return (
-    <div className="stories-editor h-full flex flex-col">
-      {/* Заголовок */}
-      <div className="p-4 border-b bg-muted/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Редактор Instagram Stories</h2>
-            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <Badge variant="outline">
-                {storyData.slides.length} слайд{storyData.slides.length === 1 ? '' : storyData.slides.length > 4 ? 'ов' : 'а'}
-              </Badge>
-              <span>Общая длительность: {storyData.totalDuration}с</span>
-              <span>9:16 формат</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviewToggle}
-              className="flex items-center gap-2"
-            >
-              {isPreviewMode ? <Pause className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {isPreviewMode ? 'Редактор' : 'Превью'}
-            </Button>
-            <Button
-              onClick={onSave}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Сохранить Stories
-            </Button>
-          </div>
+    <div className="w-full h-96 border rounded-lg bg-gray-50 p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Редактор Stories</h3>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAddSlide}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Добавить слайд
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Предпросмотр
+          </Button>
         </div>
       </div>
 
-      {/* Основной интерфейс */}
-      <div className="flex-1 flex overflow-hidden">
-        {!isPreviewMode ? (
-          <>
-            {/* Левая панель - список слайдов */}
-            <StoriesSidebar
-              slides={storyData.slides}
-              selectedIndex={selectedSlideIndex}
-              onSlideSelect={setSelectedSlideIndex}
-              onAddSlide={handleAddSlide}
-              onDeleteSlide={handleDeleteSlide}
-            />
-
-            {/* Центральная область - canvas */}
-            <StoriesCanvas
-              slide={currentSlide}
-              selectedElement={selectedElement}
-              onElementSelect={setSelectedElement}
-              onElementUpdate={handleElementUpdate}
-              onElementAdd={handleElementAdd}
-              onElementDelete={handleElementDelete}
-            />
-
-            {/* Правая панель - инструменты */}
-            <StoriesToolbar
-              slide={currentSlide}
-              selectedElement={selectedElement}
-              onElementStyleChange={handleElementUpdate}
-              onBackgroundChange={handleBackgroundChange}
-              onDurationChange={handleDurationChange}
-            />
-          </>
-        ) : (
-          // Режим превью
-          <div className="flex-1 flex items-center justify-center bg-gray-900 p-8">
-            <div className="text-center">
-              <div 
-                className="stories-preview-frame relative bg-black shadow-2xl mx-auto"
-                style={{ 
-                  width: '270px', 
-                  height: '480px',
-                  borderRadius: '24px',
-                  overflow: 'hidden'
-                }}
+      <div className="grid grid-cols-3 gap-4 h-full">
+        {/* Список слайдов */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Слайды ({storyData.slides.length})</Label>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {storyData.slides.map((slide, index) => (
+              <Card
+                key={slide.id}
+                className={`p-2 cursor-pointer transition-colors ${
+                  selectedSlideIndex === index
+                    ? 'ring-2 ring-blue-500 bg-blue-50'
+                    : 'hover:bg-gray-100'
+                }`}
+                onClick={() => setSelectedSlideIndex(index)}
               >
-                <StoriesCanvas
-                  slide={storyData.slides[previewSlideIndex]}
-                  selectedElement={null}
-                  onElementSelect={() => {}}
-                  onElementUpdate={() => {}}
-                  onElementAdd={() => {}}
-                  onElementDelete={() => {}}
-                  isPreview={true}
-                />
-                
-                {/* Индикаторы прогресса */}
-                <div className="absolute top-2 left-2 right-2 flex gap-1">
-                  {storyData.slides.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`h-1 rounded-full flex-1 ${
-                        index === previewSlideIndex ? 'bg-white' : 'bg-white/30'
-                      }`}
-                    />
-                  ))}
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Слайд {index + 1}</div>
+                  <div
+                    className="w-full h-12 rounded border bg-white relative"
+                    style={{
+                      backgroundColor: slide.background?.color || slide.background?.value || '#ffffff'
+                    }}
+                  >
+                    {slide.elements.length > 0 && (
+                      <div className="absolute bottom-0 right-0 text-xs bg-gray-800 text-white px-1 rounded">
+                        {slide.elements.length}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">{slide.duration}с</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Canvas */}
+        <div className="flex flex-col items-center space-y-4">
+          <div
+            className="relative border-2 border-gray-300 rounded-lg overflow-hidden"
+            style={{
+              width: '135px', // 9:16 aspect ratio (135x240)
+              height: '240px',
+              backgroundColor: currentSlide.background?.color || currentSlide.background?.value || '#ffffff'
+            }}
+          >
+            {currentSlide.elements.map((element) => (
+              <div
+                key={element.id}
+                className={`absolute cursor-pointer ${
+                  selectedElement === element.id ? 'ring-1 ring-blue-500' : ''
+                }`}
+                style={{
+                  left: `${(element.position.x / 270) * 100}%`,
+                  top: `${(element.position.y / 480) * 100}%`,
+                  transform: 'scale(0.5)',
+                  transformOrigin: 'top left'
+                }}
+                onClick={() => setSelectedElement(element.id)}
+              >
+                {element.type === 'text' && (
+                  <div
+                    style={{
+                      fontSize: `${element.style?.fontSize || 16}px`,
+                      color: element.style?.color || '#000000',
+                      backgroundColor: element.style?.backgroundColor || 'transparent',
+                      padding: '4px',
+                      borderRadius: `${element.style?.borderRadius || 0}px`
+                    }}
+                  >
+                    {element.content || 'Текст'}
+                  </div>
+                )}
+                {element.type === 'image' && (
+                  <img
+                    src={element.content || 'https://placehold.co/100x100?text=Img'}
+                    alt="Story element"
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                )}
+                {element.type === 'shape' && (
+                  <div
+                    className="w-16 h-16 rounded"
+                    style={{
+                      backgroundColor: element.style?.backgroundColor || '#000000'
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+            
+            {/* Empty state */}
+            {currentSlide.elements.length === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-xs">
+                <p className="mb-2">Пустой слайд</p>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleAddElement('text')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Type className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleAddElement('image')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Image className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleAddElement('shape')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Square className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
-              
-              {/* Навигация превью */}
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setPreviewSlideIndex(Math.max(0, previewSlideIndex - 1))}
-                  disabled={previewSlideIndex === 0}
-                >
-                  Назад
-                </Button>
-                <span className="text-white">
-                  {previewSlideIndex + 1} / {storyData.slides.length}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => setPreviewSlideIndex(Math.min(storyData.slides.length - 1, previewSlideIndex + 1))}
-                  disabled={previewSlideIndex === storyData.slides.length - 1}
-                >
-                  Далее
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+
+          {/* Add elements toolbar */}
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('text')}
+              className="h-8 px-3 text-xs"
+            >
+              <Type className="h-3 w-3 mr-1" />
+              Текст
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('image')}
+              className="h-8 px-3 text-xs"
+            >
+              <Image className="h-3 w-3 mr-1" />
+              Изображение
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('shape')}
+              className="h-8 px-3 text-xs"
+            >
+              <Square className="h-3 w-3 mr-1" />
+              Фигура
+            </Button>
+          </div>
+        </div>
+
+        {/* Properties panel */}
+        <div className="space-y-4">
+          <Label className="text-sm font-medium">Настройки</Label>
+          
+          {/* Slide settings */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Слайд</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div>
+                <Label className="text-xs">Длительность (сек)</Label>
+                <Input
+                  type="number"
+                  value={currentSlide.duration}
+                  onChange={(e) => handleDurationChange(Number(e.target.value))}
+                  min={1}
+                  max={15}
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Цвет фона</Label>
+                <Input
+                  type="color"
+                  value={currentSlide.background?.color || currentSlide.background?.value || '#ffffff'}
+                  onChange={(e) => handleBackgroundChange({
+                    type: 'color',
+                    value: e.target.value,
+                    color: e.target.value
+                  })}
+                  className="h-8"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Element settings */}
+          {selectedElement && currentSlide.elements.find(el => el.id === selectedElement) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">
+                  Выбранный элемент
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(() => {
+                  const element = currentSlide.elements.find(el => el.id === selectedElement);
+                  if (!element) return null;
+                  
+                  return (
+                    <>
+                      {element.type === 'text' && (
+                        <div>
+                          <Label className="text-xs">Текст</Label>
+                          <Input
+                            value={element.content}
+                            onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
+                            className="h-8"
+                          />
+                        </div>
+                      )}
+                      {element.type === 'image' && (
+                        <div>
+                          <Label className="text-xs">URL изображения</Label>
+                          <Input
+                            value={element.content}
+                            onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
+                            className="h-8"
+                            placeholder="https://..."
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <Label className="text-xs">Цвет</Label>
+                        <Input
+                          type="color"
+                          value={element.style?.color || '#000000'}
+                          onChange={(e) => handleUpdateElement(element.id, {
+                            style: { ...element.style, color: e.target.value }
+                          })}
+                          className="h-8"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteElement(element.id)}
+                        className="w-full h-8"
+                      >
+                        Удалить элемент
+                      </Button>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stats */}
+          <div className="text-xs text-gray-500 space-y-1">
+            <div>Слайдов: {storyData.slides.length}</div>
+            <div>Общая длительность: {storyData.totalDuration}с</div>
+            <div>Элементов на слайде: {currentSlide.elements.length}</div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -105,6 +105,7 @@ export interface StoryElement {
     height?: string | number;
     filter?: string;
     zIndex?: number;
+    rotation?: number;
   };
 }
 
@@ -114,6 +115,8 @@ export interface StorySlide {
   background: {
     type: 'color' | 'gradient' | 'image' | 'video';
     value: string; // цвет/градиент/URL
+    color?: string; // для обратной совместимости
+    image?: string; // для обратной совместимости
   };
   elements: StoryElement[];
   duration: number; // 1-15 секунд
