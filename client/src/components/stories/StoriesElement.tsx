@@ -103,7 +103,7 @@ const StoriesElement: React.FC<StoriesElementProps> = ({
     position: 'absolute' as const,
     left: element.position.x,
     top: element.position.y,
-    zIndex: element.style?.zIndex || 1,
+    zIndex: Math.min(element.style?.zIndex || 1, 10), // Ограничиваем максимальный z-index
     cursor: isPreview ? 'default' : 'move',
     transform: `rotate(${element.style?.rotation || 0}deg)`,
     transformOrigin: 'center'

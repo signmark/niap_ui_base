@@ -126,6 +126,7 @@ export default function ContentPage() {
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
+  const [isStoriesEditorOpen, setIsStoriesEditorOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -1475,18 +1476,29 @@ export default function ContentPage() {
             {newContent.contentType === "story" && (
               <div className="space-y-4">
                 <Label>Редактор Stories</Label>
-                <StoriesEditor
-                  value={newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }}
-                  onChange={(storyData) => {
-                    setNewContent({
-                      ...newContent,
-                      metadata: {
-                        ...newContent.metadata,
-                        storyData
-                      }
-                    });
-                  }}
-                />
+                <div className="border rounded-lg p-4 bg-white" style={{ minHeight: '300px', overflow: 'visible', zIndex: 'auto' }}>
+                  <div className="text-center text-gray-500 py-8">
+                    <p className="mb-4">Stories редактор будет открыт в отдельном окне</p>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Открываем Stories редактор в отдельном модальном окне
+                        setIsStoriesEditorOpen(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Открыть редактор Stories
+                    </Button>
+                  </div>
+                  {newContent.metadata?.storyData?.slides?.length > 0 && (
+                    <div className="mt-4 p-2 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">
+                        Создано слайдов: {newContent.metadata.storyData.slides.length}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             

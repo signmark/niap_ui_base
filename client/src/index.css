@@ -27,19 +27,39 @@
   position: relative;
   z-index: 0;
   isolation: isolate;
+  contain: layout style paint;
+  transform: translateZ(0); /* Создаем новый stacking context */
 }
 
-.stories-editor * {
-  z-index: auto;
+/* Принудительно ограничиваем z-index всех дочерних элементов */
+.stories-editor *,
+.stories-editor .react-draggable,
+.stories-editor .react-draggable *,
+.stories-editor .draggable-element,
+.stories-editor .element-controls,
+.stories-editor button,
+.stories-editor div {
+  z-index: 1 !important;
+  position: relative !important;
 }
 
-/* Убираем высокий z-index у дочерних элементов Stories */
-.stories-editor .draggable-element {
-  z-index: 1;
+/* Убираем fixed/absolute позиционирование внутри Stories редактора */
+.stories-editor .react-draggable > div {
+  position: relative !important;
+  z-index: 1 !important;
 }
 
-.stories-editor .element-controls {
-  z-index: 2;
+/* Специальные стили для предотвращения выхода за границы диалога */
+[data-radix-dialog-content] .stories-editor {
+  overflow: hidden;
+  max-height: 400px;
+  contain: layout style paint;
+}
+
+/* Контекст наслоения для всего диалога */
+[data-radix-dialog-content] {
+  isolation: isolate;
+  contain: layout style;
 }
 
 /* Общие стили для WYSIWYG контента */
