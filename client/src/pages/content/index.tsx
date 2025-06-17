@@ -782,6 +782,7 @@ export default function ContentPage() {
       additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
       videoUrl: currentContent.videoUrl,
       additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
+      metadata: currentContent.metadata || {}, // Добавляем metadata для сохранения Stories данных
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
