@@ -180,7 +180,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   }, [storyData.slides, selectedSlideIndex]);
 
   return (
-    <div className="w-full h-80 border rounded-lg bg-gray-50 p-3 stories-editor">
+    <div className="w-full h-[500px] border rounded-lg bg-gray-50 p-3 stories-editor overflow-hidden">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Редактор Stories</h3>
         <div className="flex gap-2">
@@ -360,15 +360,13 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
 
         {/* Properties panel */}
-        <div className="space-y-4">
+        <div className="space-y-3 max-h-[400px] overflow-y-auto">
           <Label className="text-sm font-medium">Настройки</Label>
           
           {/* Slide settings */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Слайд</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <Card className="p-3">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Слайд</Label>
               <div>
                 <Label className="text-xs">Длительность (сек)</Label>
                 <Input
@@ -393,18 +391,14 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                   className="h-8"
                 />
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Element settings */}
           {selectedElement && currentSlide?.elements?.find(el => el.id === selectedElement) && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">
-                  Выбранный элемент
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
+            <Card className="p-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Выбранный элемент</Label>
                 {(() => {
                   const element = currentSlide?.elements?.find(el => el.id === selectedElement);
                   if (!element) return null;
