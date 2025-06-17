@@ -24,8 +24,8 @@ export function StoriesCanvas({
   isPreview = false
 }: StoriesCanvasProps) {
   const canvasStyle = {
-    width: '270px', // 9:16 aspect ratio (270x480)
-    height: '480px',
+    width: '180px', // Smaller 9:16 aspect ratio (180x320)
+    height: '320px',
     backgroundColor: slide.background?.color || '#ffffff',
     backgroundImage: slide.background?.image ? `url(${slide.background.image})` : undefined,
     backgroundSize: 'cover',

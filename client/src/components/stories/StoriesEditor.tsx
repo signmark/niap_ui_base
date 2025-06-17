@@ -180,7 +180,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   }, [storyData.slides, selectedSlideIndex]);
 
   return (
-    <div className="w-full h-96 border rounded-lg bg-gray-50 p-4 stories-editor">
+    <div className="w-full h-80 border rounded-lg bg-gray-50 p-3 stories-editor">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Редактор Stories</h3>
         <div className="flex gap-2">
@@ -202,7 +202,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 h-full">
+      <div className="grid grid-cols-4 gap-3 h-full">
         {/* Список слайдов */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Слайды ({storyData.slides.length})</Label>
