@@ -2573,6 +2573,37 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Отдельный диалог для Stories редактора */}
+      <Dialog open={isStoriesEditorOpen} onOpenChange={setIsStoriesEditorOpen}>
+        <DialogContent className="sm:max-w-[1200px] max-h-[95vh] overflow-y-auto" style={{ zIndex: 60 }}>
+          <DialogHeader>
+            <DialogTitle>Редактор Instagram Stories</DialogTitle>
+            <DialogDescription>
+              Создайте многослайдовые Stories с текстом, изображениями и эффектами
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <StoriesEditor
+              value={newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }}
+              onChange={(storyData) => {
+                setNewContent({
+                  ...newContent,
+                  metadata: {
+                    ...newContent.metadata,
+                    storyData
+                  }
+                });
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsStoriesEditorOpen(false)}>
+              Сохранить и закрыть
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
