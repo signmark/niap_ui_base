@@ -1,158 +1,157 @@
 import React from 'react';
+import { StorySlide } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Copy } from 'lucide-react';
-import type { StorySlide } from '@/types';
+import { Plus, Copy, Trash2, Eye } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 interface StoriesSidebarProps {
   slides: StorySlide[];
-  selectedIndex: number;
+  currentSlide: number;
   onSlideSelect: (index: number) => void;
-  onAddSlide: () => void;
-  onDeleteSlide: (index: number) => void;
+  onSlideAdd: () => void;
+  onSlideDuplicate: (index: number) => void;
+  onSlideDelete: (index: number) => void;
+  onPreview: () => void;
 }
 
 export function StoriesSidebar({
   slides,
-  selectedIndex,
+  currentSlide,
   onSlideSelect,
-  onAddSlide,
-  onDeleteSlide
+  onSlideAdd,
+  onSlideDuplicate,
+  onSlideDelete,
+  onPreview
 }: StoriesSidebarProps) {
   return (
-    <div className="w-64 border-r bg-muted/20 p-4 flex flex-col">
-      {/* Заголовок */}
-      <div className="mb-4">
-        <h3 className="font-medium mb-3">Слайды Stories</h3>
-        <Button
-          onClick={onAddSlide}
-          className="w-full flex items-center gap-2"
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          Добавить слайд
-        </Button>
+    <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h3 className="font-medium text-gray-900">Слайды</h3>
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onPreview}
+            className="h-8 w-8 p-0"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            onClick={onSlideAdd}
+            className="h-8 w-8 p-0"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Список слайдов */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-2">
-          {slides.map((slide, index) => (
-            <Card
-              key={slide.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                selectedIndex === index 
-                  ? 'ring-2 ring-primary bg-primary/5' 
-                  : 'hover:bg-muted/50'
-              }`}
-              onClick={() => onSlideSelect(index)}
-            >
-              <CardContent className="p-3">
-                {/* Превью слайда */}
-                <div 
-                  className="w-full aspect-[9/16] rounded-lg mb-2 relative overflow-hidden border"
-                  style={{ 
-                    backgroundColor: slide.background.type === 'color' 
-                      ? slide.background.value 
-                      : '#f3f4f6',
-                    backgroundImage: slide.background.type === 'image' 
-                      ? `url(${slide.background.value})` 
-                      : 'none',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  {/* Превью элементов */}
-                  {slide.elements.slice(0, 3).map((element, elemIndex) => (
-                    <div
-                      key={element.id}
-                      className="absolute text-xs text-white/80 bg-black/20 px-1 rounded"
-                      style={{
-                        left: `${Math.min(element.position.x / 4, 80)}%`,
-                        top: `${Math.min(element.position.y / 8, 85)}%`,
-                        fontSize: '8px'
-                      }}
-                    >
-                      {element.type === 'text' 
-                        ? element.content.slice(0, 15) + (element.content.length > 15 ? '...' : '')
-                        : element.type
-                      }
-                    </div>
-                  ))}
-                  
-                  {/* Индикатор количества элементов */}
-                  {slide.elements.length > 0 && (
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute top-1 right-1 text-xs h-5"
-                    >
-                      {slide.elements.length}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Информация о слайде */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Слайд {index + 1}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {slide.duration}с
-                    </span>
+      {/* Slides list */}
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {slides.map((slide, index) => (
+          <Card
+            key={index}
+            className={`p-3 cursor-pointer transition-colors ${
+              currentSlide === index
+                ? 'ring-2 ring-blue-500 bg-blue-50'
+                : 'hover:bg-gray-100'
+            }`}
+            onClick={() => onSlideSelect(index)}
+          >
+            <div className="space-y-2">
+              {/* Slide preview */}
+              <div
+                className="w-full h-20 rounded border bg-white relative overflow-hidden"
+                style={{
+                  backgroundColor: slide.background?.color || '#ffffff',
+                  backgroundImage: slide.background?.image ? `url(${slide.background.image})` : undefined,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                {/* Mini preview of elements */}
+                {slide.elements.slice(0, 3).map((element, elemIndex) => (
+                  <div
+                    key={element.id}
+                    className="absolute text-xs"
+                    style={{
+                      left: `${(element.position.x / 270) * 100}%`,
+                      top: `${(element.position.y / 480) * 100}%`,
+                      transform: 'scale(0.3)',
+                      transformOrigin: 'top left'
+                    }}
+                  >
+                    {element.type === 'text' && (
+                      <div className="bg-gray-800 text-white px-1 rounded text-xs">
+                        {element.content?.substring(0, 10) || 'Текст'}
+                      </div>
+                    )}
+                    {element.type === 'image' && (
+                      <div className="w-6 h-6 bg-gray-300 rounded flex items-center justify-center">
+                        <div className="w-3 h-3 bg-gray-600 rounded"></div>
+                      </div>
+                    )}
+                    {element.type === 'shape' && (
+                      <div 
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: element.style?.backgroundColor || '#000' }}
+                      ></div>
+                    )}
                   </div>
-                  
-                  {slide.elements.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      {slide.elements.length} элемент{slide.elements.length === 1 ? '' : slide.elements.length > 4 ? 'ов' : 'а'}
-                    </div>
-                  )}
-                </div>
+                ))}
+                
+                {slide.elements.length > 3 && (
+                  <div className="absolute bottom-1 right-1 text-xs bg-gray-800 text-white px-1 rounded">
+                    +{slide.elements.length - 3}
+                  </div>
+                )}
+              </div>
 
-                {/* Кнопки управления */}
-                <div className="flex gap-1 mt-2">
+              {/* Slide info */}
+              <div className="flex justify-between items-center text-xs text-gray-600">
+                <span>Слайд {index + 1}</span>
+                <span>{slide.duration}с</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSlideDuplicate(index);
+                  }}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Копировать
+                </Button>
+                {slides.length > 1 && (
                   <Button
-                    variant="ghost"
                     size="sm"
-                    className="h-7 px-2 flex-1"
+                    variant="ghost"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Добавить функцию дублирования
+                      onSlideDelete(index);
                     }}
+                    className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                   >
-                    <Copy className="h-3 w-3" />
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Удалить
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-destructive hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteSlide(index);
-                    }}
-                    disabled={slides.length <= 1}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </ScrollArea>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-      {/* Информация */}
-      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-        <div className="text-xs text-muted-foreground space-y-1">
-          <div>Всего слайдов: {slides.length}</div>
-          <div>
-            Общая длительность: {slides.reduce((sum, slide) => sum + slide.duration, 0)}с
-          </div>
-          <div className="text-xs text-muted-foreground/70 mt-2">
-            Формат: 9:16 (Instagram Stories)
-          </div>
+      {/* Total duration */}
+      <div className="pt-2 border-t border-gray-200">
+        <div className="text-sm text-gray-600">
+          Общая длительность: {slides.reduce((total, slide) => total + slide.duration, 0)}с
         </div>
       </div>
     </div>

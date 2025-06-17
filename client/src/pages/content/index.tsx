@@ -1451,6 +1451,7 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1467,6 +1468,26 @@ export default function ContentPage() {
                 />
               </div>
             </div>
+            
+            {/* Stories Editor */}
+            {newContent.contentType === "story" && (
+              <div className="space-y-4">
+                <Label>Редактор Stories</Label>
+                <StoriesEditor
+                  value={newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }}
+                  onChange={(storyData) => {
+                    setNewContent({
+                      ...newContent,
+                      metadata: {
+                        ...newContent.metadata,
+                        storyData
+                      }
+                    });
+                  }}
+                />
+              </div>
+            )}
+            
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
