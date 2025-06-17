@@ -9,7 +9,8 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, Edit3, 
+  AlertCircle, Layers
 } from "lucide-react";
 import {
   AlertDialog,
@@ -695,11 +696,33 @@ export default function ContentPage() {
       return;
     }
 
-    createContentMutation.mutate({
+    // Проверяем корректность данных для Stories
+    if (newContent.contentType === "story") {
+      if (!newContent.metadata?.storyData?.slides || newContent.metadata.storyData.slides.length === 0) {
+        toast({
+          description: "Создайте хотя бы один слайд для Stories",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Подготавливаем данные для создания контента
+    const contentData = {
       campaignId: selectedCampaignId,
       ...newContent,
       status: 'draft'
-    });
+    };
+
+    // Для Stories контента, сохраняем данные Stories в metadata
+    if (newContent.contentType === "story" && newContent.metadata?.storyData) {
+      contentData.metadata = {
+        ...newContent.metadata,
+        storyData: newContent.metadata.storyData
+      };
+    }
+
+    createContentMutation.mutate(contentData);
   };
 
   // Обработчик обновления контента
@@ -1863,6 +1886,40 @@ export default function ContentPage() {
                 </div>
               )}
               
+              {/* Stories Editor для редактирования Stories контента */}
+              {currentContent.contentType === "story" && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Stories Content</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsStoriesEditorOpen(true)}
+                      className="h-8"
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Редактировать Stories
+                    </Button>
+                  </div>
+                  {currentContent.metadata?.storyData?.slides && currentContent.metadata.storyData.slides.length > 0 ? (
+                    <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded">
+                      <div className="flex items-center gap-2">
+                        <Image className="h-4 w-4" />
+                        <span>Stories содержит {currentContent.metadata.storyData.slides.length} слайдов</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground bg-orange-50 p-3 rounded">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
+                        <span>Stories не содержит слайдов. Нажмите "Редактировать Stories" для создания контента.</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Скрыли универсальное поле additional_media */}
               
               {/* Список ключевых слов кампании */}
@@ -2587,15 +2644,31 @@ export default function ContentPage() {
           </DialogHeader>
           <div className="py-4">
             <StoriesEditor
-              value={newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }}
+              value={
+                isEditDialogOpen && currentContent?.contentType === "story" 
+                  ? currentContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
+                  : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
+              }
               onChange={(storyData) => {
-                setNewContent({
-                  ...newContent,
-                  metadata: {
-                    ...newContent.metadata,
-                    storyData
-                  }
-                });
+                if (isEditDialogOpen && currentContent?.contentType === "story") {
+                  // Editing existing Stories content
+                  setCurrentContentSafe({
+                    ...currentContent,
+                    metadata: {
+                      ...currentContent.metadata,
+                      storyData
+                    }
+                  });
+                } else {
+                  // Creating new Stories content
+                  setNewContent({
+                    ...newContent,
+                    metadata: {
+                      ...newContent.metadata,
+                      storyData
+                    }
+                  });
+                }
               }}
             />
           </div>
