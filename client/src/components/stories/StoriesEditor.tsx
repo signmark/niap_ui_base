@@ -281,7 +281,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   };
 
   return (
-    <div className="w-full h-[420px] border rounded-lg bg-white stories-editor overflow-hidden flex flex-col">
+    <div className="w-full h-[600px] border rounded-lg bg-white stories-editor overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center p-3 border-b bg-gray-50">
         <h3 className="text-lg font-medium">Instagram Stories Editor</h3>
