@@ -1,4 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+// Simple debounce implementation
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,12 +43,19 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     setStoryData(value);
   }, [value]);
 
+  const debouncedOnChange = useCallback(
+    debounce((newStoryData: StoryData) => {
+      onChange({
+        ...newStoryData,
+        totalDuration: newStoryData.slides.reduce((sum, slide) => sum + slide.duration, 0)
+      });
+    }, 300),
+    [onChange]
+  );
+
   useEffect(() => {
-    onChange({
-      ...storyData,
-      totalDuration: storyData.slides.reduce((sum, slide) => sum + slide.duration, 0)
-    });
-  }, [storyData, onChange]);
+    debouncedOnChange(storyData);
+  }, [storyData, debouncedOnChange]);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -189,6 +209,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     if (element.type === 'image') {
       return (
         <img
+          key={`img-${element.id}-${element.content}`}
           src={element.content || 'https://placehold.co/100x100?text=Img'}
           alt="Element"
           style={{
@@ -197,6 +218,14 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
             height: `${element.style?.height || 100}px`,
             objectFit: 'cover',
             borderRadius: `${element.style?.borderRadius || 0}px`
+          }}
+          loading="lazy"
+          onLoad={(e) => {
+            // Предотвращаем дополнительные загрузки
+            e.currentTarget.style.opacity = '1';
+          }}
+          onError={(e) => {
+            console.error('Image load error:', element.content);
           }}
         />
       );
