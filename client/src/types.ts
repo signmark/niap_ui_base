@@ -82,10 +82,10 @@ export interface MediaItem {
 // Структуры данных для Stories
 export interface StoryElement {
   id: string;
-  type: 'text' | 'image' | 'sticker' | 'poll' | 'question' | 'countdown' | 'shape';
+  type: 'text' | 'image' | 'video' | 'sticker' | 'poll' | 'question' | 'countdown' | 'shape';
   position: { x: number; y: number };
-  size: { width: number; height: number };
-  rotation: number;
+  size?: { width: number; height: number };
+  rotation?: number;
   content: string;
   style?: {
     fontSize?: number;
@@ -112,7 +112,7 @@ export interface StoryElement {
 
 export interface StorySlide {
   id: string;
-  order: number;
+  order?: number;
   background: {
     type: 'color' | 'gradient' | 'image' | 'video';
     value: string; // цвет/градиент/URL

@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { StoryData, StorySlide, StoryElement } from '@/types';
 import { 
-  Plus, Trash2, Type, Image, Square, Eye, Upload, Video
+  Plus, Trash2, Type, Image, Square, Eye, Video, BarChart3, Sparkles
 } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
 import { VideoUploader } from '@/components/VideoUploader';
+import { AIImageGenerator } from '../AIImageGenerator';
 
 interface StoriesEditorProps {
   value: StoryData;
@@ -21,6 +22,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   const currentSlide = storyData.slides[selectedSlideIndex];
 
@@ -70,13 +72,18 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
       id: generateId(),
       type,
       position: { x: 50, y: 50 },
-      content: type === 'text' ? 'Новый текст' : '',
+      content: type === 'text' ? 'Новый текст' : 
+               type === 'poll' ? JSON.stringify({ question: 'Ваш вопрос?', options: ['Да', 'Нет'] }) : 
+               '',
       style: {
         fontSize: type === 'text' ? 16 : undefined,
         color: type === 'text' ? '#000000' : undefined,
-        backgroundColor: type === 'shape' ? '#3b82f6' : undefined,
-        width: type === 'image' || type === 'shape' ? 100 : undefined,
-        height: type === 'image' || type === 'shape' ? 100 : undefined,
+        backgroundColor: type === 'shape' ? '#3b82f6' : 
+                        type === 'poll' ? '#ffffff' : undefined,
+        width: type === 'image' || type === 'shape' || type === 'video' ? 100 : 
+               type === 'poll' ? 200 : undefined,
+        height: type === 'image' || type === 'shape' || type === 'video' ? 100 : 
+                type === 'poll' ? 80 : undefined,
       }
     };
 
@@ -140,6 +147,137 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         : slide
     );
     setStoryData({ ...storyData, slides: updatedSlides });
+  };
+
+  const handleAIImageGenerated = (imageUrl: string) => {
+    handleAddElement('image');
+    // Найти только что добавленный элемент и обновить его
+    const lastElement = currentSlide.elements[currentSlide.elements.length - 1];
+    if (lastElement && lastElement.type === 'image') {
+      handleElementUpdate(lastElement.id, { content: imageUrl });
+    }
+    setShowAIGenerator(false);
+  };
+
+  const renderElement = (element: StoryElement) => {
+    const baseStyle = {
+      left: `${(element.position.x / 270) * 100}%`,
+      top: `${(element.position.y / 480) * 100}%`,
+      transform: 'scale(0.5)',
+      transformOrigin: 'top left'
+    };
+
+    if (element.type === 'text') {
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            fontSize: `${element.style?.fontSize || 16}px`,
+            color: element.style?.color || '#000000',
+            backgroundColor: element.style?.backgroundColor || 'transparent',
+            padding: '4px 8px',
+            borderRadius: `${element.style?.borderRadius || 0}px`,
+            fontWeight: element.style?.fontWeight || 'normal',
+            whiteSpace: 'pre-wrap'
+          }}
+        >
+          {element.content || 'Нажмите для редактирования'}
+        </div>
+      );
+    }
+
+    if (element.type === 'image') {
+      return (
+        <img
+          src={element.content || 'https://placehold.co/100x100?text=Img'}
+          alt="Element"
+          style={{
+            ...baseStyle,
+            width: `${element.style?.width || 100}px`,
+            height: `${element.style?.height || 100}px`,
+            objectFit: 'cover',
+            borderRadius: `${element.style?.borderRadius || 0}px`
+          }}
+        />
+      );
+    }
+
+    if (element.type === 'video') {
+      return (
+        <video
+          src={element.content || ''}
+          style={{
+            ...baseStyle,
+            width: `${element.style?.width || 100}px`,
+            height: `${element.style?.height || 100}px`,
+            objectFit: 'cover',
+            borderRadius: `${element.style?.borderRadius || 0}px`
+          }}
+          muted
+          loop
+        />
+      );
+    }
+
+    if (element.type === 'shape') {
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            width: `${element.style?.width || 50}px`,
+            height: `${element.style?.height || 50}px`,
+            backgroundColor: element.style?.backgroundColor || '#3b82f6',
+            borderRadius: `${element.style?.borderRadius || 0}px`
+          }}
+        />
+      );
+    }
+
+    if (element.type === 'poll') {
+      let pollData = { question: 'Ваш вопрос?', options: ['Да', 'Нет'] };
+      try {
+        pollData = JSON.parse(element.content || '{}');
+      } catch (e) {
+        // Используем значения по умолчанию
+      }
+
+      return (
+        <div
+          style={{
+            ...baseStyle,
+            width: `${element.style?.width || 200}px`,
+            height: `${element.style?.height || 80}px`,
+            backgroundColor: element.style?.backgroundColor || '#ffffff',
+            border: '2px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '8px',
+            fontSize: '10px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            {pollData.question}
+          </div>
+          {pollData.options.map((option: string, idx: number) => (
+            <div 
+              key={idx}
+              style={{ 
+                padding: '2px 6px', 
+                backgroundColor: '#f3f4f6', 
+                borderRadius: '6px',
+                fontSize: '8px'
+              }}
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -228,64 +366,9 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                   className={`absolute cursor-pointer transition-all ${
                     selectedElement === element.id ? 'ring-2 ring-blue-400 z-30' : 'z-20'
                   }`}
-                  style={{
-                    left: `${(element.position.x / 270) * 100}%`,
-                    top: `${(element.position.y / 480) * 100}%`,
-                    transform: 'scale(0.5)',
-                    transformOrigin: 'top left'
-                  }}
                   onClick={() => setSelectedElement(element.id)}
                 >
-                  {element.type === 'text' && (
-                    <div
-                      style={{
-                        fontSize: `${element.style?.fontSize || 16}px`,
-                        color: element.style?.color || '#000000',
-                        backgroundColor: element.style?.backgroundColor || 'transparent',
-                        padding: '4px 8px',
-                        borderRadius: `${element.style?.borderRadius || 0}px`,
-                        fontWeight: element.style?.fontWeight || 'normal',
-                        whiteSpace: 'pre-wrap'
-                      }}
-                    >
-                      {element.content || 'Нажмите для редактирования'}
-                    </div>
-                  )}
-                  {element.type === 'image' && (
-                    <img
-                      src={element.content || 'https://placehold.co/100x100?text=Img'}
-                      alt="Element"
-                      style={{
-                        width: `${element.style?.width || 100}px`,
-                        height: `${element.style?.height || 100}px`,
-                        objectFit: 'cover',
-                        borderRadius: `${element.style?.borderRadius || 0}px`
-                      }}
-                    />
-                  )}
-                  {element.type === 'video' && (
-                    <video
-                      src={element.content || ''}
-                      style={{
-                        width: `${element.style?.width || 100}px`,
-                        height: `${element.style?.height || 100}px`,
-                        objectFit: 'cover',
-                        borderRadius: `${element.style?.borderRadius || 0}px`
-                      }}
-                      muted
-                      loop
-                    />
-                  )}
-                  {element.type === 'shape' && (
-                    <div
-                      style={{
-                        width: `${element.style?.width || 50}px`,
-                        height: `${element.style?.height || 50}px`,
-                        backgroundColor: element.style?.backgroundColor || '#3b82f6',
-                        borderRadius: `${element.style?.borderRadius || 0}px`
-                      }}
-                    />
-                  )}
+                  {renderElement(element)}
                 </div>
               ))}
             </div>
@@ -297,7 +380,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           </div>
 
           {/* Tools */}
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex gap-2 flex-wrap justify-center">
             <Button
               size="sm"
               variant="outline"
@@ -319,11 +402,29 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => setShowAIGenerator(true)}
+              className="h-8 px-3"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              AI Фото
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => handleAddElement('video')}
               className="h-8 px-3"
             >
               <Video className="h-4 w-4 mr-1" />
               Видео
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('poll')}
+              className="h-8 px-3"
+            >
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Опрос
             </Button>
             <Button
               size="sm"
@@ -428,6 +529,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                     <div>
                       <Label className="text-xs">Изображение</Label>
                       <ImageUploader
+                        id={`story-image-${selectedElement}`}
                         value={element.content || ''}
                         onChange={(url) => handleElementUpdate(selectedElement, { content: url })}
                         placeholder="Загрузите изображение"
@@ -496,6 +598,79 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                     </div>
                   </div>
                 )}
+
+                {element.type === 'poll' && (() => {
+                  let pollData = { question: 'Ваш вопрос?', options: ['Да', 'Нет'] };
+                  try {
+                    pollData = JSON.parse(element.content || '{}');
+                  } catch (e) {
+                    // Используем значения по умолчанию
+                  }
+
+                  const updatePollData = (newData: any) => {
+                    handleElementUpdate(selectedElement, { content: JSON.stringify(newData) });
+                  };
+
+                  return (
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-xs">Вопрос</Label>
+                        <Input
+                          value={pollData.question}
+                          onChange={(e) => updatePollData({ ...pollData, question: e.target.value })}
+                          className="h-8"
+                          placeholder="Введите вопрос..."
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Варианты ответов</Label>
+                        {pollData.options.map((option: string, idx: number) => (
+                          <div key={idx} className="flex gap-1 mt-1">
+                            <Input
+                              value={option}
+                              onChange={(e) => {
+                                const newOptions = [...pollData.options];
+                                newOptions[idx] = e.target.value;
+                                updatePollData({ ...pollData, options: newOptions });
+                              }}
+                              className="h-8 flex-1"
+                              placeholder={`Вариант ${idx + 1}`}
+                            />
+                            {pollData.options.length > 2 && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  const newOptions = pollData.options.filter((_, i) => i !== idx);
+                                  updatePollData({ ...pollData, options: newOptions });
+                                }}
+                                className="h-8 w-8 p-0 text-red-500"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        {pollData.options.length < 4 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              updatePollData({ 
+                                ...pollData, 
+                                options: [...pollData.options, `Вариант ${pollData.options.length + 1}`] 
+                              });
+                            }}
+                            className="h-8 mt-2 w-full"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Добавить вариант
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 {element.type === 'shape' && (
                   <div className="space-y-2">
@@ -541,6 +716,15 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           })()}
         </div>
       </div>
+
+      {/* AI Image Generator Dialog */}
+      {showAIGenerator && (
+        <AIImageGenerator
+          isOpen={showAIGenerator}
+          onClose={() => setShowAIGenerator(false)}
+          onImageGenerated={handleAIImageGenerated}
+        />
+      )}
     </div>
   );
 }
