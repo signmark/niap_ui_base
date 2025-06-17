@@ -1905,7 +1905,7 @@ export default function ContentPage() {
                   {currentContent.metadata?.storyData?.slides && currentContent.metadata.storyData.slides.length > 0 ? (
                     <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded">
                       <div className="flex items-center gap-2">
-                        <Image className="h-4 w-4" />
+                        <Layers className="h-4 w-4" />
                         <span>Stories содержит {currentContent.metadata.storyData.slides.length} слайдов</span>
                       </div>
                     </div>
@@ -2471,11 +2471,13 @@ export default function ContentPage() {
               {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
               {previewContent?.contentType === "video" && <Video size={16} />}
               {previewContent?.contentType === "video-text" && <Video size={16} />}
+              {previewContent?.contentType === "story" && <Layers size={16} />}
               <span>
                 {previewContent?.contentType === "text" && "Текстовый контент"}
                 {previewContent?.contentType === "text-image" && "Контент с изображением"}
                 {previewContent?.contentType === "video" && "Видео контент"}
                 {previewContent?.contentType === "video-text" && "Видео с текстом"}
+                {previewContent?.contentType === "story" && "Instagram Stories"}
               </span>
             </div>
 
@@ -2533,6 +2535,50 @@ export default function ContentPage() {
                     )
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Stories Content Preview */}
+            {previewContent?.contentType === "story" && previewContent?.metadata?.storyData && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Stories Content</h4>
+                {previewContent.metadata.storyData.slides && previewContent.metadata.storyData.slides.length > 0 ? (
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Layers className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium">
+                        {previewContent.metadata.storyData.slides.length} слайдов
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
+                      {previewContent.metadata.storyData.slides.map((slide, index) => (
+                        <div key={index} className="bg-white p-3 rounded border aspect-[9/16] flex flex-col justify-center">
+                          <div className="text-xs text-muted-foreground mb-1">Слайд {index + 1}</div>
+                          {slide.elements && slide.elements.length > 0 ? (
+                            <div className="text-sm space-y-1">
+                              {slide.elements.map((element, elemIndex) => (
+                                <div key={elemIndex} className="text-xs">
+                                  {element.type === 'text' && element.content && (
+                                    <div className="text-gray-700">{element.content.substring(0, 50)}...</div>
+                                  )}
+                                  {element.type === 'image' && element.src && (
+                                    <div className="text-blue-600">🖼️ Изображение</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground">Пустой слайд</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-orange-50 p-3 rounded text-sm text-orange-700">
+                    Stories не содержит слайдов
+                  </div>
+                )}
               </div>
             )}
             
