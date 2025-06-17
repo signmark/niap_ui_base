@@ -155,4 +155,5 @@ const StoriesElement: React.FC<StoriesElementProps> = ({
   );
 };
 
+export { StoriesElement };
 export default StoriesElement;

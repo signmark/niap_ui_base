@@ -462,7 +462,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           <div className="text-xs text-gray-500 space-y-1">
             <div>Слайдов: {storyData.slides.length}</div>
             <div>Общая длительность: {storyData.totalDuration}с</div>
-            <div>Элементов на слайде: {currentSlide.elements.length}</div>
+            <div>Элементов на слайде: {currentSlide?.elements?.length || 0}</div>
           </div>
         </div>
       </div>
