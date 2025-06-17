@@ -222,16 +222,16 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                   <div
                     className="w-full h-12 rounded border bg-white relative"
                     style={{
-                      backgroundColor: slide.background?.color || slide.background?.value || '#ffffff'
+                      backgroundColor: slide?.background?.color || slide?.background?.value || '#ffffff'
                     }}
                   >
-                    {slide.elements.length > 0 && (
+                    {slide?.elements && slide.elements.length > 0 && (
                       <div className="absolute bottom-0 right-0 text-xs bg-gray-800 text-white px-1 rounded">
                         {slide.elements.length}
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">{slide.duration}с</div>
+                  <div className="text-xs text-gray-500">{slide?.duration || 5}с</div>
                 </div>
               </Card>
             ))}
@@ -245,10 +245,10 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
             style={{
               width: '135px', // 9:16 aspect ratio (135x240)
               height: '240px',
-              backgroundColor: currentSlide.background?.color || currentSlide.background?.value || '#ffffff'
+              backgroundColor: currentSlide?.background?.color || currentSlide?.background?.value || '#ffffff'
             }}
           >
-            {currentSlide.elements.map((element) => (
+            {currentSlide?.elements?.map((element) => (
               <div
                 key={element.id}
                 className={`absolute cursor-pointer ${
@@ -294,7 +294,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
             ))}
             
             {/* Empty state */}
-            {currentSlide.elements.length === 0 && (
+            {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-xs">
                 <p className="mb-2">Пустой слайд</p>
                 <div className="flex gap-1">

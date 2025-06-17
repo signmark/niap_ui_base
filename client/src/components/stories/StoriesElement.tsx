@@ -147,3 +147,5 @@ export function StoriesElement({
     </Draggable>
   );
 }
+
+export default StoriesElement;

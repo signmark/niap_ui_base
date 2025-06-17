@@ -1,6 +1,6 @@
 import React from 'react';
 import { StorySlide, StoryElement } from '@/types';
-import { StoriesElement } from './StoriesElement';
+import StoriesElement from './StoriesElement';
 import { Button } from '@/components/ui/button';
 import { Type, Image, Square, Plus } from 'lucide-react';
 
