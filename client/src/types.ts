@@ -68,7 +68,7 @@ export interface PlatformPublishInfo {
 }
 
 // Типы контента
-export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed';
+export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed' | 'story';
 
 // Интерфейс для контента кампании
 // Тип для медиа-файла
@@ -77,6 +77,44 @@ export interface MediaItem {
   type: 'image' | 'video';
   title?: string;
   description?: string;
+}
+
+// Структуры данных для Stories
+export interface StoryElement {
+  id: string;
+  type: 'text' | 'image' | 'sticker' | 'poll' | 'question' | 'countdown';
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  rotation: number;
+  content: string;
+  style?: {
+    fontSize?: number;
+    fontFamily?: string;
+    color?: string;
+    backgroundColor?: string;
+    borderRadius?: number;
+    textAlign?: 'left' | 'center' | 'right';
+    fontWeight?: 'normal' | 'bold';
+    opacity?: number;
+  };
+}
+
+export interface StorySlide {
+  id: string;
+  order: number;
+  background: {
+    type: 'color' | 'gradient' | 'image' | 'video';
+    value: string; // цвет/градиент/URL
+  };
+  elements: StoryElement[];
+  duration: number; // 1-15 секунд
+}
+
+export interface StoryData {
+  slides: StorySlide[];
+  aspectRatio: '9:16';
+  totalDuration: number;
+  preview?: string; // URL превью первого слайда
 }
 
 export interface CampaignContent {
@@ -100,4 +138,7 @@ export interface CampaignContent {
   publishedAt?: string | Date | null;
   socialPlatforms?: Record<SocialPlatform, PlatformPublishInfo> | null;
   userId?: string;
+  // Поля для Stories
+  storyData?: StoryData | null;
+  storyPreview?: string | null;
 }
