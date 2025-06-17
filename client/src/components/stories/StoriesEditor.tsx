@@ -373,7 +373,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                 <Label className="text-xs">Длительность (сек)</Label>
                 <Input
                   type="number"
-                  value={currentSlide.duration}
+                  value={currentSlide?.duration || 5}
                   onChange={(e) => handleDurationChange(Number(e.target.value))}
                   min={1}
                   max={15}

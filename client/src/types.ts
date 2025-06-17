@@ -100,6 +100,7 @@ export interface StoryElement {
     textShadow?: string;
     padding?: string;
     border?: string;
+    borderColor?: string;
     textDecoration?: string;
     width?: string | number;
     height?: string | number;
