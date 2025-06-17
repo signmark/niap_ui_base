@@ -1,8 +1,5 @@
 import React from 'react';
 import { StorySlide, StoryElement } from '@/types';
-import StoriesElement from './StoriesElement';
-import { Button } from '@/components/ui/button';
-import { Type, Image, Square, Plus } from 'lucide-react';
 
 interface StoriesCanvasProps {
   slide: StorySlide;
@@ -53,88 +50,66 @@ export function StoriesCanvas({
         className="cursor-default"
       >
         {slide.elements.map((element) => (
-          <StoriesElement
+          <div
             key={element.id}
-            element={element}
-            isSelected={selectedElement === element.id}
-            isPreview={isPreview}
-            onClick={() => onElementSelect(element.id)}
-            onUpdate={onElementUpdate}
-            onDelete={onElementDelete}
-          />
-        ))}
-        
-        {/* Empty state */}
-        {slide.elements.length === 0 && !isPreview && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 space-y-4">
-            <div className="text-center">
-              <p className="text-sm mb-4">Добавьте элементы в ваш Stories</p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onElementAdd('text')}
-                  className="flex items-center gap-1"
-                >
-                  <Type className="h-4 w-4" />
-                  Текст
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onElementAdd('image')}
-                  className="flex items-center gap-1"
-                >
-                  <Image className="h-4 w-4" />
-                  Изображение
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onElementAdd('shape')}
-                  className="flex items-center gap-1"
-                >
-                  <Square className="h-4 w-4" />
-                  Фигура
-                </Button>
+            className={`absolute cursor-pointer ${
+              selectedElement === element.id ? 'ring-2 ring-blue-500' : ''
+            }`}
+            style={{
+              left: `${element.position.x}px`,
+              top: `${element.position.y}px`,
+              width: `${element.size.width}px`,
+              height: `${element.size.height}px`,
+              zIndex: 10
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onElementSelect(element.id);
+            }}
+          >
+            {element.type === 'text' && (
+              <div
+                style={{
+                  fontSize: `${element.style?.fontSize || 16}px`,
+                  color: element.style?.color || '#000000',
+                  backgroundColor: element.style?.backgroundColor || 'transparent',
+                  padding: '4px',
+                  borderRadius: `${element.style?.borderRadius || 0}px`,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {element.content || 'Текст'}
               </div>
-            </div>
+            )}
+            {element.type === 'image' && (
+              <img
+                src={element.content || 'https://placehold.co/100x100?text=Img'}
+                alt="Element"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: `${element.style?.borderRadius || 0}px`
+                }}
+              />
+            )}
+            {element.type === 'shape' && (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: element.style?.backgroundColor || '#6366f1',
+                  borderRadius: `${element.style?.borderRadius || 8}px`
+                }}
+              />
+            )}
           </div>
-        )}
+        ))}
       </div>
-
-      {/* Add elements toolbar (when not in preview) */}
-      {!isPreview && (
-        <div className="flex gap-2 p-2 bg-gray-50 rounded-lg">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onElementAdd('text')}
-            className="flex items-center gap-1"
-          >
-            <Type className="h-4 w-4" />
-            Добавить текст
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onElementAdd('image')}
-            className="flex items-center gap-1"
-          >
-            <Image className="h-4 w-4" />
-            Добавить изображение
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onElementAdd('shape')}
-            className="flex items-center gap-1"
-          >
-            <Square className="h-4 w-4" />
-            Добавить фигуру
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,61 +3,42 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import type { StoryData, StorySlide, StoryElement } from '@/types';
-import { Plus, Type, Image, Square, Play, Eye } from 'lucide-react';
+import { Plus, Eye, Type, Image, Square, Trash2 } from 'lucide-react';
+import { StoryData, StorySlide, StoryElement } from '@/types';
 
 interface StoriesEditorProps {
   value: StoryData;
   onChange: (data: StoryData) => void;
 }
 
-// Генерация ID
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-// Функция для создания пустого слайда
 const createEmptySlide = (order: number): StorySlide => ({
-  id: generateId(),
+  id: `slide-${Date.now()}-${order}`,
   order,
+  duration: 5,
   background: {
     type: 'color',
-    value: '#4f46e5',
-    color: '#4f46e5'
+    value: '#6366f1',
+    color: '#6366f1'
   },
-  elements: [],
-  duration: 5
+  elements: []
 });
 
-// Функция для создания начальных данных Stories
 const createInitialStoryData = (): StoryData => ({
-  slides: [createEmptySlide(1)],
+  slides: [createEmptySlide(0)],
   aspectRatio: '9:16',
-  totalDuration: 5,
-  preview: undefined
+  totalDuration: 5
 });
 
 export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
-  const { toast } = useToast();
-  
-  // Инициализируем данные Stories
-  const [storyData, setStoryData] = useState<StoryData>(() => {
-    return value || createInitialStoryData();
-  });
-  
+  const [storyData, setStoryData] = useState<StoryData>(value || createInitialStoryData());
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
-  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const [selectedElement, setSelectedElement] = useState<string>('');
+  const [isPreview, setIsPreview] = useState(false);
 
-  // Обновляем родительский компонент при изменении данных Stories
-  useEffect(() => {
-    onChange(storyData);
-  }, [storyData, onChange]);
+  const currentSlide = storyData.slides[selectedSlideIndex];
 
-  // Получаем текущий слайд
-  const currentSlide = storyData.slides[selectedSlideIndex] || storyData.slides[0];
-
-  // Обработчики для слайдов
   const handleAddSlide = useCallback(() => {
-    const newSlide = createEmptySlide(storyData.slides.length + 1);
+    const newSlide = createEmptySlide(storyData.slides.length);
     const updatedSlides = [...storyData.slides, newSlide];
     
     setStoryData(prev => ({
@@ -65,113 +46,29 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
       slides: updatedSlides,
       totalDuration: updatedSlides.reduce((sum, slide) => sum + slide.duration, 0)
     }));
+  }, [storyData.slides]);
+
+  const handleDeleteSlide = useCallback((slideIndex: number) => {
+    if (storyData.slides.length <= 1) return;
     
-    setSelectedSlideIndex(updatedSlides.length - 1);
-    toast({
-      title: "Слайд добавлен",
-      description: "Новый слайд добавлен в Stories"
-    });
-  }, [storyData.slides, toast]);
-
-  // Добавление элемента
-  const handleAddElement = useCallback((type: StoryElement['type']) => {
-    const newElement: StoryElement = {
-      id: generateId(),
-      type,
-      position: { x: 50, y: 100 },
-      size: { width: 200, height: 100 },
-      rotation: 0,
-      content: type === 'text' ? 'Новый текст' : type === 'image' ? 'https://placehold.co/200x200?text=Image' : '',
-      style: {
-        fontSize: 16,
-        color: '#ffffff',
-        backgroundColor: type === 'shape' ? '#000000' : 'transparent',
-        borderRadius: 0,
-        opacity: 1
-      }
-    };
-
-    const updatedSlides = storyData.slides.map((slide, index) => 
-      index === selectedSlideIndex 
-        ? { ...slide, elements: [...slide.elements, newElement] }
-        : slide
-    );
-
-    setStoryData(prev => ({
-      ...prev,
-      slides: updatedSlides
-    }));
-
-    setSelectedElement(newElement.id);
+    const updatedSlides = storyData.slides.filter((_, index) => index !== slideIndex);
     
-    toast({
-      title: "Элемент добавлен",
-      description: `${type === 'text' ? 'Текст' : type === 'image' ? 'Изображение' : 'Фигура'} добавлен на слайд`
-    });
-  }, [storyData.slides, selectedSlideIndex, toast]);
-
-  // Обновление элемента
-  const handleUpdateElement = useCallback((elementId: string, updates: Partial<StoryElement>) => {
-    const updatedSlides = storyData.slides.map((slide, index) => 
-      index === selectedSlideIndex 
-        ? { 
-            ...slide, 
-            elements: slide.elements.map(el => 
-              el.id === elementId ? { ...el, ...updates } : el
-            )
-          }
-        : slide
-    );
-
     setStoryData(prev => ({
       ...prev,
-      slides: updatedSlides
+      slides: updatedSlides,
+      totalDuration: updatedSlides.reduce((sum, slide) => sum + slide.duration, 0)
     }));
-  }, [storyData.slides, selectedSlideIndex]);
-
-  // Удаление элемента
-  const handleDeleteElement = useCallback((elementId: string) => {
-    const updatedSlides = storyData.slides.map((slide, index) => 
-      index === selectedSlideIndex 
-        ? { 
-            ...slide, 
-            elements: slide.elements.filter(el => el.id !== elementId)
-          }
-        : slide
-    );
-
-    setStoryData(prev => ({
-      ...prev,
-      slides: updatedSlides
-    }));
-
-    if (selectedElement === elementId) {
-      setSelectedElement(null);
+    
+    if (selectedSlideIndex >= updatedSlides.length) {
+      setSelectedSlideIndex(updatedSlides.length - 1);
     }
-  }, [storyData.slides, selectedSlideIndex, selectedElement]);
-
-  // Обновление фона слайда
-  const handleBackgroundChange = useCallback((background: StorySlide['background']) => {
-    const updatedSlides = storyData.slides.map((slide, index) => 
-      index === selectedSlideIndex 
-        ? { ...slide, background }
-        : slide
-    );
-
-    setStoryData(prev => ({
-      ...prev,
-      slides: updatedSlides
-    }));
   }, [storyData.slides, selectedSlideIndex]);
 
-  // Обновление длительности слайда
   const handleDurationChange = useCallback((duration: number) => {
     const updatedSlides = storyData.slides.map((slide, index) => 
-      index === selectedSlideIndex 
-        ? { ...slide, duration }
-        : slide
+      index === selectedSlideIndex ? { ...slide, duration } : slide
     );
-
+    
     setStoryData(prev => ({
       ...prev,
       slides: updatedSlides,
@@ -179,22 +76,106 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     }));
   }, [storyData.slides, selectedSlideIndex]);
 
+  const handleBackgroundChange = useCallback((background: StorySlide['background']) => {
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex ? { ...slide, background } : slide
+    );
+    
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
+  }, [storyData.slides, selectedSlideIndex]);
+
+  const handleAddElement = useCallback((type: StoryElement['type']) => {
+    const newElement: StoryElement = {
+      id: `element-${Date.now()}`,
+      type,
+      position: { x: 50, y: 50 },
+      size: { width: 200, height: type === 'text' ? 50 : 100 },
+      rotation: 0,
+      content: type === 'text' ? 'Новый текст' : type === 'image' ? 'https://placehold.co/200x100?text=Img' : '',
+      style: type === 'text' ? {
+        fontSize: 16,
+        color: '#000000',
+        backgroundColor: 'transparent',
+        borderRadius: 0
+      } : type === 'shape' ? {
+        backgroundColor: '#6366f1',
+        borderRadius: 8
+      } : undefined
+    };
+
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? { ...slide, elements: [...slide.elements, newElement] }
+        : slide
+    );
+    
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
+    
+    setSelectedElement(newElement.id);
+  }, [storyData.slides, selectedSlideIndex]);
+
+  const handleUpdateElement = useCallback((elementId: string, updates: Partial<StoryElement>) => {
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? {
+            ...slide,
+            elements: slide.elements.map(element => 
+              element.id === elementId ? { ...element, ...updates } : element
+            )
+          }
+        : slide
+    );
+    
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
+  }, [storyData.slides, selectedSlideIndex]);
+
+  const handleDeleteElement = useCallback((elementId: string) => {
+    const updatedSlides = storyData.slides.map((slide, index) => 
+      index === selectedSlideIndex 
+        ? {
+            ...slide,
+            elements: slide.elements.filter(element => element.id !== elementId)
+          }
+        : slide
+    );
+    
+    setStoryData(prev => ({
+      ...prev,
+      slides: updatedSlides
+    }));
+    
+    if (selectedElement === elementId) {
+      setSelectedElement('');
+    }
+  }, [storyData.slides, selectedSlideIndex, selectedElement]);
+
+  useEffect(() => {
+    onChange({
+      ...storyData,
+      slides: storyData.slides.map((slide, index) => ({ ...slide, order: index })),
+      totalDuration: storyData.slides.reduce((sum, slide) => sum + slide.duration, 0)
+    });
+  }, [storyData, onChange]);
+
   return (
-    <div className="w-full h-[500px] border rounded-lg bg-gray-50 p-3 stories-editor overflow-hidden">
-      <div className="flex justify-between items-center mb-4">
+    <div className="w-full h-[450px] border rounded-lg bg-gray-50 p-3 stories-editor overflow-hidden">
+      <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-medium">Редактор Stories</h3>
         <div className="flex gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={handleAddSlide}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Добавить слайд
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
+            onClick={() => setIsPreview(!isPreview)}
+            className="h-8"
           >
             <Eye className="h-4 w-4 mr-1" />
             Предпросмотр
@@ -203,30 +184,48 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
       </div>
 
       <div className="grid grid-cols-4 gap-3 h-full">
-        {/* Список слайдов */}
+        {/* Slides list */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Слайды ({storyData.slides.length})</Label>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="flex justify-between items-center">
+            <Label className="text-sm font-medium">Слайды ({storyData.slides.length})</Label>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAddSlide}
+              className="h-6 w-6 p-0"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
             {storyData.slides.map((slide, index) => (
-              <Card
+              <Card 
                 key={slide.id}
-                className={`p-2 cursor-pointer transition-colors ${
-                  selectedSlideIndex === index
-                    ? 'ring-2 ring-blue-500 bg-blue-50'
-                    : 'hover:bg-gray-100'
+                className={`cursor-pointer transition-colors ${
+                  selectedSlideIndex === index ? 'ring-2 ring-blue-500' : ''
                 }`}
                 onClick={() => setSelectedSlideIndex(index)}
               >
-                <div className="space-y-1">
-                  <div className="text-xs font-medium">Слайд {index + 1}</div>
-                  <div
-                    className="w-full h-12 rounded border bg-white relative"
-                    style={{
-                      backgroundColor: slide?.background?.color || slide?.background?.value || '#ffffff'
-                    }}
-                  >
-                    {slide?.elements && slide.elements.length > 0 && (
-                      <div className="absolute bottom-0 right-0 text-xs bg-gray-800 text-white px-1 rounded">
+                <div className="p-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-medium">Слайд {index + 1}</span>
+                    {storyData.slides.length > 1 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSlide(index);
+                        }}
+                        className="h-4 w-4 p-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    {slide.elements.length > 0 && (
+                      <div className="text-xs bg-blue-100 text-blue-700 rounded px-1">
                         {slide.elements.length}
                       </div>
                     )}
@@ -243,7 +242,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           <div
             className="relative border-2 border-gray-300 rounded-lg overflow-hidden"
             style={{
-              width: '135px', // 9:16 aspect ratio (135x240)
+              width: '135px',
               height: '240px',
               backgroundColor: currentSlide?.background?.color || currentSlide?.background?.value || '#ffffff'
             }}
@@ -278,53 +277,27 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                 {element.type === 'image' && (
                   <img
                     src={element.content || 'https://placehold.co/100x100?text=Img'}
-                    alt="Story element"
-                    className="w-16 h-16 object-cover rounded"
+                    alt="Element"
+                    style={{
+                      width: element.size.width,
+                      height: element.size.height,
+                      objectFit: 'cover',
+                      borderRadius: `${element.style?.borderRadius || 0}px`
+                    }}
                   />
                 )}
                 {element.type === 'shape' && (
                   <div
-                    className="w-16 h-16 rounded"
                     style={{
-                      backgroundColor: element.style?.backgroundColor || '#000000'
+                      width: element.size.width,
+                      height: element.size.height,
+                      backgroundColor: element.style?.backgroundColor || '#6366f1',
+                      borderRadius: `${element.style?.borderRadius || 8}px`
                     }}
                   />
                 )}
               </div>
             ))}
-            
-            {/* Empty state */}
-            {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-xs">
-                <p className="mb-2">Пустой слайд</p>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddElement('text')}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Type className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddElement('image')}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Image className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddElement('shape')}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Square className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Add elements toolbar */}
@@ -360,7 +333,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
 
         {/* Properties panel */}
-        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+        <div className="col-span-2 space-y-3 max-h-[380px] overflow-y-auto">
           <Label className="text-sm font-medium">Настройки</Label>
           
           {/* Slide settings */}
@@ -375,7 +348,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                   onChange={(e) => handleDurationChange(Number(e.target.value))}
                   min={1}
                   max={15}
-                  className="h-8"
+                  className="h-7 text-xs"
                 />
               </div>
               <div>
@@ -388,7 +361,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                     value: e.target.value,
                     color: e.target.value
                   })}
-                  className="h-8"
+                  className="h-7"
                 />
               </div>
             </div>
@@ -404,14 +377,14 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                   if (!element) return null;
                   
                   return (
-                    <>
+                    <div className="space-y-2">
                       {element.type === 'text' && (
                         <div>
                           <Label className="text-xs">Текст</Label>
                           <Input
                             value={element.content}
                             onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
-                            className="h-8"
+                            className="h-7 text-xs"
                           />
                         </div>
                       )}
@@ -421,34 +394,22 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                           <Input
                             value={element.content}
                             onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
-                            className="h-8"
-                            placeholder="https://..."
+                            className="h-7 text-xs"
                           />
                         </div>
                       )}
-                      <div>
-                        <Label className="text-xs">Цвет</Label>
-                        <Input
-                          type="color"
-                          value={element.style?.color || '#000000'}
-                          onChange={(e) => handleUpdateElement(element.id, {
-                            style: { ...element.style, color: e.target.value }
-                          })}
-                          className="h-8"
-                        />
-                      </div>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteElement(element.id)}
-                        className="w-full h-8"
+                        className="w-full h-7 text-xs"
                       >
                         Удалить элемент
                       </Button>
-                    </>
+                    </div>
                   );
                 })()}
-              </CardContent>
+              </div>
             </Card>
           )}
 
