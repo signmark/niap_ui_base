@@ -24,6 +24,7 @@ import {
 import { ImageUploader } from '@/components/ImageUploader';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AIImageGenerator } from '@/components/AIImageGenerator';
+import StoriesElement from '@/components/stories/StoriesElement';
 
 interface StoriesEditorProps {
   value: StoryData;
@@ -427,15 +428,15 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
             >
               {/* Canvas Content */}
               {currentSlide?.elements?.map((element) => (
-                <div
+                <StoriesElement
                   key={element.id}
-                  className={`absolute cursor-pointer transition-all ${
-                    selectedElement === element.id ? 'ring-2 ring-blue-400 z-30' : 'z-20'
-                  }`}
+                  element={element}
+                  isSelected={selectedElement === element.id}
+                  isPreview={false}
                   onClick={() => setSelectedElement(element.id)}
-                >
-                  {renderElement(element)}
-                </div>
+                  onUpdate={handleElementUpdate}
+                  onDelete={handleDeleteElement}
+                />
               ))}
             </div>
             

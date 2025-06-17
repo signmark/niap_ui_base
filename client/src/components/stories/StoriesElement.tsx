@@ -24,10 +24,17 @@ const StoriesElement: React.FC<StoriesElementProps> = ({
   const handleDrag = (e: any, data: any) => {
     if (isPreview) return;
     
+    // Ограничиваем позицию в пределах canvas
+    const maxX = 270 - (element.style?.width || 100);
+    const maxY = 480 - (element.style?.height || 100);
+    
+    const newX = Math.max(0, Math.min(maxX, data.x));
+    const newY = Math.max(0, Math.min(maxY, data.y));
+    
     onUpdate(element.id, {
       position: {
-        x: data.x,
-        y: data.y
+        x: newX,
+        y: newY
       }
     });
   };
