@@ -384,7 +384,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                 <Label className="text-xs">Цвет фона</Label>
                 <Input
                   type="color"
-                  value={currentSlide.background?.color || currentSlide.background?.value || '#ffffff'}
+                  value={currentSlide?.background?.color || currentSlide?.background?.value || '#ffffff'}
                   onChange={(e) => handleBackgroundChange({
                     type: 'color',
                     value: e.target.value,
@@ -397,7 +397,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           </Card>
 
           {/* Element settings */}
-          {selectedElement && currentSlide.elements.find(el => el.id === selectedElement) && (
+          {selectedElement && currentSlide?.elements?.find(el => el.id === selectedElement) && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">
@@ -406,7 +406,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
               </CardHeader>
               <CardContent className="space-y-2">
                 {(() => {
-                  const element = currentSlide.elements.find(el => el.id === selectedElement);
+                  const element = currentSlide?.elements?.find(el => el.id === selectedElement);
                   if (!element) return null;
                   
                   return (
