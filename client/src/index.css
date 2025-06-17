@@ -399,3 +399,19 @@
     scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
   }
 }
+
+/* Устранение мерцания в списке слайдов Stories */
+.stories-slides-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: auto;
+  contain: layout style paint;
+}
+
+.stories-slide-item {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: auto;
+  contain: layout style paint;
+  transition: none !important;
+}

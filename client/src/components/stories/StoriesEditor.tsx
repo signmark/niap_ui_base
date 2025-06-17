@@ -30,8 +30,8 @@ interface StoriesEditorProps {
   onChange: (data: StoryData) => void;
 }
 
-// Стабильный компонент слайда
-const SlideItem = ({ 
+// Мемоизированный компонент слайда для предотвращения мерцания
+const SlideItem = React.memo(({ 
   slide, 
   index, 
   isSelected, 
@@ -79,7 +79,7 @@ const SlideItem = ({
       </div>
     </div>
   );
-};
+});
 
 export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   const [storyData, setStoryData] = useState<StoryData>(value);
@@ -391,17 +391,18 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
               <Plus className="h-3 w-3" />
             </Button>
           </div>
-          <div className="space-y-2 overflow-y-auto max-h-72">
+          <div className="space-y-2 overflow-y-auto max-h-72 stories-slides-container">
             {storyData.slides.map((slide, index) => (
-              <SlideItem
-                key={`slide-${slide.id}`}
-                slide={slide}
-                index={index}
-                isSelected={selectedSlideIndex === index}
-                onSelect={handleSelectSlide}
-                onDelete={handleDeleteSlide}
-                canDelete={storyData.slides.length > 1}
-              />
+              <div key={`slide-${slide.id}`} className="stories-slide-item">
+                <SlideItem
+                  slide={slide}
+                  index={index}
+                  isSelected={selectedSlideIndex === index}
+                  onSelect={handleSelectSlide}
+                  onDelete={handleDeleteSlide}
+                  canDelete={storyData.slides.length > 1}
+                />
+              </div>
             ))}
           </div>
         </div>
