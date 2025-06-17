@@ -166,7 +166,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         : slide
     );
 
-    setStoryData({ ...storyData, slides: updatedSlides });
+    const newStoryData = { ...storyData, slides: updatedSlides };
+    updateStoryData(newStoryData); // Используем updateStoryData вместо setStoryData
     setSelectedElement(newElement.id);
   };
 
@@ -182,7 +183,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         : slide
     );
 
-    setStoryData({ ...storyData, slides: updatedSlides });
+    const newStoryData = { ...storyData, slides: updatedSlides };
+    updateStoryData(newStoryData);
   };
 
   const handleDeleteElement = (elementId: string) => {
@@ -195,7 +197,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         : slide
     );
 
-    setStoryData({ ...storyData, slides: updatedSlides });
+    const newStoryData = { ...storyData, slides: updatedSlides };
+    updateStoryData(newStoryData);
     setSelectedElement(null);
   };
 
