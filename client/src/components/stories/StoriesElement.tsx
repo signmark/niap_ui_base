@@ -13,14 +13,14 @@ interface StoriesElementProps {
   onDelete: (elementId: string) => void;
 }
 
-export function StoriesElement({
+const StoriesElement: React.FC<StoriesElementProps> = ({
   element,
   isSelected,
   isPreview = false,
   onClick,
   onUpdate,
   onDelete
-}: StoriesElementProps) {
+}) => {
   const handleDrag = (e: any, data: any) => {
     if (isPreview) return;
     
@@ -38,58 +38,64 @@ export function StoriesElement({
         return (
           <div
             style={{
-              fontSize: `${element.style?.fontSize || 16}px`,
+              fontSize: element.style?.fontSize || 16,
               color: element.style?.color || '#000000',
               fontWeight: element.style?.fontWeight || 'normal',
-              textAlign: element.style?.textAlign as any || 'left',
-              fontFamily: element.style?.fontFamily || 'Arial',
-              textShadow: element.style?.textShadow || 'none',
-              backgroundColor: element.style?.backgroundColor || 'transparent',
-              padding: element.style?.padding || '8px',
-              borderRadius: element.style?.borderRadius || '0px',
-              border: element.style?.border || 'none',
-              textDecoration: element.style?.textDecoration || 'none'
+              textAlign: (element.style?.textAlign as any) || 'left',
+              padding: '4px',
+              background: element.style?.backgroundColor || 'transparent',
+              borderRadius: '4px',
+              maxWidth: '200px',
+              wordBreak: 'break-word'
             }}
-            className="pointer-events-none select-none whitespace-pre-wrap"
           >
-            {element.content || 'Введите текст'}
+            {element.content || 'Текст'}
           </div>
         );
-      
       case 'image':
         return (
-          <img
-            src={element.content || 'https://placehold.co/200x200?text=Image'}
-            alt="Story element"
-            className="max-w-full max-h-full object-contain pointer-events-none select-none"
+          <div
             style={{
-              width: element.style?.width || 'auto',
-              height: element.style?.height || 'auto',
-              borderRadius: element.style?.borderRadius || '0px',
-              border: element.style?.border || 'none',
-              filter: element.style?.filter || 'none',
-              opacity: element.style?.opacity || 1
+              width: element.style?.width || 100,
+              height: element.style?.height || 100,
+              border: '2px dashed #ccc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              backgroundColor: '#f9f9f9'
             }}
-          />
+          >
+            {element.content ? (
+              <img
+                src={element.content}
+                alt="Story element"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '4px'
+                }}
+              />
+            ) : (
+              <Image className="h-6 w-6 text-gray-400" />
+            )}
+          </div>
         );
-      
       case 'shape':
         return (
           <div
-            className="pointer-events-none select-none"
             style={{
-              width: element.style?.width || '100px',
-              height: element.style?.height || '100px',
-              backgroundColor: element.style?.backgroundColor || '#000000',
-              borderRadius: element.style?.borderRadius || '0px',
-              border: element.style?.border || 'none',
-              opacity: element.style?.opacity || 1
+              width: element.style?.width || 50,
+              height: element.style?.height || 50,
+              backgroundColor: element.style?.backgroundColor || '#3b82f6',
+              borderRadius: element.style?.borderRadius || '4px',
+              border: `2px solid ${element.style?.borderColor || 'transparent'}`
             }}
           />
         );
-      
       default:
-        return <div>Unknown element type</div>;
+        return null;
     }
   };
 
@@ -118,12 +124,13 @@ export function StoriesElement({
       disabled={isPreview}
     >
       <div
-        style={elementStyle}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
+        className={`group relative ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={onClick}
+        style={{
+          cursor: isPreview ? 'default' : 'move',
+          transform: `rotate(${element.style?.rotation || 0}deg)`,
+          transformOrigin: 'center'
         }}
-        className={`group ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
       >
         {getElementContent()}
         
@@ -146,6 +153,6 @@ export function StoriesElement({
       </div>
     </Draggable>
   );
-}
+};
 
 export default StoriesElement;
