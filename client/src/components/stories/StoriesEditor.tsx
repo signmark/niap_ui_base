@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
 import { VideoUploader } from '@/components/VideoUploader';
-import { AIImageGenerator } from '../AIImageGenerator';
+import { AIImageGenerator } from '@/components/AIImageGenerator';
 
 interface StoriesEditorProps {
   value: StoryData;
