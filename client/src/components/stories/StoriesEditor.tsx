@@ -167,7 +167,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   }, [storyData, onChange]);
 
   return (
-    <div className="w-full h-[450px] border rounded-lg bg-gray-50 p-3 stories-editor overflow-hidden">
+    <div className="w-full h-[420px] border rounded-lg bg-gray-50 p-3 stories-editor overflow-hidden">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-medium">Редактор Stories</h3>
         <div className="flex gap-2">
@@ -333,7 +333,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
 
         {/* Properties panel */}
-        <div className="col-span-2 space-y-3 max-h-[380px] overflow-y-auto">
+        <div className="col-span-2 space-y-2 max-h-[340px] overflow-y-auto">
           <Label className="text-sm font-medium">Настройки</Label>
           
           {/* Slide settings */}
