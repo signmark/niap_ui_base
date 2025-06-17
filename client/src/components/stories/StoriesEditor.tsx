@@ -96,11 +96,14 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
 
   // Простое обновление без debounce для предотвращения мерцания
   const updateStoryData = useCallback((newStoryData: StoryData) => {
+    console.log('📱 StoriesEditor: Обновление данных', newStoryData);
     setStoryData(newStoryData);
-    onChange({
+    const updatedData = {
       ...newStoryData,
       totalDuration: newStoryData.slides.reduce((sum, slide) => sum + slide.duration, 0)
-    });
+    };
+    console.log('📱 StoriesEditor: Вызываем onChange с данными', updatedData);
+    onChange(updatedData);
   }, [onChange]);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);

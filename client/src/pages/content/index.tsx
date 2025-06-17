@@ -2696,8 +2696,10 @@ export default function ContentPage() {
                   : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
               }
               onChange={(storyData) => {
+                console.log('🔄 Получены обновленные Stories данные:', storyData);
                 if (isEditDialogOpen && currentContent?.contentType === "story") {
                   // Editing existing Stories content
+                  console.log('✏️ Обновляем существующий Stories контент');
                   setCurrentContentSafe({
                     ...currentContent,
                     metadata: {
@@ -2707,6 +2709,7 @@ export default function ContentPage() {
                   });
                 } else {
                   // Creating new Stories content
+                  console.log('➕ Обновляем новый Stories контент');
                   setNewContent({
                     ...newContent,
                     metadata: {
@@ -2719,7 +2722,14 @@ export default function ContentPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsStoriesEditorOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                // Данные уже сохранены через onChange в StoriesEditor
+                // Просто закрываем диалог
+                setIsStoriesEditorOpen(false);
+              }}
+            >
               Сохранить и закрыть
             </Button>
           </DialogFooter>
