@@ -30,6 +30,57 @@ interface StoriesEditorProps {
   onChange: (data: StoryData) => void;
 }
 
+// Мемоизированный компонент слайда для предотвращения мерцания
+const SlideItem = React.memo(({ 
+  slide, 
+  index, 
+  isSelected, 
+  onSelect, 
+  onDelete, 
+  canDelete 
+}: {
+  slide: StorySlide;
+  index: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}) => {
+  const elementsCount = slide.elements?.length || 0;
+  const duration = slide?.duration || 5;
+  
+  return (
+    <div
+      className={`p-2 rounded border cursor-pointer transition-all ${
+        isSelected 
+          ? 'border-blue-500 bg-blue-50' 
+          : 'border-gray-200 bg-white hover:bg-gray-50'
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-xs font-medium">Слайд {index + 1}</span>
+        {canDelete && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="h-4 w-4 p-0 hover:bg-red-100"
+          >
+            <Trash2 className="h-3 w-3 text-red-500" />
+          </Button>
+        )}
+      </div>
+      <div className="text-xs text-gray-500">
+        {elementsCount} элементов • {duration}с
+      </div>
+    </div>
+  );
+});
+
 export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   const [storyData, setStoryData] = useState<StoryData>(value);
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
@@ -59,7 +110,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const handleAddSlide = () => {
+  const handleAddSlide = useCallback(() => {
     const newSlide: StorySlide = {
       id: generateId(),
       elements: [],
@@ -73,9 +124,9 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     };
     setStoryData(newStoryData);
     setSelectedSlideIndex(newStoryData.slides.length - 1);
-  };
+  }, [storyData]);
 
-  const handleDeleteSlide = (index: number) => {
+  const handleDeleteSlide = useCallback((index: number) => {
     if (storyData.slides.length === 1) return;
     
     const newSlides = storyData.slides.filter((_, i) => i !== index);
@@ -85,7 +136,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     if (selectedSlideIndex >= newSlides.length) {
       setSelectedSlideIndex(newSlides.length - 1);
     }
-  };
+  }, [storyData, selectedSlideIndex]);
 
   const handleAddElement = (type: StoryElement['type']) => {
     const newElement: StoryElement = {
@@ -343,35 +394,15 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           </div>
           <div className="space-y-2 overflow-y-auto max-h-72">
             {storyData.slides.map((slide, index) => (
-              <div
-                key={slide.id}
-                className={`p-2 rounded border cursor-pointer transition-all ${
-                  selectedSlideIndex === index 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 bg-white hover:bg-gray-50'
-                }`}
-                onClick={() => setSelectedSlideIndex(index)}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-medium">Слайд {index + 1}</span>
-                  {storyData.slides.length > 1 && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteSlide(index);
-                      }}
-                      className="h-4 w-4 p-0 hover:bg-red-100"
-                    >
-                      <Trash2 className="h-3 w-3 text-red-500" />
-                    </Button>
-                  )}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {slide.elements?.length || 0} элементов • {slide?.duration || 5}с
-                </div>
-              </div>
+              <SlideItem
+                key={`slide-${slide.id}`}
+                slide={slide}
+                index={index}
+                isSelected={selectedSlideIndex === index}
+                onSelect={() => setSelectedSlideIndex(index)}
+                onDelete={() => handleDeleteSlide(index)}
+                canDelete={storyData.slides.length > 1}
+              />
             ))}
           </div>
         </div>
