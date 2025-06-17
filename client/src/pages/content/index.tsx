@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import type { Campaign, CampaignContent } from "@/types";
+import type { Campaign, CampaignContent, ContentType } from "@/types";
 import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -988,9 +988,9 @@ export default function ContentPage() {
           'publishedAt' in platform && 
           platform.status === 'published' && 
           platform.publishedAt) {
-        const publishedTime = new Date(platform.publishedAt);
-        if (!latestTime || publishedTime > new Date(latestTime)) {
-          latestTime = platform.publishedAt;
+        const publishedTime = new Date(platform.publishedAt as string);
+        if (!latestTime || publishedTime > new Date(latestTime as string)) {
+          latestTime = platform.publishedAt as string;
         }
       }
     }
@@ -1741,7 +1741,7 @@ export default function ContentPage() {
                 <Select
                   value={currentContent.contentType || 'text'}
                   onValueChange={(value) => {
-                    const updatedContent = {...currentContent, contentType: value};
+                    const updatedContent = {...currentContent, contentType: value as ContentType};
                     setCurrentContentSafe(updatedContent);
                   }}
                 >
