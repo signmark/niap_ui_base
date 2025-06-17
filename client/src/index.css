@@ -19,6 +19,27 @@
   background-color: white !important;
   color: black !important;
   opacity: 1 !important;
+  z-index: 50 !important;
+}
+
+/* Stories Editor стили для правильного наслоения */
+.stories-editor {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.stories-editor * {
+  z-index: auto;
+}
+
+/* Убираем высокий z-index у дочерних элементов Stories */
+.stories-editor .draggable-element {
+  z-index: 1;
+}
+
+.stories-editor .element-controls {
+  z-index: 2;
 }
 
 /* Общие стили для WYSIWYG контента */

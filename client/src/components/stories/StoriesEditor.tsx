@@ -180,7 +180,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   }, [storyData.slides, selectedSlideIndex]);
 
   return (
-    <div className="w-full h-96 border rounded-lg bg-gray-50 p-4">
+    <div className="w-full h-96 border rounded-lg bg-gray-50 p-4 stories-editor">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Редактор Stories</h3>
         <div className="flex gap-2">

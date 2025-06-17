@@ -1424,7 +1424,7 @@ export default function ContentPage() {
 
       {/* Диалог создания контента */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto z-50">
           <DialogHeader>
             <DialogTitle>Создание нового контента</DialogTitle>
           </DialogHeader>
