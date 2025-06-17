@@ -30,8 +30,8 @@ interface StoriesEditorProps {
   onChange: (data: StoryData) => void;
 }
 
-// Мемоизированный компонент слайда для предотвращения мерцания
-const SlideItem = React.memo(({ 
+// Стабильный компонент слайда
+const SlideItem = ({ 
   slide, 
   index, 
   isSelected, 
@@ -42,8 +42,8 @@ const SlideItem = React.memo(({
   slide: StorySlide;
   index: number;
   isSelected: boolean;
-  onSelect: () => void;
-  onDelete: () => void;
+  onSelect: (index: number) => void;
+  onDelete: (index: number) => void;
   canDelete: boolean;
 }) => {
   const elementsCount = slide.elements?.length || 0;
@@ -56,7 +56,7 @@ const SlideItem = React.memo(({
           ? 'border-blue-500 bg-blue-50' 
           : 'border-gray-200 bg-white hover:bg-gray-50'
       }`}
-      onClick={onSelect}
+      onClick={() => onSelect(index)}
     >
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs font-medium">Слайд {index + 1}</span>
@@ -66,7 +66,7 @@ const SlideItem = React.memo(({
             variant="ghost"
             onClick={(e) => {
               e.stopPropagation();
-              onDelete();
+              onDelete(index);
             }}
             className="h-4 w-4 p-0 hover:bg-red-100"
           >
@@ -79,7 +79,7 @@ const SlideItem = React.memo(({
       </div>
     </div>
   );
-});
+};
 
 export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
   const [storyData, setStoryData] = useState<StoryData>(value);
@@ -94,19 +94,14 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     setStoryData(value);
   }, [value]);
 
-  const debouncedOnChange = useCallback(
-    debounce((newStoryData: StoryData) => {
-      onChange({
-        ...newStoryData,
-        totalDuration: newStoryData.slides.reduce((sum, slide) => sum + slide.duration, 0)
-      });
-    }, 300),
-    [onChange]
-  );
-
-  useEffect(() => {
-    debouncedOnChange(storyData);
-  }, [storyData, debouncedOnChange]);
+  // Простое обновление без debounce для предотвращения мерцания
+  const updateStoryData = useCallback((newStoryData: StoryData) => {
+    setStoryData(newStoryData);
+    onChange({
+      ...newStoryData,
+      totalDuration: newStoryData.slides.reduce((sum, slide) => sum + slide.duration, 0)
+    });
+  }, [onChange]);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -122,21 +117,25 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
       ...storyData,
       slides: [...storyData.slides, newSlide]
     };
-    setStoryData(newStoryData);
+    updateStoryData(newStoryData);
     setSelectedSlideIndex(newStoryData.slides.length - 1);
-  }, [storyData]);
+  }, [storyData, updateStoryData]);
 
   const handleDeleteSlide = useCallback((index: number) => {
     if (storyData.slides.length === 1) return;
     
     const newSlides = storyData.slides.filter((_, i) => i !== index);
     const newStoryData = { ...storyData, slides: newSlides };
-    setStoryData(newStoryData);
+    updateStoryData(newStoryData);
     
     if (selectedSlideIndex >= newSlides.length) {
       setSelectedSlideIndex(newSlides.length - 1);
     }
-  }, [storyData, selectedSlideIndex]);
+  }, [storyData, selectedSlideIndex, updateStoryData]);
+
+  const handleSelectSlide = useCallback((index: number) => {
+    setSelectedSlideIndex(index);
+  }, []);
 
   const handleAddElement = (type: StoryElement['type']) => {
     const newElement: StoryElement = {
@@ -399,8 +398,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
                 slide={slide}
                 index={index}
                 isSelected={selectedSlideIndex === index}
-                onSelect={() => setSelectedSlideIndex(index)}
-                onDelete={() => handleDeleteSlide(index)}
+                onSelect={handleSelectSlide}
+                onDelete={handleDeleteSlide}
                 canDelete={storyData.slides.length > 1}
               />
             ))}
