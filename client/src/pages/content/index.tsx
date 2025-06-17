@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import type { Campaign, CampaignContent } from "@shared/schema";
+import type { Campaign, CampaignContent } from "@/types";
 import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -140,7 +140,7 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map(k => {
+          processedKeywords = content.keywords.map((k: any) => {
             // Проверяем, является ли k объектом с полем keyword
             if (k && typeof k === 'object' && 'keyword' in k) {
               return k.keyword;
@@ -236,7 +236,8 @@ export default function ContentPage() {
     videoUrl: "",
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
-    keywords: [] as string[]
+    keywords: [] as string[],
+    metadata: {} as Record<string, any> // Добавляем поле metadata для Stories
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
@@ -387,7 +388,8 @@ export default function ContentPage() {
             videoUrl: "",
             additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
-            keywords: []
+            keywords: [],
+            metadata: {} // Сбрасываем metadata
           });
           
           // Закрываем диалог
