@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import type { Campaign, CampaignContent, ContentType } from "@/types";
+import type { Campaign, CampaignContent, ContentType, StoryData } from "@/types";
 import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -238,7 +238,8 @@ export default function ContentPage() {
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[],
-    metadata: {} as Record<string, any> // Добавляем поле metadata для Stories
+    metadata: {} as Record<string, any>, // Добавляем поле metadata для Stories
+    storyData: null as StoryData | null // Данные для Stories
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
@@ -390,7 +391,8 @@ export default function ContentPage() {
             additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
             keywords: [],
-            metadata: {} // Сбрасываем metadata
+            metadata: {}, // Сбрасываем metadata
+            storyData: null // Сбрасываем данные Stories
           });
           
           // Закрываем диалог
