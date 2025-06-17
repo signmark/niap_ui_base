@@ -238,7 +238,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
 
         {/* Canvas */}
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center space-y-4 relative z-20">
           <div
             className="relative border-2 border-gray-300 rounded-lg overflow-hidden"
             style={{
@@ -251,7 +251,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
               <div
                 key={element.id}
                 className={`absolute cursor-pointer ${
-                  selectedElement === element.id ? 'ring-1 ring-blue-500' : ''
+                  selectedElement === element.id ? 'ring-1 ring-blue-500 z-30' : 'z-20'
                 }`}
                 style={{
                   left: `${(element.position.x / 270) * 100}%`,
@@ -333,7 +333,7 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
         </div>
 
         {/* Properties panel */}
-        <div className="col-span-2 space-y-2 max-h-[340px] overflow-y-auto">
+        <div className="col-span-2 space-y-2 max-h-[340px] overflow-y-auto bg-white relative z-10">
           <Label className="text-sm font-medium">Настройки</Label>
           
           {/* Slide settings */}
