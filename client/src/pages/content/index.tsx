@@ -2693,18 +2693,37 @@ export default function ContentPage() {
                   ? currentContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
                   : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
               }
-              onChange={(storyData) => {
+              onChange={async (storyData) => {
                 console.log('🔄 Получены обновленные Stories данные:', storyData);
                 if (isEditDialogOpen && currentContent?.contentType === "story") {
                   // Editing existing Stories content
                   console.log('✏️ Обновляем существующий Stories контент');
-                  setCurrentContentSafe({
+                  const updatedContent = {
                     ...currentContent,
                     metadata: {
                       ...currentContent.metadata,
                       storyData
                     }
-                  });
+                  };
+                  setCurrentContentSafe(updatedContent);
+                  
+                  // Автоматически сохраняем изменения в базу данных
+                  try {
+                    console.log('💾 Автосохранение Stories данных...');
+                    await apiRequest(`/api/campaign-content/${currentContent.id}`, {
+                      method: 'PATCH',
+                      data: {
+                        metadata: updatedContent.metadata
+                      }
+                    });
+                    console.log('✅ Stories данные автоматически сохранены');
+                  } catch (error) {
+                    console.error('❌ Ошибка автосохранения Stories:', error);
+                    toast({
+                      variant: "destructive",
+                      description: "Ошибка сохранения изменений Stories"
+                    });
+                  }
                 } else {
                   // Creating new Stories content
                   console.log('➕ Обновляем новый Stories контент');

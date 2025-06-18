@@ -207,7 +207,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
     const updatedSlides = storyData.slides.map((slide, index) => 
       index === selectedSlideIndex ? { ...slide, duration } : slide
     );
-    setStoryData({ ...storyData, slides: updatedSlides });
+    const newStoryData = { ...storyData, slides: updatedSlides };
+    updateStoryData(newStoryData);
   };
 
   const handleBackgroundChange = (background: { color: string }) => {
@@ -223,7 +224,8 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
           } 
         : slide
     );
-    setStoryData({ ...storyData, slides: updatedSlides });
+    const newStoryData = { ...storyData, slides: updatedSlides };
+    updateStoryData(newStoryData);
   };
 
   const handleAIImageGenerated = (imageUrl: string) => {
