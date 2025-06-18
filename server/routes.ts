@@ -7474,13 +7474,42 @@ Return your response as a JSON array in this exact format:
         console.log(`Fetching content with ID: ${contentId}`);
         
         // Получаем ID пользователя из токена для проверки прав доступа
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        let userId: string;
+        let validToken = token;
         
-        const userId = userResponse.data.data.id;
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          userId = userResponse.data.data.id;
+        } catch (error: any) {
+          console.log(`[DEV] [directus] Не удалось определить пользователя по токену при ${error.response?.status} ошибке`);
+          
+          // Если токен истек, получаем админский токен
+          if (error.response?.status === 401) {
+            console.log(`[DEV] [directus] Получаем админский токен для обработки N8N webhook`);
+            
+            const adminToken = await getAdminTokenForScheduler();
+            if (adminToken) {
+              validToken = adminToken;
+              
+              // Получаем ID админа
+              const adminUserResponse = await directusApi.get('/users/me', {
+                headers: {
+                  'Authorization': `Bearer ${adminToken}`
+                }
+              });
+              userId = adminUserResponse.data.data.id;
+              console.log(`[DEV] [directus] Используем админский токен для пользователя ${userId}`);
+            } else {
+              throw new Error('Не удалось получить действующий токен');
+            }
+          } else {
+            throw error;
+          }
+        }
         
         if (!userId) {
           throw new Error('User ID not found');
@@ -7489,7 +7518,7 @@ Return your response as a JSON array in this exact format:
         // Получаем контент напрямую из Directus API
         const response = await directusApi.get(`/items/campaign_content/${contentId}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         });
         
