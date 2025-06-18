@@ -2693,7 +2693,7 @@ export default function ContentPage() {
                   ? currentContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
                   : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
               }
-              onChange={async (storyData) => {
+              onChange={(storyData) => {
                 console.log('🔄 Получены обновленные Stories данные:', storyData);
                 if (isEditDialogOpen && currentContent?.contentType === "story") {
                   // Editing existing Stories content
@@ -2706,24 +2706,6 @@ export default function ContentPage() {
                     }
                   };
                   setCurrentContentSafe(updatedContent);
-                  
-                  // Автоматически сохраняем изменения в базу данных
-                  try {
-                    console.log('💾 Автосохранение Stories данных...');
-                    await apiRequest(`/api/campaign-content/${currentContent.id}`, {
-                      method: 'PATCH',
-                      data: {
-                        metadata: updatedContent.metadata
-                      }
-                    });
-                    console.log('✅ Stories данные автоматически сохранены');
-                  } catch (error) {
-                    console.error('❌ Ошибка автосохранения Stories:', error);
-                    toast({
-                      variant: "destructive",
-                      description: "Ошибка сохранения изменений Stories"
-                    });
-                  }
                 } else {
                   // Creating new Stories content
                   console.log('➕ Обновляем новый Stories контент');
@@ -2741,10 +2723,35 @@ export default function ContentPage() {
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => {
-                // Данные уже сохранены через onChange в StoriesEditor
-                // Просто закрываем диалог
-                setIsStoriesEditorOpen(false);
+              onClick={async () => {
+                try {
+                  if (isEditDialogOpen && currentContent?.contentType === "story") {
+                    // Сохраняем существующий Stories контент
+                    console.log('💾 Сохраняем Stories контент:', currentContent);
+                    await apiRequest(`/api/campaign-content/${currentContent.id}`, {
+                      method: 'PATCH',
+                      data: {
+                        metadata: currentContent.metadata
+                      }
+                    });
+                    console.log('✅ Stories контент сохранен');
+                    toast({
+                      description: "Stories контент успешно сохранен"
+                    });
+                  } else if (newContent.contentType === "story" && newContent.metadata?.storyData) {
+                    // Сохраняем новый Stories контент
+                    console.log('💾 Создаем новый Stories контент:', newContent);
+                    await handleSaveContent();
+                    console.log('✅ Новый Stories контент создан');
+                  }
+                  setIsStoriesEditorOpen(false);
+                } catch (error) {
+                  console.error('❌ Ошибка сохранения Stories:', error);
+                  toast({
+                    variant: "destructive",
+                    description: "Ошибка сохранения Stories контента"
+                  });
+                }
               }}
             >
               Сохранить и закрыть
