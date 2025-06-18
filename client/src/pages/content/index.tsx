@@ -2160,7 +2160,7 @@ export default function ContentPage() {
                     // Вызываем новый API эндпоинт для N8N публикации
                     const response = await apiRequest('/api/publish-content', {
                       method: 'POST',
-                      body: requestData
+                      data: requestData
                     });
                     
                     if (response.success) {
