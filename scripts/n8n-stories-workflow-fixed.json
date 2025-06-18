@@ -1,0 +1,396 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-stories",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        60
+      ],
+      "id": "7f77f3c8-2384-4bf6-99b1-a4ddc2993dfb",
+      "webhookId": "c62c3b6d-abf8-4c26-90a9-4d2e2ab10351"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.item.json.body || $input.item.json;\nreturn {\n  contentId: body.contentId,\n  platform: body.platform || 'instagram'\n};"
+      },
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        60
+      ],
+      "id": "49a0e0a5-e6fc-4805-a2a4-b8c68f9e9c53"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "campaign_content",
+          "mode": "list",
+          "cachedResultName": "campaign_content"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -460,
+        60
+      ],
+      "id": "27d0a721-18d1-4fc9-9e3c-ac6aab4666c4",
+      "name": "Get Content",
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из базы\nconst content = $input.all()[0].json;\nconst metadata = content.additional_media || {};\nconst storyData = metadata.storyData || {};\nconst slides = storyData.slides || [];\n\n// Проверяем интерактивные элементы\nconst hasInteractive = slides.some(slide => \n  slide.elements && slide.elements.some(element => \n    ['poll', 'quiz', 'slider', 'question'].includes(element.type)\n  )\n);\n\n// Определяем типы интерактивных элементов\nconst interactiveTypes = [];\nslides.forEach(slide => {\n  if (slide.elements) {\n    slide.elements.forEach(element => {\n      if (['poll', 'quiz', 'slider', 'question'].includes(element.type) && \n          !interactiveTypes.includes(element.type)) {\n        interactiveTypes.push(element.type);\n      }\n    });\n  }\n});\n\nreturn {\n  ...content,\n  contentType: content.content_type,\n  hasInteractive: hasInteractive,\n  interactiveTypes: interactiveTypes,\n  storyData: storyData,\n  platform: 'instagram'\n};"
+      },
+      "name": "Process Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        60
+      ],
+      "id": "44cd2a60-5bc3-47c4-814e-d3880eeb0501"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.contentType }}",
+              "value2": "story"
+            }
+          ]
+        }
+      },
+      "name": "Is Stories?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        60
+      ],
+      "id": "bbbcb332-994c-4bf7-aaa9-bbf53de781be"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasInteractive }}"
+            }
+          ]
+        }
+      },
+      "name": "Has Interactive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        140,
+        -40
+      ],
+      "id": "3e22d0e4-0c59-4246-8ba0-bf4c59a7098d"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/stories/publish-interactive",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.id }}\",\n  \"storyData\": {{ JSON.stringify($json.storyData) }},\n  \"platform\": \"instagram\",\n  \"instagramCredentials\": {\n    \"username\": \"{{ $('Get Content').item.json.social_platforms.instagram.username || 'test_username' }}\",\n    \"password\": \"{{ $('Get Content').item.json.social_platforms.instagram.password || 'test_password' }}\"\n  }\n}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Publish Interactive Stories",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        -160
+      ],
+      "id": "c294857c-6ef5-4097-88ef-71de519876d4"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/stories/publish-static",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.id }}\",\n  \"storyData\": {{ JSON.stringify($json.storyData) }},\n  \"platform\": \"instagram\",\n  \"instagramCredentials\": {\n    \"accessToken\": \"{{ $('Get Content').item.json.social_platforms.instagram.accessToken || 'test_token' }}\",\n    \"accountId\": \"{{ $('Get Content').item.json.social_platforms.instagram.accountId || 'test_account' }}\"\n  }\n}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        }
+      },
+      "name": "Publish Static Stories",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        40
+      ],
+      "id": "16f37898-b7d3-43b2-ba1f-761ca824c783"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ошибка: контент не является Stories\nreturn {\n  success: false,\n  error: `Контент не является Stories типом. Получен тип: ${$input.all()[0].json.contentType}`,\n  contentType: $input.all()[0].json.contentType,\n  expectedType: 'story'\n};"
+      },
+      "name": "Not Stories Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        180,
+        400
+      ],
+      "id": "d7c930a7-1ba0-4777-adcb-229a9ba46222"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "campaign_content",
+          "mode": "list"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "columns": {
+          "values": [
+            {
+              "column": "status",
+              "value": "published"
+            },
+            {
+              "column": "published_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        600,
+        -40
+      ],
+      "id": "a7b3273e-f945-4278-b83a-5677f48354cb",
+      "name": "Update Status",
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        740,
+        60
+      ],
+      "id": "da91f498-fe34-4e16-b46b-a4535f05f432"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Get Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content": {
+      "main": [
+        [
+          {
+            "node": "Process Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Content": {
+      "main": [
+        [
+          {
+            "node": "Is Stories?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Stories?": {
+      "main": [
+        [
+          {
+            "node": "Has Interactive?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Stories Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Interactive?": {
+      "main": [
+        [
+          {
+            "node": "Publish Interactive Stories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publish Static Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Interactive Stories": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Static Stories": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Stories Error": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "48b343d4f21061cd3a73b34f5a2564ef792ed905f0d50c185e3671d2882f3122"
+  }
+}
