@@ -98,22 +98,9 @@ router.post('/publish', async (req, res) => {
 
         log(`[N8N Stories] Отправка в ${platform} через ${webhookUrl}`, 'n8n-stories');
 
-        // Подготавливаем данные для N8N
+        // Упрощенные данные для N8N - только ID контента
         const n8nPayload = {
-          contentId,
-          platform,
-          contentType: 'stories',
-          storyData,
-          metadata: content.metadata,
-          title: content.title,
-          scheduleTime,
-          // Дополнительные данные для обработки в N8N
-          slides: storyData.slides,
-          hasInteractiveElements: hasInteractiveElements(storyData),
-          campaign: {
-            id: content.campaign_id,
-            title: content.campaign?.title
-          }
+          contentId
         };
 
         // Отправляем в N8N
