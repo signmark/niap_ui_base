@@ -171,24 +171,19 @@ export class PublishScheduler {
       const directusCrud = await import('./directus-crud').then(m => m.directusCrud);
       const adminUserId = process.env.DIRECTUS_ADMIN_USER_ID || '53921f16-f51d-4591-80b9-8caa4fde4d13';
       
-      // 1. Приоритет - авторизация через логин/пароль (если есть учетные данные)
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
+      // 1. ПРИНУДИТЕЛЬНО используем продакшн учетные данные
+      const email = 'lbrspb@gmail.com';
+      const password = 'QtpZ3dh7';
       
-      if (email && password) {
-        log('Попытка авторизации администратора с учетными данными из env', 'scheduler');
-        
-        try {
-          // Прямая авторизация через REST API
-          const directusUrl = process.env.DIRECTUS_URL;
-          if (!directusUrl) {
-            console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
-            return null;
-          }
-          const response = await axios.post(`${directusUrl}/auth/login`, {
-            email,
-            password
-          });
+      log('Попытка авторизации администратора с продакшн учетными данными', 'scheduler');
+      
+      try {
+        // Прямая авторизация через продакшн REST API
+        const directusUrl = 'https://directus.nplanner.ru';
+        const response = await axios.post(`${directusUrl}/auth/login`, {
+          email,
+          password
+        });
           
           if (response?.data?.data?.access_token) {
             const token = response.data.data.access_token;
@@ -219,41 +214,221 @@ export class PublishScheduler {
           }
         }
         
-        try {
-          // Запасной вариант - используем метод для авторизации через DirectusAuthManager
-          const authInfo = await directusAuthManager.login(email, password);
-          
-          if (authInfo && authInfo.token) {
-            log('Авторизация администратора успешна через directusAuthManager', 'scheduler');
-            
-            // Сохраняем токен в кэше планировщика
-            this.adminTokenCache = authInfo.token;
-            this.adminTokenTimestamp = now;
-            
-            return authInfo.token;
+      }
+      
+      log('Не удалось получить токен через продакшн авторизацию', 'scheduler');
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
+      return null;
+    }
+  }
+
+  /**
+   * Проверяет статусы всех платформ для контента и обновляет статус по алгоритму:
+   * 1. Если ВСЕ платформы в JSON имеют статус 'published', обновляет статус на 'published'
+   * 2. Если есть хотя бы одна платформа с ошибкой и нет ожидающих платформ, устанавливает статус 'failed'
+   * Обновлено в соответствии с новыми требованиями по проверке ВСЕХ платформ
+   */
+  async checkAndUpdateContentStatuses() {
+    try {
+      const authToken = await this.getSystemToken();
+      if (!authToken) {
+        return;
+      }
+
+      // Получаем все контенты со статусом 'scheduled' и 'draft' для проверки их платформ
+      const directusUrl = 'https://directus.nplanner.ru';
+      
+      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        params: {
+          'filter[status][_in]': 'scheduled,draft',
+          'fields': '*',
+          'limit': -1
+        }
+      });
+
+      const allItems: any[] = response?.data?.data || [];
+      
+      for (const item of allItems) {
+        await this.checkAndUpdateSingleContentStatus(item, authToken);
+      }
+      
+    } catch (error: any) {
+      // Тихо обрабатываем ошибки
+    }
+  }
+
+  /**
+   * Проверяет и обновляет статус одного контента
+   */
+  private async checkAndUpdateSingleContentStatus(content: any, authToken: string) {
+    try {
+      if (!content.social_platforms) {
+        return;
+      }
+
+      let platforms;
+      try {
+        platforms = typeof content.social_platforms === 'string' ? 
+          JSON.parse(content.social_platforms) : content.social_platforms;
+      } catch (e) {
+        return;
+      }
+
+      let allPublished = true;
+      let hasErrors = false;
+      let hasPending = false;
+      const selectedPlatforms = Object.entries(platforms).filter(([_, data]: [string, any]) => data.selected === true);
+
+      if (selectedPlatforms.length === 0) {
+        return;
+      }
+
+      for (const [platform, data] of selectedPlatforms) {
+        const platformData = data as any;
+        
+        // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем уже опубликованные платформы
+        if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+          // Платформа уже опубликована с postUrl - пропускаем
+          if (this.verboseLogging) {
+            log(`ПЛАНИРОВЩИК БЛОКИРОВКА: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl}) в контенте ID ${content.id}`, 'scheduler');
           }
-          
-          // Если не получилось через directusAuthManager, пробуем через directusCrud
-          const authResult = await directusCrud.login(email, password);
-          
-          if (authResult?.access_token) {
-            log('Авторизация администратора успешна через directusCrud', 'scheduler');
-            
-            // Сохраняем токен в кэше планировщика
-            this.adminTokenCache = authResult.access_token;
-            this.adminTokenTimestamp = now;
-            
-            return authResult.access_token;
+          continue;
+        }
+        
+        // Сбрасываем некорректные published статусы без postUrl
+        if (platformData.status === 'published' && (!platformData.postUrl || platformData.postUrl.trim() === '')) {
+          log(`ПЛАНИРОВЩИК ИСПРАВЛЕНИЕ: Сброс некорректного статуса 'published' без postUrl для платформы ${platform} в контенте ID ${content.id}`, 'scheduler');
+          platformData.status = 'pending'; // Исправляем статус локально
+        }
+        
+        if (platformData.status === 'published') {
+          // OK
+        } else if (platformData.status === 'failed') {
+          hasErrors = true;
+          allPublished = false;
+        } else {
+          allPublished = false;
+          if (platformData.status === 'pending') {
+            hasPending = true;
           }
-        } catch (error: any) {
-          log(`Ошибка при авторизации через вспомогательные сервисы: ${error.message}`, 'scheduler');
+        }
+      }
+
+      // Обновляем глобальный статус контента
+      let newStatus = content.status;
+      if (allPublished && content.status !== 'published') {
+        newStatus = 'published';
+        
+        // Обновляем статус в базе данных
+        await axios.patch(`https://directus.nplanner.ru/items/campaign_content/${content.id}`, {
+          status: 'published',
+          published_at: new Date().toISOString()
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        log(`Обновлен глобальный статус контента ${content.id} на "published"`, 'scheduler');
+      } else if (hasErrors && !hasPending && content.status !== 'failed') {
+        newStatus = 'failed';
+        
+        // Обновляем статус в базе данных
+        await axios.patch(`https://directus.nplanner.ru/items/campaign_content/${content.id}`, {
+          status: 'failed'
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        log(`Обновлен глобальный статус контента ${content.id} на "failed"`, 'scheduler');
+      }
+      
+    } catch (error: any) {
+      // Тихо обрабатываем ошибки
+    }
+  }
+
+  /**
+   * Проверяет и публикует запланированный контент 
+   * Ищет контент со статусом 'scheduled' и немедленно публикует платформы в статусе 'pending'
+   * Имплементирует новый алгоритм согласно инструкции
+   */
+  async checkScheduledContent() {
+    try {
+      // КРИТИЧЕСКИ ВАЖНО: Проверяем блокировку для предотвращения двойной публикации
+      if (this.isProcessing) {
+        const processingDuration = Date.now() - this.processingStartTime;
+        if (processingDuration < 60000) {
+          // Планировщик уже выполняется, тихо пропускаем итерацию
+          return;
+        } else {
+          // Принудительный сброс блокировки при зависании
+          this.isProcessing = false;
         }
       }
       
-      // 2. Проверяем, есть ли активные сессии пользователей
-      const sessions = directusAuthManager.getAllActiveSessions();
+      // Устанавливаем блокировку
+      this.isProcessing = true;
+      this.processingStartTime = Date.now();
       
-      if (sessions.length > 0) {
+      // Тихая проверка запланированных публикаций
+      
+      // Проверяем, не отключены ли публикации глобально
+      if (this.disablePublishing) {
+        // Публикации отключены глобально
+        return;
+      }
+      
+      // Сбрасываем кэшированный токен для принудительного обновления
+      // Принудительное обновление токена администратора
+      this.adminTokenCache = null; // Очищаем кэш токена, чтобы получить новый
+
+      // Добавляем проверку и обновление статусов контента со всеми опубликованными платформами
+      // Функция выполняется в фоновом режиме, чтобы не блокировать публикацию нового контента
+      // Тихая проверка статусов контента
+      this.checkAndUpdateContentStatuses().catch(() => {
+        // Тихо обрабатываем ошибки
+      });
+      
+      // Проверяем запросы на извлечение токена
+      checkTokenExtractionRequest();
+      
+      // Получаем системный токен для доступа ко всем публикациям
+      const authToken = await this.getSystemToken();
+      
+      if (!authToken) {
+        // Системный токен не получен, тихо завершаем работу
+        return;
+      }
+      
+      // Пытаемся получить запланированные публикации
+      let scheduledContent: any[] = [];
+      
+      try {
+        // ПРИНУДИТЕЛЬНО используем продакшн Directus URL
+        const directusUrl = 'https://directus.nplanner.ru';
+        log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
+        
+        const headers = {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        // Запрос с фильтром ТОЛЬКО по статусу "scheduled"
+        // Получаем запланированные публикации со статусом 'scheduled'
+        const scheduledResponse = await axios.get(`${directusUrl}/items/campaign_content`, {
+          headers,
+          params: {
         // Используем токен первого активного пользователя
         const firstSession = sessions[0];
         log(`Использование токена пользователя ${firstSession.userId} из активной сессии`, 'scheduler');
@@ -750,12 +925,8 @@ export class PublishScheduler {
       let scheduledContent: CampaignContent[] = [];
       
       try {
-        // Прямой запрос с параметрами фильтрации
-        const directusUrl = process.env.DIRECTUS_URL;
-        if (!directusUrl) {
-          console.log(`[scheduler] DIRECTUS_URL не настроен в переменных окружения`);
-          return;
-        }
+        // ПРИНУДИТЕЛЬНО используем продакшн Directus URL
+        const directusUrl = 'https://directus.nplanner.ru';
         log(`Прямой запрос axios к ${directusUrl}/items/campaign_content с фильтром по статусу scheduled`, 'scheduler');
         
         const headers = {
