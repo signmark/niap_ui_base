@@ -11542,21 +11542,33 @@ ${datesText}
   // API эндпоинт для мгновенной публикации через N8N
   app.post('/api/publish-content', async (req, res) => {
     try {
+      console.log('[N8N-PUBLISH] Получен запрос на публикацию:', JSON.stringify(req.body, null, 2));
+      
       const { contentId, platforms } = req.body;
       
+      console.log('[N8N-PUBLISH] contentId:', contentId, 'тип:', typeof contentId);
+      console.log('[N8N-PUBLISH] platforms:', platforms, 'тип:', typeof platforms, 'isArray:', Array.isArray(platforms));
+      
       if (!contentId || !platforms || !Array.isArray(platforms)) {
+        console.log('[N8N-PUBLISH] Ошибка валидации:', {
+          hasContentId: !!contentId,
+          hasPlatforms: !!platforms,
+          isPlatformsArray: Array.isArray(platforms)
+        });
         return res.status(400).json({
           success: false,
           error: 'Требуется contentId и массив platforms'
         });
       }
 
+      console.log('[N8N-PUBLISH] Вызов publishScheduler.publishContent с:', contentId, platforms);
       const { publishScheduler } = await import('./services/publish-scheduler-simple');
       const result = await publishScheduler.publishContent(contentId, platforms);
       
+      console.log('[N8N-PUBLISH] Результат от publishScheduler:', result);
       res.json(result);
     } catch (error: any) {
-      console.error('Ошибка публикации контента:', error);
+      console.error('[N8N-PUBLISH] Ошибка публикации контента:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Ошибка при публикации контента'

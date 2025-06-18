@@ -2148,15 +2148,19 @@ export default function ContentPage() {
                       .filter(([_, isSelected]) => isSelected)
                       .map(([platform]) => platform);
                     
-                    console.log("Отправка в N8N:", { contentId: currentContent?.id, platforms: selectedPlatformList });
+                    const requestData = {
+                      contentId: currentContent?.id,
+                      platforms: selectedPlatformList
+                    };
+                    
+                    console.log("Отправка в N8N - contentId:", currentContent?.id);
+                    console.log("Отправка в N8N - platforms:", selectedPlatformList);
+                    console.log("Отправка в N8N - полный объект:", requestData);
                     
                     // Вызываем новый API эндпоинт для N8N публикации
                     const response = await apiRequest('/api/publish-content', {
                       method: 'POST',
-                      body: {
-                        contentId: currentContent?.id,
-                        platforms: selectedPlatformList
-                      }
+                      body: requestData
                     });
                     
                     if (response.success) {
