@@ -173,7 +173,7 @@ router.post('/publish-static', async (req, res) => {
     log(`[Stories Static] Отправляем запрос к inst-oauth API: ${JSON.stringify(publishPayload)}`, 'stories-publish');
 
     const publishResponse = await axios.post(
-      'https://inst-oauth.smmniap.pw/api/posts',
+      'https://inst-oauth.smmniap.pw/api/posts/create',
       publishPayload,
       {
         headers: {
