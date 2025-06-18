@@ -19,12 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { StoryData, StorySlide, StoryElement } from '@/types';
 import { 
-  Plus, Trash2, Type, Image, Square, Eye, Video, BarChart3, Sparkles
+  Plus, Trash2, Type, Image, Square, Eye, Video, BarChart3, Sparkles, Vote, Brain, Sliders, Star
 } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
 import { VideoUploader } from '@/components/VideoUploader';
 import { AIImageGenerator } from '@/components/AIImageGenerator';
 import StoriesElement from '@/components/stories/StoriesElement';
+import { PollElement, QuizElement, SliderElement, StickerElement } from './InteractiveElements';
 
 interface StoriesEditorProps {
   value: StoryData;
@@ -148,6 +149,9 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
       position: { x: 50, y: 50 },
       content: type === 'text' ? 'Новый текст' : 
                type === 'poll' ? JSON.stringify({ question: 'Ваш вопрос?', options: ['Да', 'Нет'] }) : 
+               type === 'quiz' ? JSON.stringify({ question: 'Вопрос викторины?', options: ['Вариант A', 'Вариант B'], correctAnswer: 0 }) :
+               type === 'slider' ? JSON.stringify({ question: 'Оцените от 1 до 10', minLabel: '1', maxLabel: '10' }) :
+               type === 'sticker' ? JSON.stringify({ type: 'heart', size: 50 }) :
                '',
       style: {
         fontSize: type === 'text' ? 16 : undefined,
@@ -492,8 +496,35 @@ export function StoriesEditor({ value, onChange }: StoriesEditorProps) {
               onClick={() => handleAddElement('poll')}
               className="h-8 px-3"
             >
-              <BarChart3 className="h-4 w-4 mr-1" />
-              Опрос
+              <Vote className="h-4 w-4 mr-1" />
+              Голосование
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('quiz')}
+              className="h-8 px-3"
+            >
+              <Brain className="h-4 w-4 mr-1" />
+              Викторина
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('slider')}
+              className="h-8 px-3"
+            >
+              <Sliders className="h-4 w-4 mr-1" />
+              Слайдер
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddElement('sticker')}
+              className="h-8 px-3"
+            >
+              <Star className="h-4 w-4 mr-1" />
+              Стикер
             </Button>
             <Button
               size="sm"
