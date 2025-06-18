@@ -2132,7 +2132,7 @@ export default function ContentPage() {
               <Button 
                 type="button" 
                 variant="default" 
-                onClick={() => {
+                onClick={async () => {
                   // Проверка на выбор хотя бы одной платформы
                   if (!Object.values(selectedPlatforms).some(Boolean)) {
                     toast({
@@ -2142,14 +2142,42 @@ export default function ContentPage() {
                     return;
                   }
                   
-                  // Публикуем немедленно через новый API, который ожидает объект с булевыми значениями
-                  // для каждой платформы: {telegram: true, vk: true, instagram: false, facebook: false}
-                  publishContentMutation.mutate({
-                    id: currentContent?.id || '',
-                    platforms: selectedPlatforms
-                  });
+                  try {
+                    // Получаем выбранные платформы как массив строк для N8N API
+                    const selectedPlatformList = Object.entries(selectedPlatforms)
+                      .filter(([_, isSelected]) => isSelected)
+                      .map(([platform]) => platform);
+                    
+                    console.log("Отправка в N8N:", { contentId: currentContent?.id, platforms: selectedPlatformList });
+                    
+                    // Вызываем новый API эндпоинт для N8N публикации
+                    const response = await apiRequest('/api/publish-content', {
+                      method: 'POST',
+                      body: {
+                        contentId: currentContent?.id,
+                        platforms: selectedPlatformList
+                      }
+                    });
+                    
+                    if (response.success) {
+                      toast({
+                        description: response.message || "Контент отправлен в N8N для публикации",
+                        variant: "default"
+                      });
+                    } else {
+                      toast({
+                        description: response.error || "Ошибка при отправке в N8N",
+                        variant: "destructive"
+                      });
+                    }
+                  } catch (error: any) {
+                    console.error("Ошибка N8N публикации:", error);
+                    toast({
+                      description: error.message || "Ошибка при отправке в N8N",
+                      variant: "destructive"
+                    });
+                  }
                   
-                  console.log("Запрос на публикацию с выбранными платформами:", selectedPlatforms);
                   setIsScheduleDialogOpen(false);
                 }}
                 disabled={
@@ -2158,7 +2186,7 @@ export default function ContentPage() {
                 }
               >
                 {publishContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Опубликовать сейчас
+                Опубликовать через N8N
               </Button>
               <Button 
                 type="button" 

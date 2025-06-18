@@ -11538,6 +11538,31 @@ ${datesText}
       });
     }
   });
+
+  // API эндпоинт для мгновенной публикации через N8N
+  app.post('/api/publish-content', async (req, res) => {
+    try {
+      const { contentId, platforms } = req.body;
+      
+      if (!contentId || !platforms || !Array.isArray(platforms)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Требуется contentId и массив platforms'
+        });
+      }
+
+      const { publishScheduler } = await import('./services/publish-scheduler-simple');
+      const result = await publishScheduler.publishContent(contentId, platforms);
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Ошибка публикации контента:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Ошибка при публикации контента'
+      });
+    }
+  });
   
   return httpServer;
 }
