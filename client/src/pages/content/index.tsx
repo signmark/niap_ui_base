@@ -9,7 +9,8 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, Edit3, 
+  AlertCircle, Layers
 } from "lucide-react";
 import {
   AlertDialog,
@@ -31,7 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import type { Campaign, CampaignContent } from "@shared/schema";
+import type { Campaign, CampaignContent, ContentType, StoryData } from "@/types";
 import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -51,6 +52,8 @@ import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
 import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
+import { StoriesEditor } from "@/components/stories/StoriesEditor";
+import { StoriesPreview } from "@/components/stories/StoriesPreview";
 import { 
   Popover, 
   PopoverContent, 
@@ -125,6 +128,7 @@ export default function ContentPage() {
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
+  const [isStoriesEditorOpen, setIsStoriesEditorOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -139,7 +143,7 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map(k => {
+          processedKeywords = content.keywords.map((k: any) => {
             // Проверяем, является ли k объектом с полем keyword
             if (k && typeof k === 'object' && 'keyword' in k) {
               return k.keyword;
@@ -235,7 +239,9 @@ export default function ContentPage() {
     videoUrl: "",
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
-    keywords: [] as string[]
+    keywords: [] as string[],
+    metadata: {} as Record<string, any>, // Добавляем поле metadata для Stories
+    storyData: null as StoryData | null // Данные для Stories
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
@@ -386,7 +392,9 @@ export default function ContentPage() {
             videoUrl: "",
             additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
-            keywords: []
+            keywords: [],
+            metadata: {}, // Сбрасываем metadata
+            storyData: null // Сбрасываем данные Stories
           });
           
           // Закрываем диалог
@@ -689,11 +697,33 @@ export default function ContentPage() {
       return;
     }
 
-    createContentMutation.mutate({
+    // Проверяем корректность данных для Stories
+    if (newContent.contentType === "story") {
+      if (!newContent.metadata?.storyData?.slides || newContent.metadata.storyData.slides.length === 0) {
+        toast({
+          description: "Создайте хотя бы один слайд для Stories",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Подготавливаем данные для создания контента
+    const contentData = {
       campaignId: selectedCampaignId,
       ...newContent,
       status: 'draft'
-    });
+    };
+
+    // Для Stories контента, сохраняем данные Stories в metadata
+    if (newContent.contentType === "story" && newContent.metadata?.storyData) {
+      contentData.metadata = {
+        ...newContent.metadata,
+        storyData: newContent.metadata.storyData
+      };
+    }
+
+    createContentMutation.mutate(contentData);
   };
 
   // Обработчик обновления контента
@@ -753,6 +783,7 @@ export default function ContentPage() {
       additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
       videoUrl: currentContent.videoUrl,
       additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
+      metadata: currentContent.metadata || {}, // Добавляем metadata для сохранения Stories данных
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
@@ -985,9 +1016,9 @@ export default function ContentPage() {
           'publishedAt' in platform && 
           platform.status === 'published' && 
           platform.publishedAt) {
-        const publishedTime = new Date(platform.publishedAt);
-        if (!latestTime || publishedTime > new Date(latestTime)) {
-          latestTime = platform.publishedAt;
+        const publishedTime = new Date(platform.publishedAt as string);
+        if (!latestTime || publishedTime > new Date(latestTime as string)) {
+          latestTime = platform.publishedAt as string;
         }
       }
     }
@@ -1421,7 +1452,7 @@ export default function ContentPage() {
 
       {/* Диалог создания контента */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto z-50">
           <DialogHeader>
             <DialogTitle>Создание нового контента</DialogTitle>
           </DialogHeader>
@@ -1450,6 +1481,7 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1466,6 +1498,37 @@ export default function ContentPage() {
                 />
               </div>
             </div>
+            
+            {/* Stories Editor */}
+            {newContent.contentType === "story" && (
+              <div className="space-y-4">
+                <Label>Редактор Stories</Label>
+                <div className="border rounded-lg p-4 bg-white" style={{ minHeight: '300px', overflow: 'visible', zIndex: 'auto' }}>
+                  <div className="text-center text-gray-500 py-8">
+                    <p className="mb-4">Stories редактор будет открыт в отдельном окне</p>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Открываем Stories редактор в отдельном модальном окне
+                        setIsStoriesEditorOpen(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Открыть редактор Stories
+                    </Button>
+                  </div>
+                  {newContent.metadata?.storyData?.slides?.length > 0 && (
+                    <div className="mt-4 p-2 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">
+                        Создано слайдов: {newContent.metadata.storyData.slides.length}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1717,7 +1780,7 @@ export default function ContentPage() {
                 <Select
                   value={currentContent.contentType || 'text'}
                   onValueChange={(value) => {
-                    const updatedContent = {...currentContent, contentType: value};
+                    const updatedContent = {...currentContent, contentType: value as ContentType};
                     setCurrentContentSafe(updatedContent);
                   }}
                 >
@@ -1729,6 +1792,7 @@ export default function ContentPage() {
                     <SelectItem value="text-image">Текст с изображением</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="video-text">Видео с текстом</SelectItem>
+                    <SelectItem value="story">Stories</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1821,6 +1885,40 @@ export default function ContentPage() {
                     onChange={(videos) => setCurrentContentSafe({...currentContent, additionalVideos: videos})}
                     label="Дополнительные видео"
                   />
+                </div>
+              )}
+              
+              {/* Stories Editor для редактирования Stories контента */}
+              {currentContent.contentType === "story" && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Stories Content</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsStoriesEditorOpen(true)}
+                      className="h-8"
+                    >
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Редактировать Stories
+                    </Button>
+                  </div>
+                  {currentContent.metadata?.storyData?.slides && currentContent.metadata.storyData.slides.length > 0 ? (
+                    <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4" />
+                        <span>Stories содержит {currentContent.metadata.storyData.slides.length} слайдов</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground bg-orange-50 p-3 rounded">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
+                        <span>Stories не содержит слайдов. Нажмите "Редактировать Stories" для создания контента.</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -2407,11 +2505,13 @@ export default function ContentPage() {
               {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
               {previewContent?.contentType === "video" && <Video size={16} />}
               {previewContent?.contentType === "video-text" && <Video size={16} />}
+              {previewContent?.contentType === "story" && <Layers size={16} />}
               <span>
                 {previewContent?.contentType === "text" && "Текстовый контент"}
                 {previewContent?.contentType === "text-image" && "Контент с изображением"}
                 {previewContent?.contentType === "video" && "Видео контент"}
                 {previewContent?.contentType === "video-text" && "Видео с текстом"}
+                {previewContent?.contentType === "story" && "Instagram Stories"}
               </span>
             </div>
 
@@ -2469,6 +2569,14 @@ export default function ContentPage() {
                     )
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Stories Content Preview */}
+            {previewContent?.contentType === "story" && previewContent?.metadata?.storyData && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Stories Content</h4>
+                <StoriesPreview storyData={previewContent.metadata.storyData} />
               </div>
             )}
             
@@ -2565,6 +2673,63 @@ export default function ContentPage() {
                 Редактировать
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Отдельный диалог для Stories редактора */}
+      <Dialog open={isStoriesEditorOpen} onOpenChange={setIsStoriesEditorOpen}>
+        <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] overflow-y-auto" style={{ zIndex: 60 }}>
+          <DialogHeader>
+            <DialogTitle>Редактор Instagram Stories</DialogTitle>
+            <DialogDescription>
+              Создайте многослайдовые Stories с текстом, изображениями и эффектами
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <StoriesEditor
+              value={
+                isEditDialogOpen && currentContent?.contentType === "story" 
+                  ? currentContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
+                  : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
+              }
+              onChange={(storyData) => {
+                console.log('🔄 Получены обновленные Stories данные:', storyData);
+                if (isEditDialogOpen && currentContent?.contentType === "story") {
+                  // Editing existing Stories content
+                  console.log('✏️ Обновляем существующий Stories контент');
+                  setCurrentContentSafe({
+                    ...currentContent,
+                    metadata: {
+                      ...currentContent.metadata,
+                      storyData
+                    }
+                  });
+                } else {
+                  // Creating new Stories content
+                  console.log('➕ Обновляем новый Stories контент');
+                  setNewContent({
+                    ...newContent,
+                    metadata: {
+                      ...newContent.metadata,
+                      storyData
+                    }
+                  });
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                // Данные уже сохранены через onChange в StoriesEditor
+                // Просто закрываем диалог
+                setIsStoriesEditorOpen(false);
+              }}
+            >
+              Сохранить и закрыть
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
