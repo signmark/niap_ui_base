@@ -352,6 +352,45 @@ class DirectusApiManager {
   }
   
   /**
+   * Получает токен администратора для системных операций
+   * @returns Токен администратора или null в случае ошибки
+   */
+  async getAdminToken(): Promise<string | null> {
+    try {
+      const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL;
+      const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD;
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+
+      // Если есть готовый токен в переменных окружения, используем его
+      if (adminToken) {
+        log('Использую токен администратора из переменных окружения', 'directus');
+        return adminToken;
+      }
+
+      if (!adminEmail || !adminPassword) {
+        log('Отсутствуют учетные данные администратора в переменных окружения', 'directus');
+        return null;
+      }
+
+      const response = await this.axiosInstance.post('/auth/login', {
+        email: adminEmail,
+        password: adminPassword
+      });
+
+      if (response.data?.data?.access_token) {
+        log('Получен административный токен через авторизацию', 'directus');
+        return response.data.data.access_token;
+      }
+
+      log('Неверный формат ответа при получении административного токена', 'directus');
+      return null;
+    } catch (error: any) {
+      log(`Ошибка при получении административного токена: ${error.message}`, 'directus');
+      return null;
+    }
+  }
+
+  /**
    * Возвращает axios инстанс для работы с Directus API
    * @returns Axios инстанс
    */

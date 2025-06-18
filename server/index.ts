@@ -26,8 +26,8 @@ import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
 import analyticsRouter from './analytics-api';
 // Импортируем валидатор статусов публикаций
 import { statusValidator } from './services/status-validator';
-// Импортируем планировщик публикаций для очистки кэша
-import { publishScheduler } from './services/publish-scheduler';
+// Импортируем упрощенный N8N планировщик
+import { publishScheduler } from './services/publish-scheduler-simple';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
