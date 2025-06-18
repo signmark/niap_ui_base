@@ -84,11 +84,8 @@ export class SocialPublishingService {
    * Публикует контент через n8n webhook (ЕДИНСТВЕННЫЙ способ публикации)
    */
   private async publishThroughN8nWebhook(content: any, platform: string, settings: any): Promise<any> {
-    // Используем только N8N_URL из переменных окружения
-    const baseN8nUrl = process.env.N8N_URL;
-    if (!baseN8nUrl) {
-      throw new Error('N8N_URL не настроен в переменных окружения');
-    }
+    // ПРИНУДИТЕЛЬНО используем продакшн N8N URL
+    const baseN8nUrl = 'https://n8n.nplanner.ru';
     
     const webhookUrls = {
       'vk': `${baseN8nUrl}/webhook/publish-vk`,

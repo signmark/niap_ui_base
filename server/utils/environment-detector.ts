@@ -21,10 +21,8 @@ export function detectEnvironment(): EnvironmentConfig {
   const envVariable = process.env.ENV || 'production';
   const environment = envVariable === 'development' ? 'development' : 'production';
   
-  // URL Directus в зависимости от окружения
-  const directusUrl = environment === 'development' 
-    ? (process.env.DIRECTUS_URL || 'https://directus.roboflow.tech')
-    : (process.env.DIRECTUS_URL || 'https://directus.nplanner.ru');
+  // ПРИНУДИТЕЛЬНО используем продакшн URL для подключения к реальному серверу
+  const directusUrl = 'https://directus.nplanner.ru';
 
   // Конфигурация логгирования в зависимости от окружения
   const logLevel = (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 
@@ -34,8 +32,8 @@ export function detectEnvironment(): EnvironmentConfig {
   const verboseLogs = process.env.VERBOSE_LOGS === 'true' || environment === 'development';
 
   return {
-    adminEmail: 'admin@roboflow.tech',
-    adminPassword: 'asdASD123!@#',
+    adminEmail: 'lbrspb@gmail.com',
+    adminPassword: 'QtpZ3dh7',
     directusUrl,
     environment,
     logLevel,
