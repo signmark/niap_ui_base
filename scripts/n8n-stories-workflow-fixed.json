@@ -164,7 +164,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"contentId\": \"{{ $json.id }}\",\n  \"storyData\": {{ JSON.stringify($json.storyData) }},\n  \"platform\": \"instagram\",\n  \"instagramCredentials\": {\n    \"accessToken\": \"{{ $('Get Content').item.json.social_platforms.instagram.accessToken || 'test_token' }}\",\n    \"accountId\": \"{{ $('Get Content').item.json.social_platforms.instagram.accountId || 'test_account' }}\"\n  }\n}",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.id }}\",\n  \"storyData\": {{ JSON.stringify($json.storyData) }},\n  \"platform\": \"instagram\",\n  \"instagramCredentials\": {\n    \"username\": \"{{ $('Get Content').item.json.social_platforms.instagram.username || 'test_username' }}\",\n    \"password\": \"{{ $('Get Content').item.json.social_platforms.instagram.password || 'test_password' }}\"\n  }\n}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

@@ -9,6 +9,23 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { log } from '../utils/logger';
 
+/**
+ * Простой генератор изображения Stories для тестирования
+ */
+async function generateSimpleStoriesImage(storyData: any): Promise<string> {
+  // Для тестирования возвращаем статичное изображение Stories
+  // В реальной системе здесь должен быть полноценный генератор
+  const slides = storyData.slides || [];
+  const slideCount = slides.length;
+  
+  // Симулируем генерацию изображения
+  const mockImageUrl = `https://via.placeholder.com/1080x1920/FF6B6B/FFFFFF.png?text=Stories+${slideCount}+slides`;
+  
+  log(`[Stories Generator] Сгенерировано тестовое изображение: ${mockImageUrl}`, 'stories-publish');
+  
+  return mockImageUrl;
+}
+
 const router = express.Router();
 
 /**
@@ -115,7 +132,7 @@ router.post('/publish-interactive', async (req, res) => {
 });
 
 /**
- * Endpoint для публикации обычных Instagram Stories через Graph API
+ * Endpoint для публикации обычных Instagram Stories через inst-oauth.smmniap.pw API
  */
 router.post('/publish-static', async (req, res) => {
   try {
@@ -130,73 +147,75 @@ router.post('/publish-static', async (req, res) => {
       });
     }
 
-    // Генерируем изображение Stories
-    const imageResponse = await axios.post('http://localhost:5000/generate-stories', {
-      metadata: { storyData }
-    });
+    // Создаем простое изображение Stories (временно, для тестирования)
+    const imageUrl = await generateSimpleStoriesImage(storyData);
 
-    if (!imageResponse.data.success) {
-      throw new Error('Ошибка генерации изображения Stories');
-    }
+    // Проверяем наличие учетных данных
+    const username = instagramCredentials?.username;
+    const password = instagramCredentials?.password;
 
-    const imageUrl = imageResponse.data.imageUrl;
-
-    // Публикуем через Graph API
-    const accessToken = instagramCredentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN;
-    const instagramAccountId = instagramCredentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID;
-
-    if (!accessToken || !instagramAccountId) {
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Отсутствуют Instagram учетные данные'
+        error: 'Отсутствуют Instagram учетные данные (username, password)'
       });
     }
 
-    // Создаем Stories через Graph API
-    const graphResponse = await axios.post(
-      `https://graph.facebook.com/v18.0/${instagramAccountId}/media`,
-      {
-        image_url: imageUrl,
-        media_type: 'STORIES'
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      }
-    );
+    // Публикуем через inst-oauth.smmniap.pw API
+    const publishPayload = {
+      username: username,
+      password: password,
+      media_urls: [imageUrl],
+      type: "story",
+      caption: storyData.caption || ""
+    };
 
-    const mediaId = graphResponse.data.id;
+    log(`[Stories Static] Отправляем запрос к inst-oauth API: ${JSON.stringify(publishPayload)}`, 'stories-publish');
 
-    // Публикуем Stories
     const publishResponse = await axios.post(
-      `https://graph.facebook.com/v18.0/${instagramAccountId}/media_publish`,
-      {
-        creation_id: mediaId
-      },
+      'https://inst-oauth.smmniap.pw/api/posts',
+      publishPayload,
       {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 30000 // 30 секунд таймаут
       }
     );
 
-    log(`[Stories Static] Успешно опубликовано: ${contentId}`, 'stories-publish');
+    log(`[Stories Static] Ответ от inst-oauth API: ${JSON.stringify(publishResponse.data)}`, 'stories-publish');
 
-    res.json({
-      success: true,
-      method: 'graph_api',
-      contentId,
-      mediaId: publishResponse.data.id,
-      imageUrl,
-      hasInteractive: false
-    });
+    // Проверяем успешность публикации
+    if (publishResponse.data && publishResponse.data.success !== false) {
+      log(`[Stories Static] Успешно опубликовано: ${contentId}`, 'stories-publish');
+
+      res.json({
+        success: true,
+        method: 'inst_oauth_api',
+        contentId,
+        publishResult: publishResponse.data,
+        imageUrl,
+        hasInteractive: false,
+        postUrl: publishResponse.data.post_url || publishResponse.data.url
+      });
+    } else {
+      throw new Error(`API вернул ошибку: ${publishResponse.data.error || 'Unknown error'}`);
+    }
 
   } catch (error: any) {
     log(`[Stories Static] Ошибка: ${error.message}`, 'stories-publish');
+    
+    // Детальный лог ошибки для отладки
+    if (error.response) {
+      log(`[Stories Static] HTTP Status: ${error.response.status}`, 'stories-publish');
+      log(`[Stories Static] Response Data: ${JSON.stringify(error.response.data)}`, 'stories-publish');
+    }
+    
     res.status(500).json({
       success: false,
-      error: `Ошибка публикации статичных Stories: ${error.message}`
+      error: `Ошибка публикации статичных Stories: ${error.message}`,
+      details: error.response?.data || null
     });
   }
 });

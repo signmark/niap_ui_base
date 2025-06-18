@@ -247,7 +247,7 @@ def generate_stories():
         data = request.get_json()
         
         if not data:
-            return jsonify({'error': 'Данные не предоставлены'}), 400
+            return jsonify({'success': False, 'error': 'Данные не предоставлены'}), 400
             
         # Получаем metadata Stories
         metadata = data.get('metadata', {})
