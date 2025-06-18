@@ -1,0 +1,485 @@
+{
+  "name": "Stories Publishing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-stories",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Stories Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Извлекаем данные из входящего запроса\nconst body = $input.item.json.body || $input.item.json;\nconst contentId = body.contentId;\nconst platform = body.platform || 'instagram';\nconst metadata = body.metadata || {};\nconst storyData = metadata.storyData || {};\n\n// Проверяем наличие интерактивных элементов\nlet hasInteractive = false;\nconst interactiveTypes = [];\n\nif (storyData.slides) {\n  for (const slide of storyData.slides) {\n    if (slide.elements) {\n      for (const element of slide.elements) {\n        if (['poll', 'quiz', 'slider', 'question'].includes(element.type)) {\n          hasInteractive = true;\n          if (!interactiveTypes.includes(element.type)) {\n            interactiveTypes.push(element.type);\n          }\n        }\n      }\n    }\n  }\n}\n\nreturn {\n  contentId: contentId,\n  platform: platform,\n  hasInteractive: hasInteractive,\n  interactiveTypes: interactiveTypes,\n  storyData: storyData,\n  metadata: metadata,\n  originalBody: body\n};"
+      },
+      "id": "extract-data",
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "campaign_content",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        }
+      },
+      "id": "get-content",
+      "name": "Get Content",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -400,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public", 
+        "table": "user_campaigns",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $node['Get Content'].json.campaign_id }}"
+            }
+          ]
+        }
+      },
+      "id": "get-campaign",
+      "name": "Get Campaign",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -200,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node['Extract Data'].json.platform }}",
+              "value2": "instagram"
+            }
+          ]
+        }
+      },
+      "id": "check-platform",
+      "name": "Check Platform",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обработка Instagram Stories\nconst extractData = $node['Extract Data'].json;\nconst content = $node['Get Content'].json;\nconst campaign = $node['Get Campaign'].json;\n\n// Парсим настройки соцсетей\nlet socialSettings = {};\nif (campaign.social_media_settings) {\n  try {\n    if (typeof campaign.social_media_settings === 'string') {\n      socialSettings = JSON.parse(campaign.social_media_settings);\n    } else {\n      socialSettings = campaign.social_media_settings;\n    }\n  } catch (e) {\n    console.log('Error parsing social settings:', e);\n  }\n}\n\nconst instagram = socialSettings.instagram || {};\n\n// Определяем метод публикации\nlet publishMethod = 'official_api';\nif (extractData.hasInteractive) {\n  publishMethod = 'instagrapi';\n}\n\nreturn {\n  contentId: content.id,\n  title: content.title || '',\n  content: content.content || '',\n  imageUrl: content.image_url,\n  storyData: extractData.storyData,\n  hasInteractive: extractData.hasInteractive,\n  publishMethod: publishMethod,\n  instagramToken: instagram.token,\n  instagramAccountId: instagram.businessAccountId,\n  instagramUsername: instagram.username\n};"
+      },
+      "id": "process-instagram",
+      "name": "Process Instagram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasInteractive }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-interactive",
+      "name": "Has Interactive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5001/api/stories/publish-instagrapi",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "values": [
+            {
+              "name": "storyData",
+              "value": "={{ $json.storyData }}"
+            },
+            {
+              "name": "credentials",
+              "value": "={{ { username: $json.instagramUsername, password: 'instagram_password' } }}"
+            },
+            {
+              "name": "contentId",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        }
+      },
+      "id": "publish-instagrapi",
+      "name": "Publish via Instagrapi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        600,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $json.instagramAccountId }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token", 
+              "value": "={{ $json.instagramToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "STORIES"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.imageUrl }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.title }}"
+            }
+          ]
+        }
+      },
+      "id": "create-container",
+      "name": "Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $node['Process Instagram'].json.instagramAccountId }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $node['Process Instagram'].json.instagramToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "publish-story",
+      "name": "Publish Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обработка других платформ (Facebook, VK, Telegram)\nconst extractData = $node['Extract Data'].json;\nconst content = $node['Get Content'].json;\n\nreturn {\n  platform: extractData.platform,\n  contentId: content.id,\n  title: content.title || '',\n  content: content.content || '',\n  storyData: extractData.storyData,\n  needsProcessing: true\n};"
+      },
+      "id": "process-other",
+      "name": "Process Other Platforms",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обновляем статус публикации\nconst extractData = $node['Extract Data'].json;\nconst publishResult = $json;\n\n// Создаем статус для обновления\nconst status = {\n  selected: true,\n  status: publishResult.success !== false ? 'published' : 'error',\n  publishedAt: new Date().toISOString(),\n  postUrl: publishResult.storyUrl || publishResult.id || null,\n  error: publishResult.success === false ? (publishResult.error || 'Publication error') : null\n};\n\nreturn {\n  contentId: extractData.contentId,\n  platform: extractData.platform,\n  status: JSON.stringify({ [extractData.platform]: status }),\n  success: publishResult.success !== false\n};"
+      },
+      "id": "update-status",
+      "name": "Update Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "campaign_content",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "social_platforms": "={{ $json.status }}"
+          }
+        },
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        }
+      },
+      "id": "update-db",
+      "name": "Update Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1200,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: $node['Update Status'].json.success, platform: $node['Update Status'].json.platform, contentId: $node['Update Status'].json.contentId } }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Stories Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Get Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content": {
+      "main": [
+        [
+          {
+            "node": "Get Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign": {
+      "main": [
+        [
+          {
+            "node": "Check Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Platform": {
+      "main": [
+        [
+          {
+            "node": "Process Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Other Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Instagram": {
+      "main": [
+        [
+          {
+            "node": "Has Interactive?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Interactive?": {
+      "main": [
+        [
+          {
+            "node": "Publish via Instagrapi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Container": {
+      "main": [
+        [
+          {
+            "node": "Publish Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Story": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish via Instagrapi": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Other Platforms": {
+      "main": [
+        [
+          {
+            "node": "Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status": {
+      "main": [
+        [
+          {
+            "node": "Update Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Database": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
