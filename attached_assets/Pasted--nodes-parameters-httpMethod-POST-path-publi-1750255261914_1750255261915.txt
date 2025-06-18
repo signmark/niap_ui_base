@@ -1,0 +1,234 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-stories",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        340
+      ],
+      "id": "6c00cc84-eb5c-457a-9b56-56e18ce78783",
+      "webhookId": "c62c3b6d-abf8-4c26-90a9-4d2e2ab10351"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.item.json.body || $input.item.json;\nreturn {\n  contentId: body.contentId,\n  platform: body.platform || 'instagram',\n  storyData: body.metadata?.storyData || {},\n  hasInteractive: false\n};"
+      },
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        340
+      ],
+      "id": "9d5e13c5-0043-4f30-87c1-b4fbcfef870d"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node['Extract Data'].json.platform }}",
+              "value2": "instagram"
+            }
+          ]
+        }
+      },
+      "name": "Is Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        60,
+        340
+      ],
+      "id": "77336a82-29e3-4815-8752-0085dd0086ba"
+    },
+    {
+      "parameters": {
+        "jsCode": "const extractData = $node['Extract Data'].json;\nreturn {\n  success: true,\n  message: 'Other platform processed',\n  contentId: extractData.contentId,\n  platform: extractData.platform\n};"
+      },
+      "name": "Process Other",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        260,
+        440
+      ],
+      "id": "24bc0f0b-2529-4369-99c6-5ec5a4a29644"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        340
+      ],
+      "id": "ada09f14-7c6f-4a59-8c4d-14e61d4bdfd6"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "campaign_content",
+          "mode": "list",
+          "cachedResultName": "campaign_content"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -340,
+        340
+      ],
+      "id": "b006194f-49de-43ca-8554-94cbf328487a",
+      "name": "Get Content",
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Get Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Instagram?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Process Other",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Other": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content": {
+      "main": [
+        [
+          {
+            "node": "Is Instagram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "n8n.roboflow.tech",
+          "user-agent": "curl/8.11.1",
+          "content-length": "552",
+          "accept": "*/*",
+          "content-type": "application/json",
+          "x-forwarded-for": "34.75.42.122",
+          "x-forwarded-host": "n8n.roboflow.tech",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "f031e42c4283",
+          "x-real-ip": "34.75.42.122",
+          "accept-encoding": "gzip"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "contentId": "61bbf030-8287-4ec2-ad07-3a472812b0c3",
+          "platform": "instagram",
+          "contentType": "stories",
+          "metadata": {
+            "storyData": {
+              "slides": [
+                {
+                  "background": "#FF6B6B",
+                  "elements": [
+                    {
+                      "type": "poll",
+                      "question": "Любите ли вы здоровое питание?",
+                      "options": [
+                        "Да",
+                        "Нет"
+                      ],
+                      "position": {
+                        "x": 50,
+                        "y": 80
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "webhookUrl": "https://n8n.roboflow.tech/webhook/publish-stories",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "48b343d4f21061cd3a73b34f5a2564ef792ed905f0d50c185e3671d2882f3122"
+  }
+}
