@@ -2186,7 +2186,7 @@ export default function ContentPage() {
                 }
               >
                 {publishContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Опубликовать через N8N
+                Опубликовать сразу
               </Button>
               <Button 
                 type="button" 
