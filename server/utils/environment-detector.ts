@@ -7,6 +7,7 @@ export interface EnvironmentConfig {
   adminEmail: string;
   adminPassword: string;
   directusUrl: string;
+  n8nUrl: string;
   environment: 'development' | 'production';
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   debugScheduler: boolean;
@@ -17,12 +18,17 @@ export interface EnvironmentConfig {
  * Detects current environment and returns appropriate admin credentials
  */
 export function detectEnvironment(): EnvironmentConfig {
-  // Используем переменную ENV для определения окружения
-  const envVariable = process.env.ENV || 'production';
+  // Автоматически определяем окружение по переменным среды
+  const envVariable = process.env.ENV || process.env.NODE_ENV || 'production';
   const environment = envVariable === 'development' ? 'development' : 'production';
   
-  // ПРИНУДИТЕЛЬНО используем продакшн URL для подключения к реальному серверу
-  const directusUrl = 'https://directus.nplanner.ru';
+  // Получаем URL из переменных окружения с fallback
+  const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL || 'https://directus.nplanner.ru';
+  const n8nUrl = process.env.N8N_URL || process.env.VITE_N8N_URL || 'https://n8n.nplanner.ru';
+
+  // Получаем учетные данные из переменных окружения
+  const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || process.env.DIRECTUS_EMAIL || 'lbrspb@gmail.com';
+  const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || process.env.DIRECTUS_PASSWORD || 'QtpZ3dh7';
 
   // Конфигурация логгирования в зависимости от окружения
   const logLevel = (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 
@@ -32,9 +38,10 @@ export function detectEnvironment(): EnvironmentConfig {
   const verboseLogs = process.env.VERBOSE_LOGS === 'true' || environment === 'development';
 
   return {
-    adminEmail: 'lbrspb@gmail.com',
-    adminPassword: 'QtpZ3dh7',
+    adminEmail,
+    adminPassword,
     directusUrl,
+    n8nUrl,
     environment,
     logLevel,
     debugScheduler,
