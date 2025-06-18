@@ -49,6 +49,7 @@ import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { publishScheduler } from './services/publish-scheduler';
 import n8nStoriesWebhook from './api/n8n-stories-webhook';
+import storiesPublishEndpoints from './api/stories-publish-endpoints';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
@@ -1240,6 +1241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем N8N Stories webhook
   app.use('/api/n8n/stories', n8nStoriesWebhook);
+  app.use('/api/stories', storiesPublishEndpoints);
   // Прокси для прямых запросов к FAL.AI REST API
   // Отладочный маршрут для проверки API ключа FAL.AI
   app.get('/api/debug-fal-ai', async (req, res) => {
