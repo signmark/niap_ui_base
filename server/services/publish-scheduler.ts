@@ -185,11 +185,11 @@ export class PublishScheduler {
         for (const [platformName, platformData] of Object.entries(platforms)) {
           const data = platformData as any;
           
-          log(`Проверка платформы ${platformName} для контента ${content.id}: статус=${data.status}, scheduledAt=${data.scheduledAt}, postUrl=${data.postUrl}`, 'scheduler');
-          
           // Пропускаем уже опубликованные платформы
           if (data.status === 'published' && data.postUrl) {
-            log(`Платформа ${platformName} уже опубликована, пропускаем`, 'scheduler');
+            if (this.verboseLogging) {
+              log(`Платформа ${platformName} уже опубликована, пропускаем`, 'scheduler');
+            }
             continue;
           }
 
@@ -199,30 +199,31 @@ export class PublishScheduler {
           if (data.scheduledAt) {
             // У платформы есть свое время публикации
             const platformTime = new Date(data.scheduledAt);
-            log(`Платформа ${platformName}: время планирования ${platformTime.toISOString()}, текущее время ${currentTime.toISOString()}`, 'scheduler');
             if (platformTime <= currentTime) {
               shouldPublish = true;
-              log(`Платформа ${platformName} готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
-            } else {
-              log(`Платформа ${platformName} еще не готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
+              if (this.verboseLogging) {
+                log(`Платформа ${platformName} готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
+              }
             }
           } else if (content.scheduled_at) {
             // Используем общее время контента
             const contentTime = new Date(content.scheduled_at);
-            log(`Платформа ${platformName}: используем общее время контента ${contentTime.toISOString()}`, 'scheduler');
             if (contentTime <= currentTime) {
               shouldPublish = true;
-              log(`Платформа ${platformName} готова к публикации (общее время: ${contentTime.toISOString()})`, 'scheduler');
+              if (this.verboseLogging) {
+                log(`Платформа ${platformName} готова к публикации (общее время: ${contentTime.toISOString()})`, 'scheduler');
+              }
             }
           } else if (data.status === 'pending') {
             // Платформа в статусе pending без времени - публикуем немедленно
             shouldPublish = true;
-            log(`Платформа ${platformName} в статусе pending - публикуем немедленно`, 'scheduler');
+            if (this.verboseLogging) {
+              log(`Платформа ${platformName} в статусе pending - публикуем немедленно`, 'scheduler');
+            }
           }
 
           if (shouldPublish) {
             readyPlatforms.push(platformName);
-            log(`Платформа ${platformName} добавлена в список готовых к публикации`, 'scheduler');
           }
         }
 
