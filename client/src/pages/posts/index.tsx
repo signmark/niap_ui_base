@@ -40,10 +40,10 @@ export default function Posts() {
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации - N8N {{$now}} показывать как есть
+  // Функция для отображения общего времени публикации - показывать published_at как есть
   const formatGeneralTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // N8N {{$now}} уже сохраняет правильное московское время
+      // Показывать время из поля published_at как есть, без преобразований
       const date = new Date(dateString);
       return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
