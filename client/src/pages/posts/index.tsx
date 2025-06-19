@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { formatInTimeZone } from 'date-fns-tz';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
@@ -27,6 +28,13 @@ export default function Posts() {
     vk: 0,
     facebook: 0
   });
+  
+  // Функция для форматирования времени в часовом поясе пользователя
+  const formatUserTime = (dateString: string | Date): string => {
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
   
   // Состояние для хранения данных публикаций
   
@@ -518,13 +526,13 @@ export default function Posts() {
                                                 {/* Время публикации для платформы */}
                                                 {info.scheduledAt && (
                                                   <div className="text-xs text-muted-foreground">
-                                                    <strong>Время платформы:</strong> {format(new Date(info.scheduledAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                                    <strong>Время платформы:</strong> {formatUserTime(info.scheduledAt)}
                                                   </div>
                                                 )}
                                                 
                                                 {info.publishedAt && (
                                                   <div className="text-xs text-muted-foreground">
-                                                    <strong>Фактически опубликовано:</strong> {format(new Date(info.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                                    <strong>Фактически опубликовано:</strong> {formatUserTime(info.publishedAt)}
                                                   </div>
                                                 )}
                                                 
@@ -558,12 +566,12 @@ export default function Posts() {
                                   <div className="text-sm text-muted-foreground border-t pt-4 space-y-2">
                                     {content.scheduledAt && (
                                       <div>
-                                        <strong>Общее время публикации:</strong> {format(new Date(content.scheduledAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                        <strong>Общее время публикации:</strong> {formatUserTime(content.scheduledAt)}
                                       </div>
                                     )}
                                     {content.publishedAt && (
                                       <div>
-                                        <strong>Фактически опубликовано:</strong> {format(new Date(content.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                        <strong>Фактически опубликовано:</strong> {formatUserTime(content.publishedAt)}
                                       </div>
                                     )}
                                   </div>
