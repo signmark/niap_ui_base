@@ -586,7 +586,7 @@ export default function Posts() {
                                     )}
                                     {content.scheduledAt && (
                                       <div>
-                                        <strong>Запланировано на:</strong> {formatGeneralTime(content.scheduledAt)}
+                                        <strong>Запланировано на:</strong> {formatUserTime(content.scheduledAt)}
                                       </div>
                                     )}
                                   </div>
