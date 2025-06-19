@@ -1820,56 +1820,157 @@ export class PublishScheduler {
         return;
       }
 
-      // Публикуем в каждую платформу
-      let successfulPublications = 0;
-      let totalAttempts = 0;
+      // Публикуем во ВСЕ платформы ОДНОВРЕМЕННО через N8N вебхуки
+      log(`НАЧИНАЕМ ПАРАЛЛЕЛЬНУЮ ПУБЛИКАЦИЮ через N8N в ${platformsToPublish.length} платформ: ${platformsToPublish.join(', ')}`, 'scheduler');
       
-      for (const platform of platformsToPublish) {
-        // Проверяем, существует ли объект социальных платформ и платформа в нём
-        const platformStatus = socialPlatforms && typeof socialPlatforms === 'object' 
-          ? (socialPlatforms as Record<string, any>)[platform]?.status
-          : undefined;
+      // Создаем массив промисов для параллельной публикации через N8N
+      const publishPromises = platformsToPublish.map(async (platform) => {
+        try {
+          // Проверяем, существует ли объект социальных платформ и платформа в нём
+          const platformStatus = socialPlatforms && typeof socialPlatforms === 'object' 
+            ? (socialPlatforms as Record<string, any>)[platform]?.status
+            : undefined;
+            
+          // Пропускаем уже опубликованные
+          if (platformStatus === 'published') {
+            log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
+            return { platform, success: true, alreadyPublished: true };
+          }
+
+          log(`ПАРАЛЛЕЛЬНАЯ ПУБЛИКАЦИЯ через N8N: Запускаем публикацию в ${platform}`, 'scheduler');
+
+          // Убедимся, что метаданные проинициализированы
+          if (!content.metadata) {
+            content.metadata = {};
+          }
           
-        // Пропускаем уже опубликованные, но считаем их как успешные
-        if (platformStatus === 'published') {
-          log(`Контент ${content.id} уже опубликован в ${platform}`, 'scheduler');
-          successfulPublications++;
-          continue;
-        }
+          // Для Telegram убираем принудительное разделение картинки и текста
+          if (platform === 'telegram') {
+            (content.metadata as any).forceImageTextSeparation = false;
+            log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
+          }
 
-        totalAttempts++;
+          // Маппинг платформ на их N8N webhook endpoints
+          const webhookMap: Record<string, string> = {
+            'telegram': 'publish-telegram',
+            'vk': 'publish-vk', 
+            'instagram': 'publish-instagram',
+            'facebook': 'publish-facebook'
+          };
+          
+          // Преобразуем platform в строку нижнего регистра
+          const platformString = String(platform).toLowerCase();
+          let webhookName = webhookMap[platformString];
+          
+          if (!webhookName) {
+            webhookName = `publish-${platformString}`;
+            log(`Внимание: используем стандартный webhook для платформы ${platformString}`, 'scheduler');
+          }
+          
+          // Формируем URL для N8N webhook
+          const n8nBaseUrl = process.env.N8N_URL;
+          if (!n8nBaseUrl) {
+            throw new Error('N8N_URL не настроен в переменных окружения');
+          }
+          
+          const baseUrl = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
+          const webhookUrl = baseUrl.includes('/webhook') 
+            ? `${baseUrl}/${webhookName}`
+            : `${baseUrl}/webhook/${webhookName}`;
+          
+          log(`Отправка запроса на N8N webhook: ${webhookUrl} для контента ${content.id} в ${platform}`, 'scheduler');
+          
+          // Отправляем запрос на N8N webhook
+          const webhookResponse = await axios.post(webhookUrl, {
+            contentId: content.id,
+            platform: platformString
+          }, {
+            timeout: 30000 // 30 секунд timeout
+          });
+          
+          log(`Успешный ответ от N8N webhook для ${platform}: ${JSON.stringify(webhookResponse.data)}`, 'scheduler');
+          
+          // Создаем результат публикации
+          const result = {
+            platform,
+            status: 'published' as const,
+            publishedAt: new Date(),
+            postUrl: webhookResponse.data?.postUrl || null,
+            postId: webhookResponse.data?.postId || webhookResponse.data?.messageId || null,
+            error: null
+          };
+          
+          // Обновляем статус публикации
+          await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+          
+          return { platform, success: true, result };
+          
+        } catch (error: any) {
+          log(`Ошибка при публикации в ${platform} через N8N: ${error.message}`, 'scheduler');
+          
+          // Создаем результат с ошибкой
+          const errorResult = {
+            platform,
+            status: 'failed' as const,
+            publishedAt: new Date(),
+            postUrl: null,
+            postId: null,
+            error: error.message
+          };
+          
+          // Обновляем статус с ошибкой
+          await socialPublishingService.updatePublicationStatus(content.id, platform, errorResult);
+          
+          return { platform, success: false, error: error.message };
+        }
+      });
 
-        // Убедимся, что метаданные проинициализированы и установлен флаг forceImageTextSeparation для Telegram
-        if (!content.metadata) {
-          content.metadata = {};
-        }
-        
-        // Для Telegram убираем принудительное разделение картинки и текста
-        if (platform === 'telegram') {
-          (content.metadata as any).forceImageTextSeparation = false;
-          log(`Отключен флаг forceImageTextSeparation для запланированной Telegram публикации ID: ${content.id}`, 'scheduler');
-        }
-        
-        // Определяем URL для API запроса "Опубликовать сейчас"
-        const appUrl = process.env.APP_URL || 'http://localhost:5000';
-        
-        // Передаем имя платформы как строку, чтобы избежать ошибки "Platform [object Object] is not supported yet"
-        const platformName = typeof platform === 'string' ? platform : String(platform);
-        
-        // Для Facebook используем специальный прямой URL, для остальных - стандартный
-        let publishUrl;
-        let logMessage;
-        
-        if (platformName.toLowerCase() === 'facebook') {
-          // Используем прямой маршрут для Facebook
-          publishUrl = `${appUrl}/api/facebook-webhook-direct`;
-          logMessage = `Вызов прямого API публикации Facebook для запланированного контента ${content.id}`;
-          log(logMessage, 'scheduler');
+      // Ждем завершения всех публикаций
+      const results = await Promise.allSettled(publishPromises);
+      
+      // Подсчитываем результаты
+      let successfulPublications = 0;
+      let totalAttempts = results.length;
+      
+      results.forEach((result, index) => {
+        const platform = platformsToPublish[index];
+        if (result.status === 'fulfilled') {
+          if (result.value.success) {
+            successfulPublications++;
+            log(`✅ Успешная публикация в ${platform}`, 'scheduler');
+          } else {
+            log(`❌ Ошибка публикации в ${platform}: ${result.value.error}`, 'scheduler');
+          }
         } else {
-          // Используем route /api/publish для остальных платформ, которые маршрутизирует запросы через n8n
-          publishUrl = `${appUrl}/api/publish`;
-          logMessage = `Вызов API публикации через n8n для запланированного контента ${content.id} на платформе ${platformName}`;
-          log(logMessage, 'scheduler');
+          log(`❌ Критическая ошибка публикации в ${platform}: ${result.reason}`, 'scheduler');
+        }
+      });
+
+      log(`РЕЗУЛЬТАТ ПАРАЛЛЕЛЬНОЙ ПУБЛИКАЦИИ: ${successfulPublications}/${totalAttempts} платформ успешно`, 'scheduler');
+
+      // Проверяем итоговый статус контента
+      if (successfulPublications > 0) {
+        log(`Успешно опубликовано в ${successfulPublications} платформ из ${totalAttempts}`, 'scheduler');
+        
+        // Обновляем общий статус контента
+        if (successfulPublications === totalAttempts) {
+          // Все платформы опубликованы успешно
+          try {
+            await storage.updateCampaignContent(content.id, {
+              status: 'published',
+              published_at: new Date()
+            }, authToken);
+            log(`Контент ${content.id} полностью опубликован во всех платформах`, 'scheduler');
+          } catch (error: any) {
+            log(`Ошибка при обновлении статуса контента: ${error.message}`, 'scheduler');
+          }
+        } else {
+          // Частичная публикация
+          log(`Контент ${content.id} частично опубликован (${successfulPublications}/${totalAttempts})`, 'scheduler');
+        }
+      } else {
+        log(`Не удалось опубликовать контент ${content.id} ни в одной платформе`, 'scheduler');
+      }
         }
         
         try {
