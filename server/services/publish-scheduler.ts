@@ -61,14 +61,15 @@ export class PublishScheduler {
    */
   public async getSystemToken(): Promise<string | null> {
     try {
-      // Проверяем кэшированный токен
-      const now = Date.now();
-      if (this.adminTokenCache && 
-          (now - this.adminTokenTimestamp < this.tokenExpirationMs)) {
-        return this.adminTokenCache;
+      // Используем статический админский токен из переменных окружения
+      const adminToken = process.env.ADMIN_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
+      
+      if (adminToken) {
+        log('Используется статический токен администратора для планировщика', 'scheduler');
+        return adminToken;
       }
 
-      // Получаем новый токен
+      // Fallback: получаем новый токен через логин
       const email = process.env.DIRECTUS_ADMIN_EMAIL;
       const password = process.env.DIRECTUS_ADMIN_PASSWORD;
       
@@ -82,7 +83,7 @@ export class PublishScheduler {
           
           if (authResponse.data?.data?.access_token) {
             this.adminTokenCache = authResponse.data.data.access_token;
-            this.adminTokenTimestamp = now;
+            this.adminTokenTimestamp = Date.now();
             log('Успешно получен новый токен администратора для планировщика', 'scheduler');
             return authResponse.data.data.access_token;
           }
