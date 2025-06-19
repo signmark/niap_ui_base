@@ -140,41 +140,25 @@ export class PublishScheduler {
       const currentTime = new Date();
       const currentTimeISO = currentTime.toISOString();
       
-      // Получаем только контент с запланированным временем публикации или статусом 'scheduled'
+      // Получаем контент с платформами для проверки индивидуального времени
+      // Упрощенный фильтр - проверим время на уровне приложения
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            _and: [
-              {
-                social_platforms: {
-                  _nnull: true
-                }
-              },
-              {
-                _or: [
-                  {
-                    scheduled_at: {
-                      _lte: currentTimeISO
-                    }
-                  },
-                  {
-                    status: {
-                      _eq: 'scheduled'
-                    }
-                  }
-                ]
-              }
-            ]
+            social_platforms: {
+              _nnull: true
+            }
           }),
-          limit: 100 // Ограничиваем количество записей для производительности
+          limit: 200 // Увеличиваем лимит для обнаружения контента с индивидуальным планированием
         }
       });
 
       const allContent = response?.data?.data || [];
       
       if (allContent.length === 0) {
-        return; // Нет контента для публикации - выходим без логирования
+        log('Нет контента готового к публикации в базе данных', 'scheduler');
+        return;
       }
       
       log(`Проверка ${allContent.length} записей контента на готовность к публикации`, 'scheduler');
@@ -182,7 +166,12 @@ export class PublishScheduler {
 
       // Проверяем каждый контент на готовность к публикации
       for (const content of allContent) {
-        if (!content.social_platforms) continue;
+        if (!content.social_platforms) {
+          log(`Контент ${content.id} пропущен - нет платформ`, 'scheduler');
+          continue;
+        }
+        
+        log(`Проверка контента ${content.id} с платформами: ${JSON.stringify(content.social_platforms)}`, 'scheduler');
 
         let platforms = content.social_platforms;
         if (typeof platforms === 'string') {
@@ -217,11 +206,12 @@ export class PublishScheduler {
           // Проверяем время публикации для платформы
           let shouldPublish = false;
 
-          if (data.scheduledAt) {
+          if (data.scheduledAt || data.scheduled_at) {
             // У платформы есть свое время публикации
-            const platformTime = new Date(data.scheduledAt);
+            const platformTime = new Date(data.scheduledAt || data.scheduled_at);
             if (platformTime <= currentTime) {
               shouldPublish = true;
+              log(`Платформа ${platformName} готова к публикации: запланирована на ${platformTime.toISOString()}`, 'scheduler');
             }
           } else if (content.scheduled_at) {
             // Используем общее время контента
