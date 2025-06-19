@@ -40,12 +40,13 @@ export default function Posts() {
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации - показываем как есть
+  // Функция для отображения общего времени публикации (UTC -> Московское время +3 часа)
   const formatGeneralTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Показываем время как есть в базе данных (уже московское)
-      const date = new Date(dateString);
-      return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // Парсим UTC время и добавляем 3 часа для московского времени
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
