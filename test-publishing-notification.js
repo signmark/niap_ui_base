@@ -3,7 +3,7 @@
  * Создает тестовый запланированный контент для проверки WebSocket уведомлений
  */
 
-const axios = require('axios');
+import axios from 'axios';
 
 async function createTestScheduledContent() {
   try {
