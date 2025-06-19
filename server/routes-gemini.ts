@@ -65,7 +65,7 @@ export function registerGeminiRoutes(app: any) {
    */
   router.post('/api/gemini/improve-text', async (req: Request, res: Response) => {
     try {
-      const { text, prompt, model = 'gemini-2.5-flash-preview-05-20' } = req.body;
+      const { text, prompt, model = 'gemini-2.5-flash' } = req.body;
       
       logger.log(`[gemini-routes] Received improve-text request with model: ${model}`, 'gemini');
       
@@ -83,12 +83,12 @@ export function registerGeminiRoutes(app: any) {
       let improvedText: string;
       
       if (isGemini25Model) {
-        // Маппинг коротких названий моделей на полные
+        // Маппинг коротких названий моделей на новые GA endpoints
         let fullModelName = model;
         if (model === 'gemini-2.5-flash') {
-          fullModelName = 'gemini-2.5-flash-preview-05-20';
+          fullModelName = 'gemini-2.5-flash';
         } else if (model === 'gemini-2.5-pro') {
-          fullModelName = 'gemini-2.5-pro-preview-05-06';
+          fullModelName = 'gemini-2.5-pro';
         }
         
         // Используем прямой Vertex AI для моделей 2.5

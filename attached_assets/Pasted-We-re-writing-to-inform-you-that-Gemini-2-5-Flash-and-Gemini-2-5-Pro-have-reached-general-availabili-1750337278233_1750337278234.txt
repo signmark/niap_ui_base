@@ -1,0 +1,67 @@
+We’re writing to inform you that Gemini 2.5 Flash and Gemini 2.5 Pro have reached general availability (GA) as of June 17, 2025. Preview endpoints will be discontinued on July 15, 2025.
+
+The pricing for Gemini 2.5 Flash will be increasing to reflect its improved quality and unify input and output token pricing. Pricing for Gemini 2.5 Flash-Lite, our most cost-efficient Gemini 2.5 model, is now available in public preview.
+
+We’ve provided additional details below to help you understand these changes and take any necessary actions.
+
+What you need to know
+Key changes:
+
+New GA Endpoints: New GA endpoints for Gemini 2.5 Flash (gemini-2.5-flash) and Gemini 2.5 Pro (gemini-2.5-pro) are now available (effective June 17, 2025). We’ve removed the “-001” suffix, which was previously used to indicate a stable version.
+For more information, refer to the (Gemini 2.5 Flash documentation).
+Preview Endpoint Availability and Removal: All existing Gemini 2.5 Flash and Pro preview endpoints (listed below) will continue to be available with their current preview pricing until July 15, 2025. After this date, these preview endpoints will be shut down.
+gemini-2.5-flash-preview-04-17
+gemini-2.5-flash-preview-05-20
+gemini-2.5-pro-preview-03-25
+gemini-2.5-pro-preview-05-06
+gemini-2.5-pro-preview-06-05
+Updated Preview Endpoints: Effective June 19, 2025, gemini-2.5-flash-preview-04-17 endpoint will serve the Gemini 2.5 Flash model version released on 05-20, which has been promoted to GA. Similarly, the gemini-2.5-pro-preview-05-06 and 03-25 endpoints will serve the Gemini 2.5 Pro model version released on 06-05, also promoted to GA. This update ensures continuity during your transition.
+Updated Pricing for Gemini 2.5 Flash GA: The price for Gemini 2.5 Flash in GA will be adjusted to reflect its quality and unified output token pricing. This includes lower prices for “thinking” output, higher prices for “non-thinking” output, and ongoing service enhancements. These pricing changes will take effect on the new GA endpoint as shared above. Preview pricing will only continue on existing preview endpoints for 30 days post-GA on July 15, 2025.
+Refer to the table below for details.
+
+Provisioned Throughput (PT): Once the product is GA, all new PT purchases will be for GA endpoints only.
+If you’ve purchased PT for a specific preview version, It will still work for that specific preview.
+However, you must migrate the existing PT to the GA endpoint or purchase new PT for the GA endpoint by July 15, 2025.
+Gemini 2.5 Flash Pricing:
+
+Endpoint(s)	Task Type	Price before June 17, 2025 price (per 1M tokens)	Price after June 17, 2025 price (per 1M tokens)	Provisioned Throughput
+/gemini-2.5-flash-preview-04-17
+
+(Endpoint Retired on 7/15/2025)
+
+/gemini-2.5-flash-preview-05-20
+
+(Endpoint Retired on 7/15/2025)	Input (text, image, video)	$0.15	$0.15	
+Existing users who purchased PT for Preview versions will continue to receive PT treatment at their existing throughput per GSU while using the Preview endpoint.
+No new Preview PT purchases will be accepted after June 17, 2025.
+Audio Output	$1	$1
+Text output (no thinking)	$0.60	$0.60
+Text output (thinking- response and reasoning)	$3.50	$3.50
+/gemini-2.5-flash	Input (text, image, video)	N/A	$0.30	
+2.5 Flash PT purchases only available for GA after June 17, 2025.
+Audio Output	N/A	$1 (no change)
+Text output (no thinking)	N/A	$2.50
+Text output (thinking- response and reasoning)	N/A	$2.50
+What you need to do
+Required actions:
+To ensure uninterrupted service and to use the new GA capabilities, you will need to do the following:
+
+Migrate to new GA endpoints: Update your applications to use the new GA endpoints (gemini-2.5-flash and gemini-2.5-pro) before July 15, 2025. After this date, the preview endpoints will be decommissioned.
+Advised actions:
+
+Review price changes: Familiarize yourself with the updated pricing for Gemini 2.5 Flash GA detailed above.
+Update Provisioned Throughput: If you’ve purchased PT for Preview versions, update your PT assignment to the GA endpoint before July 15, 2025.
+Impacted customers/accounts:
+
+Your affected projects, format project_id (project_number), are listed below:
+
+laboratory-449308 (267968960436)
+We’re here to help
+We understand that this change may require some planning, and we're here to support you during this process. If you have any questions or require assistance, please reach out to the following contacts:
+
+For assistance with updating your endpoint, contact your account team
+For other troubleshooting inquiries, contact Google Cloud Support
+For the latest pricing details, refer to the pricing page
+Thanks for choosing Google Cloud.
+
+— The Google Cloud Team
