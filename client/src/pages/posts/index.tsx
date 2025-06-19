@@ -77,12 +77,14 @@ export default function Posts() {
       };
 
       campaignContent.forEach(content => {
-        // Учитываем только посты со статусом "published"
-        if (content.status === 'published' && content.socialPlatforms) {
+        // Учитываем посты со статусом "published" или "partial"
+        if ((content.status === 'published' || content.status === 'partial') && content.socialPlatforms) {
           Object.entries(content.socialPlatforms).forEach(([platform, info]) => {
-            // Учитываем только опубликованные платформы с валидными ссылками
-            if (info.status === 'published' && info.postUrl && platform in counts) {
-              counts[platform as SocialPlatform]++;
+            // Учитываем опубликованные платформы с валидными ссылками или платформы с ошибками
+            if ((info.status === 'published' && info.postUrl) || info.status === 'failed' || info.error) {
+              if (platform in counts) {
+                counts[platform as SocialPlatform]++;
+              }
             }
           });
         }
