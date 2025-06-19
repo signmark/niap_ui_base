@@ -39,6 +39,17 @@ export default function Posts() {
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
+
+  // Функция для времени "Фактически опубликовано" в превью - добавляем 3 часа
+  const formatPublishedTime = (dateString: string | Date): string => {
+    if (typeof dateString === 'string') {
+      // Добавляем 3 часа для отображения в превью карточек
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    }
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
   
   // Функция для отображения общего времени публикации - показывать published_at как есть
   const formatGeneralTime = (dateString: string | Date): string => {
@@ -547,7 +558,7 @@ export default function Posts() {
                                                 
                                                 {info.publishedAt && (
                                                   <div className="text-xs text-muted-foreground">
-                                                    <strong>Фактически опубликовано:</strong> {formatUserTime(info.publishedAt)}
+                                                    <strong>Фактически опубликовано:</strong> {formatPublishedTime(info.publishedAt)}
                                                   </div>
                                                 )}
                                                 
