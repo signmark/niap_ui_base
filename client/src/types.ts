@@ -49,7 +49,7 @@ export interface SocialCredentials {
 }
 
 // Типы статусов публикации контента
-export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'failed';
+export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'partial';
 
 // Типы социальных платформ
 export type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';

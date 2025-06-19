@@ -29,11 +29,17 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Функция для форматирования времени в часовом поясе пользователя
+  // Функция для форматирования времени в часовом поясе пользователя (для платформ)
   const formatUserTime = (dateString: string | Date): string => {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
+  
+  // Функция для отображения общего времени публикации (уже в правильном часовом поясе от n8n)
+  const formatGeneralTime = (dateString: string | Date): string => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
   // Состояние для хранения данных публикаций
@@ -136,14 +142,10 @@ export default function Posts() {
               platformData?.error) {
             hasValidPlatform = true;
             
-            // Добавляем дату публикации или обновления платформы
+            // Добавляем дату публикации платформы
             if (platformData.publishedAt) {
               try { 
                 publishedDates.push(new Date(platformData.publishedAt)); 
-              } catch (e) {}
-            } else if (platformData.updatedAt) {
-              try { 
-                publishedDates.push(new Date(platformData.updatedAt)); 
               } catch (e) {}
             }
           }
@@ -571,12 +573,12 @@ export default function Posts() {
                                   <div className="text-sm text-muted-foreground border-t pt-4 space-y-2">
                                     {content.scheduledAt && (
                                       <div>
-                                        <strong>Общее время публикации:</strong> {formatUserTime(content.scheduledAt)}
+                                        <strong>Общее время публикации:</strong> {formatGeneralTime(content.scheduledAt)}
                                       </div>
                                     )}
                                     {content.publishedAt && (
                                       <div>
-                                        <strong>Фактически опубликовано:</strong> {formatUserTime(content.publishedAt)}
+                                        <strong>Фактически опубликовано:</strong> {formatGeneralTime(content.publishedAt)}
                                       </div>
                                     )}
                                   </div>
