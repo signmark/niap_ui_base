@@ -115,37 +115,43 @@ export default function Posts() {
     // Получаем весь контент
     const allContent = getContent();
     
-    // Проходим по всем постам и находим только опубликованные
+    // Проходим по всем постам и находим опубликованные и частично опубликованные
     for (const post of allContent) {
-      // КРИТИЧЕСКИ ВАЖНО: показываем только посты со статусом "published"
-      if (post.status !== 'published') {
+      // КРИТИЧЕСКИ ВАЖНО: показываем посты со статусом "published" и "partial" (с ошибками)
+      if (post.status !== 'published' && post.status !== 'partial') {
         continue;
       }
       
-      // Проверяем что у поста есть хотя бы одна опубликованная платформа с postUrl
-      let hasPublishedPlatform = false;
+      // Проверяем что у поста есть хотя бы одна опубликованная платформа или платформа с ошибкой
+      let hasValidPlatform = false;
       const publishedDates: Date[] = [];
       
       if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
         for (const platform in post.socialPlatforms) {
           const platformData = post.socialPlatforms[platform as SocialPlatform];
           
-          // Проверяем что платформа опубликована И имеет ссылку
-          if (platformData?.status === 'published' && platformData?.postUrl) {
-            hasPublishedPlatform = true;
+          // Проверяем что платформа опубликована И имеет ссылку ИЛИ имеет ошибку
+          if ((platformData?.status === 'published' && platformData?.postUrl) || 
+              platformData?.status === 'failed' || 
+              platformData?.error) {
+            hasValidPlatform = true;
             
-            // Добавляем дату публикации платформы
+            // Добавляем дату публикации или обновления платформы
             if (platformData.publishedAt) {
               try { 
                 publishedDates.push(new Date(platformData.publishedAt)); 
+              } catch (e) {}
+            } else if (platformData.updatedAt) {
+              try { 
+                publishedDates.push(new Date(platformData.updatedAt)); 
               } catch (e) {}
             }
           }
         }
       }
       
-      // Если нет опубликованных платформ с ссылками, пропускаем пост
-      if (!hasPublishedPlatform) {
+      // Если нет валидных платформ (опубликованных или с ошибками), пропускаем пост
+      if (!hasValidPlatform) {
         continue;
       }
       
