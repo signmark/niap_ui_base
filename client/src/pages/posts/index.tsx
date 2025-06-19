@@ -29,11 +29,15 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Функция для форматирования времени в часовом поясе пользователя (для платформ)
+  // Функция для форматирования времени платформ (UTC -> Московское время +3 часа)
   const formatUserTime = (dateString: string | Date): string => {
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    if (typeof dateString === 'string') {
+      // Парсим UTC время и добавляем 3 часа для московского времени
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    }
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
   // Функция для отображения общего времени публикации - отображаем как есть в базе данных
