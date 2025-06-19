@@ -2153,11 +2153,11 @@ export default function ContentPage() {
                       platforms: selectedPlatformList
                     };
                     
-                    console.log("Отправка в N8N - contentId:", currentContent?.id);
-                    console.log("Отправка в N8N - platforms:", selectedPlatformList);
-                    console.log("Отправка в N8N - полный объект:", requestData);
+                    console.log("Публикация контента - contentId:", currentContent?.id);
+                    console.log("Публикация контента - platforms:", selectedPlatformList);
+                    console.log("Публикация контента - полный объект:", requestData);
                     
-                    // Вызываем новый API эндпоинт для N8N публикации
+                    // Вызываем API эндпоинт для публикации контента
                     const response = await apiRequest('/api/publish-content', {
                       method: 'POST',
                       data: requestData
@@ -2165,19 +2165,19 @@ export default function ContentPage() {
                     
                     if (response.success) {
                       toast({
-                        description: response.message || "Контент отправлен в N8N для публикации",
+                        description: response.message || "Контент успешно отправлен на публикацию",
                         variant: "default"
                       });
                     } else {
                       toast({
-                        description: response.error || "Ошибка при отправке в N8N",
+                        description: response.error || "Ошибка при публикации контента",
                         variant: "destructive"
                       });
                     }
                   } catch (error: any) {
-                    console.error("Ошибка N8N публикации:", error);
+                    console.error("Ошибка публикации контента:", error);
                     toast({
-                      description: error.message || "Ошибка при отправке в N8N",
+                      description: error.message || "Ошибка при публикации контента",
                       variant: "destructive"
                     });
                   }

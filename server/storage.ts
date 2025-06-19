@@ -1123,7 +1123,10 @@ export class DatabaseStorage implements IStorage {
           }
           
           directusUpdates.social_platforms = mergedPlatforms;
-          console.log(`Обновлены платформы с сохранением опубликованных статусов для контента ${id}`);
+          console.log(`🔒 ЗАЩИТА ОТ СБРОСА: Обновлены платформы с сохранением опубликованных статусов для контента ${id}`);
+          console.log(`🔒 Сохранены published статусы:`, Object.entries(mergedPlatforms)
+            .filter(([_, data]) => data.status === 'published')
+            .map(([platform, _]) => platform));
         } else {
           // Если нет текущих данных, используем новые
           directusUpdates.social_platforms = updates.socialPlatforms;
