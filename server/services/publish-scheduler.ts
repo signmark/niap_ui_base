@@ -76,15 +76,20 @@ export class PublishScheduler {
       
       if (email && password) {
         try {
-          const authResult = await directusCrud.login(email, password);
+          const directusUrl = process.env.DIRECTUS_URL;
+          const authResponse = await axios.post(`${directusUrl}/auth/login`, {
+            email,
+            password
+          });
           
-          if (authResult?.access_token) {
-            this.adminTokenCache = authResult.access_token;
+          if (authResponse.data?.data?.access_token) {
+            this.adminTokenCache = authResponse.data.data.access_token;
             this.adminTokenTimestamp = now;
-            return authResult.access_token;
+            log('Успешно получен новый токен администратора для планировщика', 'scheduler');
+            return authResponse.data.data.access_token;
           }
         } catch (error: any) {
-          log(`Ошибка при авторизации: ${error.message}`, 'scheduler');
+          log(`Ошибка при авторизации планировщика: ${error.message}`, 'scheduler');
         }
       }
 
@@ -132,15 +137,11 @@ export class PublishScheduler {
         'Content-Type': 'application/json'
       };
 
-      // Получаем контент со статусом 'scheduled' и 'draft' с платформами
+      // Получаем весь контент с платформами для проверки индивидуального времени
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            _or: [
-              { status: { _eq: 'scheduled' } },
-              { status: { _eq: 'draft' } }
-            ],
             social_platforms: {
               _nnull: true
             }
@@ -150,11 +151,16 @@ export class PublishScheduler {
       });
 
       const allContent = response?.data?.data || [];
+      log(`Получено ${allContent.length} записей контента для проверки планирования`, 'scheduler');
+      
       if (allContent.length === 0) {
-        if (this.verboseLogging) {
-          log('Нет контента для проверки времени публикации', 'scheduler');
-        }
+        log('Нет контента для проверки времени публикации', 'scheduler');
         return;
+      }
+      
+      // Показываем первые несколько записей для отладки
+      if (allContent.length > 0) {
+        log(`Пример контента: ID=${allContent[0].id}, статус=${allContent[0].status}, есть платформы=${!!allContent[0].social_platforms}`, 'scheduler');
       }
 
       const currentTime = new Date();
@@ -179,8 +185,11 @@ export class PublishScheduler {
         for (const [platformName, platformData] of Object.entries(platforms)) {
           const data = platformData as any;
           
+          log(`Проверка платформы ${platformName} для контента ${content.id}: статус=${data.status}, scheduledAt=${data.scheduledAt}, postUrl=${data.postUrl}`, 'scheduler');
+          
           // Пропускаем уже опубликованные платформы
           if (data.status === 'published' && data.postUrl) {
+            log(`Платформа ${platformName} уже опубликована, пропускаем`, 'scheduler');
             continue;
           }
 
@@ -190,31 +199,30 @@ export class PublishScheduler {
           if (data.scheduledAt) {
             // У платформы есть свое время публикации
             const platformTime = new Date(data.scheduledAt);
+            log(`Платформа ${platformName}: время планирования ${platformTime.toISOString()}, текущее время ${currentTime.toISOString()}`, 'scheduler');
             if (platformTime <= currentTime) {
               shouldPublish = true;
-              if (this.verboseLogging) {
-                log(`Платформа ${platformName} готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
-              }
+              log(`Платформа ${platformName} готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
+            } else {
+              log(`Платформа ${platformName} еще не готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
             }
           } else if (content.scheduled_at) {
             // Используем общее время контента
             const contentTime = new Date(content.scheduled_at);
+            log(`Платформа ${platformName}: используем общее время контента ${contentTime.toISOString()}`, 'scheduler');
             if (contentTime <= currentTime) {
               shouldPublish = true;
-              if (this.verboseLogging) {
-                log(`Платформа ${platformName} готова к публикации (общее время: ${contentTime.toISOString()})`, 'scheduler');
-              }
+              log(`Платформа ${platformName} готова к публикации (общее время: ${contentTime.toISOString()})`, 'scheduler');
             }
           } else if (data.status === 'pending') {
             // Платформа в статусе pending без времени - публикуем немедленно
             shouldPublish = true;
-            if (this.verboseLogging) {
-              log(`Платформа ${platformName} в статусе pending - публикуем немедленно`, 'scheduler');
-            }
+            log(`Платформа ${platformName} в статусе pending - публикуем немедленно`, 'scheduler');
           }
 
           if (shouldPublish) {
             readyPlatforms.push(platformName);
+            log(`Платформа ${platformName} добавлена в список готовых к публикации`, 'scheduler');
           }
         }
 
