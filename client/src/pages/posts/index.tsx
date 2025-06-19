@@ -36,10 +36,10 @@ export default function Posts() {
     return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации - строго как в базе данных
+  // Функция для отображения общего времени публикации - отображаем как есть в базе данных
   const formatGeneralTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Парсим ISO строку и извлекаем компоненты вручную
+      // Парсим ISO строку и отображаем время как есть (уже в московском времени)
       const isoString = dateString.replace('Z', '');
       const parts = isoString.split('T');
       const datePart = parts[0];
