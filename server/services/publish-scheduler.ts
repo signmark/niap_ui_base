@@ -164,18 +164,25 @@ export class PublishScheduler {
 
       // Проверяем каждый контент на готовность к публикации
       for (const content of allContent) {
+        log(`Планировщик: Проверяем контент ${content.id} (статус: ${content.status})`, 'scheduler');
         // Поддерживаем оба формата: social_platforms и socialPlatforms
         const platformsData = content.social_platforms || content.socialPlatforms;
-        if (!platformsData) continue;
+        if (!platformsData) {
+          log(`Планировщик: Пропускаем контент ${content.id} - нет данных платформ`, 'scheduler');
+          continue;
+        }
 
         let platforms = platformsData;
         if (typeof platforms === 'string') {
           try {
             platforms = JSON.parse(platforms);
           } catch (e) {
+            log(`Планировщик: Ошибка парсинга JSON для контента ${content.id}`, 'scheduler');
             continue;
           }
         }
+        
+        log(`Планировщик: Платформы для контента ${content.id}: ${JSON.stringify(Object.keys(platforms))}`, 'scheduler');
 
         // Быстрая проверка: есть ли хотя бы одна неопубликованная платформа
         const hasUnpublishedPlatforms = Object.values(platforms).some((platformData: any) => 
