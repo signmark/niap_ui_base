@@ -292,7 +292,7 @@ export default function ScheduledPublicationDetails({
             <div className="flex items-center">
               <Calendar className="mr-2" size={16} />
               <span className="text-sm font-medium">Дата публикации:</span>
-              <span className="ml-2 text-sm">{formatScheduledDate(content.scheduledAt)}</span>
+              <span className="ml-2 text-sm">{formatScheduledDate(content.publishedAt || content.scheduledAt)}</span>
             </div>
             
             {platforms.length > 0 && (
