@@ -14,7 +14,7 @@ export class PublishScheduler {
   private checkIntervalMs = 20000; // проверяем каждые 20 секунд
   private isProcessing = false;
   private processingStartTime: number = 0;
-  private verboseLogging = process.env.DEBUG_SCHEDULER === 'true';
+  private verboseLogging = false; // Отключаем детальное логирование для уменьшения шума
   private adminTokenCache: string | null = null;
   private adminTokenTimestamp: number = 0;
   private tokenExpirationMs = 30 * 60 * 1000; // 30 минут
