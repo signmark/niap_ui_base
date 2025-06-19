@@ -137,33 +137,47 @@ export class PublishScheduler {
         'Content-Type': 'application/json'
       };
 
-      // Получаем весь контент с платформами для проверки индивидуального времени
+      const currentTime = new Date();
+      const currentTimeISO = currentTime.toISOString();
+      
+      // Получаем только контент с запланированным временем публикации или статусом 'scheduled'
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            social_platforms: {
-              _nnull: true
-            }
+            _and: [
+              {
+                social_platforms: {
+                  _nnull: true
+                }
+              },
+              {
+                _or: [
+                  {
+                    scheduled_at: {
+                      _lte: currentTimeISO
+                    }
+                  },
+                  {
+                    status: {
+                      _eq: 'scheduled'
+                    }
+                  }
+                ]
+              }
+            ]
           }),
-          limit: -1
+          limit: 100 // Ограничиваем количество записей для производительности
         }
       });
 
       const allContent = response?.data?.data || [];
-      log(`Получено ${allContent.length} записей контента для проверки планирования`, 'scheduler');
       
       if (allContent.length === 0) {
-        log('Нет контента для проверки времени публикации', 'scheduler');
-        return;
+        return; // Нет контента для публикации - выходим без логирования
       }
       
-      // Показываем первые несколько записей для отладки
-      if (allContent.length > 0) {
-        log(`Пример контента: ID=${allContent[0].id}, статус=${allContent[0].status}, есть платформы=${!!allContent[0].social_platforms}`, 'scheduler');
-      }
-
-      const currentTime = new Date();
+      log(`Проверка ${allContent.length} записей контента на готовность к публикации`, 'scheduler');
       const contentToPublish = [];
 
       // Проверяем каждый контент на готовность к публикации
@@ -179,6 +193,16 @@ export class PublishScheduler {
           }
         }
 
+        // Быстрая проверка: есть ли хотя бы одна неопубликованная платформа
+        const hasUnpublishedPlatforms = Object.values(platforms).some((platformData: any) => 
+          !(platformData.status === 'published' && platformData.postUrl)
+        );
+        
+        if (!hasUnpublishedPlatforms) {
+          // Все платформы уже опубликованы, пропускаем этот контент
+          continue;
+        }
+
         const readyPlatforms = [];
 
         // Проверяем каждую платформу на готовность к публикации
@@ -187,9 +211,6 @@ export class PublishScheduler {
           
           // Пропускаем уже опубликованные платформы
           if (data.status === 'published' && data.postUrl) {
-            if (this.verboseLogging) {
-              log(`Платформа ${platformName} уже опубликована, пропускаем`, 'scheduler');
-            }
             continue;
           }
 
@@ -201,25 +222,16 @@ export class PublishScheduler {
             const platformTime = new Date(data.scheduledAt);
             if (platformTime <= currentTime) {
               shouldPublish = true;
-              if (this.verboseLogging) {
-                log(`Платформа ${platformName} готова к публикации (время: ${platformTime.toISOString()})`, 'scheduler');
-              }
             }
           } else if (content.scheduled_at) {
             // Используем общее время контента
             const contentTime = new Date(content.scheduled_at);
             if (contentTime <= currentTime) {
               shouldPublish = true;
-              if (this.verboseLogging) {
-                log(`Платформа ${platformName} готова к публикации (общее время: ${contentTime.toISOString()})`, 'scheduler');
-              }
             }
           } else if (data.status === 'pending') {
             // Платформа в статусе pending без времени - публикуем немедленно
             shouldPublish = true;
-            if (this.verboseLogging) {
-              log(`Платформа ${platformName} в статусе pending - публикуем немедленно`, 'scheduler');
-            }
           }
 
           if (shouldPublish) {
