@@ -1087,7 +1087,48 @@ export class DatabaseStorage implements IStorage {
         directusUpdates.prompt = updates.prompt;
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
-      if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
+      
+      // КРИТИЧЕСКИ ВАЖНО: при обновлении socialPlatforms сохраняем существующие статусы опубликованных платформ
+      if (updates.socialPlatforms !== undefined) {
+        // Получаем текущие данные контента
+        const currentContent = await this.getCampaignContentById(id, authToken);
+        if (currentContent && currentContent.socialPlatforms) {
+          const currentPlatforms = typeof currentContent.socialPlatforms === 'string' 
+            ? JSON.parse(currentContent.socialPlatforms) 
+            : currentContent.socialPlatforms;
+          
+          const newPlatforms = typeof updates.socialPlatforms === 'string'
+            ? JSON.parse(updates.socialPlatforms)
+            : updates.socialPlatforms;
+          
+          // Объединяем данные: сохраняем опубликованные статусы, обновляем остальные
+          const mergedPlatforms = { ...currentPlatforms };
+          
+          for (const [platform, newData] of Object.entries(newPlatforms)) {
+            const currentData = mergedPlatforms[platform];
+            const newPlatformData = newData as any;
+            
+            // Если платформа уже опубликована - сохраняем её статус и данные
+            if (currentData && currentData.status === 'published' && currentData.postUrl) {
+              console.log(`Сохраняем опубликованный статус для платформы ${platform}`);
+              // Обновляем только время, если оно изменилось, но сохраняем статус published
+              mergedPlatforms[platform] = {
+                ...currentData, // Сохраняем все данные опубликованной платформы
+                scheduledAt: newPlatformData.scheduledAt || currentData.scheduledAt // Обновляем время если нужно
+              };
+            } else {
+              // Для неопубликованных платформ используем новые данные
+              mergedPlatforms[platform] = newPlatformData;
+            }
+          }
+          
+          directusUpdates.social_platforms = mergedPlatforms;
+          console.log(`Обновлены платформы с сохранением опубликованных статусов для контента ${id}`);
+        } else {
+          // Если нет текущих данных, используем новые
+          directusUpdates.social_platforms = updates.socialPlatforms;
+        }
+      }
       // Добавляем обработку дополнительных изображений
       if (updates.additionalImages !== undefined) {
         console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);
