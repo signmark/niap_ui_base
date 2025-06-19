@@ -2435,12 +2435,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Прямой импорт для обеспечения доступности метода
             const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
             
-            // Маппинг коротких названий моделей на полные Vertex AI названия
+            // Маппинг коротких названий моделей на новые GA endpoints
             let fullModelName = service;
             if (service === 'gemini-2.5-flash') {
-              fullModelName = 'gemini-2.5-flash-preview-05-20';
+              fullModelName = 'gemini-2.5-flash';
             } else if (service === 'gemini-2.5-pro') {
-              fullModelName = 'gemini-2.5-pro-preview-05-06';
+              fullModelName = 'gemini-2.5-pro';
             }
             
             console.log('[gemini-2.5] Генерация контента с полным названием модели:', fullModelName);

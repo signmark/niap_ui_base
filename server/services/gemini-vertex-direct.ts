@@ -146,7 +146,7 @@ class GeminiVertexDirect {
    */
   async generateContent(params: { prompt: string; model?: string }): Promise<string> {
     try {
-      const { prompt, model = 'gemini-2.5-flash-preview-05-20' } = params;
+      const { prompt, model = 'gemini-2.5-flash' } = params;
       
       log(`[gemini-vertex-direct] Запрос генерации текста с моделью: ${model}`, 'info');
       

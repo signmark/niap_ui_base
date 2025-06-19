@@ -40,7 +40,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('deepseek');
+  const [selectedService, setSelectedService] = useState<ApiService>('gemini-2.5-flash');
   const [useCampaignData, setUseCampaignData] = useState(false);
 
   const { mutate: generateContent, isPending } = useMutation({
