@@ -155,6 +155,8 @@ export class PublishScheduler {
 
       const allContent = response?.data?.data || [];
       
+      log(`Планировщик: Найдено ${allContent.length} контентов в статусе scheduled`, 'scheduler');
+      
       if (allContent.length === 0) {
         return;
       }

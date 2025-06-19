@@ -415,6 +415,7 @@ app.use((req, res, next) => {
         log('Запуск планировщика публикаций с поддержкой N8N', 'scheduler');
         const scheduler = getPublishScheduler();
         scheduler.start();
+        log('✅ Планировщик публикаций успешно запущен', 'scheduler');
       }, 35000); // Задержка 35 секунд для завершения инициализации всех сервисов
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
