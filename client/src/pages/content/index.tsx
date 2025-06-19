@@ -1378,12 +1378,12 @@ export default function ContentPage() {
                                 <div className="mt-2 pt-1.5 border-t text-xs text-muted-foreground flex flex-wrap gap-x-3">
                                   {content.publishedAt && (
                                     <CreationTimeDisplay
-                                      createdAt={getCorrectPublishedTime(content)}
+                                      createdAt={content.publishedAt}
                                       label="Опубл.:"
                                       showIcon={false}
                                       iconType="check"
                                       className="text-xs"
-                                      isFromPlatforms={true}
+                                      isFromPlatforms={false}
                                     />
                                   )}
                                   {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
