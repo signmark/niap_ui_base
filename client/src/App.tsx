@@ -39,6 +39,7 @@ import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -120,6 +121,9 @@ function Router() {
 }
 
 function App() {
+  // Инициализируем WebSocket соединение для real-time уведомлений
+  useWebSocket();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

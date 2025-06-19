@@ -229,6 +229,17 @@ export class PublishScheduler {
 
       if (contentToPublish.length > 0) {
         log(`Найдено ${contentToPublish.length} контентов готовых к публикации`, 'scheduler');
+        
+        // Отправляем уведомление в UI о найденном запланированном контенте
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('scheduled_content_found', {
+            count: contentToPublish.length,
+            message: `Найдено ${contentToPublish.length} контентов готовых к публикации`
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
+        }
       }
 
       // Публикуем контент асинхронно через N8N
@@ -287,6 +298,18 @@ export class PublishScheduler {
         });
 
         log(`Контент ${content.id} успешно отправлен в ${platform}`, 'scheduler');
+        
+        // Отправляем уведомление в UI об успешной отправке
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('content_published', {
+            contentId: content.id,
+            platform: platform,
+            message: `Контент успешно опубликован в ${platform}`
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
+        }
         
         return { platform, success: true };
 
