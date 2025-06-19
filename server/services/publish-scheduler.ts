@@ -164,9 +164,24 @@ export class PublishScheduler {
           return;
         }
 
+        // Отправляем уведомление о начале обработки
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('scheduler_processing_start', {
+            count: allContent.length,
+            message: `Начинаем обработку ${allContent.length} контентов для публикации`
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
+        }
+
+        let processedCount = 0;
+        let publishedCount = 0;
+
         // Обрабатываем каждый контент для определения неопубликованных платформ
         for (const content of allContent) {
           log(`Планировщик: Обрабатываем контент ${content.id} (статус: ${content.status})`, 'scheduler');
+          processedCount++;
           
           // Получаем данные платформ
           const platformsData = content.social_platforms || content.socialPlatforms;
@@ -201,9 +216,22 @@ export class PublishScheduler {
             
             // Отправляем в неопубликованные платформы через N8N
             await this.publishContentToPlatforms(content, unpublishedPlatforms, authToken);
+            publishedCount++;
           } else {
             log(`Планировщик: Контент ${content.id} уже опубликован во всех платформах`, 'scheduler');
           }
+        }
+
+        // Отправляем итоговое уведомление
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('scheduler_processing_complete', {
+            processedCount,
+            publishedCount,
+            message: `Обработка завершена: ${publishedCount} из ${processedCount} контентов отправлены на публикацию`
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
         }
         
       } catch (error: any) {

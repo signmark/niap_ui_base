@@ -28,6 +28,22 @@ export function useWebSocket() {
         const message: WebSocketMessage = JSON.parse(event.data);
         
         switch (message.type) {
+          case 'scheduler_processing_start':
+            toast({
+              title: "Обработка контента",
+              description: message.data.message,
+              duration: 3000,
+            });
+            break;
+
+          case 'scheduler_processing_complete':
+            toast({
+              title: "Обработка завершена",
+              description: message.data.message,
+              duration: 5000,
+            });
+            break;
+            
           case 'scheduled_content_found':
             toast({
               title: "Найден запланированный контент",
