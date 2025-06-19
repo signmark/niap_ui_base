@@ -243,12 +243,9 @@ export class PublishScheduler {
    * Публикует контент в указанные платформы через N8N
    */
   private async publishContentToPlatforms(content: any, platforms: string[], authToken: string) {
-    log(`НАЧИНАЕМ ПАРАЛЛЕЛЬНУЮ ПУБЛИКАЦИЮ контента ${content.id} в платформы: ${platforms.join(', ')}`, 'scheduler');
-
     // Создаем промисы для параллельной публикации через N8N
     const publishPromises = platforms.map(async (platform) => {
       try {
-        log(`Публикация в ${platform} через N8N для контента ${content.id}`, 'scheduler');
 
         // Маппинг платформ на N8N webhook endpoints
         const webhookMap: Record<string, string> = {
@@ -272,10 +269,8 @@ export class PublishScheduler {
           ? `${baseUrl}/${webhookName}`
           : `${baseUrl}/webhook/${webhookName}`;
 
-        log(`Отправка запроса на N8N: ${webhookUrl}`, 'scheduler');
-
         // Отправляем запрос на N8N webhook
-        const response = await axios.post(webhookUrl, {
+        await axios.post(webhookUrl, {
           contentId: content.id,
           platform: platformString
         }, {
@@ -285,58 +280,17 @@ export class PublishScheduler {
           }
         });
 
-        log(`Успешный ответ от N8N для ${platform}: ${JSON.stringify(response.data)}`, 'scheduler');
-
-        // Обновляем статус публикации
-        const result = {
-          platform,
-          status: 'published' as const,
-          publishedAt: new Date(),
-          postUrl: response.data?.postUrl || null,
-          postId: response.data?.postId || response.data?.messageId || null,
-          error: null
-        };
-
-        await socialPublishingService.updatePublicationStatus(content.id, platform, result);
+        // N8N обновит статус публикации автоматически
         
-        return { platform, success: true, result };
+        return { platform, success: true };
 
       } catch (error: any) {
-        log(`Ошибка при публикации в ${platform}: ${error.message}`, 'scheduler');
-
-        // Обновляем статус с ошибкой
-        const errorResult = {
-          platform,
-          status: 'failed' as const,
-          publishedAt: new Date(),
-          postUrl: null,
-          postId: null,
-          error: error.message
-        };
-
-        await socialPublishingService.updatePublicationStatus(content.id, platform, errorResult);
-        
         return { platform, success: false, error: error.message };
       }
     });
 
-    // Ждем завершения всех публикаций
-    const results = await Promise.allSettled(publishPromises);
-    
-    // Подсчитываем результаты
-    let successCount = 0;
-    results.forEach((result, index) => {
-      const platform = platforms[index];
-      if (result.status === 'fulfilled' && result.value.success) {
-        successCount++;
-        log(`✅ Успешная публикация в ${platform}`, 'scheduler');
-      } else {
-        const error = result.status === 'fulfilled' ? result.value.error : result.reason;
-        log(`❌ Ошибка публикации в ${platform}: ${error}`, 'scheduler');
-      }
-    });
-
-    log(`Результат публикации контента ${content.id}: ${successCount}/${platforms.length} платформ успешно`, 'scheduler');
+    // Выполняем все публикации параллельно и показываем результат
+    await Promise.allSettled(publishPromises);
 
     // Обновляем общий статус контента
     await this.updateContentStatus(content.id, authToken);
