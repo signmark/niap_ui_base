@@ -579,14 +579,14 @@ export default function Posts() {
                                   
                                   {/* Время публикации */}
                                   <div className="text-sm text-muted-foreground border-t pt-4 space-y-2">
-                                    {content.scheduledAt && (
-                                      <div>
-                                        <strong>Общее время публикации:</strong> {formatGeneralTime(content.scheduledAt)}
-                                      </div>
-                                    )}
                                     {content.publishedAt && (
                                       <div>
-                                        <strong>Фактически опубликовано:</strong> {formatGeneralTime(content.publishedAt)}
+                                        <strong>Общее время публикации:</strong> {formatGeneralTime(content.publishedAt)}
+                                      </div>
+                                    )}
+                                    {content.scheduledAt && (
+                                      <div>
+                                        <strong>Запланировано на:</strong> {formatGeneralTime(content.scheduledAt)}
                                       </div>
                                     )}
                                   </div>
