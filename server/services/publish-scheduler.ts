@@ -132,30 +132,37 @@ export class PublishScheduler {
       const currentTime = new Date();
       const currentTimeISO = currentTime.toISOString();
       
-      // Получаем только контент со статусом 'scheduled'
+      // Получаем контент со статусами 'scheduled' и 'partial' для обработки
       log(`Планировщик: Отправляем запрос к ${directusUrl}/items/campaign_content с токеном ${authToken.substring(0, 10)}...`, 'scheduler');
       
-      const response = await axios.get(`${directusUrl}/items/campaign_content`, {
-        headers,
-        params: {
-          filter: JSON.stringify({
-            status: {
-              _eq: 'scheduled'
-            }
-          }),
-          limit: 100
+      try {
+        const response = await axios.get(`${directusUrl}/items/campaign_content`, {
+          headers,
+          params: {
+            filter: JSON.stringify({
+              status: {
+                _in: ['scheduled', 'partial']
+              }
+            }),
+            limit: 100
+          }
+        });
+
+        log(`Планировщик: Получен ответ от Directus. Статус: ${response.status}`, 'scheduler');
+
+        const allContent = response?.data?.data || [];
+        
+        log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
+        
+        if (allContent.length > 0) {
+          log(`Планировщик: Статусы найденного контента: ${allContent.map((c: any) => c.status).join(', ')}`, 'scheduler');
         }
-      });
-
-      log(`Планировщик: Получен ответ от Directus. Статус: ${response.status}, Content-Type: ${response.headers['content-type']}`, 'scheduler');
-      log(`Планировщик: Структура ответа: ${JSON.stringify(Object.keys(response.data || {}), null, 2)}`, 'scheduler');
-
-      const allContent = response?.data?.data || [];
-      
-      log(`Планировщик: Найдено ${allContent.length} контентов в статусе scheduled`, 'scheduler');
-      
-      if (allContent.length > 0) {
-        log(`Планировщик: Первый элемент: ${JSON.stringify(allContent[0], null, 2)}`, 'scheduler');
+      } catch (error: any) {
+        log(`Планировщик: Ошибка запроса к Directus API: ${error.message}`, 'scheduler');
+        if (error.response) {
+          log(`Планировщик: Статус ошибки: ${error.response.status}, Данные: ${JSON.stringify(error.response.data)}`, 'scheduler');
+        }
+        return;
       }
       
       if (allContent.length === 0) {
