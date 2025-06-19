@@ -29,24 +29,23 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Функция для форматирования времени платформ (UTC -> Московское время +3 часа)
+  // Функция для форматирования времени платформ (Московское -> UTC время -3 часа)
   const formatUserTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Парсим UTC время и добавляем 3 часа для московского времени
-      const utcDate = new Date(dateString);
-      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
-      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // Парсим московское время и убавляем 3 часа для UTC
+      const moscowDate = new Date(dateString);
+      const utcTime = new Date(moscowDate.getTime() - (3 * 60 * 60 * 1000));
+      return format(utcTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации (UTC -> Московское время +3 часа)
+  // Функция для отображения общего времени публикации - показываем как есть
   const formatGeneralTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Парсим UTC время и добавляем 3 часа для московского времени
-      const utcDate = new Date(dateString);
-      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
-      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // Показываем время как есть в базе данных (уже московское)
+      const date = new Date(dateString);
+      return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
