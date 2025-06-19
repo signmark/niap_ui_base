@@ -133,30 +133,30 @@ export class PublishScheduler {
       const currentTimeISO = currentTime.toISOString();
       
       // Получаем только контент со статусом 'scheduled'
+      log(`Планировщик: Отправляем запрос к ${directusUrl}/items/campaign_content с токеном ${authToken.substring(0, 10)}...`, 'scheduler');
+      
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            _and: [
-              {
-                status: {
-                  _eq: 'scheduled'
-                }
-              },
-              {
-                social_platforms: {
-                  _nnull: true
-                }
-              }
-            ]
+            status: {
+              _eq: 'scheduled'
+            }
           }),
           limit: 100
         }
       });
 
+      log(`Планировщик: Получен ответ от Directus. Статус: ${response.status}, Content-Type: ${response.headers['content-type']}`, 'scheduler');
+      log(`Планировщик: Структура ответа: ${JSON.stringify(Object.keys(response.data || {}), null, 2)}`, 'scheduler');
+
       const allContent = response?.data?.data || [];
       
       log(`Планировщик: Найдено ${allContent.length} контентов в статусе scheduled`, 'scheduler');
+      
+      if (allContent.length > 0) {
+        log(`Планировщик: Первый элемент: ${JSON.stringify(allContent[0], null, 2)}`, 'scheduler');
+      }
       
       if (allContent.length === 0) {
         return;
