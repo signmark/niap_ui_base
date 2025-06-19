@@ -2510,19 +2510,16 @@ export default function ContentPage() {
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {previewContent?.publishedAt && (() => {
-                  // Получаем самое позднее время публикации из платформ
-                  const getLatestPublishedTime = () => {
-                    return getCorrectPublishedTime(previewContent);
-                  };
-                  
+                  // Для общего времени публикации используем published_at как есть (БЕЗ добавления 3 часов)
+                  // Это время уже сохранено в правильном формате из N8N
                   return (
                     <CreationTimeDisplay 
-                      createdAt={getLatestPublishedTime()}
+                      createdAt={previewContent.publishedAt}
                       label="Опубликовано:"
                       showIcon={true}
                       iconType="check"
                       className="flex items-center gap-1"
-                      isFromPlatforms={true}
+                      isFromPlatforms={false}
                     />
                   );
                 })()}
