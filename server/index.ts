@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
@@ -38,6 +40,43 @@ process.env.NODE_ENV = 'development';
 global['directusApiManager'] = directusApiManager;
 
 const app = express();
+const server = createServer(app);
+
+// WebSocket server для real-time уведомлений
+const wss = new WebSocketServer({ server });
+
+// Обработка WebSocket подключений
+wss.on('connection', (ws) => {
+  log('WebSocket клиент подключен', 'websocket');
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      log(`WebSocket сообщение получено: ${data.type}`, 'websocket');
+    } catch (error) {
+      log(`Ошибка парсинга WebSocket сообщения: ${error}`, 'websocket');
+    }
+  });
+  
+  ws.on('close', () => {
+    log('WebSocket клиент отключен', 'websocket');
+  });
+});
+
+// Функция для отправки уведомлений всем подключенным клиентам
+export function broadcastNotification(type: string, data: any) {
+  const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Экспортируем WebSocket server для использования в других модулях
+export { wss };
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

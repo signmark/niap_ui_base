@@ -227,6 +227,10 @@ export class PublishScheduler {
         }
       }
 
+      if (contentToPublish.length > 0) {
+        log(`Найдено ${contentToPublish.length} контентов готовых к публикации`, 'scheduler');
+      }
+
       // Публикуем контент асинхронно через N8N
       for (const item of contentToPublish) {
         await this.publishContentToPlatforms(item.content, item.platforms, authToken);
@@ -270,6 +274,8 @@ export class PublishScheduler {
           : `${baseUrl}/webhook/${webhookName}`;
 
         // Отправляем запрос на N8N webhook
+        log(`Отправка контента ${content.id} в ${platform} через N8N webhook`, 'scheduler');
+        
         await axios.post(webhookUrl, {
           contentId: content.id,
           platform: platformString
@@ -280,7 +286,7 @@ export class PublishScheduler {
           }
         });
 
-        // N8N обновит статус публикации автоматически
+        log(`Контент ${content.id} успешно отправлен в ${platform}`, 'scheduler');
         
         return { platform, success: true };
 
