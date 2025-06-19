@@ -36,19 +36,25 @@ export default function Posts() {
     return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации - БЕЗ ПРЕОБРАЗОВАНИЙ
+  // Функция для отображения общего времени публикации - строго как в базе данных
   const formatGeneralTime = (dateString: string | Date): string => {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    // Используем getUTC методы для получения времени как есть из базы данных
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const day = date.getUTCDate();
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
+    if (typeof dateString === 'string') {
+      // Парсим ISO строку и извлекаем компоненты вручную
+      const isoString = dateString.replace('Z', '');
+      const parts = isoString.split('T');
+      const datePart = parts[0];
+      const timePart = parts[1];
+      
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hours, minutes] = timePart.split(':').map(Number);
+      
+      const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
+                         'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      
+      return `${day} ${monthNames[month - 1]} ${year}, ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
     
-    // Создаем новую дату с этими значениями как локальное время
-    const localDate = new Date(year, month, day, hours, minutes);
-    return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
   // Состояние для хранения данных публикаций
