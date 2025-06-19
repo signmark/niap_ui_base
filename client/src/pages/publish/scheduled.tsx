@@ -9,6 +9,7 @@ import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { safeSocialPlatforms, platformNames, SocialPlatforms } from '@/lib/social-platforms';
 import { Link } from 'wouter';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 import {
   Card,
@@ -129,9 +130,20 @@ export default function ScheduledPublications() {
     enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
     refetchOnMount: true,
     refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем при переходе
+    staleTime: 0, // Всегда считаем данные устаревшими
+    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд для отслеживания статусов
+    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
   });
   
+  // WebSocket для получения уведомлений о изменении статусов публикаций
+  const { isConnected } = useWebSocket((message) => {
+    if (message.type === 'publication_status_updated' || message.type === 'content_published') {
+      console.log('Получено уведомление о обновлении статуса публикации:', message);
+      // Обновляем данные запланированных публикаций при изменении статусов
+      refetchScheduled();
+    }
+  });
+
   // Обновляем данные при изменении выбранной кампании или пользователя
   useEffect(() => {
     if (selectedCampaign?.id && userId) {
