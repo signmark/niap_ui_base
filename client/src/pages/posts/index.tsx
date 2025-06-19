@@ -40,24 +40,14 @@ export default function Posts() {
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации - отображаем как есть в базе данных
+  // Функция для отображения общего времени публикации (UTC -> Московское время +3 часа)
   const formatGeneralTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Парсим ISO строку и отображаем время как есть (уже в московском времени)
-      const isoString = dateString.replace('Z', '');
-      const parts = isoString.split('T');
-      const datePart = parts[0];
-      const timePart = parts[1];
-      
-      const [year, month, day] = datePart.split('-').map(Number);
-      const [hours, minutes] = timePart.split(':').map(Number);
-      
-      const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 
-                         'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-      
-      return `${day} ${monthNames[month - 1]} ${year}, ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      // Парсим UTC время и добавляем 3 часа для московского времени
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
-    
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
