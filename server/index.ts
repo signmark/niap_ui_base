@@ -26,8 +26,8 @@ import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
 import analyticsRouter from './analytics-api';
 // Импортируем валидатор статусов публикаций
 import { statusValidator } from './services/status-validator';
-// Импортируем упрощенный N8N планировщик
-import { publishScheduler } from './services/publish-scheduler-simple';
+// Импортируем исправленный планировщик публикаций
+import { getPublishScheduler } from './services/publish-scheduler';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -370,6 +370,13 @@ app.use((req, res, next) => {
         log('Запуск валидатора статусов публикаций', 'status-validator');
         statusValidator.startValidation();
       }, 30000); // Задержка 30 секунд для завершения инициализации всех сервисов
+      
+      // Запускаем планировщик публикаций с поддержкой индивидуального времени платформ
+      setTimeout(() => {
+        log('Запуск планировщика публикаций с поддержкой N8N', 'scheduler');
+        const scheduler = getPublishScheduler();
+        scheduler.start();
+      }, 35000); // Задержка 35 секунд для завершения инициализации всех сервисов
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {
