@@ -200,25 +200,63 @@ export class PublishScheduler {
             }
           }
           
-          // Определяем неопубликованные платформы
-          const unpublishedPlatforms = [];
+          // Определяем платформы готовые к публикации с учетом времени
+          const readyPlatforms = [];
           for (const [platformName, platformData] of Object.entries(platforms)) {
             const data = platformData as any;
             
-            // Если платформа не опубликована, добавляем её в список
-            if (!(data.status === 'published' && data.postUrl)) {
-              unpublishedPlatforms.push(platformName);
+            // Пропускаем уже опубликованные платформы
+            if (data.status === 'published' && data.postUrl) {
+              continue;
+            }
+
+            // Проверяем время публикации для платформы
+            let shouldPublish = false;
+
+            // Проверяем индивидуальное время платформы (приоритет)
+            if (data.scheduledAt || data.scheduled_at) {
+              const platformTime = new Date(data.scheduledAt || data.scheduled_at);
+              if (platformTime <= currentTime) {
+                shouldPublish = true;
+                log(`Планировщик: Платформа ${platformName} готова по индивидуальному времени - ${platformTime.toISOString()} <= ${currentTime.toISOString()}`, 'scheduler');
+              } else {
+                log(`Планировщик: Платформа ${platformName} ждет своего времени - ${platformTime.toISOString()} > ${currentTime.toISOString()}`, 'scheduler');
+              }
+            } 
+            // Проверяем общее время контента (если нет индивидуального)
+            else if (content.scheduled_at) {
+              const contentTime = new Date(content.scheduled_at);
+              if (contentTime <= currentTime) {
+                shouldPublish = true;
+                log(`Планировщик: Платформа ${platformName} готова по общему времени - ${contentTime.toISOString()} <= ${currentTime.toISOString()}`, 'scheduler');
+              } else {
+                log(`Планировщик: Платформа ${platformName} ждет общего времени контента - ${contentTime.toISOString()} > ${currentTime.toISOString()}`, 'scheduler');
+              }
+            } 
+            // Для контента со статусом partial - публикуем сразу (повторная попытка)
+            else if (content.status === 'partial') {
+              shouldPublish = true;
+              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус partial)`, 'scheduler');
+            }
+            // Платформа в статусе pending без времени - публикуем сразу
+            else if (data.status === 'pending') {
+              shouldPublish = true;
+              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус pending)`, 'scheduler');
+            }
+
+            if (shouldPublish) {
+              readyPlatforms.push(platformName);
             }
           }
 
-          if (unpublishedPlatforms.length > 0) {
-            log(`Планировщик: Контент ${content.id} требует публикации в: ${unpublishedPlatforms.join(', ')}`, 'scheduler');
+          if (readyPlatforms.length > 0) {
+            log(`Планировщик: Контент ${content.id} готов к публикации в: ${readyPlatforms.join(', ')}`, 'scheduler');
             
-            // Отправляем в неопубликованные платформы через N8N
-            await this.publishContentToPlatforms(content, unpublishedPlatforms, authToken);
+            // Отправляем в готовые платформы через N8N
+            await this.publishContentToPlatforms(content, readyPlatforms, authToken);
             publishedCount++;
           } else {
-            log(`Планировщик: Контент ${content.id} уже опубликован во всех платформах`, 'scheduler');
+            log(`Планировщик: Контент ${content.id} - нет платформ готовых к публикации в данный момент`, 'scheduler');
           }
         }
 
