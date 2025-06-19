@@ -36,17 +36,19 @@ export default function Posts() {
     return formatInTimeZone(date, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
-  // Функция для отображения общего времени публикации (уже в правильном часовом поясе от n8n)
-  // Отображаем время ТОЧНО КАК ЕСТЬ, без каких-либо преобразований
+  // Функция для отображения общего времени публикации - БЕЗ ПРЕОБРАЗОВАНИЙ
   const formatGeneralTime = (dateString: string | Date): string => {
-    // Если это строка ISO, парсим её и отображаем как локальное время
-    if (typeof dateString === 'string') {
-      // Убираем Z в конце чтобы интерпретировать как локальное время
-      const cleanDateString = dateString.replace('Z', '');
-      const date = new Date(cleanDateString);
-      return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
-    }
-    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    // Используем getUTC методы для получения времени как есть из базы данных
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    
+    // Создаем новую дату с этими значениями как локальное время
+    const localDate = new Date(year, month, day, hours, minutes);
+    return format(localDate, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
   // Состояние для хранения данных публикаций
