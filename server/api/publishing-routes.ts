@@ -868,7 +868,7 @@ export function registerPublishingRoutes(app: Express): void {
               const directusUrl = process.env.DIRECTUS_URL;
               const response = await axios.get(`${directusUrl}/items/campaign_content`, {
                 params: {
-                  filter: { status: { _eq: 'scheduled' } }
+                  filter: { status: { _in: ['scheduled', 'partial'] } }
                 },
                 headers: { 'Authorization': `Bearer ${authToken}` }
               });
@@ -917,8 +917,8 @@ export function registerPublishingRoutes(app: Express): void {
           
           // ИСПРАВЛЕНО: Упрощенная и более надежная логика фильтрации запланированных постов
           scheduledContent = allContent.filter(content => {
-            // Основной критерий: статус 'scheduled'
-            if (content.status === 'scheduled') {
+            // Основной критерий: статус 'scheduled' или 'partial'
+            if (content.status === 'scheduled' || content.status === 'partial') {
               log(`Найден запланированный пост: ${content.id} (статус: ${content.status})`, 'api');
               return true;
             }
