@@ -135,6 +135,8 @@ export class PublishScheduler {
       // Получаем контент со статусами 'scheduled' и 'partial' для обработки
       log(`Планировщик: Отправляем запрос к ${directusUrl}/items/campaign_content с токеном ${authToken.substring(0, 10)}...`, 'scheduler');
       
+      let allContent: any[] = [];
+      
       try {
         const response = await axios.get(`${directusUrl}/items/campaign_content`, {
           headers,
@@ -150,13 +152,60 @@ export class PublishScheduler {
 
         log(`Планировщик: Получен ответ от Directus. Статус: ${response.status}`, 'scheduler');
 
-        const allContent = response?.data?.data || [];
+        allContent = response?.data?.data || [];
         
         log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
         
         if (allContent.length > 0) {
           log(`Планировщик: Статусы найденного контента: ${allContent.map((c: any) => c.status).join(', ')}`, 'scheduler');
         }
+        
+        if (allContent.length === 0) {
+          return;
+        }
+
+        // Обрабатываем каждый контент для определения неопубликованных платформ
+        for (const content of allContent) {
+          log(`Планировщик: Обрабатываем контент ${content.id} (статус: ${content.status})`, 'scheduler');
+          
+          // Получаем данные платформ
+          const platformsData = content.social_platforms || content.socialPlatforms;
+          if (!platformsData) {
+            log(`Планировщик: Пропускаем контент ${content.id} - нет данных платформ`, 'scheduler');
+            continue;
+          }
+
+          let platforms = platformsData;
+          if (typeof platforms === 'string') {
+            try {
+              platforms = JSON.parse(platforms);
+            } catch (e) {
+              log(`Планировщик: Ошибка парсинга JSON для контента ${content.id}`, 'scheduler');
+              continue;
+            }
+          }
+          
+          // Определяем неопубликованные платформы
+          const unpublishedPlatforms = [];
+          for (const [platformName, platformData] of Object.entries(platforms)) {
+            const data = platformData as any;
+            
+            // Если платформа не опубликована, добавляем её в список
+            if (!(data.status === 'published' && data.postUrl)) {
+              unpublishedPlatforms.push(platformName);
+            }
+          }
+
+          if (unpublishedPlatforms.length > 0) {
+            log(`Планировщик: Контент ${content.id} требует публикации в: ${unpublishedPlatforms.join(', ')}`, 'scheduler');
+            
+            // Отправляем в неопубликованные платформы через N8N
+            await this.publishContentToPlatforms(content, unpublishedPlatforms, authToken);
+          } else {
+            log(`Планировщик: Контент ${content.id} уже опубликован во всех платформах`, 'scheduler');
+          }
+        }
+        
       } catch (error: any) {
         log(`Планировщик: Ошибка запроса к Directus API: ${error.message}`, 'scheduler');
         if (error.response) {
@@ -165,115 +214,6 @@ export class PublishScheduler {
         return;
       }
       
-      if (allContent.length === 0) {
-        return;
-      }
-      const contentToPublish = [];
-
-      // Проверяем каждый контент на готовность к публикации
-      for (const content of allContent) {
-        log(`Планировщик: Проверяем контент ${content.id} (статус: ${content.status})`, 'scheduler');
-        // Поддерживаем оба формата: social_platforms и socialPlatforms
-        const platformsData = content.social_platforms || content.socialPlatforms;
-        if (!platformsData) {
-          log(`Планировщик: Пропускаем контент ${content.id} - нет данных платформ`, 'scheduler');
-          continue;
-        }
-
-        let platforms = platformsData;
-        if (typeof platforms === 'string') {
-          try {
-            platforms = JSON.parse(platforms);
-          } catch (e) {
-            log(`Планировщик: Ошибка парсинга JSON для контента ${content.id}`, 'scheduler');
-            continue;
-          }
-        }
-        
-        log(`Планировщик: Платформы для контента ${content.id}: ${JSON.stringify(Object.keys(platforms))}`, 'scheduler');
-
-        // Быстрая проверка: есть ли хотя бы одна неопубликованная платформа
-        const hasUnpublishedPlatforms = Object.values(platforms).some((platformData: any) => 
-          !(platformData.status === 'published' && platformData.postUrl)
-        );
-        
-        if (!hasUnpublishedPlatforms) {
-          // Все платформы уже опубликованы, пропускаем этот контент
-          continue;
-        }
-
-        const readyPlatforms = [];
-
-        // Проверяем каждую платформу на готовность к публикации
-        for (const [platformName, platformData] of Object.entries(platforms)) {
-          const data = platformData as any;
-          
-          // Пропускаем уже опубликованные платформы
-          if (data.status === 'published' && data.postUrl) {
-            continue;
-          }
-
-          // Проверяем время публикации для платформы
-          let shouldPublish = false;
-
-          if (data.scheduledAt || data.scheduled_at) {
-            // У платформы есть свое время публикации
-            const platformTime = new Date(data.scheduledAt || data.scheduled_at);
-            if (platformTime <= currentTime) {
-              shouldPublish = true;
-            }
-          } else if (content.scheduled_at) {
-            // Используем общее время контента
-            const contentTime = new Date(content.scheduled_at);
-            if (contentTime <= currentTime) {
-              shouldPublish = true;
-            }
-          } else if (data.status === 'pending') {
-            // Платформа в статусе pending без времени - публикуем немедленно
-            shouldPublish = true;
-          } else if (data.status === 'failed') {
-            // Повторная попытка для failed публикаций через 5 минут
-            const failedTime = data.updatedAt ? new Date(data.updatedAt) : new Date(0);
-            const retryTime = new Date(failedTime.getTime() + 5 * 60 * 1000); // +5 минут
-            if (currentTime >= retryTime) {
-              shouldPublish = true;
-              log(`Повторная попытка публикации в ${platformName} для контента ${content.id}`, 'scheduler');
-            }
-          }
-
-          if (shouldPublish) {
-            readyPlatforms.push(platformName);
-          }
-        }
-
-        if (readyPlatforms.length > 0) {
-          contentToPublish.push({
-            content,
-            platforms: readyPlatforms
-          });
-        }
-      }
-
-      if (contentToPublish.length > 0) {
-        log(`Найдено ${contentToPublish.length} контентов готовых к публикации`, 'scheduler');
-        
-        // Отправляем уведомление в UI о найденном запланированном контенте
-        try {
-          const { broadcastNotification } = await import('../index');
-          broadcastNotification('scheduled_content_found', {
-            count: contentToPublish.length,
-            message: `Найдено ${contentToPublish.length} контентов готовых к публикации`
-          });
-        } catch (error) {
-          // Игнорируем ошибки уведомлений
-        }
-      }
-
-      // Публикуем контент асинхронно через N8N
-      for (const item of contentToPublish) {
-        await this.publishContentToPlatforms(item.content, item.platforms, authToken);
-      }
-
     } catch (error: any) {
       log(`Ошибка при проверке запланированных публикаций: ${error.message}`, 'scheduler');
     } finally {
