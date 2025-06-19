@@ -37,9 +37,12 @@ export default function Posts() {
   };
   
   // Функция для отображения общего времени публикации (уже в правильном часовом поясе от n8n)
+  // Отображаем время БЕЗ конвертации часового пояса
   const formatGeneralTime = (dateString: string | Date): string => {
+    // Парсим дату как UTC и добавляем 3 часа (московское время)
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    const moscowTime = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+    return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
   
   // Состояние для хранения данных публикаций
