@@ -25,10 +25,9 @@ export function formatDateWithTimezone(
       return 'Некорректная дата';
     }
     
-    // ВАЖНО: Для времени публикации (isFromPlatforms=true) ВСЕГДА добавляем 3 часа
-    // Время из платформ сохраняется в UTC через JavaScript new Date().toISOString()
-    // Для корректного отображения в московском времени добавляем 3 часа
-    if (isFromPlatforms || (typeof dateString === 'string' && dateString.includes('T'))) {
+    // ТОЛЬКО для времени из платформ (JSON) добавляем 3 часа
+    // Время published_at из N8N уже в правильном формате - НЕ преобразуем
+    if (isFromPlatforms) {
       // Создаем новую дату с учетом смещения в 3 часа (Москва UTC+3)
       date = new Date(date.getTime() + 3 * 60 * 60 * 1000);
     }
