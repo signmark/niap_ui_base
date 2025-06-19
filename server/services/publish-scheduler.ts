@@ -266,7 +266,7 @@ export class PublishScheduler {
           broadcastNotification('scheduler_processing_complete', {
             processedCount,
             publishedCount,
-            message: `Обработка завершена: ${publishedCount} из ${processedCount} контентов отправлены на публикацию`
+            message: `Обработка завершена: ${publishedCount} из ${processedCount} публикаций запущено`
           });
         } catch (error) {
           // Игнорируем ошибки уведомлений
@@ -317,8 +317,8 @@ export class PublishScheduler {
           ? `${baseUrl}/${webhookName}`
           : `${baseUrl}/webhook/${webhookName}`;
 
-        // Отправляем запрос на N8N webhook
-        log(`Отправка контента ${content.id} в ${platform} через N8N webhook`, 'scheduler');
+        // Отправляем запрос на публикацию
+        log(`Публикация контента ${content.id} в ${platform}`, 'scheduler');
         
         await axios.post(webhookUrl, {
           contentId: content.id,
@@ -330,15 +330,23 @@ export class PublishScheduler {
           }
         });
 
-        log(`Контент ${content.id} успешно отправлен в ${platform}`, 'scheduler');
+        log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
         
-        // Отправляем уведомление в UI об успешной отправке
+        // Отправляем уведомление в UI об успешной публикации
         try {
           const { broadcastNotification } = await import('../index');
+          const platformNames: Record<string, string> = {
+            'instagram': 'Instagram',
+            'facebook': 'Facebook', 
+            'vk': 'ВКонтакте',
+            'telegram': 'Telegram'
+          };
+          const platformName = platformNames[platform.toLowerCase()] || platform;
+          
           broadcastNotification('content_published', {
             contentId: content.id,
             platform: platform,
-            message: `Контент успешно опубликован в ${platform}`
+            message: `Успешно опубликовано в ${platformName}`
           });
         } catch (error) {
           // Игнорируем ошибки уведомлений
