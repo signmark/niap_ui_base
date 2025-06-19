@@ -160,13 +160,13 @@ export default function EditScheduledPublication({
         console.warn('Ошибка обновления токена:', refreshError);
       }
       
-      // Формируем объект socialPlatforms для отправки на сервер
-      const socialPlatforms: Record<string, any> = {};
+      // ВАЖНО: Начинаем с копии существующих данных всех платформ
+      const socialPlatforms: Record<string, any> = JSON.parse(JSON.stringify(content.socialPlatforms || {}));
       
       Object.entries(selectedPlatforms).forEach(([platform, isSelected]) => {
         if (isSelected) {
-          // Копируем существующие данные для платформы или создаем новые
-          const existingData = content.socialPlatforms?.[platform as SafeSocialPlatform] || {};
+          // Получаем существующие данные для платформы
+          const existingData = socialPlatforms[platform] || {};
           
           // Создаем дату публикации для этой платформы
           const platformDate = new Date(scheduledAt);
@@ -176,19 +176,22 @@ export default function EditScheduledPublication({
           platformDate.setHours(parseInt(time.hour, 10), parseInt(time.minute, 10), 0, 0);
           
           // Создаем строку даты, используя UTC-совместимый формат для сервера
-          // Это сохранит именно то время, которое выбрал пользователь
-          // Сервер получит UTC-дату, но интерпретирует ее согласно своему часовому поясу (UTC+3)
           const localISOString = platformDate.toISOString();
+          
+          // ЗАЩИТА: Обновляем только время, но сохраняем статус published если он есть
+          const preservedStatus = existingData.status === 'published' ? 'published' : 'scheduled';
+          console.log(`🔒 ЗАЩИТА СТАТУСА для ${platform}: существующий статус = ${existingData.status}, сохраняем = ${preservedStatus}`);
           
           socialPlatforms[platform] = {
             ...existingData,
-            status: 'scheduled',
+            // Не меняем статус published на scheduled!
+            status: preservedStatus,
             scheduledAt: localISOString,
-            publishedAt: null
+            // Сохраняем publishedAt если контент уже опубликован
+            publishedAt: existingData.publishedAt || null
           };
         }
-        // Если платформа НЕ выбрана - просто не включаем ее в socialPlatforms
-        // Это приведет к полному удалению платформы из объекта в базе данных
+        // Если платформа НЕ выбрана - сохраняем существующие данные без изменений
       });
       
       // Проверяем, есть ли хотя бы одна активная платформа (не cancelled)
