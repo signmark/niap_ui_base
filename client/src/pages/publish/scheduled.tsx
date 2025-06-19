@@ -130,19 +130,35 @@ export default function ScheduledPublications() {
     enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
     refetchOnMount: true,
     refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
-    staleTime: 0, // Всегда считаем данные устаревшими
-    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд для отслеживания статусов
-    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
+    staleTime: 0 // Всегда считаем данные устаревшими и обновляем только через WebSocket
   });
   
   // WebSocket для получения уведомлений о изменении статусов публикаций
-  const { isConnected } = useWebSocket((message) => {
-    if (message.type === 'publication_status_updated' || message.type === 'content_published') {
-      console.log('Получено уведомление о обновлении статуса публикации:', message);
-      // Обновляем данные запланированных публикаций при изменении статусов
-      refetchScheduled();
+  const ws = useWebSocket();
+  
+  // Обрабатываем WebSocket сообщения для обновления данных
+  useEffect(() => {
+    if (ws) {
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'publication_status_updated' || message.type === 'content_published') {
+            console.log('Получено уведомление о обновлении статуса публикации:', message);
+            // Обновляем данные запланированных публикаций при изменении статусов
+            refetchScheduled();
+          }
+        } catch (error) {
+          console.error('Ошибка обработки WebSocket сообщения:', error);
+        }
+      };
+
+      ws.addEventListener('message', handleMessage);
+      
+      return () => {
+        ws.removeEventListener('message', handleMessage);
+      };
     }
-  });
+  }, [ws, refetchScheduled]);
 
   // Обновляем данные при изменении выбранной кампании или пользователя
   useEffect(() => {
