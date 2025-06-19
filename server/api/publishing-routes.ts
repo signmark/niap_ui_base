@@ -4,7 +4,7 @@ import { storage } from '../storage';
 import { socialPublishingService } from '../services/social/index';
 
 // Не используем старый сервис, заменив его на новый модульный
-import { publishScheduler } from '../services/publish-scheduler';
+import { getPublishScheduler } from '../services/publish-scheduler';
 // Определяем тип SocialPlatform локально
 type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';
 import { log } from '../utils/logger';

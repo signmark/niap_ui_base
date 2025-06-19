@@ -47,7 +47,7 @@ import { registerTokenRoutes } from './api/token-routes';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
-import { publishScheduler } from './services/publish-scheduler';
+import { getPublishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';

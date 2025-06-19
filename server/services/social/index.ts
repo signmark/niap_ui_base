@@ -3,7 +3,7 @@ import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { facebookSocialService } from './facebook';
 import { log } from '../../utils/logger';
-import { publishScheduler } from '../publish-scheduler';
+import { getPublishScheduler } from '../publish-scheduler';
 import fetch from 'node-fetch';
 
 /**
@@ -17,7 +17,7 @@ export class SocialPublishingService {
    * @returns {Promise<string|null>} Токен для авторизации запросов к API
    */
   public async getSystemToken(): Promise<string | null> {
-    return await publishScheduler.getSystemToken();
+    return await getPublishScheduler().getSystemToken();
   }
   /**
    * Публикует контент в выбранную социальную платформу
