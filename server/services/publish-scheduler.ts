@@ -11,10 +11,8 @@ import { directusCrud } from './directus-crud';
 export class PublishScheduler {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
-  private checkIntervalMs = 20000; // проверяем каждые 20 секунд
+  private checkIntervalMs = 30000; // проверяем каждые 30 секунд
   private isProcessing = false;
-  private processingStartTime: number = 0;
-  private verboseLogging = false; // Отключаем детальное логирование для уменьшения шума
   private adminTokenCache: string | null = null;
   private adminTokenTimestamp: number = 0;
   private tokenExpirationMs = 30 * 60 * 1000; // 30 минут
@@ -106,18 +104,11 @@ export class PublishScheduler {
    */
   async checkScheduledContent() {
     try {
-      // Проверяем блокировку для предотвращения параллельного выполнения
       if (this.isProcessing) {
-        const processingDuration = Date.now() - this.processingStartTime;
-        if (processingDuration < 60000) {
-          return; // Планировщик уже выполняется
-        } else {
-          this.isProcessing = false; // Принудительный сброс блокировки
-        }
+        return;
       }
       
       this.isProcessing = true;
-      this.processingStartTime = Date.now();
       
       // Получаем системный токен
       const authToken = await this.getSystemToken();
@@ -140,38 +131,38 @@ export class PublishScheduler {
       const currentTime = new Date();
       const currentTimeISO = currentTime.toISOString();
       
-      // Получаем контент с платформами для проверки индивидуального времени
-      // Упрощенный фильтр - проверим время на уровне приложения
+      // Получаем только контент со статусом 'scheduled'
       const response = await axios.get(`${directusUrl}/items/campaign_content`, {
         headers,
         params: {
           filter: JSON.stringify({
-            social_platforms: {
-              _nnull: true
-            }
+            _and: [
+              {
+                status: {
+                  _eq: 'scheduled'
+                }
+              },
+              {
+                social_platforms: {
+                  _nnull: true
+                }
+              }
+            ]
           }),
-          limit: 200 // Увеличиваем лимит для обнаружения контента с индивидуальным планированием
+          limit: 100
         }
       });
 
       const allContent = response?.data?.data || [];
       
       if (allContent.length === 0) {
-        log('Нет контента готового к публикации в базе данных', 'scheduler');
         return;
       }
-      
-      log(`Проверка ${allContent.length} записей контента на готовность к публикации`, 'scheduler');
       const contentToPublish = [];
 
       // Проверяем каждый контент на готовность к публикации
       for (const content of allContent) {
-        if (!content.social_platforms) {
-          log(`Контент ${content.id} пропущен - нет платформ`, 'scheduler');
-          continue;
-        }
-        
-        log(`Проверка контента ${content.id} с платформами: ${JSON.stringify(content.social_platforms)}`, 'scheduler');
+        if (!content.social_platforms) continue;
 
         let platforms = content.social_platforms;
         if (typeof platforms === 'string') {
@@ -211,7 +202,6 @@ export class PublishScheduler {
             const platformTime = new Date(data.scheduledAt || data.scheduled_at);
             if (platformTime <= currentTime) {
               shouldPublish = true;
-              log(`Платформа ${platformName} готова к публикации: запланирована на ${platformTime.toISOString()}`, 'scheduler');
             }
           } else if (content.scheduled_at) {
             // Используем общее время контента
@@ -237,9 +227,7 @@ export class PublishScheduler {
         }
       }
 
-      log(`Найдено ${contentToPublish.length} контентов готовых к публикации`, 'scheduler');
-
-      // Публикуем контент
+      // Публикуем контент асинхронно через N8N
       for (const item of contentToPublish) {
         await this.publishContentToPlatforms(item.content, item.platforms, authToken);
       }
