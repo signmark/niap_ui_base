@@ -67,9 +67,8 @@ export default function Posts() {
     },
     enabled: !!selectedCampaign?.id,
     refetchOnMount: true,
-    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд
-    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
+    refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем при переходе
   });
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];

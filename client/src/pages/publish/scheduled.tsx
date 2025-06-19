@@ -128,9 +128,8 @@ export default function ScheduledPublications() {
     },
     enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
     refetchOnMount: true,
-    staleTime: 60000, // Считаем данные свежими в течение 1 минуты
-    refetchInterval: 60000, // Автоматически обновляем данные только раз в минуту
-    refetchIntervalInBackground: false // Не обновляем данные, если вкладка не активна
+    refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем при переходе
   });
   
   // Обновляем данные при изменении выбранной кампании или пользователя
