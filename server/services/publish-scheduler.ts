@@ -162,9 +162,11 @@ export class PublishScheduler {
 
       // Проверяем каждый контент на готовность к публикации
       for (const content of allContent) {
-        if (!content.social_platforms) continue;
+        // Поддерживаем оба формата: social_platforms и socialPlatforms
+        const platformsData = content.social_platforms || content.socialPlatforms;
+        if (!platformsData) continue;
 
-        let platforms = content.social_platforms;
+        let platforms = platformsData;
         if (typeof platforms === 'string') {
           try {
             platforms = JSON.parse(platforms);
@@ -212,6 +214,14 @@ export class PublishScheduler {
           } else if (data.status === 'pending') {
             // Платформа в статусе pending без времени - публикуем немедленно
             shouldPublish = true;
+          } else if (data.status === 'failed') {
+            // Повторная попытка для failed публикаций через 5 минут
+            const failedTime = data.updatedAt ? new Date(data.updatedAt) : new Date(0);
+            const retryTime = new Date(failedTime.getTime() + 5 * 60 * 1000); // +5 минут
+            if (currentTime >= retryTime) {
+              shouldPublish = true;
+              log(`Повторная попытка публикации в ${platformName} для контента ${content.id}`, 'scheduler');
+            }
           }
 
           if (shouldPublish) {
