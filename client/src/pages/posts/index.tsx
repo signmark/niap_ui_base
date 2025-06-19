@@ -29,12 +29,13 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Функция для форматирования времени платформ - показываем как есть
+  // Функция для форматирования времени платформ (UTC -> Московское время +3 часа)
   const formatUserTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Показываем время как есть, без преобразований
-      const date = new Date(dateString);
-      return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // JavaScript new Date().toISOString() сохраняет в UTC, добавляем 3 часа
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
