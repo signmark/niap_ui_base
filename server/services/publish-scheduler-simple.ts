@@ -240,12 +240,12 @@ export class PublishScheduler {
     if (successCount === totalCount) {
       return {
         success: true, 
-        message: `Контент отправлен в N8N для публикации на ${totalCount} платформах`
+        message: `Контент успешно отправлен на публикацию на ${totalCount} платформах`
       };
     } else if (successCount > 0) {
       return {
         success: true,
-        message: `Контент отправлен в N8N для ${successCount} из ${totalCount} платформ`
+        message: `Контент отправлен на публикацию для ${successCount} из ${totalCount} платформ`
       };
     } else {
       return {
