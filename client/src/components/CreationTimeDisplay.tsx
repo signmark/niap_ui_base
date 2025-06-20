@@ -22,7 +22,8 @@ export const CreationTimeDisplay: React.FC<CreationTimeDisplayProps> = ({
   iconType = 'calendar',
   isFromPlatforms = false
 }) => {
-  const formattedDateTime = formatDateWithTimezone(createdAt, 'dd MMMM yyyy, HH:mm', isFromPlatforms);
+  // Для времени создания всегда добавляем 3 часа для корректного отображения пользователю
+  const formattedDateTime = formatDateWithTimezone(createdAt, 'dd MMMM yyyy, HH:mm', true);
   
   // Выбор иконки в зависимости от типа
   const renderIcon = () => {

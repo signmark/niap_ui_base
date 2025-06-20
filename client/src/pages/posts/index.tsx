@@ -29,12 +29,13 @@ export default function Posts() {
     facebook: 0
   });
   
-  // Функция для форматирования времени (время уже корректно в БД)
-  const formatUserTime = (dateString: string | Date): string => {
+  // Функция для форматирования ЗАПЛАНИРОВАННОГО времени (добавляем +3 часа для пользователя)
+  const formatScheduledTime = (dateString: string | Date): string => {
     if (typeof dateString === 'string') {
-      // Время уже корректно в БД, не добавляем смещение
-      const dateObj = new Date(dateString);
-      return format(dateObj, 'dd MMMM yyyy, HH:mm', { locale: ru });
+      // Для запланированного времени добавляем 3 часа для московского времени
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
     }
     return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
   };
@@ -550,7 +551,7 @@ export default function Posts() {
                                                 {/* Время публикации для платформы */}
                                                 {info.scheduledAt && (
                                                   <div className="text-xs text-muted-foreground">
-                                                    <strong>Время платформы:</strong> {formatUserTime(info.scheduledAt)}
+                                                    <strong>Время платформы:</strong> {formatScheduledTime(info.scheduledAt)}
                                                   </div>
                                                 )}
                                                 
@@ -590,12 +591,12 @@ export default function Posts() {
                                   <div className="text-sm text-muted-foreground border-t pt-4 space-y-2">
                                     {content.publishedAt && (
                                       <div>
-                                        <strong>Общее время публикации:</strong> {formatGeneralTime(content.publishedAt)}
+                                        <strong>Общее время публикации:</strong> {formatPublishedTime(content.publishedAt)}
                                       </div>
                                     )}
                                     {content.scheduledAt && (
                                       <div>
-                                        <strong>Запланировано на:</strong> {formatUserTime(content.scheduledAt)}
+                                        <strong>Запланировано на:</strong> {formatScheduledTime(content.scheduledAt)}
                                       </div>
                                     )}
                                   </div>
