@@ -943,6 +943,8 @@ export default function ContentPage() {
         return <Clock className="h-4 w-4" />;
       case "published":
         return <CheckCircle2 className="h-4 w-4" />;
+      case "partial":
+        return <CheckCircle2 className="h-4 w-4" />;
       default:
         return <Pencil className="h-4 w-4" />;
     }
@@ -957,6 +959,8 @@ export default function ContentPage() {
         return "secondary";
       case "published":
         return "default";
+      case "partial":
+        return "secondary";
       default:
         return "outline";
     }
@@ -971,6 +975,8 @@ export default function ContentPage() {
         return "Запланировано";
       case "published":
         return "Опубликовано";
+      case "partial":
+        return "Частично";
       default:
         return "Черновик";
     }
@@ -1139,7 +1145,6 @@ export default function ContentPage() {
                 <TabsTrigger value="all">Все</TabsTrigger>
                 <TabsTrigger value="draft">Черновики</TabsTrigger>
                 <TabsTrigger value="scheduled">Запланированные</TabsTrigger>
-                <TabsTrigger value="partial">Частично</TabsTrigger>
                 <TabsTrigger value="published">Опубликованные</TabsTrigger>
               </TabsList>
             </Tabs>
