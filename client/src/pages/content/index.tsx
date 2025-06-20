@@ -861,8 +861,15 @@ export default function ContentPage() {
   const filteredContent = Array.isArray(campaignContent) ? campaignContent
     .filter(content => {
       // Фильтр по статусу (вкладки)
-      if (activeTab !== "all" && content.status !== activeTab) {
-        return false;
+      if (activeTab !== "all") {
+        if (activeTab === "published") {
+          // В табе "Опубликованные" показываем контент со статусом "published" и "partial"
+          if (content.status !== "published" && content.status !== "partial") {
+            return false;
+          }
+        } else if (content.status !== activeTab) {
+          return false;
+        }
       }
       
       // Фильтр по диапазону дат, если указан
