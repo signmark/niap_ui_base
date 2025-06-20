@@ -848,7 +848,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined> {
     try {
-      console.log(`Запрос контента по ID: ${id}`);
+      // Запрос контента по ID
       
       // Настраиваем headers с токеном, если он передан
       let response = null;
@@ -951,7 +951,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       const item = response.data.data;
-      console.log(`✅ Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
+      // Контент найден в Directus
       
       return {
         id: item.id,
