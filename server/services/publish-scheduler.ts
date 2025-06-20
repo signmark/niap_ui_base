@@ -3,6 +3,7 @@ import { log } from '../utils/logger';
 import { storage } from '../storage';
 import { socialPublishingService } from './social/index';
 import { directusCrud } from './directus-crud';
+import { publicationLockManager } from './publication-lock-manager';
 
 /**
  * Исправленный класс для планирования и выполнения автоматической публикации контента
@@ -230,6 +231,13 @@ export class PublishScheduler {
               continue;
             }
 
+            // ГЛОБАЛЬНАЯ ЗАЩИТА: Проверяем блокировку публикации
+            const lockAcquired = await publicationLockManager.acquireLock(content.id, platformName);
+            if (!lockAcquired) {
+              log(`Планировщик: Не удалось получить блокировку для ${content.id}:${platformName}, пропускаем`, 'scheduler');
+              continue;
+            }
+
             // Проверяем время публикации для платформы
             let shouldPublish = false;
 
@@ -340,12 +348,15 @@ export class PublishScheduler {
           ? `${baseUrl}/${webhookName}`
           : `${baseUrl}/webhook/${webhookName}`;
 
-        // Отправляем запрос на публикацию
-        log(`Публикация контента ${content.id} в ${platform}`, 'scheduler');
+        // КРИТИЧЕСКАЯ ЗАЩИТА: Финальная проверка перед отправкой запроса в N8N
+        log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
+        log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
         
         await axios.post(webhookUrl, {
           contentId: content.id,
-          platform: platformString
+          platform: platformString,
+          source: 'scheduler', // Добавляем метку источника запроса
+          timestamp: new Date().toISOString()
         }, {
           timeout: 30000,
           headers: {
@@ -375,9 +386,15 @@ export class PublishScheduler {
           // Игнорируем ошибки уведомлений
         }
         
+        // Освобождаем блокировку после успешной публикации
+        await publicationLockManager.releaseLock(content.id, platformString);
+        
         return { platform, success: true };
 
       } catch (error: any) {
+        // Освобождаем блокировку при ошибке
+        await publicationLockManager.releaseLock(content.id, platformString);
+        log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
       }
     });
