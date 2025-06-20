@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, createRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -279,6 +280,45 @@ export default function ContentPage() {
       }
     }
   }, [currentContent?.id, currentContent?.imageUrl, currentContent?.images, currentContent?.contentType, isScheduleDialogOpen]);
+
+
+
+  // Force refetch data when campaign changes
+  useEffect(() => {
+    if (selectedCampaignId) {
+      console.log('Принудительная перезагрузка данных для кампании:', selectedCampaignId);
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+    }
+  }, [selectedCampaignId, queryClient]);
+
+  // Track location changes to reload data when navigating to content page
+  const [location] = useLocation();
+  const [hasNavigated, setHasNavigated] = useState(false);
+
+  // Force refetch data when navigating to content page
+  useEffect(() => {
+    if (location === '/content' && selectedCampaignId) {
+      console.log('Переход на страницу контента, принудительная загрузка данных');
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      // Принудительная перезагрузка данных
+      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      setHasNavigated(true);
+    }
+  }, [location, selectedCampaignId, queryClient]);
+
+  // Also force reload when component first mounts
+  useEffect(() => {
+    if (!hasNavigated && selectedCampaignId) {
+      console.log('Компонент контента смонтирован, принудительная загрузка данных');
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+    }
+  }, [selectedCampaignId, hasNavigated, queryClient]);
 
   // Запрос списка кампаний
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
