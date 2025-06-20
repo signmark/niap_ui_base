@@ -2535,19 +2535,22 @@ export default function ContentPage() {
                         if (platformData.status !== 'published') return null;
                         
                         return (
-                          <div key={platform} className="flex items-center justify-between p-3 rounded bg-green-50 border border-green-200">
+                          <div key={platform} className="flex items-center justify-between p-3 rounded-lg bg-green-100 border border-green-300">
                             <div className="flex items-center gap-2">
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              <CheckCircle2 className="h-5 w-5 text-green-600" />
                               <span className="text-sm font-medium text-green-800">{platformNames[platform] || platform}</span>
                             </div>
-                            <div className="text-xs text-green-700">
-                              Опубликовано {platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
-                                day: '2-digit',
-                                month: '2-digit', 
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-green-700">
+                                Опубликовано {platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
+                                  day: '2-digit',
+                                  month: 'long', 
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
                             </div>
                           </div>
                         );
