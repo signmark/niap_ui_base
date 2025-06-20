@@ -11574,6 +11574,7 @@ ${datesText}
       console.log('[N8N-PUBLISH] Получен запрос на публикацию:', JSON.stringify(req.body, null, 2));
       
       const { contentId, platforms } = req.body;
+      const { publicationLockManager } = await import('./services/publication-lock-manager');
       
       console.log('[N8N-PUBLISH] contentId:', contentId, 'тип:', typeof contentId);
       console.log('[N8N-PUBLISH] platforms:', platforms, 'тип:', typeof platforms, 'isArray:', Array.isArray(platforms));

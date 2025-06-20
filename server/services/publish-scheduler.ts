@@ -387,13 +387,13 @@ export class PublishScheduler {
         }
         
         // Освобождаем блокировку после успешной публикации
-        await publicationLockManager.releaseLock(content.id, platformString);
+        await publicationLockManager.releaseLock(content.id, platform);
         
         return { platform, success: true };
 
       } catch (error: any) {
         // Освобождаем блокировку при ошибке
-        await publicationLockManager.releaseLock(content.id, platformString);
+        await publicationLockManager.releaseLock(content.id, platform);
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
       }

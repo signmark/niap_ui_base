@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
+import { publicationLockManager } from './publication-lock-manager';
 
 /**
  * Упрощенный планировщик для отправки webhooks в N8N
@@ -230,8 +231,25 @@ export class PublishScheduler {
     const results = [];
     
     for (const platform of selectedPlatforms) {
-      const success = await this.publishToSocialMedia(contentId, platform);
-      results.push({platform, success});
+      // Проверяем блокировку для предотвращения дублирования
+      const lockAcquired = await publicationLockManager.acquireLock(contentId, platform);
+      if (!lockAcquired) {
+        log(`🔒 PublishContent: Блокировка уже установлена для ${contentId}:${platform}, пропускаем`, 'scheduler');
+        results.push({platform, success: false, reason: 'blocked'});
+        continue;
+      }
+
+      try {
+        const success = await this.publishToSocialMedia(contentId, platform);
+        results.push({platform, success});
+        
+        // Освобождаем блокировку после публикации
+        await publicationLockManager.releaseLock(contentId, platform);
+      } catch (error) {
+        // Освобождаем блокировку при ошибке
+        await publicationLockManager.releaseLock(contentId, platform);
+        results.push({platform, success: false, error: error.message});
+      }
     }
     
     const successCount = results.filter(r => r.success).length;

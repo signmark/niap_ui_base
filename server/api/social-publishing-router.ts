@@ -8,6 +8,7 @@ import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { authMiddleware } from '../middleware/auth';
+import { publicationLockManager } from '../services/publication-lock-manager';
 import * as instagramCarouselHandler from './instagram-carousel-webhook';
 import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
