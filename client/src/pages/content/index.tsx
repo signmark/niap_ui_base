@@ -2531,18 +2531,28 @@ export default function ContentPage() {
                           facebook: 'Facebook'
                         };
                         
-                        // Только показываем успешно опубликованные платформы здесь
-                        if (platformData.status !== 'published') return null;
+                        // Показываем все выбранные платформы с соответствующей стилизацией
+                        const isPublished = platformData.status === 'published' || platformData.postUrl;
+                        const isFailed = platformData.status === 'failed' || platformData.error;
+                        
+                        // Если платформа не опубликована и не имеет ошибки, не показываем в этом разделе
+                        if (!isPublished && !isFailed) return null;
+                        
+                        const bgColor = isPublished ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
+                        const textColor = isPublished ? 'text-green-800' : 'text-red-800';
+                        const iconColor = isPublished ? 'text-green-600' : 'text-red-600';
+                        const statusText = isPublished ? 'Опубликовано' : 'Ошибка';
+                        const Icon = isPublished ? CheckCircle2 : AlertCircle;
                         
                         return (
-                          <div key={platform} className="flex items-center justify-between p-3 rounded-lg bg-green-100 border border-green-300">
+                          <div key={platform} className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}>
                             <div className="flex items-center gap-2">
-                              <CheckCircle2 className="h-5 w-5 text-green-600" />
-                              <span className="text-sm font-medium text-green-800">{platformNames[platform] || platform}</span>
+                              <Icon className={`h-5 w-5 ${iconColor}`} />
+                              <span className={`text-sm font-medium ${textColor}`}>{platformNames[platform] || platform}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-green-700">
-                                Опубликовано {platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
+                              <span className={`text-sm ${isPublished ? 'text-green-700' : 'text-red-700'}`}>
+                                {statusText} {isPublished && platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
                                   day: '2-digit',
                                   month: 'long', 
                                   year: 'numeric',
@@ -2550,7 +2560,7 @@ export default function ContentPage() {
                                   minute: '2-digit'
                                 })}
                               </span>
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              <Icon className={`h-4 w-4 ${iconColor}`} />
                             </div>
                           </div>
                         );
@@ -2558,47 +2568,17 @@ export default function ContentPage() {
                     </div>
                   </div>
                   
-                  {/* Показываем ошибки если есть */}
-                  {Object.entries(previewContent.socialPlatforms as Record<string, any>).some(([_, platformData]) => 
-                    platformData?.selected && (platformData?.error || platformData?.status === 'failed')
-                  ) && (
-                    <div>
-                      <div className="space-y-2">
-                        {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
-                          if (!platformData?.selected || (!platformData?.error && platformData?.status !== 'failed')) return null;
-                          
-                          const platformNames: Record<string, string> = {
-                            vk: 'ВКонтакте',
-                            telegram: 'Telegram', 
-                            instagram: 'Instagram',
-                            facebook: 'Facebook'
-                          };
-                          
-                          return (
-                            <div key={platform} className="flex items-center justify-between p-3 rounded bg-red-50 border border-red-200">
-                              <div className="flex items-center gap-2">
-                                <AlertCircle className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-800">{platformNames[platform] || platform}</span>
-                              </div>
-                              <div className="text-xs text-red-700">
-                                Ошибка
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+
                   
-                  {/* Ссылки на публикации */}
+                  {/* Ссылки на публикации - объединены с основным отображением */}
                   {Object.entries(previewContent.socialPlatforms as Record<string, any>).some(([_, platformData]) => 
-                    platformData?.postUrl && platformData?.status === 'published'
+                    platformData?.selected && platformData?.postUrl
                   ) && (
                     <div>
                       <h5 className="text-xs font-medium text-muted-foreground mb-2">Ссылки на публикации:</h5>
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
-                          if (!platformData?.postUrl || platformData?.status !== 'published') return null;
+                          if (!platformData?.selected || !platformData?.postUrl) return null;
                           
                           const platformNames: Record<string, string> = {
                             vk: 'ВКонтакте',
