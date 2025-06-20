@@ -613,7 +613,7 @@ export default function PublicationCalendar({
               onMonthChange={setCurrentMonth}
               className="rounded-md border"
               classNames={{
-                day_selected: "bg-transparent text-foreground hover:bg-transparent hover:text-foreground focus:bg-transparent focus:text-foreground",
+                day_selected: "bg-gray-700 text-white hover:bg-gray-600 hover:text-white focus:bg-gray-700 focus:text-white",
                 cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-transparent [&:has([aria-selected])]:bg-transparent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20"
               }}
               components={{
