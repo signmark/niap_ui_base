@@ -2616,13 +2616,17 @@ export default function ContentPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className={`text-sm ${isPublished ? 'text-green-700' : 'text-red-700'}`}>
-                                {statusText} {isPublished && platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
-                                  day: '2-digit',
-                                  month: 'long', 
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
+                                {statusText} {isPublished && platformData.publishedAt && (() => {
+                                  // Время publishedAt уже корректно в БД, не добавляем смещение
+                                  const date = new Date(platformData.publishedAt);
+                                  return date.toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: 'long', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  });
+                                })()}
                               </span>
                               <Icon className={`h-4 w-4 ${iconColor}`} />
                             </div>
@@ -2664,6 +2668,7 @@ export default function ContentPage() {
                       iconType="check"
                       className="flex items-center gap-1"
                       isFromPlatforms={false}
+                      isPublishedTime={true}
                     />
                   );
                 })()}
