@@ -2544,8 +2544,8 @@ export default function ContentPage() {
                         const statusText = isPublished ? 'Опубликовано' : 'Ошибка';
                         const Icon = isPublished ? CheckCircle2 : AlertCircle;
                         
-                        return (
-                          <div key={platform} className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}>
+                        const content = (
+                          <div className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}>
                             <div className="flex items-center gap-2">
                               <Icon className={`h-5 w-5 ${iconColor}`} />
                               <span className={`text-sm font-medium ${textColor}`}>{platformNames[platform] || platform}</span>
@@ -2564,44 +2564,27 @@ export default function ContentPage() {
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
-                  </div>
-                  
 
-                  
-                  {/* Ссылки на публикации - объединены с основным отображением */}
-                  {Object.entries(previewContent.socialPlatforms as Record<string, any>).some(([_, platformData]) => 
-                    platformData?.selected && platformData?.postUrl
-                  ) && (
-                    <div>
-                      <h5 className="text-xs font-medium text-muted-foreground mb-2">Ссылки на публикации:</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
-                          if (!platformData?.selected || !platformData?.postUrl) return null;
-                          
-                          const platformNames: Record<string, string> = {
-                            vk: 'ВКонтакте',
-                            telegram: 'Telegram',
-                            instagram: 'Instagram', 
-                            facebook: 'Facebook'
-                          };
-                          
+                        // Если есть ссылка на пост, делаем блок кликабельным
+                        if (platformData.postUrl) {
                           return (
                             <a
                               key={platform}
                               href={platformData.postUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                              className="block hover:opacity-90 transition-opacity"
                             >
-                              {platformNames[platform] || platform}
+                              {content}
                             </a>
                           );
-                        })}
-                      </div>
+                        }
+
+                        return <div key={platform}>{content}</div>;
+                      })}
                     </div>
-                  )}
+                  </div>
+
                 </div>
               </div>
             ) : (
