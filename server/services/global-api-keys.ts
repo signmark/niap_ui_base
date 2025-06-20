@@ -122,16 +122,8 @@ export class GlobalApiKeysService {
    */
   private async getSystemToken(): Promise<string | null> {
     try {
-      // Используем directusAuthManager для получения рабочего токена администратора
-      const adminSession = await directusAuthManager.getAdminSession();
-      
-      if (adminSession?.token) {
-        log('Системный токен получен через directusAuthManager', 'global-api-keys');
-        return adminSession.token;
-      } else {
-        console.error('Не удалось получить сессию администратора через directusAuthManager');
-        return null;
-      }
+      const { adminTokenManager } = await import('./admin-token-manager');
+      return await adminTokenManager.getAdminToken();
     } catch (error) {
       console.error('Ошибка при получении токена системного администратора:', error);
       return null;

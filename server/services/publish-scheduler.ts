@@ -61,39 +61,8 @@ export class PublishScheduler {
    */
   public async getSystemToken(): Promise<string | null> {
     try {
-      // Используем статический админский токен из переменных окружения
-      const adminToken = process.env.ADMIN_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
-      
-      if (adminToken) {
-        log('Используется статический токен администратора для планировщика', 'scheduler');
-        return adminToken;
-      }
-
-      // Fallback: получаем новый токен через логин
-      const email = process.env.DIRECTUS_ADMIN_EMAIL;
-      const password = process.env.DIRECTUS_ADMIN_PASSWORD;
-      
-      if (email && password) {
-        try {
-          const directusUrl = process.env.DIRECTUS_URL;
-          const authResponse = await axios.post(`${directusUrl}/auth/login`, {
-            email,
-            password
-          });
-          
-          if (authResponse.data?.data?.access_token) {
-            this.adminTokenCache = authResponse.data.data.access_token;
-            this.adminTokenTimestamp = Date.now();
-            log('Успешно получен новый токен администратора для планировщика', 'scheduler');
-            return authResponse.data.data.access_token;
-          }
-        } catch (error: any) {
-          log(`Ошибка при авторизации планировщика: ${error.message}`, 'scheduler');
-        }
-      }
-
-      log('Не удалось получить действительный токен для планировщика', 'scheduler');
-      return null;
+      const { adminTokenManager } = await import('./admin-token-manager');
+      return await adminTokenManager.getAdminToken();
     } catch (error: any) {
       log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
       return null;

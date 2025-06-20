@@ -2,20 +2,10 @@ import { directusApi } from "./lib/directus";
 import { directusStorageAdapter } from './services/directus';
 import axios from 'axios';
 import { 
-  type Campaign, 
-  type InsertCampaign, 
-  type ContentSource, 
-  type InsertContentSource, 
-  type TrendTopic, 
-  type InsertTrendTopic,
-  type CampaignContent,
-  type InsertCampaignContent,
-  type CampaignTrendTopic,
-  type InsertCampaignTrendTopic,
+  type UserCampaign, 
+  type InsertUserCampaign,
   type BusinessQuestionnaire,
-  type InsertBusinessQuestionnaire,
-  type CampaignKeyword,
-  type InsertCampaignKeyword
+  type InsertBusinessQuestionnaire
 } from "@shared/schema";
 
 // Тип для информации о токене пользователя
