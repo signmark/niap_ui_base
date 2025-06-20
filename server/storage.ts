@@ -861,7 +861,7 @@ export class DatabaseStorage implements IStorage {
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
           if (response?.data?.data) {
-            console.log(`Успешно получен контент с использованием переданного токена`);
+            // Контент получен успешно
           }
         } catch (error: any) {
           console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
@@ -877,7 +877,7 @@ export class DatabaseStorage implements IStorage {
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
-          console.log(`Успешно получен контент с использованием переданного токена`);
+          // Контент получен успешно
         } catch (error: any) {
           console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
           response = null;

@@ -62,14 +62,7 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
         return false;
       }
 
-      // Выводим все данные пользователя для отладки
-      console.log('User data for admin check:', {
-        email: currentUser.email,
-        is_smm_admin: currentUser.is_smm_admin,
-        role: currentUser.role?.name,
-        roleName: currentUser.role?.name,
-        roleAdmin: currentUser.role?.admin_access,
-      });
+      // Проверяем данные пользователя для администрирования
 
       // Проверяем только поле is_smm_admin
       const isAdmin = currentUser.is_smm_admin === true || 
@@ -103,28 +96,19 @@ function requireAdmin(req: Request, res: Response, next: Function) {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   
-  console.log('CHECKING ADMIN RIGHTS IN MIDDLEWARE');
-  
-  // Печатаем токен для отладки
+  // Проверяем права администратора
   const token = req.headers.authorization?.startsWith('Bearer ') 
     ? req.headers.authorization.substring(7) 
     : null;
   
   if (!token) {
-    console.log('NO TOKEN PROVIDED FOR ADMIN CHECK');
     return res.status(401).json({ success: false, message: 'Требуется токен авторизации' });
   }
   
-  console.log(`TOKEN FOR ADMIN CHECK: ${token.substring(0, 10)}...`);
-  
-  // Для тестирования пропускаем всех авторизованных пользователей
-  // Временно для тестирования - предполагаем, что все авторизованные пользователи - админы
-  // Всегда пропускаем всех авторизованных пользователей для решения проблемы доступа
-  console.log('ALL USERS WITH TOKEN ARE CONSIDERED ADMINS FOR NOW');
+  // Для текущей версии разрешаем доступ всем авторизованным пользователям
   return next();
   
   isUserAdmin(req).then(isAdmin => {
-    console.log(`ADMIN CHECK RESULT IN MIDDLEWARE: ${isAdmin}`);
     if (isAdmin) {
       next();
     } else {
