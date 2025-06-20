@@ -209,6 +209,11 @@ export class PublishScheduler {
             if (data.status === 'published' && data.postUrl) {
               continue;
             }
+            
+            // Пропускаем платформы с ошибками - не публикуем пока не будет исправлен контент
+            if (data.error || data.status === 'failed') {
+              continue;
+            }
 
             // Проверяем время публикации для платформы
             let shouldPublish = false;
