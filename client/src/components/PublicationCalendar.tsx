@@ -131,10 +131,6 @@ const DroppableDay = ({
       ref={drop}
       style={{
         backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-        border: isOver ? '2px dashed #3b82f6' : '2px dashed transparent',
-        borderRadius: '4px',
-        minHeight: '80px',
-        padding: '4px'
       }}
     >
       {children}
