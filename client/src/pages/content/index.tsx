@@ -1454,6 +1454,7 @@ export default function ContentPage() {
                                       iconType="check"
                                       className="text-xs"
                                       isFromPlatforms={false}
+                                      isPublishedTime={true}
                                     />
                                   )}
                                   {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
