@@ -2522,7 +2522,8 @@ export default function ContentPage() {
                     <h5 className="text-xs font-medium text-muted-foreground mb-2">Платформы:</h5>
                     <div className="space-y-2">
                       {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
-                        if (!platformData?.selected) return null;
+                        // Show all platforms that exist in the data
+                        if (!platformData) return null;
                         
                         const platformNames: Record<string, string> = {
                           vk: 'ВКонтакте',
@@ -2531,12 +2532,13 @@ export default function ContentPage() {
                           facebook: 'Facebook'
                         };
                         
-                        // Показываем все выбранные платформы с соответствующей стилизацией
+                        // Показываем все платформы которые имеют данные
                         const isPublished = platformData.status === 'published' || platformData.postUrl;
                         const isFailed = platformData.status === 'failed' || platformData.error;
+                        const isScheduled = platformData.status === 'scheduled' || platformData.scheduledAt;
                         
-                        // Если платформа не опубликована и не имеет ошибки, не показываем в этом разделе
-                        if (!isPublished && !isFailed) return null;
+                        // Показываем платформы с любым статусом
+                        if (!isPublished && !isFailed && !isScheduled && !platformData.selected) return null;
                         
                         const bgColor = isPublished ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
                         const textColor = isPublished ? 'text-green-800' : 'text-red-800';
