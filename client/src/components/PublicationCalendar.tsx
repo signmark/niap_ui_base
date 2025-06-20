@@ -612,6 +612,10 @@ export default function PublicationCalendar({
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               className="rounded-md border"
+              classNames={{
+                day_selected: "bg-transparent text-foreground hover:bg-transparent hover:text-foreground focus:bg-transparent focus:text-foreground",
+                cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-transparent [&:has([aria-selected])]:bg-transparent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20"
+              }}
               components={{
                 DayContent: ({ date }) => (
                   <DroppableDay day={date} onDropPost={handleDropPost}>
