@@ -39,7 +39,7 @@ const generateContentSchema = z.object({
   scheduledFor: z.date().optional(),
   platforms: z.array(z.enum(['telegram', 'vk', 'instagram', 'youtube'])),
   title: z.string().optional(),
-  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-pro-exp', 'gemini-2.5-pro-preview-03-25', 'gemini-2.5-pro-exp-03-25']).default('deepseek'),
+  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini-2.5-flash', 'gemini-2.5-pro']).default('deepseek'),
 });
 
 type GenerateContentForm = z.infer<typeof generateContentSchema>;
