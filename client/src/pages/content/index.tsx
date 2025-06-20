@@ -2513,13 +2513,122 @@ export default function ContentPage() {
             {previewContent?.socialPlatforms && 
              typeof previewContent.socialPlatforms === 'object' &&
              ((previewContent?.status === 'scheduled' && previewContent?.scheduledAt) || 
-              (previewContent?.status === 'published' && previewContent?.publishedAt)) ? (
-              <ScheduledPostInfo 
-                socialPlatforms={previewContent.socialPlatforms as Record<string, any>} 
-                scheduledAt={typeof previewContent?.scheduledAt === 'string' ? previewContent.scheduledAt : previewContent?.scheduledAt?.toISOString() || null}
-                publishedAt={typeof previewContent?.publishedAt === 'string' ? previewContent.publishedAt : previewContent?.publishedAt?.toISOString() || null}
-                compact={false}
-              />
+              (previewContent?.status === 'published' && previewContent?.publishedAt) ||
+              (previewContent?.status === 'partial')) ? (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-sm font-medium mb-3">Информация о публикации</h4>
+                <div className="space-y-3">
+                  <div>
+                    <h5 className="text-xs font-medium text-muted-foreground mb-2">Платформы:</h5>
+                    <div className="space-y-2">
+                      {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
+                        if (!platformData?.selected) return null;
+                        
+                        const platformNames: Record<string, string> = {
+                          vk: 'ВКонтакте',
+                          telegram: 'Telegram',
+                          instagram: 'Instagram',
+                          facebook: 'Facebook'
+                        };
+                        
+                        const statusText = platformData.status === 'published' ? 'Опубликовано' :
+                                         platformData.status === 'failed' ? 'Ошибка' :
+                                         platformData.status === 'pending' ? 'В ожидании' :
+                                         'Запланировано';
+                        
+                        const statusColor = platformData.status === 'published' ? 'bg-green-100 text-green-700' :
+                                          platformData.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                          'bg-yellow-100 text-yellow-700';
+                        
+                        return (
+                          <div key={platform} className={`flex items-center justify-between p-2 rounded ${statusColor}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{platformNames[platform] || platform}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {statusText} {platformData.publishedAt && new Date(platformData.publishedAt).toLocaleString('ru-RU', {
+                                  day: '2-digit',
+                                  month: '2-digit', 
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </Badge>
+                              {platformData.status === 'published' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                              {platformData.status === 'failed' && <AlertCircle className="h-4 w-4 text-red-600" />}
+                              {platformData.status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Показываем ошибки если есть */}
+                  {Object.entries(previewContent.socialPlatforms as Record<string, any>).some(([_, platformData]) => 
+                    platformData?.error || platformData?.status === 'failed'
+                  ) && (
+                    <div>
+                      <h5 className="text-xs font-medium text-red-600 mb-2">Ошибки публикации:</h5>
+                      <div className="space-y-1">
+                        {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
+                          if (!platformData?.error && platformData?.status !== 'failed') return null;
+                          
+                          const platformNames: Record<string, string> = {
+                            vk: 'ВКонтакте',
+                            telegram: 'Telegram', 
+                            instagram: 'Instagram',
+                            facebook: 'Facebook'
+                          };
+                          
+                          return (
+                            <div key={platform} className="bg-red-50 p-2 rounded text-sm">
+                              <div className="font-medium text-red-700">{platformNames[platform] || platform}:</div>
+                              <div className="text-red-600 text-xs mt-1">
+                                {platformData.error || 'Произошла ошибка при публикации'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Ссылки на публикации */}
+                  {Object.entries(previewContent.socialPlatforms as Record<string, any>).some(([_, platformData]) => 
+                    platformData?.postUrl && platformData?.status === 'published'
+                  ) && (
+                    <div>
+                      <h5 className="text-xs font-medium text-muted-foreground mb-2">Ссылки на публикации:</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
+                          if (!platformData?.postUrl || platformData?.status !== 'published') return null;
+                          
+                          const platformNames: Record<string, string> = {
+                            vk: 'ВКонтакте',
+                            telegram: 'Telegram',
+                            instagram: 'Instagram', 
+                            facebook: 'Facebook'
+                          };
+                          
+                          return (
+                            <a
+                              key={platform}
+                              href={platformData.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {platformNames[platform] || platform}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {previewContent?.publishedAt && (() => {
