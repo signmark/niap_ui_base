@@ -16,6 +16,43 @@ export class PublishScheduler {
   private adminTokenCache: string | null = null;
   private adminTokenTimestamp: number = 0;
   private tokenExpirationMs = 30 * 60 * 1000; // 30 минут
+  
+  // Кэш для предотвращения повторной публикации
+  private processedContentCache = new Map<string, Set<string>>(); // contentId -> Set<platform>
+  private cacheCleanupInterval = 10 * 60 * 1000; // очищаем кэш каждые 10 минут
+  private lastCacheCleanup = Date.now();
+
+  /**
+   * Очищает кэш обработанного контента
+   */
+  private cleanupCache() {
+    const now = Date.now();
+    if (now - this.lastCacheCleanup > this.cacheCleanupInterval) {
+      this.processedContentCache.clear();
+      this.lastCacheCleanup = now;
+      log('Кэш обработанного контента очищен', 'scheduler');
+    }
+  }
+
+  /**
+   * Проверяет, была ли уже обработана публикация для данной платформы
+   */
+  private isAlreadyProcessed(contentId: string, platform: string): boolean {
+    const platformSet = this.processedContentCache.get(contentId);
+    return platformSet ? platformSet.has(platform) : false;
+  }
+
+  /**
+   * Отмечает контент как обработанный для данной платформы
+   */
+  private markAsProcessed(contentId: string, platform: string) {
+    let platformSet = this.processedContentCache.get(contentId);
+    if (!platformSet) {
+      platformSet = new Set();
+      this.processedContentCache.set(contentId, platformSet);
+    }
+    platformSet.add(platform);
+  }
 
   /**
    * Запускает планировщик публикаций
@@ -79,6 +116,9 @@ export class PublishScheduler {
       }
       
       this.isProcessing = true;
+      
+      // Очищаем кэш при необходимости
+      this.cleanupCache();
       
       // Получаем системный токен
       const authToken = await this.getSystemToken();
@@ -174,13 +214,19 @@ export class PublishScheduler {
           for (const [platformName, platformData] of Object.entries(platforms)) {
             const data = platformData as any;
             
-            // Пропускаем уже опубликованные платформы
-            if (data.status === 'published' && data.postUrl) {
+            // Пропускаем уже опубликованные платформы (строгая проверка)
+            if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
               continue;
             }
             
             // Пропускаем платформы с ошибками - не публикуем пока не будет исправлен контент
             if (data.error || data.status === 'failed') {
+              continue;
+            }
+
+            // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем кэш на предмет повторной обработки
+            if (this.isAlreadyProcessed(content.id, platformName)) {
+              log(`Планировщик: Платформа ${platformName} для контента ${content.id} уже обрабатывается, пропускаем`, 'scheduler');
               continue;
             }
 
@@ -219,7 +265,10 @@ export class PublishScheduler {
             }
 
             if (shouldPublish) {
+              // Отмечаем платформу как обрабатываемую ПЕРЕД добавлением в очередь
+              this.markAsProcessed(content.id, platformName);
               readyPlatforms.push(platformName);
+              log(`Планировщик: Платформа ${platformName} добавлена в очередь публикации для контента ${content.id}`, 'scheduler');
             }
           }
 
