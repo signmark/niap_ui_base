@@ -856,7 +856,7 @@ export class DatabaseStorage implements IStorage {
       // Попытка 1: Используем переданный токен авторизации (если он есть)
       if (authToken) {
         try {
-          console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+          // Используем переданный токен авторизации
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -871,7 +871,7 @@ export class DatabaseStorage implements IStorage {
       
       // Попытка 2: Используем переданный токен, если первая попытка не удалась
       if (!response && authToken) {
-        console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+        // Используем переданный токен авторизации
         
         try {
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
@@ -1049,7 +1049,7 @@ export class DatabaseStorage implements IStorage {
       
       // Если передан токен напрямую, используем его
       if (authToken) {
-        console.log(`Используем переданный токен авторизации для обновления контента ${id}`);
+        // Используем переданный токен авторизации
         headers['Authorization'] = `Bearer ${authToken}`;
       } else {
         // Получаем данные текущего контента для доступа к userId

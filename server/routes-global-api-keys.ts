@@ -77,13 +77,7 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
                      currentUser.is_smm_admin === '1' || 
                      currentUser.is_smm_admin === 'true';
       
-      // Выводим логи для проверки
-      console.log('Admin check results:', { 
-        isSmmAdmin: isAdmin,
-        finalResult: isAdmin 
-      });
-
-      log(`Пользователь ${currentUser.email}: итоговый статус админа = ${isAdmin}. Значение is_smm_admin = ${currentUser.is_smm_admin}, тип: ${typeof currentUser.is_smm_admin}. Роль = ${currentUser.role?.name}`, 'admin');
+      // Проверяем права администратора
       
       return isAdmin;
     } catch (innerError) {

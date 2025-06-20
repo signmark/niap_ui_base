@@ -29,7 +29,7 @@ function extractUserIdFromToken(token: string): string | null {
     
     try {
       const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
-      console.log('Полезная нагрузка токена:', payload);
+      // Извлекаем данные из токена
       
       const userId = payload.sub || payload.id || null;
       if (!userId) {
