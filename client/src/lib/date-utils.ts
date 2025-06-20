@@ -2,11 +2,11 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 /**
- * Форматирует дату, правильно учитывая часовой пояс пользователя
+ * Форматирует дату (время уже корректно в БД)
  * @param dateString строка с датой или объект даты
  * @param formatStr формат вывода даты (по умолчанию 'dd MMMM yyyy, HH:mm')
- * @param isFromPlatforms указывает, что время пришло из данных платформ (всегда добавляем 3 часа для корректного отображения)
- * @returns отформатированная дата в локальном часовом поясе пользователя
+ * @param isFromPlatforms устаревший параметр (теперь игнорируется)
+ * @returns отформатированная дата
  */
 export function formatDateWithTimezone(
   dateString: string | Date | null | undefined,
@@ -17,7 +17,7 @@ export function formatDateWithTimezone(
   
   try {
     // Конвертируем строку в объект Date если нужно
-    let date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     
     // Проверяем, что дата валидна
     if (isNaN(date.getTime())) {
@@ -25,13 +25,7 @@ export function formatDateWithTimezone(
       return 'Некорректная дата';
     }
     
-    // ТОЛЬКО для времени из платформ (JSON) добавляем 3 часа
-    // Время published_at из N8N уже в правильном формате - НЕ преобразуем
-    if (isFromPlatforms) {
-      // Создаем новую дату с учетом смещения в 3 часа (Москва UTC+3)
-      date = new Date(date.getTime() + 3 * 60 * 60 * 1000);
-    }
-    
+    // Время уже корректно в БД, не добавляем смещение
     // Форматируем дату с использованием locale ru для русских названий месяцев
     return format(date, formatStr, { locale: ru });
   } catch (error) {
