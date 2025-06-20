@@ -1139,6 +1139,7 @@ export default function ContentPage() {
                 <TabsTrigger value="all">Все</TabsTrigger>
                 <TabsTrigger value="draft">Черновики</TabsTrigger>
                 <TabsTrigger value="scheduled">Запланированные</TabsTrigger>
+                <TabsTrigger value="partial">Частично</TabsTrigger>
                 <TabsTrigger value="published">Опубликованные</TabsTrigger>
               </TabsList>
             </Tabs>
