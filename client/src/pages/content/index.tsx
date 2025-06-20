@@ -263,6 +263,23 @@ export default function ContentPage() {
   // Отслеживание предыдущих статусов контента для показа тостов при изменении
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, string>>({});
 
+  // Auto-uncheck Instagram when content has no images
+  useEffect(() => {
+    if (currentContent && isScheduleDialogOpen) {
+      const hasImages = currentContent.imageUrl || 
+        (currentContent.images && currentContent.images.length > 0) ||
+        currentContent.contentType === 'text-image' ||
+        currentContent.contentType === 'video';
+      
+      if (!hasImages && selectedPlatforms.instagram) {
+        setSelectedPlatforms(prev => ({
+          ...prev,
+          instagram: false
+        }));
+      }
+    }
+  }, [currentContent?.id, currentContent?.imageUrl, currentContent?.images, currentContent?.contentType, isScheduleDialogOpen]);
+
   // Запрос списка кампаний
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
