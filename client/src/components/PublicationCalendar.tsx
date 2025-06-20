@@ -526,7 +526,7 @@ export default function PublicationCalendar({
     }
   };
 
-  // Форматирование даты публикации с учетом часового пояса
+  // Форматирование даты публикации (время уже корректно в БД)
   const formatScheduledTime = (date: string | Date | null | undefined, showFullDate: boolean = false) => {
     if (!date) return "--:--";
     
@@ -534,17 +534,14 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
-      // Принудительно добавляем 3 часа к UTC времени для получения московского времени
-      const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
-      
       if (showFullDate) {
-        const formattedDate = moscowTime.toLocaleDateString('ru-RU', {
+        const formattedDate = dateObj.toLocaleDateString('ru-RU', {
           day: '2-digit',
           month: 'long',
           year: 'numeric'
         });
         
-        const formattedTime = moscowTime.toLocaleTimeString('ru-RU', {
+        const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
@@ -552,7 +549,7 @@ export default function PublicationCalendar({
         
         return `${formattedDate}, ${formattedTime}`;
       } else {
-        return moscowTime.toLocaleTimeString('ru-RU', {
+        return dateObj.toLocaleTimeString('ru-RU', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
