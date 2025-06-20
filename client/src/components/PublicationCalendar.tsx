@@ -149,7 +149,6 @@ export default function PublicationCalendar({
 }: PublicationCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredPlatforms, setFilteredPlatforms] = useState<SocialPlatform[]>([]);
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
@@ -564,16 +563,7 @@ export default function PublicationCalendar({
     }
   };
 
-  // Навигация по месяцам
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth);
-    if (direction === 'prev') {
-      newMonth.setMonth(newMonth.getMonth() - 1);
-    } else {
-      newMonth.setMonth(newMonth.getMonth() + 1);
-    }
-    setCurrentMonth(newMonth);
-  };
+
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -581,32 +571,10 @@ export default function PublicationCalendar({
         <CardContent className="pt-6">
           <div className="grid gap-6 md:grid-cols-[300px_1fr]">
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => navigateMonth('prev')}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <span className="font-medium">
-                {format(currentMonth, 'LLLL yyyy', { locale: ru })}
-              </span>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => navigateMonth('next')}
-              >
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-            
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => (
