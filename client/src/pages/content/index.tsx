@@ -2111,6 +2111,11 @@ export default function ContentPage() {
                       [platform]: isSelected
                     }));
                   }}
+                  content={{
+                    contentType: currentContent.contentType,
+                    imageUrl: currentContent.imageUrl,
+                    images: currentContent.images
+                  }}
                 />
                 
                 {/* Summary of selected platforms */}
