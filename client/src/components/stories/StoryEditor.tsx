@@ -5,7 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { 
   Type, 
   Image, 
@@ -15,9 +17,14 @@ import {
   Move,
   Trash2,
   Upload,
-  Link
+  Link,
+  ArrowLeft,
+  Save,
+  Play,
+  Plus
 } from 'lucide-react';
 import Draggable from 'react-draggable';
+import ElementDialog from './ElementDialog';
 
 interface StorySlide {
   id: string;
@@ -46,13 +53,14 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [storyTitle, setStoryTitle] = useState('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [showElementDialog, setShowElementDialog] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
 
   // Fetch existing story if editing
   const { data: story, isLoading, error } = useQuery({
@@ -74,7 +82,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         description: 'Новая история успешно создана'
       });
       // Navigate to edit the new story
-      setLocation(`/stories/${newStory.data.id}/edit`);
+      window.location.href = `/stories/${newStory.data.id}/edit`;
     },
     onError: (error: any) => {
       toast({
@@ -163,11 +171,11 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   };
 
   const handleGoBack = () => {
-    setLocation(campaignId ? `/campaigns/${campaignId}` : '/campaigns');
+    window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  const currentSlide = story?.data?.slides?.[currentSlideIndex];
-  const slides = story?.data?.slides || [];
+  const currentSlide = story?.slides?.[currentSlideIndex];
+  const slides = story?.slides || [];
 
   if (isLoading) {
     return (
