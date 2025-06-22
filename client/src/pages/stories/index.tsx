@@ -19,7 +19,8 @@ import {
   Move
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { StoryEditor } from "@/components/stories/StoryEditor";
+import StoryEditor from "@/components/stories/StoryEditor";
+import ElementDialog from "@/components/stories/ElementDialog";
 
 interface StorySlide {
   id: string;

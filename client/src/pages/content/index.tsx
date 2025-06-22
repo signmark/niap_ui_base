@@ -28,6 +28,7 @@ import { PublishingStatus } from "@/components/PublishingStatus";
 import { ScheduledPostInfo } from "@/components/ScheduledPostInfo";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import ContentTypeDialog from "@/components/ContentTypeDialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -1108,21 +1109,13 @@ export default function ContentPage() {
             <Wand2 className="mr-2 h-4 w-4" />
             Генерация через AI
           </Button>
+
           <Button 
-            onClick={() => setIsCreateDialogOpen(true)} 
+            onClick={() => setIsContentTypeDialogOpen(true)} 
             disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
           >
             <Plus className="mr-2 h-4 w-4" />
             Создать контент
-          </Button>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)} 
-            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
-            variant="outline"
-            className="bg-purple-50 border-purple-200 hover:bg-purple-100"
-          >
-            <Layers className="mr-2 h-4 w-4" />
-            Создать Stories
           </Button>
         </div>
       </div>

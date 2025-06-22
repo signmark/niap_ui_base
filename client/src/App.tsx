@@ -86,6 +86,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
+      <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
