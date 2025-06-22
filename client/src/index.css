@@ -19,6 +19,58 @@
   background-color: white !important;
   color: black !important;
   opacity: 1 !important;
+  z-index: 50 !important;
+}
+
+/* Stories Editor стили для правильного наслоения */
+.stories-editor {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Canvas area - lower z-index */
+.stories-canvas {
+  z-index: 1;
+  position: relative;
+}
+
+/* Properties panel - higher z-index */
+.stories-properties {
+  z-index: 10;
+  position: relative;
+  background: white;
+}
+
+/* Selected element controls */
+.stories-element-selected {
+  z-index: 20 !important;
+}
+
+/* Draggable elements */
+.react-draggable {
+  z-index: 5;
+}
+
+/* Element delete buttons and controls */
+.stories-element-controls {
+  z-index: 30 !important;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Специальные стили для предотвращения выхода за границы диалога */
+[data-radix-dialog-content] .stories-editor {
+  overflow: hidden;
+  max-height: 400px;
+  contain: layout style paint;
+}
+
+/* Контекст наслоения для всего диалога */
+[data-radix-dialog-content] {
+  isolation: isolate;
+  contain: layout style;
 }
 
 /* Общие стили для WYSIWYG контента */
@@ -346,4 +398,20 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(160, 160, 160, 0.5) rgba(240, 240, 240, 0.5);
   }
+}
+
+/* Устранение мерцания в списке слайдов Stories */
+.stories-slides-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: auto;
+  contain: layout style paint;
+}
+
+.stories-slide-item {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: auto;
+  contain: layout style paint;
+  transition: none !important;
 }

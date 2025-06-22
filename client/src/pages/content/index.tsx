@@ -52,6 +52,7 @@ import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
 import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
+import { StoriesEditor } from "@/components/stories/StoriesEditor";
 import { 
   Popover, 
   PopoverContent, 
@@ -64,6 +65,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import type { StoryData } from "@/types";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -126,6 +128,7 @@ export default function ContentPage() {
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
+  const [isStoriesEditorOpen, setIsStoriesEditorOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -236,7 +239,8 @@ export default function ContentPage() {
     videoUrl: "",
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
-    keywords: [] as string[]
+    keywords: [] as string[],
+    storyData: null as StoryData | null
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
@@ -1420,6 +1424,30 @@ export default function ContentPage() {
                                       </div>
                                     </div>
                                   )}
+                                  {/* Stories content preview */}
+                                  {content.contentType === "story" && content.storyData && (
+                                    <div className="w-20 h-20 flex-shrink-0 relative bg-gradient-to-br from-purple-400 to-pink-400 rounded-md overflow-hidden">
+                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-xs">
+                                        <div className="font-medium">{content.storyData.slides?.length || 0}</div>
+                                        <div className="text-[10px] opacity-80">слайдов</div>
+                                      </div>
+                                      <div className="absolute top-1 right-1">
+                                        <div className="w-2 h-2 bg-white rounded-full opacity-80"></div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {/* Stories content preview */}
+                                  {content.contentType === "story" && content.storyData && (
+                                    <div className="w-20 h-20 flex-shrink-0 relative bg-gradient-to-br from-purple-400 to-pink-400 rounded-md overflow-hidden">
+                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-xs">
+                                        <div className="font-medium">{content.storyData.slides?.length || 0}</div>
+                                        <div className="text-[10px] opacity-80">слайдов</div>
+                                      </div>
+                                      <div className="absolute top-1 right-1">
+                                        <div className="w-2 h-2 bg-white rounded-full opacity-80"></div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 {/* Publishing status for published content */}
@@ -1521,22 +1549,79 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  <SelectItem value="story">Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content">Контент</Label>
-              <div>
-                <RichTextEditor
-                  value={newContent.content || ''}
-                  onChange={(html: string) => setNewContent({...newContent, content: html})}
-                  minHeight={150}
-                  className="tiptap"
-                  enableResize={true}
-                  placeholder="Введите текст контента..."
-                />
+            {/* Поле контента - скрываем для Stories */}
+            {newContent.contentType !== 'story' && (
+              <div className="space-y-2">
+                <Label htmlFor="content">Контент</Label>
+                <div>
+                  <RichTextEditor
+                    value={newContent.content || ''}
+                    onChange={(html: string) => setNewContent({...newContent, content: html})}
+                    minHeight={150}
+                    className="tiptap"
+                    enableResize={true}
+                    placeholder="Введите текст контента..."
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Stories Editor - ВМЕСТО текстового контента */}
+            {newContent.contentType === 'story' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Описание</Label>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Создание контента для Instagram Stories с возможностью добавления текста, изображений и интерактивных элементов.
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-purple-50 p-2 rounded">
+                    Формат: 9:16 (1080x1920px)
+                  </div>
+                </div>
+
+                {/* Текстовое поле для Stories */}
+                <div className="space-y-2">
+                  <Label htmlFor="storyText">Текстовое содержание Stories</Label>
+                  <Textarea
+                    id="storyText"
+                    value={newContent.content || ''}
+                    onChange={(e) => setNewContent({...newContent, content: e.target.value})}
+                    placeholder="Введите текст для Stories (будет добавлен как элемент в редакторе)..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                {/* Кнопка редактора */}
+                <div className="flex items-center gap-2 p-4 border rounded-lg bg-purple-50">
+                  {newContent.storyData ? (
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">Stories создан</div>
+                      <div className="text-xs text-muted-foreground">
+                        {newContent.storyData.slides?.length || 0} слайдов, {newContent.storyData.totalDuration || 0}с
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">Stories не создан</div>
+                      <div className="text-xs text-muted-foreground">
+                        Нажмите кнопку для создания Stories
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => setIsStoriesEditorOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {newContent.storyData ? 'Редактировать Stories' : 'Открыть редактор Stories'}
+                  </Button>
+                </div>
+              </div>
+            )}
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -2483,26 +2568,64 @@ export default function ContentPage() {
               {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
               {previewContent?.contentType === "video" && <Video size={16} />}
               {previewContent?.contentType === "video-text" && <Video size={16} />}
+              {previewContent?.contentType === "story" && <div className="w-4 h-4 bg-gradient-to-br from-purple-400 to-pink-400 rounded"></div>}
               <span>
                 {previewContent?.contentType === "text" && "Текстовый контент"}
                 {previewContent?.contentType === "text-image" && "Контент с изображением"}
                 {previewContent?.contentType === "video" && "Видео контент"}
                 {previewContent?.contentType === "video-text" && "Видео с текстом"}
+                {previewContent?.contentType === "story" && "Stories"}
               </span>
             </div>
 
             {/* Основной контент */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: previewContent && typeof previewContent.content === 'string' 
-                    ? (previewContent.content.startsWith('<') 
-                      ? previewContent.content 
-                      : processMarkdownSyntax(previewContent.content))
-                    : ''
-                }}
-              />
-            </div>
+            {previewContent?.contentType === "story" && previewContent?.storyData ? (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  Stories содержит {previewContent.storyData.slides?.length || 0} слайдов
+                  общей продолжительностью {previewContent.storyData.totalDuration || 0} секунд
+                </div>
+                {previewContent.content && (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: previewContent.content.startsWith('<') 
+                          ? previewContent.content 
+                          : processMarkdownSyntax(previewContent.content)
+                      }}
+                    />
+                  </div>
+                )}
+                {previewContent.storyData.slides && previewContent.storyData.slides.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Слайды Stories:</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {previewContent.storyData.slides.map((slide, index) => (
+                        <div key={slide.id} className="aspect-[9/16] bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg p-2 text-white text-xs">
+                          <div className="text-center">Слайд {index + 1}</div>
+                          <div className="text-[10px] opacity-80 mt-1">{slide.duration}s</div>
+                          {slide.elements && slide.elements.length > 0 && (
+                            <div className="text-[10px] opacity-80">{slide.elements.length} элементов</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <div 
+                  dangerouslySetInnerHTML={{ 
+                    __html: previewContent && typeof previewContent.content === 'string' 
+                      ? (previewContent.content.startsWith('<') 
+                        ? previewContent.content 
+                        : processMarkdownSyntax(previewContent.content))
+                      : ''
+                  }}
+                />
+              </div>
+            )}
 
             {/* Медиа-контент */}
             {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
@@ -2715,6 +2838,26 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Stories Editor */}
+      {isStoriesEditorOpen && (
+        <div className="fixed inset-0 z-[100] bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="w-[95vw] h-[95vh] bg-white rounded-lg shadow-xl overflow-hidden relative">
+            <StoriesEditor 
+              onSave={(storyData) => {
+                setNewContent({
+                  ...newContent,
+                  content: '',
+                  storyData: storyData
+                });
+                setIsStoriesEditorOpen(false);
+              }}
+              onClose={() => setIsStoriesEditorOpen(false)}
+              initialData={newContent.storyData || undefined}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
