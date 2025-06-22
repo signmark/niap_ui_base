@@ -26,7 +26,9 @@ export default function ElementDialog({ isOpen, onOpenChange, element, onSave }:
   const [elementData, setElementData] = useState<Partial<StoryElement>>(element || {});
 
   const handleSave = () => {
-    onSave(elementData);
+    if (onSave) {
+      onSave(elementData);
+    }
     onOpenChange(false);
   };
 

@@ -52,7 +52,7 @@ interface StoryEditorProps {
   storyId?: string;
 }
 
-export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
+export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
