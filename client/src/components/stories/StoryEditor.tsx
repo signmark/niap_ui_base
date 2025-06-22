@@ -643,16 +643,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       </footer>
 
       {/* Element Dialog */}
-      {showElementDialog && (
+      {showElementDialog && selectedElement && (
         <ElementDialog
           isOpen={showElementDialog}
           onOpenChange={setShowElementDialog}
           element={selectedElement}
           onSave={(elementData) => {
-            if (selectedElement) {
-              updateElement(selectedElement.id, elementData);
-            }
-            setShowElementDialog(false);
+            updateElement(selectedElement.id, elementData);
+            setSelectedElement(null);
           }}
         />
       )}

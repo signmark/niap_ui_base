@@ -27,6 +27,7 @@ export default function ElementDialog({ isOpen, onOpenChange, element, onSave }:
 
   const handleSave = () => {
     onSave(elementData);
+    onOpenChange(false);
   };
 
   return (
