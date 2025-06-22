@@ -40,14 +40,15 @@ const authenticateUser = async (req: any, res: any, next: any) => {
     return res.status(500).json({ success: false, error: 'Authentication error' });
   }
 };
-import {
-  insertStoryContentSchema,
-  insertStorySlideSchema,
-  insertStoryElementSchema,
-  StoryContent,
-  StorySlide,
-  StoryElement
-} from '../../shared/stories-schema';
+// Temporarily comment out problematic imports to fix UI
+// import {
+//   insertStoryContentSchema,
+//   insertStorySlideSchema,
+//   insertStoryElementSchema,
+//   StoryContent,
+//   StorySlide,
+//   StoryElement
+// } from '../../shared/stories-schema';
 
 const router = Router();
 
@@ -338,7 +339,7 @@ router.get('/stories/:id/preview', authenticateUser, async (req, res) => {
 });
 
 // Helper function to generate slide thumbnail (placeholder)
-function generateSlideThumbnail(slide: StorySlide): string {
+function generateSlideThumbnail(slide: any): string {
   // This would generate an actual thumbnail based on slide content
   return `/api/stories/thumbnails/${slide.id}`;
 }
