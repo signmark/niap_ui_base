@@ -92,7 +92,7 @@ router.put('/stories/:id', authenticateUser, async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const updatedStory = await storage.updateStory(id, updateData, req.user.id);
+    const updatedStory = await directusStorageAdapter.updateStory(id, updateData, req.user.id);
     
     if (!updatedStory) {
       return res.status(404).json({ success: false, error: 'Story not found' });
@@ -162,7 +162,7 @@ router.put('/stories/:storyId/slides/:slideId', authenticateUser, async (req, re
     const { storyId, slideId } = req.params;
     const updateData = req.body;
 
-    const updatedSlide = await storage.updateSlide(slideId, updateData, req.user.id);
+    const updatedSlide = await directusStorageAdapter.updateSlide(slideId, updateData, req.user.id);
     
     if (!updatedSlide) {
       return res.status(404).json({ success: false, error: 'Slide not found' });
@@ -180,7 +180,7 @@ router.put('/stories/:storyId/slides/:slideId', authenticateUser, async (req, re
 router.delete('/stories/:storyId/slides/:slideId', authenticateUser, async (req, res) => {
   try {
     const { storyId, slideId } = req.params;
-    const deleted = await storage.deleteSlide(slideId, req.user.id);
+    const deleted = await directusStorageAdapter.deleteSlide(slideId, req.user.id);
     
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Slide not found' });
@@ -204,7 +204,7 @@ router.post('/stories/:id/slides/reorder', authenticateUser, async (req, res) =>
       return res.status(400).json({ success: false, error: 'slideIds must be an array' });
     }
 
-    await storage.reorderSlides(storyId, slideIds, req.user.id);
+    await directusStorageAdapter.reorderSlides(storyId, slideIds, req.user.id);
     log(`Reordered slides for story ${storyId}`, 'stories');
 
     res.json({ success: true, message: 'Slides reordered successfully' });
@@ -223,7 +223,7 @@ router.post('/stories/:storyId/slides/:slideId/elements', authenticateUser, asyn
       slideId
     });
 
-    const element = await storage.addElementToSlide(elementData, req.user.id);
+    const element = await directusStorageAdapter.addElementToSlide(elementData, req.user.id);
     log(`Added element to slide ${slideId}: ${element.id}`, 'stories');
 
     res.json({ success: true, data: element });
@@ -239,7 +239,7 @@ router.put('/stories/:storyId/slides/:slideId/elements/:elementId', authenticate
     const { elementId } = req.params;
     const updateData = req.body;
 
-    const updatedElement = await storage.updateElement(elementId, updateData, req.user.id);
+    const updatedElement = await directusStorageAdapter.updateElement(elementId, updateData, req.user.id);
     
     if (!updatedElement) {
       return res.status(404).json({ success: false, error: 'Element not found' });
@@ -257,7 +257,7 @@ router.put('/stories/:storyId/slides/:slideId/elements/:elementId', authenticate
 router.delete('/stories/:storyId/slides/:slideId/elements/:elementId', authenticateUser, async (req, res) => {
   try {
     const { elementId } = req.params;
-    const deleted = await storage.deleteElement(elementId, req.user.id);
+    const deleted = await directusStorageAdapter.deleteElement(elementId, req.user.id);
     
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Element not found' });
@@ -277,7 +277,7 @@ router.post('/stories/:id/schedule', authenticateUser, async (req, res) => {
     const { id } = req.params;
     const { scheduledAt, platformSettings } = req.body;
 
-    const scheduledStory = await storage.scheduleStory(id, scheduledAt, platformSettings, req.user.id);
+    const scheduledStory = await directusStorageAdapter.scheduleStory(id, scheduledAt, platformSettings, req.user.id);
     
     if (!scheduledStory) {
       return res.status(404).json({ success: false, error: 'Story not found' });
@@ -311,7 +311,7 @@ router.post('/stories/:id/publish', authenticateUser, async (req, res) => {
 router.get('/stories/:id/preview', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const story = await storage.getStoryById(id, req.user.id);
+    const story = await directusStorageAdapter.getStoryById(id, req.user.id);
     
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
