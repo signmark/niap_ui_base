@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { storage } from '../storage';
+import { directusStorageAdapter } from '../services/directus-storage-adapter';
 import { log } from '../utils/logger';
 import { directusApi } from '../lib/directus';
 
@@ -54,12 +54,12 @@ const router = Router();
 // Create new story
 router.post('/stories', authenticateUser, async (req, res) => {
   try {
-    const validatedData = insertStoryContentSchema.parse({
+    const storyData = {
       ...req.body,
       userId: req.user.id
-    });
+    };
 
-    const story = await storage.createStory(validatedData);
+    const story = await directusStorageAdapter.createStory(storyData);
     log(`Created new story: ${story.id}`, 'stories');
 
     res.json({ success: true, data: story });
@@ -73,7 +73,7 @@ router.post('/stories', authenticateUser, async (req, res) => {
 router.get('/stories/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const story = await storage.getStoryById(id, req.user.id);
+    const story = await directusStorageAdapter.getStoryById(id, req.user.id);
     
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
@@ -110,7 +110,7 @@ router.put('/stories/:id', authenticateUser, async (req, res) => {
 router.delete('/stories/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await storage.deleteStory(id, req.user.id);
+    const deleted = await directusStorageAdapter.deleteStory(id, req.user.id);
     
     if (!deleted) {
       return res.status(404).json({ success: false, error: 'Story not found' });
@@ -128,7 +128,7 @@ router.delete('/stories/:id', authenticateUser, async (req, res) => {
 router.get('/campaigns/:campaignId/stories', authenticateUser, async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const stories = await storage.getStoriesByCampaign(campaignId, req.user.id);
+    const stories = await directusStorageAdapter.getStoriesByCampaign(campaignId, req.user.id);
 
     res.json({ success: true, data: stories });
   } catch (error: any) {
@@ -146,7 +146,7 @@ router.post('/stories/:id/slides', authenticateUser, async (req, res) => {
       storyId
     });
 
-    const slide = await storage.addSlideToStory(slideData, req.user.id);
+    const slide = await directusStorageAdapter.addSlideToStory(slideData, req.user.id);
     log(`Added slide to story ${storyId}: ${slide.id}`, 'stories');
 
     res.json({ success: true, data: slide });
