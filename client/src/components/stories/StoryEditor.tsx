@@ -413,43 +413,52 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
             
             {/* Add elements */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Добавить элемент</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Добавить элементы</h4>
+              <div className="space-y-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex flex-col h-16"
+                  className="w-full justify-start"
                   onClick={() => addElement('text')}
                 >
-                  <Type className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Текст</span>
+                  <Type className="w-4 h-4 mr-2" />
+                  Текст
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex flex-col h-16"
+                  className="w-full justify-start"
                   onClick={() => addElement('image')}
                 >
-                  <Image className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Изображение</span>
+                  <Image className="w-4 h-4 mr-2" />
+                  Фото
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex flex-col h-16"
+                  className="w-full justify-start"
                   onClick={() => addElement('video')}
                 >
-                  <Video className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Видео</span>
+                  <Video className="w-4 h-4 mr-2" />
+                  Видео
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex flex-col h-16"
+                  className="w-full justify-start"
                   onClick={() => addElement('poll')}
                 >
-                  <BarChart3 className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Опрос</span>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Опрос
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={() => addElement('ai-image')}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI фото
                 </Button>
               </div>
             </div>
