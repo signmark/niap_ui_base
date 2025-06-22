@@ -1,0 +1,87 @@
+{
+  "name": "Facebook Publishing",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "publish-facebook",
+        "responseMode": "responseNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "name": "Facebook Webhook"
+    },
+    {
+      "parameters": {
+        "collection": "campaign_content",
+        "operation": "get",
+        "id": "={{ $json.contentId }}"
+      },
+      "type": "n8n-nodes-base.directus",
+      "name": "Get Content"
+    },
+    {
+      "parameters": {
+        "collection": "campaigns", 
+        "operation": "get",
+        "id": "={{ $node['Get Content'].json.campaign_id }}"
+      },
+      "type": "n8n-nodes-base.directus",
+      "name": "Get Campaign"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обработка контента для Facebook\nconst content = $input.first().json;\nconst campaign = $node['Get Campaign'].json;\n\n// Очистка HTML\nconst message = content.content.replace(/<[^>]*>/g, '');\n\n// Получение токена\nconst facebookToken = campaign.social_media_settings.facebook.token;\nconst pageId = campaign.social_media_settings.facebook.pageId;\n\nreturn [{\n  message,\n  pageId,\n  token: facebookToken,\n  contentId: content.id,\n  imageUrl: content.image_url\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "name": "Process Content"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $json.pageId }}/feed",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "access_token", 
+              "value": "={{ $json.token }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "name": "Post to Facebook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Финальное обновление статуса контента\nconst contentId = $node['Process Content'].json.contentId;\nconst postId = $node['Post to Facebook'].json.id;\nconst postUrl = `https://facebook.com/{{ $json.pageId }}/posts/${postId}`;\n\n// Обновляем платформу Facebook\nconst platformUpdate = {\n  status: 'published',\n  postId: postId,\n  postUrl: postUrl,\n  publishedAt: new Date().toISOString()\n};\n\n// Получаем текущие social_platforms\nconst currentPlatforms = $node['Get Content'].json.social_platforms || {};\ncurrentPlatforms.facebook = platformUpdate;\n\n// Проверяем общий статус контента\nconst platforms = Object.values(currentPlatforms);\nconst publishedCount = platforms.filter(p => p.status === 'published').length;\nconst totalSelected = platforms.filter(p => p.selected !== false).length;\n\nlet contentStatus = 'draft';\nif (publishedCount === totalSelected) {\n  contentStatus = 'published';\n} else if (publishedCount > 0) {\n  contentStatus = 'partial';\n}\n\nreturn [{\n  contentId,\n  social_platforms: currentPlatforms,\n  status: contentStatus\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "name": "Calculate Status"
+    },
+    {
+      "parameters": {
+        "collection": "campaign_content",
+        "operation": "update", 
+        "id": "={{ $json.contentId }}",
+        "updateFields": {
+          "social_platforms": "={{ $json.social_platforms }}",
+          "status": "={{ $json.status }}"
+        }
+      },
+      "type": "n8n-nodes-base.directus",
+      "name": "Update Content Status"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\": \"ok\"}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "name": "Return Status 200"
+    }
+  ]
+}

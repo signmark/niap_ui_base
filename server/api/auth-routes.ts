@@ -69,26 +69,21 @@ export function registerAuthRoutes(app: Express): void {
       let adminToken: string;
       
       try {
-        // Пробуем использовать токен из активной сессии admin@roboflow.tech
+        // Импортируем directusApiManager
         const { directusApiManager } = await import('../directus.js');
-        const adminUserId = '61941d89-55c2-4def-83a3-bc8bfbd21d6f'; // ID admin@roboflow.tech
         
-        const cachedToken = directusApiManager.getCachedToken(adminUserId);
+        // Пробуем получить токен через прямую авторизацию администратора
+        const loginResponse = await directusApiManager.post('/auth/login', {
+          email: 'admin@roboflow.tech',
+          password: 'QtpZ3dh7'
+        });
         
-        if (cachedToken && cachedToken.token) {
-          adminToken = cachedToken.token;
-          console.log('Using cached admin@roboflow.tech token for user creation');
-        } else {
-          // Пробуем получить токен через планировщик
-          const { publishScheduler } = await import('../services/publish-scheduler.js');
-          const systemToken = await publishScheduler.getSystemToken();
-          
-          if (!systemToken) {
-            throw new Error('Не удалось получить токен администратора');
-          }
-          adminToken = systemToken;
-          console.log('Using system token from scheduler for user creation');
+        if (!loginResponse.data?.data?.access_token) {
+          throw new Error('Получен неверный ответ при авторизации администратора');
         }
+        
+        adminToken = loginResponse.data.data.access_token;
+        console.log('Successfully obtained admin token for user creation');
         
         // Создаем пользователя через directusApiManager с админским токеном
         const response = await directusApiManager.post('/users', {

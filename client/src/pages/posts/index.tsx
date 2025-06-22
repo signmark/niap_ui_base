@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { formatInTimeZone } from 'date-fns-tz';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
@@ -27,6 +28,37 @@ export default function Posts() {
     vk: 0,
     facebook: 0
   });
+  
+  // Функция для форматирования ЗАПЛАНИРОВАННОГО времени (добавляем +3 часа для пользователя)
+  const formatScheduledTime = (dateString: string | Date): string => {
+    if (typeof dateString === 'string') {
+      // Для запланированного времени добавляем 3 часа для московского времени
+      const utcDate = new Date(dateString);
+      const moscowTime = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      return format(moscowTime, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    }
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
+
+  // Функция для времени "Фактически опубликовано" (время уже корректно в БД)
+  const formatPublishedTime = (dateString: string | Date): string => {
+    if (typeof dateString === 'string') {
+      // Время уже корректно в БД, не добавляем смещение
+      const dateObj = new Date(dateString);
+      return format(dateObj, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    }
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
+  
+  // Функция для отображения общего времени публикации - показывать published_at как есть
+  const formatGeneralTime = (dateString: string | Date): string => {
+    if (typeof dateString === 'string') {
+      // Показывать время из поля published_at как есть, без преобразований
+      const date = new Date(dateString);
+      return format(date, 'dd MMMM yyyy, HH:mm', { locale: ru });
+    }
+    return format(dateString, 'dd MMMM yyyy, HH:mm', { locale: ru });
+  };
   
   // Состояние для хранения данных публикаций
   
@@ -59,9 +91,8 @@ export default function Posts() {
     },
     enabled: !!selectedCampaign?.id,
     refetchOnMount: true,
-    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000, // Автоматически обновляем данные каждые 10 секунд
-    refetchIntervalInBackground: true // Обновляем даже если вкладка не активна
+    refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
+    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем при переходе
   });
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
@@ -77,12 +108,14 @@ export default function Posts() {
       };
 
       campaignContent.forEach(content => {
-        // Учитываем только посты со статусом "published"
-        if (content.status === 'published' && content.socialPlatforms) {
+        // Учитываем посты со статусом "published" или "partial"
+        if ((content.status === 'published' || content.status === 'partial') && content.socialPlatforms) {
           Object.entries(content.socialPlatforms).forEach(([platform, info]) => {
-            // Учитываем только опубликованные платформы с валидными ссылками
-            if (info.status === 'published' && info.postUrl && platform in counts) {
-              counts[platform as SocialPlatform]++;
+            // Учитываем опубликованные платформы с валидными ссылками или платформы с ошибками
+            if ((info.status === 'published' && info.postUrl) || info.status === 'failed' || info.error) {
+              if (platform in counts) {
+                counts[platform as SocialPlatform]++;
+              }
             }
           });
         }
@@ -106,24 +139,26 @@ export default function Posts() {
     // Получаем весь контент
     const allContent = getContent();
     
-    // Проходим по всем постам и находим только опубликованные
+    // Проходим по всем постам и находим опубликованные и частично опубликованные
     for (const post of allContent) {
-      // КРИТИЧЕСКИ ВАЖНО: показываем только посты со статусом "published"
-      if (post.status !== 'published') {
+      // КРИТИЧЕСКИ ВАЖНО: показываем посты со статусом "published" и "partial" (с ошибками)
+      if (post.status !== 'published' && post.status !== 'partial') {
         continue;
       }
       
-      // Проверяем что у поста есть хотя бы одна опубликованная платформа с postUrl
-      let hasPublishedPlatform = false;
+      // Проверяем что у поста есть хотя бы одна опубликованная платформа или платформа с ошибкой
+      let hasValidPlatform = false;
       const publishedDates: Date[] = [];
       
       if (post.socialPlatforms && typeof post.socialPlatforms === 'object') {
         for (const platform in post.socialPlatforms) {
           const platformData = post.socialPlatforms[platform as SocialPlatform];
           
-          // Проверяем что платформа опубликована И имеет ссылку
-          if (platformData?.status === 'published' && platformData?.postUrl) {
-            hasPublishedPlatform = true;
+          // Проверяем что платформа опубликована И имеет ссылку ИЛИ имеет ошибку
+          if ((platformData?.status === 'published' && platformData?.postUrl) || 
+              platformData?.status === 'failed' || 
+              platformData?.error) {
+            hasValidPlatform = true;
             
             // Добавляем дату публикации платформы
             if (platformData.publishedAt) {
@@ -135,8 +170,8 @@ export default function Posts() {
         }
       }
       
-      // Если нет опубликованных платформ с ссылками, пропускаем пост
-      if (!hasPublishedPlatform) {
+      // Если нет валидных платформ (опубликованных или с ошибками), пропускаем пост
+      if (!hasValidPlatform) {
         continue;
       }
       
@@ -393,9 +428,11 @@ export default function Posts() {
                                         {/* Платформы */}
                                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                                           {content.socialPlatforms && Object.entries(content.socialPlatforms).map(([platform, info]) => {
-                                            if (info.status === 'published') {
+                                            if (info.status === 'published' || info.status === 'failed' || info.error) {
                                               let Icon = SiInstagram;
                                               let color = 'text-pink-600';
+                                              let badgeVariant = 'secondary';
+                                              let badgeClass = 'h-6 px-2 text-xs';
                                               
                                               if (platform === 'telegram') {
                                                 Icon = SiTelegram;
@@ -408,10 +445,18 @@ export default function Posts() {
                                                 color = 'text-indigo-600';
                                               }
                                               
+                                              // Определяем стиль бэджа в зависимости от статуса
+                                              if (info.status === 'failed' || info.error) {
+                                                badgeClass = 'h-6 px-2 text-xs bg-red-100 text-red-800';
+                                              }
+                                              
                                               return (
-                                                <Badge key={platform} variant="secondary" className="h-6 px-2 text-xs">
+                                                <Badge key={platform} variant="secondary" className={badgeClass}>
                                                   <Icon className={`h-3 w-3 mr-1 ${color}`} />
                                                   <span className="capitalize">{platform}</span>
+                                                  {(info.status === 'failed' || info.error) && (
+                                                    <span className="ml-1 text-xs">⚠️</span>
+                                                  )}
                                                 </Badge>
                                               );
                                             }
@@ -466,7 +511,7 @@ export default function Posts() {
                                     <h4 className="text-sm font-medium mb-3">Статус публикации:</h4>
                                     <div className="space-y-2">
                                       {content.socialPlatforms && Object.entries(content.socialPlatforms).map(([platform, info]) => {
-                                        if (info.status === 'published') {
+                                        if (info.status === 'published' || info.status === 'failed' || info.error) {
                                           let Icon = SiInstagram;
                                           let color = 'text-pink-600';
                                           let platformName = platform;
@@ -487,17 +532,43 @@ export default function Posts() {
                                             platformName = 'Instagram';
                                           }
                                           
+                                          const hasError = info.status === 'failed' || info.error;
+                                          
                                           return (
-                                            <div key={platform} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
-                                              <div className="flex items-center gap-2">
-                                                <Icon className={`h-4 w-4 ${color}`} />
-                                                <span className="font-medium">{platformName}</span>
-                                                <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
-                                                  Опубликовано
-                                                </Badge>
+                                            <div key={platform} className={`flex items-start justify-between p-3 rounded-md ${hasError ? 'bg-red-50 border border-red-200' : 'bg-muted/50'}`}>
+                                              <div className="flex flex-col gap-2 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                  <Icon className={`h-4 w-4 ${color}`} />
+                                                  <span className="font-medium">{platformName}</span>
+                                                  <Badge 
+                                                    variant="default" 
+                                                    className={hasError ? "bg-red-100 text-red-800 text-xs" : "bg-green-100 text-green-800 text-xs"}
+                                                  >
+                                                    {hasError ? 'Ошибка' : 'Опубликовано'}
+                                                  </Badge>
+                                                </div>
+                                                
+                                                {/* Время публикации для платформы */}
+                                                {info.scheduledAt && (
+                                                  <div className="text-xs text-muted-foreground">
+                                                    <strong>Время платформы:</strong> {formatScheduledTime(info.scheduledAt)}
+                                                  </div>
+                                                )}
+                                                
+                                                {info.publishedAt && (
+                                                  <div className="text-xs text-muted-foreground">
+                                                    <strong>Фактически опубликовано:</strong> {formatPublishedTime(info.publishedAt)}
+                                                  </div>
+                                                )}
+                                                
+                                                {info.error && (
+                                                  <div className="text-xs text-red-600 bg-red-100 p-2 rounded border">
+                                                    <strong>Ошибка:</strong> {info.error}
+                                                  </div>
+                                                )}
                                               </div>
-                                              {info.postUrl && (
-                                                <Button asChild size="sm" variant="outline" className="h-8">
+                                              {info.postUrl && !hasError && (
+                                                <Button asChild size="sm" variant="outline" className="h-8 ml-2">
                                                   <a 
                                                     href={info.postUrl} 
                                                     target="_blank" 
@@ -516,12 +587,19 @@ export default function Posts() {
                                     </div>
                                   </div>
                                   
-                                  {/* Дата публикации */}
-                                  {content.publishedAt && (
-                                    <div className="text-sm text-muted-foreground border-t pt-4">
-                                      <strong>Дата публикации:</strong> {format(new Date(content.publishedAt), 'dd MMMM yyyy, HH:mm', { locale: ru })}
-                                    </div>
-                                  )}
+                                  {/* Время публикации */}
+                                  <div className="text-sm text-muted-foreground border-t pt-4 space-y-2">
+                                    {content.publishedAt && (
+                                      <div>
+                                        <strong>Общее время публикации:</strong> {formatPublishedTime(content.publishedAt)}
+                                      </div>
+                                    )}
+                                    {content.scheduledAt && (
+                                      <div>
+                                        <strong>Запланировано на:</strong> {formatScheduledTime(content.scheduledAt)}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </DialogContent>
                             </Dialog>

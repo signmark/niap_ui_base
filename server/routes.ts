@@ -47,7 +47,7 @@ import { registerTokenRoutes } from './api/token-routes';
 import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
-import { publishScheduler } from './services/publish-scheduler';
+import { getPublishScheduler } from './services/publish-scheduler';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
@@ -2428,35 +2428,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         try {
-          // Для моделей 2.5 используем прямой Vertex AI БЕЗ фолбека
+          // Для моделей 2.5 пробуем сначала прямой Vertex AI, потом фолбек через прокси
           if (service === 'gemini-2.5-flash' || service === 'gemini-2.5-pro') {
-            console.log('[gemini-2.5] Использование прямого Vertex AI для модели', service);
+            console.log('[gemini-2.5] Пробуем прямой Vertex AI для модели', service);
             
-            // Прямой импорт для обеспечения доступности метода
-            const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
-            
-            // Маппинг коротких названий моделей на полные Vertex AI названия
-            let fullModelName = service;
-            if (service === 'gemini-2.5-flash') {
-              fullModelName = 'gemini-2.5-flash-preview-05-20';
-            } else if (service === 'gemini-2.5-pro') {
-              fullModelName = 'gemini-2.5-pro-preview-05-06';
+            try {
+              // Прямой импорт для обеспечения доступности метода
+              const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
+              
+              // Маппинг коротких названий моделей на новые GA endpoints
+              let fullModelName = service;
+              if (service === 'gemini-2.5-flash') {
+                fullModelName = 'gemini-2.5-flash';
+              } else if (service === 'gemini-2.5-pro') {
+                fullModelName = 'gemini-2.5-pro';
+              }
+              
+              console.log('[gemini-2.5] Генерация контента с полным названием модели:', fullModelName);
+              const generatedContent = await geminiVertexDirect.generateContent({
+                prompt: enrichedPrompt,
+                model: fullModelName
+              });
+              
+              console.log('[gemini-2.5] Контент успешно сгенерирован через прямой Vertex AI');
+              
+              return res.json({
+                success: true,
+                content: generatedContent,
+                service: service,
+                actualModel: fullModelName,
+                method: 'vertex-ai-direct'
+              });
+            } catch (vertexError) {
+              console.log('[gemini-2.5] Vertex AI недоступен, используем фолбек через прокси:', vertexError.message);
+              
+              // Фолбек: используем стандартный Gemini API через прокси для 2.5 моделей
+              const { globalApiKeyManager } = await import('./services/global-api-key-manager.js');
+              const { ApiServiceName } = await import('./services/api-keys.js');
+              
+              const geminiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.GEMINI);
+              if (!geminiApiKey) {
+                throw new Error('Gemini API key not found in Global API Keys collection');
+              }
+              
+              const geminiService = new GeminiService({ apiKey: geminiApiKey });
+              // Для фолбека используем gemini-2.0-flash (доступна через обычный API)
+              const fallbackModel = 'gemini-2.0-flash';
+              console.log('[gemini-2.5] Фолбек: генерируем через прокси с моделью', fallbackModel);
+              const generatedContent = await geminiService.generateText(enrichedPrompt, fallbackModel);
+              console.log('[gemini-2.5] Контент успешно сгенерирован через прокси фолбек');
+              
+              return res.json({
+                success: true,
+                content: generatedContent,
+                service: service,
+                actualModel: fallbackModel,
+                method: 'proxy-fallback'
+              });
             }
-            
-            console.log('[gemini-2.5] Генерация контента с полным названием модели:', fullModelName);
-            const generatedContent = await geminiVertexDirect.generateContent({
-              prompt: enrichedPrompt,
-              model: fullModelName
-            });
-            
-            console.log('[gemini-2.5] Контент успешно сгенерирован через прямой Vertex AI');
-            
-            return res.json({
-              success: true,
-              content: generatedContent,
-              service: service,
-              actualModel: fullModelName
-            });
           }
           
           // Для стандартных моделей Gemini используем обычный API
@@ -11535,6 +11564,44 @@ ${datesText}
       res.status(500).json({ 
         error: 'Ошибка сервера при обновлении пользователя',
         details: error.message 
+      });
+    }
+  });
+
+  // API эндпоинт для мгновенной публикации через N8N
+  app.post('/api/publish-content', async (req, res) => {
+    try {
+      console.log('[N8N-PUBLISH] Получен запрос на публикацию:', JSON.stringify(req.body, null, 2));
+      
+      const { contentId, platforms } = req.body;
+      const { publicationLockManager } = await import('./services/publication-lock-manager');
+      
+      console.log('[N8N-PUBLISH] contentId:', contentId, 'тип:', typeof contentId);
+      console.log('[N8N-PUBLISH] platforms:', platforms, 'тип:', typeof platforms, 'isArray:', Array.isArray(platforms));
+      
+      if (!contentId || !platforms || !Array.isArray(platforms)) {
+        console.log('[N8N-PUBLISH] Ошибка валидации:', {
+          hasContentId: !!contentId,
+          hasPlatforms: !!platforms,
+          isPlatformsArray: Array.isArray(platforms)
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Требуется contentId и массив platforms'
+        });
+      }
+
+      console.log('[N8N-PUBLISH] Вызов publishScheduler.publishContent с:', contentId, platforms);
+      const { publishScheduler } = await import('./services/publish-scheduler-simple');
+      const result = await publishScheduler.publishContent(contentId, platforms);
+      
+      console.log('[N8N-PUBLISH] Результат от publishScheduler:', result);
+      res.json(result);
+    } catch (error: any) {
+      console.error('[N8N-PUBLISH] Ошибка публикации контента:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Ошибка при публикации контента'
       });
     }
   });

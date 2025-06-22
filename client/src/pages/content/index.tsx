@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, createRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -9,8 +10,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, Edit3, 
-  AlertCircle, Layers
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, AlertCircle
 } from "lucide-react";
 import {
   AlertDialog,
@@ -32,7 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import type { Campaign, CampaignContent, ContentType, StoryData } from "@/types";
+import type { Campaign, CampaignContent } from "@shared/schema";
 import axios from "axios";
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -53,7 +53,6 @@ import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader"
 import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
 import { StoriesEditor } from "@/components/stories/StoriesEditor";
-import { StoriesPreview } from "@/components/stories/StoriesPreview";
 import { 
   Popover, 
   PopoverContent, 
@@ -66,6 +65,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import type { StoryData } from "@/types";
 
 // Создаем формат даты
 const formatDate = (date: string | Date) => {
@@ -143,7 +143,7 @@ export default function ContentPage() {
       // Обрабатываем ключевые слова для обеспечения правильного формата
       if (content.keywords) {
         if (Array.isArray(content.keywords)) {
-          processedKeywords = content.keywords.map((k: any) => {
+          processedKeywords = content.keywords.map(k => {
             // Проверяем, является ли k объектом с полем keyword
             if (k && typeof k === 'object' && 'keyword' in k) {
               return k.keyword;
@@ -240,8 +240,7 @@ export default function ContentPage() {
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[],
-    metadata: {} as Record<string, any>, // Добавляем поле metadata для Stories
-    storyData: null as StoryData | null // Данные для Stories
+    storyData: null as StoryData | null
   });
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
@@ -268,6 +267,62 @@ export default function ContentPage() {
   
   // Отслеживание предыдущих статусов контента для показа тостов при изменении
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, string>>({});
+
+  // Auto-uncheck Instagram when content has no images
+  useEffect(() => {
+    if (currentContent && isScheduleDialogOpen) {
+      const hasImages = currentContent.imageUrl || 
+        (currentContent.images && currentContent.images.length > 0) ||
+        currentContent.contentType === 'text-image' ||
+        currentContent.contentType === 'video';
+      
+      if (!hasImages && selectedPlatforms.instagram) {
+        setSelectedPlatforms(prev => ({
+          ...prev,
+          instagram: false
+        }));
+      }
+    }
+  }, [currentContent?.id, currentContent?.imageUrl, currentContent?.images, currentContent?.contentType, isScheduleDialogOpen]);
+
+
+
+  // Force refetch data when campaign changes
+  useEffect(() => {
+    if (selectedCampaignId) {
+      console.log('Принудительная перезагрузка данных для кампании:', selectedCampaignId);
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+    }
+  }, [selectedCampaignId, queryClient]);
+
+  // Track location changes to reload data when navigating to content page
+  const [location] = useLocation();
+  const [hasNavigated, setHasNavigated] = useState(false);
+
+  // Force refetch data when navigating to content page
+  useEffect(() => {
+    if (location === '/content' && selectedCampaignId) {
+      console.log('Переход на страницу контента, принудительная загрузка данных');
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      // Принудительная перезагрузка данных
+      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      setHasNavigated(true);
+    }
+  }, [location, selectedCampaignId, queryClient]);
+
+  // Also force reload when component first mounts
+  useEffect(() => {
+    if (!hasNavigated && selectedCampaignId) {
+      console.log('Компонент контента смонтирован, принудительная загрузка данных');
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
+    }
+  }, [selectedCampaignId, hasNavigated, queryClient]);
 
   // Запрос списка кампаний
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
@@ -392,9 +447,7 @@ export default function ContentPage() {
             videoUrl: "",
             additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
-            keywords: [],
-            metadata: {}, // Сбрасываем metadata
-            storyData: null // Сбрасываем данные Stories
+            keywords: []
           });
           
           // Закрываем диалог
@@ -697,33 +750,11 @@ export default function ContentPage() {
       return;
     }
 
-    // Проверяем корректность данных для Stories
-    if (newContent.contentType === "story") {
-      if (!newContent.metadata?.storyData?.slides || newContent.metadata.storyData.slides.length === 0) {
-        toast({
-          description: "Создайте хотя бы один слайд для Stories",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
-    // Подготавливаем данные для создания контента
-    const contentData = {
+    createContentMutation.mutate({
       campaignId: selectedCampaignId,
       ...newContent,
       status: 'draft'
-    };
-
-    // Для Stories контента, сохраняем данные Stories в metadata
-    if (newContent.contentType === "story" && newContent.metadata?.storyData) {
-      contentData.metadata = {
-        ...newContent.metadata,
-        storyData: newContent.metadata.storyData
-      };
-    }
-
-    createContentMutation.mutate(contentData);
+    });
   };
 
   // Обработчик обновления контента
@@ -783,7 +814,6 @@ export default function ContentPage() {
       additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
       videoUrl: currentContent.videoUrl,
       additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
-      metadata: currentContent.metadata || {}, // Добавляем metadata для сохранения Stories данных
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
       keywords: [...selectedKeywordTexts.filter(k => k && k.trim() !== '')] // Фильтруем пустые значения и создаем новый массив
@@ -892,8 +922,15 @@ export default function ContentPage() {
   const filteredContent = Array.isArray(campaignContent) ? campaignContent
     .filter(content => {
       // Фильтр по статусу (вкладки)
-      if (activeTab !== "all" && content.status !== activeTab) {
-        return false;
+      if (activeTab !== "all") {
+        if (activeTab === "published") {
+          // В табе "Опубликованные" показываем контент со статусом "published" и "partial"
+          if (content.status !== "published" && content.status !== "partial") {
+            return false;
+          }
+        } else if (content.status !== activeTab) {
+          return false;
+        }
       }
       
       // Фильтр по диапазону дат, если указан
@@ -967,6 +1004,8 @@ export default function ContentPage() {
         return <Clock className="h-4 w-4" />;
       case "published":
         return <CheckCircle2 className="h-4 w-4" />;
+      case "partial":
+        return <CheckCircle2 className="h-4 w-4" />;
       default:
         return <Pencil className="h-4 w-4" />;
     }
@@ -981,6 +1020,8 @@ export default function ContentPage() {
         return "secondary";
       case "published":
         return "default";
+      case "partial":
+        return "secondary";
       default:
         return "outline";
     }
@@ -995,6 +1036,8 @@ export default function ContentPage() {
         return "Запланировано";
       case "published":
         return "Опубликовано";
+      case "partial":
+        return "Частично";
       default:
         return "Черновик";
     }
@@ -1016,9 +1059,9 @@ export default function ContentPage() {
           'publishedAt' in platform && 
           platform.status === 'published' && 
           platform.publishedAt) {
-        const publishedTime = new Date(platform.publishedAt as string);
-        if (!latestTime || publishedTime > new Date(latestTime as string)) {
-          latestTime = platform.publishedAt as string;
+        const publishedTime = new Date(platform.publishedAt);
+        if (!latestTime || publishedTime > new Date(latestTime)) {
+          latestTime = platform.publishedAt;
         }
       }
     }
@@ -1381,6 +1424,30 @@ export default function ContentPage() {
                                       </div>
                                     </div>
                                   )}
+                                  {/* Stories content preview */}
+                                  {content.contentType === "story" && content.storyData && (
+                                    <div className="w-20 h-20 flex-shrink-0 relative bg-gradient-to-br from-purple-400 to-pink-400 rounded-md overflow-hidden">
+                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-xs">
+                                        <div className="font-medium">{content.storyData.slides?.length || 0}</div>
+                                        <div className="text-[10px] opacity-80">слайдов</div>
+                                      </div>
+                                      <div className="absolute top-1 right-1">
+                                        <div className="w-2 h-2 bg-white rounded-full opacity-80"></div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {/* Stories content preview */}
+                                  {content.contentType === "story" && content.storyData && (
+                                    <div className="w-20 h-20 flex-shrink-0 relative bg-gradient-to-br from-purple-400 to-pink-400 rounded-md overflow-hidden">
+                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-xs">
+                                        <div className="font-medium">{content.storyData.slides?.length || 0}</div>
+                                        <div className="text-[10px] opacity-80">слайдов</div>
+                                      </div>
+                                      <div className="absolute top-1 right-1">
+                                        <div className="w-2 h-2 bg-white rounded-full opacity-80"></div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 {/* Publishing status for published content */}
@@ -1409,12 +1476,13 @@ export default function ContentPage() {
                                 <div className="mt-2 pt-1.5 border-t text-xs text-muted-foreground flex flex-wrap gap-x-3">
                                   {content.publishedAt && (
                                     <CreationTimeDisplay
-                                      createdAt={getCorrectPublishedTime(content)}
+                                      createdAt={content.publishedAt}
                                       label="Опубл.:"
                                       showIcon={false}
                                       iconType="check"
                                       className="text-xs"
-                                      isFromPlatforms={true}
+                                      isFromPlatforms={false}
+                                      isPublishedTime={true}
                                     />
                                   )}
                                   {content.scheduledAt && !content.publishedAt && content.status !== 'scheduled' && (
@@ -1452,7 +1520,7 @@ export default function ContentPage() {
 
       {/* Диалог создания контента */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto z-50">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Создание нового контента</DialogTitle>
           </DialogHeader>
@@ -1481,54 +1549,79 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
-                  <SelectItem value="story">Instagram Stories</SelectItem>
+                  <SelectItem value="story">Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content">Контент</Label>
-              <div>
-                <RichTextEditor
-                  value={newContent.content || ''}
-                  onChange={(html: string) => setNewContent({...newContent, content: html})}
-                  minHeight={150}
-                  className="tiptap"
-                  enableResize={true}
-                  placeholder="Введите текст контента..."
-                />
-              </div>
-            </div>
-            
-            {/* Stories Editor */}
-            {newContent.contentType === "story" && (
-              <div className="space-y-4">
-                <Label>Редактор Stories</Label>
-                <div className="border rounded-lg p-4 bg-white" style={{ minHeight: '300px', overflow: 'visible', zIndex: 'auto' }}>
-                  <div className="text-center text-gray-500 py-8">
-                    <p className="mb-4">Stories редактор будет открыт в отдельном окне</p>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        // Открываем Stories редактор в отдельном модальном окне
-                        setIsStoriesEditorOpen(true);
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Открыть редактор Stories
-                    </Button>
-                  </div>
-                  {newContent.metadata?.storyData?.slides?.length > 0 && (
-                    <div className="mt-4 p-2 bg-gray-50 rounded">
-                      <p className="text-sm text-gray-600">
-                        Создано слайдов: {newContent.metadata.storyData.slides.length}
-                      </p>
-                    </div>
-                  )}
+            {/* Поле контента - скрываем для Stories */}
+            {newContent.contentType !== 'story' && (
+              <div className="space-y-2">
+                <Label htmlFor="content">Контент</Label>
+                <div>
+                  <RichTextEditor
+                    value={newContent.content || ''}
+                    onChange={(html: string) => setNewContent({...newContent, content: html})}
+                    minHeight={150}
+                    className="tiptap"
+                    enableResize={true}
+                    placeholder="Введите текст контента..."
+                  />
                 </div>
               </div>
             )}
-            
+
+            {/* Stories Editor - ВМЕСТО текстового контента */}
+            {newContent.contentType === 'story' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Описание</Label>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Создание контента для Instagram Stories с возможностью добавления текста, изображений и интерактивных элементов.
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-purple-50 p-2 rounded">
+                    Формат: 9:16 (1080x1920px)
+                  </div>
+                </div>
+
+                {/* Текстовое поле для Stories */}
+                <div className="space-y-2">
+                  <Label htmlFor="storyText">Текстовое содержание Stories</Label>
+                  <Textarea
+                    id="storyText"
+                    value={newContent.content || ''}
+                    onChange={(e) => setNewContent({...newContent, content: e.target.value})}
+                    placeholder="Введите текст для Stories (будет добавлен как элемент в редакторе)..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                {/* Кнопка редактора */}
+                <div className="flex items-center gap-2 p-4 border rounded-lg bg-purple-50">
+                  {newContent.storyData ? (
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">Stories создан</div>
+                      <div className="text-xs text-muted-foreground">
+                        {newContent.storyData.slides?.length || 0} слайдов, {newContent.storyData.totalDuration || 0}с
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">Stories не создан</div>
+                      <div className="text-xs text-muted-foreground">
+                        Нажмите кнопку для создания Stories
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => setIsStoriesEditorOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {newContent.storyData ? 'Редактировать Stories' : 'Открыть редактор Stories'}
+                  </Button>
+                </div>
+              </div>
+            )}
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1780,7 +1873,7 @@ export default function ContentPage() {
                 <Select
                   value={currentContent.contentType || 'text'}
                   onValueChange={(value) => {
-                    const updatedContent = {...currentContent, contentType: value as ContentType};
+                    const updatedContent = {...currentContent, contentType: value};
                     setCurrentContentSafe(updatedContent);
                   }}
                 >
@@ -1792,7 +1885,6 @@ export default function ContentPage() {
                     <SelectItem value="text-image">Текст с изображением</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="video-text">Видео с текстом</SelectItem>
-                    <SelectItem value="story">Stories</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1885,40 +1977,6 @@ export default function ContentPage() {
                     onChange={(videos) => setCurrentContentSafe({...currentContent, additionalVideos: videos})}
                     label="Дополнительные видео"
                   />
-                </div>
-              )}
-              
-              {/* Stories Editor для редактирования Stories контента */}
-              {currentContent.contentType === "story" && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label>Stories Content</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsStoriesEditorOpen(true)}
-                      className="h-8"
-                    >
-                      <Edit3 className="h-4 w-4 mr-1" />
-                      Редактировать Stories
-                    </Button>
-                  </div>
-                  {currentContent.metadata?.storyData?.slides && currentContent.metadata.storyData.slides.length > 0 ? (
-                    <div className="text-sm text-muted-foreground bg-slate-50 p-3 rounded">
-                      <div className="flex items-center gap-2">
-                        <Layers className="h-4 w-4" />
-                        <span>Stories содержит {currentContent.metadata.storyData.slides.length} слайдов</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground bg-orange-50 p-3 rounded">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                        <span>Stories не содержит слайдов. Нажмите "Редактировать Stories" для создания контента.</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
               
@@ -2196,6 +2254,11 @@ export default function ContentPage() {
                       [platform]: isSelected
                     }));
                   }}
+                  content={{
+                    contentType: currentContent.contentType,
+                    imageUrl: currentContent.imageUrl,
+                    images: currentContent.images
+                  }}
                 />
                 
                 {/* Summary of selected platforms */}
@@ -2230,7 +2293,7 @@ export default function ContentPage() {
               <Button 
                 type="button" 
                 variant="default" 
-                onClick={() => {
+                onClick={async () => {
                   // Проверка на выбор хотя бы одной платформы
                   if (!Object.values(selectedPlatforms).some(Boolean)) {
                     toast({
@@ -2240,14 +2303,46 @@ export default function ContentPage() {
                     return;
                   }
                   
-                  // Публикуем немедленно через новый API, который ожидает объект с булевыми значениями
-                  // для каждой платформы: {telegram: true, vk: true, instagram: false, facebook: false}
-                  publishContentMutation.mutate({
-                    id: currentContent?.id || '',
-                    platforms: selectedPlatforms
-                  });
+                  try {
+                    // Получаем выбранные платформы как массив строк для N8N API
+                    const selectedPlatformList = Object.entries(selectedPlatforms)
+                      .filter(([_, isSelected]) => isSelected)
+                      .map(([platform]) => platform);
+                    
+                    const requestData = {
+                      contentId: currentContent?.id,
+                      platforms: selectedPlatformList
+                    };
+                    
+                    console.log("Публикация контента - contentId:", currentContent?.id);
+                    console.log("Публикация контента - platforms:", selectedPlatformList);
+                    console.log("Публикация контента - полный объект:", requestData);
+                    
+                    // Вызываем API эндпоинт для публикации контента
+                    const response = await apiRequest('/api/publish-content', {
+                      method: 'POST',
+                      data: requestData
+                    });
+                    
+                    if (response.success) {
+                      toast({
+                        description: response.message || "Контент успешно отправлен на публикацию",
+                        variant: "default"
+                      });
+                    } else {
+                      toast({
+                        description: response.error || "Ошибка при публикации контента",
+                        variant: "destructive"
+                      });
+                    }
+                  } catch (error: any) {
+                    console.error("Ошибка публикации контента:", error);
+                    toast({
+                      description: error.message || "Ошибка при публикации контента",
+                      variant: "destructive"
+                    });
+                  }
                   
-                  console.log("Запрос на публикацию с выбранными платформами:", selectedPlatforms);
                   setIsScheduleDialogOpen(false);
                 }}
                 disabled={
@@ -2256,7 +2351,7 @@ export default function ContentPage() {
                 }
               >
                 {publishContentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Опубликовать сейчас
+                Опубликовать сразу
               </Button>
               <Button 
                 type="button" 
@@ -2473,28 +2568,64 @@ export default function ContentPage() {
               {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
               {previewContent?.contentType === "video" && <Video size={16} />}
               {previewContent?.contentType === "video-text" && <Video size={16} />}
-              {previewContent?.contentType === "story" && <Layers size={16} />}
+              {previewContent?.contentType === "story" && <div className="w-4 h-4 bg-gradient-to-br from-purple-400 to-pink-400 rounded"></div>}
               <span>
                 {previewContent?.contentType === "text" && "Текстовый контент"}
                 {previewContent?.contentType === "text-image" && "Контент с изображением"}
                 {previewContent?.contentType === "video" && "Видео контент"}
                 {previewContent?.contentType === "video-text" && "Видео с текстом"}
-                {previewContent?.contentType === "story" && "Instagram Stories"}
+                {previewContent?.contentType === "story" && "Stories"}
               </span>
             </div>
 
             {/* Основной контент */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: previewContent && typeof previewContent.content === 'string' 
-                    ? (previewContent.content.startsWith('<') 
-                      ? previewContent.content 
-                      : processMarkdownSyntax(previewContent.content))
-                    : ''
-                }}
-              />
-            </div>
+            {previewContent?.contentType === "story" && previewContent?.storyData ? (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  Stories содержит {previewContent.storyData.slides?.length || 0} слайдов
+                  общей продолжительностью {previewContent.storyData.totalDuration || 0} секунд
+                </div>
+                {previewContent.content && (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: previewContent.content.startsWith('<') 
+                          ? previewContent.content 
+                          : processMarkdownSyntax(previewContent.content)
+                      }}
+                    />
+                  </div>
+                )}
+                {previewContent.storyData.slides && previewContent.storyData.slides.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Слайды Stories:</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {previewContent.storyData.slides.map((slide, index) => (
+                        <div key={slide.id} className="aspect-[9/16] bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg p-2 text-white text-xs">
+                          <div className="text-center">Слайд {index + 1}</div>
+                          <div className="text-[10px] opacity-80 mt-1">{slide.duration}s</div>
+                          {slide.elements && slide.elements.length > 0 && (
+                            <div className="text-[10px] opacity-80">{slide.elements.length} элементов</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <div 
+                  dangerouslySetInnerHTML={{ 
+                    __html: previewContent && typeof previewContent.content === 'string' 
+                      ? (previewContent.content.startsWith('<') 
+                        ? previewContent.content 
+                        : processMarkdownSyntax(previewContent.content))
+                      : ''
+                  }}
+                />
+              </div>
+            )}
 
             {/* Медиа-контент */}
             {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
@@ -2539,14 +2670,6 @@ export default function ContentPage() {
                 </div>
               </div>
             )}
-
-            {/* Stories Content Preview */}
-            {previewContent?.contentType === "story" && previewContent?.metadata?.storyData && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Stories Content</h4>
-                <StoriesPreview storyData={previewContent.metadata.storyData} />
-              </div>
-            )}
             
             {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
               <div className="mt-4">
@@ -2576,29 +2699,100 @@ export default function ContentPage() {
             {previewContent?.socialPlatforms && 
              typeof previewContent.socialPlatforms === 'object' &&
              ((previewContent?.status === 'scheduled' && previewContent?.scheduledAt) || 
-              (previewContent?.status === 'published' && previewContent?.publishedAt)) ? (
-              <ScheduledPostInfo 
-                socialPlatforms={previewContent.socialPlatforms as Record<string, any>} 
-                scheduledAt={typeof previewContent?.scheduledAt === 'string' ? previewContent.scheduledAt : previewContent?.scheduledAt?.toISOString() || null}
-                publishedAt={typeof previewContent?.publishedAt === 'string' ? previewContent.publishedAt : previewContent?.publishedAt?.toISOString() || null}
-                compact={false}
-              />
+              (previewContent?.status === 'published' && previewContent?.publishedAt) ||
+              (previewContent?.status === 'partial')) ? (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-sm font-medium mb-3">Информация о публикации</h4>
+                <div className="space-y-3">
+                  <div>
+                    <h5 className="text-xs font-medium text-muted-foreground mb-2">Платформы:</h5>
+                    <div className="space-y-2">
+                      {Object.entries(previewContent.socialPlatforms as Record<string, any>).map(([platform, platformData]) => {
+                        // Show all platforms that exist in the data
+                        if (!platformData) return null;
+                        
+                        const platformNames: Record<string, string> = {
+                          vk: 'ВКонтакте',
+                          telegram: 'Telegram',
+                          instagram: 'Instagram',
+                          facebook: 'Facebook'
+                        };
+                        
+                        // Показываем все платформы которые имеют данные
+                        const isPublished = platformData.status === 'published' || platformData.postUrl;
+                        const isFailed = platformData.status === 'failed' || platformData.error;
+                        const isScheduled = platformData.status === 'scheduled' || platformData.scheduledAt;
+                        
+                        // Показываем платформы с любым статусом
+                        if (!isPublished && !isFailed && !isScheduled && !platformData.selected) return null;
+                        
+                        const bgColor = isPublished ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
+                        const textColor = isPublished ? 'text-green-800' : 'text-red-800';
+                        const iconColor = isPublished ? 'text-green-600' : 'text-red-600';
+                        const statusText = isPublished ? 'Опубликовано' : 'Ошибка';
+                        const Icon = isPublished ? CheckCircle2 : AlertCircle;
+                        
+                        const content = (
+                          <div className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}>
+                            <div className="flex items-center gap-2">
+                              <Icon className={`h-5 w-5 ${iconColor}`} />
+                              <span className={`text-sm font-medium ${textColor}`}>{platformNames[platform] || platform}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm ${isPublished ? 'text-green-700' : 'text-red-700'}`}>
+                                {statusText} {isPublished && platformData.publishedAt && (() => {
+                                  // Время publishedAt уже корректно в БД, не добавляем смещение
+                                  const date = new Date(platformData.publishedAt);
+                                  return date.toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: 'long', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  });
+                                })()}
+                              </span>
+                              <Icon className={`h-4 w-4 ${iconColor}`} />
+                            </div>
+                          </div>
+                        );
+
+                        // Если есть ссылка на пост, делаем блок кликабельным
+                        if (platformData.postUrl) {
+                          return (
+                            <a
+                              key={platform}
+                              href={platformData.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block hover:opacity-90 transition-opacity"
+                            >
+                              {content}
+                            </a>
+                          );
+                        }
+
+                        return <div key={platform}>{content}</div>;
+                      })}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
             ) : (
               <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 {previewContent?.publishedAt && (() => {
-                  // Получаем самое позднее время публикации из платформ
-                  const getLatestPublishedTime = () => {
-                    return getCorrectPublishedTime(previewContent);
-                  };
-                  
+                  // Для общего времени публикации используем published_at как есть (БЕЗ добавления 3 часов)
+                  // Это время уже сохранено в правильном формате из N8N
                   return (
                     <CreationTimeDisplay 
-                      createdAt={getLatestPublishedTime()}
+                      createdAt={previewContent.publishedAt}
                       label="Опубликовано:"
                       showIcon={true}
                       iconType="check"
                       className="flex items-center gap-1"
-                      isFromPlatforms={true}
+                      isFromPlatforms={false}
+                      isPublishedTime={true}
                     />
                   );
                 })()}
@@ -2645,62 +2839,25 @@ export default function ContentPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Отдельный диалог для Stories редактора */}
-      <Dialog open={isStoriesEditorOpen} onOpenChange={setIsStoriesEditorOpen}>
-        <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] overflow-y-auto" style={{ zIndex: 60 }}>
-          <DialogHeader>
-            <DialogTitle>Редактор Instagram Stories</DialogTitle>
-            <DialogDescription>
-              Создайте многослайдовые Stories с текстом, изображениями и эффектами
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <StoriesEditor
-              value={
-                isEditDialogOpen && currentContent?.contentType === "story" 
-                  ? currentContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
-                  : newContent.metadata?.storyData || { slides: [], aspectRatio: '9:16', totalDuration: 0 }
-              }
-              onChange={(storyData) => {
-                console.log('🔄 Получены обновленные Stories данные:', storyData);
-                if (isEditDialogOpen && currentContent?.contentType === "story") {
-                  // Editing existing Stories content
-                  console.log('✏️ Обновляем существующий Stories контент');
-                  setCurrentContentSafe({
-                    ...currentContent,
-                    metadata: {
-                      ...currentContent.metadata,
-                      storyData
-                    }
-                  });
-                } else {
-                  // Creating new Stories content
-                  console.log('➕ Обновляем новый Stories контент');
-                  setNewContent({
-                    ...newContent,
-                    metadata: {
-                      ...newContent.metadata,
-                      storyData
-                    }
-                  });
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                // Данные уже сохранены через onChange в StoriesEditor
-                // Просто закрываем диалог
+      {/* Stories Editor */}
+      {isStoriesEditorOpen && (
+        <div className="fixed inset-0 z-[100] bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="w-[95vw] h-[95vh] bg-white rounded-lg shadow-xl overflow-hidden relative">
+            <StoriesEditor 
+              onSave={(storyData) => {
+                setNewContent({
+                  ...newContent,
+                  content: '',
+                  storyData: storyData
+                });
                 setIsStoriesEditorOpen(false);
               }}
-            >
-              Сохранить и закрыть
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              onClose={() => setIsStoriesEditorOpen(false)}
+              initialData={newContent.storyData || undefined}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -29,7 +29,7 @@ interface ContentGenerationDialogProps {
   onClose: () => void;
 }
 
-type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini' | 'gemini-2.0-flash' | 'gemini-2.0-flash-lite' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
+type ApiService = 'apiservice' | 'deepseek' | 'qwen' | 'claude' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
 
 export function ContentGenerationDialog({ campaignId, keywords, onClose }: ContentGenerationDialogProps) {
   const { toast } = useToast();
@@ -40,7 +40,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
   const [title, setTitle] = useState('');
   const [tone, setTone] = useState('informative');
   const [platform, setPlatform] = useState('facebook');
-  const [selectedService, setSelectedService] = useState<ApiService>('gemini-2.0-flash');
+  const [selectedService, setSelectedService] = useState<ApiService>('gemini-2.5-flash');
   const [useCampaignData, setUseCampaignData] = useState(false);
 
   const { mutate: generateContent, isPending } = useMutation({
@@ -273,9 +273,6 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
                     <SelectItem value="deepseek">DeepSeek</SelectItem>
                     <SelectItem value="qwen">Qwen</SelectItem>
                     <SelectItem value="claude">Claude</SelectItem>
-                    <SelectItem value="gemini">Gemini</SelectItem>
-                    <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-                    <SelectItem value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</SelectItem>
                     <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
                     <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                   </SelectContent>
@@ -283,7 +280,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               </div>
             </div>
             
-            {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService.includes('gemini')) && (
+            {(selectedService === 'deepseek' || selectedService === 'claude' || selectedService === 'qwen' || selectedService === 'gemini-2.5-flash' || selectedService === 'gemini-2.5-pro') && (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="platform" className="text-right">
                   Платформа

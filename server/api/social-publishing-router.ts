@@ -8,6 +8,7 @@ import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { authMiddleware } from '../middleware/auth';
+import { publicationLockManager } from '../services/publication-lock-manager';
 import * as instagramCarouselHandler from './instagram-carousel-webhook';
 import { storage } from '../storage';
 import { SocialPlatform } from '@shared/schema';
@@ -167,6 +168,18 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             continue;
           }
           
+          // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем блокировку для предотвращения дублирования
+          const lockAcquired = await publicationLockManager.acquireLock(contentId, platform);
+          if (!lockAcquired) {
+            log(`[Social Publishing] 🔒 Блокировка уже установлена для ${contentId}:${platform}, пропускаем`);
+            publishResults.push({
+              platform,
+              success: false,
+              error: `Публикация уже выполняется для платформы ${platform}`
+            });
+            continue;
+          }
+          
           log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
           
           // Для Facebook используем прямой API вместо n8n
@@ -191,8 +204,14 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             success: true,
             result
           });
+          
+          // Освобождаем блокировку после успешной публикации
+          await publicationLockManager.releaseLock(contentId, platform);
         } catch (error: any) {
           log(`[Social Publishing] Ошибка при публикации в ${platform}: ${error.message}`);
+          
+          // Освобождаем блокировку при ошибке
+          await publicationLockManager.releaseLock(contentId, platform);
           
           publishResults.push({
             platform,

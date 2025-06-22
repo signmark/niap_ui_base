@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CampaignContent, SocialPlatform } from '@/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog,
@@ -216,27 +217,15 @@ export default function ScheduledPublicationDetails({
     });
   };
   
-  // Форматируем дату публикации для отображения с учетом часового пояса
+  // Форматируем дату публикации для отображения в часовом поясе пользователя
   const formatScheduledDate = (date: string | Date | null | undefined) => {
     if (!date) return "Не запланировано";
     
     try {
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
-      // JavaScript автоматически отображает время в локальном часовом поясе пользователя
-      const formattedDate = dateObj.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      });
-      
-      const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-      
-      return `${formattedDate}, ${formattedTime}`;
+      return formatInTimeZone(dateObj, userTimeZone, 'dd MMMM yyyy, HH:mm', { locale: ru });
     } catch (error) {
       console.error("Ошибка форматирования даты:", error);
       return "Некорректная дата";
@@ -303,7 +292,7 @@ export default function ScheduledPublicationDetails({
             <div className="flex items-center">
               <Calendar className="mr-2" size={16} />
               <span className="text-sm font-medium">Дата публикации:</span>
-              <span className="ml-2 text-sm">{formatScheduledDate(content.scheduledAt)}</span>
+              <span className="ml-2 text-sm">{formatScheduledDate(content.publishedAt || content.scheduledAt)}</span>
             </div>
             
             {platforms.length > 0 && (

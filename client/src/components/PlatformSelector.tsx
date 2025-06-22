@@ -3,15 +3,22 @@ import { SafeSocialPlatform } from '@/lib/social-platforms';
 import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PlatformSelectorProps {
   selectedPlatforms: Record<string, boolean>;
   onChange: (platform: SafeSocialPlatform, isSelected: boolean) => void;
+  content?: {
+    contentType?: string;
+    imageUrl?: string;
+    images?: string[];
+  };
 }
 
 export default function PlatformSelector({
   selectedPlatforms,
-  onChange
+  onChange,
+  content
 }: PlatformSelectorProps) {
   const platforms = [
     {
@@ -40,35 +47,71 @@ export default function PlatformSelector({
     }
   ];
 
+  // Check if content has images
+  const hasImages = content && (
+    content.imageUrl || 
+    (content.images && content.images.length > 0) ||
+    content.contentType === 'text-image' ||
+    content.contentType === 'video'
+  );
+
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {platforms.map((platform) => {
-        const isSelected = selectedPlatforms[platform.id] || false;
-        
-        return (
-          <div 
-            key={platform.id}
-            className={`flex items-center gap-2 p-3 border rounded-md ${
-              isSelected ? 'border-primary bg-primary/5' : 'border-input'
-            }`}
-          >
-            <Checkbox
-              id={`platform-${platform.id}`}
-              checked={isSelected}
-              onCheckedChange={(checked) => {
-                onChange(platform.id, checked === true);
-              }}
-            />
-            <Label 
-              htmlFor={`platform-${platform.id}`}
-              className="flex items-center gap-2 cursor-pointer"
+    <TooltipProvider>
+      <div className="grid grid-cols-2 gap-4">
+        {platforms.map((platform) => {
+          const isSelected = selectedPlatforms[platform.id] || false;
+          
+          // Instagram requires images, so disable it if no images
+          const isDisabled = platform.id === 'instagram' && !hasImages;
+          
+          const platformComponent = (
+            <div 
+              key={platform.id}
+              className={`flex items-center gap-2 p-3 border rounded-md ${
+                isDisabled 
+                  ? 'border-muted bg-muted/30 opacity-50' 
+                  : isSelected 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-input'
+              }`}
             >
-              <platform.icon className={`h-5 w-5 ${platform.color}`} />
-              <span>{platform.name}</span>
-            </Label>
-          </div>
-        );
-      })}
-    </div>
+              <Checkbox
+                id={`platform-${platform.id}`}
+                checked={isSelected && !isDisabled}
+                disabled={isDisabled}
+                onCheckedChange={(checked) => {
+                  if (!isDisabled) {
+                    onChange(platform.id, checked === true);
+                  }
+                }}
+              />
+              <Label 
+                htmlFor={`platform-${platform.id}`}
+                className={`flex items-center gap-2 ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <platform.icon className={`h-5 w-5 ${platform.color}`} />
+                <span>{platform.name}</span>
+              </Label>
+            </div>
+          );
+
+          // Wrap Instagram with tooltip when disabled
+          if (isDisabled && platform.id === 'instagram') {
+            return (
+              <Tooltip key={platform.id}>
+                <TooltipTrigger asChild>
+                  {platformComponent}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Instagram требует изображения для публикации</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return platformComponent;
+        })}
+      </div>
+    </TooltipProvider>
   );
 }

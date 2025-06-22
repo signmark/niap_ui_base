@@ -9,6 +9,7 @@ import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { safeSocialPlatforms, platformNames, SocialPlatforms } from '@/lib/social-platforms';
 import { Link } from 'wouter';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 import {
   Card,
@@ -128,11 +129,37 @@ export default function ScheduledPublications() {
     },
     enabled: !!userId && !!selectedCampaign?.id, // Загружаем только если есть выбранная кампания
     refetchOnMount: true,
-    staleTime: 60000, // Считаем данные свежими в течение 1 минуты
-    refetchInterval: 60000, // Автоматически обновляем данные только раз в минуту
-    refetchIntervalInBackground: false // Не обновляем данные, если вкладка не активна
+    refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
+    staleTime: 0 // Всегда считаем данные устаревшими и обновляем только через WebSocket
   });
   
+  // WebSocket для получения уведомлений о изменении статусов публикаций
+  const ws = useWebSocket();
+  
+  // Обрабатываем WebSocket сообщения для обновления данных
+  useEffect(() => {
+    if (ws) {
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'publication_status_updated' || message.type === 'content_published') {
+            console.log('Получено уведомление о обновлении статуса публикации:', message);
+            // Обновляем данные запланированных публикаций при изменении статусов
+            refetchScheduled();
+          }
+        } catch (error) {
+          console.error('Ошибка обработки WebSocket сообщения:', error);
+        }
+      };
+
+      ws.addEventListener('message', handleMessage);
+      
+      return () => {
+        ws.removeEventListener('message', handleMessage);
+      };
+    }
+  }, [ws, refetchScheduled]);
+
   // Обновляем данные при изменении выбранной кампании или пользователя
   useEffect(() => {
     if (selectedCampaign?.id && userId) {

@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
@@ -26,8 +28,8 @@ import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
 import analyticsRouter from './analytics-api';
 // Импортируем валидатор статусов публикаций
 import { statusValidator } from './services/status-validator';
-// Импортируем планировщик публикаций для очистки кэша
-import { publishScheduler } from './services/publish-scheduler';
+// Импортируем исправленный планировщик публикаций
+import { getPublishScheduler } from './services/publish-scheduler';
 
 // Установка переменных окружения для отладки
 process.env.DEBUG = 'express:*,vite:*';
@@ -38,6 +40,43 @@ process.env.NODE_ENV = 'development';
 global['directusApiManager'] = directusApiManager;
 
 const app = express();
+const server = createServer(app);
+
+// WebSocket server для real-time уведомлений
+const wss = new WebSocketServer({ server });
+
+// Обработка WebSocket подключений
+wss.on('connection', (ws) => {
+  log('WebSocket клиент подключен', 'websocket');
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      log(`WebSocket сообщение получено: ${data.type}`, 'websocket');
+    } catch (error) {
+      log(`Ошибка парсинга WebSocket сообщения: ${error}`, 'websocket');
+    }
+  });
+  
+  ws.on('close', () => {
+    log('WebSocket клиент отключен', 'websocket');
+  });
+});
+
+// Функция для отправки уведомлений всем подключенным клиентам
+export function broadcastNotification(type: string, data: any) {
+  const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Экспортируем WebSocket server для использования в других модулях
+export { wss };
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -370,6 +409,14 @@ app.use((req, res, next) => {
         log('Запуск валидатора статусов публикаций', 'status-validator');
         statusValidator.startValidation();
       }, 30000); // Задержка 30 секунд для завершения инициализации всех сервисов
+      
+      // Запускаем планировщик публикаций с поддержкой индивидуального времени платформ
+      setTimeout(() => {
+        log('Запуск планировщика публикаций с поддержкой N8N', 'scheduler');
+        const scheduler = getPublishScheduler();
+        scheduler.start();
+        log('✅ Планировщик публикаций успешно запущен', 'scheduler');
+      }, 35000); // Задержка 35 секунд для завершения инициализации всех сервисов
     }).on('error', (err: NodeJS.ErrnoException) => {
       console.log(`=== SERVER START ERROR: ${err.message} ===`);
       if (err.code === 'EADDRINUSE') {

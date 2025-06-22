@@ -282,7 +282,7 @@ export class DirectusStorageAdapter {
       
       // Строим фильтр для запроса
       const filter: Record<string, any> = {
-        status: { _eq: 'scheduled' },
+        status: { _in: ['scheduled', 'partial'] },
         scheduled_at: { _nnull: true }
       };
       
@@ -352,8 +352,8 @@ export class DirectusStorageAdapter {
       
       // Дополнительная фильтрация на стороне клиента
       const filteredContent = scheduledContent.filter(content => {
-        // Проверяем, что контент имеет статус "scheduled"
-        const isScheduled = content.status === 'scheduled';
+        // Проверяем, что контент имеет статус "scheduled" или "partial"
+        const isScheduled = content.status === 'scheduled' || content.status === 'partial';
         
         // Проверяем, что у контента есть scheduledAt
         const hasScheduled = !!content.scheduledAt;

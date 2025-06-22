@@ -131,10 +131,6 @@ const DroppableDay = ({
       ref={drop}
       style={{
         backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-        border: isOver ? '2px dashed #3b82f6' : '2px dashed transparent',
-        borderRadius: '4px',
-        minHeight: '80px',
-        padding: '4px'
       }}
     >
       {children}
@@ -153,7 +149,6 @@ export default function PublicationCalendar({
 }: PublicationCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredPlatforms, setFilteredPlatforms] = useState<SocialPlatform[]>([]);
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CampaignContent | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder); // Используем initialSortOrder
@@ -531,7 +526,7 @@ export default function PublicationCalendar({
     }
   };
 
-  // Форматирование даты публикации с учетом часового пояса
+  // Форматирование даты публикации (время уже корректно в БД)
   const formatScheduledTime = (date: string | Date | null | undefined, showFullDate: boolean = false) => {
     if (!date) return "--:--";
     
@@ -539,17 +534,14 @@ export default function PublicationCalendar({
       const dateObj = typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : null);
       if (!dateObj) return "--:--";
       
-      // Принудительно добавляем 3 часа к UTC времени для получения московского времени
-      const moscowTime = new Date(dateObj.getTime() + (3 * 60 * 60 * 1000));
-      
       if (showFullDate) {
-        const formattedDate = moscowTime.toLocaleDateString('ru-RU', {
+        const formattedDate = dateObj.toLocaleDateString('ru-RU', {
           day: '2-digit',
           month: 'long',
           year: 'numeric'
         });
         
-        const formattedTime = moscowTime.toLocaleTimeString('ru-RU', {
+        const formattedTime = dateObj.toLocaleTimeString('ru-RU', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
@@ -557,7 +549,7 @@ export default function PublicationCalendar({
         
         return `${formattedDate}, ${formattedTime}`;
       } else {
-        return moscowTime.toLocaleTimeString('ru-RU', {
+        return dateObj.toLocaleTimeString('ru-RU', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
@@ -568,16 +560,7 @@ export default function PublicationCalendar({
     }
   };
 
-  // Навигация по месяцам
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth);
-    if (direction === 'prev') {
-      newMonth.setMonth(newMonth.getMonth() - 1);
-    } else {
-      newMonth.setMonth(newMonth.getMonth() + 1);
-    }
-    setCurrentMonth(newMonth);
-  };
+
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -585,32 +568,10 @@ export default function PublicationCalendar({
         <CardContent className="pt-6">
           <div className="grid gap-6 md:grid-cols-[300px_1fr]">
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => navigateMonth('prev')}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <span className="font-medium">
-                {format(currentMonth, 'LLLL yyyy', { locale: ru })}
-              </span>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => navigateMonth('next')}
-              >
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-            
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
               className="rounded-md border"
               components={{
                 DayContent: ({ date }) => (

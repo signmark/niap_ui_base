@@ -4,7 +4,7 @@ import { storage } from '../storage';
 import { socialPublishingService } from '../services/social/index';
 
 // Не используем старый сервис, заменив его на новый модульный
-import { publishScheduler } from '../services/publish-scheduler';
+import { getPublishScheduler } from '../services/publish-scheduler';
 // Определяем тип SocialPlatform локально
 type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';
 import { log } from '../utils/logger';
@@ -24,7 +24,7 @@ export function registerPublishingRoutes(app: Express): void {
       log('Проверка запланированных публикаций восстановлена', 'api');
       
       // Получаем планировщик из глобального экспорта
-      const { publishScheduler } = await import('../services/publish-scheduler');
+      const publishScheduler = getPublishScheduler();
       
       if (!publishScheduler) {
         return res.status(500).json({ 
@@ -53,21 +53,24 @@ export function registerPublishingRoutes(app: Express): void {
   app.all('/api/publish/toggle-publishing', async (req: Request, res: Response) => {
     try {
       const enable = req.query.enable === 'true';
+      const publishScheduler = getPublishScheduler();
       
+      // Новый планировщик не имеет флага disablePublishing
+      // Вместо этого мы просто включаем/выключаем его работу
       if (enable) {
-        publishScheduler.disablePublishing = false;
-        log('Глобальный флаг публикаций ВКЛЮЧЕН. Контент будет публиковаться в соцсети.', 'api');
+        publishScheduler.start();
+        log('Планировщик публикаций ВКЛЮЧЕН. Контент будет публиковаться в соцсети.', 'api');
       } else {
-        publishScheduler.disablePublishing = true;
-        log('Глобальный флаг публикаций ОТКЛЮЧЕН. Контент будет помечаться как опубликованный без фактической публикации!', 'api');
+        publishScheduler.stop();
+        log('Планировщик публикаций ОТКЛЮЧЕН. Автоматические публикации приостановлены.', 'api');
       }
       
       return res.status(200).json({
         success: true,
-        publishing: !publishScheduler.disablePublishing,
-        message: publishScheduler.disablePublishing 
-          ? 'Публикации отключены. Контент будет помечаться как опубликованный без фактической публикации!' 
-          : 'Публикации включены. Контент будет публиковаться в соцсети.'
+        publishing: enable,
+        message: enable 
+          ? 'Планировщик публикаций включен. Контент будет публиковаться в соцсети.' 
+          : 'Планировщик публикаций отключен. Автоматические публикации приостановлены.'
       });
     } catch (error: any) {
       log(`Ошибка при управлении флагом публикаций: ${error.message}`, 'api');
@@ -126,10 +129,9 @@ export function registerPublishingRoutes(app: Express): void {
         log(`Ошибка при установке published_at: ${error.message}`, 'api');
       }
       
-      // Добавляем ID в список для предотвращения повторной обработки
-      // Используем публичный метод для добавления в processedContentIds
-      publishScheduler.addProcessedContentId(contentId);
-      log(`ID ${contentId} добавлен в список обработанных записей`, 'api');
+      // Новый планировщик автоматически обрабатывает статусы контента
+      // поэтому нет необходимости в ручном добавлении в список обработанных
+      log(`Контент ${contentId} помечен как опубликованный`, 'api');
       
       return res.status(200).json({
         success: true,
@@ -151,8 +153,11 @@ export function registerPublishingRoutes(app: Express): void {
     try {
       log('Запрос на очистку кэша обработанных ID контента', 'api');
       
-      // Очищаем кэш обработанных ID контента
-      publishScheduler.clearProcessedContentIds();
+      // Новый планировщик не использует кэш обработанных ID
+      // Он работает на основе статусов в базе данных
+      const publishScheduler = getPublishScheduler();
+      publishScheduler.stop();
+      publishScheduler.start();
       
       log('Кэш обработанных ID контента очищен', 'api');
       
@@ -863,7 +868,7 @@ export function registerPublishingRoutes(app: Express): void {
               const directusUrl = process.env.DIRECTUS_URL;
               const response = await axios.get(`${directusUrl}/items/campaign_content`, {
                 params: {
-                  filter: { status: { _eq: 'scheduled' } }
+                  filter: { status: { _in: ['scheduled', 'partial'] } }
                 },
                 headers: { 'Authorization': `Bearer ${authToken}` }
               });
@@ -912,8 +917,8 @@ export function registerPublishingRoutes(app: Express): void {
           
           // ИСПРАВЛЕНО: Упрощенная и более надежная логика фильтрации запланированных постов
           scheduledContent = allContent.filter(content => {
-            // Основной критерий: статус 'scheduled'
-            if (content.status === 'scheduled') {
+            // Основной критерий: статус 'scheduled' или 'partial'
+            if (content.status === 'scheduled' || content.status === 'partial') {
               log(`Найден запланированный пост: ${content.id} (статус: ${content.status})`, 'api');
               return true;
             }

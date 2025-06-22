@@ -52,15 +52,15 @@ export class GlobalApiKeysService {
   private directusApi = directusApiManager.instance;
   
   constructor() {
-    console.log('Global API Keys Service initialized');
-    
     // Запускаем периодическую очистку кэша
     setInterval(() => this.cleanupCache(), 30 * 60 * 1000); // каждые 30 минут
     
-    // Загружаем кэш при запуске
-    this.refreshCache().catch(err => {
-      console.error('Failed to initialize global API keys cache:', err);
-    });
+    // Отложенная загрузка кэша для предотвращения дублирования аутентификации при старте
+    setTimeout(() => {
+      this.refreshCache().catch(err => {
+        console.error('Failed to initialize global API keys cache:', err);
+      });
+    }, 15000); // Загружаем через 15 секунд после полной инициализации сервера
   }
   
   /**
@@ -90,7 +90,7 @@ export class GlobalApiKeysService {
       });
       
       const apiKeys = response.data?.data || [];
-      console.log(`Загружено ${apiKeys.length} глобальных API ключей`);
+      // Глобальные API ключи загружены
       
       // Заполняем кэш полученными ключами
       const now = Date.now();
@@ -122,16 +122,8 @@ export class GlobalApiKeysService {
    */
   private async getSystemToken(): Promise<string | null> {
     try {
-      // Используем directusAuthManager для получения рабочего токена администратора
-      const adminSession = await directusAuthManager.getAdminSession();
-      
-      if (adminSession?.token) {
-        log('Системный токен получен через directusAuthManager', 'global-api-keys');
-        return adminSession.token;
-      } else {
-        console.error('Не удалось получить сессию администратора через directusAuthManager');
-        return null;
-      }
+      const { adminTokenManager } = await import('./admin-token-manager');
+      return await adminTokenManager.getAdminToken();
     } catch (error) {
       console.error('Ошибка при получении токена системного администратора:', error);
       return null;

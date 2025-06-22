@@ -2,20 +2,10 @@ import { directusApi } from "./lib/directus";
 import { directusStorageAdapter } from './services/directus';
 import axios from 'axios';
 import { 
-  type Campaign, 
-  type InsertCampaign, 
-  type ContentSource, 
-  type InsertContentSource, 
-  type TrendTopic, 
-  type InsertTrendTopic,
-  type CampaignContent,
-  type InsertCampaignContent,
-  type CampaignTrendTopic,
-  type InsertCampaignTrendTopic,
+  type UserCampaign, 
+  type InsertUserCampaign,
   type BusinessQuestionnaire,
-  type InsertBusinessQuestionnaire,
-  type CampaignKeyword,
-  type InsertCampaignKeyword
+  type InsertBusinessQuestionnaire
 } from "@shared/schema";
 
 // Тип для информации о токене пользователя
@@ -848,7 +838,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined> {
     try {
-      console.log(`Запрос контента по ID: ${id}`);
+      // Запрос контента по ID
       
       // Настраиваем headers с токеном, если он передан
       let response = null;
@@ -856,12 +846,12 @@ export class DatabaseStorage implements IStorage {
       // Попытка 1: Используем переданный токен авторизации (если он есть)
       if (authToken) {
         try {
-          console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+          // Используем переданный токен авторизации
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
           if (response?.data?.data) {
-            console.log(`Успешно получен контент с использованием переданного токена`);
+            // Контент получен успешно
           }
         } catch (error: any) {
           console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
@@ -871,13 +861,13 @@ export class DatabaseStorage implements IStorage {
       
       // Попытка 2: Используем переданный токен, если первая попытка не удалась
       if (!response && authToken) {
-        console.log(`Используем переданный токен авторизации для запроса контента ${id}`);
+        // Используем переданный токен авторизации
         
         try {
           response = await directusApi.get(`/items/campaign_content/${id}`, { 
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
-          console.log(`Успешно получен контент с использованием переданного токена`);
+          // Контент получен успешно
         } catch (error: any) {
           console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
           response = null;
@@ -951,7 +941,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       const item = response.data.data;
-      console.log(`✅ Контент найден в Directus: ${item.id}, user_id: ${item.user_id}`);
+      // Контент найден в Directus
       
       return {
         id: item.id,
@@ -1049,7 +1039,7 @@ export class DatabaseStorage implements IStorage {
       
       // Если передан токен напрямую, используем его
       if (authToken) {
-        console.log(`Используем переданный токен авторизации для обновления контента ${id}`);
+        // Используем переданный токен авторизации
         headers['Authorization'] = `Bearer ${authToken}`;
       } else {
         // Получаем данные текущего контента для доступа к userId
@@ -1087,7 +1077,51 @@ export class DatabaseStorage implements IStorage {
         directusUpdates.prompt = updates.prompt;
       }
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
-      if (updates.socialPlatforms !== undefined) directusUpdates.social_platforms = updates.socialPlatforms;
+      
+      // КРИТИЧЕСКИ ВАЖНО: при обновлении socialPlatforms сохраняем существующие статусы опубликованных платформ
+      if (updates.socialPlatforms !== undefined) {
+        // Получаем текущие данные контента
+        const currentContent = await this.getCampaignContentById(id, authToken);
+        if (currentContent && currentContent.socialPlatforms) {
+          const currentPlatforms = typeof currentContent.socialPlatforms === 'string' 
+            ? JSON.parse(currentContent.socialPlatforms) 
+            : currentContent.socialPlatforms;
+          
+          const newPlatforms = typeof updates.socialPlatforms === 'string'
+            ? JSON.parse(updates.socialPlatforms)
+            : updates.socialPlatforms;
+          
+          // Объединяем данные: сохраняем опубликованные статусы, обновляем остальные
+          const mergedPlatforms = { ...currentPlatforms };
+          
+          for (const [platform, newData] of Object.entries(newPlatforms)) {
+            const currentData = mergedPlatforms[platform];
+            const newPlatformData = newData as any;
+            
+            // Если платформа уже опубликована - сохраняем её статус и данные
+            if (currentData && currentData.status === 'published' && currentData.postUrl) {
+              console.log(`Сохраняем опубликованный статус для платформы ${platform}`);
+              // Обновляем только время, если оно изменилось, но сохраняем статус published
+              mergedPlatforms[platform] = {
+                ...currentData, // Сохраняем все данные опубликованной платформы
+                scheduledAt: newPlatformData.scheduledAt || currentData.scheduledAt // Обновляем время если нужно
+              };
+            } else {
+              // Для неопубликованных платформ используем новые данные
+              mergedPlatforms[platform] = newPlatformData;
+            }
+          }
+          
+          directusUpdates.social_platforms = mergedPlatforms;
+          console.log(`🔒 ЗАЩИТА ОТ СБРОСА: Обновлены платформы с сохранением опубликованных статусов для контента ${id}`);
+          console.log(`🔒 Сохранены published статусы:`, Object.entries(mergedPlatforms)
+            .filter(([_, data]) => data.status === 'published')
+            .map(([platform, _]) => platform));
+        } else {
+          // Если нет текущих данных, используем новые
+          directusUpdates.social_platforms = updates.socialPlatforms;
+        }
+      }
       // Добавляем обработку дополнительных изображений
       if (updates.additionalImages !== undefined) {
         console.log(`Обновляем дополнительные изображения контента ${id}:`, updates.additionalImages);
@@ -1180,7 +1214,7 @@ export class DatabaseStorage implements IStorage {
       
       const filter: any = {
         status: {
-          _eq: 'scheduled'
+          _in: ['scheduled', 'partial']
         },
         scheduled_at: {
           _nnull: true

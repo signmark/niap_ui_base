@@ -72,7 +72,7 @@ function extractKeywordsFromTrends(trends: TrendTopic[]): string[] {
 
 const generateContentSchema = z.object({
   prompt: z.string().min(1, "Введите промт для генерации контента"),
-  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-pro-exp', 'gemini-2.5-pro-preview-03-25', 'gemini-2.5-pro-exp-03-25']).default('deepseek'),
+  modelType: z.enum(['deepseek', 'qwen', 'claude', 'gemini-2.5-flash', 'gemini-2.5-pro']).default('deepseek'),
   tone: z.enum(['informative', 'casual', 'professional', 'funny']).default('informative'),
   platforms: z.array(z.string()).min(1, "Выберите хотя бы одну платформу")
 });
@@ -440,14 +440,8 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
                         <SelectItem value="deepseek">DeepSeek</SelectItem>
                         <SelectItem value="qwen">Qwen</SelectItem>
                         <SelectItem value="claude">Claude</SelectItem>
-                        {/* Группа моделей Gemini */}
-                        <SelectItem value="gemini">Gemini Pro</SelectItem>
-                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (рекомендуется)</SelectItem>
-                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash (быстрая)</SelectItem>
-                        <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (быстрее + 1M токенов)</SelectItem>
-                        <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
-                        <SelectItem value="gemini-2.5-pro-preview-03-25">Gemini 2.5 Pro Preview</SelectItem>
-                        <SelectItem value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Experimental</SelectItem>
+                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

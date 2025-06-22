@@ -9,6 +9,7 @@ interface CreationTimeDisplayProps {
   showIcon?: boolean;
   iconType?: 'calendar' | 'clock' | 'check';
   isFromPlatforms?: boolean;
+  isPublishedTime?: boolean; // Новый параметр для времени фактической публикации
 }
 
 /**
@@ -20,9 +21,14 @@ export const CreationTimeDisplay: React.FC<CreationTimeDisplayProps> = ({
   className = '',
   showIcon = true,
   iconType = 'calendar',
-  isFromPlatforms = false
+  isFromPlatforms = false,
+  isPublishedTime = false
 }) => {
-  const formattedDateTime = formatDateWithTimezone(createdAt, 'dd MMMM yyyy, HH:mm', isFromPlatforms);
+  // Определяем нужно ли добавлять смещение времени:
+  // - Для времени фактической публикации (isPublishedTime=true) НЕ добавляем смещение
+  // - Для времени создания/планирования добавляем 3 часа
+  const needsTimezoneOffset = !isPublishedTime;
+  const formattedDateTime = formatDateWithTimezone(createdAt, 'dd MMMM yyyy, HH:mm', needsTimezoneOffset);
   
   // Выбор иконки в зависимости от типа
   const renderIcon = () => {
