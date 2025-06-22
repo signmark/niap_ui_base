@@ -1524,22 +1524,53 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  <SelectItem value="instagram-stories">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content">Контент</Label>
-              <div>
-                <RichTextEditor
-                  value={newContent.content || ''}
-                  onChange={(html: string) => setNewContent({...newContent, content: html})}
-                  minHeight={150}
-                  className="tiptap"
-                  enableResize={true}
-                  placeholder="Введите текст контента..."
-                />
+            {newContent.contentType !== "instagram-stories" && (
+              <div className="space-y-2">
+                <Label htmlFor="content">Контент</Label>
+                <div>
+                  <RichTextEditor
+                    value={newContent.content || ''}
+                    onChange={(html: string) => setNewContent({...newContent, content: html})}
+                    minHeight={150}
+                    className="tiptap"
+                    enableResize={true}
+                    placeholder="Введите текст контента..."
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {newContent.contentType === "instagram-stories" && (
+              <div className="space-y-4">
+                <div className="p-6 border-2 border-dashed border-purple-300 bg-purple-50 rounded-lg text-center">
+                  <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
+                  <h3 className="text-lg font-medium text-purple-900 mb-2">Instagram Stories</h3>
+                  <p className="text-purple-600 mb-4">Создайте интерактивные Stories со слайдами, элементами и анимацией</p>
+                  <Button 
+                    onClick={() => {
+                      // Сохраняем базовую информацию и переходим к редактору Stories
+                      if (!newContent.title.trim()) {
+                        toast({
+                          title: "Ошибка",
+                          description: "Введите название для Stories",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      window.location.href = `/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(newContent.title)}`;
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Layers className="mr-2 h-4 w-4" />
+                    Открыть редактор Stories
+                  </Button>
+                </div>
+              </div>
+            )}
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1808,22 +1839,65 @@ export default function ContentPage() {
                 </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="content">Контент</Label>
-                <div>
-                  <RichTextEditor
-                    value={currentContent.content || ''}
-                    onChange={(html: string) => {
-                      const updatedContent = {...currentContent, content: html};
-                      setCurrentContentSafe(updatedContent);
-                    }}
-                    minHeight={150}
-                    className="tiptap"
-                    enableResize={true}
-                    placeholder="Введите текст контента..."
-                  />
+              {currentContent.contentType !== "instagram-stories" && (
+                <div className="space-y-2">
+                  <Label htmlFor="content">Контент</Label>
+                  <div>
+                    <RichTextEditor
+                      value={currentContent.content || ''}
+                      onChange={(html: string) => {
+                        const updatedContent = {...currentContent, content: html};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      minHeight={150}
+                      className="tiptap"
+                      enableResize={true}
+                      placeholder="Введите текст контента..."
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {currentContent.contentType === "instagram-stories" && (
+                <div className="space-y-4">
+                  <div className="p-6 border-2 border-dashed border-purple-300 bg-purple-50 rounded-lg text-center">
+                    <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
+                    <h3 className="text-lg font-medium text-purple-900 mb-2">Instagram Stories</h3>
+                    
+                    {currentContent.metadata?.slides ? (
+                      <div className="space-y-3">
+                        <p className="text-purple-600">
+                          Создано слайдов: {currentContent.metadata.slides.length}
+                        </p>
+                        <div className="flex gap-2 justify-center">
+                          <Button 
+                            onClick={() => {
+                              window.location.href = `/stories/${currentContent.id}/edit`;
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Layers className="mr-2 h-4 w-4" />
+                            Редактировать Stories
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-purple-600">Stories не созданы</p>
+                        <Button 
+                          onClick={() => {
+                            window.location.href = `/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`;
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Layers className="mr-2 h-4 w-4" />
+                          Создать Stories
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {(currentContent.contentType === "text-image") && (
                 <div className="space-y-4">
                   <div className="space-y-2">

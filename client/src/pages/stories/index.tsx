@@ -56,8 +56,12 @@ export default function StoriesPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   
+  // Получаем название из URL параметров
+  const urlParams = new URLSearchParams(window.location.search);
+  const titleFromUrl = urlParams.get('title') || '';
+  
   const [story, setStory] = useState<Story>({
-    title: "",
+    title: titleFromUrl,
     campaignId: campaignId || "",
     slides: [],
     status: 'draft'
