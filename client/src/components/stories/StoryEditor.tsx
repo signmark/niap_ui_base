@@ -50,8 +50,6 @@ interface StoryElement {
 interface StoryEditorProps {
   campaignId?: string;
   storyId?: string;
-  slide: StorySlide;
-  onUpdateSlide: (updates: Partial<StorySlide>) => void;
 }
 
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
@@ -109,8 +107,16 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       content: getDefaultContent(elementType)
     };
     
+    const currentSlideData = slides[currentSlideIndex];
+    const newElements = [...(currentSlideData?.elements || []), newElement];
+    
     updateSlide({
-      elements: [...(currentSlide?.elements || []), newElement]
+      elements: newElements
+    });
+    
+    toast({
+      title: 'Элемент добавлен',
+      description: `${getElementTypeName(elementType)} добавлен на слайд`
     });
   };
 
@@ -131,8 +137,20 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     }
   };
 
+  const getElementTypeName = (type: StoryElement['type']) => {
+    switch (type) {
+      case 'text': return 'Текст';
+      case 'image': return 'Изображение';
+      case 'video': return 'Видео';
+      case 'poll': return 'Опрос';
+      case 'quiz': return 'Викторина';
+      default: return 'Элемент';
+    }
+  };
+
   const updateElement = (elementId: string, updates: Partial<StoryElement>) => {
-    const newElements = currentSlide?.elements?.map(el => 
+    const currentSlideData = slides[currentSlideIndex];
+    const newElements = currentSlideData?.elements?.map(el => 
       el.id === elementId ? { ...el, ...updates } : el
     ) || [];
     
@@ -140,14 +158,29 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   };
 
   const deleteElement = (elementId: string) => {
-    const newElements = currentSlide?.elements?.filter(el => el.id !== elementId) || [];
+    const currentSlideData = slides[currentSlideIndex];
+    const newElements = currentSlideData?.elements?.filter(el => el.id !== elementId) || [];
     updateSlide({ elements: newElements });
+    
+    toast({
+      title: 'Элемент удален',
+      description: 'Элемент успешно удален со слайда'
+    });
   };
 
   const handleSave = () => {
+    // Здесь будет логика сохранения в API
+    const storyData = {
+      title: storyTitle,
+      slides: slides,
+      campaignId: campaignId
+    };
+    
+    console.log('Сохранение Stories:', storyData);
+    
     toast({
       title: 'Сохранено',
-      description: 'История успешно сохранена'
+      description: `История "${storyTitle || 'Без названия'}" сохранена с ${slides.length} слайдами`
     });
   };
 
