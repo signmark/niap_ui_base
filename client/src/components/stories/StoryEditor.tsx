@@ -61,6 +61,15 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
+  const [slides, setSlides] = useState<StorySlide[]>([
+    {
+      id: 'slide-1',
+      order: 1,
+      duration: 5,
+      background: { type: 'color', value: '#6366f1' },
+      elements: []
+    }
+  ]);
 
   // Fetch existing story if editing
   const { data: story, isLoading, error } = useQuery({
@@ -174,8 +183,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  const currentSlide = story?.slides?.[currentSlideIndex];
-  const slides = story?.slides || [];
+  const currentSlide = slides[currentSlideIndex];
 
   if (isLoading) {
     return (
