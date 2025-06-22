@@ -6728,6 +6728,17 @@ Return your response as a JSON array in this exact format:
 
   // Stories API routes
   app.use('/api', storiesRouter);
+  
+  // Stories preview generation
+  app.post('/api/stories/generate-preview', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { handleGenerateStoryPreviews } = await import('./api/stories-generator');
+      await handleGenerateStoryPreviews(req, res);
+    } catch (error) {
+      console.error('Error loading stories generator:', error);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
 
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {

@@ -65,6 +65,8 @@ export default function StoriesPage() {
   
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
+  const [showElementDialog, setShowElementDialog] = useState(false);
+  const [currentElementType, setCurrentElementType] = useState<StoryElement['type']>('text');
 
   const addSlide = () => {
     const newSlide: StorySlide = {
@@ -102,13 +104,18 @@ export default function StoriesPage() {
       return;
     }
 
+    setCurrentElementType(type);
+    setShowElementDialog(true);
+  };
+
+  const handleAddElement = (content: any) => {
     const newElement: StoryElement = {
       id: `element-${Date.now()}`,
-      type,
+      type: currentElementType,
       position: { x: 50, y: 50 },
       rotation: 0,
       zIndex: story.slides[currentSlideIndex]?.elements.length || 0,
-      content: getDefaultContent(type)
+      content
     };
 
     const updatedSlide = {
@@ -138,6 +145,25 @@ export default function StoriesPage() {
 
   const saveStory = async () => {
     try {
+      // Сначала генерируем превью слайдов
+      const previewResponse = await fetch('/api/stories/generate-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          storyData: { slides: story.slides }
+        })
+      });
+
+      let previewUrls = [];
+      if (previewResponse.ok) {
+        const previewResult = await previewResponse.json();
+        previewUrls = previewResult.previews || [];
+      }
+
+      // Сохраняем Stories с превью
       const response = await fetch('/api/stories', {
         method: 'POST',
         headers: {
@@ -147,11 +173,13 @@ export default function StoriesPage() {
         body: JSON.stringify({
           title: story.title,
           campaignId: story.campaignId,
+          type: 'story',
           metadata: {
             slides: story.slides,
             interactiveElements: story.slides.flatMap(slide => 
               slide.elements.filter(el => ['poll', 'quiz'].includes(el.type))
-            )
+            ),
+            previewUrls
           }
         })
       });
@@ -159,8 +187,9 @@ export default function StoriesPage() {
       if (response.ok) {
         toast({
           title: "Stories сохранены",
-          description: "Ваши Stories успешно сохранены"
+          description: "Ваши Stories успешно сохранены с превью"
         });
+        navigate(`/campaigns/${story.campaignId}`);
       } else {
         throw new Error('Ошибка сохранения');
       }
@@ -303,15 +332,24 @@ export default function StoriesPage() {
                       Опрос
                     </Button>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full mt-2"
-                    onClick={() => addElement('quiz')}
-                  >
-                    <Sparkles className="w-4 h-4 mr-1" />
-                    Викторина
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => addElement('quiz')}
+                    >
+                      <Sparkles className="w-4 h-4 mr-1" />
+                      Викторина
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => addElement('ai-image')}
+                    >
+                      <Sparkles className="w-4 h-4 mr-1" />
+                      AI фото
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Slide Duration */}
@@ -335,6 +373,14 @@ export default function StoriesPage() {
           </div>
         </div>
       </div>
+
+      {/* Диалог добавления элемента */}
+      <ElementDialog
+        isOpen={showElementDialog}
+        onClose={() => setShowElementDialog(false)}
+        elementType={currentElementType}
+        onAddElement={handleAddElement}
+      />
     </div>
   );
 }
