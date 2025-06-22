@@ -1803,6 +1803,7 @@ export default function ContentPage() {
                     <SelectItem value="text-image">Текст с изображением</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="video-text">Видео с текстом</SelectItem>
+                    <SelectItem value="instagram-stories">Instagram Stories</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
