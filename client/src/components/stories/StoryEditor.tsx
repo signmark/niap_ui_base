@@ -100,6 +100,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const addElement = (elementType: StoryElement['type']) => {
+    console.log('Adding element:', elementType);
     const newElement: StoryElement = {
       id: `element-${Date.now()}`,
       type: elementType,
@@ -109,15 +110,24 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       content: getDefaultContent(elementType)
     };
     
+    console.log('New element created:', newElement);
+    
     setSlides(prevSlides => {
       const updatedSlides = [...prevSlides];
       const currentSlideData = updatedSlides[currentSlideIndex];
       
+      console.log('Current slide data:', currentSlideData);
+      console.log('Current slide index:', currentSlideIndex);
+      
       if (currentSlideData) {
+        const newElements = [...(currentSlideData.elements || []), newElement];
         updatedSlides[currentSlideIndex] = {
           ...currentSlideData,
-          elements: [...(currentSlideData.elements || []), newElement]
+          elements: newElements
         };
+        
+        console.log('Updated slide elements:', newElements);
+        console.log('Updated slides:', updatedSlides);
       }
       
       return updatedSlides;
@@ -334,6 +344,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                 }}
               >
                 {/* Story elements */}
+                {console.log('Rendering elements:', currentSlide?.elements)}
                 {currentSlide?.elements?.map((element) => (
                   <Draggable
                     key={element.id}
@@ -402,6 +413,18 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                               {option}
                             </div>
                           ))}
+                        </div>
+                      )}
+                      
+                      {element.type === 'video' && (
+                        <div className="w-24 h-16 bg-black rounded flex items-center justify-center border-2 border-transparent group-hover:border-white/50">
+                          <Video className="w-6 h-6 text-white" />
+                        </div>
+                      )}
+                      
+                      {element.type === 'ai-image' && (
+                        <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded flex items-center justify-center border-2 border-transparent group-hover:border-purple-300">
+                          <Sparkles className="w-8 h-8 text-white" />
                         </div>
                       )}
                       
