@@ -92,16 +92,14 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const updateSlide = (updates: Partial<StorySlide>) => {
-    const newSlides = [...slides];
-    newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], ...updates };
-    setSlides(newSlides);
+    setSlides(prevSlides => {
+      const newSlides = [...prevSlides];
+      newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], ...updates };
+      return newSlides;
+    });
   };
 
   const addElement = (elementType: StoryElement['type']) => {
-    console.log('Adding element:', elementType);
-    console.log('Current slide index:', currentSlideIndex);
-    console.log('Current slides:', slides);
-    
     const newElement: StoryElement = {
       id: `element-${Date.now()}`,
       type: elementType,
@@ -111,21 +109,19 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       content: getDefaultContent(elementType)
     };
     
-    console.log('New element:', newElement);
-    
-    const currentSlideData = slides[currentSlideIndex];
-    const newElements = [...(currentSlideData?.elements || []), newElement];
-    
-    console.log('Updated elements:', newElements);
-    
-    const updatedSlides = [...slides];
-    updatedSlides[currentSlideIndex] = {
-      ...updatedSlides[currentSlideIndex],
-      elements: newElements
-    };
-    
-    console.log('Updated slides:', updatedSlides);
-    setSlides(updatedSlides);
+    setSlides(prevSlides => {
+      const updatedSlides = [...prevSlides];
+      const currentSlideData = updatedSlides[currentSlideIndex];
+      
+      if (currentSlideData) {
+        updatedSlides[currentSlideIndex] = {
+          ...currentSlideData,
+          elements: [...(currentSlideData.elements || []), newElement]
+        };
+      }
+      
+      return updatedSlides;
+    });
     
     toast({
       title: 'Элемент добавлен',
@@ -162,18 +158,37 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const updateElement = (elementId: string, updates: Partial<StoryElement>) => {
-    const currentSlideData = slides[currentSlideIndex];
-    const newElements = currentSlideData?.elements?.map(el => 
-      el.id === elementId ? { ...el, ...updates } : el
-    ) || [];
-    
-    updateSlide({ elements: newElements });
+    setSlides(prevSlides => {
+      const newSlides = [...prevSlides];
+      const currentSlideData = newSlides[currentSlideIndex];
+      
+      if (currentSlideData) {
+        newSlides[currentSlideIndex] = {
+          ...currentSlideData,
+          elements: currentSlideData.elements?.map(el => 
+            el.id === elementId ? { ...el, ...updates } : el
+          ) || []
+        };
+      }
+      
+      return newSlides;
+    });
   };
 
   const deleteElement = (elementId: string) => {
-    const currentSlideData = slides[currentSlideIndex];
-    const newElements = currentSlideData?.elements?.filter(el => el.id !== elementId) || [];
-    updateSlide({ elements: newElements });
+    setSlides(prevSlides => {
+      const newSlides = [...prevSlides];
+      const currentSlideData = newSlides[currentSlideIndex];
+      
+      if (currentSlideData) {
+        newSlides[currentSlideIndex] = {
+          ...currentSlideData,
+          elements: currentSlideData.elements?.filter(el => el.id !== elementId) || []
+        };
+      }
+      
+      return newSlides;
+    });
     
     toast({
       title: 'Элемент удален',
