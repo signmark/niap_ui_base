@@ -6726,6 +6726,9 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // Stories API routes
+  app.use('/api', storiesRouter);
+
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       // Получаем userId двумя способами - из middleware authenticateUser или из заголовка

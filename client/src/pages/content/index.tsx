@@ -1115,6 +1115,19 @@ export default function ContentPage() {
             <Plus className="mr-2 h-4 w-4" />
             Создать контент
           </Button>
+          <Button 
+            onClick={() => {
+              if (selectedCampaignId && selectedCampaignId !== "loading" && selectedCampaignId !== "empty") {
+                window.location.href = `/campaigns/${selectedCampaignId}/stories/new`;
+              }
+            }} 
+            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
+            variant="outline"
+            className="bg-purple-50 border-purple-200 hover:bg-purple-100"
+          >
+            <Layers className="mr-2 h-4 w-4" />
+            Создать Stories
+          </Button>
         </div>
       </div>
 
