@@ -68,7 +68,7 @@ export interface PlatformPublishInfo {
 }
 
 // Типы контента
-export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed';
+export type ContentType = 'text' | 'text-image' | 'video' | 'video-text' | 'mixed' | 'story';
 
 // Интерфейс для контента кампании
 // Тип для медиа-файла
@@ -77,6 +77,57 @@ export interface MediaItem {
   type: 'image' | 'video';
   title?: string;
   description?: string;
+}
+
+// Структуры данных для Stories
+export interface StoryElement {
+  id: string;
+  type: 'text' | 'image' | 'video' | 'sticker' | 'poll' | 'question' | 'countdown' | 'shape';
+  position: { x: number; y: number };
+  size?: { width: number; height: number };
+  rotation?: number;
+  content: string;
+  style?: {
+    fontSize?: number;
+    fontFamily?: string;
+    color?: string;
+    backgroundColor?: string;
+    borderRadius?: number;
+    textAlign?: 'left' | 'center' | 'right';
+    fontWeight?: 'normal' | 'bold';
+    opacity?: number;
+    // Дополнительные CSS свойства для гибкости
+    textShadow?: string;
+    padding?: string;
+    border?: string;
+    borderColor?: string;
+    textDecoration?: string;
+    width?: string | number;
+    height?: string | number;
+    filter?: string;
+    zIndex?: number;
+    rotation?: number;
+  };
+}
+
+export interface StorySlide {
+  id: string;
+  order?: number;
+  background: {
+    type: 'color' | 'gradient' | 'image' | 'video';
+    value: string; // цвет/градиент/URL
+    color?: string; // для обратной совместимости
+    image?: string; // для обратной совместимости
+  };
+  elements: StoryElement[];
+  duration: number; // 1-15 секунд
+}
+
+export interface StoryData {
+  slides: StorySlide[];
+  aspectRatio: '9:16';
+  totalDuration: number;
+  preview?: string; // URL превью первого слайда
 }
 
 export interface CampaignContent {
@@ -93,6 +144,7 @@ export interface CampaignContent {
   additionalVideos?: string[] | null; // Для обратной совместимости
   additionalMedia?: MediaItem[] | null; // Новое универсальное поле для всех типов медиа
   imagePrompt?: string | null;
+  prompt?: string | null; // Поле для промпта генерации
   status: ContentStatus;
   keywords?: string[];
   metadata?: Record<string, any> | null;
@@ -100,4 +152,7 @@ export interface CampaignContent {
   publishedAt?: string | Date | null;
   socialPlatforms?: Record<SocialPlatform, PlatformPublishInfo> | null;
   userId?: string;
+  // Поля для Stories
+  storyData?: StoryData | null;
+  storyPreview?: string | null;
 }
