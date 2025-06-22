@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,7 +100,6 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const addElement = (elementType: StoryElement['type']) => {
-    console.log('Adding element:', elementType);
     const newElement: StoryElement = {
       id: `element-${Date.now()}`,
       type: elementType,
@@ -110,24 +109,16 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       content: getDefaultContent(elementType)
     };
     
-    console.log('New element created:', newElement);
-    
+    // Принудительно обновляем состояние с новым элементом
     setSlides(prevSlides => {
       const updatedSlides = [...prevSlides];
       const currentSlideData = updatedSlides[currentSlideIndex];
       
-      console.log('Current slide data:', currentSlideData);
-      console.log('Current slide index:', currentSlideIndex);
-      
       if (currentSlideData) {
-        const newElements = [...(currentSlideData.elements || []), newElement];
         updatedSlides[currentSlideIndex] = {
           ...currentSlideData,
-          elements: newElements
+          elements: [...(currentSlideData.elements || []), newElement]
         };
-        
-        console.log('Updated slide elements:', newElements);
-        console.log('Updated slides:', updatedSlides);
       }
       
       return updatedSlides;
@@ -233,7 +224,11 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  const currentSlide = slides[currentSlideIndex];
+  // Current slide data - мемоизируем для правильной синхронизации
+  const currentSlide = useMemo(() => {
+    console.log('Computing currentSlide, slides:', slides, 'index:', currentSlideIndex);
+    return slides[currentSlideIndex];
+  }, [slides, currentSlideIndex]);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
@@ -344,7 +339,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                 }}
               >
                 {/* Story elements */}
-                {console.log('Rendering elements:', currentSlide?.elements)}
+                {console.log('Rendering elements:', currentSlide?.elements, 'Current slide:', currentSlide)}
                 {currentSlide?.elements?.map((element) => (
                   <Draggable
                     key={element.id}
