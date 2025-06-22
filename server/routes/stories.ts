@@ -1,26 +1,45 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
-// Authentication middleware
-const authenticateUser = (req: any, res: any, next: any) => {
-  // Extract token from Authorization header
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, error: 'No valid token provided' });
-  }
-  
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-  
+import { log } from '../utils/logger';
+import { directusApi } from '../lib/directus';
+
+// Authentication middleware using the same pattern as other routes
+const authenticateUser = async (req: any, res: any, next: any) => {
   try {
-    // For now, we'll use a simple token validation
-    // In production, this should validate the JWT token properly
-    req.user = { id: 'placeholder-user-id' }; // Placeholder implementation
-    next();
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'No valid token provided' });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      // Validate token with Directus
+      const response = await directusApi.get('/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.data?.data?.id) {
+        return res.status(401).json({ success: false, error: 'Invalid token' });
+      }
+
+      req.user = {
+        id: response.data.data.id,
+        token: token,
+        email: response.data.data.email
+      };
+      
+      next();
+    } catch (error) {
+      return res.status(401).json({ success: false, error: 'Invalid token' });
+    }
   } catch (error) {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
+    return res.status(500).json({ success: false, error: 'Authentication error' });
   }
 };
-import { log } from '../utils/logger';
 import {
   insertStoryContentSchema,
   insertStorySlideSchema,
