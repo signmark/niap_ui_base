@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,30 +17,41 @@ interface StoryElement {
 
 interface ElementDialogProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   element: StoryElement | null;
   onSave: (elementData: Partial<StoryElement>) => void;
 }
 
-export default function ElementDialog({ isOpen, onOpenChange, element, onSave }: ElementDialogProps) {
-  const [elementData, setElementData] = useState<Partial<StoryElement>>(element || {});
+export default function ElementDialog({ isOpen, onClose, element, onSave }: ElementDialogProps) {
+  const [elementData, setElementData] = useState<Partial<StoryElement>>({});
+
+  useEffect(() => {
+    if (element) {
+      setElementData(element);
+    }
+  }, [element]);
 
   const handleSave = () => {
-    if (onSave) {
-      onSave(elementData);
-    }
-    onOpenChange(false);
+    onSave(elementData);
+    onClose();
   };
 
+  const handleClose = () => {
+    setElementData({});
+    onClose();
+  };
+
+  if (!element) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Редактирование элемента</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          {element?.type === 'text' && (
+          {element.type === 'text' && (
             <div>
               <Label htmlFor="text-content">Текст</Label>
               <Textarea
@@ -50,11 +61,12 @@ export default function ElementDialog({ isOpen, onOpenChange, element, onSave }:
                   ...elementData,
                   content: { ...elementData.content, text: e.target.value }
                 })}
+                placeholder="Введите текст"
               />
             </div>
           )}
           
-          {element?.type === 'image' && (
+          {element.type === 'image' && (
             <div>
               <Label htmlFor="image-url">URL изображения</Label>
               <Input
@@ -69,9 +81,13 @@ export default function ElementDialog({ isOpen, onOpenChange, element, onSave }:
             </div>
           )}
           
-          <div className="flex gap-2">
-            <Button onClick={handleSave}>Сохранить</Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={handleClose}>
+              Отмена
+            </Button>
+            <Button onClick={handleSave}>
+              Сохранить
+            </Button>
           </div>
         </div>
       </DialogContent>
