@@ -1,21 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Play, ArrowLeft, Plus } from 'lucide-react';
-import SlidePanel from './SlidePanel';
-import StoryCanvas from './StoryCanvas';
-import ToolsPanel from './ToolsPanel';
-import { StoryContent, StorySlide } from '../../../shared/stories-schema';
+import { 
+  Type, 
+  Image, 
+  Video, 
+  BarChart3, 
+  Sparkles,
+  Move,
+  Trash2,
+  Upload,
+  Link
+} from 'lucide-react';
+import Draggable from 'react-draggable';
+
+interface StorySlide {
+  id: string;
+  order: number;
+  duration: number;
+  background: {
+    type: 'color' | 'image' | 'video';
+    value: string;
+  };
+  elements: StoryElement[];
+}
+
+interface StoryElement {
+  id: string;
+  type: 'text' | 'image' | 'video' | 'poll' | 'quiz' | 'ai-image';
+  position: { x: number; y: number };
+  rotation: number;
+  zIndex: number;
+  content: any;
+  style?: any;
+}
 
 interface StoryEditorProps {
-  campaignId?: string;
-  storyId?: string;
+  slide: StorySlide;
+  onUpdateSlide: (updates: Partial<StorySlide>) => void;
 }
 
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
