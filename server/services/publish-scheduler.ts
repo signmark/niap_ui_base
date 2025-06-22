@@ -231,12 +231,8 @@ export class PublishScheduler {
               continue;
             }
 
-            // ГЛОБАЛЬНАЯ ЗАЩИТА: Проверяем блокировку публикации
-            const lockAcquired = await publicationLockManager.acquireLock(content.id, platformName);
-            if (!lockAcquired) {
-              log(`Планировщик: Не удалось получить блокировку для ${content.id}:${platformName}, пропускаем`, 'scheduler');
-              continue;
-            }
+            // ОТКЛЮЧЕНА БЛОКИРОВКА ДЛЯ ПЛАНИРОВЩИКА - блокировки только для ручной публикации
+            // Планировщик должен работать свободно по расписанию
 
             // Проверяем время публикации для платформы
             let shouldPublish = false;
@@ -325,7 +321,6 @@ export class PublishScheduler {
     // Создаем промисы для параллельной публикации через N8N
     const publishPromises = platforms.map(async (platform) => {
       try {
-
         // Маппинг платформ на N8N webhook endpoints
         const webhookMap: Record<string, string> = {
           'telegram': 'publish-telegram',
@@ -386,14 +381,11 @@ export class PublishScheduler {
           // Игнорируем ошибки уведомлений
         }
         
-        // Освобождаем блокировку после успешной публикации
-        await publicationLockManager.releaseLock(content.id, platform);
+        // Блокировки отключены для планировщика
         
         return { platform, success: true };
 
       } catch (error: any) {
-        // Освобождаем блокировку при ошибке
-        await publicationLockManager.releaseLock(content.id, platform);
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
       }

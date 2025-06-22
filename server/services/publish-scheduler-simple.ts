@@ -231,23 +231,11 @@ export class PublishScheduler {
     const results = [];
     
     for (const platform of selectedPlatforms) {
-      // Проверяем блокировку для предотвращения дублирования
-      const lockAcquired = await publicationLockManager.acquireLock(contentId, platform);
-      if (!lockAcquired) {
-        log(`🔒 PublishContent: Блокировка уже установлена для ${contentId}:${platform}, пропускаем`, 'scheduler');
-        results.push({platform, success: false, reason: 'blocked'});
-        continue;
-      }
-
+      // БЛОКИРОВКИ ОТКЛЮЧЕНЫ для простого планировщика
       try {
         const success = await this.publishToSocialMedia(contentId, platform);
         results.push({platform, success});
-        
-        // Освобождаем блокировку после публикации
-        await publicationLockManager.releaseLock(contentId, platform);
       } catch (error) {
-        // Освобождаем блокировку при ошибке
-        await publicationLockManager.releaseLock(contentId, platform);
         results.push({platform, success: false, error: error.message});
       }
     }
