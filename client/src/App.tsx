@@ -40,6 +40,7 @@ import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
+import StoryEditor from "@/components/stories/StoryEditor";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -112,6 +113,19 @@ function Router() {
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
+      
+      {/* Stories routes */}
+      <Route path="/campaigns/:campaignId/stories/new">
+        {(params) => (
+          <WithLayout Component={() => <StoryEditor campaignId={params.campaignId} />} />
+        )}
+      </Route>
+      <Route path="/stories/:storyId/edit">
+        {(params) => (
+          <WithLayout Component={() => <StoryEditor storyId={params.storyId} />} />
+        )}
+      </Route>
+      
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}
