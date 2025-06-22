@@ -98,6 +98,10 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const addElement = (elementType: StoryElement['type']) => {
+    console.log('Adding element:', elementType);
+    console.log('Current slide index:', currentSlideIndex);
+    console.log('Current slides:', slides);
+    
     const newElement: StoryElement = {
       id: `element-${Date.now()}`,
       type: elementType,
@@ -107,12 +111,21 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       content: getDefaultContent(elementType)
     };
     
+    console.log('New element:', newElement);
+    
     const currentSlideData = slides[currentSlideIndex];
     const newElements = [...(currentSlideData?.elements || []), newElement];
     
-    updateSlide({
+    console.log('Updated elements:', newElements);
+    
+    const updatedSlides = [...slides];
+    updatedSlides[currentSlideIndex] = {
+      ...updatedSlides[currentSlideIndex],
       elements: newElements
-    });
+    };
+    
+    console.log('Updated slides:', updatedSlides);
+    setSlides(updatedSlides);
     
     toast({
       title: 'Элемент добавлен',
