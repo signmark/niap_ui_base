@@ -127,6 +127,7 @@ export default function ContentPage() {
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
+  const [isContentTypeDialogOpen, setIsContentTypeDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -2717,6 +2718,19 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Диалог выбора типа контента */}
+      <ContentTypeDialog
+        isOpen={isContentTypeDialogOpen}
+        onClose={() => setIsContentTypeDialogOpen(false)}
+        onSelectType={(type) => {
+          if (type === 'story') {
+            window.location.href = `/campaigns/${selectedCampaignId}/stories/new`;
+          } else {
+            setIsCreateDialogOpen(true);
+          }
+        }}
+      />
     </div>
   );
 }
