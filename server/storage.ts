@@ -48,6 +48,27 @@ export interface IStorage {
   
   // Business Questionnaire
   getBusinessQuestionnaire(campaignId: string): Promise<BusinessQuestionnaire | null>;
+
+  // Stories Management
+  createStory(story: any): Promise<any>;
+  getStoryById(id: string, userId: string): Promise<any>;
+  updateStory(id: string, updates: any, userId: string): Promise<any>;
+  deleteStory(id: string, userId: string): Promise<boolean>;
+  getStoriesByCampaign(campaignId: string, userId: string): Promise<any[]>;
+  
+  // Story Slides
+  addSlideToStory(slide: any, userId: string): Promise<any>;
+  updateSlide(slideId: string, updates: any, userId: string): Promise<any>;
+  deleteSlide(slideId: string, userId: string): Promise<boolean>;
+  reorderSlides(storyId: string, slideIds: string[], userId: string): Promise<void>;
+  
+  // Story Elements
+  addElementToSlide(element: any, userId: string): Promise<any>;
+  updateElement(elementId: string, updates: any, userId: string): Promise<any>;
+  deleteElement(elementId: string, userId: string): Promise<boolean>;
+  
+  // Story Scheduling
+  scheduleStory(storyId: string, scheduledAt: string, platformSettings: any, userId: string): Promise<any>;
   createBusinessQuestionnaire(questionnaire: InsertBusinessQuestionnaire): Promise<BusinessQuestionnaire>;
   updateBusinessQuestionnaire(id: string, updates: Partial<InsertBusinessQuestionnaire>): Promise<BusinessQuestionnaire>;
   
