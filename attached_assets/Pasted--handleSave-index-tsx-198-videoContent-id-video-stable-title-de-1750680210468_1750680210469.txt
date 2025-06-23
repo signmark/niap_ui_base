@@ -1,0 +1,123 @@
+🔥 handleSave вызван!
+index.tsx:198 🔥 Текущее videoContent: {id: 'video-stable', title: 'Видос', description: 'Хер', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+index.tsx:205 🔥 Campaign ID sources: {prop: '46868c44-c6a4-4bed-accf-9ad07bba790e', url: null, store: undefined, final: '46868c44-c6a4-4bed-accf-9ad07bba790e'}
+index.tsx:240 🔥 Готовы к мутации: {campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e', content_type: 'video-text', text_content: 'Хер', video_url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', thumbnail_url: null, …}
+index.tsx:241 🔥 Вызываем createVideoContentMutation.mutate
+index.tsx:123 🔥 Отправляем запрос на сохранение: {campaign_id: '46868c44-c6a4-4bed-accf-9ad07bba790e', content_type: 'video-text', text_content: 'Хер', video_url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', thumbnail_url: null, …}
+queryClient.ts:50 📤 API Запрос: POST /api/campaign-content
+queryClient.ts:51 🔐 Статус авторизации: {hasToken: true, userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', tokenPrefix: 'eyJhbGciOi...'}
+queryClient.ts:65 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaign-content 500 (Internal Server Error)
+apiRequest @ queryClient.ts:65
+mutationFn @ index.tsx:124
+fn @ @tanstack_react-query.js?v=44182660:1189
+run @ @tanstack_react-query.js?v=44182660:494
+start @ @tanstack_react-query.js?v=44182660:536
+execute @ @tanstack_react-query.js?v=44182660:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=44182660:2630
+(anonymous) @ @tanstack_react-query.js?v=44182660:3295
+handleSave @ index.tsx:242
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=44182660:3736
+executeDispatch @ chunk-276SZO74.js?v=44182660:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=44182660:7034
+processDispatchQueue @ chunk-276SZO74.js?v=44182660:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=44182660:7051
+(anonymous) @ chunk-276SZO74.js?v=44182660:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=44182660:18913
+batchedUpdates @ chunk-276SZO74.js?v=44182660:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=44182660:5478
+dispatchEvent @ chunk-276SZO74.js?v=44182660:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=44182660:5449Understand this error
+logger.ts:125 Сервис недоступен: Временные технические проблемы. Обратитесь к администрации.
+overrideMethod @ hook.js:608
+serviceError @ logger.ts:125
+serviceError @ logger.ts:152
+handleApiError @ error-handler.ts:56
+handleError @ error-handler.ts:116
+globalErrorHandler @ queryClient.ts:117
+execute @ @tanstack_react-query.js?v=44182660:1247
+await in execute
+mutate @ @tanstack_react-query.js?v=44182660:2630
+(anonymous) @ @tanstack_react-query.js?v=44182660:3295
+handleSave @ index.tsx:242
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=44182660:3736
+executeDispatch @ chunk-276SZO74.js?v=44182660:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=44182660:7034
+processDispatchQueue @ chunk-276SZO74.js?v=44182660:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=44182660:7051
+(anonymous) @ chunk-276SZO74.js?v=44182660:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=44182660:18913
+batchedUpdates @ chunk-276SZO74.js?v=44182660:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=44182660:5478
+dispatchEvent @ chunk-276SZO74.js?v=44182660:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=44182660:5449Understand this error
+queryClient.ts:121 Ошибка: Временные технические проблемы на сервере. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ queryClient.ts:121
+execute @ @tanstack_react-query.js?v=44182660:1247
+await in execute
+mutate @ @tanstack_react-query.js?v=44182660:2630
+(anonymous) @ @tanstack_react-query.js?v=44182660:3295
+handleSave @ index.tsx:242
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=44182660:3736
+executeDispatch @ chunk-276SZO74.js?v=44182660:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=44182660:7034
+processDispatchQueue @ chunk-276SZO74.js?v=44182660:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=44182660:7051
+(anonymous) @ chunk-276SZO74.js?v=44182660:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=44182660:18913
+batchedUpdates @ chunk-276SZO74.js?v=44182660:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=44182660:5478
+dispatchEvent @ chunk-276SZO74.js?v=44182660:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=44182660:5449Understand this error
+index.tsx:142 🔥 Ошибка сохранения: Error: 500: {"success":false,"error":"Внутренняя ошибка сервера"}
+    at throwIfResNotOk (queryClient.ts:26:19)
+    at async apiRequest (queryClient.ts:72:3)
+    at async Object.mutationFn (index.tsx:124:22)
+overrideMethod @ hook.js:608
+onError @ index.tsx:142
+execute @ @tanstack_react-query.js?v=44182660:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=44182660:2630
+(anonymous) @ @tanstack_react-query.js?v=44182660:3295
+handleSave @ index.tsx:242
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=44182660:3736
+executeDispatch @ chunk-276SZO74.js?v=44182660:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=44182660:7034
+processDispatchQueue @ chunk-276SZO74.js?v=44182660:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=44182660:7051
+(anonymous) @ chunk-276SZO74.js?v=44182660:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=44182660:18913
+batchedUpdates @ chunk-276SZO74.js?v=44182660:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=44182660:5478
+dispatchEvent @ chunk-276SZO74.js?v=44182660:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=44182660:5449Understand this error
+VideoUploader.tsx:56 VideoUploader useEffect - value изменен: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:62 VideoUploader useEffect - установили превью для: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:100 videoContent изменен: {id: 'video-stable', title: 'Видос', description: 'Хер', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+index.tsx:101 videoUrl в videoContent: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:103 ✓ URL сохранен в videoContent: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:56 VideoUploader useEffect - value изменен: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:62 VideoUploader useEffect - установили превью для: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:100 videoContent изменен: {id: 'video-stable', title: 'Видос', description: 'Хер', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+index.tsx:101 videoUrl в videoContent: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:103 ✓ URL сохранен в videoContent: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
