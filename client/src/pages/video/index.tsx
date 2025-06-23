@@ -103,14 +103,95 @@ export default function VideoEditor() {
     }));
   };
 
-  const handleSave = () => {
-    // Здесь будет логика сохранения в API
-    console.log('Сохранение видео контента:', videoContent);
+  const handleSave = async () => {
+    try {
+      if (!videoContent.title.trim()) {
+        toast({
+          title: 'Ошибка',
+          description: 'Необходимо указать название видео',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Подготавливаем данные для сохранения
+      const contentData = {
+        campaign_id: campaignId,
+        content_type: 'video-text',
+        title: videoContent.title,
+        content: videoContent.description,
+        video_url: videoContent.videoFile ? await uploadVideoToS3(videoContent.videoFile) : null,
+        thumbnail_url: videoContent.thumbnail ? await uploadImageToS3(videoContent.thumbnail) : null,
+        platforms: JSON.stringify(videoContent.platforms),
+        scheduled_time: videoContent.scheduling.scheduledDate?.toISOString() || null,
+        metadata: JSON.stringify({
+          tags: videoContent.tags,
+          duration: videoContent.duration,
+          id: videoContent.id
+        }),
+        status: 'draft'
+      };
+
+      const response = await fetch('/api/campaign-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(contentData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка сохранения');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: 'Сохранено',
+        description: 'Видео контент успешно сохранен'
+      });
+      
+      console.log('Видео контент сохранен:', result);
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось сохранить видео контент',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Вспомогательные функции для загрузки файлов
+  const uploadVideoToS3 = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('video', file);
     
-    toast({
-      title: 'Сохранено',
-      description: 'Видео контент успешно сохранен'
+    const response = await fetch('/api/beget-s3-video/upload', {
+      method: 'POST',
+      body: formData
     });
+    
+    if (!response.ok) throw new Error('Ошибка загрузки видео');
+    
+    const result = await response.json();
+    return result.videoUrl;
+  };
+
+  const uploadImageToS3 = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await fetch('/api/beget-s3-aws/upload', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) throw new Error('Ошибка загрузки изображения');
+    
+    const result = await response.json();
+    return result.imageUrl;
   };
 
   const handlePublish = () => {
