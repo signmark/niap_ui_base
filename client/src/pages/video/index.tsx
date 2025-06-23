@@ -21,7 +21,7 @@ import {
   Settings,
   Clock
 } from 'lucide-react';
-import { useParams } from 'wouter';
+
 
 interface VideoContent {
   id: string;
@@ -42,8 +42,11 @@ interface VideoContent {
   };
 }
 
-export default function VideoEditor() {
-  const { campaignId } = useParams();
+interface VideoEditorProps {
+  campaignId?: string;
+}
+
+export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
   
   const [videoContent, setVideoContent] = useState<VideoContent>({
@@ -103,17 +106,43 @@ export default function VideoEditor() {
     }));
   };
 
-  const handleSave = () => {
-    // Здесь будет логика сохранения в API
-    console.log('Сохранение видео контента:', videoContent);
+  const handleSave = async () => {
+    if (!campaignId) return;
     
-    toast({
-      title: 'Сохранено',
-      description: 'Видео контент успешно сохранен'
-    });
+    // Формируем данные для сохранения в формате, совместимом с существующим API
+    const contentData = {
+      title: videoContent.title,
+      content: videoContent.description,
+      contentType: 'video-text', // Используем существующий тип из БД
+      campaignId: campaignId,
+      platforms: videoContent.platforms,
+      scheduling: videoContent.scheduling,
+      tags: videoContent.tags,
+      videoFile: videoContent.videoFile,
+      thumbnail: videoContent.thumbnail
+    };
+    
+    try {
+      // Здесь будет API вызов для сохранения
+      console.log('Сохранение видео контента:', contentData);
+      
+      toast({
+        title: 'Сохранено',
+        description: 'Видео контент успешно сохранен'
+      });
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось сохранить видео контент',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (!campaignId) return;
+    
     if (!videoContent.videoFile) {
       toast({
         title: 'Ошибка',
@@ -145,13 +174,32 @@ export default function VideoEditor() {
       return;
     }
 
-    // Здесь будет логика публикации
-    console.log('Публикация видео на платформы:', selectedPlatforms);
-    
-    toast({
-      title: 'Видео запланировано к публикации',
-      description: `Будет опубликовано на: ${selectedPlatforms.join(', ')}`
-    });
+    try {
+      // Сначала сохраняем контент
+      await handleSave();
+      
+      // Затем отправляем на публикацию
+      const publishData = {
+        contentType: 'video-text',
+        campaignId: campaignId,
+        platforms: videoContent.platforms,
+        scheduling: videoContent.scheduling
+      };
+      
+      console.log('Публикация видео на платформы:', selectedPlatforms, publishData);
+      
+      toast({
+        title: 'Видео запланировано к публикации',
+        description: `Будет опубликовано на: ${selectedPlatforms.join(', ')}`
+      });
+    } catch (error) {
+      console.error('Ошибка публикации:', error);
+      toast({
+        title: 'Ошибка публикации',
+        description: 'Не удалось запланировать публикацию видео',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleGoBack = () => {

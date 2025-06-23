@@ -129,6 +129,13 @@ function Router() {
         )}
       </Route>
       
+      {/* Video routes */}
+      <Route path="/campaigns/:campaignId/video">
+        {(params) => (
+          <WithLayout Component={() => <VideoPage campaignId={params.campaignId} />} />
+        )}
+      </Route>
+      
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}

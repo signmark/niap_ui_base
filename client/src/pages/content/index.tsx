@@ -2801,6 +2801,8 @@ export default function ContentPage() {
         onSelectType={(type: 'post' | 'story' | 'video') => {
           if (type === 'story') {
             window.location.href = `/campaigns/${selectedCampaignId}/stories/new`;
+          } else if (type === 'video') {
+            window.location.href = `/campaigns/${selectedCampaignId}/video`;
           } else {
             setIsCreateDialogOpen(true);
           }
