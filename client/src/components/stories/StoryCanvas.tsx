@@ -86,10 +86,6 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
     onSuccess: () => {
       setSelectedElementId(null);
       onSlideUpdate();
-      toast({
-        title: 'Элемент удален',
-        description: 'Элемент успешно удален'
-      });
     },
     onError: (error: any) => {
       toast({
@@ -104,7 +100,7 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
     e.preventDefault();
     e.stopPropagation();
     
-    const element = slide?.elements?.find(el => el.id === elementId);
+    const element = slide?.elements.find(el => el.id === elementId);
     if (!element) return;
 
     setSelectedElementId(elementId);
@@ -124,24 +120,16 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
     const deltaX = e.clientX - dragState.startX;
     const deltaY = e.clientY - dragState.startY;
     
-    const newX = Math.max(0, Math.min(1080 - 100, dragState.startElementX + deltaX * 2)); // Scale for canvas
-    const newY = Math.max(0, Math.min(1920 - 100, dragState.startElementY + deltaY * 3.56)); // 9:16 ratio scaling
-
-    const element = slide?.elements?.find(el => el.id === dragState.elementId);
-    if (!element) return;
-
-    // Update element position optimistically
-    const updatedPosition = {
-      ...element.position,
-      x: newX,
-      y: newY
-    };
+    const newX = Math.max(0, Math.min(320 - 50, dragState.startElementX + deltaX));
+    const newY = Math.max(0, Math.min(568 - 50, dragState.startElementY + deltaY));
 
     updateElementMutation.mutate({
       elementId: dragState.elementId,
-      data: { position: updatedPosition }
+      data: {
+        position: { x: newX, y: newY }
+      }
     });
-  }, [dragState, slide?.elements, updateElementMutation]);
+  }, [dragState, updateElementMutation]);
 
   const handleMouseUp = useCallback(() => {
     setDragState({
@@ -155,38 +143,19 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
   }, []);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    // If clicking on canvas background, deselect elements
     if (e.target === e.currentTarget) {
       setSelectedElementId(null);
     }
   }, []);
 
-  const handleDeleteElement = () => {
-    if (selectedElementId) {
-      deleteElementMutation.mutate(selectedElementId);
-    }
-  };
-
-  const getBackgroundStyle = (background: any): React.CSSProperties => {
-    if (!background) return { backgroundColor: '#ffffff' };
-
+  const getBackgroundStyle = (background: StorySlide['background']) => {
     switch (background.type) {
       case 'color':
         return { backgroundColor: background.value };
-      case 'gradient':
-        if (background.value.type === 'linear') {
-          const angle = background.value.angle || 0;
-          const colors = background.value.colors?.join(', ') || '#ffffff, #000000';
-          return { background: `linear-gradient(${angle}deg, ${colors})` };
-        } else if (background.value.type === 'radial') {
-          const colors = background.value.colors?.join(', ') || '#ffffff, #000000';
-          return { background: `radial-gradient(circle, ${colors})` };
-        }
-        break;
       case 'image':
         return {
-          backgroundImage: `url(${background.value.url})`,
-          backgroundSize: background.value.fit || 'cover',
+          backgroundImage: `url(${background.value})`,
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         };
@@ -234,39 +203,14 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
       );
     });
   };
-        key={element.id}
-        style={elementStyle}
-        onMouseDown={(e) => handleMouseDown(e, element.id)}
-        onClick={(e) => {
-          e.stopPropagation();
-          setSelectedElementId(element.id);
-        }}
-        className="group"
-      >
-        {elementContent}
-        
-        {/* Selection handles */}
-        {isSelected && (
-          <>
-            <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
-            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 rounded-full" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
-          </>
-        )}
-      </div>
-    );
-  };
 
   if (!slide) {
     return (
-      <Card className="w-80 h-[568px] bg-gray-100">
-        <CardContent className="h-full flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <Square className="w-8 h-8 mx-auto mb-2" />
-            <p>Выберите слайд для редактирования</p>
-          </div>
-        </CardContent>
+      <Card className="w-80 h-[568px] flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          <p className="text-lg font-medium">История не найдена</p>
+          <p className="text-sm">Выберите историю для редактирования</p>
+        </div>
       </Card>
     );
   }
@@ -319,8 +263,24 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDeleteElement}
-                  disabled={deleteElementMutation.isPending}
+                  onClick={() => {
+                    const element = slide.elements.find(el => el.id === selectedElementId);
+                    if (element) {
+                      updateElementMutation.mutate({
+                        elementId: selectedElementId,
+                        data: {
+                          rotation: (element.rotation + 90) % 360
+                        }
+                      });
+                    }
+                  }}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteElementMutation.mutate(selectedElementId)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
