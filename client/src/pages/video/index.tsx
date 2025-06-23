@@ -44,7 +44,9 @@ interface VideoContent {
 }
 
 export default function VideoEditor() {
-  const { campaignId } = useParams();
+  const { campaignId: urlCampaignId } = useParams();
+  const selectedCampaign = useCampaignStore((state) => state.selectedCampaign);
+  const campaignId = urlCampaignId || selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
   const { toast } = useToast();
   
   const [videoContent, setVideoContent] = useState<VideoContent>({
