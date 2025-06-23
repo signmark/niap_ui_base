@@ -135,13 +135,22 @@ export default function VideoEditor() {
         status: 'draft'
       };
 
-      const response = await fetch('/api/campaign-content', {
+      const response = await fetch('/api/video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify(contentData)
+        body: JSON.stringify({
+          title: videoContent.title,
+          description: videoContent.description,
+          campaignId: campaignId,
+          videoUrl: videoContent.videoFile ? await uploadVideoToS3(videoContent.videoFile) : null,
+          thumbnailUrl: videoContent.thumbnail ? await uploadImageToS3(videoContent.thumbnail) : null,
+          platforms: videoContent.platforms,
+          tags: videoContent.tags,
+          scheduling: videoContent.scheduling
+        })
       });
 
       if (!response.ok) {
@@ -254,13 +263,19 @@ export default function VideoEditor() {
         scheduling: videoContent.scheduling
       };
 
-      const response = await fetch('/api/publish/video', {
+      const savedVideo = await handleSave();
+      if (!savedVideo) return;
+
+      const response = await fetch(`/api/video/${savedVideo.id}/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify(publishData)
+        body: JSON.stringify({
+          platforms: selectedPlatforms,
+          scheduledAt: videoContent.scheduling.scheduledDate?.toISOString()
+        })
       });
 
       if (!response.ok) {

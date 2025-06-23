@@ -50,7 +50,6 @@ import { registerTestInstagramCarouselRoute } from './api/test-instagram-carouse
 import { getPublishScheduler } from './services/publish-scheduler';
 import storiesRouter from './routes/stories';
 import videoRouter from './routes/video';
-import storiesRouter from './routes/stories';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
@@ -3763,6 +3762,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/facebook-test', facebookWebhookDirectTestRoutes); // Тестовый маршрут для прямой публикации в Facebook
   app.use('/api', socialPlatformStatusWebhookRoutes); // Универсальный вебхук для обновления статусов соцсетей
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
+  
+  // Stories and Video content routes
+  app.use('/api/stories', storiesRouter);
+  app.use('/api/video', videoRouter);
   
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
   // чтобы его специфичные маршруты (например, /api/publish/now) не перехватывались
