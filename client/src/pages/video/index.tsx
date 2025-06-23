@@ -79,6 +79,11 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     }
   });
 
+  // Отладочный useEffect для отслеживания изменений videoContent
+  useEffect(() => {
+    console.log('videoContent изменен:', videoContent);
+  }, [videoContent]);
+
   const [newTag, setNewTag] = useState('');
   const [activeTab, setActiveTab] = useState('content');
 
@@ -375,8 +380,10 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                       onChange={(url) => {
                         console.log('VideoUploader onChange вызван с URL:', url);
                         setVideoContent(prev => {
+                          const newContent = { ...prev, videoUrl: url };
                           console.log('Обновляем videoContent.videoUrl с:', url);
-                          return { ...prev, videoUrl: url };
+                          console.log('Новое состояние videoContent:', newContent);
+                          return newContent;
                         });
                       }}
                     />

@@ -55,23 +55,27 @@ export function VideoUploader({
 
   // Обновляем превью и отображение URL при изменении значения
   useEffect(() => {
-    console.log('VideoUploader value изменен:', value);
-    console.log('Текущий inputValue:', inputValue);
+    console.log('VideoUploader useEffect - value изменен:', value);
+    console.log('VideoUploader useEffect - текущий inputValue:', inputValue);
     
     const newValue = value || '';
     
     // Обновляем inputValue только если value действительно изменился
-    setInputValue(newValue);
-    console.log('Синхронизируем inputValue с value:', newValue);
+    if (inputValue !== newValue) {
+      setInputValue(newValue);
+      console.log('VideoUploader useEffect - синхронизируем inputValue с value:', newValue);
+    }
     
     if (newValue && newValue.trim() !== '') {
       setPreviewUrl(newValue);
       setShowPreview(forcePreview || true);
       setDisplayUrl(newValue.length > 50 ? newValue.substring(0, 47) + '...' : newValue);
+      console.log('VideoUploader useEffect - установили превью и отображение для:', newValue);
     } else {
       setShowPreview(false);
       setPreviewUrl('');
       setDisplayUrl('');
+      console.log('VideoUploader useEffect - очистили превью и отображение');
     }
   }, [value, forcePreview]);
 
