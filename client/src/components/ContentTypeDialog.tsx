@@ -13,7 +13,7 @@ import {
 interface ContentTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectType: (type: 'post' | 'story') => void;
+  onSelectType: (type: 'post' | 'story' | 'video') => void;
 }
 
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
@@ -31,10 +31,17 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
       description: 'Интерактивные истории со слайдами',
       icon: Layers,
       color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
+    },
+    {
+      id: 'video',
+      title: 'Видео с текстом',
+      description: 'Видео контент для YouTube, VK, Telegram',
+      icon: Video,
+      color: 'bg-red-50 border-red-200 hover:bg-red-100'
     }
   ];
 
-  const handleSelect = (type: 'post' | 'story') => {
+  const handleSelect = (type: 'post' | 'story' | 'video') => {
     onSelectType(type);
     onClose();
   };
@@ -53,7 +60,7 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
               <Card 
                 key={type.id}
                 className={`cursor-pointer transition-colors ${type.color}`}
-                onClick={() => handleSelect(type.id as 'post' | 'story')}
+                onClick={() => handleSelect(type.id as 'post' | 'story' | 'video')}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
