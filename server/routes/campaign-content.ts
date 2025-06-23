@@ -3,27 +3,57 @@
  * Сохранение видео и других типов контента в campaign_content
  */
 import { Router, Request, Response, NextFunction } from 'express';
-import { authMiddleware } from '../middleware/auth';
 import { directusCrud } from '../services/directus-crud';
+import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
+import axios from 'axios';
 
-// Middleware для извлечения токена авторизации из заголовков
-const extractAuthTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    (req as any).userToken = authHeader.substring(7);
+// Копируем рабочий authenticateUser из routes.ts
+const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Токен авторизации не найден' 
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    try {
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
+      
+      const response = await axios.get(`${finalUrl}users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        timeout: 10000
+      });
+      
+      if (response.data?.data?.id) {
+        (req as any).userId = response.data.data.id;
+        (req as any).userToken = token;
+        next();
+      } else {
+        return res.status(401).json({ error: 'Недействительный токен' });
+      }
+    } catch (error: any) {
+      return res.status(401).json({ 
+        error: 'Ошибка проверки токена',
+        details: error.response?.data || error.message 
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: 'Ошибка аутентификации' });
   }
-  next();
 };
 
 const router = Router();
 const logPrefix = 'campaign-content-api';
 
-// Применяем middleware для извлечения токена ко всем маршрутам
-router.use(extractAuthTokenMiddleware);
-
 // Создание нового контента в кампании
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateUser, async (req, res) => {
   try {
     log(`Creating campaign content`, logPrefix);
     const {
@@ -62,10 +92,14 @@ router.post('/', authMiddleware, async (req, res) => {
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
 
-    // Используем токен пользователя как в других маршрутах
+    // Используем userId и userToken из authenticateUser middleware
+    const userId = (req as any).userId;
     const userToken = (req as any).userToken;
     
-    log(`Using user token for request: ${userToken ? 'present' : 'missing'}`, logPrefix);
+    log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
+    
+    // Заменяем "authenticated-user" на реальный userId
+    contentData.user_created = userId;
     
     const result = await directusCrud.create('campaign_content', contentData, {
       authToken: userToken
@@ -87,7 +121,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Получение контента кампании
-router.get('/:campaignId', authMiddleware, async (req, res) => {
+router.get('/:campaignId', authenticateUser, async (req, res) => {
   try {
     const { campaignId } = req.params;
     
@@ -116,7 +150,7 @@ router.get('/:campaignId', authMiddleware, async (req, res) => {
 });
 
 // Обновление контента
-router.patch('/:contentId', authMiddleware, async (req, res) => {
+router.patch('/:contentId', authenticateUser, async (req, res) => {
   try {
     const { contentId } = req.params;
     const updateData = req.body;
@@ -147,7 +181,7 @@ router.patch('/:contentId', authMiddleware, async (req, res) => {
 });
 
 // Удаление контента
-router.delete('/:contentId', authMiddleware, async (req, res) => {
+router.delete('/:contentId', authenticateUser, async (req, res) => {
   try {
     const { contentId } = req.params;
 
