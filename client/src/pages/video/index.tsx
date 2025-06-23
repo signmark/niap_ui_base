@@ -133,22 +133,21 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   });
 
   const handleVideoUpload = (videoUrl: string) => {
+    console.log('handleVideoUpload получил URL:', videoUrl);
     setVideoContent(prev => ({ ...prev, videoUrl }));
-    toast({
-      title: 'Видео загружено',
-      description: 'Видео успешно загружено на S3'
-    });
   };
 
   const handleThumbnailUpload = (media: any[]) => {
+    console.log('handleThumbnailUpload получил медиа:', media);
     if (media.length > 0) {
       setVideoContent(prev => ({ ...prev, thumbnailUrl: media[0].url }));
-      toast({
-        title: 'Превью загружено',
-        description: 'Изображение превью успешно загружено'
-      });
     }
   };
+
+  // Отладочный лог для отслеживания изменений videoContent
+  useEffect(() => {
+    console.log('videoContent изменен:', videoContent);
+  }, [videoContent]);
 
   const addTag = () => {
     if (newTag.trim() && !videoContent.tags.includes(newTag.trim())) {
@@ -367,6 +366,9 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Тестовый загрузчик */}
+                  <TestUploader />
+                  
                   {/* Видео файл */}
                   <div className="space-y-2">
                     <Label>Видео файл</Label>
