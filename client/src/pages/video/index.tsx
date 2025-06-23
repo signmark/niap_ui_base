@@ -62,7 +62,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [videoContent, setVideoContent] = useState<VideoContent>({
+  const [videoContent, setVideoContent] = useState<VideoContent>(() => ({
     id: `video-${Date.now()}`,
     title: '',
     description: '',
@@ -77,7 +77,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     scheduling: {
       publishNow: true
     }
-  });
+  }));
 
   // Отладочный useEffect для отслеживания изменений videoContent
   useEffect(() => {

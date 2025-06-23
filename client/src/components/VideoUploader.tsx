@@ -109,11 +109,12 @@ export function VideoUploader({
           console.log('Полученный URL видео:', videoUrl);
           console.log('Вызываем onChange с URL:', videoUrl);
           
-          // Важно: обновляем значение через onChange
+          // Важно: сначала вызываем onChange, потом обновляем локальное состояние
+          console.log('Вызываем onChange с URL:', videoUrl);
+          onChange(videoUrl);
+          
           console.log('Устанавливаем inputValue:', videoUrl);
           setInputValue(videoUrl);
-          console.log('Вызываем onChange:', videoUrl);
-          onChange(videoUrl);
           setPreviewUrl(videoUrl);
           setShowPreview(true);
           
