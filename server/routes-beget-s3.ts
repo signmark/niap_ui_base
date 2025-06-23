@@ -13,9 +13,9 @@ import { log } from './utils/logger';
 export function registerBegetS3Routes(app: Express): void {
   log("Registering Beget S3 storage routes...", "beget-s3-routes");
   
-  // Регистрируем основные маршруты для работы с S3
-  app.use('/api/beget-s3', begetS3AwsRouter);
-  log("Beget S3 basic storage routes registered", "beget-s3-routes");
+  // Регистрируем основные маршруты для работы с S3 (AWS-совместимый API)
+  app.use('/api/beget-s3-aws', begetS3AwsRouter);
+  log("Beget S3 AWS-compatible storage routes registered at /api/beget-s3-aws", "beget-s3-routes");
   
   // Регистрируем маршруты для работы с видео в S3
   app.use('/api/beget-s3-video', begetS3VideoRouter);

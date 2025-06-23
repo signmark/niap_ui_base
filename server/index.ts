@@ -354,10 +354,13 @@ app.use((req, res, next) => {
     registerDeepSeekModelsRoute(app);
     log("DeepSeek Models route registered successfully");
     
-    // Регистрируем маршруты для работы с Beget S3
+    // Регистрируем маршруты для работы с Beget S3 (включая AWS-совместимый API)
     log("Registering Beget S3 routes...");
     registerBegetS3Routes(app);
     log("Beget S3 routes registered successfully");
+    
+    // Добавляем логирование для проверки регистрации маршрутов
+    console.log("Beget S3 routes should now be available at /api/beget-s3-aws/* and /api/beget-s3-video/*");
     
     // Регистрируем маршрут для очистки кэша
     log("Registering clear cache routes...");
