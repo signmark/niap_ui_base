@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,6 +54,16 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId }: StoryEditorProps) {
+  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId);
+  
+  // useEffect для отслеживания размонтирования
+  useEffect(() => {
+    console.log('🔥 StoryEditor EFFECT RUN for campaignId:', campaignId);
+    return () => {
+      console.log('💀 StoryEditor UNMOUNTING for campaignId:', campaignId);
+    };
+  }, [campaignId]);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -63,16 +73,19 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
   
-  // Инициализация состояния без лишних логов
-  const [slides, setSlides] = useState<StorySlide[]>([
-    {
-      id: 'slide-1',
-      order: 1,
-      duration: 5,
-      background: { type: 'color', value: '#6366f1' },
-      elements: []
-    }
-  ]);
+  // Инициализация состояния с защитой от сброса
+  const [slides, setSlides] = useState<StorySlide[]>(() => {
+    console.log('🎬 Initializing slides state for campaignId:', campaignId);
+    return [
+      {
+        id: 'slide-1',
+        order: 1,
+        duration: 5,
+        background: { type: 'color', value: '#6366f1' },
+        elements: []
+      }
+    ];
+  });
 
   // Отслеживание изменений slides
   useEffect(() => {
@@ -158,7 +171,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     }
   };
 
-  const addElement = (elementType: StoryElement['type']) => {
+  const addElement = useCallback((elementType: StoryElement['type']) => {
     const newElement: StoryElement = {
       id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: elementType,
@@ -169,9 +182,9 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       style: getDefaultStyle(elementType)
     };
 
+    console.log('🔧 Adding element:', newElement.id, 'to slide:', currentSlideIndex);
+
     setSlides(prevSlides => {
-      console.log('🔧 Adding element to slide index:', currentSlideIndex);
-      
       const newSlides = [...prevSlides];
       const targetSlide = newSlides[currentSlideIndex];
       
@@ -183,7 +196,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         newSlides[currentSlideIndex] = updatedSlide;
         
         console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
-        console.log('✅ Updated slide ID:', updatedSlide.id);
+        console.log('✅ All elements:', updatedSlide.elements.map(el => el.id));
       }
       
       return newSlides;
@@ -195,7 +208,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       title: 'Элемент добавлен',
       description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
     });
-  };
+  }, [slides, currentSlideIndex, toast]);
 
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
