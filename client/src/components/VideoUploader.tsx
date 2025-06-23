@@ -60,11 +60,9 @@ export function VideoUploader({
     
     const newValue = value || '';
     
-    // Обновляем inputValue только если value действительно изменился
-    if (inputValue !== newValue) {
-      setInputValue(newValue);
-      console.log('VideoUploader useEffect - синхронизируем inputValue с value:', newValue);
-    }
+    // Всегда синхронизируем inputValue с value из props
+    setInputValue(newValue);
+    console.log('VideoUploader useEffect - синхронизируем inputValue с value:', newValue);
     
     if (newValue && newValue.trim() !== '') {
       setPreviewUrl(newValue);

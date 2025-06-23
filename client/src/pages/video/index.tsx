@@ -62,8 +62,9 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const [initialId] = useState(() => `video-${Date.now()}`);
   const [videoContent, setVideoContent] = useState<VideoContent>(() => ({
-    id: `video-${Date.now()}`,
+    id: initialId,
     title: '',
     description: '',
     tags: [],
@@ -82,6 +83,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   // Отладочный useEffect для отслеживания изменений videoContent
   useEffect(() => {
     console.log('videoContent изменен:', videoContent);
+    console.log('videoUrl в videoContent:', videoContent.videoUrl);
   }, [videoContent]);
 
   const [newTag, setNewTag] = useState('');

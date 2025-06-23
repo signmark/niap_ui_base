@@ -1,0 +1,20 @@
+VideoUploader.tsx:58 VideoUploader useEffect - value изменен: 
+VideoUploader.tsx:59 VideoUploader useEffect - текущий inputValue: 
+VideoUploader.tsx:78 VideoUploader useEffect - очистили превью и отображение
+VideoUploader.tsx:86 Загружаем файл: mov_bbb.mp4 размер: 788493
+VideoUploader.tsx:93 Отправка запроса на загрузку видео файла...
+VideoUploader.tsx:105 Ответ от API загрузки видео: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', key: 'mov_bbb.mp4'}
+VideoUploader.tsx:109 Полученный URL видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:110 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:113 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:381 VideoUploader onChange вызван с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:384 Обновляем videoContent.videoUrl с: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:385 Новое состояние videoContent: {id: 'video-1750678472436', title: '', description: '', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+VideoUploader.tsx:116 Устанавливаем inputValue: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:121 VideoUploader: состояние обновлено с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:84 videoContent изменен: {id: 'video-1750678560423', title: '', description: '', tags: Array(0), videoUrl: '', …}
+VideoUploader.tsx:58 VideoUploader useEffect - value изменен: 
+VideoUploader.tsx:59 VideoUploader useEffect - текущий inputValue: 
+VideoUploader.tsx:78 VideoUploader useEffect - очистили превью и отображение
+index.tsx:84 videoContent изменен: {id: 'video-1750678563421', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:84 videoContent изменен: {id: 'video-1750678565452', title: '', description: '', tags: Array(0), videoUrl: '', …}
