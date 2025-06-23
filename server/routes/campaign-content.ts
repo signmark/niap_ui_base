@@ -8,21 +8,28 @@ import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 import axios from 'axios';
 
-// Копируем рабочий authenticateUser из routes.ts
+// Используем точно такой же authenticateUser как в routes.ts
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Пытаемся получить токен из заголовка Authorization или из cookie
     const authHeader = req.headers.authorization;
+    const cookieToken = req.cookies?.directus_session_token;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Токен авторизации не найден' 
-      });
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (cookieToken) {
+      token = cookieToken;
     }
     
-    const token = authHeader.substring(7);
-    
+    if (!token) {
+      console.log('No token provided in header or cookie');
+      return res.status(401).json({ error: 'Не авторизован: Отсутствует токен авторизации' });
+    }
+
     try {
+      // Получаем информацию о пользователе из Directus API
       const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
       const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
       
@@ -30,22 +37,33 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
         headers: { 'Authorization': `Bearer ${token}` },
         timeout: 10000
       });
-      
-      if (response.data?.data?.id) {
-        (req as any).userId = response.data.data.id;
-        (req as any).userToken = token;
-        next();
-      } else {
-        return res.status(401).json({ error: 'Недействительный токен' });
+
+      if (!response.data?.data?.id) {
+        console.log('Invalid token: cannot get user info');
+        return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
       }
+
+      // Устанавливаем информацию о пользователе в объект запроса
+      req.user = {
+        id: response.data.data.id,
+        token: token,
+        email: response.data.data.email,
+        firstName: response.data.data.first_name,
+        lastName: response.data.data.last_name
+      };
+      
+      // Добавляем поля для совместимости
+      (req as any).userId = response.data.data.id;
+      (req as any).userToken = token;
+      
+      next();
     } catch (error: any) {
-      return res.status(401).json({ 
-        error: 'Ошибка проверки токена',
-        details: error.response?.data || error.message 
-      });
+      console.error('Authentication error:', error.response?.data || error.message);
+      return res.status(401).json({ error: 'Не авторизован: Ошибка проверки токена' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Ошибка аутентификации' });
+    console.error('Server error during authentication:', error);
+    return res.status(500).json({ error: 'Внутренняя ошибка сервера при аутентификации' });
   }
 };
 
@@ -98,7 +116,7 @@ router.post('/', authenticateUser, async (req, res) => {
     
     log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
     
-    // Заменяем "authenticated-user" на реальный userId
+    // Устанавливаем правильного пользователя
     contentData.user_created = userId;
     
     const result = await directusCrud.create('campaign_content', contentData, {
