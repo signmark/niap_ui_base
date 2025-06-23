@@ -93,8 +93,8 @@ export function VideoUploader({
 
         console.log('Ответ от API загрузки видео:', response.data);
 
-        if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
-          const videoUrl = response.data.url || response.data.videoUrl;
+        if (response.data && response.data.success && response.data.url) {
+          const videoUrl = response.data.url;
           console.log('Полученный URL видео:', videoUrl);
           console.log('Вызываем onChange с URL:', videoUrl);
           

@@ -88,15 +88,12 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   // Обновляем медиа при изменении value из props
   useEffect(() => {
-    if (value !== null) {
+    if (value !== null && JSON.stringify(value) !== JSON.stringify(mediaList)) {
       setMediaList(value);
     }
   }, [value]);
 
-  // Обновляем родительский компонент при изменении медиасписка
-  useEffect(() => {
-    onChange(mediaList);
-  }, [mediaList, onChange]);
+  // Убираем автоматический вызов onChange - только при явных действиях пользователя
 
   // Проверяет тип файла по расширению
   const isImageFile = (fileName: string): boolean => {
@@ -249,7 +246,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
   // Удаляет медиафайл по индексу
   const handleRemoveMedia = (index: number) => {
-    setMediaList(prev => prev.filter((_, i) => i !== index));
+    const updatedList = mediaList.filter((_, i) => i !== index);
+    setMediaList(updatedList);
+    onChange(updatedList);
   };
 
   // Открывает диалог редактирования медиафайла

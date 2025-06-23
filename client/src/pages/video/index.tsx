@@ -391,11 +391,14 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                       onChange={(media) => {
                         console.log('MediaUploader onChange (превью):', media);
                         if (media && media.length > 0) {
+                          const newThumbnailUrl = media[0].url;
+                          console.log('Обновляем thumbnailUrl:', newThumbnailUrl);
                           setVideoContent(prev => ({
                             ...prev,
-                            thumbnailUrl: media[0].url
+                            thumbnailUrl: newThumbnailUrl
                           }));
                         } else {
+                          console.log('Очищаем thumbnailUrl');
                           setVideoContent(prev => ({
                             ...prev,
                             thumbnailUrl: ''
