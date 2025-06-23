@@ -176,6 +176,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: "/keywords", label: "Ключевые слова", icon: Search },
     { path: "/trends", label: "Тренды", icon: TrendingUp },
     { path: "/content", label: "Контент", icon: PenTool },
+    { path: "/video", label: "Видео редактор", icon: Video },
+    { path: "/stories", label: "Stories Canvas", icon: Sparkles },
     { path: "/publish/scheduled", label: "Запланированные", icon: Clock },
     { path: "/posts", label: "Публикации", icon: Calendar },
     { path: "/analytics", label: "Аналитика", icon: BarChart },
