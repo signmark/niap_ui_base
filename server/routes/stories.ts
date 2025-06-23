@@ -48,7 +48,8 @@ router.post('/', authenticateUser, async (req, res) => {
       metadata: JSON.stringify({ slides: slides || [] })
     };
 
-    const story = await directusCrud.create('campaign_content', storyData);
+    const createResponse = await directusApi.post('/items/campaign_content', storyData);
+    const story = createResponse.data.data;
 
     res.json({ success: true, data: story });
   } catch (error) {
@@ -74,7 +75,8 @@ router.put('/story/:id', authenticateUser, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    const story = await directusCrud.update('campaign_content', id, updateData);
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData);
+    const story = updateResponse.data.data;
 
     res.json({ success: true, data: story });
   } catch (error) {
