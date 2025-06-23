@@ -169,32 +169,85 @@ export default function VideoEditor() {
   // Вспомогательные функции для загрузки файлов
   const uploadVideoToS3 = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('video', file);
+    formData.append('file', file);
     
-    const response = await fetch('/api/beget-s3-video/upload', {
+    const response = await fetch('/api/beget-s3/upload', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
       body: formData
     });
     
     if (!response.ok) throw new Error('Ошибка загрузки видео');
     
     const result = await response.json();
-    return result.videoUrl;
+    return result.url;
   };
 
   const uploadImageToS3 = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
     
-    const response = await fetch('/api/beget-s3-aws/upload', {
+    const response = await fetch('/api/beget-s3/upload', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
       body: formData
     });
     
     if (!response.ok) throw new Error('Ошибка загрузки изображения');
     
     const result = await response.json();
-    return result.imageUrl;
+    return result.url;
+  };
+
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('video/')) {
+        setVideoContent(prev => ({
+          ...prev,
+          videoFile: file,
+          duration: 0
+        }));
+        
+        toast({
+          title: 'Видео загружено',
+          description: `Файл "${file.name}" готов к обработке`
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: 'Выберите видео файл',
+          variant: 'destructive'
+        });
+      }
+    }
+  };
+
+  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setVideoContent(prev => ({
+          ...prev,
+          thumbnail: file
+        }));
+        
+        toast({
+          title: 'Обложка загружена',
+          description: `Файл "${file.name}" готов к использованию`
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: 'Выберите изображение для обложки',
+          variant: 'destructive'
+        });
+      }
+    }
   };
 
   const handlePublish = async () => {

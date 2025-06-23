@@ -99,34 +99,91 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     });
   };
 
+  const getDefaultContent = (elementType: StoryElement['type']) => {
+    switch (elementType) {
+      case 'text':
+        return { text: 'Новый текст' };
+      case 'image':
+        return { url: '', alt: 'Изображение' };
+      case 'video':
+        return { url: '', thumbnail: '' };
+      case 'poll':
+        return { 
+          question: 'Ваш вопрос?', 
+          options: ['Вариант 1', 'Вариант 2'] 
+        };
+      case 'quiz':
+        return { 
+          question: 'Вопрос викторины?', 
+          options: ['Вариант 1', 'Вариант 2', 'Вариант 3'], 
+          correctAnswer: 0 
+        };
+      default:
+        return {};
+    }
+  };
+
+  const getDefaultStyle = (elementType: StoryElement['type']) => {
+    switch (elementType) {
+      case 'text':
+        return {
+          fontSize: 16,
+          fontFamily: 'Arial',
+          color: '#000000',
+          fontWeight: 'normal',
+          textAlign: 'center'
+        };
+      case 'image':
+      case 'video':
+        return {
+          borderRadius: 8
+        };
+      case 'poll':
+      case 'quiz':
+        return {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          borderRadius: 12,
+          padding: 16
+        };
+      default:
+        return {};
+    }
+  };
+
   const addElement = (elementType: StoryElement['type']) => {
     const newElement: StoryElement = {
-      id: `element-${Date.now()}`,
+      id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: elementType,
       position: { x: 50, y: 50 },
       rotation: 0,
-      zIndex: 1,
-      content: getDefaultContent(elementType)
+      zIndex: (slides[currentSlideIndex]?.elements?.length || 0) + 1,
+      content: getDefaultContent(elementType),
+      style: getDefaultStyle(elementType)
     };
-    
-    // Принудительно обновляем состояние с новым элементом
+
     setSlides(prevSlides => {
-      const updatedSlides = [...prevSlides];
-      const currentSlideData = updatedSlides[currentSlideIndex];
+      const newSlides = [...prevSlides];
+      const currentSlide = newSlides[currentSlideIndex];
       
-      if (currentSlideData) {
-        updatedSlides[currentSlideIndex] = {
-          ...currentSlideData,
-          elements: [...(currentSlideData.elements || []), newElement]
+      if (currentSlide) {
+        const updatedSlide = {
+          ...currentSlide,
+          elements: [...(currentSlide.elements || []), newElement]
         };
+        newSlides[currentSlideIndex] = updatedSlide;
+        
+        console.log('Added element:', newElement);
+        console.log('Updated slide:', updatedSlide);
       }
       
-      return updatedSlides;
+      return newSlides;
     });
+
+    setSelectedElement(newElement.id);
     
     toast({
       title: 'Элемент добавлен',
-      description: `${getElementTypeName(elementType)} добавлен на слайд`
+      description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
     });
   };
 
