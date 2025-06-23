@@ -52,7 +52,7 @@ import {
 import { queryClient } from '@/lib/queryClient';
 import { uploadImageToBegetS3 } from '@/lib/s3Client';
 import { uploadVideoToBegetS3 } from '@/lib/s3VideoClient';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface MediaUploaderProps {
@@ -74,6 +74,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   title = "Дополнительные медиафайлы",
   hideTitle = false
 }) => {
+  const { toast } = useToast();
   const [mediaList, setMediaList] = useState<MediaItem[]>(value || []);
   const [selectedType, setSelectedType] = useState<'image' | 'video'>('image');
   const [urlInput, setUrlInput] = useState('');
@@ -341,7 +342,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           disabled={isUploading || mediaList.length >= maxItems}
           className="flex items-center gap-1"
         >
-          {isUploading ? <Spinner size="sm" /> : <Upload size={16} className="mr-1" />}
+          {isUploading ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Upload size={16} className="mr-1" />}
           {isUploading ? "" : "Загрузить файл"}
         </Button>
 
