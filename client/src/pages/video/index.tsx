@@ -133,31 +133,9 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     }
   });
 
-  const handleVideoUpload = (videoUrl: string) => {
-    console.log('handleVideoUpload получил URL:', videoUrl);
-    setVideoContent(prev => ({ ...prev, videoUrl }));
-  };
+  // Убрали handleVideoUpload и handleThumbnailUpload - используем прямые onChange в компонентах
 
-  const handleThumbnailUpload = (media: any[]) => {
-    console.log('handleThumbnailUpload получил медиа:', media);
-    if (media.length > 0) {
-      setVideoContent(prev => ({ ...prev, thumbnailUrl: media[0].url }));
-    }
-  };
-
-  // Отладочный лог для отслеживания изменений videoContent
-  useEffect(() => {
-    console.log('videoContent изменен:', videoContent);
-  }, [videoContent]);
-
-  // Дополнительное логирование состояния формы
-  useEffect(() => {
-    console.log('Текущее состояние формы видео:', {
-      videoUrl: videoContent.videoUrl,
-      thumbnailUrl: videoContent.thumbnailUrl,
-      title: videoContent.title
-    });
-  }, [videoContent.videoUrl, videoContent.thumbnailUrl, videoContent.title]);
+  // Убираем отладочные логи для videoContent (переменная не определена)
 
   const addTag = () => {
     if (newTag.trim() && !videoContent.tags.includes(newTag.trim())) {
@@ -393,10 +371,15 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                   <div className="space-y-2">
                     <Label>Видео файл</Label>
                     <VideoUploader
-                      id="video-uploader"
-                      placeholder="Введите URL видео или загрузите файл"
                       value={videoContent.videoUrl || ''}
-                      onChange={handleVideoUpload}
+                      onChange={(url) => {
+                        console.log('VideoUploader onChange:', url);
+                        setVideoContent(prev => ({ ...prev, videoUrl: url }));
+                      }}
+                      onThumbnailChange={(url) => {
+                        console.log('VideoUploader onThumbnailChange:', url);
+                        setVideoContent(prev => ({ ...prev, thumbnailUrl: url }));
+                      }}
                     />
                   </div>
 
