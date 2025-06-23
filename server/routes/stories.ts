@@ -169,4 +169,5 @@ router.post('/:id/publish', authenticateUser, async (req, res) => {
   }
 });
 
+// Export router with specific story routes only
 export default router;

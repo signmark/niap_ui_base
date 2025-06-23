@@ -314,11 +314,11 @@ app.use((req, res, next) => {
     console.log("Claude routes registered");
     log("Claude routes registered successfully");
 
-    // Register stories routes
+    // Register stories routes with specific path to avoid conflicts
     console.log("Registering Stories routes...");
     log("Registering Stories routes...");
     const storiesRoutes = (await import('./routes/stories')).default;
-    app.use('/api', storiesRoutes);
+    app.use('/api/stories', storiesRoutes);
     console.log("Stories routes registered");
     log("Stories routes registered successfully");
 
