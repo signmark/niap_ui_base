@@ -7,7 +7,7 @@ export async function uploadImageToBegetS3(file: File): Promise<{ url: string }>
   const token = localStorage.getItem('auth_token');
   
   try {
-    const response = await axios.post('/api/beget-s3/upload', formData, {
+    const response = await axios.post('/api/beget-s3-aws/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Authorization': token ? `Bearer ${token}` : ''

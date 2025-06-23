@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { VideoUploader } from '@/components/VideoUploader';
 import { MediaUploader } from '@/components/MediaUploader';
+import { TestUploader } from '@/components/TestUploader';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';

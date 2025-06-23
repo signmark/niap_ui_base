@@ -74,10 +74,13 @@ export function TestUploader() {
       <div className="space-y-2">
         <h4 className="font-medium">Загруженные файлы:</h4>
         {urls.map((url, index) => (
-          <div key={index} className="p-2 bg-gray-50 rounded text-sm break-all">
-            <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-              {url}
-            </a>
+          <div key={index} className="p-2 bg-gray-50 rounded text-sm break-all space-y-2">
+            <div>URL: <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500">{url}</a></div>
+            {url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+              <img src={url} alt="Preview" className="max-w-xs max-h-32 object-contain" />
+            ) : url.match(/\.(mp4|webm|mov)$/i) ? (
+              <video src={url} controls className="max-w-xs max-h-32" />
+            ) : null}
           </div>
         ))}
       </div>

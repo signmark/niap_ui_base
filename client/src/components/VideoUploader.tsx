@@ -51,8 +51,12 @@ export function VideoUploader({
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
 
+  const [inputValue, setInputValue] = useState(value || '');
+
   // Обновляем превью и отображение URL при изменении значения
   useEffect(() => {
+    console.log('VideoUploader value изменен:', value);
+    setInputValue(value || '');
     if (value && value.trim() !== '') {
       setPreviewUrl(value);
       setShowPreview(forcePreview || showPreview);
@@ -91,6 +95,7 @@ export function VideoUploader({
         if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
           const videoUrl = response.data.url || response.data.videoUrl;
           console.log('Полученный URL видео:', videoUrl);
+          console.log('Вызываем onChange с URL:', videoUrl);
           
           // Важно: обновляем значение через onChange
           onChange(videoUrl);
