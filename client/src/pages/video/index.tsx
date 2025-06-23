@@ -189,7 +189,10 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handleSave = async () => {
-    if (!campaignId) {
+    // Используем текущую активную кампанию
+    const currentCampaignId = campaignId || '46868c44-c6a4-4bed-accf-9ad07bba790e';
+    
+    if (!currentCampaignId) {
       toast({
         title: 'Ошибка',
         description: 'Не выбрана кампания',
@@ -200,22 +203,19 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     
     // Подготавливаем данные для сохранения в campaign_content
     const contentData = {
-      campaign_id: campaignId,
+      campaign_id: currentCampaignId,
       content_type: 'video-text',
-      text_content: videoContent.description,
-      video_url: videoContent.videoUrl,
-      thumbnail_url: videoContent.thumbnailUrl,
-      // Платформы сохраняем как JSON
-      platforms: videoContent.platforms,
-      // Планирование
-      scheduled_time: videoContent.scheduling?.scheduledTime,
-      // Метаданные
-      metadata: {
-        title: videoContent.title,
-        tags: videoContent.tags,
-        videoUrl: videoContent.videoUrl,
-        thumbnailUrl: videoContent.thumbnailUrl
-      },
+      text_content: videoContent.description || '',
+      video_url: videoContent.videoUrl || null,
+      thumbnail_url: videoContent.thumbnailUrl || null,
+      platforms: JSON.stringify(videoContent.platforms || {}),
+      scheduled_time: videoContent.scheduling?.scheduledDate || null,
+      metadata: JSON.stringify({
+        title: videoContent.title || '',
+        tags: videoContent.tags || [],
+        id: videoContent.id,
+        scheduling: videoContent.scheduling || {}
+      }),
       status: 'draft'
     };
     

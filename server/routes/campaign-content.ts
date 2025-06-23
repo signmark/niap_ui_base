@@ -41,9 +41,9 @@ router.post('/', authMiddleware, async (req, res) => {
       text_content: text_content || '',
       video_url: video_url || null,
       thumbnail_url: thumbnail_url || null,
-      platforms: platforms || {},
+      platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
       scheduled_time: scheduled_time || null,
-      metadata: metadata || {},
+      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {}),
       status,
       user_created: req.user?.id
     };
