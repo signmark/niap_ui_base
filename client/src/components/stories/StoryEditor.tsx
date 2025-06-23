@@ -435,10 +435,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
               >
                 {/* Story elements */}
                 {console.log('🎨 Rendering canvas with elements:', currentSlide?.elements?.length || 0)}
-                {(currentSlide?.elements || []).map((element) => {
-                  console.log('🎯 Rendering element:', element.id, element.type);
-                  return (
-                    <Draggable
+                {(currentSlide?.elements || []).map((element) => (
+                  <Draggable
                     key={element.id}
                     defaultPosition={element.position}
                     onStop={(e, data) => {
@@ -532,9 +530,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                    </Draggable>
-                  );
-                })}
+                  </Draggable>
+                ))}
                 
                 {/* Add element overlay when no elements */}
                 {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
