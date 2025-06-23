@@ -74,11 +74,17 @@ const logPrefix = 'campaign-content-api';
 router.post('/', authenticateUser, async (req, res) => {
   try {
     log(`Creating campaign content`, logPrefix);
+    
     const {
       campaign_id,
+      campaignId,
       content_type,
+      contentType,
       text_content,
+      title,
+      content,
       video_url,
+      videoUrl,
       thumbnail_url,
       platforms,
       scheduled_time,
@@ -86,26 +92,34 @@ router.post('/', authenticateUser, async (req, res) => {
       status = 'draft'
     } = req.body;
 
+    // Поддерживаем разные форматы полей
+    const finalCampaignId = campaign_id || campaignId;
+    const finalContentType = content_type || contentType;
+    const finalTextContent = text_content || content || title;
+    const finalVideoUrl = video_url || videoUrl;
+
     // Проверяем обязательные поля
-    if (!campaign_id || !content_type) {
+    if (!finalCampaignId || !finalContentType) {
       return res.status(400).json({
         success: false,
         error: 'campaign_id и content_type обязательны'
       });
     }
 
-    // Используем userId и userToken из authenticateUser middleware
-    const userId = (req as any).userId;
+    // Получаем данные пользователя из middleware
     const userToken = (req as any).userToken;
+    const userId = (req as any).userId;
+
+    log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
 
     // Подготавливаем данные для сохранения согласно реальной схеме таблицы
     const contentData = {
-      title: text_content || '', // Используем text_content как title
-      campaign_id,
-      user_id: userId, // Используем user_id вместо user_created
-      content_type,
-      content: text_content || '', // Основное содержимое
-      video_url: video_url || null,
+      title: finalTextContent || '', 
+      campaign_id: finalCampaignId,
+      user_id: userId,
+      content_type: finalContentType,
+      content: finalTextContent || '', 
+      video_url: finalVideoUrl || null,
       status: status || 'draft',
       social_platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
       scheduled_at: scheduled_time || null,
@@ -113,10 +127,6 @@ router.post('/', authenticateUser, async (req, res) => {
     };
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
-    
-    log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
-    
-    // user_id уже установлен в contentData выше
     
     const result = await directusCrud.create('campaign_content', contentData, {
       authToken: userToken
