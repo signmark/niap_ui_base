@@ -4,7 +4,7 @@
  */
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { directusApiManager } from '../directus';
+import { directusCrud } from '../services/directus-crud';
 import { log } from '../utils/logger';
 
 const router = Router();
@@ -50,23 +50,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
 
-    // Сохраняем в Directus
-    const result = await directusApiManager.createRecord('campaign_content', contentData);
-
-    if (result.success) {
-      log(`Campaign content created successfully: ${result.data.id}`, logPrefix);
-      res.json({
-        success: true,
-        data: result.data,
-        message: 'Контент кампании успешно создан'
-      });
-    } else {
-      log(`Error creating campaign content: ${result.error}`, logPrefix);
-      res.status(500).json({
-        success: false,
-        error: result.error || 'Ошибка создания контента'
-      });
-    }
+    // Сохраняем в Directus через CRUD сервис
+    const result = await directusCrud.create('campaign_content', contentData);
+    
+    log(`Campaign content created successfully: ${JSON.stringify(result)}`, logPrefix);
+    res.json({
+      success: true,
+      data: result,
+      message: 'Контент кампании успешно создан'
+    });
   } catch (error) {
     log(`Exception in campaign content creation: ${(error as Error).message}`, logPrefix);
     res.status(500).json({
@@ -83,22 +75,15 @@ router.get('/:campaignId', authMiddleware, async (req, res) => {
     
     log(`Fetching content for campaign: ${campaignId}`, logPrefix);
 
-    const result = await directusApiManager.getRecords('campaign_content', {
+    const result = await directusCrud.list('campaign_content', {
       filter: { campaign_id: { _eq: campaignId } },
       sort: ['-date_created']
     });
 
-    if (result.success) {
-      res.json({
-        success: true,
-        data: result.data || []
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: result.error || 'Ошибка получения контента'
-      });
-    }
+    res.json({
+      success: true,
+      data: result || []
+    });
   } catch (error) {
     log(`Exception in campaign content fetch: ${(error as Error).message}`, logPrefix);
     res.status(500).json({

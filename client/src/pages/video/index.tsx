@@ -190,8 +190,17 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handleSave = async () => {
-    // Получаем ID активной кампании
-    const currentCampaignId = campaignId || activeCampaign?.id;
+    // Получаем ID активной кампании из URL или store
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignFromUrl = urlParams.get('campaignId');
+    const currentCampaignId = campaignId || campaignFromUrl || activeCampaign?.id;
+    
+    console.log('Campaign ID sources:', {
+      prop: campaignId,
+      url: campaignFromUrl,
+      store: activeCampaign?.id,
+      final: currentCampaignId
+    });
     
     if (!currentCampaignId) {
       toast({
