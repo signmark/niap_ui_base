@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,18 +62,32 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
-  const [slides, setSlides] = useState<StorySlide[]>([
-    {
-      id: 'slide-1',
-      order: 1,
-      duration: 5,
-      background: { type: 'color', value: '#6366f1' },
-      elements: []
-    }
-  ]);
+  
+  // Используем useRef для предотвращения сброса состояния при перерендере
+  const [slides, setSlides] = useState<StorySlide[]>(() => {
+    console.log('🎬 Initializing slides state');
+    return [
+      {
+        id: 'slide-1',
+        order: 1,
+        duration: 5,
+        background: { type: 'color', value: '#6366f1' },
+        elements: []
+      }
+    ];
+  });
 
-  // Принудительно пересоздаем currentSlide при изменении slides для синхронизации
-  const [forceUpdate, setForceUpdate] = useState(0);
+  // Отслеживание изменений slides
+  useEffect(() => {
+    console.log('📊 Slides state changed:', slides);
+    console.log('📊 Current slide elements count:', slides[currentSlideIndex]?.elements?.length || 0);
+    
+    // Принудительно вызываем перерендер
+    const currentSlide = slides[currentSlideIndex];
+    if (currentSlide?.elements?.length > 0) {
+      console.log('🎯 Elements found, forcing re-render');
+    }
+  }, [slides, currentSlideIndex]);
 
   // Обработчики для работы со слайдами
   const addSlide = () => {
@@ -166,8 +180,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     };
 
     setSlides(prevSlides => {
-      console.log('🔧 Before update - prevSlides:', prevSlides);
-      console.log('🔧 Current slide index for update:', currentSlideIndex);
+      console.log('🔧 Adding element to slide index:', currentSlideIndex);
       
       const newSlides = [...prevSlides];
       const targetSlide = newSlides[currentSlideIndex];
@@ -179,17 +192,19 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         };
         newSlides[currentSlideIndex] = updatedSlide;
         
-        console.log('✅ Element added successfully:', newElement);
-        console.log('✅ Updated slide with elements count:', updatedSlide.elements.length);
-        console.log('✅ Updated slide elements:', updatedSlide.elements);
-        console.log('✅ All slides after update:', newSlides);
+        console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
+        console.log('✅ New element ID:', newElement.id);
+        console.log('✅ Complete slide state:', updatedSlide);
+        
+        // Проверяем что состояние действительно обновилось
+        setTimeout(() => {
+          console.log('⏰ Delayed check - slides state:', newSlides[currentSlideIndex]?.elements?.length);
+        }, 100);
       }
       
       return newSlides;
     });
 
-    // Принудительно обновляем компонент
-    setForceUpdate(prev => prev + 1);
     setSelectedElement(newElement);
     
     toast({
@@ -326,16 +341,13 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - принудительно обновляем состояние
+  // Current slide data - получаем текущий слайд
   const currentSlide = slides[currentSlideIndex];
   
-  // Логирование для отладки состояния
-  console.log('🔍 Debugging state:');
-  console.log('📊 All slides:', slides);
-  console.log('📌 Current slide index:', currentSlideIndex);
-  console.log('🎯 Current slide:', currentSlide);
-  console.log('📝 Elements in current slide:', currentSlide?.elements);
-  console.log('🔢 Elements count:', currentSlide?.elements?.length || 0);
+  // Логирование для отладки состояния - только при изменениях
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 Render debug - Current slide:', currentSlideIndex, currentSlide?.elements?.length || 0);
+  }
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
@@ -446,8 +458,10 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                 }}
               >
                 {/* Story elements */}
-                {console.log('🎨 Rendering canvas with elements:', currentSlide?.elements?.length || 0)}
-                {(currentSlide?.elements || []).map((element) => (
+                {console.log('🎨 Rendering elements - count:', currentSlide?.elements?.length || 0)}
+                {currentSlide?.elements?.map((element) => {
+                  console.log('🎯 Rendering element:', element.id, element.type);
+                  return (
                   <Draggable
                     key={element.id}
                     defaultPosition={element.position}
@@ -543,7 +557,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                       </Button>
                     </div>
                   </Draggable>
-                ))}
+                  );
+                }) || []}
                 
                 {/* Add element overlay when no elements */}
                 {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
