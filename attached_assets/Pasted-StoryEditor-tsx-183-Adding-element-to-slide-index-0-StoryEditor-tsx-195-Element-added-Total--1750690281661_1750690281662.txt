@@ -1,0 +1,33 @@
+StoryEditor.tsx:183 🔧 Adding element to slide index: 0
+StoryEditor.tsx:195 ✅ Element added! Total elements now: 1
+StoryEditor.tsx:196 ✅ New element ID: element-1750690270336-ftm63wmsu
+StoryEditor.tsx:197 ✅ Complete slide state: {id: 'slide-1', order: 1, duration: 5, background: {…}, elements: Array(1)}
+StoryEditor.tsx:68 🎬 Initializing slides state
+StoryEditor.tsx:349 🔍 Render debug - Current slide: 0 0
+StoryEditor.tsx:461 🎨 Rendering elements - count: 0
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:82 📊 Slides state changed: [{…}]
+StoryEditor.tsx:83 📊 Current slide elements count: 0
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+StoryEditor.tsx:201 ⏰ Delayed check - slides state: 1
+store.ts:115 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750690270962}
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true
+StoryEditor.tsx:68 🎬 Initializing slides state
+StoryEditor.tsx:349 🔍 Render debug - Current slide: 0 0
+StoryEditor.tsx:461 🎨 Rendering elements - count: 0
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:82 📊 Slides state changed: [{…}]
+StoryEditor.tsx:83 📊 Current slide elements count: 0
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:115 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750690273976}
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true

@@ -64,29 +64,22 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
   
   // Используем useRef для предотвращения сброса состояния при перерендере
-  const [slides, setSlides] = useState<StorySlide[]>(() => {
-    console.log('🎬 Initializing slides state');
-    return [
-      {
-        id: 'slide-1',
-        order: 1,
-        duration: 5,
-        background: { type: 'color', value: '#6366f1' },
-        elements: []
-      }
-    ];
-  });
-
-  // Отслеживание изменений slides
-  useEffect(() => {
-    console.log('📊 Slides state changed:', slides);
-    console.log('📊 Current slide elements count:', slides[currentSlideIndex]?.elements?.length || 0);
-    
-    // Принудительно вызываем перерендер
-    const currentSlide = slides[currentSlideIndex];
-    if (currentSlide?.elements?.length > 0) {
-      console.log('🎯 Elements found, forcing re-render');
+  const slidesRef = useRef<StorySlide[]>([
+    {
+      id: 'slide-1',
+      order: 1,
+      duration: 5,
+      background: { type: 'color', value: '#6366f1' },
+      elements: []
     }
+  ]);
+  
+  const [slides, setSlides] = useState<StorySlide[]>(slidesRef.current);
+
+  // Синхронизируем состояние с ref
+  useEffect(() => {
+    slidesRef.current = slides;
+    console.log('📊 Slides synced to ref:', slides[currentSlideIndex]?.elements?.length || 0);
   }, [slides, currentSlideIndex]);
 
   // Обработчики для работы со слайдами
@@ -192,8 +185,11 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         };
         newSlides[currentSlideIndex] = updatedSlide;
         
+        // Обновляем ref для предотвращения сброса
+        slidesRef.current = newSlides;
+        
         console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
-        console.log('✅ All elements in slide:', updatedSlide.elements.map(el => ({ id: el.id, type: el.type })));
+        console.log('✅ Ref updated with elements:', slidesRef.current[currentSlideIndex]?.elements?.length);
       }
       
       return newSlides;
@@ -335,16 +331,16 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - используем useMemo для принудительного перерендера
+  // Current slide data - берем из ref для стабильности
   const currentSlide = useMemo(() => {
-    const slide = slides[currentSlideIndex];
-    console.log('🔄 Recomputing currentSlide:', slide?.elements?.length || 0);
+    const slide = slidesRef.current[currentSlideIndex] || slides[currentSlideIndex];
+    console.log('🔄 Current slide from ref:', slide?.elements?.length || 0);
+    console.log('🔄 Current slide from state:', slides[currentSlideIndex]?.elements?.length || 0);
     return slide;
   }, [slides, currentSlideIndex]);
   
   // Принудительно отслеживаем элементы
   const elementsCount = currentSlide?.elements?.length || 0;
-  console.log('📊 Current elements count:', elementsCount);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
