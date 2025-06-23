@@ -102,7 +102,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
     res.json({ success: true, data: story });
   } catch (error) {
     console.error('Error fetching story:', error);
-    res.status(500).json({ error: 'Failed to fetch story' });
+    res.status(500).json({ error: 'Не удалось загрузить историю' });
   }
 });
 

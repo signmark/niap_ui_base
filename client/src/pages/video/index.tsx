@@ -187,7 +187,7 @@ export default function VideoEditor() {
       const response = await fetch('/api/beget-s3/upload-video', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
         },
         body: formData
       });
@@ -218,7 +218,7 @@ export default function VideoEditor() {
       const response = await fetch('/api/beget-s3/upload', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
         },
         body: formData
       });
