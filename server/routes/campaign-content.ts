@@ -112,39 +112,37 @@ router.post('/', authenticateUser, async (req, res) => {
       });
     }
 
-    // Подготавливаем данные для сохранения согласно ТОЧНОЙ схеме Directus
+    // Убираем лишние поля, которых нет в схеме - только основные
     const contentData = {
       title: finalTextContent || '', 
       campaign_id: finalCampaignId,
       user_id: userId,
       content: finalTextContent || '', 
       content_type: finalContentType,
-      image_url: null,
       video_url: finalVideoUrl || null,
-      prompt: '',
-      keywords: [],
-      created_at: new Date().toISOString(),
-      scheduled_at: scheduled_time || null,
-      published_at: null,
       status: status || 'draft',
-      social_platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
-      additional_images: [],
-      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {}),
-      additional_media: []
+      social_platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {})
     };
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
     
-    const result = await directusCrud.create('campaign_content', contentData, {
-      authToken: userToken
-    });
+    // Используем directusApiManager.createRecord напрямую как в других маршрутах
+    const result = await directusApiManager.createRecord('campaign_content', contentData);
     
-    log(`Campaign content created successfully: ${JSON.stringify(result)}`, logPrefix);
-    res.json({
-      success: true,
-      data: result,
-      message: 'Контент кампании успешно создан'
-    });
+    if (result.success) {
+      log(`Campaign content created successfully: ${JSON.stringify(result.data)}`, logPrefix);
+      res.json({
+        success: true,
+        data: result.data,
+        message: 'Контент кампании успешно создан'
+      });
+    } else {
+      log(`Failed to create campaign content: ${result.error}`, logPrefix);
+      res.status(500).json({
+        success: false,
+        error: result.error || 'Ошибка создания контента'
+      });
+    }
   } catch (error) {
     log(`Exception in campaign content creation: ${(error as Error).message}`, logPrefix);
     console.error('Full error:', error);
