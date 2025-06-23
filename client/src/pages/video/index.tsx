@@ -6,7 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
+import { VideoUploader } from '@/components/VideoUploader';
+import { MediaUploader } from '@/components/MediaUploader';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { 
   ArrowLeft, 
   Upload, 
@@ -15,26 +25,27 @@ import {
   Youtube, 
   Share2,
   Eye,
-  Calendar,
+  CalendarIcon,
   FileVideo,
   Image,
   Settings,
-  Clock
+  Clock,
+  X,
+  Plus,
+  Send
 } from 'lucide-react';
-
 
 interface VideoContent {
   id: string;
   title: string;
   description: string;
-  videoFile?: File;
-  thumbnail?: File;
+  videoUrl?: string;
+  thumbnailUrl?: string;
   tags: string[];
-  duration?: number;
   platforms: {
-    youtube: boolean;
     vk: boolean;
     telegram: boolean;
+    instagram: boolean;
   };
   scheduling: {
     publishNow: boolean;
@@ -48,16 +59,19 @@ interface VideoEditorProps {
 
 export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [videoContent, setVideoContent] = useState<VideoContent>({
     id: `video-${Date.now()}`,
     title: '',
     description: '',
     tags: [],
+    videoUrl: '',
+    thumbnailUrl: '',
     platforms: {
-      youtube: true,
-      vk: false,
-      telegram: false
+      vk: true,
+      telegram: false,
+      instagram: false
     },
     scheduling: {
       publishNow: true
@@ -67,6 +81,57 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const [newTag, setNewTag] = useState('');
   const [activeTab, setActiveTab] = useState('content');
 
+  // Мутация для создания видео контента
+  const createVideoContentMutation = useMutation({
+    mutationFn: async (contentData: any) => {
+      return await apiRequest('/api/campaign-content', { 
+        method: 'POST',
+        data: contentData 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", campaignId] });
+      toast({
+        title: 'Сохранено',
+        description: 'Видео контент успешно сохранен'
+      });
+      // Возвращаемся к списку контента
+      window.history.back();
+    },
+    onError: (error: Error) => {
+      console.error('Ошибка сохранения:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось сохранить видео контент',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Мутация для публикации
+  const publishVideoMutation = useMutation({
+    mutationFn: async (publishData: any) => {
+      return await apiRequest('/api/publish/now', {
+        method: 'POST',
+        data: publishData
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Запланировано к публикации',
+        description: 'Видео будет опубликовано через N8n'
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Ошибка публикации:', error);
+      toast({
+        title: 'Ошибка публикации',
+        description: 'Не удалось запланировать публикацию',
+        variant: 'destructive'
+      });
+    }
+  });
+
   const handleVideoUpload = (videoUrl: string) => {
     setVideoContent(prev => ({ ...prev, videoUrl }));
     toast({
@@ -75,21 +140,12 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     });
   };
 
-  const handleThumbnailUpload = (thumbnailUrl: string) => {
-    setVideoContent(prev => ({ ...prev, thumbnailUrl }));
-    toast({
-      title: 'Превью загружено',
-      description: 'Изображение превью успешно загружено'
-    });
-  };;
-
-  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setVideoContent(prev => ({ ...prev, thumbnail: file }));
+  const handleThumbnailUpload = (media: any[]) => {
+    if (media.length > 0) {
+      setVideoContent(prev => ({ ...prev, thumbnailUrl: media[0].url }));
       toast({
         title: 'Превью загружено',
-        description: 'Изображение для превью успешно загружено'
+        description: 'Изображение превью успешно загружено'
       });
     }
   };
@@ -114,35 +170,23 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const handleSave = async () => {
     if (!campaignId) return;
     
-    // Формируем данные для сохранения в формате, совместимом с существующим API
     const contentData = {
       title: videoContent.title,
       content: videoContent.description,
-      contentType: 'video-text', // Используем существующий тип из БД
+      contentType: 'video-text',
       campaignId: campaignId,
       platforms: videoContent.platforms,
       scheduling: videoContent.scheduling,
       tags: videoContent.tags,
       videoUrl: videoContent.videoUrl,
-      thumbnailUrl: videoContent.thumbnailUrl
+      thumbnailUrl: videoContent.thumbnailUrl,
+      metadata: {
+        videoUrl: videoContent.videoUrl,
+        thumbnailUrl: videoContent.thumbnailUrl
+      }
     };
     
-    try {
-      // Здесь будет API вызов для сохранения
-      console.log('Сохранение видео контента:', contentData);
-      
-      toast({
-        title: 'Сохранено',
-        description: 'Видео контент успешно сохранен'
-      });
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить видео контент',
-        variant: 'destructive'
-      });
-    }
+    createVideoContentMutation.mutate(contentData);
   };
 
   const handlePublish = async () => {
@@ -179,361 +223,380 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
       return;
     }
 
-    try {
-      // Сначала сохраняем контент
-      await handleSave();
-      
-      // Затем отправляем на публикацию
-      const publishData = {
-        contentType: 'video-text',
-        campaignId: campaignId,
-        platforms: videoContent.platforms,
-        scheduling: videoContent.scheduling
-      };
-      
-      console.log('Публикация видео на платформы:', selectedPlatforms, publishData);
-      
-      toast({
-        title: 'Видео запланировано к публикации',
-        description: `Будет опубликовано на: ${selectedPlatforms.join(', ')}`
-      });
-    } catch (error) {
-      console.error('Ошибка публикации:', error);
-      toast({
-        title: 'Ошибка публикации',
-        description: 'Не удалось запланировать публикацию видео',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleGoBack = () => {
-    window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
+    // Сначала сохраняем
+    await handleSave();
+    
+    // Затем публикуем
+    const publishData = {
+      contentType: 'video-text',
+      campaignId: campaignId,
+      platforms: videoContent.platforms,
+      scheduling: videoContent.scheduling,
+      content: {
+        title: videoContent.title,
+        description: videoContent.description,
+        videoUrl: videoContent.videoUrl,
+        thumbnailUrl: videoContent.thumbnailUrl,
+        tags: videoContent.tags
+      }
+    };
+    
+    publishVideoMutation.mutate(publishData);
   };
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      {/* Заголовок */}
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleGoBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
             Назад
           </Button>
-          <div className="flex items-center gap-2">
-            <FileVideo className="w-5 h-5 text-red-500" />
-            <h1 className="text-lg font-semibold">Видео редактор</h1>
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <FileVideo className="h-6 w-6" />
+              Редактор видео контента
+            </h1>
+            <p className="text-gray-600">Создание и планирование видео для социальных сетей</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleSave}
+            disabled={createVideoContentMutation.isPending}
+          >
+            <Save className="h-4 w-4 mr-2" />
             Сохранить
           </Button>
-          <Button size="sm" onClick={handlePublish}>
-            <Play className="w-4 h-4 mr-2" />
+          <Button 
+            onClick={handlePublish}
+            disabled={publishVideoMutation.isPending || createVideoContentMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Send className="h-4 w-4 mr-2" />
             Опубликовать
           </Button>
         </div>
-      </header>
+      </div>
 
-      <div className="flex-1 flex">
-        {/* Left Panel - Content */}
-        <div className="w-2/3 p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Основная область редактирования */}
+        <div className="lg:col-span-2 space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="content">Контент</TabsTrigger>
-              <TabsTrigger value="platforms">Платформы</TabsTrigger>
-              <TabsTrigger value="scheduling">Планирование</TabsTrigger>
+              <TabsTrigger value="files">Файлы</TabsTrigger>
+              <TabsTrigger value="settings">Настройки</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="content" className="space-y-6">
+            {/* Вкладка контента */}
+            <TabsContent value="content" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Основная информация</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="title">Название видео</Label>
                     <Input
                       id="title"
+                      placeholder="Введите название видео..."
                       value={videoContent.title}
                       onChange={(e) => setVideoContent(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Введите название видео"
                     />
                   </div>
                   
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="description">Описание</Label>
                     <Textarea
                       id="description"
+                      placeholder="Введите описание видео..."
                       value={videoContent.description}
                       onChange={(e) => setVideoContent(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Описание видео для каждой платформы..."
                       rows={4}
                     />
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Файлы</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Видео файл</Label>
-                    <div className="mt-2">
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                        id="video-upload"
-                      />
-                      <Button variant="outline" asChild>
-                        <label htmlFor="video-upload" className="cursor-pointer">
-                          <Upload className="w-4 h-4 mr-2" />
-                          {videoContent.videoFile ? videoContent.videoFile.name : 'Загрузить видео'}
-                        </label>
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Превью (обложка)</Label>
-                    <div className="mt-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleThumbnailUpload}
-                        className="hidden"
-                        id="thumbnail-upload"
-                      />
-                      <Button variant="outline" asChild>
-                        <label htmlFor="thumbnail-upload" className="cursor-pointer">
-                          <Image className="w-4 h-4 mr-2" />
-                          {videoContent.thumbnail ? videoContent.thumbnail.name : 'Загрузить превью'}
-                        </label>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Теги</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2 mb-3">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Добавить тег"
-                      onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                    />
-                    <Button onClick={addTag}>Добавить</Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {videoContent.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-                        #{tag} ×
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="platforms" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Выберите платформы</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="youtube"
-                      checked={videoContent.platforms.youtube}
-                      onChange={(e) => setVideoContent(prev => ({
-                        ...prev,
-                        platforms: { ...prev.platforms, youtube: e.target.checked }
-                      }))}
-                    />
-                    <label htmlFor="youtube" className="flex items-center gap-2">
-                      <Youtube className="w-5 h-5 text-red-600" />
-                      YouTube
-                    </label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="vk"
-                      checked={videoContent.platforms.vk}
-                      onChange={(e) => setVideoContent(prev => ({
-                        ...prev,
-                        platforms: { ...prev.platforms, vk: e.target.checked }
-                      }))}
-                    />
-                    <label htmlFor="vk" className="flex items-center gap-2">
-                      <Share2 className="w-5 h-5 text-blue-600" />
-                      ВКонтакте
-                    </label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="telegram"
-                      checked={videoContent.platforms.telegram}
-                      onChange={(e) => setVideoContent(prev => ({
-                        ...prev,
-                        platforms: { ...prev.platforms, telegram: e.target.checked }
-                      }))}
-                    />
-                    <label htmlFor="telegram" className="flex items-center gap-2">
-                      <Share2 className="w-5 h-5 text-blue-500" />
-                      Telegram
-                    </label>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="scheduling" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Время публикации</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="publish-now"
-                      name="scheduling"
-                      checked={videoContent.scheduling.publishNow}
-                      onChange={() => setVideoContent(prev => ({
-                        ...prev,
-                        scheduling: { ...prev.scheduling, publishNow: true }
-                      }))}
-                    />
-                    <label htmlFor="publish-now" className="flex items-center gap-2">
-                      <Play className="w-4 h-4" />
-                      Опубликовать сейчас
-                    </label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="schedule"
-                      name="scheduling"
-                      checked={!videoContent.scheduling.publishNow}
-                      onChange={() => setVideoContent(prev => ({
-                        ...prev,
-                        scheduling: { ...prev.scheduling, publishNow: false }
-                      }))}
-                    />
-                    <label htmlFor="schedule" className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Запланировать
-                    </label>
-                  </div>
-
-                  {!videoContent.scheduling.publishNow && (
-                    <div className="ml-6">
+                  {/* Теги */}
+                  <div className="space-y-2">
+                    <Label>Теги</Label>
+                    <div className="flex gap-2">
                       <Input
-                        type="datetime-local"
-                        onChange={(e) => setVideoContent(prev => ({
-                          ...prev,
-                          scheduling: { 
-                            ...prev.scheduling, 
-                            scheduledDate: new Date(e.target.value) 
-                          }
-                        }))}
+                        placeholder="Добавить тег..."
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addTag()}
                       />
+                      <Button type="button" onClick={addTag} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {videoContent.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {tag}
+                          <button
+                            onClick={() => removeTag(tag)}
+                            className="ml-1 hover:text-red-500"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Вкладка файлов */}
+            <TabsContent value="files" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" />
+                    Файлы
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Видео файл */}
+                  <div className="space-y-2">
+                    <Label>Видео файл</Label>
+                    <VideoUploader
+                      value={videoContent.videoUrl || ''}
+                      onChange={handleVideoUpload}
+                      label="Загрузить видео"
+                    />
+                  </div>
+
+                  {/* Превью (обложка) */}
+                  <div className="space-y-2">
+                    <Label>Превью (обложка)</Label>
+                    <MediaUploader
+                      media={videoContent.thumbnailUrl ? [{ url: videoContent.thumbnailUrl, type: 'image' }] : []}
+                      onChange={handleThumbnailUpload}
+                      maxFiles={1}
+                      allowedTypes={['image']}
+                      label="Загрузить превью"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Вкладка настроек */}
+            <TabsContent value="settings" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Платформы публикации
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="vk"
+                        checked={videoContent.platforms.vk}
+                        onCheckedChange={(checked) => 
+                          setVideoContent(prev => ({
+                            ...prev,
+                            platforms: { ...prev.platforms, vk: !!checked }
+                          }))
+                        }
+                      />
+                      <Label htmlFor="vk" className="flex items-center gap-2">
+                        <Share2 className="h-4 w-4" />
+                        VK (ВКонтакте)
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="telegram"
+                        checked={videoContent.platforms.telegram}
+                        onCheckedChange={(checked) => 
+                          setVideoContent(prev => ({
+                            ...prev,
+                            platforms: { ...prev.platforms, telegram: !!checked }
+                          }))
+                        }
+                      />
+                      <Label htmlFor="telegram" className="flex items-center gap-2">
+                        <Share2 className="h-4 w-4" />
+                        Telegram
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="instagram"
+                        checked={videoContent.platforms.instagram}
+                        onCheckedChange={(checked) => 
+                          setVideoContent(prev => ({
+                            ...prev,
+                            platforms: { ...prev.platforms, instagram: !!checked }
+                          }))
+                        }
+                      />
+                      <Label htmlFor="instagram" className="flex items-center gap-2">
+                        <Image className="h-4 w-4" />
+                        Instagram
+                      </Label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Планирование */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Планирование публикации
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="publishNow"
+                        checked={videoContent.scheduling.publishNow}
+                        onCheckedChange={(checked) => 
+                          setVideoContent(prev => ({
+                            ...prev,
+                            scheduling: { ...prev.scheduling, publishNow: !!checked }
+                          }))
+                        }
+                      />
+                      <Label htmlFor="publishNow">Опубликовать сейчас</Label>
+                    </div>
+                    
+                    {!videoContent.scheduling.publishNow && (
+                      <div className="space-y-2">
+                        <Label>Дата и время публикации</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !videoContent.scheduling.scheduledDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {videoContent.scheduling.scheduledDate ? (
+                                format(videoContent.scheduling.scheduledDate, "PPP", { locale: ru })
+                              ) : (
+                                <span>Выберите дату</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={videoContent.scheduling.scheduledDate}
+                              onSelect={(date) => 
+                                setVideoContent(prev => ({
+                                  ...prev,
+                                  scheduling: { ...prev.scheduling, scheduledDate: date }
+                                }))
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Right Panel - Preview */}
-        <div className="w-1/3 border-l border-gray-200 bg-white p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            Предпросмотр
-          </h3>
-          
-          <Card>
-            <CardContent className="p-4">
-              {videoContent.videoFile ? (
-                <div className="space-y-3">
-                  <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
-                    <Play className="w-12 h-12 text-white opacity-50" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{videoContent.title || 'Без названия'}</h4>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-3">
-                      {videoContent.description || 'Нет описания'}
-                    </p>
-                  </div>
-                  {videoContent.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {videoContent.tags.slice(0, 3).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                      {videoContent.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{videoContent.tags.length - 3}
-                        </Badge>
-                      )}
+        {/* Боковая панель предпросмотра */}
+        <div className="space-y-6">
+          {/* Предпросмотр */}
+          {(videoContent.videoUrl || videoContent.thumbnailUrl) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Предпросмотр
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {videoContent.videoUrl && (
+                    <div>
+                      <Label>Видео</Label>
+                      <div className="mt-2">
+                        <video 
+                          src={videoContent.videoUrl}
+                          controls
+                          className="w-full rounded-lg"
+                          style={{ maxHeight: '200px' }}
+                        >
+                          Ваш браузер не поддерживает видео.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {videoContent.thumbnailUrl && (
+                    <div>
+                      <Label>Превью</Label>
+                      <div className="mt-2">
+                        <img 
+                          src={videoContent.thumbnailUrl}
+                          alt="Превью видео"
+                          className="w-full rounded-lg"
+                          style={{ maxHeight: '150px', objectFit: 'cover' }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <FileVideo className="w-12 h-12 mx-auto mb-2" />
-                    <p>Загрузите видео для предпросмотра</p>
-                  </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Информация о публикации */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Статус публикации</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Платформы:</span>
+                  <span>{Object.values(videoContent.platforms).filter(Boolean).length}</span>
                 </div>
-              )}
+                <div className="flex justify-between">
+                  <span>Теги:</span>
+                  <span>{videoContent.tags.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Тип:</span>
+                  <span>Видео контент</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Публикация:</span>
+                  <span>{videoContent.scheduling.publishNow ? 'Сейчас' : 'Запланировано'}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
-          {/* Platform indicators */}
-          <div className="mt-4 space-y-2">
-            <h4 className="font-medium text-sm">Платформы для публикации:</h4>
-            <div className="space-y-1">
-              {videoContent.platforms.youtube && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Youtube className="w-4 h-4 text-red-600" />
-                  YouTube
-                </div>
-              )}
-              {videoContent.platforms.vk && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Share2 className="w-4 h-4 text-blue-600" />
-                  ВКонтакте
-                </div>
-              )}
-              {videoContent.platforms.telegram && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Share2 className="w-4 h-4 text-blue-500" />
-                  Telegram
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
