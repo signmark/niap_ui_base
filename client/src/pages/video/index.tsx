@@ -139,7 +139,7 @@ export default function VideoEditor() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           title: videoContent.title,
@@ -296,7 +296,7 @@ export default function VideoEditor() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           platforms: selectedPlatforms,

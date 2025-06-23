@@ -234,62 +234,6 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
       );
     });
   };
-
-    switch (element.type) {
-      case 'text':
-        elementContent = (
-          <div
-            className="w-full h-full flex items-center justify-center p-2 text-center"
-            style={{
-              fontSize: element.style?.fontSize || 16,
-              fontFamily: element.style?.fontFamily || 'Arial',
-              fontWeight: element.style?.fontWeight || 'normal',
-              fontStyle: element.style?.fontStyle || 'normal',
-              textAlign: element.style?.textAlign || 'center',
-              color: element.style?.color || '#000000',
-              backgroundColor: element.style?.backgroundColor || 'transparent',
-              textShadow: element.style?.textShadow || 'none'
-            }}
-          >
-            {element.content?.text || 'Текст'}
-          </div>
-        );
-        break;
-      
-      case 'image':
-        elementContent = (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-            {element.content?.url ? (
-              <img 
-                src={element.content.url} 
-                alt="" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              'Изображение'
-            )}
-          </div>
-        );
-        break;
-      
-      case 'sticker':
-        elementContent = (
-          <div className="w-full h-full flex items-center justify-center text-2xl">
-            {element.content?.emoji || '😀'}
-          </div>
-        );
-        break;
-      
-      default:
-        elementContent = (
-          <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm">
-            {element.type}
-          </div>
-        );
-    }
-
-    return (
-      <div
         key={element.id}
         style={elementStyle}
         onMouseDown={(e) => handleMouseDown(e, element.id)}
