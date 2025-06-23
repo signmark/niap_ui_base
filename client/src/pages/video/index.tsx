@@ -177,39 +177,65 @@ export default function VideoEditor() {
 
   // Вспомогательные функции для загрузки файлов
   const uploadVideoToS3 = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await fetch('/api/beget-s3/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: formData
-    });
-    
-    if (!response.ok) throw new Error('Ошибка загрузки видео');
-    
-    const result = await response.json();
-    return result.url;
+    try {
+      console.log('Uploading video to S3:', file.name, file.type);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'videos');
+      formData.append('contentType', file.type);
+      
+      const response = await fetch('/api/beget-s3/upload-video', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('S3 video upload failed:', errorText);
+        throw new Error(`Ошибка загрузки видео: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Video uploaded successfully:', result.url);
+      return result.url;
+    } catch (error) {
+      console.error('Video upload error:', error);
+      throw error;
+    }
   };
 
   const uploadImageToS3 = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const response = await fetch('/api/beget-s3/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: formData
-    });
-    
-    if (!response.ok) throw new Error('Ошибка загрузки изображения');
-    
-    const result = await response.json();
-    return result.url;
+    try {
+      console.log('Uploading image to S3:', file.name, file.type);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'images');
+      formData.append('contentType', file.type);
+      
+      const response = await fetch('/api/beget-s3/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('S3 image upload failed:', errorText);
+        throw new Error(`Ошибка загрузки изображения: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Image uploaded successfully:', result.url);
+      return result.url;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      throw error;
+    }
   };
 
 

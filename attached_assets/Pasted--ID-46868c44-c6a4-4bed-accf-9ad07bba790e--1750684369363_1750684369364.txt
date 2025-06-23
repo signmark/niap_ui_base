@@ -1,0 +1,440 @@
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ src/components/CampaignSelector.tsx:51
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+queryFn @ src/components/CampaignSelector.tsx:67
+await in queryFn
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750684362988}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ src/components/CampaignSelector.tsx:51
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+queryFn @ src/components/CampaignSelector.tsx:67
+await in queryFn
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:72
+systemError @ logger.ts:96
+handleError @ src/utils/error-handler.ts:89
+globalErrorHandler @ src/lib/queryClient.ts:71
+onError @ @fs/home/runner/work…y.js?v=44182660:867
+reject @ @fs/home/runner/work…y.js?v=44182660:465
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:508
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ src/lib/queryClient.ts:73
+onError @ @fs/home/runner/work…y.js?v=44182660:867
+reject @ @fs/home/runner/work…y.js?v=44182660:465
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:508
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19416
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18895
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+flushSync @ @fs/home/runner/work…js?v=44182660:18959
+finishEventHandler @ @fs/home/runner/work….js?v=44182660:3569
+batchedUpdates @ @fs/home/runner/work….js?v=44182660:3582
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=44182660:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=44182660:5478
+dispatchEvent @ @fs/home/runner/work….js?v=44182660:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=44182660:5449
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ src/components/CampaignSelector.tsx:51
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384
+ Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+queryFn @ src/components/CampaignSelector.tsx:67
+await in queryFn
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750684365736}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ src/components/CampaignSelector.tsx:51
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384
+ Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+queryFn @ src/components/CampaignSelector.tsx:67
+await in queryFn
+fetchFn @ @fs/home/runner/work…y.js?v=44182660:840
+run @ @fs/home/runner/work…y.js?v=44182660:494
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384
+ Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Не удалось загрузить кампании (500)
+    at queryFn (src/components/Campa…nSelector.tsx:61:17)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:72
+systemError @ logger.ts:96
+handleError @ src/utils/error-handler.ts:89
+globalErrorHandler @ src/lib/queryClient.ts:71
+onError @ @fs/home/runner/work…y.js?v=44182660:867
+reject @ @fs/home/runner/work…y.js?v=44182660:465
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:508
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ src/lib/queryClient.ts:73
+onError @ @fs/home/runner/work…y.js?v=44182660:867
+reject @ @fs/home/runner/work…y.js?v=44182660:465
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:508
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:519
+Promise.then
+(anonymous) @ @fs/home/runner/work…y.js?v=44182660:515
+Promise.catch
+run @ @fs/home/runner/work…y.js?v=44182660:498
+start @ @fs/home/runner/work…y.js?v=44182660:536
+fetch @ @fs/home/runner/work…y.js?v=44182660:926
+executeFetch_fn @ @fs/home/runner/work….js?v=44182660:2211
+onSubscribe @ @fs/home/runner/work….js?v=44182660:1898
+subscribe @ @fs/home/runner/work…ry.js?v=44182660:24
+(anonymous) @ @fs/home/runner/work….js?v=44182660:3022
+subscribeToStore @ @fs/home/runner/work…js?v=44182660:11984
+commitHookEffectListMount @ @fs/home/runner/work…js?v=44182660:16915
+commitPassiveMountOnFiber @ @fs/home/runner/work…js?v=44182660:18156
+commitPassiveMountEffects_complete @ @fs/home/runner/work…js?v=44182660:18129
+commitPassiveMountEffects_begin @ @fs/home/runner/work…js?v=44182660:18119
+commitPassiveMountEffects @ @fs/home/runner/work…js?v=44182660:18109
+flushPassiveEffectsImpl @ @fs/home/runner/work…js?v=44182660:19490
+flushPassiveEffects @ @fs/home/runner/work…js?v=44182660:19447
+performSyncWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18868
+flushSyncCallbacks @ @fs/home/runner/work….js?v=44182660:9119
+commitRootImpl @ @fs/home/runner/work…js?v=44182660:19432
+commitRoot @ @fs/home/runner/work…js?v=44182660:19277
+finishConcurrentRender @ @fs/home/runner/work…js?v=44182660:18805
+performConcurrentWorkOnRoot @ @fs/home/runner/work…js?v=44182660:18718
+workLoop @ @fs/home/runner/work…4.js?v=44182660:197
+flushWork @ @fs/home/runner/work…4.js?v=44182660:176
+performWorkUntilDeadline @ @fs/home/runner/work…4.js?v=44182660:384

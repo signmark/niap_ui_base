@@ -6882,7 +6882,7 @@ Return your response as a JSON array in this exact format:
       }
     } catch (error) {
       console.error("Error in campaigns route:", error);
-      res.status(500).json({ error: "Failed to fetch campaigns" });
+      res.status(500).json({ error: "Не удалось загрузить кампании" });
     }
   });
 
