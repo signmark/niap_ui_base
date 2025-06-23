@@ -1,0 +1,25 @@
+VideoUploader useEffect - value изменен: 
+VideoUploader.tsx:59 VideoUploader useEffect - текущий inputValue: 
+VideoUploader.tsx:65 VideoUploader useEffect - синхронизируем inputValue с value: 
+VideoUploader.tsx:76 VideoUploader useEffect - очистили превью и отображение
+VideoUploader.tsx:84 Загружаем файл: mov_bbb.mp4 размер: 788493
+VideoUploader.tsx:91 Отправка запроса на загрузку видео файла...
+VideoUploader.tsx:103 Ответ от API загрузки видео: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', key: 'mov_bbb.mp4'}
+VideoUploader.tsx:107 Полученный URL видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:108 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:111 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:383 VideoUploader onChange вызван с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:386 Обновляем videoContent.videoUrl с: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:387 Новое состояние videoContent: {id: 'video-1750678625874', title: '', description: '', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+VideoUploader.tsx:114 Устанавливаем inputValue: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:119 VideoUploader: состояние обновлено с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:85 videoContent изменен: {id: 'video-1750678638291', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:86 videoUrl в videoContent: 
+VideoUploader.tsx:58 VideoUploader useEffect - value изменен: 
+VideoUploader.tsx:59 VideoUploader useEffect - текущий inputValue: 
+VideoUploader.tsx:65 VideoUploader useEffect - синхронизируем inputValue с value: 
+VideoUploader.tsx:76 VideoUploader useEffect - очистили превью и отображение
+index.tsx:85 videoContent изменен: {id: 'video-1750678641305', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:86 videoUrl в videoContent: 
+index.tsx:85 videoContent изменен: {id: 'video-1750678643327', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:86 videoUrl в videoContent: 

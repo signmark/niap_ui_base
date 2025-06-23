@@ -51,29 +51,20 @@ export function VideoUploader({
   const [previewUrl, setPreviewUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState<string>('');
 
-  const [inputValue, setInputValue] = useState(value || '');
-
-  // Обновляем превью и отображение URL при изменении значения
+  // Обновляем превью при изменении value
   useEffect(() => {
     console.log('VideoUploader useEffect - value изменен:', value);
-    console.log('VideoUploader useEffect - текущий inputValue:', inputValue);
     
-    const newValue = value || '';
-    
-    // Всегда синхронизируем inputValue с value из props
-    setInputValue(newValue);
-    console.log('VideoUploader useEffect - синхронизируем inputValue с value:', newValue);
-    
-    if (newValue && newValue.trim() !== '') {
-      setPreviewUrl(newValue);
+    if (value && value.trim() !== '') {
+      setPreviewUrl(value);
       setShowPreview(forcePreview || true);
-      setDisplayUrl(newValue.length > 50 ? newValue.substring(0, 47) + '...' : newValue);
-      console.log('VideoUploader useEffect - установили превью и отображение для:', newValue);
+      setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
+      console.log('VideoUploader useEffect - установили превью для:', value);
     } else {
       setShowPreview(false);
       setPreviewUrl('');
       setDisplayUrl('');
-      console.log('VideoUploader useEffect - очистили превью и отображение');
+      console.log('VideoUploader useEffect - очистили превью');
     }
   }, [value, forcePreview]);
 
@@ -107,16 +98,10 @@ export function VideoUploader({
           console.log('Полученный URL видео:', videoUrl);
           console.log('Вызываем onChange с URL:', videoUrl);
           
-          // Важно: сначала вызываем onChange, потом обновляем локальное состояние
+          // Вызываем onChange для обновления родительского компонента
           console.log('Вызываем onChange с URL:', videoUrl);
           onChange(videoUrl);
-          
-          console.log('Устанавливаем inputValue:', videoUrl);
-          setInputValue(videoUrl);
-          setPreviewUrl(videoUrl);
-          setShowPreview(true);
-          
-          console.log('VideoUploader: состояние обновлено с URL:', videoUrl);
+          console.log('VideoUploader: загрузка завершена с URL:', videoUrl);
           
 
           
@@ -168,11 +153,10 @@ export function VideoUploader({
           id={id}
           type="text"
           placeholder={placeholder}
-          value={inputValue}
+          value={value || ''}
           onChange={(e) => {
             const newValue = e.target.value;
             console.log('Input onChange:', newValue);
-            setInputValue(newValue);
             onChange(newValue);
           }}
           className="flex-1"

@@ -62,9 +62,8 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [initialId] = useState(() => `video-${Date.now()}`);
-  const [videoContent, setVideoContent] = useState<VideoContent>(() => ({
-    id: initialId,
+  const [videoContent, setVideoContent] = useState<VideoContent>({
+    id: 'video-stable',
     title: '',
     description: '',
     tags: [],
@@ -78,12 +77,15 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     scheduling: {
       publishNow: true
     }
-  }));
+  });
 
   // Отладочный useEffect для отслеживания изменений videoContent
   useEffect(() => {
     console.log('videoContent изменен:', videoContent);
     console.log('videoUrl в videoContent:', videoContent.videoUrl);
+    if (videoContent.videoUrl) {
+      console.log('✓ URL сохранен в videoContent:', videoContent.videoUrl);
+    }
   }, [videoContent]);
 
   const [newTag, setNewTag] = useState('');
