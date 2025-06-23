@@ -126,23 +126,30 @@ router.post('/', authenticateUser, async (req, res) => {
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
     
-    // Используем directusApiManager.createRecord напрямую как в других маршрутах
-    const result = await directusApiManager.createRecord('campaign_content', contentData);
+    // Используем storage.createCampaignContent который работает с правильной аутентификацией
+    const mappedData = {
+      content: finalTextContent || '',
+      userId: userId,
+      campaignId: finalCampaignId,
+      status: status || 'draft',
+      contentType: finalContentType,
+      title: finalTextContent || '',
+      videoUrl: finalVideoUrl || null,
+      imageUrl: null,
+      socialPlatforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
+      scheduledAt: scheduled_time ? new Date(scheduled_time) : null,
+      prompt: '',
+      keywords: []
+    };
     
-    if (result.success) {
-      log(`Campaign content created successfully: ${JSON.stringify(result.data)}`, logPrefix);
-      res.json({
-        success: true,
-        data: result.data,
-        message: 'Контент кампании успешно создан'
-      });
-    } else {
-      log(`Failed to create campaign content: ${result.error}`, logPrefix);
-      res.status(500).json({
-        success: false,
-        error: result.error || 'Ошибка создания контента'
-      });
-    }
+    const result = await storage.createCampaignContent(mappedData);
+    
+    log(`Campaign content created successfully: ${JSON.stringify(result)}`, logPrefix);
+    res.json({
+      success: true,
+      data: result,
+      message: 'Контент кампании успешно создан'
+    });
   } catch (error) {
     log(`Exception in campaign content creation: ${(error as Error).message}`, logPrefix);
     console.error('Full error:', error);
