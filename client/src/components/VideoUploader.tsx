@@ -103,6 +103,8 @@ export function VideoUploader({
           setPreviewUrl(videoUrl);
           setShowPreview(true);
           
+          console.log('VideoUploader: обновили состояние с URL:', videoUrl);
+          
           toast({
             title: 'Успешно',
             description: `Видео загружено: ${videoUrl.split('/').pop()}`
