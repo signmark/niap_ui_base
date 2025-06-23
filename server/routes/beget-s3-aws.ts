@@ -38,9 +38,13 @@ const upload = multer({ storage });
 // Загрузка файла
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    log.info('Upload request received', logPrefix);
     if (!req.file) {
+      log.error('No file provided in upload request', logPrefix);
       return res.status(400).json({ success: false, error: 'No file provided' });
     }
+    
+    log.info(`Processing file: ${req.file.originalname}, size: ${req.file.size}`, logPrefix);
 
     const filePath = req.file.path;
     const fileName = req.body.fileName || req.file.originalname;
@@ -61,12 +65,14 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }
 
     if (!uploadResult.success) {
+      log.error(`Upload failed: ${uploadResult.error}`, logPrefix);
       return res.status(500).json({ 
         success: false, 
         error: uploadResult.error || 'Error uploading file to S3' 
       });
     }
 
+    log.info(`File uploaded successfully: ${uploadResult.url}`, logPrefix);
     return res.json({
       success: true,
       url: uploadResult.url,
