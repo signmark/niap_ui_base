@@ -75,6 +75,12 @@ router.post('/', authenticateUser, async (req, res) => {
   try {
     log(`Creating campaign content`, logPrefix);
     
+    // Получаем данные пользователя из middleware СРАЗУ
+    const userToken = (req as any).userToken;
+    const userId = (req as any).userId;
+    
+    log(`User data: ${userId}, token: ${userToken ? 'present' : 'missing'}`, logPrefix);
+    
     const {
       campaign_id,
       campaignId,
@@ -106,12 +112,6 @@ router.post('/', authenticateUser, async (req, res) => {
       });
     }
 
-    // Получаем данные пользователя из middleware
-    const userToken = (req as any).userToken;
-    const userId = (req as any).userId;
-
-    log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
-
     // Подготавливаем данные для сохранения согласно реальной схеме таблицы
     const contentData = {
       title: finalTextContent || '', 
@@ -140,6 +140,7 @@ router.post('/', authenticateUser, async (req, res) => {
     });
   } catch (error) {
     log(`Exception in campaign content creation: ${(error as Error).message}`, logPrefix);
+    console.error('Full error:', error);
     res.status(500).json({
       success: false,
       error: 'Внутренняя ошибка сервера'
