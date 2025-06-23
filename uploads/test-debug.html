@@ -27,7 +27,8 @@
     </div>
 
     <script>
-        const token = localStorage.getItem('auth_token') || 'test';
+        const token = localStorage.getItem('auth_token');
+        console.log('Используем токен:', token ? 'токен найден' : 'токен не найден');
         
         async function uploadImage() {
             const file = document.getElementById('imageFile').files[0];

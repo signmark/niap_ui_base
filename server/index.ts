@@ -81,6 +81,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Статическое обслуживание файлов из папки uploads
+app.use('/uploads', express.static('uploads'));
+
 // Health check endpoint for deployment monitoring
 app.get('/health', (req, res) => {
   res.status(200).json({

@@ -19,21 +19,26 @@ export function TestUploader() {
 
     try {
       for (const file of files) {
-        console.log('Загружаем файл:', file.name, file.type);
+        console.log('Загружаем файл:', file.name, file.type, 'размер:', file.size);
         
         let result;
         if (file.type.startsWith('image/')) {
+          console.log('Загружаем изображение через uploadImageToBegetS3');
           result = await uploadImageToBegetS3(file);
         } else if (file.type.startsWith('video/')) {
+          console.log('Загружаем видео через uploadVideoToBegetS3');
           result = await uploadVideoToBegetS3(file);
         } else {
           console.log('Неподдерживаемый тип файла:', file.type);
           continue;
         }
 
+        console.log('Результат загрузки:', result);
         if (result && result.url) {
           console.log('Получен URL:', result.url);
           newUrls.push(result.url);
+        } else {
+          console.log('URL не получен или пустой результат');
         }
       }
 
