@@ -4,6 +4,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Trash2, RotateCw, Move, Square } from 'lucide-react';
 import StoryElement from './StoryElement';
 
 interface StorySlide {
@@ -26,7 +27,6 @@ interface StoryElementType {
   content: any;
   style?: any;
 }
-import { Trash2, RotateCw, Move, Square } from 'lucide-react';
 
 interface StoryCanvasProps {
   slide?: StorySlide;
@@ -198,24 +198,33 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
     return { backgroundColor: '#ffffff' };
   };
 
-  const renderElement = (element: StoryElement) => {
-    const isSelected = selectedElementId === element.id;
-    
-    const elementStyle: React.CSSProperties = {
-      position: 'absolute',
-      left: `${(element.position.x / 1080) * 100}%`,
-      top: `${(element.position.y / 1920) * 100}%`,
-      width: `${(element.position.width / 1080) * 100}%`,
-      height: `${(element.position.height / 1920) * 100}%`,
-      transform: `rotate(${element.rotation}deg)`,
-      zIndex: element.zIndex,
-      cursor: 'move',
-      border: isSelected ? '2px solid #3b82f6' : '1px solid transparent',
-      borderRadius: '2px',
-      ...element.style
-    };
+  const renderElements = () => {
+    if (!slide?.elements || slide.elements.length === 0) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center text-white/70">
+          <div className="text-center">
+            <p className="text-lg font-medium">Нет элементов на слайде</p>
+            <p className="text-sm">Добавьте элементы используя панель слева</p>
+          </div>
+        </div>
+      );
+    }
 
-    let elementContent = null;
+    return slide.elements.map((element) => (
+      <StoryElement
+        key={element.id}
+        element={element}
+        isSelected={selectedElementId === element.id}
+        onSelect={setSelectedElementId}
+        onUpdate={(elementId: string, updates: any) => {
+          updateElementMutation.mutate({ elementId, data: updates });
+        }}
+        onDelete={(elementId: string) => {
+          deleteElementMutation.mutate(elementId);
+        }}
+      />
+    ));
+  };
 
     switch (element.type) {
       case 'text':
@@ -335,7 +344,7 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
             />
 
             {/* Render elements */}
-            {slide.elements?.map(renderElement)}
+            {renderElements()}
             
             {/* Canvas info overlay */}
             <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">

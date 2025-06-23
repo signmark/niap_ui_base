@@ -48,12 +48,6 @@ interface StoryElement {
   style?: any;
 }
 
-interface StoryEditorState {
-  slides: StorySlide[];
-  currentSlideIndex: number;
-  selectedElement: StoryElement | null;
-}
-
 interface StoryEditorProps {
   campaignId?: string;
   storyId?: string;
