@@ -117,12 +117,13 @@ router.delete('/story/:id', authenticateUser, async (req, res) => {
     }
 
     // Verify ownership
-    const story = await directusCrud.read('campaign_content', id);
+    const response = await directusApi.get(`/items/campaign_content/${id}`);
+    const story = response.data.data;
     if (!story || story.user_id !== userId) {
       return res.status(404).json({ error: 'Story not found' });
     }
 
-    await directusCrud.delete('campaign_content', id);
+    await directusApi.delete(`/items/campaign_content/${id}`);
 
     res.json({ success: true, message: 'Story deleted successfully' });
   } catch (error) {
@@ -143,7 +144,8 @@ router.post('/story/:id/publish', authenticateUser, async (req, res) => {
     }
 
     // Get story
-    const story = await directusCrud.read('campaign_content', id);
+    const response = await directusApi.get(`/items/campaign_content/${id}`);
+    const story = response.data.data;
     if (!story || story.user_id !== userId) {
       return res.status(404).json({ error: 'Story not found' });
     }
@@ -156,7 +158,8 @@ router.post('/story/:id/publish', authenticateUser, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    const updatedStory = await directusCrud.update('campaign_content', id, updateData);
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData);
+    const updatedStory = updateResponse.data.data;
 
     res.json({ 
       success: true, 
