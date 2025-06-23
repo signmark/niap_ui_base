@@ -175,6 +175,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         
         console.log('Added element:', newElement);
         console.log('Updated slide:', updatedSlide);
+        console.log('All slides after update:', newSlides);
+        console.log('All slides after update:', newSlides);
       }
       
       return newSlides;
@@ -318,8 +320,10 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
 
   // Current slide data - мемоизируем для правильной синхронизации
   const currentSlide = useMemo(() => {
+    const slide = slides[currentSlideIndex];
     console.log('Computing currentSlide, slides:', slides, 'index:', currentSlideIndex);
-    return slides[currentSlideIndex];
+    console.log('Current slide elements:', slide?.elements);
+    return slide;
   }, [slides, currentSlideIndex]);
 
   return (
@@ -432,7 +436,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
               >
                 {/* Story elements */}
                 {console.log('Rendering elements:', currentSlide?.elements, 'Current slide:', currentSlide)}
-                {currentSlide?.elements?.map((element) => (
+                {console.log('Elements array length:', currentSlide?.elements?.length)}
+                {(currentSlide?.elements || []).map((element) => (
                   <Draggable
                     key={element.id}
                     defaultPosition={element.position}
