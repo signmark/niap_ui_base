@@ -62,7 +62,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     return () => {
       console.log('💀 StoryEditor UNMOUNTING for campaignId:', campaignId);
     };
-  }, [campaignId]);
+  }, []);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,7 +89,11 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
 
   // Отслеживание изменений slides
   useEffect(() => {
-    console.log('📊 Slides updated, elements count:', slides[currentSlideIndex]?.elements?.length || 0);
+    const count = slides[currentSlideIndex]?.elements?.length || 0;
+    console.log('📊 Slides updated, elements count:', count);
+    if (count > 0) {
+      console.log('🎯 Elements found in slide:', slides[currentSlideIndex]?.elements?.map(el => el.id));
+    }
   }, [slides, currentSlideIndex]);
 
   // Обработчики для работы со слайдами

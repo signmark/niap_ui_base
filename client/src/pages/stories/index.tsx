@@ -7,12 +7,18 @@ export default function StoriesPage() {
   const { campaignId } = useParams();
   const selectedCampaign = useCampaignStore((state) => state.selectedCampaign);
   
-  // Стабилизируем campaignId чтобы избежать перемонтирования
+  // Стабилизируем campaignId с приоритетом URL параметру
   const activeCampaignId = useMemo(() => {
-    const id = campaignId || selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
-    console.log('🌟 StoriesPage stabilizing campaignId:', id);
-    return id;
-  }, [campaignId, selectedCampaign?.id]);
+    // URL параметр имеет приоритет и НЕ должен перезаписываться
+    if (campaignId) {
+      console.log('🌟 Using campaignId from URL:', campaignId);
+      return campaignId;
+    }
+    
+    const storeId = selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
+    console.log('🌟 Using campaignId from store:', storeId);
+    return storeId;
+  }, [campaignId]); // Убираем selectedCampaign?.id из зависимостей!
 
   return (
     <div className="min-h-screen">
