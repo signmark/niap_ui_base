@@ -176,7 +176,6 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         console.log('Added element:', newElement);
         console.log('Updated slide:', updatedSlide);
         console.log('All slides after update:', newSlides);
-        console.log('All slides after update:', newSlides);
       }
       
       return newSlides;
