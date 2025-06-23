@@ -79,7 +79,7 @@ router.post('/', authenticateUser, async (req, res) => {
     const userToken = (req as any).userToken;
     const userId = (req as any).userId;
     
-    log(`User data: ${userId}, token: ${userToken ? 'present' : 'missing'}`, logPrefix);
+    log(`User data: ${userId}, token: ${userToken ? userToken.substring(0, 20) + '...' : 'missing'}`, logPrefix);
     
     const {
       campaign_id,
@@ -112,18 +112,25 @@ router.post('/', authenticateUser, async (req, res) => {
       });
     }
 
-    // Подготавливаем данные для сохранения согласно реальной схеме таблицы
+    // Подготавливаем данные для сохранения согласно ТОЧНОЙ схеме Directus
     const contentData = {
       title: finalTextContent || '', 
       campaign_id: finalCampaignId,
       user_id: userId,
-      content_type: finalContentType,
       content: finalTextContent || '', 
+      content_type: finalContentType,
+      image_url: null,
       video_url: finalVideoUrl || null,
+      prompt: '',
+      keywords: [],
+      created_at: new Date().toISOString(),
+      scheduled_at: scheduled_time || null,
+      published_at: null,
       status: status || 'draft',
       social_platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
-      scheduled_at: scheduled_time || null,
-      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {})
+      additional_images: [],
+      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {}),
+      additional_media: []
     };
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);

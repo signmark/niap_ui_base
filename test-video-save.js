@@ -4,6 +4,7 @@ import axios from 'axios';
 async function testVideoSave() {
   try {
     const token = process.env.DIRECTUS_TOKEN;
+    console.log('Testing with token:', token ? 'present' : 'missing');
     
     const response = await axios.post('http://localhost:5000/api/campaign-content', {
       campaign_id: "46868c44-c6a4-4bed-accf-9ad07bba790e",
@@ -25,8 +26,9 @@ async function testVideoSave() {
 
 testVideoSave();
 
-// Очистка временного файла
-import fs from 'fs';
+// Очистка после завершения
 setTimeout(() => {
-  try { fs.unlinkSync('./test-video-save.js'); } catch {}
-}, 2000);
+  import('fs').then(fs => {
+    try { fs.unlinkSync('./test-video-save.js'); } catch {}
+  });
+}, 3000);
