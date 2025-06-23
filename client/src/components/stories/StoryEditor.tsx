@@ -193,13 +193,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         newSlides[currentSlideIndex] = updatedSlide;
         
         console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
-        console.log('✅ New element ID:', newElement.id);
-        console.log('✅ Complete slide state:', updatedSlide);
-        
-        // Проверяем что состояние действительно обновилось
-        setTimeout(() => {
-          console.log('⏰ Delayed check - slides state:', newSlides[currentSlideIndex]?.elements?.length);
-        }, 100);
+        console.log('✅ All elements in slide:', updatedSlide.elements.map(el => ({ id: el.id, type: el.type })));
       }
       
       return newSlides;
@@ -341,13 +335,16 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - получаем текущий слайд
-  const currentSlide = slides[currentSlideIndex];
+  // Current slide data - используем useMemo для принудительного перерендера
+  const currentSlide = useMemo(() => {
+    const slide = slides[currentSlideIndex];
+    console.log('🔄 Recomputing currentSlide:', slide?.elements?.length || 0);
+    return slide;
+  }, [slides, currentSlideIndex]);
   
-  // Логирование для отладки состояния - только при изменениях
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 Render debug - Current slide:', currentSlideIndex, currentSlide?.elements?.length || 0);
-  }
+  // Принудительно отслеживаем элементы
+  const elementsCount = currentSlide?.elements?.length || 0;
+  console.log('📊 Current elements count:', elementsCount);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
@@ -458,10 +455,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                 }}
               >
                 {/* Story elements */}
-                {console.log('🎨 Rendering elements - count:', currentSlide?.elements?.length || 0)}
-                {currentSlide?.elements?.map((element) => {
-                  console.log('🎯 Rendering element:', element.id, element.type);
-                  return (
+                {currentSlide?.elements?.map((element) => (
                   <Draggable
                     key={element.id}
                     defaultPosition={element.position}
@@ -557,8 +551,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                       </Button>
                     </div>
                   </Draggable>
-                  );
-                }) || []}
+                ))}
+                
+                {/* Debug info */}
+                <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
+                  Elements: {elementsCount}
+                </div>
                 
                 {/* Add element overlay when no elements */}
                 {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
