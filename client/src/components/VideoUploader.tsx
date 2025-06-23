@@ -90,21 +90,28 @@ export function VideoUploader({
 
         if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
           const videoUrl = response.data.url || response.data.videoUrl;
+          console.log('Полученный URL видео:', videoUrl);
+          
+          // Важно: обновляем значение через onChange
           onChange(videoUrl);
           setPreviewUrl(videoUrl);
           setShowPreview(true);
+          
           toast({
             title: 'Успешно',
-            description: 'Видео загружено на S3'
+            description: `Видео загружено: ${videoUrl.split('/').pop()}`
           });
 
           // Очищаем поле выбора файла
-          e.target.value = '';
+          if (e.target.files) {
+            e.target.value = '';
+          }
         } else {
           console.error('Не удалось извлечь URL видео из ответа сервера');
+          console.error('Полный ответ сервера:', response.data);
           toast({
             title: 'Ошибка',
-            description: response.data?.error || 'Не удалось загрузить видео. Попробуйте другой формат.',
+            description: response.data?.error || 'Не удалось загрузить видео',
             variant: 'destructive'
           });
         }
