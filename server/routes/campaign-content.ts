@@ -50,8 +50,14 @@ router.post('/', authMiddleware, async (req, res) => {
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
 
-    // Для коллекции campaign_content используем админский токен из-за ограничений прав
-    const result = await directusCrud.create('campaign_content', contentData);
+    // Используем токен пользователя как в других маршрутах
+    const userToken = (req as any).userToken;
+    
+    log(`Using user token for request: ${userToken ? 'present' : 'missing'}`, logPrefix);
+    
+    const result = await directusCrud.create('campaign_content', contentData, {
+      authToken: userToken
+    });
     
     log(`Campaign content created successfully: ${JSON.stringify(result)}`, logPrefix);
     res.json({
@@ -75,9 +81,13 @@ router.get('/:campaignId', authMiddleware, async (req, res) => {
     
     log(`Fetching content for campaign: ${campaignId}`, logPrefix);
 
+    // Используем токен пользователя как в других маршрутах  
+    const userToken = (req as any).userToken;
     const result = await directusCrud.list('campaign_content', {
       filter: { campaign_id: { _eq: campaignId } },
       sort: ['-date_created']
+    }, {
+      authToken: userToken
     });
 
     res.json({
