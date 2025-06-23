@@ -56,13 +56,13 @@ export function VideoUploader({
   // Обновляем превью и отображение URL при изменении значения
   useEffect(() => {
     console.log('VideoUploader value изменен:', value);
+    console.log('Текущий inputValue:', inputValue);
+    
     const newValue = value || '';
     
-    // Проверяем, действительно ли значение изменилось
-    if (inputValue !== newValue) {
-      setInputValue(newValue);
-      console.log('VideoUploader обновляем inputValue:', newValue);
-    }
+    // Обновляем inputValue только если value действительно изменился
+    setInputValue(newValue);
+    console.log('Синхронизируем inputValue с value:', newValue);
     
     if (newValue && newValue.trim() !== '') {
       setPreviewUrl(newValue);
@@ -106,12 +106,16 @@ export function VideoUploader({
           console.log('Вызываем onChange с URL:', videoUrl);
           
           // Важно: обновляем значение через onChange
+          console.log('Устанавливаем inputValue:', videoUrl);
           setInputValue(videoUrl);
+          console.log('Вызываем onChange:', videoUrl);
           onChange(videoUrl);
           setPreviewUrl(videoUrl);
           setShowPreview(true);
           
-          console.log('VideoUploader: обновили состояние с URL:', videoUrl);
+          console.log('VideoUploader: состояние обновлено с URL:', videoUrl);
+          
+
           
           toast({
             title: 'Успешно',
@@ -163,8 +167,10 @@ export function VideoUploader({
           placeholder={placeholder}
           value={inputValue}
           onChange={(e) => {
-            setInputValue(e.target.value);
-            onChange(e.target.value);
+            const newValue = e.target.value;
+            console.log('Input onChange:', newValue);
+            setInputValue(newValue);
+            onChange(newValue);
           }}
           className="flex-1"
         />
