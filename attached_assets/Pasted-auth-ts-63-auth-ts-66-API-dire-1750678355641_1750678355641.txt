@@ -1,0 +1,138 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+auth.ts:94 Токен успешно обновлен через API
+store.ts:43 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+index.tsx:83 Uncaught ReferenceError: useEffect is not defined
+    at VideoEditor (index.tsx:83:3)
+    at renderWithHooks (chunk-276SZO74.js?v=44182660:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=44182660:14926:21)
+    at beginWork (chunk-276SZO74.js?v=44182660:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=44182660:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=44182660:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=44182660:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=44182660:19765:15)
+    at performUnitOfWork (chunk-276SZO74.js?v=44182660:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=44182660:19137:13)
+VideoEditor @ index.tsx:83
+renderWithHooks @ chunk-276SZO74.js?v=44182660:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=44182660:14926
+beginWork @ chunk-276SZO74.js?v=44182660:15914
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+beginWork$1 @ chunk-276SZO74.js?v=44182660:19765
+performUnitOfWork @ chunk-276SZO74.js?v=44182660:19198
+workLoopSync @ chunk-276SZO74.js?v=44182660:19137
+renderRootSync @ chunk-276SZO74.js?v=44182660:19116
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18678
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384Understand this error
+index.tsx:83 Uncaught ReferenceError: useEffect is not defined
+    at VideoEditor (index.tsx:83:3)
+    at renderWithHooks (chunk-276SZO74.js?v=44182660:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=44182660:14926:21)
+    at beginWork (chunk-276SZO74.js?v=44182660:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=44182660:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=44182660:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=44182660:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=44182660:19765:15)
+    at performUnitOfWork (chunk-276SZO74.js?v=44182660:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=44182660:19137:13)
+VideoEditor @ index.tsx:83
+renderWithHooks @ chunk-276SZO74.js?v=44182660:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=44182660:14926
+beginWork @ chunk-276SZO74.js?v=44182660:15914
+callCallback2 @ chunk-276SZO74.js?v=44182660:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=44182660:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=44182660:3733
+beginWork$1 @ chunk-276SZO74.js?v=44182660:19765
+performUnitOfWork @ chunk-276SZO74.js?v=44182660:19198
+workLoopSync @ chunk-276SZO74.js?v=44182660:19137
+renderRootSync @ chunk-276SZO74.js?v=44182660:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=44182660:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18684
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384Understand this error
+hook.js:608 The above error occurred in the <VideoEditor> component:
+
+    at VideoEditor (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/pages/video/index.tsx:52:39)
+    at Component
+    at main
+    at div
+    at div
+    at ThemeProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/Layout.tsx:34:26)
+    at WithLayout (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/App.tsx?v=cxzGxWFdKm4li92Rr9lI0:60:23)
+    at Route (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=44182660:323:16)
+    at Switch (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=44182660:379:17)
+    at Router
+    at AuthGuard (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=44182660:2805:3)
+    at App (https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/src/App.tsx?v=cxzGxWFdKm4li92Rr9lI0:459:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+overrideMethod @ hook.js:608
+logCapturedError @ chunk-276SZO74.js?v=44182660:14032
+update.callback @ chunk-276SZO74.js?v=44182660:14052
+callCallback @ chunk-276SZO74.js?v=44182660:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=44182660:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=44182660:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=44182660:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=44182660:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=44182660:17920
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19353
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18760
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384Understand this error
+chunk-276SZO74.js?v=44182660:19413 Uncaught ReferenceError: useEffect is not defined
+    at VideoEditor (index.tsx:83:3)
+    at renderWithHooks (chunk-276SZO74.js?v=44182660:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=44182660:14926:21)
+    at beginWork (chunk-276SZO74.js?v=44182660:15914:22)
+    at beginWork$1 (chunk-276SZO74.js?v=44182660:19753:22)
+    at performUnitOfWork (chunk-276SZO74.js?v=44182660:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=44182660:19137:13)
+    at renderRootSync (chunk-276SZO74.js?v=44182660:19116:15)
+    at recoverFromConcurrentError (chunk-276SZO74.js?v=44182660:18736:28)
+    at performConcurrentWorkOnRoot (chunk-276SZO74.js?v=44182660:18684:30)
+VideoEditor @ index.tsx:83
+renderWithHooks @ chunk-276SZO74.js?v=44182660:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=44182660:14926
+beginWork @ chunk-276SZO74.js?v=44182660:15914
+beginWork$1 @ chunk-276SZO74.js?v=44182660:19753
+performUnitOfWork @ chunk-276SZO74.js?v=44182660:19198
+workLoopSync @ chunk-276SZO74.js?v=44182660:19137
+renderRootSync @ chunk-276SZO74.js?v=44182660:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=44182660:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18684
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384Understand this error
+use-websocket.ts:82 WebSocket connection to 'wss://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/' failed: WebSocket is closed before the connection is established.
+(anonymous) @ use-websocket.ts:82
+safelyCallDestroy @ chunk-276SZO74.js?v=44182660:16748
+commitHookEffectListUnmount @ chunk-276SZO74.js?v=44182660:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-276SZO74.js?v=44182660:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-276SZO74.js?v=44182660:18245
+commitPassiveUnmountEffects_begin @ chunk-276SZO74.js?v=44182660:18181
+commitPassiveUnmountEffects @ chunk-276SZO74.js?v=44182660:18169
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19489
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+(anonymous) @ chunk-276SZO74.js?v=44182660:19328
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384Understand this warning
+use-websocket.ts:76 Ошибка WebSocket: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
+overrideMethod @ hook.js:608
+ws.onerror @ use-websocket.ts:76Understand this error
+use-websocket.ts:72 WebSocket отключен
