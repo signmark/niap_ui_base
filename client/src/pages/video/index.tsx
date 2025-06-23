@@ -85,6 +85,9 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     console.log('videoUrl в videoContent:', videoContent.videoUrl);
     if (videoContent.videoUrl) {
       console.log('✓ URL сохранен в videoContent:', videoContent.videoUrl);
+    } else {
+      console.log('⚠️ videoUrl пуст! Проверяем источник сброса');
+      console.trace('Стек вызовов для пустого videoUrl:');
     }
   }, [videoContent]);
 
@@ -400,19 +403,22 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                       value={videoContent.thumbnailUrl ? [{ url: videoContent.thumbnailUrl, type: 'image', title: 'Превью' }] : []}
                       onChange={(media) => {
                         console.log('MediaUploader onChange (превью):', media);
+                        console.log('Текущий videoContent перед обновлением превью:', videoContent);
                         if (media && media.length > 0) {
                           const newThumbnailUrl = media[0].url;
                           console.log('Обновляем thumbnailUrl:', newThumbnailUrl);
-                          setVideoContent(prev => ({
-                            ...prev,
-                            thumbnailUrl: newThumbnailUrl
-                          }));
+                          setVideoContent(prev => {
+                            const updated = { ...prev, thumbnailUrl: newThumbnailUrl };
+                            console.log('Новое состояние после обновления превью:', updated);
+                            return updated;
+                          });
                         } else {
-                          console.log('Очищаем thumbnailUrl');
-                          setVideoContent(prev => ({
-                            ...prev,
-                            thumbnailUrl: ''
-                          }));
+                          console.log('Очищаем thumbnailUrl (НЕ сбрасываем videoUrl)');
+                          setVideoContent(prev => {
+                            const updated = { ...prev, thumbnailUrl: '' };
+                            console.log('Состояние после очистки превью (videoUrl должен остаться):', updated);
+                            return updated;
+                          });
                         }
                       }}
                       maxItems={1}

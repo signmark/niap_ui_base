@@ -1,0 +1,45 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:84 videoContent изменен: Object
+index.tsx:85 videoUrl в videoContent: 
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: Object
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+auth.ts:94 Токен успешно обновлен через API
+store.ts:43 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:115 Ответ сервера на запрос проверки админа: Object
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true
+CampaignSelector.tsx:69 Campaigns loaded: 7
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "NPlanner.ru"
+campaignStore.ts:88 Установлена активная кампания: id=46868c44-c6a4-4bed-accf-9ad07bba790e, name=NPlanner.ru
+SettingsDialog.tsx:105 Successfully fetched 8 API keys
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+store.ts:115 Ответ сервера на запрос проверки админа: Object
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true
+VideoUploader.tsx:56 VideoUploader useEffect - value изменен: 
+VideoUploader.tsx:67 VideoUploader useEffect - очистили превью
+VideoUploader.tsx:75 Загружаем файл: mov_bbb.mp4 размер: 788493
+VideoUploader.tsx:82 Отправка запроса на загрузку видео файла...
+VideoUploader.tsx:94 Ответ от API загрузки видео: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', key: 'mov_bbb.mp4'}
+VideoUploader.tsx:98 Полученный URL видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:99 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+VideoUploader.tsx:102 Вызываем onChange с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:385 VideoUploader onChange вызван с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:388 Обновляем videoContent.videoUrl с: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:389 Новое состояние videoContent: {id: 'video-stable', title: '', description: '', tags: Array(0), videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4', …}
+VideoUploader.tsx:104 VideoUploader: загрузка завершена с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/mov_bbb.mp4
+index.tsx:84 videoContent изменен: {id: 'video-stable', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:85 videoUrl в videoContent: 
+index.tsx:84 videoContent изменен: {id: 'video-stable', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:85 videoUrl в videoContent: 
+index.tsx:84 videoContent изменен: {id: 'video-stable', title: '', description: '', tags: Array(0), videoUrl: '', …}
+index.tsx:85 videoUrl в videoContent: 
