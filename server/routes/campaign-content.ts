@@ -94,6 +94,10 @@ router.post('/', authenticateUser, async (req, res) => {
       });
     }
 
+    // Используем userId и userToken из authenticateUser middleware
+    const userId = (req as any).userId;
+    const userToken = (req as any).userToken;
+
     // Подготавливаем данные для сохранения согласно реальной схеме таблицы
     const contentData = {
       title: text_content || '', // Используем text_content как title
@@ -109,10 +113,6 @@ router.post('/', authenticateUser, async (req, res) => {
     };
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
-
-    // Используем userId и userToken из authenticateUser middleware
-    const userId = (req as any).userId;
-    const userToken = (req as any).userToken;
     
     log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
     
