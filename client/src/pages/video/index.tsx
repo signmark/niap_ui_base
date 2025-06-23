@@ -58,11 +58,9 @@ interface VideoEditorProps {
   campaignId?: string;
 }
 
-export default function VideoEditor({ campaignId }: VideoEditorProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [videoContent, setVideoContent] = useState<VideoContent>({
+// Хранилище состояния вне компонента для устойчивости к hot reload
+const videoContentStore = {
+  current: {
     id: 'video-stable',
     title: '',
     description: '',
@@ -77,7 +75,24 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     scheduling: {
       publishNow: true
     }
-  });
+  } as VideoContent
+};
+
+// Хранилище для activeTab
+const tabStore = {
+  current: 'content'
+};
+
+export default function VideoEditor({ campaignId }: VideoEditorProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [videoContent, setVideoContent] = useState<VideoContent>(() => videoContentStore.current);
+  
+  // Синхронизируем с внешним хранилищем
+  useEffect(() => {
+    videoContentStore.current = videoContent;
+  }, [videoContent]);
 
   // Отладочный useEffect для отслеживания изменений videoContent
   useEffect(() => {
@@ -92,7 +107,14 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   }, [videoContent]);
 
   const [newTag, setNewTag] = useState('');
-  const [activeTab, setActiveTab] = useState('content');
+  const [activeTab, setActiveTab] = useState(() => tabStore.current);
+  
+  // Синхронизируем активный таб с хранилищем
+  const handleTabChange = (value: string) => {
+    console.log('Переключение таба на:', value);
+    tabStore.current = value;
+    setActiveTab(value);
+  };
 
   // Мутация для создания видео контента
   const createVideoContentMutation = useMutation({
@@ -302,7 +324,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Основная область редактирования */}
         <div className="lg:col-span-2 space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="content">Контент</TabsTrigger>
               <TabsTrigger value="files">Файлы</TabsTrigger>
@@ -386,10 +408,15 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                       value={videoContent.videoUrl || ''}
                       onChange={(url) => {
                         console.log('VideoUploader onChange вызван с URL:', url);
+                        console.log('Текущий activeTab:', activeTab);
+                        
                         setVideoContent(prev => {
                           const newContent = { ...prev, videoUrl: url };
                           console.log('Обновляем videoContent.videoUrl с:', url);
                           console.log('Новое состояние videoContent:', newContent);
+                          
+                          // Сохраняем в store
+                          videoContentStore.current = newContent;
                           return newContent;
                         });
                       }}
