@@ -121,6 +121,7 @@ export default function ContentPage() {
     }
   }, [selectedCampaign]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
@@ -229,7 +230,7 @@ export default function ContentPage() {
       setSelectedKeywordIds(new Set());
     }
   };
-  const [newContent, setNewContent] = useState({
+  const defaultContent = {
     title: "",
     content: "",
     contentType: "text",
@@ -239,7 +240,9 @@ export default function ContentPage() {
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
-  });
+  };
+  
+  const [newContent, setNewContent] = useState(defaultContent);
   const [scheduleDate, setScheduleDate] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<{[key: string]: boolean}>({
     instagram: false,
@@ -449,7 +452,7 @@ export default function ContentPage() {
           });
           
           // Закрываем диалог
-          setIsCreateDialogOpen(false);
+          setIsDialogOpen(false);
         });
     },
     onError: (error: Error) => {
@@ -1494,7 +1497,7 @@ export default function ContentPage() {
       )}
 
       {/* Диалог создания контента */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Создание нового контента</DialogTitle>
@@ -1780,7 +1783,7 @@ export default function ContentPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
+              onClick={() => setIsDialogOpen(false)}
             >
               Отмена
             </Button>
@@ -2804,8 +2807,15 @@ export default function ContentPage() {
           } else if (type === 'video') {
             window.location.href = `/campaigns/${selectedCampaignId}/video`;
           } else {
-            setIsCreateDialogOpen(true);
+            // Для обычных постов открываем стандартный диалог
+            setNewContent({ 
+              ...defaultContent, 
+              contentType: type,
+              campaignId: selectedCampaignId 
+            });
+            setIsDialogOpen(true);
           }
+          setIsContentTypeDialogOpen(false);
         }}
       />
     </div>
