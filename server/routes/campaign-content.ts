@@ -4,7 +4,7 @@
  */
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { directusStorage } from '../storage/directus-storage';
+import { directusApiManager } from '../directus';
 import { log } from '../utils/logger';
 
 const router = Router();
@@ -51,7 +51,7 @@ router.post('/', authMiddleware, async (req, res) => {
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
 
     // Сохраняем в Directus
-    const result = await directusStorage.createCampaignContent(contentData);
+    const result = await directusApiManager.createRecord('campaign_content', contentData);
 
     if (result.success) {
       log(`Campaign content created successfully: ${result.data.id}`, logPrefix);
@@ -83,7 +83,10 @@ router.get('/:campaignId', authMiddleware, async (req, res) => {
     
     log(`Fetching content for campaign: ${campaignId}`, logPrefix);
 
-    const result = await directusStorage.getCampaignContent(campaignId);
+    const result = await directusApiManager.getRecords('campaign_content', {
+      filter: { campaign_id: { _eq: campaignId } },
+      sort: ['-date_created']
+    });
 
     if (result.success) {
       res.json({
@@ -113,7 +116,7 @@ router.patch('/:contentId', authMiddleware, async (req, res) => {
 
     log(`Updating campaign content: ${contentId}`, logPrefix);
 
-    const result = await directusStorage.updateCampaignContent(contentId, updateData);
+    const result = await directusApiManager.updateRecord('campaign_content', contentId, updateData);
 
     if (result.success) {
       res.json({
@@ -143,7 +146,7 @@ router.delete('/:contentId', authMiddleware, async (req, res) => {
 
     log(`Deleting campaign content: ${contentId}`, logPrefix);
 
-    const result = await directusStorage.deleteCampaignContent(contentId);
+    const result = await directusApiManager.deleteRecord('campaign_content', contentId);
 
     if (result.success) {
       res.json({
