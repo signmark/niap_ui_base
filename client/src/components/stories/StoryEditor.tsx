@@ -188,23 +188,6 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     });
   };
 
-  const getDefaultContent = (type: StoryElement['type']) => {
-    switch (type) {
-      case 'text':
-        return { text: 'Новый текст', fontSize: 24, color: '#ffffff', fontWeight: 'bold' };
-      case 'image':
-        return { url: '', alt: 'Изображение' };
-      case 'video':
-        return { url: '', autoplay: true };
-      case 'poll':
-        return { question: 'Вопрос?', options: ['Вариант 1', 'Вариант 2'] };
-      case 'quiz':
-        return { question: 'Вопрос?', options: ['Вариант 1', 'Вариант 2'], correct: 0 };
-      default:
-        return {};
-    }
-  };
-
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
       case 'text': return 'Текст';
