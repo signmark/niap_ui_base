@@ -12,12 +12,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { VideoUploader } from '@/components/VideoUploader';
 import { MediaUploader } from '@/components/MediaUploader';
-// Убрали TestUploader, используем только рабочие компоненты
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useCampaignStore } from '@/store/campaignStore';
 import { 
   ArrowLeft, 
   Upload, 
@@ -86,6 +86,7 @@ const tabStore = {
 export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { activeCampaign } = useCampaignStore();
   
   const [videoContent, setVideoContent] = useState<VideoContent>(() => videoContentStore.current);
   
@@ -189,8 +190,8 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handleSave = async () => {
-    // Используем текущую активную кампанию
-    const currentCampaignId = campaignId || '46868c44-c6a4-4bed-accf-9ad07bba790e';
+    // Получаем ID активной кампании
+    const currentCampaignId = campaignId || activeCampaign?.id;
     
     if (!currentCampaignId) {
       toast({
@@ -224,7 +225,8 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handlePublish = async () => {
-    if (!campaignId) return;
+    const currentCampaignId = campaignId || activeCampaign?.id;
+    if (!currentCampaignId) return;
     
     if (!videoContent.videoUrl) {
       toast({
@@ -263,7 +265,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     // Затем публикуем
     const publishData = {
       contentType: 'video-text',
-      campaignId: campaignId,
+      campaignId: currentCampaignId,
       platforms: videoContent.platforms,
       scheduling: videoContent.scheduling,
       content: {
