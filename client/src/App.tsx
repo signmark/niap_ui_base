@@ -41,6 +41,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
+import VideoPage from "@/pages/video";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (

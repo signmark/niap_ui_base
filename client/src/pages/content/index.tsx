@@ -2798,7 +2798,7 @@ export default function ContentPage() {
       <ContentTypeDialog
         isOpen={isContentTypeDialogOpen}
         onClose={() => setIsContentTypeDialogOpen(false)}
-        onSelectType={(type) => {
+        onSelectType={(type: 'post' | 'story' | 'video') => {
           if (type === 'story') {
             window.location.href = `/campaigns/${selectedCampaignId}/stories/new`;
           } else {
