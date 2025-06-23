@@ -94,18 +94,18 @@ router.post('/', authenticateUser, async (req, res) => {
       });
     }
 
-    // Подготавливаем данные для сохранения
+    // Подготавливаем данные для сохранения согласно реальной схеме таблицы
     const contentData = {
+      title: text_content || '', // Используем text_content как title
       campaign_id,
+      user_id: userId, // Используем user_id вместо user_created
       content_type,
-      text_content: text_content || '',
+      content: text_content || '', // Основное содержимое
       video_url: video_url || null,
-      thumbnail_url: thumbnail_url || null,
-      platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
-      scheduled_time: scheduled_time || null,
-      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {}),
-      status,
-      user_created: req.user?.id
+      status: status || 'draft',
+      social_platforms: typeof platforms === 'string' ? platforms : JSON.stringify(platforms || {}),
+      scheduled_at: scheduled_time || null,
+      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata || {})
     };
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
@@ -116,8 +116,7 @@ router.post('/', authenticateUser, async (req, res) => {
     
     log(`Creating content for user: ${userId}, token present: ${userToken ? 'yes' : 'no'}`, logPrefix);
     
-    // Устанавливаем правильного пользователя
-    contentData.user_created = userId;
+    // user_id уже установлен в contentData выше
     
     const result = await directusCrud.create('campaign_content', contentData, {
       authToken: userToken
