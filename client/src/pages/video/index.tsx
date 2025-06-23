@@ -67,16 +67,21 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const [newTag, setNewTag] = useState('');
   const [activeTab, setActiveTab] = useState('content');
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setVideoContent(prev => ({ ...prev, videoFile: file }));
-      toast({
-        title: 'Видео загружено',
-        description: `Файл ${file.name} успешно загружен`
-      });
-    }
+  const handleVideoUpload = (videoUrl: string) => {
+    setVideoContent(prev => ({ ...prev, videoUrl }));
+    toast({
+      title: 'Видео загружено',
+      description: 'Видео успешно загружено на S3'
+    });
   };
+
+  const handleThumbnailUpload = (thumbnailUrl: string) => {
+    setVideoContent(prev => ({ ...prev, thumbnailUrl }));
+    toast({
+      title: 'Превью загружено',
+      description: 'Изображение превью успешно загружено'
+    });
+  };;
 
   const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -118,8 +123,8 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
       platforms: videoContent.platforms,
       scheduling: videoContent.scheduling,
       tags: videoContent.tags,
-      videoFile: videoContent.videoFile,
-      thumbnail: videoContent.thumbnail
+      videoUrl: videoContent.videoUrl,
+      thumbnailUrl: videoContent.thumbnailUrl
     };
     
     try {
@@ -143,7 +148,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   const handlePublish = async () => {
     if (!campaignId) return;
     
-    if (!videoContent.videoFile) {
+    if (!videoContent.videoUrl) {
       toast({
         title: 'Ошибка',
         description: 'Необходимо загрузить видео файл',
