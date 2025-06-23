@@ -72,8 +72,9 @@ export function VideoUploader({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      console.log('Загружаем файл:', file.name, 'размер:', file.size);
       const formData = new FormData();
-      formData.append('video', file);
+      formData.append('file', file);
 
       setIsUploading(true);
 
@@ -83,7 +84,7 @@ export function VideoUploader({
         // Получаем токен авторизации из localStorage
         const token = localStorage.getItem('auth_token');
 
-        const response = await axios.post('/api/beget-s3-video/upload', formData, {
+        const response = await axios.post('/api/beget-s3-aws/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Authorization': token ? `Bearer ${token}` : ''
