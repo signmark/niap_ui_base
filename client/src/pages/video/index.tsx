@@ -120,12 +120,16 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   // Мутация для создания видео контента
   const createVideoContentMutation = useMutation({
     mutationFn: async (contentData: any) => {
-      return await apiRequest('/api/campaign-content', { 
+      console.log('🔥 Отправляем запрос на сохранение:', contentData);
+      const result = await apiRequest('/api/campaign-content', { 
         method: 'POST',
         data: contentData 
       });
+      console.log('🔥 Получен ответ от API:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🔥 Успешно сохранено:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", campaignId] });
       toast({
         title: 'Сохранено',
@@ -135,7 +139,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
       window.history.back();
     },
     onError: (error: Error) => {
-      console.error('Ошибка сохранения:', error);
+      console.error('🔥 Ошибка сохранения:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось сохранить видео контент',
@@ -190,12 +194,15 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handleSave = async () => {
+    console.log('🔥 handleSave вызван!');
+    console.log('🔥 Текущее videoContent:', videoContent);
+    
     // Получаем ID активной кампании из URL или store
     const urlParams = new URLSearchParams(window.location.search);
     const campaignFromUrl = urlParams.get('campaignId');
     const currentCampaignId = campaignId || campaignFromUrl || activeCampaign?.id;
     
-    console.log('Campaign ID sources:', {
+    console.log('🔥 Campaign ID sources:', {
       prop: campaignId,
       url: campaignFromUrl,
       store: activeCampaign?.id,
@@ -203,6 +210,7 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     });
     
     if (!currentCampaignId) {
+      console.log('🔥 Ошибка: campaignId не найден');
       toast({
         title: 'Ошибка',
         description: 'Не выбрана кампания',
@@ -229,7 +237,8 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
       status: 'draft'
     };
     
-    console.log('Сохраняем видеоконтент в campaign_content:', contentData);
+    console.log('🔥 Готовы к мутации:', contentData);
+    console.log('🔥 Вызываем createVideoContentMutation.mutate');
     createVideoContentMutation.mutate(contentData);
   };
 
