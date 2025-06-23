@@ -53,7 +53,7 @@ import { queryClient } from '@/lib/queryClient';
 import { uploadImageToBegetS3 } from '@/lib/s3Client';
 import { uploadVideoToBegetS3 } from '@/lib/s3VideoClient';
 import { toast } from '@/hooks/use-toast';
-import { Spinner } from './Spinner';
+import { Spinner } from './ui/spinner';
 
 interface MediaUploaderProps {
   value: MediaItem[] | null;
