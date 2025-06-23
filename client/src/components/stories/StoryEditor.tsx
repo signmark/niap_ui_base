@@ -72,6 +72,9 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     }
   ]);
 
+  // Принудительно пересоздаем currentSlide при изменении slides для синхронизации
+  const [forceUpdate, setForceUpdate] = useState(0);
+
   // Обработчики для работы со слайдами
   const addSlide = () => {
     const newSlide: StorySlide = {
@@ -163,6 +166,9 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     };
 
     setSlides(prevSlides => {
+      console.log('🔧 Before update - prevSlides:', prevSlides);
+      console.log('🔧 Current slide index for update:', currentSlideIndex);
+      
       const newSlides = [...prevSlides];
       const targetSlide = newSlides[currentSlideIndex];
       
@@ -174,13 +180,16 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         newSlides[currentSlideIndex] = updatedSlide;
         
         console.log('✅ Element added successfully:', newElement);
-        console.log('✅ Updated slide with elements:', updatedSlide.elements.length);
-        console.log('✅ Complete updated slide:', updatedSlide);
+        console.log('✅ Updated slide with elements count:', updatedSlide.elements.length);
+        console.log('✅ Updated slide elements:', updatedSlide.elements);
+        console.log('✅ All slides after update:', newSlides);
       }
       
       return newSlides;
     });
 
+    // Принудительно обновляем компонент
+    setForceUpdate(prev => prev + 1);
     setSelectedElement(newElement);
     
     toast({
@@ -317,13 +326,16 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - получаем напрямую без мемоизации для корректного обновления
+  // Current slide data - принудительно обновляем состояние
   const currentSlide = slides[currentSlideIndex];
   
-  // Логирование для отладки
-  console.log('Current slide data:', currentSlide);
-  console.log('Current slide elements:', currentSlide?.elements);
-  console.log('Elements count:', currentSlide?.elements?.length || 0);
+  // Логирование для отладки состояния
+  console.log('🔍 Debugging state:');
+  console.log('📊 All slides:', slides);
+  console.log('📌 Current slide index:', currentSlideIndex);
+  console.log('🎯 Current slide:', currentSlide);
+  console.log('📝 Elements in current slide:', currentSlide?.elements);
+  console.log('🔢 Elements count:', currentSlide?.elements?.length || 0);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
