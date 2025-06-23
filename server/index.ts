@@ -314,17 +314,17 @@ app.use((req, res, next) => {
     console.log("Claude routes registered");
     log("Claude routes registered successfully");
 
-    // Register stories routes with specific path to avoid conflicts
+    log("Registering main routes first...");
+    console.log("Starting route registration...");
+    const server = await registerRoutes(app);
+    
+    // Register stories routes AFTER main routes to prevent conflicts
     console.log("Registering Stories routes...");
     log("Registering Stories routes...");
     const storiesRoutes = (await import('./routes/stories')).default;
     app.use('/api/stories', storiesRoutes);
     console.log("Stories routes registered");
     log("Stories routes registered successfully");
-
-    log("Registering routes...");
-    console.log("Starting route registration...");
-    const server = await registerRoutes(app);
     
     // Регистрируем маршруты аналитики
     log("Registering Analytics routes...");
