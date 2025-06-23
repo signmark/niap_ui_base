@@ -56,11 +56,18 @@ export function VideoUploader({
   // Обновляем превью и отображение URL при изменении значения
   useEffect(() => {
     console.log('VideoUploader value изменен:', value);
-    setInputValue(value || '');
-    if (value && value.trim() !== '') {
-      setPreviewUrl(value);
-      setShowPreview(forcePreview || showPreview);
-      setDisplayUrl(value.length > 50 ? value.substring(0, 47) + '...' : value);
+    const newValue = value || '';
+    
+    // Проверяем, действительно ли значение изменилось
+    if (inputValue !== newValue) {
+      setInputValue(newValue);
+      console.log('VideoUploader обновляем inputValue:', newValue);
+    }
+    
+    if (newValue && newValue.trim() !== '') {
+      setPreviewUrl(newValue);
+      setShowPreview(forcePreview || true);
+      setDisplayUrl(newValue.length > 50 ? newValue.substring(0, 47) + '...' : newValue);
     } else {
       setShowPreview(false);
       setPreviewUrl('');

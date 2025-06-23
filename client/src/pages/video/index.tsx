@@ -373,12 +373,11 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                     <VideoUploader
                       value={videoContent.videoUrl || ''}
                       onChange={(url) => {
-                        console.log('VideoUploader onChange:', url);
-                        setVideoContent(prev => ({ ...prev, videoUrl: url }));
-                      }}
-                      onThumbnailChange={(url) => {
-                        console.log('VideoUploader onThumbnailChange:', url);
-                        setVideoContent(prev => ({ ...prev, thumbnailUrl: url }));
+                        console.log('VideoUploader onChange вызван с URL:', url);
+                        setVideoContent(prev => {
+                          console.log('Обновляем videoContent.videoUrl с:', url);
+                          return { ...prev, videoUrl: url };
+                        });
                       }}
                     />
                   </div>
