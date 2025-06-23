@@ -50,9 +50,13 @@ router.post('/', authMiddleware, async (req, res) => {
 
     log(`Saving content data: ${JSON.stringify(contentData)}`, logPrefix);
 
+    // Получаем токен из заголовка Authorization
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
     // Сохраняем в Directus через CRUD сервис с токеном пользователя
     const result = await directusCrud.create('campaign_content', contentData, {
-      userId: req.user?.id
+      authToken: token
     });
     
     log(`Campaign content created successfully: ${JSON.stringify(result)}`, logPrefix);
@@ -77,11 +81,15 @@ router.get('/:campaignId', authMiddleware, async (req, res) => {
     
     log(`Fetching content for campaign: ${campaignId}`, logPrefix);
 
+    // Получаем токен из заголовка Authorization
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
     const result = await directusCrud.list('campaign_content', {
       filter: { campaign_id: { _eq: campaignId } },
       sort: ['-date_created']
     }, {
-      userId: req.user?.id
+      authToken: token
     });
 
     res.json({
