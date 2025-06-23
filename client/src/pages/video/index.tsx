@@ -194,7 +194,7 @@ export default function VideoEditor() {
     return result.imageUrl;
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!videoContent.videoFile) {
       toast({
         title: 'Ошибка',
@@ -226,13 +226,49 @@ export default function VideoEditor() {
       return;
     }
 
-    // Здесь будет логика публикации
-    console.log('Публикация видео на платформы:', selectedPlatforms);
-    
-    toast({
-      title: 'Видео запланировано к публикации',
-      description: `Будет опубликовано на: ${selectedPlatforms.join(', ')}`
-    });
+    try {
+      // Сначала сохраняем контент
+      await handleSave();
+      
+      // Затем планируем публикацию
+      const publishData = {
+        contentType: 'video-text',
+        campaignId: campaignId,
+        title: videoContent.title,
+        description: videoContent.description,
+        videoUrl: videoContent.videoFile ? await uploadVideoToS3(videoContent.videoFile) : null,
+        thumbnailUrl: videoContent.thumbnail ? await uploadImageToS3(videoContent.thumbnail) : null,
+        platforms: selectedPlatforms,
+        tags: videoContent.tags,
+        scheduling: videoContent.scheduling
+      };
+
+      const response = await fetch('/api/publish/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(publishData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка планирования публикации');
+      }
+
+      toast({
+        title: 'Видео запланировано к публикации',
+        description: `Будет опубликовано на: ${selectedPlatforms.join(', ')}`
+      });
+      
+    } catch (error) {
+      console.error('Ошибка публикации:', error);
+      toast({
+        title: 'Ошибка публикации',
+        description: 'Не удалось запланировать публикацию видео',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleGoBack = () => {
