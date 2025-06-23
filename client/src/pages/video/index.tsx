@@ -203,52 +203,7 @@ export default function VideoEditor() {
     return result.url;
   };
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('video/')) {
-        setVideoContent(prev => ({
-          ...prev,
-          videoFile: file,
-          duration: 0
-        }));
-        
-        toast({
-          title: 'Видео загружено',
-          description: `Файл "${file.name}" готов к обработке`
-        });
-      } else {
-        toast({
-          title: 'Ошибка',
-          description: 'Выберите видео файл',
-          variant: 'destructive'
-        });
-      }
-    }
-  };
 
-  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setVideoContent(prev => ({
-          ...prev,
-          thumbnail: file
-        }));
-        
-        toast({
-          title: 'Обложка загружена',
-          description: `Файл "${file.name}" готов к использованию`
-        });
-      } else {
-        toast({
-          title: 'Ошибка',
-          description: 'Выберите изображение для обложки',
-          variant: 'destructive'
-        });
-      }
-    }
-  };
 
   const handlePublish = async () => {
     if (!videoContent.videoFile) {
@@ -408,7 +363,15 @@ export default function VideoEditor() {
                       <input
                         type="file"
                         accept="video/*"
-                        onChange={handleVideoUpload}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.type.startsWith('video/')) {
+                            setVideoContent(prev => ({ ...prev, videoFile: file, duration: 0 }));
+                            toast({ title: 'Видео загружено', description: `Файл "${file.name}" готов к обработке` });
+                          } else if (file) {
+                            toast({ title: 'Ошибка', description: 'Выберите видео файл', variant: 'destructive' });
+                          }
+                        }}
                         className="hidden"
                         id="video-upload"
                       />
@@ -427,7 +390,15 @@ export default function VideoEditor() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleThumbnailUpload}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.type.startsWith('image/')) {
+                            setVideoContent(prev => ({ ...prev, thumbnail: file }));
+                            toast({ title: 'Обложка загружена', description: `Файл "${file.name}" готов к использованию` });
+                          } else if (file) {
+                            toast({ title: 'Ошибка', description: 'Выберите изображение для обложки', variant: 'destructive' });
+                          }
+                        }}
                         className="hidden"
                         id="thumbnail-upload"
                       />

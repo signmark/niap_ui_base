@@ -26,6 +26,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 
+// Local interfaces for component
 interface StorySlide {
   id: string;
   order: number;
@@ -39,12 +40,18 @@ interface StorySlide {
 
 interface StoryElement {
   id: string;
-  type: 'text' | 'image' | 'video' | 'poll' | 'quiz' | 'ai-image';
+  type: 'text' | 'image' | 'video' | 'poll' | 'quiz';
   position: { x: number; y: number };
   rotation: number;
   zIndex: number;
   content: any;
   style?: any;
+}
+
+interface StoryEditorState {
+  slides: StorySlide[];
+  currentSlideIndex: number;
+  selectedElement: StoryElement | null;
 }
 
 interface StoryEditorProps {
@@ -179,7 +186,7 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       return newSlides;
     });
 
-    setSelectedElement(newElement.id);
+    setSelectedElement(newElement);
     
     toast({
       title: 'Элемент добавлен',

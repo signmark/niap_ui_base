@@ -4,7 +4,28 @@ import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { StorySlide, StoryElement } from '../../../shared/stories-schema';
+import StoryElement from './StoryElement';
+
+interface StorySlide {
+  id: string;
+  order: number;
+  duration: number;
+  background: {
+    type: 'color' | 'image' | 'video';
+    value: string;
+  };
+  elements: StoryElementType[];
+}
+
+interface StoryElementType {
+  id: string;
+  type: 'text' | 'image' | 'video' | 'poll' | 'quiz';
+  position: { x: number; y: number };
+  rotation: number;
+  zIndex: number;
+  content: any;
+  style?: any;
+}
 import { Trash2, RotateCw, Move, Square } from 'lucide-react';
 
 interface StoryCanvasProps {
