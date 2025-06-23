@@ -22,6 +22,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useParams } from 'wouter';
+import { useCampaignStore } from '@/lib/campaignStore';
 
 interface VideoContent {
   id: string;
