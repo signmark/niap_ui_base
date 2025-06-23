@@ -371,9 +371,10 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                   <div className="space-y-2">
                     <Label>Видео файл</Label>
                     <VideoUploader
+                      id="video-uploader"
+                      placeholder="Введите URL видео или загрузите файл"
                       value={videoContent.videoUrl || ''}
                       onChange={handleVideoUpload}
-                      label="Загрузить видео"
                     />
                   </div>
 
@@ -381,11 +382,24 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                   <div className="space-y-2">
                     <Label>Превью (обложка)</Label>
                     <MediaUploader
-                      media={videoContent.thumbnailUrl ? [{ url: videoContent.thumbnailUrl, type: 'image' }] : []}
-                      onChange={handleThumbnailUpload}
-                      maxFiles={1}
-                      allowedTypes={['image']}
-                      label="Загрузить превью"
+                      value={videoContent.thumbnailUrl ? [{ url: videoContent.thumbnailUrl, type: 'image', title: 'Превью' }] : []}
+                      onChange={(media) => {
+                        console.log('MediaUploader onChange (превью):', media);
+                        if (media && media.length > 0) {
+                          setVideoContent(prev => ({
+                            ...prev,
+                            thumbnailUrl: media[0].url
+                          }));
+                        } else {
+                          setVideoContent(prev => ({
+                            ...prev,
+                            thumbnailUrl: ''
+                          }));
+                        }
+                      }}
+                      maxItems={1}
+                      title="Превью изображение"
+                      hideTitle={false}
                     />
                   </div>
                 </CardContent>
