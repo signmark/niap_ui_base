@@ -164,18 +164,18 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
 
     setSlides(prevSlides => {
       const newSlides = [...prevSlides];
-      const currentSlide = newSlides[currentSlideIndex];
+      const targetSlide = newSlides[currentSlideIndex];
       
-      if (currentSlide) {
+      if (targetSlide) {
         const updatedSlide = {
-          ...currentSlide,
-          elements: [...(currentSlide.elements || []), newElement]
+          ...targetSlide,
+          elements: [...(targetSlide.elements || []), newElement]
         };
         newSlides[currentSlideIndex] = updatedSlide;
         
-        console.log('Added element:', newElement);
-        console.log('Updated slide:', updatedSlide);
-        console.log('All slides after update:', newSlides);
+        console.log('✅ Element added successfully:', newElement);
+        console.log('✅ Updated slide with elements:', updatedSlide.elements.length);
+        console.log('✅ Complete updated slide:', updatedSlide);
       }
       
       return newSlides;
@@ -317,13 +317,13 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - мемоизируем для правильной синхронизации
-  const currentSlide = useMemo(() => {
-    const slide = slides[currentSlideIndex];
-    console.log('Computing currentSlide, slides:', slides, 'index:', currentSlideIndex);
-    console.log('Current slide elements:', slide?.elements);
-    return slide;
-  }, [slides, currentSlideIndex]);
+  // Current slide data - получаем напрямую без мемоизации для корректного обновления
+  const currentSlide = slides[currentSlideIndex];
+  
+  // Логирование для отладки
+  console.log('Current slide data:', currentSlide);
+  console.log('Current slide elements:', currentSlide?.elements);
+  console.log('Elements count:', currentSlide?.elements?.length || 0);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
@@ -434,10 +434,11 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                 }}
               >
                 {/* Story elements */}
-                {console.log('Rendering elements:', currentSlide?.elements, 'Current slide:', currentSlide)}
-                {console.log('Elements array length:', currentSlide?.elements?.length)}
-                {(currentSlide?.elements || []).map((element) => (
-                  <Draggable
+                {console.log('🎨 Rendering canvas with elements:', currentSlide?.elements?.length || 0)}
+                {(currentSlide?.elements || []).map((element) => {
+                  console.log('🎯 Rendering element:', element.id, element.type);
+                  return (
+                    <Draggable
                     key={element.id}
                     defaultPosition={element.position}
                     onStop={(e, data) => {
@@ -531,8 +532,9 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </Draggable>
-                ))}
+                    </Draggable>
+                  );
+                })}
                 
                 {/* Add element overlay when no elements */}
                 {(!currentSlide?.elements || currentSlide.elements.length === 0) && (
