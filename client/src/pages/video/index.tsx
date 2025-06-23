@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { VideoUploader } from '@/components/VideoUploader';
 import { MediaUploader } from '@/components/MediaUploader';
-import { TestUploader } from '@/components/TestUploader';
+// Убрали TestUploader, используем только рабочие компоненты
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
@@ -177,24 +177,37 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
   };
 
   const handleSave = async () => {
-    if (!campaignId) return;
+    if (!campaignId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не выбрана кампания',
+        variant: 'destructive'
+      });
+      return;
+    }
     
+    // Подготавливаем данные для сохранения в campaign_content
     const contentData = {
-      title: videoContent.title,
-      content: videoContent.description,
-      contentType: 'video-text',
-      campaignId: campaignId,
+      campaign_id: campaignId,
+      content_type: 'video-text',
+      text_content: videoContent.description,
+      video_url: videoContent.videoUrl,
+      thumbnail_url: videoContent.thumbnailUrl,
+      // Платформы сохраняем как JSON
       platforms: videoContent.platforms,
-      scheduling: videoContent.scheduling,
-      tags: videoContent.tags,
-      videoUrl: videoContent.videoUrl,
-      thumbnailUrl: videoContent.thumbnailUrl,
+      // Планирование
+      scheduled_time: videoContent.scheduling?.scheduledTime,
+      // Метаданные
       metadata: {
+        title: videoContent.title,
+        tags: videoContent.tags,
         videoUrl: videoContent.videoUrl,
         thumbnailUrl: videoContent.thumbnailUrl
-      }
+      },
+      status: 'draft'
     };
     
+    console.log('Сохраняем видеоконтент в campaign_content:', contentData);
     createVideoContentMutation.mutate(contentData);
   };
 
@@ -376,9 +389,6 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Тестовый загрузчик */}
-                  <TestUploader />
-                  
                   {/* Видео файл */}
                   <div className="space-y-2">
                     <Label>Видео файл</Label>

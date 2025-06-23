@@ -325,6 +325,14 @@ app.use((req, res, next) => {
     console.log("Stories routes registered");
     log("Stories routes registered successfully");
 
+    // Register campaign content routes
+    console.log("Registering Campaign Content routes...");
+    log("Registering Campaign Content routes...");
+    const campaignContentRoutes = (await import('./routes/campaign-content')).default;
+    app.use('/api/campaign-content', campaignContentRoutes);
+    console.log("Campaign Content routes registered");
+    log("Campaign Content routes registered successfully");
+
     log("Registering routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
