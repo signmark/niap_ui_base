@@ -24,7 +24,7 @@ const authenticateUser = async (req: any, res: any, next: any) => {
     return res.status(500).json({ error: 'Authentication error' });
   }
 };
-import { directusCrud } from '../services/directus-crud';
+import { directusApi } from '../directus';
 
 const router = express.Router();
 
@@ -57,8 +57,8 @@ router.post('/', authenticateUser, async (req, res) => {
   }
 });
 
-// Update story
-router.put('/:id', authenticateUser, async (req, res) => {
+// Update story - SPECIFIC ROUTE FOR STORIES ONLY
+router.put('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, slides } = req.body;
@@ -83,8 +83,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Get story by ID
-router.get('/:id', authenticateUser, async (req, res) => {
+// Get story by ID - SPECIFIC ROUTE FOR STORIES ONLY
+router.get('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -106,8 +106,8 @@ router.get('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Delete story
-router.delete('/:id', authenticateUser, async (req, res) => {
+// Delete story - SPECIFIC ROUTE FOR STORIES ONLY
+router.delete('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -131,8 +131,8 @@ router.delete('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Publish story
-router.post('/:id/publish', authenticateUser, async (req, res) => {
+// Publish story - SPECIFIC ROUTE FOR STORIES ONLY
+router.post('/story/:id/publish', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { platforms, scheduledAt } = req.body;

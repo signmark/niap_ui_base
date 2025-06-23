@@ -318,13 +318,14 @@ app.use((req, res, next) => {
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
     
-    // Register stories routes AFTER main routes to prevent conflicts
-    console.log("Registering Stories routes...");
-    log("Registering Stories routes...");
-    const storiesRoutes = (await import('./routes/stories')).default;
-    app.use('/api/stories', storiesRoutes);
-    console.log("Stories routes registered");
-    log("Stories routes registered successfully");
+    // Stories routes temporarily disabled to fix campaigns API conflict
+    // TODO: Re-enable after fixing routing conflicts
+    // console.log("Registering Stories routes...");
+    // log("Registering Stories routes...");
+    // const storiesRoutes = (await import('./routes/stories')).default;
+    // app.use('/api/stories', storiesRoutes);
+    // console.log("Stories routes registered");
+    // log("Stories routes registered successfully");
     
     // Регистрируем маршруты аналитики
     log("Registering Analytics routes...");
