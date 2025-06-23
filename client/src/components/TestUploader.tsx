@@ -42,7 +42,9 @@ export function TestUploader() {
         }
       }
 
-      setUrls(prev => [...prev, ...newUrls]);
+      const allUrls = [...urls, ...newUrls];
+      setUrls(allUrls);
+      console.log('Обновляем состояние URLs:', allUrls);
       toast({
         title: 'Успешно',
         description: `Загружено ${newUrls.length} файлов`
