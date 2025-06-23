@@ -2,13 +2,25 @@
  * API маршруты для работы с контентом кампаний
  * Сохранение видео и других типов контента в campaign_content
  */
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { directusCrud } from '../services/directus-crud';
 import { log } from '../utils/logger';
 
+// Middleware для извлечения токена авторизации из заголовков
+const extractAuthTokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    (req as any).userToken = authHeader.substring(7);
+  }
+  next();
+};
+
 const router = Router();
 const logPrefix = 'campaign-content-api';
+
+// Применяем middleware для извлечения токена ко всем маршрутам
+router.use(extractAuthTokenMiddleware);
 
 // Создание нового контента в кампании
 router.post('/', authMiddleware, async (req, res) => {
