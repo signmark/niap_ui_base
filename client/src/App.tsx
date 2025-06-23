@@ -117,6 +117,10 @@ function Router() {
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
       
+      {/* Video and Stories routes */}
+      <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />
+      <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
+      
       {/* Stories routes */}
       <Route path="/campaigns/:campaignId/stories/new">
         {(params) => (
