@@ -63,8 +63,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
   
-  // Используем useRef для предотвращения сброса состояния при перерендере
-  const slidesRef = useRef<StorySlide[]>([
+  // Инициализация состояния без лишних логов
+  const [slides, setSlides] = useState<StorySlide[]>([
     {
       id: 'slide-1',
       order: 1,
@@ -73,13 +73,10 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       elements: []
     }
   ]);
-  
-  const [slides, setSlides] = useState<StorySlide[]>(slidesRef.current);
 
-  // Синхронизируем состояние с ref
+  // Отслеживание изменений slides
   useEffect(() => {
-    slidesRef.current = slides;
-    console.log('📊 Slides synced to ref:', slides[currentSlideIndex]?.elements?.length || 0);
+    console.log('📊 Slides updated, elements count:', slides[currentSlideIndex]?.elements?.length || 0);
   }, [slides, currentSlideIndex]);
 
   // Обработчики для работы со слайдами
@@ -185,11 +182,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
         };
         newSlides[currentSlideIndex] = updatedSlide;
         
-        // Обновляем ref для предотвращения сброса
-        slidesRef.current = newSlides;
-        
         console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
-        console.log('✅ Ref updated with elements:', slidesRef.current[currentSlideIndex]?.elements?.length);
+        console.log('✅ Updated slide ID:', updatedSlide.id);
       }
       
       return newSlides;
@@ -331,13 +325,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
   };
 
-  // Current slide data - берем из ref для стабильности
-  const currentSlide = useMemo(() => {
-    const slide = slidesRef.current[currentSlideIndex] || slides[currentSlideIndex];
-    console.log('🔄 Current slide from ref:', slide?.elements?.length || 0);
-    console.log('🔄 Current slide from state:', slides[currentSlideIndex]?.elements?.length || 0);
-    return slide;
-  }, [slides, currentSlideIndex]);
+  // Current slide data - получаем напрямую из состояния
+  const currentSlide = slides[currentSlideIndex];
   
   // Принудительно отслеживаем элементы
   const elementsCount = currentSlide?.elements?.length || 0;
