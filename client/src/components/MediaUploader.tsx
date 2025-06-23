@@ -175,6 +175,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       const updatedList = [...mediaList, ...newMediaItems];
       setMediaList(updatedList);
       onChange(updatedList);
+      console.log('MediaUploader: новый список медиафайлов:', updatedList);
 
       toast({
         title: "Файлы загружены",

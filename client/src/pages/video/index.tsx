@@ -150,6 +150,15 @@ export default function VideoEditor({ campaignId }: VideoEditorProps) {
     console.log('videoContent изменен:', videoContent);
   }, [videoContent]);
 
+  // Дополнительное логирование состояния формы
+  useEffect(() => {
+    console.log('Текущее состояние формы видео:', {
+      videoUrl: videoContent.videoUrl,
+      thumbnailUrl: videoContent.thumbnailUrl,
+      title: videoContent.title
+    });
+  }, [videoContent.videoUrl, videoContent.thumbnailUrl, videoContent.title]);
+
   const addTag = () => {
     if (newTag.trim() && !videoContent.tags.includes(newTag.trim())) {
       setVideoContent(prev => ({

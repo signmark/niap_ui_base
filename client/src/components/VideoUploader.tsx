@@ -98,6 +98,7 @@ export function VideoUploader({
           console.log('Вызываем onChange с URL:', videoUrl);
           
           // Важно: обновляем значение через onChange
+          setInputValue(videoUrl);
           onChange(videoUrl);
           setPreviewUrl(videoUrl);
           setShowPreview(true);
@@ -148,9 +149,13 @@ export function VideoUploader({
       <div className="flex gap-2 w-full">
         <Input
           id={id}
+          type="text"
           placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={inputValue}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            onChange(e.target.value);
+          }}
           className="flex-1"
         />
         <div className="relative flex-shrink-0">
