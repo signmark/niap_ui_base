@@ -1360,7 +1360,9 @@ export default function ContentPage() {
                                 {/* Content title */}
                                 {content.title && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{typeof content.title === 'string' ? content.title : String(content.title)}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">
+                                      {typeof content.title === 'string' ? content.title : String(content.title || '')}
+                                    </h3>
                                   </div>
                                 )}
                                 
@@ -1415,7 +1417,7 @@ export default function ContentPage() {
                                       <div className="flex flex-wrap gap-1 mt-2">
                                         {content.keywords.slice(0, 3).map((keyword, index) => (
                                           <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                            {keyword}
+                                            {typeof keyword === 'string' ? keyword : String(keyword || '')}
                                           </Badge>
                                         ))}
                                         {content.keywords.length > 3 && (
@@ -2617,12 +2619,14 @@ export default function ContentPage() {
                                   <div className="text-xs space-y-1">
                                     {slide.elements?.map((element: any, elemIndex: number) => (
                                       <div key={elemIndex} className="bg-white/10 rounded px-2 py-1">
-                                        <span className="capitalize">{element.type}</span>
+                                        <span className="capitalize">{typeof element.type === 'string' ? element.type : String(element.type || '')}</span>
                                         {element.content && (
                                           <span className="ml-2 opacity-75">
-                                            {element.content.length > 20 
-                                              ? element.content.substring(0, 20) + '...' 
-                                              : element.content}
+                                            {typeof element.content === 'string' 
+                                              ? (element.content.length > 20 
+                                                ? element.content.substring(0, 20) + '...' 
+                                                : element.content)
+                                              : String(element.content || '')}
                                           </span>
                                         )}
                                       </div>
