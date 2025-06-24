@@ -57,13 +57,6 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
-  console.log('🔥🔥🔥 StoryEditor INITIALIZED 🔥🔥🔥');
-  console.log('🔥 Props - campaignId:', campaignId);
-  console.log('🔥 Props - storyId:', storyId);
-  console.log('🔥 Current URL:', window.location.href);
-  console.log('🔥 URL pathname:', window.location.pathname);
-  console.log('🔥 storyId type:', typeof storyId);
-  console.log('🔥 storyId truthy:', !!storyId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -95,15 +88,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [localStoryId, setLocalStoryId] = useState<string | null>(storyId || null);
   const [isEditMode, setIsEditMode] = useState(!!storyId);
   
-  console.log('🔥 LOCAL STATE - localStoryId:', localStoryId, 'isEditMode:', isEditMode);
+  // Локальное состояние: storyId и режим редактирования
 
   // Загрузка существующей Stories
   const loadExistingStory = async (id: string) => {
     try {
-      console.log('🔥 Loading story from API:', id);
-      // Получаем токен (система использует auth_token)
       const token = localStorage.getItem('auth_token');
-      console.log('🔥 Loading story with token:', token ? 'PRESENT' : 'MISSING');
       
       const response = await fetch(`/api/stories/story/${id}`, {
         headers: {
@@ -115,7 +105,6 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         const result = await response.json();
         if (result.success && result.data) {
           const storyData = result.data;
-          console.log('🔥 Story loaded successfully:', storyData);
           
           // Загружаем данные в store
           setStoryTitle(storyData.title || 'История без названия');
@@ -177,41 +166,18 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     }
   };
 
-  // Инициализация при монтировании  
+  // Инициализация при монтировании - СТАБИЛЬНАЯ ВЕРСИЯ
   useEffect(() => {
-    console.log('🔥🔥🔥 ===== STORY EDITOR INITIALIZATION ===== 🔥🔥🔥');
-    console.log('🔥 Props received - storyId:', storyId);
-    console.log('🔥 Props received - campaignId:', campaignId);
-    console.log('🔥 Current slides count:', slides.length);
-    console.log('🔥 Current isEditMode:', isEditMode);
-    console.log('🔥 Current localStoryId state:', localStoryId);
-    console.log('🔥 URL at initialization:', window.location.href);
-    
-    // КРИТИЧНО: проверяем что у нас есть storyId
     if (storyId && storyId.trim() !== '') {
-      console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', storyId);
-      console.log('🔥 Setting isEditMode to TRUE');
       setIsEditMode(true);
       setLocalStoryId(storyId);
-      console.log('🔥 Loading existing story data...');
       loadExistingStory(storyId);
     } else {
-      console.log('🔥 ❌ NO STORY ID - CREATE MODE');
-      console.log('🔥 storyId value check:', {
-        value: storyId,
-        type: typeof storyId,
-        length: storyId ? storyId.length : 'N/A',
-        trimmed: storyId ? storyId.trim() : 'N/A'
-      });
       setIsEditMode(false);
       setLocalStoryId(null);
       initializeSlides();
     }
-    
-    return () => {
-      console.log('💀 StoryEditor UNMOUNTING');
-    };
-  }, []);
+  }, []); // БЕЗ зависимостей для предотвращения перемонтирования
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -267,13 +233,6 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   });
 
   const saveStory = async () => {
-    console.log('🔥🔥🔥 SAVE STORY CALLED 🔥🔥🔥');
-    console.log('🔥 storyId:', storyId);
-    console.log('🔥 URL pathname:', window.location.pathname);
-    console.log('🔥 URL href:', window.location.href);
-    console.log('🔥 campaignId:', campaignId);
-    console.log('🔥 storyTitle:', storyTitle);
-    console.log('🔥 slides count:', slides.length);
     
     // КРИТИЧНАЯ ПРОВЕРКА: определяем режим на основе URL и наличия storyId
     const hasEditInUrl = window.location.pathname.includes('/edit');
