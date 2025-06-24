@@ -207,7 +207,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                   <div 
                     className="bg-white/95 backdrop-blur p-3 shadow-lg text-black w-full"
                     style={{
-                      backgroundColor: element.style?.backgroundColor || 'rgba(255, 255, 255, 0.95)',
+                      backgroundColor: element.style?.backgroundColor?.startsWith('#') ? element.style.backgroundColor : 'rgba(255, 255, 255, 0.95)',
                       borderRadius: `${element.style?.borderRadius || 12}px`,
                     }}
                   >

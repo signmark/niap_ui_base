@@ -71,6 +71,8 @@ interface StoriesImageGenerationDialogProps {
   onImageGenerated: (imageUrl: string, prompt?: string) => void;
   initialPrompt?: string;
   initialContent?: string;
+  contentId?: string;
+  campaignId?: string;
 }
 
 const FAL_AI_MODELS = [
@@ -96,7 +98,9 @@ export function StoriesImageGenerationDialog({
   onClose, 
   onImageGenerated, 
   initialPrompt = '',
-  initialContent = '' 
+  initialContent = '',
+  contentId,
+  campaignId
 }: StoriesImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
   
@@ -353,16 +357,24 @@ export function StoriesImageGenerationDialog({
 
   const confirmSelection = () => {
     if (selectedImageIndex >= 0 && generatedImages.length > 0) {
+      const selectedImage = generatedImages[selectedImageIndex];
+      let finalPrompt = prompt || generatedPrompt || initialPrompt || "AI generated image";
+      
+      console.log("🎯 Подтверждение выбора изображения:", {
+        imageUrl: selectedImage,
+        prompt: finalPrompt.substring(0, 50) + "...",
+        hasCallback: !!onImageGenerated
+      });
+      
       if (onImageGenerated) {
-        let finalPrompt = generatedPrompt || prompt;
-        if (!finalPrompt && initialPrompt) {
-          finalPrompt = initialPrompt;
-        }
-        
-        console.log(`Возвращаем изображение с промтом: ${finalPrompt.substring(0, 50)}...`);
-        
-        onImageGenerated(generatedImages[selectedImageIndex], finalPrompt);
+        onImageGenerated(selectedImage, finalPrompt);
+        toast({
+          title: "Изображение добавлено",
+          description: "Изображение успешно добавлено на слайд"
+        });
       }
+      
+      // Закрываем диалог
       onClose();
     } else {
       toast({
@@ -375,18 +387,18 @@ export function StoriesImageGenerationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображения для Stories</DialogTitle>
         <DialogDescription>
-          Создайте изображение с помощью искусственного интеллекта для вашей Stories
+          Создайте изображение с помощью ИИ: введите описание на русском или напишите промт на английском
         </DialogDescription>
       </DialogHeader>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="templates">Из текста</TabsTrigger>
-          <TabsTrigger value="prompt">Прямой промт</TabsTrigger>
+          <TabsTrigger value="templates">Из текста 🇷🇺</TabsTrigger>
+          <TabsTrigger value="prompt">Промт 🇬🇧</TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="space-y-4">
@@ -546,37 +558,57 @@ export function StoriesImageGenerationDialog({
 
       {/* Отображение сгенерированных изображений */}
       {generatedImages.length > 0 && (
-        <div className="space-y-4 mt-6">
-          <h3 className="text-lg font-medium">Выберите изображение</h3>
+        <div className="space-y-4 mt-6 border-t pt-6">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-medium">Выберите изображение</h3>
+            <span className="text-sm text-muted-foreground">({generatedImages.length} шт.)</span>
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
             {generatedImages.map((imageUrl, index) => (
               <div
                 key={index}
-                className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
+                className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all hover:shadow-lg ${
                   selectedImageIndex === index 
-                    ? 'border-primary ring-2 ring-primary ring-offset-2' 
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg' 
+                    : 'border-gray-200 hover:border-blue-300'
                 }`}
-                onClick={() => setSelectedImageIndex(index)}
+                onClick={() => {
+                  console.log("🖱️ Выбираем изображение:", index, imageUrl.substring(0, 50));
+                  setSelectedImageIndex(index);
+                }}
               >
                 <img
                   src={imageUrl}
-                  alt={`Сгенерированное изображение ${index + 1}`}
+                  alt={`Вариант ${index + 1}`}
                   className="w-full h-32 object-cover"
+                  onError={(e) => {
+                    console.error("🚨 Ошибка загрузки изображения:", imageUrl);
+                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iNjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2QjczODAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiI+0J7RiNC40LHQutCwINGB0LPQtdC90LXRgNCw0YbQuNC4PC90ZXh0Pgo8L3N2Zz4K';
+                  }}
                 />
+                
                 {selectedImageIndex === index && (
-                  <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                    <div className="bg-primary text-primary-foreground rounded-full p-2">
+                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                    <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                       ✓
                     </div>
                   </div>
                 )}
+                
+                <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                  #{index + 1}
+                </div>
               </div>
             ))}
           </div>
           
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+          <div className="flex gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              className="flex-1"
+            >
               Отмена
             </Button>
             <Button 
@@ -585,7 +617,7 @@ export function StoriesImageGenerationDialog({
               className="flex-1"
             >
               <Image className="mr-2 h-4 w-4" />
-              Использовать
+              {selectedImageIndex >= 0 ? `Добавить изображение #${selectedImageIndex + 1}` : 'Выберите изображение'}
             </Button>
           </div>
         </div>

@@ -1059,6 +1059,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         isOpen={imageDialogOpen}
         onClose={closeImageDialog}
         onImageGenerated={handleImageGenerated}
+        contentId={contentId}
+        campaignId={selectedCampaignId}
       />
     </div>
   );
