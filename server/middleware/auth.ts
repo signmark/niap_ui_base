@@ -34,12 +34,16 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     try {
-        // Добавляем токен в запрос для использования в дальнейших обработчиках
+        // Декодируем JWT токен для получения реального user ID
+        const base64Payload = token.split('.')[1];
+        const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+        
         req.user = {
-            id: 'authenticated-user', // Заглушка для ID
+            id: payload.id || 'authenticated-user',
             token: token
         };
         
+        console.log('[DEV] [auth-middleware] User authenticated:', req.user.id);
         return next();
     } catch (error) {
         log(`Authentication error: ${(error as Error).message}`, 'auth-middleware');
