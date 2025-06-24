@@ -143,39 +143,43 @@ export function StoriesImageGenerationDialog({
     loadModels();
   }, []);
 
-  // Стабильная инициализация без мерцания
+  // СТАБИЛЬНАЯ инициализация - выполняется ТОЛЬКО ОДИН РАЗ при открытии
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
-    if (isOpen) {
-      console.log("🎬 Инициализация StoriesImageGenerationDialog:", {
+    if (isOpen && !isInitialized) {
+      console.log("🎬 ПЕРВАЯ инициализация StoriesImageGenerationDialog:", {
         contentId,
         campaignId,
         initialPrompt,
         initialContent
       });
       
-      // Только при первом открытии сбрасываем состояние
-      if (generatedImages.length === 0) {
-        setGeneratedImages([]);
-        setSelectedImageIndex(-1);
-        setGeneratedPrompt("");
-      }
-      
       // Устанавливаем начальные значения если переданы
-      if (initialPrompt && !prompt) {
-        setPrompt(initialPrompt);
-      }
-      if (initialContent && !content) {
-        setContent(initialContent);
-      }
+      if (initialPrompt) setPrompt(initialPrompt);
+      if (initialContent) setContent(initialContent);
       
-      // Базовые настройки только при первом открытии
-      if (!negativePrompt) setNegativePrompt("");
-      if (!imageSize) setImageSize("1024x1024");
-      if (!platform) setPlatform("instagram");
-      if (!modelType) setModelType("schnell");
-      if (!stylePreset) setStylePreset("photographic");
-      if (!numImages) setNumImages(3);
+      // Базовые настройки
+      setNegativePrompt("");
+      setImageSize("1024x1024");
+      setPlatform("instagram");
+      setModelType("schnell");
+      setStylePreset("photographic");
+      setNumImages(3);
       setSavePrompt(true);
+      
+      // Помечаем как инициализированный
+      setIsInitialized(true);
+    }
+    
+    // Сбрасываем флаг при закрытии диалога
+    if (!isOpen && isInitialized) {
+      setIsInitialized(false);
+      setGeneratedImages([]);
+      setSelectedImageIndex(-1);
+      setGeneratedPrompt("");
+      setPrompt("");
+      setContent("");
     }
   }, [isOpen]);
 
@@ -259,21 +263,12 @@ export function StoriesImageGenerationDialog({
     onSuccess: (promptText) => {
       console.log("🤖 Промт успешно сгенерирован:", promptText);
       
-      // КРИТИЧНО: Немедленно устанавливаем промт в поле
+      // КРИТИЧНО: Устанавливаем промт в поле и НЕ ДАЕМ ему сброситься
       setPrompt(promptText);
       setGeneratedPrompt(promptText);
       
-      // Переключаемся на вкладку с промтом для показа результата
+      // Переключаемся на вкладку с промтом
       setActiveTab("prompt");
-      
-      // Принудительное обновление поля промта
-      setTimeout(() => {
-        const promptInput = document.querySelector('textarea[placeholder*="Опишите"]') as HTMLTextAreaElement;
-        if (promptInput) {
-          promptInput.value = promptText;
-          promptInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }, 100);
       
       toast({
         title: "Промт готов",
@@ -343,10 +338,18 @@ export function StoriesImageGenerationDialog({
       }
 
       const result = await response.json();
-      if (!result.success || !result.images?.length) {
-        throw new Error('Изображения не были сгенерированы');
+      console.log("🎨 Полный ответ сервера:", result);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Ошибка генерации изображений');
+      }
+      
+      if (!result.images || !Array.isArray(result.images) || result.images.length === 0) {
+        console.error("🚨 Неправильный формат ответа:", result);
+        throw new Error('Сервер не вернул изображения. Проверьте настройки API.');
       }
 
+      console.log("🎨 Изображения получены:", result.images.length);
       return result.images;
     },
     onSuccess: (images) => {
