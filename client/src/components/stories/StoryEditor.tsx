@@ -132,15 +132,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
                 firstSlideData: metadata.slides[0]
               });
               
-              // Ensure elements have proper structure
+              // Ensure elements have proper structure while preserving existing data
               const validatedSlides = metadata.slides.map((slide: any) => ({
                 ...slide,
                 elements: (slide.elements || []).map((element: any) => ({
                   id: element?.id || `element_${Date.now()}_${Math.random()}`,
                   type: element?.type || 'text',
-                  position: element?.position || { x: 50, y: 50 },
-                  rotation: element?.rotation || 0,
-                  zIndex: element?.zIndex || 1,
+                  position: element?.position && element.position.x !== undefined && element.position.y !== undefined 
+                    ? element.position 
+                    : { x: 50, y: 50 },
+                  rotation: element?.rotation !== undefined ? element.rotation : 0,
+                  zIndex: element?.zIndex !== undefined ? element.zIndex : 1,
                   content: element?.content || {},
                   style: element?.style || {}
                 }))
@@ -213,7 +215,9 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     const count = slides[currentSlideIndex]?.elements?.length || 0;
     console.log('📊 Store slides updated, elements count:', count);
     if (count > 0) {
-      console.log('🎯 Elements found in slide:', slides[currentSlideIndex]?.elements?.map(el => el.id));
+      const elements = slides[currentSlideIndex]?.elements || [];
+      console.log('🎯 Elements found in slide:', elements.map(el => el?.id));
+      console.log('🎯 Elements positions:', elements.map(el => ({ id: el?.id, position: el?.position })));
     }
     
     // Обновляем selectedElement если он изменился в store
@@ -318,7 +322,14 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
         title: storyTitle,
         slidesCount: slides.length,
         firstSlideElements: slides[0]?.elements?.length || 0,
-        metadata: updateData.metadata
+        metadata: updateData.metadata,
+        firstElementPosition: slides[0]?.elements?.[0]?.position,
+        allElementsData: slides[0]?.elements?.map(el => ({ 
+          id: el.id, 
+          type: el.type, 
+          position: el.position,
+          content: el.content 
+        }))
       });
       console.log('🔥 Calling updateContentMutation.mutate with ID:', actualStoryId);
       updateContentMutation.mutate({ id: actualStoryId, data: updateData });

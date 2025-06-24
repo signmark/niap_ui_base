@@ -159,16 +159,26 @@ router.patch('/story/:id', authMiddleware, async (req, res) => {
       firstSlideElementsCount: slides[0]?.elements?.length
     });
 
+    // Preserve existing metadata structure and merge with new data
+    const metadataToSave = {
+      slides: slides,
+      storyType: 'instagram',
+      format: metadata?.format || '9:16',
+      version: '1.0'
+    };
+
     const updateData = {
       title: title || 'Новая история',
-      metadata: JSON.stringify({ 
-        slides: slides,
-        storyType: 'instagram',
-        format: metadata?.format || '9:16',
-        version: '1.0'
-      }),
+      metadata: JSON.stringify(metadataToSave),
       updated_at: new Date().toISOString()
     };
+
+    console.log('[DEV] [stories] 🎯 SAVING METADATA:', {
+      slidesCount: metadataToSave.slides.length,
+      firstSlideElementsCount: metadataToSave.slides[0]?.elements?.length,
+      firstElementPosition: metadataToSave.slides[0]?.elements?.[0]?.position,
+      metadataString: JSON.stringify(metadataToSave)
+    });
 
     // Используем токен пользователя для обновления записи
     const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
