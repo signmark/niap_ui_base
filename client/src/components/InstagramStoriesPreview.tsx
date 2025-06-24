@@ -97,7 +97,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                 alt="Background" 
                 className="w-full h-full object-cover"
               />
-            ) : currentSlide.background?.type === 'color' && currentSlide.background.value ? (
+            ) : currentSlide.background?.type === 'color' && currentSlide.background.value?.startsWith('#') ? (
               <div 
                 className="w-full h-full"
                 style={{ backgroundColor: currentSlide.background.value }}
