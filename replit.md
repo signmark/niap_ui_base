@@ -129,6 +129,7 @@ Environment-specific settings managed through:
 - June 24, 2025. FINAL selectedElement FIX: Completely eliminated all selectedElement references from StoryEditor.tsx, removed all duplicate state management, simplified update logic to use only storeSelectedElement from global store
 - June 24, 2025. CRITICAL IMPORT FIXES: Fixed Dialog component import in StoriesImageGenerationDialog, added missing DialogContent and DialogHeader imports, resolved isAutoSaving undefined error
 - June 24, 2025. COMPLETE IMPORT RESOLUTION: Added missing Dialog import to StoriesImageGenerationDialog.tsx, systematically checked for all undefined component errors across Stories components
+- June 24, 2025. DIALOG STABILITY & PROMPT FIX: Fixed backgroundColor CSS validation errors, stabilized dialog state with logging, ensured generated English prompts are properly inserted into text field, resolved dialog flickering
 
 ## User Preferences
 
