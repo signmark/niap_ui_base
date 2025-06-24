@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
+import { useStoryStore } from '@/lib/storyStore';
 
 // Local interfaces for component
 interface StorySlide {
@@ -56,73 +57,53 @@ interface StoryEditorProps {
 export default function StoryEditor({ campaignId }: StoryEditorProps) {
   console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId);
   
-  // useEffect для отслеживания размонтирования
-  useEffect(() => {
-    console.log('🔥 StoryEditor EFFECT RUN for campaignId:', campaignId);
-    return () => {
-      console.log('💀 StoryEditor UNMOUNTING for campaignId:', campaignId);
-    };
-  }, []);
-  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [storyTitle, setStoryTitle] = useState('');
+  // Используем глобальный store вместо локального состояния
+  const {
+    slides,
+    currentSlideIndex,
+    storyTitle,
+    selectedElement,
+    initializeSlides,
+    setCurrentSlideIndex,
+    setStoryTitle,
+    setSelectedElement,
+    addElement: storeAddElement,
+    updateElement,
+    deleteElement,
+    addSlide: storeAddSlide,
+    deleteSlide: storeDeleteSlide,
+    updateSlide
+  } = useStoryStore();
+  
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
-  const [selectedElement, setSelectedElement] = useState<StoryElement | null>(null);
-  
-  // Инициализация состояния с защитой от сброса
-  const [slides, setSlides] = useState<StorySlide[]>(() => {
-    console.log('🎬 Initializing slides state for campaignId:', campaignId);
-    return [
-      {
-        id: 'slide-1',
-        order: 1,
-        duration: 5,
-        background: { type: 'color', value: '#6366f1' },
-        elements: []
-      }
-    ];
-  });
 
-  // Отслеживание изменений slides
+  // Инициализация при монтировании
+  useEffect(() => {
+    console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
+    if (slides.length === 0) {
+      initializeSlides();
+    }
+    return () => {
+      console.log('💀 StoryEditor UNMOUNTING');
+    };
+  }, []);
+
+  // Отслеживание изменений slides из store
   useEffect(() => {
     const count = slides[currentSlideIndex]?.elements?.length || 0;
-    console.log('📊 Slides updated, elements count:', count);
+    console.log('📊 Store slides updated, elements count:', count);
     if (count > 0) {
       console.log('🎯 Elements found in slide:', slides[currentSlideIndex]?.elements?.map(el => el.id));
     }
   }, [slides, currentSlideIndex]);
 
-  // Обработчики для работы со слайдами
-  const addSlide = () => {
-    const newSlide: StorySlide = {
-      id: `slide-${Date.now()}`,
-      order: slides.length + 1,
-      duration: 5,
-      background: { type: 'color', value: '#6366f1' },
-      elements: []
-    };
-    setSlides([...slides, newSlide]);
-    setCurrentSlideIndex(slides.length);
-  };
-
-  const deleteSlide = (slideIndex: number) => {
-    if (slides.length <= 1) return;
-    const newSlides = slides.filter((_, index) => index !== slideIndex);
-    setSlides(newSlides);
-    setCurrentSlideIndex(Math.max(0, Math.min(slideIndex, newSlides.length - 1)));
-  };
-
-  const updateSlide = (updates: Partial<StorySlide>) => {
-    setSlides(prevSlides => {
-      const newSlides = [...prevSlides];
-      newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], ...updates };
-      return newSlides;
-    });
-  };
+  // Обертки для store actions
+  const addSlide = storeAddSlide;
+  const deleteSlide = storeDeleteSlide;
 
   const getDefaultContent = (elementType: StoryElement['type']) => {
     switch (elementType) {
@@ -176,43 +157,15 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   };
 
   const addElement = useCallback((elementType: StoryElement['type']) => {
-    const newElement: StoryElement = {
-      id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: elementType,
-      position: { x: 50, y: 50 },
-      rotation: 0,
-      zIndex: (slides[currentSlideIndex]?.elements?.length || 0) + 1,
-      content: getDefaultContent(elementType),
-      style: getDefaultStyle(elementType)
-    };
-
-    console.log('🔧 Adding element:', newElement.id, 'to slide:', currentSlideIndex);
-
-    setSlides(prevSlides => {
-      const newSlides = [...prevSlides];
-      const targetSlide = newSlides[currentSlideIndex];
-      
-      if (targetSlide) {
-        const updatedSlide = {
-          ...targetSlide,
-          elements: [...(targetSlide.elements || []), newElement]
-        };
-        newSlides[currentSlideIndex] = updatedSlide;
-        
-        console.log('✅ Element added! Total elements now:', updatedSlide.elements.length);
-        console.log('✅ All elements:', updatedSlide.elements.map(el => el.id));
-      }
-      
-      return newSlides;
-    });
-
-    setSelectedElement(newElement);
+    console.log('🔧 Adding element type:', elementType, 'to slide:', currentSlideIndex);
+    
+    const newElement = storeAddElement(elementType);
     
     toast({
       title: 'Элемент добавлен',
       description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
     });
-  }, [slides, currentSlideIndex, toast]);
+  }, [currentSlideIndex, storeAddElement, toast]);
 
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
@@ -225,38 +178,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     }
   };
 
-  const updateElement = (elementId: string, updates: Partial<StoryElement>) => {
-    setSlides(prevSlides => {
-      const newSlides = [...prevSlides];
-      const currentSlideData = newSlides[currentSlideIndex];
-      
-      if (currentSlideData) {
-        newSlides[currentSlideIndex] = {
-          ...currentSlideData,
-          elements: currentSlideData.elements?.map(el => 
-            el.id === elementId ? { ...el, ...updates } : el
-          ) || []
-        };
-      }
-      
-      return newSlides;
-    });
-  };
-
-  const deleteElement = (elementId: string) => {
-    setSlides(prevSlides => {
-      const newSlides = [...prevSlides];
-      const currentSlideData = newSlides[currentSlideIndex];
-      
-      if (currentSlideData) {
-        newSlides[currentSlideIndex] = {
-          ...currentSlideData,
-          elements: currentSlideData.elements?.filter(el => el.id !== elementId) || []
-        };
-      }
-      
-      return newSlides;
-    });
+  const handleDeleteElement = (elementId: string) => {
+    deleteElement(elementId);
     
     toast({
       title: 'Элемент удален',
