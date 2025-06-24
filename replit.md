@@ -8,8 +8,8 @@ SMM Manager is an intelligent social media content management platform that help
 
 ### Technology Stack
 - **Frontend**: React with TypeScript
-- **Backend**: Node.js/Express with PostgreSQL
-- **Content Management**: Directus headless CMS
+- **Backend**: Node.js/Express 
+- **Content Management**: Directus headless CMS (primary database)
 - **State Management**: React Query
 - **Authentication**: Custom token refresh middleware
 - **AI Integration**: DeepSeek, Perplexity API, FAL AI Proxy
@@ -88,7 +88,7 @@ Core tables managed through Directus:
 - **Directus**: Headless CMS for data management
 - **N8N**: Workflow automation for complex publishing flows
 - **Beget S3**: File storage for media assets
-- **PostgreSQL**: Primary database
+- **Directus Database**: Primary data storage via hosted Directus instance
 
 ## Deployment Strategy
 
@@ -121,3 +121,4 @@ Preferred communication style: Simple, everyday language.
 ### Technical Notes
 - **Stories API Authentication**: Always use user token (req.headers.authorization) for Directus API calls, never use admin token. User tokens work constantly in the system and have proper permissions for campaign_content collection.
 - **Database Storage**: All Stories data should be stored in campaign_content.metadata field as JSON, not in separate fields.
+- **Database**: System does not use PostgreSQL - uses Directus as primary database/CMS with external hosted instance.
