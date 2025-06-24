@@ -55,6 +55,9 @@ router.get('/', authMiddleware, async (req, res) => {
     console.log('[DEV] [stories] Fetching stories for user:', userId);
 
     const response = await directusApi.get('/items/campaign_content', {
+      headers: {
+        'Authorization': req.headers.authorization
+      },
       params: {
         filter: JSON.stringify({
           user_id: { _eq: userId },
@@ -187,14 +190,22 @@ router.delete('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Verify ownership
-    const response = await directusApi.get(`/items/campaign_content/${id}`);
+    // Verify ownership с пользовательским токеном
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
     const story = response.data.data;
     if (!story || story.user_id !== userId) {
       return res.status(404).json({ error: 'Story not found' });
     }
 
-    await directusApi.delete(`/items/campaign_content/${id}`);
+    await directusApi.delete(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
 
     res.json({ success: true, message: 'Story deleted successfully' });
   } catch (error) {
@@ -214,8 +225,12 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Get story
-    const response = await directusApi.get(`/items/campaign_content/${id}`);
+    // Get story с пользовательским токеном
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
     const story = response.data.data;
     if (!story || story.user_id !== userId) {
       return res.status(404).json({ error: 'Story not found' });
@@ -229,7 +244,11 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData);
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
     const updatedStory = updateResponse.data.data;
 
     res.json({ 
