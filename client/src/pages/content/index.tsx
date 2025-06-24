@@ -1524,11 +1524,11 @@ export default function ContentPage() {
                   <SelectItem value="text-image">Текст с изображением</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="video-text">Видео с текстом</SelectItem>
-                  <SelectItem value="instagram-stories">Instagram Stories</SelectItem>
+                  <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {newContent.contentType !== "instagram-stories" && (
+            {newContent.contentType !== "story" && (
               <div className="space-y-2">
                 <Label htmlFor="content">Контент</Label>
                 <div>
@@ -1544,7 +1544,7 @@ export default function ContentPage() {
               </div>
             )}
 
-            {newContent.contentType === "instagram-stories" && (
+            {newContent.contentType === "story" && (
               <div className="space-y-4">
                 <div className="p-6 border-2 border-dashed border-purple-300 bg-purple-50 rounded-lg text-center">
                   <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
