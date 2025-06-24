@@ -136,6 +136,14 @@ router.patch('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Логируем что получили в req.body
+    console.log('[DEV] [stories] 🎯 RECEIVED PATCH DATA:', { 
+      title, 
+      metadata: metadata,
+      hasMetadata: !!metadata,
+      metadataType: typeof metadata
+    });
+    
     // Извлекаем слайды из metadata
     const slides = metadata?.slides || [];
     console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { title, slidesCount: slides.length });

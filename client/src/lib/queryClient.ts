@@ -53,6 +53,16 @@ export async function apiRequest(
     userId,
     tokenPrefix: token ? token.substring(0, 10) + '...' : null
   });
+  
+  if (data && url.includes('stories')) {
+    console.log('🔥 📦 STORIES API REQUEST DATA:', {
+      title: data.title,
+      metadata: data.metadata,
+      metadataType: typeof data.metadata,
+      hasSlides: !!(data.metadata?.slides),
+      slidesCount: data.metadata?.slides?.length || 0
+    });
+  }
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 

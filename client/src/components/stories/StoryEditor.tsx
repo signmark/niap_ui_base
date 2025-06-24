@@ -321,7 +321,12 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   // Мутация для обновления Stories - копируем паттерн из content/index.tsx
   const updateContentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: any }) => {
-      console.log('Updating story with data:', data);
+      console.log('🔥 🎯 SENDING UPDATE REQUEST:', {
+        id,
+        title: data.title,
+        metadata: data.metadata,
+        slidesInMetadata: data.metadata?.slides?.length || 0
+      });
       return await apiRequest(`/api/stories/story/${id}`, { 
         method: 'PATCH',
         data: data 
