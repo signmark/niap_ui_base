@@ -56,7 +56,7 @@ interface StoryEditorProps {
   storyId?: string;
 }
 
-export default function StoryEditor({ campaignId, storyId: initialStoryId }: StoryEditorProps) {
+export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   console.log('🔥🔥🔥 StoryEditor INITIALIZED 🔥🔥🔥');
   console.log('🔥 Props - campaignId:', campaignId);
   console.log('🔥 Props - initialStoryId:', initialStoryId);
@@ -92,10 +92,10 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [pendingElementType, setPendingElementType] = useState<StoryElement['type'] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [storyId, setStoryId] = useState<string | null>(initialStoryId || null);
-  const [isEditMode, setIsEditMode] = useState(!!initialStoryId);
+  const [localStoryId, setLocalStoryId] = useState<string | null>(storyId || null);
+  const [isEditMode, setIsEditMode] = useState(!!storyId);
   
-  console.log('🔥 LOCAL STATE - storyId:', storyId, 'isEditMode:', isEditMode);
+  console.log('🔥 LOCAL STATE - localStoryId:', localStoryId, 'isEditMode:', isEditMode);
 
   // Загрузка существующей Stories
   const loadExistingStory = async (id: string) => {
@@ -180,16 +180,16 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   // Инициализация при монтировании  
   useEffect(() => {
     console.log('🔥🔥🔥 ===== STORY EDITOR INITIALIZATION ===== 🔥🔥🔥');
-    console.log('🔥 Props received - initialStoryId:', initialStoryId);
+    console.log('🔥 Props received - storyId:', storyId);
     console.log('🔥 Props received - campaignId:', campaignId);
     console.log('🔥 Current slides count:', slides.length);
     console.log('🔥 Current isEditMode:', isEditMode);
-    console.log('🔥 Current storyId state:', storyId);
+    console.log('🔥 Current localStoryId state:', localStoryId);
     console.log('🔥 URL at initialization:', window.location.href);
     
     // КРИТИЧНО: проверяем что у нас есть initialStoryId
     if (initialStoryId && initialStoryId.trim() !== '') {
-      console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', initialStoryId);
+      console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', storyId);
       console.log('🔥 Setting isEditMode to TRUE');
       setIsEditMode(true);
       setStoryId(initialStoryId);
