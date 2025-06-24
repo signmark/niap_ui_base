@@ -192,8 +192,8 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       // КРИТИЧНАЯ ПРОВЕРКА: используем initialStoryId напрямую если есть
       const currentStoryId = storyId || initialStoryId;
       
-      if ((isEditMode || initialStoryId) && currentStoryId) {
-        console.log('🔥 🎯 UPDATING EXISTING STORY:', currentStoryId);
+      if (initialStoryId && initialStoryId.trim() !== '') {
+        console.log('🔥 🎯 UPDATING EXISTING STORY:', initialStoryId);
         await updateStory();
         return;
       }
@@ -251,12 +251,12 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     
     setIsSaving(true);
     try {
-      console.log('🔥 🎯 PATCH REQUEST for story:', currentStoryId);
+      console.log('🔥 🎯 PATCH REQUEST for story:', initialStoryId);
       
       const token = localStorage.getItem('auth_token');
       console.log('🔥 PATCH request with token:', token ? 'PRESENT' : 'MISSING');
       
-      const response = await fetch(`/api/stories/story/${currentStoryId}`, {
+      const response = await fetch(`/api/stories/story/${initialStoryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
