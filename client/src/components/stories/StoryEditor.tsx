@@ -81,17 +81,29 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [storyId, setStoryId] = useState<string | null>(null);
+  const [storyId, setStoryId] = useState<string | null>(initialStoryId || null);
+  const [isEditMode, setIsEditMode] = useState(!!initialStoryId);
 
   // Инициализация при монтировании
   useEffect(() => {
     console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
     console.log('🔥 Current slides count:', slides.length);
-    initializeSlides(); // Всегда вызываем, store сам решит что делать
+    console.log('🔥 Story ID from props:', initialStoryId);
+    
+    if (initialStoryId) {
+      console.log('🔥 Edit mode - loading story:', initialStoryId);
+      setIsEditMode(true);
+      // Здесь можно загрузить данные Stories из API по ID
+    } else {
+      console.log('🔥 Create mode - initializing new story');
+      setIsEditMode(false);
+      initializeSlides();
+    }
+    
     return () => {
       console.log('💀 StoryEditor UNMOUNTING');
     };
-  }, [initializeSlides]);
+  }, [initialStoryId, initializeSlides]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -115,6 +127,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const saveStory = async () => {
     setIsSaving(true);
     try {
+      console.log('🔥 Saving story, edit mode:', isEditMode, 'storyId:', storyId);
+      
+      if (isEditMode && storyId) {
+        // Обновляем существующую историю
+        console.log('🔥 Updating existing story');
+        await updateStory();
+        return;
+      }
+      
+      // Создаем новую историю
+      console.log('🔥 Creating new story');
       const response = await fetch('/api/stories', {
         method: 'POST',
         headers: {
@@ -124,7 +147,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
         body: JSON.stringify({
           title: storyTitle,
           slides: slides,
-          campaignId: null
+          campaignId: campaignId
         })
       });
 
@@ -132,9 +155,10 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       
       if (result.success) {
         setStoryId(result.data.id);
+        setIsEditMode(true); // Переключаемся в режим редактирования
         toast({
-          title: "История сохранена!",
-          description: `История "${storyTitle}" успешно сохранена в базу данных.`,
+          title: "История создана!",
+          description: `История "${storyTitle}" успешно создана.`,
         });
       } else {
         throw new Error(result.error || 'Ошибка сохранения');
