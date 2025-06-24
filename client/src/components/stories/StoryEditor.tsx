@@ -91,14 +91,23 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     };
   }, [initializeSlides]);
 
-  // Отслеживание изменений slides из store
+  // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
     const count = slides[currentSlideIndex]?.elements?.length || 0;
     console.log('📊 Store slides updated, elements count:', count);
     if (count > 0) {
       console.log('🎯 Elements found in slide:', slides[currentSlideIndex]?.elements?.map(el => el.id));
     }
-  }, [slides, currentSlideIndex]);
+    
+    // Обновляем selectedElement если он изменился в store
+    if (selectedElement) {
+      const updatedElement = slides[currentSlideIndex]?.elements?.find(el => el.id === selectedElement.id);
+      if (updatedElement && JSON.stringify(updatedElement) !== JSON.stringify(selectedElement)) {
+        console.log('🔄 Updating selectedElement from store');
+        setSelectedElement(updatedElement);
+      }
+    }
+  }, [slides, currentSlideIndex, selectedElement?.id]);
 
   // Обертки для store actions
   const addSlide = storeAddSlide;
@@ -573,8 +582,17 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         value={selectedElement.content.text || ''}
                         onChange={(e) => {
                           console.log('🔤 Text changing to:', e.target.value);
+                          const newContent = { ...selectedElement.content, text: e.target.value };
+                          
+                          // Сначала обновляем локальный selectedElement
+                          setSelectedElement({
+                            ...selectedElement,
+                            content: newContent
+                          });
+                          
+                          // Затем обновляем в store
                           updateElement(selectedElement.id, {
-                            content: { ...selectedElement.content, text: e.target.value }
+                            content: newContent
                           });
                         }}
                         className="mt-1"
@@ -592,8 +610,15 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         value={[selectedElement.content.fontSize || 24]}
                         onValueChange={(value) => {
                           console.log('📏 Font size changing to:', value[0]);
+                          const newContent = { ...selectedElement.content, fontSize: value[0] };
+                          
+                          setSelectedElement({
+                            ...selectedElement,
+                            content: newContent
+                          });
+                          
                           updateElement(selectedElement.id, {
-                            content: { ...selectedElement.content, fontSize: value[0] }
+                            content: newContent
                           });
                         }}
                         className="mt-1"
@@ -607,8 +632,15 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         value={selectedElement.content.color || '#ffffff'}
                         onChange={(e) => {
                           console.log('🎨 Color changing to:', e.target.value);
+                          const newContent = { ...selectedElement.content, color: e.target.value };
+                          
+                          setSelectedElement({
+                            ...selectedElement,
+                            content: newContent
+                          });
+                          
                           updateElement(selectedElement.id, {
-                            content: { ...selectedElement.content, color: e.target.value }
+                            content: newContent
                           });
                         }}
                         className="mt-1 h-8"
