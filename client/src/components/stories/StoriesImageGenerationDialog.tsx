@@ -146,11 +146,7 @@ export function StoriesImageGenerationDialog({
 
   // Стабильная инициализация - выполняется только при первом монтировании
   useEffect(() => {
-    console.log("🔄 Инициализация StoriesImageGenerationDialog", { 
-      contentId, 
-      hasInitialPrompt: !!initialPrompt,
-      hasInitialContent: !!initialContent
-    });
+    // Инициализация диалога генерации изображений для Stories
     
     // Устанавливаем начальные значения
     setNegativePrompt("");
