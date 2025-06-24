@@ -136,6 +136,11 @@ router.patch('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // 🔥 ДОБАВЛЕНО ПРИНУДИТЕЛЬНОЕ ЛОГИРОВАНИЕ
+    console.log('🔥🔥🔥 PATCH REQUEST RECEIVED 🔥🔥🔥');
+    console.log('🔥 URL:', req.originalUrl);
+    console.log('🔥 BODY:', JSON.stringify(req.body, null, 2));
+    
     // Логируем что получили в req.body
     console.log('[DEV] [stories] 🎯 RECEIVED PATCH DATA:', { 
       title, 

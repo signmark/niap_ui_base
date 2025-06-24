@@ -148,7 +148,8 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
               
               console.log('🔥 Validated slides structure:', { 
                 firstSlideValidatedElements: validatedSlides[0]?.elements?.length,
-                firstElementContent: validatedSlides[0]?.elements?.[0]
+                firstElementContent: validatedSlides[0]?.elements?.[0],
+                allElementsPositions: validatedSlides[0]?.elements?.map(el => ({ id: el.id, position: el.position }))
               });
               
               loadStoryData({ slides: validatedSlides });
