@@ -2,20 +2,6 @@ import express from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { directusApi } from '../directus';
 
-// Функция получения admin токена
-async function getAdminToken() {
-  try {
-    const response = await directusApi.post('/auth/login', {
-      email: process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech',
-      password: process.env.DIRECTUS_ADMIN_PASSWORD || 'admin123'
-    });
-    return response.data.data.access_token;
-  } catch (error) {
-    console.error('Ошибка получения admin токена:', error);
-    throw error;
-  }
-}
-
 const router = express.Router();
 
 // Create a new story
@@ -152,11 +138,10 @@ router.put('/story/:id', authMiddleware, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    // Используем admin токен для обновления записи
-    const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || await getAdminToken();
+    // Используем токен пользователя для обновления записи
     const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
       headers: {
-        'Authorization': `Bearer ${adminToken}`
+        'Authorization': req.headers.authorization
       }
     });
     const story = updateResponse.data.data;
