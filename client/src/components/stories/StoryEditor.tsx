@@ -793,7 +793,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                       <Label htmlFor="text-content" className="text-sm">Текст</Label>
                       <Textarea
                         id="text-content"
-                        value={selectedElement.content.text || ''}
+                        value={storeSelectedElement.content?.text || ''}
                         onChange={(e) => {
                           console.log('🔤 Text changing to:', e.target.value);
                           const newContent = { ...selectedElement.content, text: e.target.value };
@@ -827,7 +827,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                         min={12}
                         max={48}
                         step={2}
-                        value={[selectedElement.content.fontSize || 24]}
+                        value={[storeSelectedElement.content?.fontSize || 24]}
                         onValueChange={(value) => {
                           console.log('📏 Font size changing to:', value[0]);
                           const newContent = { ...selectedElement.content, fontSize: value[0] };
@@ -849,7 +849,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                       <Input
                         id="text-color"
                         type="color"
-                        value={selectedElement.content.color || '#ffffff'}
+                        value={storeSelectedElement.content?.color || '#ffffff'}
                         onChange={(e) => {
                           console.log('🎨 Color changing to:', e.target.value);
                           const newContent = { ...selectedElement.content, color: e.target.value };
@@ -869,15 +869,15 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                   </div>
                 )}
                 
-                {selectedElement.type === 'image' && (
+                {storeSelectedElement.type === 'image' && (
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="image-url" className="text-sm">URL изображения</Label>
                       <Input
                         id="image-url"
-                        value={selectedElement.content.url || ''}
-                        onChange={(e) => updateElement(selectedElement.id, {
-                          content: { ...selectedElement.content, url: e.target.value }
+                        value={storeSelectedElement.content?.url || ''}
+                        onChange={(e) => updateElement(storeSelectedElement.id, {
+                          content: { ...storeSelectedElement.content, url: e.target.value }
                         })}
                         placeholder="https://example.com/image.jpg"
                         className="mt-1"
@@ -890,15 +890,15 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                   </div>
                 )}
                 
-                {selectedElement.type === 'poll' && (
+                {storeSelectedElement.type === 'poll' && (
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="poll-question" className="text-sm">Вопрос</Label>
                       <Input
                         id="poll-question"
-                        value={selectedElement.content.question || ''}
-                        onChange={(e) => updateElement(selectedElement.id, {
-                          content: { ...selectedElement.content, question: e.target.value }
+                        value={storeSelectedElement.content?.question || ''}
+                        onChange={(e) => updateElement(storeSelectedElement.id, {
+                          content: { ...storeSelectedElement.content, question: e.target.value }
                         })}
                         onFocus={(e) => {
                           // Выделяем весь текст при фокусе, если это дефолтный вопрос
@@ -927,15 +927,15 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                           Добавить
                         </Button>
                       </div>
-                      {(selectedElement.content.options || ['Вариант 1', 'Вариант 2']).map((option: string, index: number) => (
+                      {(storeSelectedElement.content?.options || ['Вариант 1', 'Вариант 2']).map((option: string, index: number) => (
                         <div key={index} className="flex gap-2 mt-1">
                           <Input
                             value={option}
                             onChange={(e) => {
-                              const newOptions = [...(selectedElement.content.options || [])];
+                              const newOptions = [...(storeSelectedElement.content?.options || [])];
                               newOptions[index] = e.target.value;
-                              updateElement(selectedElement.id, {
-                                content: { ...selectedElement.content, options: newOptions }
+                              updateElement(storeSelectedElement.id, {
+                                content: { ...storeSelectedElement.content, options: newOptions }
                               });
                             }}
                             onFocus={(e) => {
@@ -947,14 +947,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                             placeholder={`Вариант ${index + 1}`}
                             className="flex-1"
                           />
-                          {(selectedElement.content.options || []).length > 2 && (
+                          {(storeSelectedElement.content?.options || []).length > 2 && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                const newOptions = (selectedElement.content.options || []).filter((_, i) => i !== index);
-                                updateElement(selectedElement.id, {
-                                  content: { ...selectedElement.content, options: newOptions }
+                                const newOptions = (storeSelectedElement.content?.options || []).filter((_, i) => i !== index);
+                                updateElement(storeSelectedElement.id, {
+                                  content: { ...storeSelectedElement.content, options: newOptions }
                                 });
                               }}
                             >
@@ -1059,10 +1059,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
           setShowElementDialog(false);
           setSelectedElement(null);
         }}
-        element={selectedElement}
+        element={storeSelectedElement}
         onSave={(elementData) => {
-          if (selectedElement) {
-            updateElement(selectedElement.id, elementData);
+          if (storeSelectedElement) {
+            updateElement(storeSelectedElement.id, elementData);
           }
           setShowElementDialog(false);
           setSelectedElement(null);
