@@ -4,6 +4,46 @@ import { directusApi } from '../directus';
 
 const router = express.Router();
 
+// Create a new story
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { title, campaignId, slides } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
+
+    // Create story content in campaign_content collection
+    const storyData = {
+      campaign_id: campaignId,
+      user_id: userId,
+      title: title || 'Новая история',
+      content_type: 'story',
+      status: 'draft',
+      content: '', // Empty content for stories
+      metadata: JSON.stringify({ 
+        slides: slides || [],
+        storyType: 'instagram',
+        format: '9:16'
+      }),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const createResponse = await directusApi.post('/items/campaign_content', storyData);
+    const story = createResponse.data.data;
+
+    console.log('[DEV] [stories] Story created with ID:', story.id);
+    res.json({ success: true, data: story });
+  } catch (error) {
+    console.error('Error creating story:', error);
+    res.status(500).json({ error: 'Failed to create story' });
+  }
+});
+
 // Get all stories for user
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -92,7 +132,8 @@ router.put('/story/:id', authMiddleware, async (req, res) => {
       metadata: JSON.stringify({ 
         slides: slides || [],
         storyType: 'instagram',
-        format: '9:16'
+        format: '9:16',
+        version: '1.0'
       }),
       updated_at: new Date().toISOString()
     };
