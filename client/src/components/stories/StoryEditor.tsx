@@ -404,7 +404,13 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                             color: element.content.color || '#ffffff',
                             fontWeight: element.content.fontWeight || 'bold'
                           }}
-                          className="px-2 py-1 border-2 border-transparent group-hover:border-white/50 rounded"
+                          className="px-2 py-1 border-2 border-transparent group-hover:border-white/50 rounded cursor-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedElement(element);
+                            setShowElementDialog(true);
+                          }}
+                          title="Нажмите для редактирования текста"
                         >
                           {element.content.text || 'Новый текст'}
                         </div>
