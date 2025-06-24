@@ -120,6 +120,7 @@ Environment-specific settings managed through:
 - June 24, 2025. SUCCESS VERIFIED: Stories duplication issue completely resolved - system now correctly uses PATCH requests to update existing Stories instead of creating duplicates
 - June 24, 2025. DEBUGGING ELEMENTS POSITION: Added comprehensive logging and validation for Stories elements structure to prevent undefined elements after save/reload operations
 - June 24, 2025. SERVER RESTART: Restarted application workflow to ensure updated PATCH request logging and metadata parsing is active
+- June 24, 2025. ELEMENTS POSITION FIX COMPLETED: Fixed validation logic that was overwriting existing element positions with default values, Stories elements now preserve their positions after save/reload
 
 ## User Preferences
 
@@ -128,6 +129,8 @@ Preferred communication style: Simple, everyday language.
 ### Technical Notes
 - **Stories API Authentication**: Always use user token (req.headers.authorization) for Directus API calls, never use admin token. User tokens work constantly in the system and have proper permissions for campaign_content collection.
 - **Database Storage**: All Stories data should be stored in campaign_content.metadata field as JSON, not in separate fields.
+- **Stories Elements Validation**: When validating loaded elements, preserve existing position data instead of overwriting with default values. Check for undefined x/y coordinates before applying defaults.
+- **Stories PATCH Operations**: System correctly uses PATCH requests to update existing Stories instead of creating duplicates. Edit mode is detected via URL pathname containing "/edit".
 - **Database**: System does not use PostgreSQL - uses Directus as primary database/CMS with external hosted instance.
 - **Testing**: For API testing only, can use DIRECTUS_TOKEN environment variable for direct Directus access.
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
