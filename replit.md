@@ -127,6 +127,7 @@ Environment-specific settings managed through:
 - June 24, 2025. VARIABLE CONFLICT RESOLVED: Fixed duplicate selectedElement declaration by renaming store variable to storeSelectedElement, corrected JSX syntax errors, updated all references to use proper store functions
 - June 24, 2025. COMPLETE VARIABLE FIXES: Fixed all remaining selectedElement references throughout StoryEditor.tsx, replaced with storeSelectedElement and setStoreSelectedElement, corrected optional chaining for content properties
 - June 24, 2025. FINAL selectedElement FIX: Completely eliminated all selectedElement references from StoryEditor.tsx, removed all duplicate state management, simplified update logic to use only storeSelectedElement from global store
+- June 24, 2025. CRITICAL IMPORT FIXES: Fixed Dialog component import in StoriesImageGenerationDialog, added missing DialogContent and DialogHeader imports, resolved isAutoSaving undefined error
 
 ## User Preferences
 
