@@ -143,7 +143,7 @@ export function StoriesImageGenerationDialog({
     loadModels();
   }, []);
 
-  // Инициализация состояния при открытии диалога
+  // Стабильная инициализация без мерцания
   useEffect(() => {
     if (isOpen) {
       console.log("🎬 Инициализация StoriesImageGenerationDialog:", {
@@ -153,29 +153,31 @@ export function StoriesImageGenerationDialog({
         initialContent
       });
       
-      // Сбрасываем состояние при открытии
-      setGeneratedImages([]);
-      setSelectedImageIndex(-1);
-      setGeneratedPrompt("");
+      // Только при первом открытии сбрасываем состояние
+      if (generatedImages.length === 0) {
+        setGeneratedImages([]);
+        setSelectedImageIndex(-1);
+        setGeneratedPrompt("");
+      }
       
       // Устанавливаем начальные значения если переданы
-      if (initialPrompt) {
+      if (initialPrompt && !prompt) {
         setPrompt(initialPrompt);
       }
-      if (initialContent) {
+      if (initialContent && !content) {
         setContent(initialContent);
       }
       
-      // Базовые настройки
-      setNegativePrompt("");
-      setImageSize("1024x1024");
-      setPlatform("instagram");
-      setModelType("schnell");
-      setStylePreset("photographic");
-      setNumImages(3);
+      // Базовые настройки только при первом открытии
+      if (!negativePrompt) setNegativePrompt("");
+      if (!imageSize) setImageSize("1024x1024");
+      if (!platform) setPlatform("instagram");
+      if (!modelType) setModelType("schnell");
+      if (!stylePreset) setStylePreset("photographic");
+      if (!numImages) setNumImages(3);
       setSavePrompt(true);
     }
-  }, [isOpen, contentId, campaignId, initialPrompt, initialContent]);
+  }, [isOpen]);
 
   // Функция для очистки HTML-тегов из текста
   const stripHtml = (html: string): string => {
@@ -257,16 +259,25 @@ export function StoriesImageGenerationDialog({
     onSuccess: (promptText) => {
       console.log("🤖 Промт успешно сгенерирован:", promptText);
       
-      // КРИТИЧНО: Устанавливаем промт в основное поле
+      // КРИТИЧНО: Немедленно устанавливаем промт в поле
       setPrompt(promptText);
       setGeneratedPrompt(promptText);
       
-      // Переключаемся на вкладку с промтом
+      // Переключаемся на вкладку с промтом для показа результата
       setActiveTab("prompt");
+      
+      // Принудительное обновление поля промта
+      setTimeout(() => {
+        const promptInput = document.querySelector('textarea[placeholder*="Опишите"]') as HTMLTextAreaElement;
+        if (promptInput) {
+          promptInput.value = promptText;
+          promptInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, 100);
       
       toast({
         title: "Промт готов",
-        description: "Можете отредактировать и сгенерировать изображение"
+        description: "Теперь нажмите 'Сгенерировать изображение'"
       });
     },
     onError: (error: unknown) => {
@@ -288,9 +299,18 @@ export function StoriesImageGenerationDialog({
         throw new Error('Промт не может быть пустым');
       }
 
+      // Получаем токен авторизации
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему заново.");
+      }
+
       const response = await fetch('/api/generate-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           prompt: prompt.trim(),
           negative_prompt: negativePrompt || undefined,
@@ -305,7 +325,20 @@ export function StoriesImageGenerationDialog({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error("🚨 Ошибка ответа сервера:", response.status, errorText);
+        
+        if (response.status === 401) {
+          throw new Error("Не авторизован. Пожалуйста, войдите в систему заново.");
+        }
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          throw new Error(`Ошибка сервера (${response.status}): ${errorText}`);
+        }
+        
         throw new Error(errorData.error || 'Ошибка при генерации изображения');
       }
 
@@ -329,20 +362,20 @@ export function StoriesImageGenerationDialog({
       const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
       console.error("🚨 Ошибка при генерации изображения:", error);
       
-      // Дополнительная информация для отладки
-      console.error("🚨 Параметры запроса:", {
-        prompt: prompt?.substring(0, 50),
-        campaignId: safeCampaignId,
-        contentId: safeContentId,
-        modelType,
-        imageSize
-      });
-      
-      toast({
-        variant: "destructive",
-        title: "Ошибка генерации изображения",
-        description: errorMessage || "Произошла ошибка при генерации изображения"
-      });
+      // Проверяем авторизацию
+      if (errorMessage.includes("авторизован") || errorMessage.includes("токен")) {
+        toast({
+          variant: "destructive",
+          title: "Ошибка авторизации",
+          description: "Пожалуйста, войдите в систему заново"
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Ошибка генерации изображения",
+          description: errorMessage
+        });
+      }
     }
   });
 
