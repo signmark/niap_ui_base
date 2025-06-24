@@ -124,3 +124,4 @@ Preferred communication style: Simple, everyday language.
 - **Database**: System does not use PostgreSQL - uses Directus as primary database/CMS with external hosted instance.
 - **Testing**: For API testing only, can use DIRECTUS_TOKEN environment variable for direct Directus access.
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
+- **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.

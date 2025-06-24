@@ -1369,7 +1369,6 @@ export default function ContentPage() {
                                   {/* Text content */}
                                   <div className="flex-1">
                                     {content.contentType === 'story' && content.metadata ? (
-                                      /* Stories preview */
                                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-2">
                                         <div className="flex items-center gap-2 mb-2">
                                           <Layers className="h-4 w-4 text-purple-600" />
@@ -1396,7 +1395,6 @@ export default function ContentPage() {
                                         })()}
                                       </div>
                                     ) : (
-                                      /* Regular content preview */
                                       <div className="max-h-14 overflow-hidden relative card-content mb-2">
                                         <div 
                                           className="prose prose-sm max-w-none text-xs"
@@ -2667,7 +2665,6 @@ export default function ContentPage() {
                 </div>
               </div>
             ) : (
-              /* Regular Content Preview */
               <div>
                 {/* Тип контента */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
@@ -2698,7 +2695,6 @@ export default function ContentPage() {
               </div>
             )}
 
-            {/* Медиа-контент для обычного контента */}
             {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
@@ -2713,7 +2709,6 @@ export default function ContentPage() {
               </div>
             )}
             
-            {/* Дополнительные изображения */}
             {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && 
              Array.isArray(previewContent?.additionalImages) && 
              previewContent.additionalImages.filter(url => url && url.trim() !== '').length > 0 && (
