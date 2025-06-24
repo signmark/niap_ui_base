@@ -54,8 +54,8 @@ interface StoryEditorProps {
   storyId?: string;
 }
 
-export default function StoryEditor({ campaignId }: StoryEditorProps) {
-  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId);
+export default function StoryEditor({ campaignId, storyId: initialStoryId }: StoryEditorProps) {
+  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId, 'storyId:', initialStoryId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
