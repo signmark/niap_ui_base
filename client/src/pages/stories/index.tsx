@@ -5,14 +5,17 @@ import { useCampaignStore } from "@/lib/campaignStore";
 
 export default function StoriesPage() {
   const params = useParams();
-  console.log('🌟 Stories page params:', params);
+  console.log('🌟 ALL PARAMS RECEIVED:', params);
   
   const { campaignId, storyId } = params;
   const selectedCampaign = useCampaignStore((state) => state.selectedCampaign);
   
+  // КРИТИЧНО: Логирование для отладки
+  console.log('🌟 EXTRACTED storyId:', storyId);
+  console.log('🌟 EXTRACTED campaignId:', campaignId);
+  
   // Стабилизируем campaignId с приоритетом URL параметру
   const activeCampaignId = useMemo(() => {
-    // URL параметр имеет приоритет и НЕ должен перезаписываться
     if (campaignId) {
       console.log('🌟 Using campaignId from URL:', campaignId);
       return campaignId;
@@ -21,9 +24,9 @@ export default function StoriesPage() {
     const storeId = selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
     console.log('🌟 Using campaignId from store:', storeId);
     return storeId;
-  }, [campaignId]); // Убираем selectedCampaign?.id из зависимостей!
+  }, [campaignId]);
 
-  console.log('🌟 Stories page - storyId from URL:', storyId);
+  console.log('🌟 FINAL PROPS TO EDITOR:', { storyId, activeCampaignId });
 
   return (
     <div className="min-h-screen">

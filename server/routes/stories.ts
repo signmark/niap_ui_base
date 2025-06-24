@@ -125,7 +125,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Update story - SPECIFIC ROUTE FOR STORIES ONLY
+// Update story - SPECIFIC ROUTE FOR STORIES ONLY  
 router.patch('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -136,7 +136,7 @@ router.patch('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] Updating story:', id, { title, slidesCount: slides?.length });
+    console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { title, slidesCount: slides?.length });
 
     const updateData = {
       title: title || 'Новая история',

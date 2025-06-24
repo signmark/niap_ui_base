@@ -123,17 +123,20 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
 
   // Инициализация при монтировании
   useEffect(() => {
-    console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
+    console.log('🔥 ===== STORY EDITOR INITIALIZATION =====');
+    console.log('🔥 Props received - initialStoryId:', initialStoryId);
+    console.log('🔥 Props received - campaignId:', campaignId);
     console.log('🔥 Current slides count:', slides.length);
-    console.log('🔥 Story ID from props:', initialStoryId);
+    console.log('🔥 Current isEditMode:', isEditMode);
+    console.log('🔥 Current storyId state:', storyId);
     
-    if (initialStoryId) {
-      console.log('🔥 Edit mode - loading story:', initialStoryId);
+    if (initialStoryId && initialStoryId.trim()) {
+      console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', initialStoryId);
       setIsEditMode(true);
       setStoryId(initialStoryId);
       loadExistingStory(initialStoryId);
     } else {
-      console.log('🔥 Create mode - initializing new story');
+      console.log('🔥 ➕ CREATE MODE DETECTED - no storyId');
       setIsEditMode(false);
       setStoryId(null);
       initializeSlides();
@@ -142,7 +145,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     return () => {
       console.log('💀 StoryEditor UNMOUNTING');
     };
-  }, [initialStoryId, initializeSlides]);
+  }, [initialStoryId]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -166,17 +169,22 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const saveStory = async () => {
     setIsSaving(true);
     try {
-      console.log('🔥 Saving story, edit mode:', isEditMode, 'storyId:', storyId);
+      console.log('🔥 ===== SAVE STORY CALLED =====');
+      console.log('🔥 isEditMode:', isEditMode);
+      console.log('🔥 storyId:', storyId);
+      console.log('🔥 initialStoryId:', initialStoryId);
       
-      if (isEditMode && storyId) {
-        // Обновляем существующую историю
-        console.log('🔥 Updating existing story');
+      // КРИТИЧНАЯ ПРОВЕРКА: используем initialStoryId напрямую если есть
+      const currentStoryId = storyId || initialStoryId;
+      
+      if ((isEditMode || initialStoryId) && currentStoryId) {
+        console.log('🔥 🎯 UPDATING EXISTING STORY:', currentStoryId);
         await updateStory();
         return;
       }
       
       // Создаем новую историю
-      console.log('🔥 Creating new story');
+      console.log('🔥 ➕ CREATING NEW STORY');
       const response = await fetch('/api/stories', {
         method: 'POST',
         headers: {
@@ -216,16 +224,18 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
 
   // Функция обновления истории
   const updateStory = async () => {
-    if (!storyId) {
-      console.error('🔥 No storyId for update');
+    const currentStoryId = storyId || initialStoryId;
+    
+    if (!currentStoryId) {
+      console.error('🔥 ❌ No storyId for update');
       return;
     }
     
     setIsSaving(true);
     try {
-      console.log('🔥 Updating story with PATCH, storyId:', storyId);
+      console.log('🔥 🎯 PATCH REQUEST for story:', currentStoryId);
       
-      const response = await fetch(`/api/stories/story/${storyId}`, {
+      const response = await fetch(`/api/stories/story/${currentStoryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
