@@ -315,6 +315,9 @@ export function ImageGenerationDialog({
       // Автоматически устанавливаем промт и в поле произвольного запроса
       setPrompt(promptText);
       
+      // Переключаемся на вкладку промпта, чтобы пользователь видел результат
+      setActiveTab("prompt");
+      
       toast({
         title: "Успешно",
         description: "Промт сгенерирован на основе текста"
