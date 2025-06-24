@@ -114,6 +114,7 @@ Environment-specific settings managed through:
 ## Changelog
 - June 24, 2025. Initial setup
 - June 24, 2025. Implemented Instagram Stories Preview with visual interface replacing technical metadata display
+- June 24, 2025. CRITICAL FIX: Stories duplication issue resolved - system now properly detects edit mode via URL pathname and initialStoryId, prevents creating new Stories when updating existing ones
 
 ## User Preferences
 

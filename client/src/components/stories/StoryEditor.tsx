@@ -215,13 +215,19 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   });
 
   const saveStory = async () => {
-    if (initialStoryId && initialStoryId.trim() !== '') {
-      console.log('UPDATING EXISTING STORY:', initialStoryId);
-      await updateStory();
+    console.log('🔥 SAVE STORY CALLED - initialStoryId:', initialStoryId);
+    console.log('🔥 URL pathname:', window.location.pathname);
+    
+    // КРИТИЧНАЯ ПРОВЕРКА: если в URL есть /edit и initialStoryId - ОБЯЗАТЕЛЬНО обновляем
+    const isEditMode = initialStoryId && initialStoryId.trim() !== '' && window.location.pathname.includes('/edit');
+    
+    if (isEditMode) {
+      console.log('🔥 ✅ EDIT MODE DETECTED - UPDATING STORY:', initialStoryId);
+      updateStory();
       return;
     }
     
-    console.log('CREATING NEW STORY');
+    console.log('🔥 ➕ CREATE MODE - CREATING NEW STORY');
     const storyData = {
       campaign_id: campaignId,
       title: storyTitle,
@@ -265,11 +271,13 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   });
 
   // Функция обновления истории
-  const updateStory = async () => {
+  const updateStory = () => {
     if (!initialStoryId) {
-      console.error('No storyId for update');
+      console.error('❌ No initialStoryId for update');
       return;
     }
+    
+    console.log('🔥 EXECUTING UPDATE for story:', initialStoryId);
     
     const updateData = {
       title: storyTitle,
