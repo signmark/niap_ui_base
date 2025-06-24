@@ -129,15 +129,14 @@ export function StoriesImageGenerationDialog({
   useEffect(() => {
     const loadModels = async () => {
       try {
-        const response = await fetch('/api/api/fal-ai-models');
-        if (response.ok) {
-          const models = await response.json();
-          setAvailableModels(models);
-        } else {
-          setAvailableModels(FAL_AI_MODELS);
+        const response = await fetch('/api/fal/models');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
+        const data = await response.json();
+        setAvailableModels(data.models || FAL_AI_MODELS);
       } catch (error) {
-        console.error('Ошибка при загрузке моделей:', error);
+        // Устанавливаем дефолтные модели если API недоступен
         setAvailableModels(FAL_AI_MODELS);
       }
     };

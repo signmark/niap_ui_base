@@ -179,15 +179,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     }
   }, []); // БЕЗ зависимостей для предотвращения перемонтирования
 
-  // Отслеживание изменений slides из store и обновление selectedElement
+  // Отслеживание изменений slides из store
   useEffect(() => {
-    const count = slides[currentSlideIndex]?.elements?.length || 0;
-    console.log('📊 Store slides updated, elements count:', count);
-    if (count > 0) {
-      const elements = slides[currentSlideIndex]?.elements || [];
-      console.log('🎯 Elements found in slide:', elements.map(el => el?.id));
-      console.log('🎯 Elements positions:', elements.map(el => ({ id: el?.id, position: el?.position })));
-    }
+    const elements = slides[currentSlideIndex]?.elements || [];
     
     // Обновляем selectedElement если он изменился в store
     if (selectedElement) {
@@ -234,30 +228,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   const saveStory = async () => {
     
-    // КРИТИЧНАЯ ПРОВЕРКА: определяем режим на основе URL и наличия storyId
-    const hasEditInUrl = window.location.pathname.includes('/edit');
-    const hasStoryIdValue = storyId && storyId.trim() !== '';
-    const currentEditMode = hasEditInUrl && hasStoryIdValue;
+    // СТАБИЛЬНОЕ определение режима редактирования
+    const urlPath = window.location.pathname;
+    const isEditMode = urlPath.includes('/edit') && (storyId || urlPath.split('/')[2]);
+    const actualStoryId = storyId || urlPath.split('/')[2];
     
-    // АЛЬТЕРНАТИВНАЯ ПРОВЕРКА: если в URL есть /stories/:id/edit - это точно режим редактирования
-    const urlParts = window.location.pathname.split('/');
-    const isStoriesEditRoute = urlParts.length >= 3 && urlParts[1] === 'stories' && urlParts[3] === 'edit';
-    const urlStoryId = isStoriesEditRoute ? urlParts[2] : null;
-    
-    console.log('🔥 hasEditInUrl:', hasEditInUrl);
-    console.log('🔥 hasStoryIdValue:', hasStoryIdValue);
-    console.log('🔥 currentEditMode:', currentEditMode);
-    console.log('🔥 isStoriesEditRoute:', isStoriesEditRoute);
-    console.log('🔥 urlStoryId:', urlStoryId);
-    
-    // ИСПРАВЛЕННАЯ ЛОГИКА: используем URL или переданный ID
-    const actualStoryId = initialStoryId || urlStoryId;
-    const shouldUpdate = (currentEditMode || isStoriesEditRoute) && actualStoryId;
-    
-    console.log('🔥 actualStoryId:', actualStoryId);
-    console.log('🔥 shouldUpdate:', shouldUpdate);
-    
-    if (shouldUpdate) {
+    if (isEditMode && actualStoryId) {
       console.log('🔥 ✅ EDIT MODE CONFIRMED - UPDATING STORY:', actualStoryId);
       console.log('🔥 Calling updateStory function...');
       
