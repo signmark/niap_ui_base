@@ -595,6 +595,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                             content: newContent
                           });
                         }}
+                        onFocus={(e) => {
+                          // Выделяем весь текст при фокусе, если это дефолтный текст
+                          if (e.target.value === 'Новый текст') {
+                            e.target.select();
+                          }
+                        }}
                         className="mt-1"
                         rows={3}
                         placeholder="Введите текст..."
@@ -680,6 +686,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         onChange={(e) => updateElement(selectedElement.id, {
                           content: { ...selectedElement.content, question: e.target.value }
                         })}
+                        onFocus={(e) => {
+                          // Выделяем весь текст при фокусе, если это дефолтный вопрос
+                          if (e.target.value === 'Ваш вопрос?' || e.target.value === 'Вопрос викторины?') {
+                            e.target.select();
+                          }
+                        }}
                         className="mt-1"
                       />
                     </div>
@@ -711,6 +723,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                               updateElement(selectedElement.id, {
                                 content: { ...selectedElement.content, options: newOptions }
                               });
+                            }}
+                            onFocus={(e) => {
+                              // Выделяем весь текст при фокусе, если это дефолтный вариант
+                              if (option.startsWith('Вариант ')) {
+                                e.target.select();
+                              }
                             }}
                             placeholder={`Вариант ${index + 1}`}
                             className="flex-1"
