@@ -190,7 +190,7 @@ export class PublishScheduler {
 
         // Обрабатываем каждый контент для определения неопубликованных платформ
         for (const content of allContent) {
-          log(`Планировщик: Обрабатываем контент ${content.id} (статус: ${content.status})`, 'scheduler');
+          // Убрано избыточное логирование каждого элемента контента
           processedCount++;
           
           // Получаем данные платформ
@@ -283,7 +283,7 @@ export class PublishScheduler {
             await this.publishContentToPlatforms(content, readyPlatforms, authToken);
             publishedCount++;
           } else {
-            log(`Планировщик: Контент ${content.id} - нет платформ готовых к публикации в данный момент`, 'scheduler');
+            // Убрано избыточное логирование - контент не готов к публикации
           }
         }
 
