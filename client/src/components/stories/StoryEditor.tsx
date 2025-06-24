@@ -56,9 +56,13 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId, storyId: initialStoryId }: StoryEditorProps) {
-  console.log('🔥 StoryEditor INITIALIZED with:', { campaignId, initialStoryId });
+  console.log('🔥🔥🔥 StoryEditor INITIALIZED 🔥🔥🔥');
+  console.log('🔥 Props - campaignId:', campaignId);
+  console.log('🔥 Props - initialStoryId:', initialStoryId);
   console.log('🔥 Current URL:', window.location.href);
   console.log('🔥 URL pathname:', window.location.pathname);
+  console.log('🔥 initialStoryId type:', typeof initialStoryId);
+  console.log('🔥 initialStoryId truthy:', !!initialStoryId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -141,22 +145,32 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     }
   };
 
-  // Инициализация при монтировании
+  // Инициализация при монтировании  
   useEffect(() => {
-    console.log('🔥 ===== STORY EDITOR INITIALIZATION =====');
+    console.log('🔥🔥🔥 ===== STORY EDITOR INITIALIZATION ===== 🔥🔥🔥');
     console.log('🔥 Props received - initialStoryId:', initialStoryId);
     console.log('🔥 Props received - campaignId:', campaignId);
     console.log('🔥 Current slides count:', slides.length);
     console.log('🔥 Current isEditMode:', isEditMode);
     console.log('🔥 Current storyId state:', storyId);
+    console.log('🔥 URL at initialization:', window.location.href);
     
-    if (initialStoryId && initialStoryId.trim()) {
+    // КРИТИЧНО: проверяем что у нас есть initialStoryId
+    if (initialStoryId && initialStoryId.trim() !== '') {
       console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', initialStoryId);
+      console.log('🔥 Setting isEditMode to TRUE');
       setIsEditMode(true);
       setStoryId(initialStoryId);
+      console.log('🔥 Loading existing story data...');
       loadExistingStory(initialStoryId);
     } else {
-      console.log('🔥 ➕ CREATE MODE DETECTED - no storyId');
+      console.log('🔥 ❌ NO INITIAL STORY ID - CREATE MODE');
+      console.log('🔥 initialStoryId value check:', {
+        value: initialStoryId,
+        type: typeof initialStoryId,
+        length: initialStoryId ? initialStoryId.length : 'N/A',
+        trimmed: initialStoryId ? initialStoryId.trim() : 'N/A'
+      });
       setIsEditMode(false);
       setStoryId(null);
       initializeSlides();
