@@ -837,7 +837,10 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
                   variant="outline" 
                   size="sm" 
                   className="w-full justify-start"
-                  onClick={() => addElement('ai-image')}
+                  onClick={() => {
+                    setPendingElementType('image');
+                    setShowImageDialog(true);
+                  }}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   AI фото
