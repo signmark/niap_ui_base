@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
+import { ImageGenerationDialog } from '@/components/ImageGenerationDialog';
 import { useStoryStore } from '@/lib/storyStore';
 
 // Local interfaces for component
@@ -88,6 +89,8 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [pendingElementType, setPendingElementType] = useState<StoryElement['type'] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(initialStoryId || null);
   const [isEditMode, setIsEditMode] = useState(!!initialStoryId);
@@ -476,6 +479,15 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const addElement = useCallback((elementType: StoryElement['type']) => {
     console.log('🔧 Adding element type:', elementType, 'to slide:', currentSlideIndex);
     
+    // Для изображений открываем диалог генерации
+    if (elementType === 'image' || elementType === 'ai-image') {
+      setPendingElementType('image'); // Всегда сохраняем как 'image'
+      setShowImageDialog(true);
+      console.log('🎨 Opening image generation dialog for Stories element');
+      return;
+    }
+    
+    // Для остальных типов добавляем сразу
     const newElement = storeAddElement(elementType);
     
     toast({
@@ -494,6 +506,27 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       default: return 'Элемент';
     }
   };
+
+  // Обработчик для добавления сгенерированного изображения
+  const handleImageGenerated = useCallback((imageUrl: string) => {
+    if (!pendingElementType) return;
+    
+    console.log('🎨 Adding generated image to Stories:', imageUrl);
+    
+    // Добавляем элемент изображения с сгенерированным URL
+    const newElement = storeAddElement('image', {
+      content: { url: imageUrl, alt: 'Сгенерированное изображение' }
+    });
+    
+    // Закрываем диалог и сбрасываем состояние
+    setShowImageDialog(false);
+    setPendingElementType(null);
+    
+    toast({
+      title: 'Изображение добавлено',
+      description: 'AI изображение успешно добавлено в Stories'
+    });
+  }, [pendingElementType, storeAddElement, toast]);
 
   const handleDeleteElement = (elementId: string) => {
     deleteElement(elementId);
