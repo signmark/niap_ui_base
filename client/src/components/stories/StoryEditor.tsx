@@ -56,7 +56,9 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId, storyId: initialStoryId }: StoryEditorProps) {
-  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId, 'storyId:', initialStoryId);
+  console.log('🔥 StoryEditor INITIALIZED with:', { campaignId, initialStoryId });
+  console.log('🔥 Current URL:', window.location.href);
+  console.log('🔥 URL pathname:', window.location.pathname);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -215,14 +217,26 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   });
 
   const saveStory = async () => {
-    console.log('🔥 SAVE STORY CALLED - initialStoryId:', initialStoryId);
+    console.log('🔥🔥🔥 SAVE STORY CALLED 🔥🔥🔥');
+    console.log('🔥 initialStoryId:', initialStoryId);
     console.log('🔥 URL pathname:', window.location.pathname);
+    console.log('🔥 URL href:', window.location.href);
+    console.log('🔥 campaignId:', campaignId);
+    console.log('🔥 storyTitle:', storyTitle);
+    console.log('🔥 slides count:', slides.length);
     
     // КРИТИЧНАЯ ПРОВЕРКА: если в URL есть /edit и initialStoryId - ОБЯЗАТЕЛЬНО обновляем
-    const isEditMode = initialStoryId && initialStoryId.trim() !== '' && window.location.pathname.includes('/edit');
+    const hasEditInUrl = window.location.pathname.includes('/edit');
+    const hasStoryId = initialStoryId && initialStoryId.trim() !== '';
+    const isEditMode = hasEditInUrl && hasStoryId;
+    
+    console.log('🔥 hasEditInUrl:', hasEditInUrl);
+    console.log('🔥 hasStoryId:', hasStoryId);
+    console.log('🔥 isEditMode:', isEditMode);
     
     if (isEditMode) {
-      console.log('🔥 ✅ EDIT MODE DETECTED - UPDATING STORY:', initialStoryId);
+      console.log('🔥 ✅ EDIT MODE CONFIRMED - UPDATING STORY:', initialStoryId);
+      console.log('🔥 Calling updateStory function...');
       updateStory();
       return;
     }
@@ -272,12 +286,23 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
 
   // Функция обновления истории
   const updateStory = () => {
+    console.log('🔥🔥🔥 UPDATE STORY FUNCTION CALLED 🔥🔥🔥');
+    console.log('🔥 initialStoryId available?', !!initialStoryId);
+    console.log('🔥 initialStoryId value:', initialStoryId);
+    
     if (!initialStoryId) {
-      console.error('❌ No initialStoryId for update');
+      console.error('❌ CRITICAL ERROR: No initialStoryId for update');
+      toast({
+        title: "Ошибка обновления",
+        description: "Не удается определить ID истории для обновления",
+        variant: "destructive"
+      });
       return;
     }
     
     console.log('🔥 EXECUTING UPDATE for story:', initialStoryId);
+    console.log('🔥 Update data - title:', storyTitle);
+    console.log('🔥 Update data - slides count:', slides.length);
     
     const updateData = {
       title: storyTitle,
@@ -287,6 +312,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       }
     };
     
+    console.log('🔥 Calling updateContentMutation.mutate...');
     updateContentMutation.mutate({ id: initialStoryId, data: updateData });
   };
 
