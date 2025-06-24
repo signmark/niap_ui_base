@@ -29,6 +29,7 @@ import { ScheduledPostInfo } from "@/components/ScheduledPostInfo";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import ContentTypeDialog from "@/components/ContentTypeDialog";
+import { InstagramStoriesPreview } from "@/components/InstagramStoriesPreview";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
