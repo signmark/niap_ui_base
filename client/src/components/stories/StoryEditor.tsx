@@ -123,8 +123,13 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
               ? JSON.parse(storyData.metadata) 
               : storyData.metadata;
             
+            console.log('🔥 Parsed metadata:', metadata);
+            
             if (metadata.slides && metadata.slides.length > 0) {
-              console.log('🔥 Loading slides from metadata:', metadata.slides);
+              console.log('🔥 Loading slides from metadata:', { 
+                slidesCount: metadata.slides.length,
+                firstSlideElements: metadata.slides[0]?.elements?.length || 0
+              });
               loadStoryData({ slides: metadata.slides });
             } else {
               console.log('🔥 No slides in metadata, keeping current state');
@@ -287,6 +292,12 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
         }
       };
       
+      console.log('🔥 🎯 UPDATE DATA PREPARED:', {
+        title: storyTitle,
+        slidesCount: slides.length,
+        firstSlideElements: slides[0]?.elements?.length || 0,
+        metadata: updateData.metadata
+      });
       console.log('🔥 Calling updateContentMutation.mutate with ID:', actualStoryId);
       updateContentMutation.mutate({ id: actualStoryId, data: updateData });
       return;

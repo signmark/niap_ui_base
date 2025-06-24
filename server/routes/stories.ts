@@ -129,21 +129,23 @@ router.post('/', authMiddleware, async (req, res) => {
 router.patch('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, slides } = req.body;
+    const { title, metadata } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { title, slidesCount: slides?.length });
+    // Извлекаем слайды из metadata
+    const slides = metadata?.slides || [];
+    console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { title, slidesCount: slides.length });
 
     const updateData = {
       title: title || 'Новая история',
       metadata: JSON.stringify({ 
-        slides: slides || [],
+        slides: slides,
         storyType: 'instagram',
-        format: '9:16',
+        format: metadata?.format || '9:16',
         version: '1.0'
       }),
       updated_at: new Date().toISOString()
