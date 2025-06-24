@@ -143,29 +143,39 @@ export function StoriesImageGenerationDialog({
     loadModels();
   }, []);
 
-  // Стабильная инициализация - выполняется только при первом монтировании
+  // Инициализация состояния при открытии диалога
   useEffect(() => {
-    // Инициализация диалога генерации изображений для Stories
-    
-    // Устанавливаем начальные значения
-    setNegativePrompt("");
-    setImageSize("1024x1024");
-    setContent("");
-    setPlatform("instagram");
-    setGeneratedImages([]);
-    setSelectedImageIndex(-1);
-    setModelType("schnell");
-    setStylePreset("photographic");
-    setNumImages(3);
-    setSavePrompt(true);
-    
-    // Устанавливаем начальный промт если есть
-    if (initialPrompt) {
-      setPrompt(initialPrompt);
-    } else {
-      setPrompt('');
+    if (isOpen) {
+      console.log("🎬 Инициализация StoriesImageGenerationDialog:", {
+        contentId,
+        campaignId,
+        initialPrompt,
+        initialContent
+      });
+      
+      // Сбрасываем состояние при открытии
+      setGeneratedImages([]);
+      setSelectedImageIndex(-1);
+      setGeneratedPrompt("");
+      
+      // Устанавливаем начальные значения если переданы
+      if (initialPrompt) {
+        setPrompt(initialPrompt);
+      }
+      if (initialContent) {
+        setContent(initialContent);
+      }
+      
+      // Базовые настройки
+      setNegativePrompt("");
+      setImageSize("1024x1024");
+      setPlatform("instagram");
+      setModelType("schnell");
+      setStylePreset("photographic");
+      setNumImages(3);
+      setSavePrompt(true);
     }
-  }, []);
+  }, [isOpen, contentId, campaignId, initialPrompt, initialContent]);
 
   // Функция для очистки HTML-тегов из текста
   const stripHtml = (html: string): string => {
@@ -216,20 +226,23 @@ export function StoriesImageGenerationDialog({
   // Мутация для генерации промта из текста
   const generatePromptMutation = useMutation({
     mutationFn: async () => {
-      if (!content) {
+      if (!content.trim()) {
         throw new Error("Необходимо ввести текст для генерации промта");
       }
       
-      console.log("Генерация промта на основе текста через DeepSeek");
+      console.log("🤖 Генерация промта на основе текста через DeepSeek");
       
       try {
-        const cleanedText = stripHtml(content);
-        console.log("Очищенный текст перед отправкой:", cleanedText);
+        const cleanedText = stripHtml(content.trim());
+        console.log("🤖 Очищенный текст перед отправкой:", cleanedText);
         
         const response = await api.post("/generate-image-prompt", {
           content: cleanedText,
-          keywords: []
+          keywords: [],
+          campaignId: campaignId || null
         });
+        
+        console.log("🤖 Ответ API:", response.data);
         
         if (response.data?.success && response.data?.prompt) {
           return response.data.prompt;
@@ -237,29 +250,33 @@ export function StoriesImageGenerationDialog({
           throw new Error("Не удалось сгенерировать промт");
         }
       } catch (error: unknown) {
+        console.error("🤖 Ошибка запроса:", error);
         throw error;
       }
     },
     onSuccess: (promptText) => {
-      console.log("Промт успешно сгенерирован:", promptText);
+      console.log("🤖 Промт успешно сгенерирован:", promptText);
       
-      setGeneratedPrompt(promptText);
+      // КРИТИЧНО: Устанавливаем промт в основное поле
       setPrompt(promptText);
+      setGeneratedPrompt(promptText);
+      
+      // Переключаемся на вкладку с промтом
       setActiveTab("prompt");
       
       toast({
-        title: "Успешно",
-        description: "Промт сгенерирован на основе текста"
+        title: "Промт готов",
+        description: "Можете отредактировать и сгенерировать изображение"
       });
     },
     onError: (error: unknown) => {
       const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
-      console.error("Ошибка при генерации промта:", error);
+      console.error("🤖 Ошибка при генерации промта:", error);
       
       toast({
         variant: "destructive",
         title: "Ошибка генерации промта",
-        description: errorMessage || "Произошла ошибка при генерации промта"
+        description: errorMessage
       });
     }
   });

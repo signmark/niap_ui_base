@@ -1060,7 +1060,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         onClose={closeImageDialog}
         onImageGenerated={handleImageGenerated}
         contentId={contentId}
-        campaignId={selectedCampaignId}
+        campaignId={campaignId}
       />
     </div>
   );
