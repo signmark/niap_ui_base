@@ -88,9 +88,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const loadExistingStory = async (id: string) => {
     try {
       console.log('🔥 Loading story from API:', id);
+      // Получаем токен из всех возможных источников
+      const token = localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('auth_token') ||
+                   localStorage.getItem('token');
+      console.log('🔥 Loading story with token:', token ? 'PRESENT' : 'MISSING');
+      console.log('🔥 Available localStorage keys:', Object.keys(localStorage));
+      
       const response = await fetch(`/api/stories/story/${id}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -185,11 +193,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       
       // Создаем новую историю
       console.log('🔥 ➕ CREATING NEW STORY');
+      const token = localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('auth_token') ||
+                   localStorage.getItem('token');
+      console.log('🔥 POST request with token:', token ? 'PRESENT' : 'MISSING');
+      
       const response = await fetch('/api/stories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: storyTitle,
@@ -235,11 +249,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     try {
       console.log('🔥 🎯 PATCH REQUEST for story:', currentStoryId);
       
+      const token = localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('auth_token') ||
+                   localStorage.getItem('token');
+      console.log('🔥 PATCH request with token:', token ? 'PRESENT' : 'MISSING');
+      
       const response = await fetch(`/api/stories/story/${currentStoryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: storyTitle,
