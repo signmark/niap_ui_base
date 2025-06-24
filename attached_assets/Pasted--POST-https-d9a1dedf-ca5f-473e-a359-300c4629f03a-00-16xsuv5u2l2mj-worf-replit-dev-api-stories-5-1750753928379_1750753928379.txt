@@ -1,0 +1,47 @@
+ 
+ POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/stories 500 (Internal Server Error)
+ Ошибка сохранения Stories: Error: Ошибка сохранения истории
+    at handleSave (src/components/stori…ryEditor.tsx:285:15)
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🔥 StoryEditor MOUNTED with campaignId: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 💀 StoryEditor UNMOUNTING
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ 🔥 StoryEditor EFFECT RUN - initializing slides
+ 🔥 Current slides count: 2
+ 🏪 Store: Slides already exist, count: 2
+ 🏪 Store: Elements in current slide: 4
+ 📊 Store slides updated, elements count: 4
+ 🎯 Elements found in slide: 
+(4) ['element-1750751966226-rn8pgatg5', 'element-1750751993900-b09y8mc8a', 'element-1750752105438-2gaen4u90', 'element-1750752694030-fy88apvqs']
+ Проверка принадлежности кампании пользователю: 
+{campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: 
+{success: true, isAdmin: true, timestamp: 1750753917728}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🔥 StoryEditor MOUNTED with campaignId: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 💀 StoryEditor UNMOUNTING
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ 🔥 StoryEditor EFFECT RUN - initializing slides
+ 🔥 Current slides count: 2
+ 🏪 Store: Slides already exist, count: 2
+ 🏪 Store: Elements in current slide: 4
+ 📊 Store slides updated, elements count: 4
+ 🎯 Elements found in slide: 
+(4) ['element-1750751966226-rn8pgatg5', 'element-1750751993900-b09y8mc8a', 'element-1750752105438-2gaen4u90', 'element-1750752694030-fy88apvqs']
+ Проверка принадлежности кампании пользователю: 
+{campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: 
+{success: true, isAdmin: true, timestamp: 1750753920737}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+﻿
