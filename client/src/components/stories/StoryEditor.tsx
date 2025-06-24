@@ -211,7 +211,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     return () => {
       console.log('💀 StoryEditor UNMOUNTING');
     };
-  }, [initialStoryId]);
+  }, []);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {

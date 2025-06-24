@@ -40,9 +40,9 @@ export default function StoriesPage() {
     <div className="min-h-screen">
       <div className="max-w-full mx-auto">
         <StoryEditor 
-          key={`story-editor-stable-${activeCampaignId}`}
+          key={`story-editor-stable-${activeCampaignId}-${storyId || 'new'}`}
           campaignId={activeCampaignId} 
-          initialStoryId={storyId}
+          storyId={storyId}
         />
       </div>
     </div>
