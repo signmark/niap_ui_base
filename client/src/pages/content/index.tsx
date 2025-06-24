@@ -1368,8 +1368,8 @@ export default function ContentPage() {
                                 <div className="flex gap-3">
                                   {/* Text content */}
                                   <div className="flex-1">
-                                    {/* Stories preview */}
                                     {content.contentType === 'story' && content.metadata ? (
+                                      /* Stories preview */
                                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-2">
                                         <div className="flex items-center gap-2 mb-2">
                                           <Layers className="h-4 w-4 text-purple-600" />
