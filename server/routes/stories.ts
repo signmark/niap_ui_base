@@ -126,7 +126,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Update story - SPECIFIC ROUTE FOR STORIES ONLY
-router.put('/story/:id', authMiddleware, async (req, res) => {
+router.patch('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, slides } = req.body;

@@ -177,12 +177,17 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
 
   // Функция обновления истории
   const updateStory = async () => {
-    if (!storyId) return saveStory();
+    if (!storyId) {
+      console.error('🔥 No storyId for update');
+      return;
+    }
     
     setIsSaving(true);
     try {
+      console.log('🔥 Updating story with PATCH, storyId:', storyId);
+      
       const response = await fetch(`/api/stories/story/${storyId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
