@@ -66,18 +66,11 @@ interface ContentItem {
 }
 
 interface StoriesImageGenerationDialogProps {
-  campaignId?: string;
-  contentId?: string;
-  businessData?: {
-    companyName: string;
-    businessDescription: string;
-    brandImage: string;
-    productsServices: string;
-  };
-  initialContent?: string | ContentItem;
-  initialPrompt?: string;
-  onImageGenerated?: (imageUrl: string, promptText?: string) => void;
+  isOpen: boolean;
   onClose: () => void;
+  onImageGenerated: (imageUrl: string, prompt?: string) => void;
+  initialPrompt?: string;
+  initialContent?: string;
 }
 
 const FAL_AI_MODELS = [
@@ -98,14 +91,12 @@ const FAL_AI_MODELS = [
   }
 ];
 
-export function StoriesImageGenerationDialog({
-  campaignId,
-  contentId,
-  businessData,
-  initialContent,
-  initialPrompt,
-  onImageGenerated,
-  onClose
+export function StoriesImageGenerationDialog({ 
+  isOpen, 
+  onClose, 
+  onImageGenerated, 
+  initialPrompt = '',
+  initialContent = '' 
 }: StoriesImageGenerationDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("prompt");
   

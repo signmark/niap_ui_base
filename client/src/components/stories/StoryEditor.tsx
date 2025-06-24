@@ -171,7 +171,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   useEffect(() => {
     // Устанавливаем contentId для диалогов
     if (storyId) {
-      setDialogContentId(storyId);
+      setContentId(storyId);
       setIsEditMode(true);
       setLocalStoryId(storyId);
       loadExistingStory(storyId);
@@ -777,10 +777,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                   variant="outline" 
                   size="sm" 
                   className="w-full justify-start"
-                  onClick={() => {
-                    setPendingElementType('image');
-                    setShowImageDialog(true);
-                  }}
+                  onClick={() => addElement('ai-image')}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   AI фото
@@ -1077,22 +1074,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
       {/* Image Generation Dialog */}
       {showImageDialog && (
-        <Dialog open={showImageDialog} onOpenChange={(open) => {
-          if (!open) {
-            setShowImageDialog(false);
-            setPendingElementType(null);
-          }
-        }}>
-          <StoriesImageGenerationDialog
-            campaignId={campaignId}
-            contentId={localStoryId || undefined}
-            onImageGenerated={handleImageGenerated}
-            onClose={() => {
-              setShowImageDialog(false);
-              setPendingElementType(null);
-            }}
-          />
-        </Dialog>
+        {/* Image Generation Dialog - Глобальный стейт */}
+        <StoriesImageGenerationDialog
+          isOpen={imageDialogOpen}
+          onClose={closeImageDialog}
+          onImageGenerated={handleImageGenerated}
+        />
       )}
     </div>
   );
