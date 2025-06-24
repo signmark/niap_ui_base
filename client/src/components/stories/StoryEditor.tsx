@@ -455,72 +455,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     });
   };
 
-  const handleSave = async () => {
-    try {
-      if (!storyTitle.trim()) {
-        toast({
-          title: 'Ошибка',
-          description: 'Необходимо указать название истории',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      const storyData = {
-        title: storyTitle,
-        campaignId: campaignId,
-        type: 'story',
-        status: 'draft',
-        slides: slides.map(slide => ({
-          order: slide.order,
-          duration: slide.duration,
-          background: slide.background,
-          elements: slide.elements.map(element => ({
-            type: element.type,
-            position: { 
-              x: element.position.x, 
-              y: element.position.y,
-              width: 100,
-              height: 100
-            },
-            rotation: element.rotation,
-            zIndex: element.zIndex,
-            content: element.content,
-            style: element.style
-          }))
-        }))
-      };
-
-      const response = await fetch('/api/stories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(storyData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Ошибка сохранения истории');
-      }
-
-      const result = await response.json();
-      
-      toast({
-        title: 'Сохранено',
-        description: `История "${storyTitle}" сохранена с ${slides.length} слайдами`
-      });
-      
-      console.log('Stories сохранена:', result);
-    } catch (error) {
-      console.error('Ошибка сохранения Stories:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить историю',
-        variant: 'destructive'
-      });
-    }
-  };
+  const handleSave = saveStory;
 
   const handlePublish = () => {
     toast({
