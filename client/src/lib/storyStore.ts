@@ -210,12 +210,12 @@ function getDefaultContent(elementType: StoryElement['type']) {
     case 'poll':
       return { 
         question: 'Ваш вопрос?', 
-        options: ['Вариант 1', 'Вариант 2'] 
+        options: ['Вариант 1', 'Вариант 2', 'Вариант 3'] 
       };
     case 'quiz':
       return { 
         question: 'Вопрос викторины?', 
-        options: ['Вариант 1', 'Вариант 2', 'Вариант 3'], 
+        options: ['Вариант 1', 'Вариант 2', 'Вариант 3', 'Вариант 4'], 
         correctAnswer: 0 
       };
     default:

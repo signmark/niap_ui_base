@@ -684,21 +684,52 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                       />
                     </div>
                     <div>
-                      <Label className="text-sm">Варианты ответов</Label>
-                      {(selectedElement.content.options || []).map((option: string, index: number) => (
-                        <Input
-                          key={index}
-                          value={option}
-                          onChange={(e) => {
-                            const newOptions = [...(selectedElement.content.options || [])];
-                            newOptions[index] = e.target.value;
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-sm">Варианты ответов</Label>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const currentOptions = selectedElement.content.options || ['Вариант 1', 'Вариант 2'];
+                            const newOptions = [...currentOptions, `Вариант ${currentOptions.length + 1}`];
                             updateElement(selectedElement.id, {
                               content: { ...selectedElement.content, options: newOptions }
                             });
                           }}
-                          className="mt-1"
-                          placeholder={`Вариант ${index + 1}`}
-                        />
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Добавить
+                        </Button>
+                      </div>
+                      {(selectedElement.content.options || ['Вариант 1', 'Вариант 2']).map((option: string, index: number) => (
+                        <div key={index} className="flex gap-2 mt-1">
+                          <Input
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...(selectedElement.content.options || [])];
+                              newOptions[index] = e.target.value;
+                              updateElement(selectedElement.id, {
+                                content: { ...selectedElement.content, options: newOptions }
+                              });
+                            }}
+                            placeholder={`Вариант ${index + 1}`}
+                            className="flex-1"
+                          />
+                          {(selectedElement.content.options || []).length > 2 && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const newOptions = (selectedElement.content.options || []).filter((_, i) => i !== index);
+                                updateElement(selectedElement.id, {
+                                  content: { ...selectedElement.content, options: newOptions }
+                                });
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
