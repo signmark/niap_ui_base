@@ -988,6 +988,8 @@ export default function ContentPage() {
         return <Video className="h-4 w-4" />;
       case "video-text":
         return <FilePlus2 className="h-4 w-4" />;
+      case "story":
+        return <Layers className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
