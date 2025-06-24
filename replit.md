@@ -127,3 +127,4 @@ Preferred communication style: Simple, everyday language.
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
 - **Checkpoint Policy**: Do not create checkpoints until the assigned task is completely implemented and tested. Work through all iterations and testing before considering the task complete.
 - **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.
+- **Code Reuse**: Always use existing system approaches and patterns. Copy and adapt working solutions from similar functionality instead of creating new approaches.

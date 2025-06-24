@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Type, 
   Image, 
@@ -181,113 +182,104 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   }, [slides, currentSlideIndex, selectedElement?.id]);
 
   // Функция сохранения истории
-  const saveStory = async () => {
-    setIsSaving(true);
-    try {
-      console.log('🔥 ===== SAVE STORY CALLED =====');
-      console.log('🔥 isEditMode:', isEditMode);
-      console.log('🔥 storyId:', storyId);
-      console.log('🔥 initialStoryId:', initialStoryId);
-      
-      // КРИТИЧНАЯ ПРОВЕРКА: используем initialStoryId напрямую если есть
-      const currentStoryId = storyId || initialStoryId;
-      
-      if (initialStoryId && initialStoryId.trim() !== '') {
-        console.log('🔥 🎯 UPDATING EXISTING STORY:', initialStoryId);
-        await updateStory();
-        return;
-      }
-      
-      // Создаем новую историю
-      console.log('🔥 ➕ CREATING NEW STORY');
-      const token = localStorage.getItem('auth_token');
-      console.log('🔥 POST request with token:', token ? 'PRESENT' : 'MISSING');
-      
-      const response = await fetch('/api/stories', {
+  // Мутация для создания Stories - копируем паттерн из content/index.tsx
+  const createContentMutation = useMutation({
+    mutationFn: async (storyData: any) => {
+      return await apiRequest('/api/stories', { 
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: storyTitle,
-          slides: slides,
-          campaignId: campaignId
-        })
+        data: storyData 
       });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        setStoryId(result.data.id);
-        setIsEditMode(true); // Переключаемся в режим редактирования
+    },
+    onSuccess: (data) => {
+      const newStoryId = data?.data?.id;
+      if (newStoryId) {
+        setStoryId(newStoryId);
+        setIsEditMode(true);
+        
         toast({
-          title: "История создана!",
-          description: `История "${storyTitle}" успешно создана.`,
+          title: "История создана",
+          description: "Новая история успешно создана",
         });
-      } else {
-        throw new Error(result.error || 'Ошибка сохранения');
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+        window.history.replaceState({}, '', `/stories/${newStoryId}/edit`);
       }
-    } catch (error) {
-      console.error('Ошибка сохранения истории:', error);
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Ошибка сохранения",
-        description: "Не удалось сохранить историю. Попробуйте еще раз.",
+        title: "Ошибка при создании истории",
+        description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setIsSaving(false);
     }
-  };
+  });
 
-  // Функция обновления истории
-  const updateStory = async () => {
-    const currentStoryId = storyId || initialStoryId;
-    
-    if (!currentStoryId) {
-      console.error('🔥 ❌ No storyId for update');
+  const saveStory = async () => {
+    if (initialStoryId && initialStoryId.trim() !== '') {
+      console.log('UPDATING EXISTING STORY:', initialStoryId);
+      await updateStory();
       return;
     }
     
-    setIsSaving(true);
-    try {
-      console.log('🔥 🎯 PATCH REQUEST for story:', initialStoryId);
-      
-      const token = localStorage.getItem('auth_token');
-      console.log('🔥 PATCH request with token:', token ? 'PRESENT' : 'MISSING');
-      
-      const response = await fetch(`/api/stories/story/${initialStoryId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: storyTitle,
-          slides: slides
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        toast({
-          title: "История обновлена!",
-          description: `Изменения в истории "${storyTitle}" сохранены.`,
-        });
-      } else {
-        throw new Error(result.error || 'Ошибка обновления');
+    console.log('CREATING NEW STORY');
+    const storyData = {
+      campaign_id: campaignId,
+      title: storyTitle,
+      content_type: 'stories',
+      status: 'partial',
+      metadata: {
+        slides,
+        format: '9:16'
       }
-    } catch (error) {
-      console.error('Ошибка обновления истории:', error);
+    };
+
+    createContentMutation.mutate(storyData);
+  };
+
+  // Мутация для обновления Stories - копируем паттерн из content/index.tsx
+  const updateContentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      console.log('Updating story with data:', data);
+      return await apiRequest(`/api/stories/story/${id}`, { 
+        method: 'PATCH',
+        data: data 
+      });
+    },
+    onSuccess: () => {
       toast({
-        title: "Ошибка обновления",
-        description: "Не удалось обновить историю. Попробуйте еще раз.",
+        title: "История обновлена",
+        description: "Изменения успешно сохранены",
+      });
+      
+      // Обновляем кэш
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/story/${initialStoryId}`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка при обновлении",
+        description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setIsSaving(false);
     }
+  });
+
+  // Функция обновления истории
+  const updateStory = async () => {
+    if (!initialStoryId) {
+      console.error('No storyId for update');
+      return;
+    }
+    
+    const updateData = {
+      title: storyTitle,
+      metadata: {
+        slides: slides,
+        format: '9:16'
+      }
+    };
+    
+    updateContentMutation.mutate({ id: initialStoryId, data: updateData });
   };
 
 
