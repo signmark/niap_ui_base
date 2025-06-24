@@ -177,32 +177,20 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     }
   };
 
-  // Инициализация при монтировании  
+  // Инициализация при монтировании - ТОЛЬКО ОДИН РАЗ
   useEffect(() => {
     console.log('🔥🔥🔥 ===== STORY EDITOR INITIALIZATION ===== 🔥🔥🔥');
     console.log('🔥 Props received - initialStoryId:', initialStoryId);
     console.log('🔥 Props received - campaignId:', campaignId);
-    console.log('🔥 Current slides count:', slides.length);
-    console.log('🔥 Current isEditMode:', isEditMode);
-    console.log('🔥 Current storyId state:', storyId);
-    console.log('🔥 URL at initialization:', window.location.href);
     
     // КРИТИЧНО: проверяем что у нас есть initialStoryId
     if (initialStoryId && initialStoryId.trim() !== '') {
       console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', initialStoryId);
-      console.log('🔥 Setting isEditMode to TRUE');
       setIsEditMode(true);
       setStoryId(initialStoryId);
-      console.log('🔥 Loading existing story data...');
       loadExistingStory(initialStoryId);
     } else {
       console.log('🔥 ❌ NO INITIAL STORY ID - CREATE MODE');
-      console.log('🔥 initialStoryId value check:', {
-        value: initialStoryId,
-        type: typeof initialStoryId,
-        length: initialStoryId ? initialStoryId.length : 'N/A',
-        trimmed: initialStoryId ? initialStoryId.trim() : 'N/A'
-      });
       setIsEditMode(false);
       setStoryId(null);
       initializeSlides();
@@ -211,7 +199,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     return () => {
       console.log('💀 StoryEditor UNMOUNTING');
     };
-  }, [initialStoryId]);
+  }, []); // Пустой массив зависимостей - выполняется ТОЛЬКО при монтировании
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -508,14 +496,16 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   };
 
   // Обработчик для добавления сгенерированного изображения
-  const handleImageGenerated = useCallback((imageUrl: string) => {
-    if (!pendingElementType) return;
-    
+  const handleImageGenerated = useCallback((imageUrl: string, prompt?: string) => {
     console.log('🎨 Adding generated image to Stories:', imageUrl);
     
     // Добавляем элемент изображения с сгенерированным URL
     const newElement = storeAddElement('image', {
-      content: { url: imageUrl, alt: 'Сгенерированное изображение' }
+      content: { 
+        url: imageUrl, 
+        alt: 'Сгенерированное изображение',
+        prompt: prompt 
+      }
     });
     
     // Закрываем диалог и сбрасываем состояние
@@ -526,7 +516,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       title: 'Изображение добавлено',
       description: 'AI изображение успешно добавлено в Stories'
     });
-  }, [pendingElementType, storeAddElement, toast]);
+  }, [storeAddElement, toast]);
 
   const handleDeleteElement = (elementId: string) => {
     deleteElement(elementId);
