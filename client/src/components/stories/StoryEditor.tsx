@@ -193,14 +193,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     const elements = slides[currentSlideIndex]?.elements || [];
     
     // Обновляем selectedElement если он изменился в store
-    if (selectedElement) {
-      const updatedElement = slides[currentSlideIndex]?.elements?.find(el => el.id === selectedElement.id);
-      if (updatedElement && JSON.stringify(updatedElement) !== JSON.stringify(selectedElement)) {
+    if (storeSelectedElement) {
+      const updatedElement = slides[currentSlideIndex]?.elements?.find(el => el.id === storeSelectedElement.id);
+      if (updatedElement && JSON.stringify(updatedElement) !== JSON.stringify(storeSelectedElement)) {
         console.log('🔄 Updating selectedElement from store');
-        setSelectedElement(updatedElement);
+        setStoreSelectedElement(updatedElement);
       }
     }
-  }, [slides, currentSlideIndex, selectedElement?.id]);
+  }, [slides, currentSlideIndex, storeSelectedElement?.id]);
 
   // Функция сохранения истории
   // Мутация для создания Stories - копируем паттерн из content/index.tsx
