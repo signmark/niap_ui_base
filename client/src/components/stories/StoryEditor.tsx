@@ -59,11 +59,11 @@ interface StoryEditorProps {
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   console.log('🔥🔥🔥 StoryEditor INITIALIZED 🔥🔥🔥');
   console.log('🔥 Props - campaignId:', campaignId);
-  console.log('🔥 Props - initialStoryId:', initialStoryId);
+  console.log('🔥 Props - storyId:', storyId);
   console.log('🔥 Current URL:', window.location.href);
   console.log('🔥 URL pathname:', window.location.pathname);
-  console.log('🔥 initialStoryId type:', typeof initialStoryId);
-  console.log('🔥 initialStoryId truthy:', !!initialStoryId);
+  console.log('🔥 storyId type:', typeof storyId);
+  console.log('🔥 storyId truthy:', !!storyId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -187,24 +187,24 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     console.log('🔥 Current localStoryId state:', localStoryId);
     console.log('🔥 URL at initialization:', window.location.href);
     
-    // КРИТИЧНО: проверяем что у нас есть initialStoryId
-    if (initialStoryId && initialStoryId.trim() !== '') {
+    // КРИТИЧНО: проверяем что у нас есть storyId
+    if (storyId && storyId.trim() !== '') {
       console.log('🔥 🎯 EDIT MODE DETECTED - storyId:', storyId);
       console.log('🔥 Setting isEditMode to TRUE');
       setIsEditMode(true);
-      setStoryId(initialStoryId);
+      setLocalStoryId(storyId);
       console.log('🔥 Loading existing story data...');
-      loadExistingStory(initialStoryId);
+      loadExistingStory(storyId);
     } else {
-      console.log('🔥 ❌ NO INITIAL STORY ID - CREATE MODE');
-      console.log('🔥 initialStoryId value check:', {
-        value: initialStoryId,
-        type: typeof initialStoryId,
-        length: initialStoryId ? initialStoryId.length : 'N/A',
-        trimmed: initialStoryId ? initialStoryId.trim() : 'N/A'
+      console.log('🔥 ❌ NO STORY ID - CREATE MODE');
+      console.log('🔥 storyId value check:', {
+        value: storyId,
+        type: typeof storyId,
+        length: storyId ? storyId.length : 'N/A',
+        trimmed: storyId ? storyId.trim() : 'N/A'
       });
       setIsEditMode(false);
-      setStoryId(null);
+      setLocalStoryId(null);
       initializeSlides();
     }
     
@@ -245,7 +245,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     onSuccess: (data) => {
       const newStoryId = data?.data?.id;
       if (newStoryId) {
-        setStoryId(newStoryId);
+        setLocalStoryId(newStoryId);
         setIsEditMode(true);
         
         toast({
@@ -268,7 +268,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   const saveStory = async () => {
     console.log('🔥🔥🔥 SAVE STORY CALLED 🔥🔥🔥');
-    console.log('🔥 initialStoryId:', initialStoryId);
+    console.log('🔥 storyId:', storyId);
     console.log('🔥 URL pathname:', window.location.pathname);
     console.log('🔥 URL href:', window.location.href);
     console.log('🔥 campaignId:', campaignId);
@@ -277,8 +277,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     
     // КРИТИЧНАЯ ПРОВЕРКА: определяем режим на основе URL и наличия storyId
     const hasEditInUrl = window.location.pathname.includes('/edit');
-    const hasStoryId = initialStoryId && initialStoryId.trim() !== '';
-    const currentEditMode = hasEditInUrl && hasStoryId;
+    const hasStoryIdValue = storyId && storyId.trim() !== '';
+    const currentEditMode = hasEditInUrl && hasStoryIdValue;
     
     // АЛЬТЕРНАТИВНАЯ ПРОВЕРКА: если в URL есть /stories/:id/edit - это точно режим редактирования
     const urlParts = window.location.pathname.split('/');
@@ -286,7 +286,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     const urlStoryId = isStoriesEditRoute ? urlParts[2] : null;
     
     console.log('🔥 hasEditInUrl:', hasEditInUrl);
-    console.log('🔥 hasStoryId:', hasStoryId);
+    console.log('🔥 hasStoryIdValue:', hasStoryIdValue);
     console.log('🔥 currentEditMode:', currentEditMode);
     console.log('🔥 isStoriesEditRoute:', isStoriesEditRoute);
     console.log('🔥 urlStoryId:', urlStoryId);
@@ -376,7 +376,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       
       // Обновляем кэш
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/stories/story/${initialStoryId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/story/${storyId}`] });
     },
     onError: (error: Error) => {
       toast({
@@ -390,11 +390,11 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   // Функция обновления истории
   const updateStory = () => {
     console.log('🔥🔥🔥 UPDATE STORY FUNCTION CALLED 🔥🔥🔥');
-    console.log('🔥 initialStoryId available?', !!initialStoryId);
-    console.log('🔥 initialStoryId value:', initialStoryId);
+    console.log('🔥 storyId available?', !!storyId);
+    console.log('🔥 storyId value:', storyId);
     
-    if (!initialStoryId) {
-      console.error('❌ CRITICAL ERROR: No initialStoryId for update');
+    if (!storyId) {
+      console.error('❌ CRITICAL ERROR: No storyId for update');
       toast({
         title: "Ошибка обновления",
         description: "Не удается определить ID истории для обновления",
@@ -403,7 +403,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       return;
     }
     
-    console.log('🔥 EXECUTING UPDATE for story:', initialStoryId);
+    console.log('🔥 EXECUTING UPDATE for story:', storyId);
     console.log('🔥 Update data - title:', storyTitle);
     console.log('🔥 Update data - slides count:', slides.length);
     
@@ -416,7 +416,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     };
     
     console.log('🔥 Calling updateContentMutation.mutate...');
-    updateContentMutation.mutate({ id: initialStoryId, data: updateData });
+    updateContentMutation.mutate({ id: storyId, data: updateData });
   };
 
 
@@ -583,7 +583,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" />
-            {isSaving ? 'Сохранение...' : (storyId ? 'Обновить' : 'Сохранить')}
+            {isSaving ? 'Сохранение...' : (localStoryId ? 'Обновить' : 'Сохранить')}
           </Button>
           <Button size="sm" onClick={handlePublish}>
             <Play className="w-4 h-4 mr-2" />
@@ -1147,7 +1147,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         }}>
           <StoriesImageGenerationDialog
             campaignId={campaignId}
-            contentId={storyId || undefined}
+            contentId={localStoryId || undefined}
             onImageGenerated={handleImageGenerated}
             onClose={() => {
               setShowImageDialog(false);
