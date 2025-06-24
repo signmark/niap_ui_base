@@ -28,9 +28,11 @@ interface StoryState {
   currentSlideIndex: number;
   storyTitle: string;
   selectedElement: StoryElement | null;
+  loadStoryData: (storyData: any) => void;
   
   // Actions
   initializeSlides: () => void;
+  loadStoryData: (storyData: any) => void;
   setSlides: (slides: StorySlide[]) => void;
   setCurrentSlideIndex: (index: number) => void;
   setStoryTitle: (title: string) => void;
@@ -71,6 +73,28 @@ export const useStoryStore = create<StoryState>()(
       console.log('🏪 Store: Slides already exist, count:', slides.length);
       console.log('🏪 Store: Elements in current slide:', slides[get().currentSlideIndex]?.elements?.length || 0);
     }
+  },
+
+  loadStoryData: (storyData: any) => {
+    console.log('🏪 Store: Loading story data:', storyData);
+    
+    const slides = storyData.slides || [
+      {
+        id: 'slide-1',
+        order: 1,
+        duration: 5,
+        background: { type: 'color', value: '#6366f1' },
+        elements: []
+      }
+    ];
+    
+    set({
+      slides: slides,
+      currentSlideIndex: 0,
+      selectedElement: null
+    });
+    
+    console.log('🏪 Store: Story data loaded, slides count:', slides.length);
   },
 
   setSlides: (slides) => {

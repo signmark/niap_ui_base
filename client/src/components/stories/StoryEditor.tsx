@@ -103,7 +103,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
         const result = await response.json();
         if (result.success && result.data) {
           const storyData = result.data;
-          console.log('🔥 Story loaded:', storyData);
+          console.log('🔥 Story loaded successfully:', storyData);
           
           // Загружаем данные в store
           setStoryTitle(storyData.title || 'История без названия');
@@ -117,9 +117,19 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
             if (metadata.slides && metadata.slides.length > 0) {
               console.log('🔥 Loading slides from metadata:', metadata.slides);
               loadStoryData({ slides: metadata.slides });
+            } else {
+              console.log('🔥 No slides in metadata, keeping current state');
             }
+          } else {
+            console.log('🔥 No metadata found, keeping current state');
           }
+        } else {
+          console.log('🔥 API response unsuccessful:', result);
         }
+      } else {
+        console.log('🔥 Failed to load story, status:', response.status);
+        const errorText = await response.text();
+        console.log('🔥 Error response:', errorText);
       }
     } catch (error) {
       console.error('🔥 Error loading story:', error);
