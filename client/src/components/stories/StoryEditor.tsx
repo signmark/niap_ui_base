@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
-import { ImageGenerationDialog } from '@/components/ImageGenerationDialog';
+import { StoriesImageGenerationDialog } from '@/components/stories/StoriesImageGenerationDialog';
 import { useStoryStore } from '@/lib/storyStore';
 
 // Local interfaces for component
@@ -1145,7 +1145,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
             setPendingElementType(null);
           }
         }}>
-          <ImageGenerationDialog
+          <StoriesImageGenerationDialog
             campaignId={campaignId}
             contentId={storyId || undefined}
             onImageGenerated={handleImageGenerated}
