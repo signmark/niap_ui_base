@@ -28,6 +28,7 @@ import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { StoriesImageGenerationDialog } from '@/components/stories/StoriesImageGenerationDialog';
 import { useStoryStore } from '@/lib/storyStore';
+import { useStoriesDialogStore } from '@/lib/storiesDialogStore';
 
 // Local interfaces for component
 interface StorySlide {
@@ -168,7 +169,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   // Инициализация при монтировании - СТАБИЛЬНАЯ ВЕРСИЯ
   useEffect(() => {
-    if (storyId && storyId.trim() !== '') {
+    // Устанавливаем contentId для диалогов
+    if (storyId) {
+      setDialogContentId(storyId);
       setIsEditMode(true);
       setLocalStoryId(storyId);
       loadExistingStory(storyId);
