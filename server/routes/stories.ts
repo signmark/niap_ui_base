@@ -1,35 +1,41 @@
 import express from 'express';
-// Using authenticateUser middleware from routes.ts
-const authenticateUser = async (req: any, res: any, next: any) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const cookieToken = req.cookies?.directus_session_token;
-    
-    let token = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    } else if (cookieToken) {
-      token = cookieToken;
-    }
-    
-    if (!token) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Set user info for the request
-    req.user = { id: 'user-id', token };
-    next();
-  } catch (error) {
-    return res.status(500).json({ error: 'Authentication error' });
-  }
-};
+import { authMiddleware } from '../middleware/auth';
 import { directusApi } from '../directus';
 
 const router = express.Router();
 
+// Get all stories for user
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Fetching stories for user:', userId);
+
+    const response = await directusApi.get('/items/campaign_content', {
+      params: {
+        filter: JSON.stringify({
+          user_id: { _eq: userId },
+          content_type: { _eq: 'story' }
+        }),
+        sort: '-created_at'
+      }
+    });
+
+    const stories = response.data.data || [];
+    console.log('[DEV] [stories] Found', stories.length, 'stories');
+    
+    res.json({ success: true, data: stories });
+  } catch (error) {
+    console.error('Error fetching stories:', error);
+    res.status(500).json({ error: 'Failed to fetch stories' });
+  }
+});
+
 // Create a new story
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { title, campaignId, slides } = req.body;
     const userId = req.user?.id;
@@ -38,19 +44,29 @@ router.post('/', authenticateUser, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Create story content
+    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
+
+    // Create story content in campaign_content collection
     const storyData = {
       campaign_id: campaignId,
       user_id: userId,
-      title,
+      title: title || 'Новая история',
       content_type: 'story',
       status: 'draft',
-      metadata: JSON.stringify({ slides: slides || [] })
+      content: '', // Empty content for stories
+      metadata: JSON.stringify({ 
+        slides: slides || [],
+        storyType: 'instagram',
+        format: '9:16'
+      }),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const createResponse = await directusApi.post('/items/campaign_content', storyData);
     const story = createResponse.data.data;
 
+    console.log('[DEV] [stories] Story created with ID:', story.id);
     res.json({ success: true, data: story });
   } catch (error) {
     console.error('Error creating story:', error);
@@ -59,7 +75,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Update story - SPECIFIC ROUTE FOR STORIES ONLY
-router.put('/story/:id', authenticateUser, async (req, res) => {
+router.put('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, slides } = req.body;
@@ -69,15 +85,22 @@ router.put('/story/:id', authenticateUser, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    console.log('[DEV] [stories] Updating story:', id, { title, slidesCount: slides?.length });
+
     const updateData = {
-      title,
-      metadata: JSON.stringify({ slides: slides || [] }),
+      title: title || 'Новая история',
+      metadata: JSON.stringify({ 
+        slides: slides || [],
+        storyType: 'instagram',
+        format: '9:16'
+      }),
       updated_at: new Date().toISOString()
     };
 
     const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData);
     const story = updateResponse.data.data;
 
+    console.log('[DEV] [stories] Story updated successfully');
     res.json({ success: true, data: story });
   } catch (error) {
     console.error('Error updating story:', error);
@@ -86,7 +109,7 @@ router.put('/story/:id', authenticateUser, async (req, res) => {
 });
 
 // Get story by ID - SPECIFIC ROUTE FOR STORIES ONLY
-router.get('/story/:id', authenticateUser, async (req, res) => {
+router.get('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -109,7 +132,7 @@ router.get('/story/:id', authenticateUser, async (req, res) => {
 });
 
 // Delete story - SPECIFIC ROUTE FOR STORIES ONLY
-router.delete('/story/:id', authenticateUser, async (req, res) => {
+router.delete('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -135,7 +158,7 @@ router.delete('/story/:id', authenticateUser, async (req, res) => {
 });
 
 // Publish story - SPECIFIC ROUTE FOR STORIES ONLY
-router.post('/story/:id/publish', authenticateUser, async (req, res) => {
+router.post('/story/:id/publish', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { platforms, scheduledAt } = req.body;

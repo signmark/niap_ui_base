@@ -109,6 +109,86 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     }
   }, [slides, currentSlideIndex, selectedElement?.id]);
 
+  // Функция сохранения истории
+  const saveStory = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/stories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          title: storyTitle,
+          slides: slides,
+          campaignId: null // Можно добавить выбор кампании позже
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setStoryId(result.data.id);
+        toast({
+          title: "История сохранена!",
+          description: `История "${storyTitle}" успешно сохранена в базу данных.`,
+        });
+      } else {
+        throw new Error(result.error || 'Ошибка сохранения');
+      }
+    } catch (error) {
+      console.error('Ошибка сохранения истории:', error);
+      toast({
+        title: "Ошибка сохранения",
+        description: "Не удалось сохранить историю. Попробуйте еще раз.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Функция обновления истории
+  const updateStory = async () => {
+    if (!storyId) return saveStory();
+    
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/stories/story/${storyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          title: storyTitle,
+          slides: slides
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "История обновлена!",
+          description: `Изменения в истории "${storyTitle}" сохранены.`,
+        });
+      } else {
+        throw new Error(result.error || 'Ошибка обновления');
+      }
+    } catch (error) {
+      console.error('Ошибка обновления истории:', error);
+      toast({
+        title: "Ошибка обновления",
+        description: "Не удалось обновить историю. Попробуйте еще раз.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Обертки для store actions
   const addSlide = storeAddSlide;
   const deleteSlide = storeDeleteSlide;
