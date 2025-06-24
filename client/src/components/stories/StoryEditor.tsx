@@ -128,9 +128,30 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
             if (metadata.slides && metadata.slides.length > 0) {
               console.log('🔥 Loading slides from metadata:', { 
                 slidesCount: metadata.slides.length,
-                firstSlideElements: metadata.slides[0]?.elements?.length || 0
+                firstSlideElements: metadata.slides[0]?.elements?.length || 0,
+                firstSlideData: metadata.slides[0]
               });
-              loadStoryData({ slides: metadata.slides });
+              
+              // Ensure elements have proper structure
+              const validatedSlides = metadata.slides.map((slide: any) => ({
+                ...slide,
+                elements: (slide.elements || []).map((element: any) => ({
+                  id: element?.id || `element_${Date.now()}_${Math.random()}`,
+                  type: element?.type || 'text',
+                  position: element?.position || { x: 50, y: 50 },
+                  rotation: element?.rotation || 0,
+                  zIndex: element?.zIndex || 1,
+                  content: element?.content || {},
+                  style: element?.style || {}
+                }))
+              }));
+              
+              console.log('🔥 Validated slides structure:', { 
+                firstSlideValidatedElements: validatedSlides[0]?.elements?.length,
+                firstElementContent: validatedSlides[0]?.elements?.[0]
+              });
+              
+              loadStoryData({ slides: validatedSlides });
             } else {
               console.log('🔥 No slides in metadata, keeping current state');
             }

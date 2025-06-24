@@ -141,12 +141,18 @@ router.patch('/story/:id', authMiddleware, async (req, res) => {
       title, 
       metadata: metadata,
       hasMetadata: !!metadata,
-      metadataType: typeof metadata
+      metadataType: typeof metadata,
+      bodyKeys: Object.keys(req.body)
     });
     
     // Извлекаем слайды из metadata
     const slides = metadata?.slides || [];
-    console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { title, slidesCount: slides.length });
+    console.log('[DEV] [stories] 🎯 PATCH REQUEST - UPDATING EXISTING STORY:', id, { 
+      title, 
+      slidesCount: slides.length,
+      firstSlideId: slides[0]?.id,
+      firstSlideElementsCount: slides[0]?.elements?.length
+    });
 
     const updateData = {
       title: title || 'Новая история',
@@ -195,8 +201,32 @@ router.get('/story/:id', authMiddleware, async (req, res) => {
     });
     const story = response.data.data;
 
-    console.log('[DEV] [stories] Story loaded for EDITING:', { id: story.id, title: story.title });
-    res.json({ success: true, data: story });
+    // Parse and validate metadata before sending
+    let parsedMetadata = null;
+    if (story.metadata) {
+      try {
+        parsedMetadata = typeof story.metadata === 'string' 
+          ? JSON.parse(story.metadata) 
+          : story.metadata;
+      } catch (e) {
+        console.log('[DEV] [stories] Error parsing metadata:', e);
+      }
+    }
+
+    console.log('[DEV] [stories] Story loaded for EDITING:', { 
+      id: story.id, 
+      title: story.title,
+      hasMetadata: !!parsedMetadata,
+      slidesCount: parsedMetadata?.slides?.length || 0,
+      firstSlideElements: parsedMetadata?.slides?.[0]?.elements?.length || 0
+    });
+    
+    const storyWithParsedMetadata = {
+      ...story,
+      metadata: parsedMetadata
+    };
+    
+    res.json({ success: true, data: storyWithParsedMetadata });
   } catch (error) {
     console.error('Error loading story:', error);
     res.status(500).json({ error: 'Не удалось загрузить историю' });
