@@ -404,13 +404,13 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                             color: element.content.color || '#ffffff',
                             fontWeight: element.content.fontWeight || 'bold'
                           }}
-                          className="px-2 py-1 border-2 border-transparent group-hover:border-white/50 rounded cursor-text"
+                          className="px-2 py-1 border-2 border-transparent group-hover:border-white/50 rounded cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
+                            console.log('🔤 Text element clicked, selecting:', element.id);
                             setSelectedElement(element);
-                            setShowElementDialog(true);
                           }}
-                          title="Нажмите для редактирования текста"
+                          title="Кликните для выбора и редактирования в панели"
                         >
                           {element.content.text || 'Новый текст'}
                         </div>
@@ -571,11 +571,15 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                       <Textarea
                         id="text-content"
                         value={selectedElement.content.text || ''}
-                        onChange={(e) => updateElement(selectedElement.id, {
-                          content: { ...selectedElement.content, text: e.target.value }
-                        })}
+                        onChange={(e) => {
+                          console.log('🔤 Text changing to:', e.target.value);
+                          updateElement(selectedElement.id, {
+                            content: { ...selectedElement.content, text: e.target.value }
+                          });
+                        }}
                         className="mt-1"
                         rows={3}
+                        placeholder="Введите текст..."
                       />
                     </div>
                     <div>
@@ -586,9 +590,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         max={48}
                         step={2}
                         value={[selectedElement.content.fontSize || 24]}
-                        onValueChange={(value) => updateElement(selectedElement.id, {
-                          content: { ...selectedElement.content, fontSize: value[0] }
-                        })}
+                        onValueChange={(value) => {
+                          console.log('📏 Font size changing to:', value[0]);
+                          updateElement(selectedElement.id, {
+                            content: { ...selectedElement.content, fontSize: value[0] }
+                          });
+                        }}
                         className="mt-1"
                       />
                     </div>
@@ -598,9 +605,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
                         id="text-color"
                         type="color"
                         value={selectedElement.content.color || '#ffffff'}
-                        onChange={(e) => updateElement(selectedElement.id, {
-                          content: { ...selectedElement.content, color: e.target.value }
-                        })}
+                        onChange={(e) => {
+                          console.log('🎨 Color changing to:', e.target.value);
+                          updateElement(selectedElement.id, {
+                            content: { ...selectedElement.content, color: e.target.value }
+                          });
+                        }}
                         className="mt-1 h-8"
                       />
                     </div>

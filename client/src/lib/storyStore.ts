@@ -124,12 +124,16 @@ export const useStoryStore = create<StoryState>()(
     const currentSlideData = newSlides[currentSlideIndex];
     
     if (currentSlideData) {
+      const updatedElements = currentSlideData.elements?.map(el => 
+        el.id === elementId ? { ...el, ...updates } : el
+      ) || [];
+      
       newSlides[currentSlideIndex] = {
         ...currentSlideData,
-        elements: currentSlideData.elements?.map(el => 
-          el.id === elementId ? { ...el, ...updates } : el
-        ) || []
+        elements: updatedElements
       };
+      
+      console.log('🏪 Store: Element updated', elementId, 'with:', updates);
       
       set({ slides: newSlides });
     }
