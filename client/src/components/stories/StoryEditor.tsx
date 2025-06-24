@@ -84,13 +84,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   // Инициализация при монтировании
   useEffect(() => {
     console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
-    if (slides.length === 0) {
-      initializeSlides();
-    }
+    console.log('🔥 Current slides count:', slides.length);
+    initializeSlides(); // Всегда вызываем, store сам решит что делать
     return () => {
       console.log('💀 StoryEditor UNMOUNTING');
     };
-  }, []);
+  }, [initializeSlides]);
 
   // Отслеживание изменений slides из store
   useEffect(() => {

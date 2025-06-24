@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // Local interfaces for story state
 interface StorySlide {
@@ -42,26 +43,34 @@ interface StoryState {
   updateSlide: (updates: Partial<StorySlide>) => void;
 }
 
-export const useStoryStore = create<StoryState>((set, get) => ({
+export const useStoryStore = create<StoryState>()(
+  persist(
+    (set, get) => ({
   slides: [],
   currentSlideIndex: 0,
   storyTitle: '',
   selectedElement: null,
 
   initializeSlides: () => {
-    console.log('🏪 Store: Initializing slides');
-    set({
-      slides: [
-        {
-          id: 'slide-1',
-          order: 1,
-          duration: 5,
-          background: { type: 'color', value: '#6366f1' },
-          elements: []
-        }
-      ],
-      currentSlideIndex: 0
-    });
+    const { slides } = get();
+    if (slides.length === 0) {
+      console.log('🏪 Store: Initializing slides (first time)');
+      set({
+        slides: [
+          {
+            id: 'slide-1',
+            order: 1,
+            duration: 5,
+            background: { type: 'color', value: '#6366f1' },
+            elements: []
+          }
+        ],
+        currentSlideIndex: 0
+      });
+    } else {
+      console.log('🏪 Store: Slides already exist, count:', slides.length);
+      console.log('🏪 Store: Elements in current slide:', slides[get().currentSlideIndex]?.elements?.length || 0);
+    }
   },
 
   setSlides: (slides) => {
@@ -176,6 +185,13 @@ export const useStoryStore = create<StoryState>((set, get) => ({
     
     set({ slides: newSlides });
   }
+}), {
+  name: 'story-editor-storage',
+  partialize: (state) => ({ 
+    slides: state.slides,
+    currentSlideIndex: state.currentSlideIndex,
+    storyTitle: state.storyTitle
+  })
 }));
 
 // Helper functions
