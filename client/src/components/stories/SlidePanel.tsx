@@ -251,7 +251,7 @@ function getBackgroundStyle(background: any): React.CSSProperties {
 
   switch (background.type) {
     case 'color':
-      return { backgroundColor: background.value };
+      return { backgroundColor: background.value?.startsWith?.('#') ? background.value : '#ffffff' };
     
     case 'gradient':
       if (background.value.type === 'linear') {

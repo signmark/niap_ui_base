@@ -151,7 +151,7 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
   const getBackgroundStyle = (background: StorySlide['background']) => {
     switch (background.type) {
       case 'color':
-        return { backgroundColor: background.value };
+        return { backgroundColor: background.value?.startsWith?.('#') ? background.value : '#ffffff' };
       case 'image':
         return {
           backgroundImage: `url(${background.value})`,
