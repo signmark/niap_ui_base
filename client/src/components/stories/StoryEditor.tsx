@@ -510,7 +510,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
               placeholder="Название истории"
             />
             <div className="text-sm text-gray-500">
-              {isAutoSaving ? 'Автосохранение...' : 'Готово к редактированию'}
+              {'Готово к редактированию'}
             </div>
           </div>
         </div>
