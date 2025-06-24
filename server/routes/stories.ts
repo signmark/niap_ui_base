@@ -33,7 +33,11 @@ router.post('/', authMiddleware, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    const createResponse = await directusApi.post('/items/campaign_content', storyData);
+    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
     const story = createResponse.data.data;
 
     console.log('[DEV] [stories] Story created with ID:', story.id);
@@ -106,7 +110,11 @@ router.post('/', authMiddleware, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    const createResponse = await directusApi.post('/items/campaign_content', storyData);
+    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
     const story = createResponse.data.data;
 
     console.log('[DEV] [stories] Story created with ID:', story.id);
