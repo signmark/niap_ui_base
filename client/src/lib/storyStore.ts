@@ -106,7 +106,7 @@ export const useStoryStore = create<StoryState>()(
   setStoryTitle: (title) => set({ storyTitle: title }),
   setSelectedElement: (element) => set({ selectedElement: element }),
 
-  addElement: (elementType) => {
+  addElement: (elementType, elementOptions = {}) => {
     const { slides, currentSlideIndex } = get();
     
     const newElement: StoryElement = {
@@ -115,8 +115,8 @@ export const useStoryStore = create<StoryState>()(
       position: { x: 50, y: 50 },
       rotation: 0,
       zIndex: (slides[currentSlideIndex]?.elements?.length || 0) + 1,
-      content: getDefaultContent(elementType),
-      style: getDefaultStyle(elementType)
+      content: elementOptions.content || getDefaultContent(elementType),
+      style: elementOptions.style || getDefaultStyle(elementType)
     };
 
     console.log('🏪 Store: Adding element', newElement.id, 'to slide', currentSlideIndex);

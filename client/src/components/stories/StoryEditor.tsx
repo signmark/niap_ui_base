@@ -1131,6 +1131,26 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
           setSelectedElement(null);
         }}
       />
+
+      {/* Image Generation Dialog */}
+      {showImageDialog && (
+        <Dialog open={showImageDialog} onOpenChange={(open) => {
+          if (!open) {
+            setShowImageDialog(false);
+            setPendingElementType(null);
+          }
+        }}>
+          <ImageGenerationDialog
+            campaignId={campaignId}
+            contentId={storyId || undefined}
+            onImageGenerated={handleImageGenerated}
+            onClose={() => {
+              setShowImageDialog(false);
+              setPendingElementType(null);
+            }}
+          />
+        </Dialog>
+      )}
     </div>
   );
 }
