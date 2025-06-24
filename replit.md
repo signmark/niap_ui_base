@@ -122,3 +122,4 @@ Preferred communication style: Simple, everyday language.
 - **Stories API Authentication**: Always use user token (req.headers.authorization) for Directus API calls, never use admin token. User tokens work constantly in the system and have proper permissions for campaign_content collection.
 - **Database Storage**: All Stories data should be stored in campaign_content.metadata field as JSON, not in separate fields.
 - **Database**: System does not use PostgreSQL - uses Directus as primary database/CMS with external hosted instance.
+- **Testing**: For API testing only, can use DIRECTUS_TOKEN environment variable for direct Directus access.
