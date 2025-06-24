@@ -798,14 +798,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                           console.log('🔤 Text changing to:', e.target.value);
                           const newContent = { ...storeSelectedElement.content, text: e.target.value };
                           
-                          // Сначала обновляем локальный selectedElement
-                          setSelectedElement({
-                            ...selectedElement,
-                            content: newContent
-                          });
-                          
-                          // Затем обновляем в store
-                          updateElement(selectedElement.id, {
+                          updateElement(storeSelectedElement.id, {
                             content: newContent
                           });
                         }}
@@ -832,12 +825,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                           console.log('📏 Font size changing to:', value[0]);
                           const newContent = { ...storeSelectedElement.content, fontSize: value[0] };
                           
-                          setSelectedElement({
-                            ...selectedElement,
-                            content: newContent
-                          });
-                          
-                          updateElement(selectedElement.id, {
+                          updateElement(storeSelectedElement.id, {
                             content: newContent
                           });
                         }}
@@ -854,12 +842,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                           console.log('🎨 Color changing to:', e.target.value);
                           const newContent = { ...storeSelectedElement.content, color: e.target.value };
                           
-                          setSelectedElement({
-                            ...selectedElement,
-                            content: newContent
-                          });
-                          
-                          updateElement(selectedElement.id, {
+                          updateElement(storeSelectedElement.id, {
                             content: newContent
                           });
                         }}
