@@ -87,6 +87,8 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const [isSaving, setIsSaving] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(initialStoryId || null);
   const [isEditMode, setIsEditMode] = useState(!!initialStoryId);
+  
+  console.log('🔥 LOCAL STATE - storyId:', storyId, 'isEditMode:', isEditMode);
 
   // Загрузка существующей Stories
   const loadExistingStory = async (id: string) => {
@@ -225,19 +227,54 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     console.log('🔥 storyTitle:', storyTitle);
     console.log('🔥 slides count:', slides.length);
     
-    // КРИТИЧНАЯ ПРОВЕРКА: если в URL есть /edit и initialStoryId - ОБЯЗАТЕЛЬНО обновляем
+    // КРИТИЧНАЯ ПРОВЕРКА: определяем режим на основе URL и наличия storyId
     const hasEditInUrl = window.location.pathname.includes('/edit');
     const hasStoryId = initialStoryId && initialStoryId.trim() !== '';
-    const isEditMode = hasEditInUrl && hasStoryId;
+    const currentEditMode = hasEditInUrl && hasStoryId;
+    
+    // АЛЬТЕРНАТИВНАЯ ПРОВЕРКА: если в URL есть /stories/:id/edit - это точно режим редактирования
+    const urlParts = window.location.pathname.split('/');
+    const isStoriesEditRoute = urlParts.length >= 3 && urlParts[1] === 'stories' && urlParts[3] === 'edit';
+    const urlStoryId = isStoriesEditRoute ? urlParts[2] : null;
     
     console.log('🔥 hasEditInUrl:', hasEditInUrl);
     console.log('🔥 hasStoryId:', hasStoryId);
-    console.log('🔥 isEditMode:', isEditMode);
+    console.log('🔥 currentEditMode:', currentEditMode);
+    console.log('🔥 isStoriesEditRoute:', isStoriesEditRoute);
+    console.log('🔥 urlStoryId:', urlStoryId);
     
-    if (isEditMode) {
-      console.log('🔥 ✅ EDIT MODE CONFIRMED - UPDATING STORY:', initialStoryId);
+    // ИСПРАВЛЕННАЯ ЛОГИКА: используем URL или переданный ID
+    const actualStoryId = initialStoryId || urlStoryId;
+    const shouldUpdate = (currentEditMode || isStoriesEditRoute) && actualStoryId;
+    
+    console.log('🔥 actualStoryId:', actualStoryId);
+    console.log('🔥 shouldUpdate:', shouldUpdate);
+    
+    if (shouldUpdate) {
+      console.log('🔥 ✅ EDIT MODE CONFIRMED - UPDATING STORY:', actualStoryId);
       console.log('🔥 Calling updateStory function...');
-      updateStory();
+      
+      // Используем actualStoryId для обновления
+      if (!actualStoryId) {
+        console.error('❌ CRITICAL ERROR: No storyId for update');
+        toast({
+          title: "Ошибка обновления",
+          description: "Не удается определить ID истории для обновления",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const updateData = {
+        title: storyTitle,
+        metadata: {
+          slides: slides,
+          format: '9:16'
+        }
+      };
+      
+      console.log('🔥 Calling updateContentMutation.mutate with ID:', actualStoryId);
+      updateContentMutation.mutate({ id: actualStoryId, data: updateData });
       return;
     }
     
