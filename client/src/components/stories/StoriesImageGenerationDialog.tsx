@@ -360,7 +360,8 @@ export function StoriesImageGenerationDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображения для Stories</DialogTitle>
         <DialogDescription>
@@ -575,6 +576,7 @@ export function StoriesImageGenerationDialog({
           </div>
         </div>
       )}
-    </DialogContent>
+      </DialogContent>
+    </Dialog>
   );
 }

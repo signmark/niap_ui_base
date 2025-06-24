@@ -67,12 +67,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     slides,
     currentSlideIndex,
     storyTitle,
-    selectedElement,
+    selectedElement: storeSelectedElement,
     initializeSlides,
     loadStoryData,
     setCurrentSlideIndex,
     setStoryTitle,
-    setSelectedElement,
+    setSelectedElement: setStoreSelectedElement,
     addElement: storeAddElement,
     updateElement,
     deleteElement,
@@ -81,10 +81,16 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     updateSlide
   } = useStoryStore();
   
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  // ГЛОБАЛЬНОЕ СОСТОЯНИЕ ДИАЛОГОВ
+  const { 
+    imageDialogOpen, 
+    openImageDialog, 
+    closeImageDialog,
+    setContentId 
+  } = useStoriesDialogStore();
+  
+  // ЛОКАЛЬНОЕ СОСТОЯНИЕ
   const [showElementDialog, setShowElementDialog] = useState(false);
-  const [showImageDialog, setShowImageDialog] = useState(false);
-  const [pendingElementType, setPendingElementType] = useState<StoryElement['type'] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [localStoryId, setLocalStoryId] = useState<string | null>(storyId || null);
   const [isEditMode, setIsEditMode] = useState(!!storyId);
@@ -415,13 +421,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   };
 
   const addElement = useCallback((elementType: StoryElement['type']) => {
-    console.log('🔧 Adding element type:', elementType, 'to slide:', currentSlideIndex);
-    
-    // Для изображений открываем диалог генерации
+    // КРИТИЧНО: для изображений открываем диалог генерации
     if (elementType === 'image' || elementType === 'ai-image') {
-      setPendingElementType('image'); // Всегда сохраняем как 'image'
-      setShowImageDialog(true);
-      console.log('🎨 Opening image generation dialog for Stories element');
+      openImageDialog(storyId || localStoryId || 'new', 'image');
       return;
     }
     
@@ -432,7 +434,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       title: 'Элемент добавлен',
       description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
     });
-  }, [currentSlideIndex, storeAddElement, toast]);
+  }, [storyId, localStoryId, openImageDialog, storeAddElement, toast]);
 
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
@@ -447,26 +449,21 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   // Обработчик для добавления сгенерированного изображения
   const handleImageGenerated = useCallback((imageUrl: string, prompt?: string) => {
-    console.log('🎨 Adding generated image to Stories:', imageUrl);
-    
     // Добавляем элемент изображения с сгенерированным URL
     const newElement = storeAddElement('image', {
-      content: { 
-        url: imageUrl, 
-        alt: 'Сгенерированное изображение',
-        prompt: prompt 
-      }
+      url: imageUrl,
+      alt: prompt || 'Generated image',
+      prompt: prompt
     });
     
-    // Закрываем диалог и сбрасываем состояние
-    setShowImageDialog(false);
-    setPendingElementType(null);
+    // Закрываем диалог через store
+    closeImageDialog();
     
     toast({
       title: 'Изображение добавлено',
-      description: 'AI изображение успешно добавлено в Stories'
+      description: 'Сгенерированное изображение добавлено на слайд'
     });
-  }, [storeAddElement, toast]);
+  }, [storeAddElement, closeImageDialog, toast]);
 
   const handleDeleteElement = (elementId: string) => {
     deleteElement(elementId);
@@ -786,11 +783,11 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
             </div>
 
             {/* Element properties */}
-            {selectedElement && (
+            {storeSelectedElement && (
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Свойства элемента</h4>
                 
-                {selectedElement.type === 'text' && (
+                {storeSelectedElement.type === 'text' && (
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="text-content" className="text-sm">Текст</Label>
@@ -1072,15 +1069,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         }}
       />
 
-      {/* Image Generation Dialog */}
-      {showImageDialog && (
-        {/* Image Generation Dialog - Глобальный стейт */}
-        <StoriesImageGenerationDialog
-          isOpen={imageDialogOpen}
-          onClose={closeImageDialog}
-          onImageGenerated={handleImageGenerated}
-        />
-      )}
+      {/* Image Generation Dialog - Глобальный стейт */}
+      <StoriesImageGenerationDialog
+        isOpen={imageDialogOpen}
+        onClose={closeImageDialog}
+        onImageGenerated={handleImageGenerated}
+      />
     </div>
   );
 }
