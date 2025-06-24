@@ -84,6 +84,43 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const [storyId, setStoryId] = useState<string | null>(initialStoryId || null);
   const [isEditMode, setIsEditMode] = useState(!!initialStoryId);
 
+  // Загрузка существующей Stories
+  const loadExistingStory = async (id: string) => {
+    try {
+      console.log('🔥 Loading story from API:', id);
+      const response = await fetch(`/api/stories/story/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const storyData = result.data;
+          console.log('🔥 Story loaded:', storyData);
+          
+          // Загружаем данные в store
+          setStoryTitle(storyData.title || 'История без названия');
+          
+          // Загружаем слайды из metadata
+          if (storyData.metadata) {
+            const metadata = typeof storyData.metadata === 'string' 
+              ? JSON.parse(storyData.metadata) 
+              : storyData.metadata;
+            
+            if (metadata.slides && metadata.slides.length > 0) {
+              // Здесь нужно обновить slides в store
+              console.log('🔥 Loading slides:', metadata.slides);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('🔥 Error loading story:', error);
+    }
+  };
+
   // Инициализация при монтировании
   useEffect(() => {
     console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
@@ -93,10 +130,12 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     if (initialStoryId) {
       console.log('🔥 Edit mode - loading story:', initialStoryId);
       setIsEditMode(true);
-      // Здесь можно загрузить данные Stories из API по ID
+      setStoryId(initialStoryId);
+      loadExistingStory(initialStoryId);
     } else {
       console.log('🔥 Create mode - initializing new story');
       setIsEditMode(false);
+      setStoryId(null);
       initializeSlides();
     }
     
