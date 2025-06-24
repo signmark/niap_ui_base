@@ -796,7 +796,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                         value={storeSelectedElement.content?.text || ''}
                         onChange={(e) => {
                           console.log('🔤 Text changing to:', e.target.value);
-                          const newContent = { ...selectedElement.content, text: e.target.value };
+                          const newContent = { ...storeSelectedElement.content, text: e.target.value };
                           
                           // Сначала обновляем локальный selectedElement
                           setSelectedElement({
@@ -830,7 +830,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                         value={[storeSelectedElement.content?.fontSize || 24]}
                         onValueChange={(value) => {
                           console.log('📏 Font size changing to:', value[0]);
-                          const newContent = { ...selectedElement.content, fontSize: value[0] };
+                          const newContent = { ...storeSelectedElement.content, fontSize: value[0] };
                           
                           setSelectedElement({
                             ...selectedElement,
@@ -852,7 +852,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                         value={storeSelectedElement.content?.color || '#ffffff'}
                         onChange={(e) => {
                           console.log('🎨 Color changing to:', e.target.value);
-                          const newContent = { ...selectedElement.content, color: e.target.value };
+                          const newContent = { ...storeSelectedElement.content, color: e.target.value };
                           
                           setSelectedElement({
                             ...selectedElement,
@@ -916,10 +916,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            const currentOptions = selectedElement.content.options || ['Вариант 1', 'Вариант 2'];
+                            const currentOptions = storeSelectedElement.content?.options || ['Вариант 1', 'Вариант 2'];
                             const newOptions = [...currentOptions, `Вариант ${currentOptions.length + 1}`];
-                            updateElement(selectedElement.id, {
-                              content: { ...selectedElement.content, options: newOptions }
+                            updateElement(storeSelectedElement.id, {
+                              content: { ...storeSelectedElement.content, options: newOptions }
                             });
                           }}
                         >
