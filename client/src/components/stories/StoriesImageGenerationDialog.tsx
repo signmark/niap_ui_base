@@ -173,53 +173,90 @@ export function StoriesImageGenerationDialog({
     }
   }, []);
 
-  // Мутация для генерации промта
+  // Функция для очистки HTML-тегов из текста
+  const stripHtml = (html: string): string => {
+    if (!html || typeof html !== 'string') return '';
+    
+    try {
+      let processedHtml = html
+        .replace(/<p.*?>(.*?)<\/p>/gi, '$1\n\n')
+        .replace(/<h[1-6].*?>(.*?)<\/h[1-6]>/gi, '$1\n\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<li.*?>(.*?)<\/li>/gi, '• $1\n')
+        .replace(/<a\s+[^>]*href=['"]([^'"]*)['"]\s*[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
+          return text && text.trim() ? `${text.trim()} (${url})` : url;
+        });
+      
+      processedHtml = processedHtml.replace(/<[^>]*>/g, '');
+      
+      processedHtml = processedHtml
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, '\'');
+      
+      let plainText = processedHtml;
+      try {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = processedHtml;
+        plainText = tempDiv.textContent || tempDiv.innerText || processedHtml;
+      } catch (e) {
+        console.warn('Не удалось создать DOM-элемент для декодирования HTML:', e);
+      }
+      
+      const cleanedText = plainText
+        .replace(/\n\s+/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      
+      return cleanedText;
+    } catch (error) {
+      console.error('Ошибка при очистке HTML:', error);
+      return html.replace(/<[^>]*>/g, '').trim();
+    }
+  };
+
+  // Мутация для генерации промта из текста
   const generatePromptMutation = useMutation({
-    mutationFn: async (contentText: string) => {
-      const cleanedContent = contentText.replace(/<[^>]*>/g, '').trim();
-      console.log("Генерация промта на основе текста через DeepSeek (оптимизированный метод)");
-      console.log("Очищенный текст перед отправкой:", cleanedContent);
+    mutationFn: async () => {
+      if (!content) {
+        throw new Error("Необходимо ввести текст для генерации промта");
+      }
       
-      const response = await fetch('/api/generate-image-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: cleanedContent,
+      console.log("Генерация промта на основе текста через DeepSeek");
+      
+      try {
+        const cleanedText = stripHtml(content);
+        console.log("Очищенный текст перед отправкой:", cleanedText);
+        
+        const response = await api.post("/generate-image-prompt", {
+          content: cleanedText,
           keywords: []
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка при генерации промта');
+        });
+        
+        if (response.data?.success && response.data?.prompt) {
+          return response.data.prompt;
+        } else {
+          throw new Error("Не удалось сгенерировать промт");
+        }
+      } catch (error: unknown) {
+        throw error;
       }
-      
-      const result = await response.json();
-      if (!result.success || !result.prompt) {
-        throw new Error('Промт не был сгенерирован');
-      }
-      
-      return result.prompt;
     },
     onSuccess: (promptText) => {
-      console.log("🎯 ПРОМТ УСПЕШНО СГЕНЕРИРОВАН:", promptText.substring(0, 100) + "...");
+      console.log("Промт успешно сгенерирован:", promptText);
       
       setGeneratedPrompt(promptText);
-      console.log("🎯 setGeneratedPrompt вызван");
-      
       setPrompt(promptText);
-      console.log("🎯 setPrompt вызван");
-      
       setActiveTab("prompt");
-      console.log("🎯 setActiveTab('prompt') вызван");
-      
-      console.log("🎯 ✅ Диалог НЕ закрываем - промт добавлен в поле");
       
       toast({
         title: "Успешно",
-        description: "Промт сгенерирован и добавлен в поле для редактирования"
+        description: "Промт сгенерирован на основе текста"
       });
-      console.log("🎯 Toast показан, функция onSuccess завершена");
     },
     onError: (error: unknown) => {
       const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
@@ -289,28 +326,16 @@ export function StoriesImageGenerationDialog({
   });
 
   const handleGeneratePrompt = () => {
-    let textToProcess = '';
-    
-    if (typeof initialContent === 'string') {
-      textToProcess = initialContent;
-    } else if (initialContent && typeof initialContent === 'object') {
-      textToProcess = initialContent.content || initialContent.originalContent || '';
-    }
-    
-    if (!textToProcess?.trim()) {
-      textToProcess = content.trim();
-    }
-    
-    if (!textToProcess) {
+    if (!content.trim()) {
       toast({
         variant: "destructive",
         title: "Нет текста для генерации",
-        description: "Введите текст в поле выше или передайте контент для генерации промта"
+        description: "Введите текст в поле выше для генерации промта"
       });
       return;
     }
     
-    generatePromptMutation.mutate(textToProcess);
+    generatePromptMutation.mutate();
   };
 
   const handleGenerateImage = () => {
@@ -359,8 +384,8 @@ export function StoriesImageGenerationDialog({
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="templates">Шаблоны</TabsTrigger>
-          <TabsTrigger value="prompt">Произвольный запрос</TabsTrigger>
+          <TabsTrigger value="templates">Из текста</TabsTrigger>
+          <TabsTrigger value="prompt">Прямой промт</TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="space-y-4">
@@ -371,14 +396,17 @@ export function StoriesImageGenerationDialog({
                 id="content-input"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Например: Интересный гусь"
+                placeholder="Например: Интересный гусь на лугу среди цветов"
                 className="min-h-[100px]"
               />
+              <p className="text-sm text-muted-foreground">
+                Опишите содержание или настроение, а ИИ создаст промт для генерации изображения
+              </p>
             </div>
             
             <Button 
               onClick={handleGeneratePrompt}
-              disabled={generatePromptMutation.isPending}
+              disabled={generatePromptMutation.isPending || !content.trim()}
               className="w-full"
             >
               {generatePromptMutation.isPending ? (
@@ -393,20 +421,32 @@ export function StoriesImageGenerationDialog({
                 </>
               )}
             </Button>
+
+            {generatedPrompt && (
+              <div className="space-y-2 p-3 bg-muted rounded-lg">
+                <Label className="text-sm font-medium">Сгенерированный промт:</Label>
+                <p className="text-sm text-muted-foreground break-words">
+                  {generatedPrompt}
+                </p>
+              </div>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="prompt" className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="prompt-input">Описание изображения</Label>
+              <Label htmlFor="prompt-input">Промт для генерации изображения</Label>
               <Textarea
                 id="prompt-input"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Опишите какое изображение вы хотите создать..."
+                placeholder="Введите детальное описание изображения на английском языке..."
                 className="min-h-[100px]"
               />
+              <p className="text-sm text-muted-foreground">
+                Чем детальнее промт, тем лучше результат. Можете сгенерировать промт из текста на вкладке "Из текста"
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -417,11 +457,19 @@ export function StoriesImageGenerationDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableModels.map(model => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
+                    {availableModels.length > 0 ? (
+                      availableModels.map(model => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      FAL_AI_MODELS.map(model => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -438,6 +486,37 @@ export function StoriesImageGenerationDialog({
                         {STYLE_DESCRIPTIONS[style] || style}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Размер изображения</Label>
+                <Select value={imageSize} onValueChange={setImageSize}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1024x1024">1024x1024 (квадрат)</SelectItem>
+                    <SelectItem value="1024x1792">1024x1792 (9:16, Stories)</SelectItem>
+                    <SelectItem value="1792x1024">1792x1024 (16:9, альбом)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Количество изображений</Label>
+                <Select value={numImages.toString()} onValueChange={(value) => setNumImages(parseInt(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 изображение</SelectItem>
+                    <SelectItem value="2">2 изображения</SelectItem>
+                    <SelectItem value="3">3 изображения</SelectItem>
+                    <SelectItem value="4">4 изображения</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
