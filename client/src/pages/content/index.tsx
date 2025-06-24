@@ -2587,35 +2587,119 @@ export default function ContentPage() {
             <DialogTitle>{previewContent?.title || "Просмотр контента"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Тип контента */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              {previewContent?.contentType === "text" && <FileText size={16} />}
-              {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
-              {previewContent?.contentType === "video" && <Video size={16} />}
-              {previewContent?.contentType === "video-text" && <Video size={16} />}
-              <span>
-                {previewContent?.contentType === "text" && "Текстовый контент"}
-                {previewContent?.contentType === "text-image" && "Контент с изображением"}
-                {previewContent?.contentType === "video" && "Видео контент"}
-                {previewContent?.contentType === "video-text" && "Видео с текстом"}
-              </span>
-            </div>
+            {/* Stories Preview */}
+            {previewContent?.contentType === 'story' && previewContent?.metadata ? (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-lg text-white">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Layers className="h-6 w-6" />
+                    <h3 className="text-lg font-semibold">Instagram Stories</h3>
+                  </div>
+                  
+                  {(() => {
+                    try {
+                      const metadata = typeof previewContent.metadata === 'string' 
+                        ? JSON.parse(previewContent.metadata) 
+                        : previewContent.metadata;
+                      const slides = metadata?.slides || [];
+                      
+                      return (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {slides.map((slide: any, index: number) => (
+                              <div key={index} className="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/20">
+                                <div className="aspect-[9/16] bg-gradient-to-b from-white/20 to-white/10 rounded-lg mb-3 flex items-center justify-center">
+                                  <div className="text-center text-white/80">
+                                    <Layers className="h-8 w-8 mx-auto mb-2" />
+                                    <p className="text-sm">Слайд {index + 1}</p>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="font-medium text-sm">Элементы:</h4>
+                                  <div className="text-xs space-y-1">
+                                    {slide.elements?.map((element: any, elemIndex: number) => (
+                                      <div key={elemIndex} className="bg-white/10 rounded px-2 py-1">
+                                        <span className="capitalize">{element.type}</span>
+                                        {element.content && (
+                                          <span className="ml-2 opacity-75">
+                                            {element.content.length > 20 
+                                              ? element.content.substring(0, 20) + '...' 
+                                              : element.content}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )) || <span className="text-white/60">Нет элементов</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                            <h4 className="font-medium mb-2">Информация о Stories:</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="opacity-75">Количество слайдов:</span>
+                                <span className="ml-2 font-medium">{slides.length}</span>
+                              </div>
+                              <div>
+                                <span className="opacity-75">Формат:</span>
+                                <span className="ml-2 font-medium">{metadata?.format || '9:16'}</span>
+                              </div>
+                              <div className="col-span-2">
+                                <span className="opacity-75">Создано:</span>
+                                <span className="ml-2 font-medium">
+                                  {new Date(previewContent.createdAt || new Date()).toLocaleString('ru-RU')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } catch (e) {
+                      return (
+                        <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                          <p className="text-white/80">Ошибка при загрузке данных Stories</p>
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+              </div>
+            ) : (
+              /* Regular Content Preview */
+              <div>
+                {/* Тип контента */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                  {previewContent?.contentType === "text" && <FileText size={16} />}
+                  {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
+                  {previewContent?.contentType === "video" && <Video size={16} />}
+                  {previewContent?.contentType === "video-text" && <Video size={16} />}
+                  <span>
+                    {previewContent?.contentType === "text" && "Текстовый контент"}
+                    {previewContent?.contentType === "text-image" && "Контент с изображением"}
+                    {previewContent?.contentType === "video" && "Видео контент"}
+                    {previewContent?.contentType === "video-text" && "Видео с текстом"}
+                  </span>
+                </div>
 
-            {/* Основной контент */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: previewContent && typeof previewContent.content === 'string' 
-                    ? (previewContent.content.startsWith('<') 
-                      ? previewContent.content 
-                      : processMarkdownSyntax(previewContent.content))
-                    : ''
-                }}
-              />
-            </div>
+                {/* Основной контент */}
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div 
+                    dangerouslySetInnerHTML={{ 
+                      __html: previewContent && typeof previewContent.content === 'string' 
+                        ? (previewContent.content.startsWith('<') 
+                          ? previewContent.content 
+                          : processMarkdownSyntax(previewContent.content))
+                        : ''
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
-            {/* Медиа-контент */}
-            {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
+            {/* Медиа-контент для обычного контента */}
+            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
@@ -2630,7 +2714,7 @@ export default function ContentPage() {
             )}
             
             {/* Дополнительные изображения */}
-            {previewContent?.contentType === "text-image" && 
+            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && 
              Array.isArray(previewContent?.additionalImages) && 
              previewContent.additionalImages.filter(url => url && url.trim() !== '').length > 0 && (
               <div className="mt-6">
@@ -2658,7 +2742,7 @@ export default function ContentPage() {
               </div>
             )}
             
-            {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
+            {previewContent?.contentType !== 'story' && (previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
               <div className="mt-4">
                 <video
                   src={previewContent.videoUrl}
@@ -2669,7 +2753,7 @@ export default function ContentPage() {
             )}
 
             {/* Ключевые слова */}
-            {previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
+            {previewContent?.contentType !== 'story' && previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
