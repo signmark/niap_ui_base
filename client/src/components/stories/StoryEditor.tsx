@@ -67,6 +67,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     storyTitle,
     selectedElement,
     initializeSlides,
+    loadStoryData,
     setCurrentSlideIndex,
     setStoryTitle,
     setSelectedElement,
@@ -88,13 +89,9 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
   const loadExistingStory = async (id: string) => {
     try {
       console.log('🔥 Loading story from API:', id);
-      // Получаем токен из всех возможных источников
-      const token = localStorage.getItem('access_token') || 
-                   localStorage.getItem('authToken') || 
-                   localStorage.getItem('auth_token') ||
-                   localStorage.getItem('token');
+      // Получаем токен (система использует auth_token)
+      const token = localStorage.getItem('auth_token');
       console.log('🔥 Loading story with token:', token ? 'PRESENT' : 'MISSING');
-      console.log('🔥 Available localStorage keys:', Object.keys(localStorage));
       
       const response = await fetch(`/api/stories/story/${id}`, {
         headers: {
@@ -118,8 +115,8 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
               : storyData.metadata;
             
             if (metadata.slides && metadata.slides.length > 0) {
-              // Здесь нужно обновить slides в store
-              console.log('🔥 Loading slides:', metadata.slides);
+              console.log('🔥 Loading slides from metadata:', metadata.slides);
+              loadStoryData({ slides: metadata.slides });
             }
           }
         }
@@ -193,10 +190,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
       
       // Создаем новую историю
       console.log('🔥 ➕ CREATING NEW STORY');
-      const token = localStorage.getItem('access_token') || 
-                   localStorage.getItem('authToken') || 
-                   localStorage.getItem('auth_token') ||
-                   localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       console.log('🔥 POST request with token:', token ? 'PRESENT' : 'MISSING');
       
       const response = await fetch('/api/stories', {
@@ -249,10 +243,7 @@ export default function StoryEditor({ campaignId, storyId: initialStoryId }: Sto
     try {
       console.log('🔥 🎯 PATCH REQUEST for story:', currentStoryId);
       
-      const token = localStorage.getItem('access_token') || 
-                   localStorage.getItem('authToken') || 
-                   localStorage.getItem('auth_token') ||
-                   localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       console.log('🔥 PATCH request with token:', token ? 'PRESENT' : 'MISSING');
       
       const response = await fetch(`/api/stories/story/${currentStoryId}`, {

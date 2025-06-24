@@ -34,6 +34,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     try {
+        // Проверяем что токен не пустой
+        if (!token || token.trim() === '' || token === 'undefined' || token === 'null') {
+            console.log('[DEV] [auth-middleware] Empty or invalid token:', token);
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Unauthorized: Empty token' 
+            });
+        }
+
         // Декодируем JWT токен для получения реального user ID
         const base64Payload = token.split('.')[1];
         const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());

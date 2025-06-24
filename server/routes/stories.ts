@@ -175,15 +175,20 @@ router.get('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const story = await directusCrud.read('campaign_content', id);
+    console.log('[DEV] [stories] Loading story for editing:', id);
 
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
+    // Get story с пользовательским токеном
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = response.data.data;
 
+    console.log('[DEV] [stories] Story loaded for EDITING:', { id: story.id, title: story.title });
     res.json({ success: true, data: story });
   } catch (error) {
-    console.error('Error fetching story:', error);
+    console.error('Error loading story:', error);
     res.status(500).json({ error: 'Не удалось загрузить историю' });
   }
 });
