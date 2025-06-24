@@ -116,6 +116,10 @@ export function StoriesImageGenerationDialog({
   
   const { toast } = useToast();
 
+  // Добавляем защитные значения по умолчанию
+  const safeCampaignId = campaignId || 'default';
+  const safeContentId = contentId || 'new';
+
   // Загрузка доступных моделей при инициализации
   useEffect(() => {
     const loadModels = async () => {
@@ -274,8 +278,8 @@ export function StoriesImageGenerationDialog({
           style_preset: stylePreset,
           image_size: imageSize,
           save_prompt: savePrompt,
-          campaign_id: campaignId,
-          content_id: contentId
+          campaign_id: safeCampaignId,
+          content_id: safeContentId
         })
       });
 
@@ -292,6 +296,7 @@ export function StoriesImageGenerationDialog({
       return result.images;
     },
     onSuccess: (images) => {
+      console.log("🎨 Изображения успешно сгенерированы:", images?.length);
       setGeneratedImages(images);
       setSelectedImageIndex(-1);
       toast({
@@ -301,7 +306,16 @@ export function StoriesImageGenerationDialog({
     },
     onError: (error: unknown) => {
       const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
-      console.error("Ошибка при генерации изображения:", error);
+      console.error("🚨 Ошибка при генерации изображения:", error);
+      
+      // Дополнительная информация для отладки
+      console.error("🚨 Параметры запроса:", {
+        prompt: prompt?.substring(0, 50),
+        campaignId: safeCampaignId,
+        contentId: safeContentId,
+        modelType,
+        imageSize
+      });
       
       toast({
         variant: "destructive",

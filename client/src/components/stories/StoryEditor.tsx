@@ -29,6 +29,7 @@ import ElementDialog from './ElementDialog';
 import { StoriesImageGenerationDialog } from '@/components/stories/StoriesImageGenerationDialog';
 import { useStoryStore } from '@/lib/storyStore';
 import { useStoriesDialogStore } from '@/lib/storiesDialogStore';
+import { useStore } from '@/lib/store';
 
 // Local interfaces for component
 interface StorySlide {
@@ -86,7 +87,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     imageDialogOpen, 
     openImageDialog, 
     closeImageDialog,
-    setContentId 
+    setContentId,
+    contentId 
   } = useStoriesDialogStore();
   
   // ЛОКАЛЬНОЕ СОСТОЯНИЕ
