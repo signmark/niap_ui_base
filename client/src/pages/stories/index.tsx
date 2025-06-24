@@ -40,6 +40,7 @@ export default function StoriesPage() {
     <div className="min-h-screen">
       <div className="max-w-full mx-auto">
         <StoryEditor 
+          key={`story-editor-stable-${activeCampaignId}`}
           campaignId={activeCampaignId} 
           initialStoryId={storyId}
         />
