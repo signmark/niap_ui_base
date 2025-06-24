@@ -1368,19 +1368,49 @@ export default function ContentPage() {
                                 <div className="flex gap-3">
                                   {/* Text content */}
                                   <div className="flex-1">
-                                    <div className="max-h-14 overflow-hidden relative card-content mb-2">
-                                      <div 
-                                        className="prose prose-sm max-w-none text-xs"
-                                        dangerouslySetInnerHTML={{ 
-                                          __html: typeof content.content === 'string' 
-                                            ? (content.content.startsWith('<') 
-                                              ? content.content 
-                                              : processMarkdownSyntax(content.content))
-                                            : ''
-                                        }}
-                                      />
-                                      <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
-                                    </div>
+                                    {/* Stories preview */}
+                                    {content.contentType === 'story' && content.metadata ? (
+                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Layers className="h-4 w-4 text-purple-600" />
+                                          <span className="text-purple-800 font-medium text-xs">Instagram Stories</span>
+                                        </div>
+                                        {(() => {
+                                          try {
+                                            const metadata = typeof content.metadata === 'string' 
+                                              ? JSON.parse(content.metadata) 
+                                              : content.metadata;
+                                            const slidesCount = metadata?.slides?.length || 0;
+                                            return (
+                                              <div className="text-xs text-purple-700">
+                                                <div className="flex items-center gap-2">
+                                                  <span>Слайдов: {slidesCount}</span>
+                                                  <span className="text-purple-500">•</span>
+                                                  <span>Формат: {metadata?.format || '9:16'}</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          } catch (e) {
+                                            return <span className="text-xs text-purple-600">Stories контент</span>;
+                                          }
+                                        })()}
+                                      </div>
+                                    ) : (
+                                      /* Regular content preview */
+                                      <div className="max-h-14 overflow-hidden relative card-content mb-2">
+                                        <div 
+                                          className="prose prose-sm max-w-none text-xs"
+                                          dangerouslySetInnerHTML={{ 
+                                            __html: typeof content.content === 'string' 
+                                              ? (content.content.startsWith('<') 
+                                                ? content.content 
+                                                : processMarkdownSyntax(content.content))
+                                              : ''
+                                          }}
+                                        />
+                                        <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
+                                      </div>
+                                    )}
                                     
                                     {/* Keywords */}
                                     {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
