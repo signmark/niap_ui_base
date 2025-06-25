@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { useAuthStore } from "@/lib/store";
-import { Loader2, HelpCircle, CheckCircle2, XCircle, Info as InfoIcon, ExternalLink } from "lucide-react";
+import { Loader2, HelpCircle, CheckCircle2, XCircle, Info as InfoIcon, ExternalLink, Youtube } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 
 // Функция для получения читаемого названия сервиса по его внутреннему идентификатору
 function getServiceDisplayName(serviceName: string): string {
