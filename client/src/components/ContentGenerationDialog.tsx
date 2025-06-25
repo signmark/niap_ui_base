@@ -211,7 +211,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           campaign_id: campaignId,
           title: title,
           content: generationResult,
-          contentType: 'text',
+          content_type: 'text',
           prompt: prompt,
           keywords: selectedKeywords,
           status: 'draft'
