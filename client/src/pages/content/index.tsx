@@ -2556,11 +2556,34 @@ export default function ContentPage() {
             console.log("Изображение успешно сгенерировано:", imageUrl);
             console.log("Промт использованный для генерации:", promptText?.substring(0, 100) + "...");
             
-            // Проверяем режим дополнительного изображения
+            // Проверяем режим обложки видео
+            const videoThumbnailMode = localStorage.getItem('videoThumbnailMode');
             const additionalImageMode = localStorage.getItem('additionalImageMode');
             const imageIndex = localStorage.getItem('currentAdditionalImageIndex');
             
-            if (additionalImageMode) {
+            if (videoThumbnailMode === 'true') {
+              // Режим генерации обложки видео
+              if (currentContent) {
+                // Для режима редактирования
+                setCurrentContent({
+                  ...currentContent,
+                  videoThumbnail: imageUrl,
+                  ...(promptText && !currentContent.prompt ? { prompt: promptText } : {})
+                });
+              } else {
+                // Для режима создания
+                setNewContent({
+                  ...newContent,
+                  videoThumbnail: imageUrl,
+                  ...(promptText && !newContent.prompt ? { prompt: promptText } : {})
+                });
+              }
+              
+              // Очищаем флаг режима
+              localStorage.removeItem('videoThumbnailMode');
+              setIsImageGenerationDialogOpen(false);
+              
+            } else if (additionalImageMode) {
               // Если это режим дополнительного изображения
               const index = parseInt(imageIndex || '0', 10);
               
@@ -2618,6 +2641,7 @@ export default function ContentPage() {
             // Очищаем localStorage при закрытии диалога
             localStorage.removeItem('additionalImageMode');
             localStorage.removeItem('currentAdditionalImageIndex');
+            localStorage.removeItem('videoThumbnailMode');
             setIsImageGenerationDialogOpen(false);
           }}
         />
