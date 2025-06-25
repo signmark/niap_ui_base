@@ -88,8 +88,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
+    // Для новых Stories создаем базовый слайд
     if (!storyId && slides.length === 0) {
-      // Создание нового слайда (логирование уменьшено)
       const newSlides = [{
         id: 'slide-1',
         order: 0,
@@ -100,12 +100,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       setSlides(newSlides);
       setStoryTitle('');
       setCurrentSlideIndex(0);
-      // Инициализация выполнена
+      console.log('New story initialized with empty slide');
       return;
     }
     
+    // Если это новая Stories и слайды уже есть - не перезаписываем
     if (!storyId && slides.length > 0) {
-      // Слайды уже инициализированы
       return;
     }
     
@@ -121,17 +121,18 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
           // Данные Stories загружены
           setStoryTitle(content.title || 'Новая история');
           
-          // Инициализируем слайды из метаданных
+          // Инициализируем слайды из метаданных с сохранением оригинальных ID
           if (content.metadata && content.metadata.slides) {
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
-              id: `slide-${index}`,
+              id: slide.id || `slide-${index}`, // Сохраняем оригинальный ID слайда
               order: slide.order || index,
               duration: slide.duration || 5,
               background: slide.background || { type: 'color', value: '#ffffff' },
-              elements: slide.elements || []
+              elements: slide.elements || [] // Важно! Сохраняем все элементы как есть
             }));
             setSlides(storySlides);
             setCurrentSlideIndex(0);
+            console.log('Loaded story with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
           }
         }
       })
@@ -146,22 +147,24 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, slides.length, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+  }, [storyId, setSlides, setCurrentSlideIndex, setStoryTitle, toast]); // Убрали slides.length из зависимостей
 
-  // Отслеживание изменений slides из store и обновление selectedElement
+  // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
-    const count = slides[currentSlideIndex]?.elements?.length || 0;
-    // Состояние слайдов обновлено (детальное логирование отключено)
+    const currentSlide = slides[currentSlideIndex];
+    if (!currentSlide) return;
+    
+    const elementsCount = currentSlide.elements?.length || 0;
+    console.log(`Slide ${currentSlideIndex} has ${elementsCount} elements`);
     
     // Обновляем selectedElement если он изменился в store
     if (selectedElement) {
-      const updatedElement = slides[currentSlideIndex]?.elements?.find(el => el.id === selectedElement.id);
+      const updatedElement = currentSlide.elements?.find(el => el.id === selectedElement.id);
       if (updatedElement && JSON.stringify(updatedElement) !== JSON.stringify(selectedElement)) {
-        console.log('🔄 Updating selectedElement from store');
         setSelectedElement(updatedElement);
       }
     }
-  }, [slides, currentSlideIndex, selectedElement?.id]);
+  }, [slides, currentSlideIndex, selectedElement, setSelectedElement]);
 
   // Функция сохранения истории
   const saveStory = async () => {

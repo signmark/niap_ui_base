@@ -81,7 +81,6 @@ export const useStoryStore = create<StoryState>()(
     const { slides, currentSlideIndex } = get();
     
     if (slides.length === 0) {
-      console.log('🏪 Store: No slides available, cannot add element');
       return null;
     }
     
@@ -95,7 +94,8 @@ export const useStoryStore = create<StoryState>()(
       style: getDefaultStyle(elementType)
     };
 
-    console.log('🏪 Store: Adding element', newElement.id, 'to slide', currentSlideIndex);
+    console.log('Adding element to slide index:', currentSlideIndex);
+    console.log('Element added:', newElement.id, 'Type:', elementType);
 
     const newSlides = [...slides];
     const targetSlide = newSlides[currentSlideIndex];
@@ -107,14 +107,16 @@ export const useStoryStore = create<StoryState>()(
       };
       newSlides[currentSlideIndex] = updatedSlide;
       
-      console.log('🏪 Store: Element added! Total elements now:', updatedSlide.elements.length);
+      console.log('Total elements now:', updatedSlide.elements.length);
+      console.log('Story updated with new element in slide:', targetSlide.id);
       
       set({ 
         slides: newSlides,
         selectedElement: newElement
       });
     } else {
-      console.log('🏪 Store: Target slide not found at index', currentSlideIndex);
+      console.log('ERROR: Target slide not found at index', currentSlideIndex);
+      return null;
     }
 
     return newElement;
