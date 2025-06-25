@@ -87,9 +87,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Проверяем параметры URL для очистки состояния
-  const urlParams = new URLSearchParams(window.location.search);
-  const shouldClear = urlParams.get('clear') === 'true';
+  // Убираем проверку параметра clear - просто очищаем localStorage для новых Stories
   
   // Флаг для предотвращения повторных загрузок
   const [isLoaded, setIsLoaded] = useState(false);
@@ -101,20 +99,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   useEffect(() => {
     console.log('StoryEditor useEffect triggered:', { 
       storyId, 
-      shouldClear, 
       slidesLength: slides.length,
       hasSlides: slides.length > 0 
     });
-    
-    // Если требуется очистка состояния (создание через диалог)
-    if (!storyId && shouldClear) {
-      console.log('Clearing store and localStorage for new story');
-      localStorage.removeItem(localStorageKey);
-      localStorage.removeItem('new-story');
-      localStorage.removeItem('story-undefined');
-      resetStore();
-      return;
-    }
     
     // Для новых Stories создаем базовый слайд если его нет
     if (!storyId && slides.length === 0) {
