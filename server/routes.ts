@@ -1267,10 +1267,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       token = authHeader.replace('Bearer ', '');
       try {
         // Получаем информацию о пользователе из токена
-        const userResponse = await directusApi.get('/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        userId = userResponse?.data?.data?.id;
+        // Декодируем токен напрямую
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          userId = payload.id;
+        }
       } catch (error) {
         console.error("Ошибка при получении информации о пользователе:", error);
       }
