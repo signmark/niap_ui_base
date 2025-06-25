@@ -1613,7 +1613,7 @@ export default function ContentPage() {
                         });
                         return;
                       }
-                      navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(newContent.title)}`);
+                      navigate(`/campaigns/${selectedCampaignId}/stories/new`);
                     }}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
@@ -1953,7 +1953,7 @@ export default function ContentPage() {
                           <p className="text-purple-600">Stories не созданы</p>
                           <Button 
                             onClick={() => {
-                              navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
+                              navigate(`/campaigns/${selectedCampaignId}/stories/new`);
                             }}
                             className="bg-purple-600 hover:bg-purple-700"
                           >
@@ -2877,7 +2877,7 @@ export default function ContentPage() {
           if (type === 'story') {
             // Очищаем состояние Stories store перед созданием новой Stories
             // Это гарантирует чистое состояние при создании через диалог
-            navigate(`/campaigns/${selectedCampaignId}/stories/new?clear=true`);
+            navigate(`/campaigns/${selectedCampaignId}/stories/new`);
           } else {
             setIsCreateDialogOpen(true);
           }
