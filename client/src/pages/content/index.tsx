@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createRef } from "react";
+import { useState, useEffect, useRef, createRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -151,7 +151,7 @@ export default function ContentPage() {
             }
             // Если это простой объект без специфической структуры
             if (k && typeof k === 'object') {
-              console.log('Обнаружен объект ключевого слова без поля keyword:', k);
+
               return JSON.stringify(k);
             }
             // Если это строка - используем как есть
@@ -177,7 +177,7 @@ export default function ContentPage() {
           }
         } else if (content.keywords !== null) {
           // Для всех других случаев
-          console.log('Нестандартный формат ключевых слов:', content.keywords);
+
           if (typeof content.keywords === 'object') {
             // Пытаемся извлечь информацию из объекта
             const extractedKeywords = Object.values(content.keywords)
@@ -199,7 +199,7 @@ export default function ContentPage() {
         keywords: processedKeywords
       };
       
-      console.log('Setting content with processed keywords:', safeContent.keywords);
+
       setCurrentContent(safeContent);
       
       // Сбрасываем и заново устанавливаем выбранные ключевые слова
@@ -207,7 +207,7 @@ export default function ContentPage() {
       
       // Добавляем ID из предопределенных ключевых слов
       if (Array.isArray(safeContent.keywords)) {
-        console.log('Comparing keywords for selection:', safeContent.keywords);
+
         
         campaignKeywords.forEach(kw => {
           // Строгое сравнение и нормализация строк для более надежного сопоставления
