@@ -381,10 +381,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
 
       // Используем apiRequest для автоматического обновления токена
-      
       const result = await apiRequest(url, {
         method: method,
-        body: JSON.stringify(storyData)
+        body: storyData
       });
       
       toast({

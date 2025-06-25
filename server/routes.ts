@@ -7633,97 +7633,83 @@ Return your response as a JSON array in this exact format:
     }
   });
 
-  app.post("/api/campaign-content", async (req, res) => {
+  app.post("/api/campaign-content", authenticateUser, async (req, res) => {
     try {
-      const authHeader = req.headers['authorization'];
+      console.log('📝 POST /api/campaign-content - Creating new content');
+      console.log('✅ User authenticated:', req.user?.id, req.user?.email);
+      console.log('📄 Content data:', JSON.stringify(req.body, null, 2));
       
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
+      const userId = req.user?.id;
+      const token = req.user?.token;
+      
+      if (!userId || !token) {
+        console.error('❌ Missing user authentication data');
+        return res.status(401).json({ error: 'Не авторизован' });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      // Проверяем наличие обязательных полей
+      const { title, campaign_id, content_type, content, status = 'draft', metadata } = req.body;
       
-      try {
-        console.log("Creating new campaign content with data:", req.body);
-        
-        // Проверяем наличие обязательных полей в соответствии с ошибкой Directus
-        const { title, campaign_id, content_type, content, status = 'draft', metadata } = req.body;
-        
-        if (!campaign_id) {
-          return res.status(400).json({ 
-            error: "Missing required field: campaign_id" 
-          });
-        }
-        
-        if (!content) {
-          return res.status(400).json({ 
-            error: "Missing required field: content" 
-          });
-        }
-        
-        if (!content_type) {
-          return res.status(400).json({ 
-            error: "Missing required field: content_type" 
-          });
-        }
-        
-        // Получаем ID пользователя из токена
-        let userId;
-        try {
-          const userResponse = await directusApi.get('/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          userId = userResponse.data.data.id;
-        } catch (userError: any) {
-          console.error("Failed to get user ID from token:", userError.response?.data || userError.message);
-          return res.status(401).json({ 
-            error: "Invalid token or failed to get user information" 
-          });
-        }
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Создаем новый контент с полученными данными
-        const contentData = {
-          title,
-          campaign_id,
-          content_type,
-          content,
-          status,
-          metadata,
-          user_id: userId // Добавляем user_id для связи с пользователем
-        };
-        
-        console.log("Content data to create:", contentData);
-        
-        // Используем прямой вызов к Directus API для создания контента
-        const response = await directusApi.post('/items/campaign_content', contentData, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        console.log("Content created successfully:", response.data);
-        
-        res.json({
-          success: true,
-          data: response.data.data
-        });
-      } catch (directusError: any) {
-        console.error("Directus API error:", directusError.response?.data || directusError.message);
-        console.error("Directus API error details:", directusError.response?.data);
-        return res.status(directusError.response?.status || 500).json({ 
-          error: "Invalid token or failed to create content",
-          details: directusError.response?.data
+      if (!campaign_id) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: campaign_id" 
         });
       }
+      
+      if (!content) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: content" 
+        });
+      }
+      
+      if (!content_type) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: content_type" 
+        });
+      }
+      
+      // Создаем новый контент с данными пользователя
+      const contentData = {
+        title,
+        campaign_id,
+        content_type,
+        content,
+        status,
+        metadata,
+        user_id: userId
+      };
+      
+      console.log('🚀 Creating content with data:', JSON.stringify(contentData, null, 2));
+      
+      // Используем токен пользователя для создания контента
+      const response = await directusApi.post('/items/campaign_content', contentData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Content created successfully:', response.data?.data?.id);
+      
+      res.json({
+        success: true,
+        data: response.data.data
+      });
     } catch (error: any) {
-      console.error("Error creating campaign content:", error);
-      res.status(500).json({ error: "Failed to create campaign content" });
+      console.error('❌ Error creating campaign content:', error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        console.error('401 error details:', error.response.data);
+        return res.status(401).json({ 
+          error: 'Ошибка авторизации при создании контента',
+          details: error.response?.data 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: 'Не удалось создать контент',
+        details: error.response?.data || error.message 
+      });
     }
   });
 
