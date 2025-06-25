@@ -388,7 +388,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       // Определяем метод и URL в зависимости от того, редактируем или создаем
       const isEdit = !!storyId;
       const url = isEdit ? `/api/campaign-content/${storyId}` : '/api/campaign-content';
-      const method = isEdit ? 'PUT' : 'POST';
+      const method = isEdit ? 'PATCH' : 'POST';
 
       console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
 
