@@ -18,7 +18,10 @@ export class YouTubeService extends BaseSocialService {
       log('youtube', `Начинаем публикацию в YouTube для контента ${content.id}`);
 
       const youtubeSettings = campaignSettings.youtube;
+      log('youtube', `YouTube настройки: ${JSON.stringify(youtubeSettings)}`);
+      
       if (!youtubeSettings?.accessToken || !youtubeSettings?.refreshToken) {
+        log('youtube', `Отсутствуют YouTube токены. accessToken: ${!!youtubeSettings?.accessToken}, refreshToken: ${!!youtubeSettings?.refreshToken}`);
         throw new Error('YouTube OAuth tokens not found');
       }
 
