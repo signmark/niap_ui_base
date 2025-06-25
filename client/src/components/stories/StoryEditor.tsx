@@ -346,16 +346,6 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     const newElement = storeAddElement(elementType);
     
     if (newElement) {
-      // Автосохранение после добавления элемента при редактировании
-      if (storyId) {
-        console.log('Auto-saving after adding element');
-        setTimeout(() => {
-          saveStory.mutate({
-            title: storyTitle || `Stories ${new Date().toLocaleString()}`
-          });
-        }, 500);
-      }
-      
       toast({
         title: 'Элемент добавлен',
         description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
