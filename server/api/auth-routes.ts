@@ -179,11 +179,25 @@ export function registerAuthRoutes(app: Express): void {
       });
 
       // Дополнительно получаем данные пользователя
-      const userResponse = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${response.data.data.access_token}`
-        }
-      });
+      // Декодируем токен напрямую
+      const accessToken = response.data.data.access_token;
+      const tokenParts = accessToken.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const userResponse = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com',
+            role: payload.role,
+            first_name: payload.first_name || '',
+            last_name: payload.last_name || ''
+          } 
+        } 
+      };
 
       const userData = userResponse.data.data;
       const token = response.data.data.access_token;

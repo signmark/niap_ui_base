@@ -48,12 +48,21 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
     // Получаем данные пользователя из Directus
     try {
       // Используем axios напрямую вместо directusApiManager
-      const response = await axios.get(`${process.env.DIRECTUS_URL}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Декодируем токен напрямую
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const response = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com' 
+          } 
+        } 
+      };
       
       const currentUser = response.data.data;
 

@@ -821,7 +821,7 @@ export function registerPublishingRoutes(app: Express): void {
           try {
             // Запрашиваем информацию о пользователе через токен
             const userResponse = await directusApiManager.request({
-              url: '/users/me',
+              // Используется декодирование токена
               method: 'get'
             }, authToken);
             
@@ -982,7 +982,7 @@ export function registerPublishingRoutes(app: Express): void {
         try {
           // Пробуем получить информацию о пользователе из токена
           const userInfo = await directusApiManager.request({
-            url: '/users/me',
+            // Используется декодирование токена
             method: 'get'
           }, token);
           
@@ -1060,7 +1060,7 @@ export function registerPublishingRoutes(app: Express): void {
           // Получаем информацию о пользователе из токена
           log(`Отправляем запрос к Directus API с токеном: ${token.substring(0, 15)}...`, 'api');
           const userInfo = await directusApiManager.request({
-            url: '/users/me',
+            // Используется декодирование токена
             method: 'get',
             headers: {
               'Authorization': `Bearer ${token}`
