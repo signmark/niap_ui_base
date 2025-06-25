@@ -350,19 +350,25 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         title: storyTitle || 'Новая история',
         content_type: 'story',
         status: 'draft',
-        content: JSON.stringify({
+        content: storyTitle || 'Instagram Stories',
+        metadata: {
           title: storyTitle || 'Новая история',
           slides: slides.map(slide => ({
             id: slide.id,
+            order: slide.order,
+            duration: slide.duration,
+            background: slide.background,
             elements: slide.elements.map(element => ({
               id: element.id,
               type: element.type,
               content: element.content,
               position: element.position,
+              rotation: element.rotation,
+              zIndex: element.zIndex,
               style: element.style
             }))
           }))
-        })
+        }
       };
 
       // Определяем метод и URL в зависимости от того, редактируем или создаем

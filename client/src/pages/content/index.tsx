@@ -1952,20 +1952,21 @@ export default function ContentPage() {
                               Редактировать Stories
                             </Button>
                           </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <p className="text-purple-600">Stories не созданы</p>
-                            <Button 
-                              onClick={() => {
-                                navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
-                              }}
-                              className="bg-purple-600 hover:bg-purple-700"
-                            >
-                              <Layers className="mr-2 h-4 w-4" />
-                              Создать Stories
-                            </Button>
-                          </div>
-                        );
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-purple-600">Stories не созданы</p>
+                          <Button 
+                            onClick={() => {
+                              navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Layers className="mr-2 h-4 w-4" />
+                            Создать Stories
+                          </Button>
+                        </div>
+                      );
                     })()}
                   </div>
                 </div>
