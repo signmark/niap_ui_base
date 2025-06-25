@@ -90,6 +90,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   // Проверяем параметры URL для очистки состояния
   const urlParams = new URLSearchParams(window.location.search);
   const shouldClear = urlParams.get('clear') === 'true';
+  
+  // Флаг для предотвращения повторных загрузок
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
@@ -130,29 +133,27 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       return;
     }
     
-    // Загрузка существующих данных при редактировании
-    if (storyId) {
-      // Загрузка существующей Stories
-      // Загружаем данные существующей истории с помощью apiRequest
+    // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ
+    if (storyId && !isLoaded && slides.length === 0) {
+      console.log('Loading story data for the first time:', storyId);
       
       apiRequest(`/api/campaign-content/${storyId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
-          // Данные Stories загружены
           setStoryTitle(content.title || 'Новая история');
           
-          // Инициализируем слайды из метаданных с сохранением оригинальных ID
           if (content.metadata && content.metadata.slides) {
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
-              id: slide.id || `slide-${index}`, // Сохраняем оригинальный ID слайда
+              id: slide.id || `slide-${index}`,
               order: slide.order || index,
               duration: slide.duration || 5,
               background: slide.background || { type: 'color', value: '#ffffff' },
-              elements: slide.elements || [] // Важно! Сохраняем все элементы как есть
+              elements: slide.elements || []
             }));
             setSlides(storySlides);
             setCurrentSlideIndex(0);
+            setIsLoaded(true);
             console.log('Loaded story with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
           }
         }
@@ -165,10 +166,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
           variant: 'destructive'
         });
       });
+    } else if (storyId && (isLoaded || slides.length > 0)) {
+      console.log('Story already loaded, not reloading to preserve changes');
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, shouldClear, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+  }, [storyId, shouldClear, isLoaded, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
