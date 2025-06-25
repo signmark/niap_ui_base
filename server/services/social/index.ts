@@ -2,6 +2,7 @@ import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { facebookSocialService } from './facebook';
+import { YouTubeService } from '../social-platforms/youtube-service';
 import { log } from '../../utils/logger';
 import { getPublishScheduler } from '../publish-scheduler';
 import fetch from 'node-fetch';
@@ -61,13 +62,26 @@ export class SocialPublishingService {
       // Получаем настройки социальных сетей из объекта кампании
       const settings = campaign.socialMediaSettings || campaign.settings || {};
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: ВК, Telegram, Instagram только через n8n webhooks
-      // Facebook публикуется напрямую
+      // Прямая публикация для Facebook и YouTube
       if (platform === 'facebook') {
         return await facebookSocialService.publish(content, settings.facebook || {});
       }
       
-      // Все остальные платформы только через n8n webhook
+      if (platform === 'youtube') {
+        const youtubeService = new YouTubeService();
+        const result = await youtubeService.publishContent(content, settings, content.user_id);
+        
+        return {
+          platform: 'youtube',
+          status: result.success ? 'published' : 'failed',
+          publishedAt: result.success ? new Date().toISOString() : null,
+          postUrl: result.postUrl || null,
+          url: result.postUrl || null,
+          error: result.error || null
+        };
+      }
+      
+      // ВК, Telegram, Instagram только через n8n webhook
       return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
