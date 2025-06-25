@@ -2875,7 +2875,9 @@ export default function ContentPage() {
         onClose={() => setIsContentTypeDialogOpen(false)}
         onSelectType={(type) => {
           if (type === 'story') {
-            navigate(`/campaigns/${selectedCampaignId}/stories/new`);
+            // Очищаем состояние Stories store перед созданием новой Stories
+            // Это гарантирует чистое состояние при создании через диалог
+            navigate(`/campaigns/${selectedCampaignId}/stories/new?clear=true`);
           } else {
             setIsCreateDialogOpen(true);
           }

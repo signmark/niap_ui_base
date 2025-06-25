@@ -31,6 +31,7 @@ interface StoryState {
   
   // Actions
   initializeSlides: () => void;
+  resetStore: () => void; // Новый метод для полной очистки состояния
   setSlides: (slides: StorySlide[]) => void;
   setCurrentSlideIndex: (index: number) => void;
   setStoryTitle: (title: string) => void;
@@ -67,6 +68,16 @@ export const useStoryStore = create<StoryState>()(
         currentSlideIndex: 0
       });
     }
+  },
+
+  resetStore: () => {
+    set({
+      slides: [],
+      currentSlideIndex: 0,
+      storyTitle: '',
+      selectedElement: null
+    });
+    console.log('Story store reset - ready for new story');
   },
 
   setSlides: (slides) => {

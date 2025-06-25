@@ -69,7 +69,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     currentSlideIndex,
     storyTitle,
     selectedElement,
-
+    initializeSlides,
+    resetStore,
     setSlides,
     setCurrentSlideIndex,
     setStoryTitle,
@@ -85,10 +86,20 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Проверяем параметры URL для очистки состояния
+  const urlParams = new URLSearchParams(window.location.search);
+  const shouldClear = urlParams.get('clear') === 'true';
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
-    // Для новых Stories создаем базовый слайд
+    // Если требуется очистка состояния (создание через диалог)
+    if (!storyId && shouldClear) {
+      resetStore();
+      return;
+    }
+    
+    // Для новых Stories создаем базовый слайд если его нет
     if (!storyId && slides.length === 0) {
       const newSlides = [{
         id: 'slide-1',
@@ -147,7 +158,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, setSlides, setCurrentSlideIndex, setStoryTitle, toast]); // Убрали slides.length из зависимостей
+  }, [storyId, shouldClear, slides.length, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
