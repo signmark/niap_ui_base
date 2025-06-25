@@ -84,8 +84,17 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Загрузка существующих данных при редактировании
+  // Сброс состояния при создании новой Stories
   useEffect(() => {
+    if (!storyId) {
+      console.log('🆕 Creating new Stories - clearing state');
+      setSlides([]);
+      setStoryTitle('');
+      setSelectedSlideIndex(0);
+      return;
+    }
+    
+    // Загрузка существующих данных при редактировании
     if (storyId) {
       console.log('🔥 Loading existing story:', storyId);
       // Загружаем данные существующей истории

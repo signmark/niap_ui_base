@@ -20,13 +20,16 @@ export default function StoriesPage() {
     return storeId;
   }, [campaignId]); // Убираем selectedCampaign?.id из зависимостей!
 
+  // Если storyId отсутствует, это новая Stories - очищаем состояние
+  const cleanStoryId = storyId || undefined;
+
   return (
     <div className="min-h-screen">
       <div className="max-w-full mx-auto">
         <StoryEditor 
-          key={storyId ? `story-editor-edit-${storyId}` : "story-editor-new"} 
+          key={cleanStoryId ? `story-editor-edit-${cleanStoryId}` : `story-editor-new-${Date.now()}`} 
           campaignId={activeCampaignId} 
-          storyId={storyId}
+          storyId={cleanStoryId}
         />
       </div>
     </div>
