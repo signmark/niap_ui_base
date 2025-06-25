@@ -69,6 +69,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     storyTitle,
     selectedElement,
     initializeSlides,
+    setSlides,
     setCurrentSlideIndex,
     setStoryTitle,
     setSelectedElement,
@@ -90,7 +91,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       console.log('🆕 Creating new Stories - clearing state');
       setSlides([]);
       setStoryTitle('');
-      setSelectedSlideIndex(0);
+      setCurrentSlideIndex(0);
       return;
     }
     
@@ -144,7 +145,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
               background: slide.background || { type: 'color', value: '#ffffff' },
               elements: slide.elements || []
             }));
-            initializeSlides(storySlides);
+            setSlides(storySlides);
+            setCurrentSlideIndex(0);
           }
         }
       })
@@ -168,7 +170,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         }]);
       }
     }
-  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast]);
+  }, [storyId, slides.length, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
