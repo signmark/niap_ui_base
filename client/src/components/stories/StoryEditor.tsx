@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Type, 
   Image, 
@@ -111,38 +112,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     // Загрузка существующих данных при редактировании
     if (storyId) {
       console.log('🔥 Loading existing story:', storyId);
-      // Загружаем данные существующей истории
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
-      if (!token) {
-        toast({
-          title: 'Ошибка авторизации',
-          description: 'Необходимо войти в систему',
-          variant: 'destructive'
-        });
-        navigate('/auth/login');
-        return;
-      }
+      // Загружаем данные существующей истории с помощью apiRequest
       
-      fetch(`/api/campaign-content/${storyId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(res => {
-        if (!res.ok) {
-          if (res.status === 401) {
-            toast({
-              title: 'Ошибка авторизации',
-              description: 'Сессия истекла, требуется повторный вход',
-              variant: 'destructive'
-            });
-            navigate('/auth/login');
-            return Promise.reject('Unauthorized');
-          }
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json();
-      })
+      apiRequest(`/api/campaign-content/${storyId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
@@ -407,40 +379,12 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
       console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
 
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
-      if (!token) {
-        toast({
-          title: 'Ошибка авторизации',
-          description: 'Необходимо войти в систему',
-          variant: 'destructive'
-        });
-        navigate('/auth/login');
-        return;
-      }
-
-      const response = await fetch(url, {
+      // Используем apiRequest для автоматического обновления токена
+      
+      const result = await apiRequest(url, {
         method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(storyData)
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast({
-            title: 'Ошибка авторизации',
-            description: 'Сессия истекла, требуется повторный вход',
-            variant: 'destructive'
-          });
-          navigate('/auth/login');
-          return;
-        }
-        throw new Error(`Ошибка ${isEdit ? 'обновления' : 'создания'} истории`);
-      }
-
-      const result = await response.json();
       
       toast({
         title: isEdit ? 'Обновлено' : 'Создано',
