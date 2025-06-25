@@ -68,7 +68,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     currentSlideIndex,
     storyTitle,
     selectedElement,
-    initializeSlides,
+
     setSlides,
     setCurrentSlideIndex,
     setStoryTitle,
@@ -161,13 +161,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       console.log('🔥 Creating new story - initializing default slides');
       if (slides.length === 0) {
-        initializeSlides([{
+        setSlides([{
           id: 'slide-1',
           order: 0,
           duration: 5,
           background: { type: 'color', value: '#ffffff' },
           elements: []
         }]);
+        setCurrentSlideIndex(0);
       }
     }
   }, [storyId, slides.length, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
