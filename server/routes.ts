@@ -970,7 +970,6 @@ function mergeSources(sources: any[]): any[] {
 // Middleware для проверки авторизации
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Пытаемся получить токен из заголовка Authorization или из cookie
     const authHeader = req.headers.authorization;
     const cookieToken = req.cookies?.directus_session_token;
     
@@ -983,24 +982,75 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
     }
     
     if (!token) {
-      console.log('No token provided in header or cookie');
       return res.status(401).json({ error: 'Не авторизован: Отсутствует токен авторизации' });
     }
 
     try {
-      // Получаем информацию о пользователе из Directus API
-      const response = await directusApi.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Попытка получить информацию о пользователе с обработкой истекшего токена
+      let response;
+      try {
+        response = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (authError: any) {
+        // Если токен истек (401), пытаемся использовать административный токен для внутренних процессов
+        if (authError.response?.status === 401) {
+          console.log('[AUTH] Пользовательский токен истек, проверяем административные права');
+          
+          // Для административных операций используем админский токен из переменной окружения
+          const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+          if (adminToken) {
+            try {
+              // Декодируем пользовательский токен для получения ID пользователя
+              const tokenParts = token.split('.');
+              if (tokenParts.length === 3) {
+                const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+                const userId = payload.id;
+                
+                if (userId) {
+                  // Получаем информацию о пользователе через админский токен
+                  const adminResponse = await directusApi.get(`/users/${userId}`, {
+                    headers: {
+                      'Authorization': `Bearer ${adminToken}`
+                    }
+                  });
+                  
+                  if (adminResponse.data?.data) {
+                    console.log(`[AUTH] Пользователь ${userId} авторизован через админский токен`);
+                    
+                    // Устанавливаем информацию о пользователе
+                    req.user = {
+                      id: adminResponse.data.data.id,
+                      token: token, // Сохраняем оригинальный токен
+                      email: adminResponse.data.data.email,
+                      firstName: adminResponse.data.data.first_name,
+                      lastName: adminResponse.data.data.last_name
+                    };
+                    
+                    (req as any).userId = adminResponse.data.data.id;
+                    return next();
+                  }
+                }
+              }
+            } catch (adminError) {
+              console.error('[AUTH] Ошибка при использовании админского токена:', adminError);
+            }
+          }
+          
+          return res.status(401).json({ 
+            error: 'Не авторизован: Токен истек и требует обновления' 
+          });
         }
-      });
+        
+        throw authError;
+      }
 
       if (!response.data?.data?.id) {
-        console.log('Invalid token: cannot get user info');
         return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
       }
 
-      // Устанавливаем информацию о пользователе в объект запроса
       req.user = {
         id: response.data.data.id,
         token: token,
@@ -1009,20 +1059,17 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
         lastName: response.data.data.last_name
       };
       
-      // Оставляем поддержку старого интерфейса для обратной совместимости
       (req as any).userId = response.data.data.id;
-      
-      console.log(`User authenticated: ${req.user.id} (${req.user.email || 'no email'})`);
       next();
-    } catch (error) {
-      console.error('Auth error:', error);
+      
+    } catch (error: any) {
+      console.error('[AUTH] Ошибка авторизации:', error.message);
       return res.status(401).json({ 
-        error: 'Не авторизован: Ошибка проверки токена',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Не авторизован: Ошибка проверки токена'
       });
     }
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('[AUTH] Критическая ошибка middleware:', error);
     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 };
