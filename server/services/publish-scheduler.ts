@@ -315,76 +315,18 @@ export class PublishScheduler {
   }
 
   /**
-   * Публикует контент в указанные платформы через N8N
+   * Публикует контент в указанные платформы через прямые сервисы или N8N
    */
   private async publishContentToPlatforms(content: any, platforms: string[], authToken: string) {
-    // Создаем промисы для параллельной публикации через N8N
+    // Создаем промисы для параллельной публикации
     const publishPromises = platforms.map(async (platform) => {
       try {
-        // Маппинг платформ на N8N webhook endpoints
-        const webhookMap: Record<string, string> = {
-          'telegram': 'publish-telegram',
-          'vk': 'publish-vk',
-          'instagram': 'publish-instagram', 
-          'facebook': 'publish-facebook'
-        };
-
-        const platformString = platform.toLowerCase();
-        const webhookName = webhookMap[platformString] || `publish-${platformString}`;
-
-        // Формируем URL для N8N webhook
-        const n8nBaseUrl = process.env.N8N_URL;
-        if (!n8nBaseUrl) {
-          throw new Error('N8N_URL не настроен в переменных окружения');
+        // YouTube публикуется напрямую через API, остальные через N8N
+        if (platform.toLowerCase() === 'youtube') {
+          return await this.publishToYouTubeDirect(content, authToken);
+        } else {
+          return await this.publishThroughN8nWebhook(content, platform);
         }
-
-        const baseUrl = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
-        const webhookUrl = baseUrl.includes('/webhook') 
-          ? `${baseUrl}/${webhookName}`
-          : `${baseUrl}/webhook/${webhookName}`;
-
-        // КРИТИЧЕСКАЯ ЗАЩИТА: Финальная проверка перед отправкой запроса в N8N
-        log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
-        log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
-        
-        await axios.post(webhookUrl, {
-          contentId: content.id,
-          platform: platformString,
-          source: 'scheduler', // Добавляем метку источника запроса
-          timestamp: new Date().toISOString()
-        }, {
-          timeout: 30000,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
-        
-        // Отправляем уведомление в UI об успешной публикации
-        try {
-          const { broadcastNotification } = await import('../index');
-          const platformNames: Record<string, string> = {
-            'instagram': 'Instagram',
-            'facebook': 'Facebook', 
-            'vk': 'ВКонтакте',
-            'telegram': 'Telegram'
-          };
-          const platformName = platformNames[platform.toLowerCase()] || platform;
-          
-          broadcastNotification('content_published', {
-            contentId: content.id,
-            platform: platform,
-            message: `Успешно опубликовано в ${platformName}`
-          });
-        } catch (error) {
-          // Игнорируем ошибки уведомлений
-        }
-        
-        // Блокировки отключены для планировщика
-        
-        return { platform, success: true };
-
       } catch (error: any) {
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
@@ -396,6 +338,133 @@ export class PublishScheduler {
 
     // Обновляем общий статус контента
     await this.updateContentStatus(content.id, authToken);
+  }
+
+  /**
+   * Публикует контент в YouTube напрямую через API
+   */
+  private async publishToYouTubeDirect(content: any, authToken: string) {
+    try {
+      log(`Планировщик: Прямая публикация в YouTube для контента ${content.id}`, 'scheduler');
+      
+      // Получаем данные кампании
+      const campaign = await this.getCampaignData(content.campaign_id, authToken);
+      if (!campaign) {
+        throw new Error('Не удалось получить данные кампании');
+      }
+
+      // Используем социальный сервис для публикации
+      const { socialPublishingService } = await import('./social/index');
+      const result = await socialPublishingService.publishToPlatform('youtube', content, campaign, authToken);
+
+      if (result.status === 'published') {
+        log(`YouTube публикация успешна для контента ${content.id}: ${result.postUrl}`, 'scheduler');
+        
+        // Отправляем уведомление
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('content_published', {
+            contentId: content.id,
+            platform: 'youtube',
+            message: 'Успешно опубликовано в YouTube'
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
+        }
+        
+        return { platform: 'youtube', success: true };
+      } else {
+        throw new Error(result.error || 'Неизвестная ошибка YouTube API');
+      }
+
+    } catch (error: any) {
+      log(`Ошибка прямой публикации YouTube ${content.id}: ${error.message}`, 'scheduler');
+      return { platform: 'youtube', success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Публикует контент через N8N webhook
+   */
+  private async publishThroughN8nWebhook(content: any, platform: string) {
+    // Маппинг платформ на N8N webhook endpoints
+    const webhookMap: Record<string, string> = {
+      'telegram': 'publish-telegram',
+      'vk': 'publish-vk',
+      'instagram': 'publish-instagram', 
+      'facebook': 'publish-facebook'
+    };
+
+    const platformString = platform.toLowerCase();
+    const webhookName = webhookMap[platformString] || `publish-${platformString}`;
+
+    // Формируем URL для N8N webhook
+    const n8nBaseUrl = process.env.N8N_URL;
+    if (!n8nBaseUrl) {
+      throw new Error('N8N_URL не настроен в переменных окружения');
+    }
+
+    const baseUrl = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
+    const webhookUrl = baseUrl.includes('/webhook') 
+      ? `${baseUrl}/${webhookName}`
+      : `${baseUrl}/webhook/${webhookName}`;
+
+    log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
+    log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
+    
+    await axios.post(webhookUrl, {
+      contentId: content.id,
+      platform: platformString,
+      source: 'scheduler',
+      timestamp: new Date().toISOString()
+    }, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    log(`Контент ${content.id} успешно отправлен в N8N для ${platform}`, 'scheduler');
+    
+    // Отправляем уведомление в UI
+    try {
+      const { broadcastNotification } = await import('../index');
+      const platformNames: Record<string, string> = {
+        'instagram': 'Instagram',
+        'facebook': 'Facebook', 
+        'vk': 'ВКонтакте',
+        'telegram': 'Telegram'
+      };
+      const platformName = platformNames[platform.toLowerCase()] || platform;
+      
+      broadcastNotification('content_published', {
+        contentId: content.id,
+        platform: platform,
+        message: `Отправлено в N8N для публикации в ${platformName}`
+      });
+    } catch (error) {
+      // Игнорируем ошибки уведомлений
+    }
+    
+    return { platform, success: true };
+  }
+
+  /**
+   * Получает данные кампании
+   */
+  private async getCampaignData(campaignId: string, authToken: string) {
+    try {
+      const response = await axios.get(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data.data;
+    } catch (error: any) {
+      log(`Ошибка получения данных кампании ${campaignId}: ${error.message}`, 'scheduler');
+      return null;
+    }
   }
 
   /**
