@@ -750,8 +750,13 @@ export default function ContentPage() {
     }
 
     createContentMutation.mutate({
-      campaignId: selectedCampaignId,
-      ...newContent,
+      campaign_id: selectedCampaignId,
+      content_type: newContent.contentType,
+      title: newContent.title,
+      content: newContent.content,
+      image_url: newContent.imageUrl,
+      video_url: newContent.videoUrl,
+      keywords: newContent.keywords || [],
       status: 'draft'
     });
   };

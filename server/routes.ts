@@ -7620,8 +7620,9 @@ Return your response as a JSON array in this exact format:
       console.log('✅ User authenticated:', req.user?.id, req.user?.email);
       console.log('📄 Content data received:', JSON.stringify(req.body, null, 2));
       
-      // Проверяем наличие campaign_id
-      if (!req.body.campaign_id) {
+      // Проверяем наличие campaign_id (поддерживаем оба формата)
+      const campaign_id = req.body.campaign_id || req.body.campaignId;
+      if (!campaign_id) {
         console.error('❌ Missing campaign_id in request body');
         return res.status(400).json({ error: 'Отсутствует обязательное поле: campaign_id' });
       }
@@ -7634,8 +7635,9 @@ Return your response as a JSON array in this exact format:
         return res.status(401).json({ error: 'Не авторизован' });
       }
       
-      // Проверяем наличие обязательных полей
-      const { title, campaign_id, content_type, content, status = 'draft', metadata } = req.body;
+      // Проверяем наличие обязательных полей (поддерживаем оба формата)
+      const content_type = req.body.content_type || req.body.contentType;
+      const { title, content, status = 'draft', metadata } = req.body;
       
       if (!campaign_id) {
         return res.status(400).json({ 
@@ -7664,9 +7666,9 @@ Return your response as a JSON array in this exact format:
         status: status || 'draft',
         metadata: metadata || {},
         user_id: userId,
-        // Дополнительные поля из body если есть
-        image_url: req.body.image_url || null,
-        video_url: req.body.video_url || null,
+        // Дополнительные поля из body если есть (поддерживаем оба формата)
+        image_url: req.body.image_url || req.body.imageUrl || null,
+        video_url: req.body.video_url || req.body.videoUrl || null,
         keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
         hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
         social_platforms: req.body.social_platforms || {},
