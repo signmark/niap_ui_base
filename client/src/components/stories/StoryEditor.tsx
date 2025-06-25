@@ -26,7 +26,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
-import { useLocation } from 'wouter';
+import { useLocation, useNavigate } from 'wouter';
 
 // Local interfaces for component
 interface StorySlide {
@@ -60,6 +60,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   // Используем глобальный store вместо локального состояния
   const {
@@ -88,25 +89,54 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     if (storyId) {
       console.log('🔥 Loading existing story:', storyId);
       // Загружаем данные существующей истории
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+      if (!token) {
+        toast({
+          title: 'Ошибка авторизации',
+          description: 'Необходимо войти в систему',
+          variant: 'destructive'
+        });
+        navigate('/auth/login');
+        return;
+      }
+      
       fetch(`/api/campaign-content/${storyId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${token}`
         }
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            toast({
+              title: 'Ошибка авторизации',
+              description: 'Сессия истекла, требуется повторный вход',
+              variant: 'destructive'
+            });
+            navigate('/auth/login');
+            return Promise.reject('Unauthorized');
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
-        if (data && data.metadata && data.metadata.slides) {
-          console.log('🔥 Loading story data:', data);
-          setStoryTitle(data.title || 'Новая история');
+        if (data && data.data) {
+          const content = data.data;
+          console.log('🔥 Loading story data:', content);
+          setStoryTitle(content.title || 'Новая история');
+          
           // Инициализируем слайды из метаданных
-          const storySlides = data.metadata.slides.map((slide: any, index: number) => ({
-            id: `slide-${index}`,
-            order: slide.order || index,
-            duration: slide.duration || 5,
-            background: slide.background || { type: 'color', value: '#ffffff' },
-            elements: slide.elements || []
-          }));
-          initializeSlides(storySlides);
+          if (content.metadata && content.metadata.slides) {
+            const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
+              id: `slide-${index}`,
+              order: slide.order || index,
+              duration: slide.duration || 5,
+              background: slide.background || { type: 'color', value: '#ffffff' },
+              elements: slide.elements || []
+            }));
+            initializeSlides(storySlides);
+          }
         }
       })
       .catch(error => {
@@ -129,7 +159,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         }]);
       }
     }
-  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast]);
+  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast, navigate]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -362,16 +392,36 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
       console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
 
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+      if (!token) {
+        toast({
+          title: 'Ошибка авторизации',
+          description: 'Необходимо войти в систему',
+          variant: 'destructive'
+        });
+        navigate('/auth/login');
+        return;
+      }
+
       const response = await fetch(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(storyData)
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: 'Ошибка авторизации',
+            description: 'Сессия истекла, требуется повторный вход',
+            variant: 'destructive'
+          });
+          navigate('/auth/login');
+          return;
+        }
         throw new Error(`Ошибка ${isEdit ? 'обновления' : 'создания'} истории`);
       }
 
