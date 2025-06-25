@@ -29,6 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -686,6 +687,17 @@ export function SocialMediaSettings({
                   </FormItem>
                 )}
               />
+              
+              {/* YouTube OAuth Setup */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-medium mb-3">OAuth Авторизация YouTube</h4>
+                <YouTubeOAuthSetup 
+                  onAuthComplete={(authData) => {
+                    console.log('YouTube авторизация завершена:', authData);
+                    // Можно дополнительно обновить форму или показать статус
+                  }} 
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
