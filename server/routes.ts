@@ -68,6 +68,7 @@ import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
+import youtubeAuthRouter from './routes/youtube-auth';
 
 
 /**

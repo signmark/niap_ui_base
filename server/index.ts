@@ -318,6 +318,14 @@ app.use((req, res, next) => {
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
     
+    // Регистрируем YouTube OAuth маршруты
+    console.log("Registering YouTube OAuth routes...");
+    log("Registering YouTube OAuth routes...");
+    const youtubeAuthRouter = (await import('./routes/youtube-auth')).default;
+    app.use('/api/auth', youtubeAuthRouter);
+    console.log("YouTube OAuth routes registered");
+    log("YouTube OAuth routes registered successfully");
+    
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
     log("Registering Stories routes...");
