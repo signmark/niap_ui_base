@@ -126,7 +126,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     }
     
     // Для новых Stories создаем базовый слайд если его нет
-    if (!storyId && slides.length === 0) {
+    if (!finalStoryId && slides.length === 0) {
       console.log('Creating initial slide for new story');
       
       // Очищаем localStorage перед созданием новой Stories
@@ -195,7 +195,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           variant: 'destructive'
         });
       });
-    } else if (storyId && (isLoaded || slides.length > 0)) {
+    } else if (finalStoryId && (isLoaded || slides.length > 0)) {
       console.log('Story already loaded, not reloading to preserve changes');
     } else {
       // Новая Stories - слайд уже создан
