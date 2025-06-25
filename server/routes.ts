@@ -7669,11 +7669,27 @@ Return your response as a JSON array in this exact format:
         // Дополнительные поля из body если есть (поддерживаем оба формата)
         image_url: req.body.image_url || req.body.imageUrl || null,
         video_url: req.body.video_url || req.body.videoUrl || null,
-        video_thumbnail: req.body.video_thumbnail || req.body.videoThumbnail || null,
+        // video_thumbnail теперь сохраняется в additional_images
         keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
         hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
         social_platforms: req.body.social_platforms || {},
-        scheduled_at: req.body.scheduled_at || null
+        scheduled_at: req.body.scheduled_at || null,
+        // Дополнительные изображения включая thumbnail видео
+        additional_images: (() => {
+          let images = Array.isArray(req.body.additional_images) 
+            ? req.body.additional_images 
+            : Array.isArray(req.body.additionalImages) 
+              ? req.body.additionalImages 
+              : [];
+          
+          // Добавляем thumbnail видео в дополнительные изображения если есть
+          const videoThumbnail = req.body.video_thumbnail || req.body.videoThumbnail;
+          if (videoThumbnail && !images.includes(videoThumbnail)) {
+            images = [videoThumbnail, ...images]; // Thumbnail в начале списка
+          }
+          
+          return images;
+        })()
       };
       
       console.log('🚀 Creating content with data:', JSON.stringify(contentData, null, 2));
