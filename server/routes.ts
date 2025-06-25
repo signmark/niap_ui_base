@@ -7657,13 +7657,20 @@ Return your response as a JSON array in this exact format:
       
       // Создаем новый контент с данными пользователя
       const contentData = {
-        title,
+        title: title || '',
         campaign_id,
         content_type,
-        content,
-        status,
-        metadata,
-        user_id: userId
+        content: content || '',
+        status: status || 'draft',
+        metadata: metadata || {},
+        user_id: userId,
+        // Дополнительные поля из body если есть
+        image_url: req.body.image_url || null,
+        video_url: req.body.video_url || null,
+        keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
+        hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
+        social_platforms: req.body.social_platforms || {},
+        scheduled_at: req.body.scheduled_at || null
       };
       
       console.log('🚀 Creating content with data:', JSON.stringify(contentData, null, 2));

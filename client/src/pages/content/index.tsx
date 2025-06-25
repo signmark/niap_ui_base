@@ -1379,11 +1379,34 @@ export default function ContentPage() {
                                         </div>
                                         {(() => {
                                           try {
-                                            const metadata = typeof content.metadata === 'string' 
-                                              ? JSON.parse(content.metadata) 
-                                              : content.metadata;
-                                            console.log('📋 Content list: Stories metadata for', content.id, metadata);
-                                            const slidesCount = metadata?.slides?.length || 0;
+                                            // Парсим метаданные Stories
+                                            let metadata;
+                                            if (typeof content.metadata === 'string') {
+                                              metadata = JSON.parse(content.metadata);
+                                            } else {
+                                              metadata = content.metadata;
+                                            }
+                                            
+                                            // Получаем данные Stories из content или metadata
+                                            let storyData;
+                                            if (typeof content.content === 'string' && content.content.startsWith('{')) {
+                                              try {
+                                                storyData = JSON.parse(content.content);
+                                              } catch {
+                                                storyData = metadata;
+                                              }
+                                            } else {
+                                              storyData = metadata;
+                                            }
+                                            
+                                            console.log('📋 Content list: Stories data for', content.id, {
+                                              metadata,
+                                              storyData,
+                                              contentType: typeof content.content,
+                                              contentPreview: typeof content.content === 'string' ? content.content.substring(0, 100) : 'not string'
+                                            });
+                                            
+                                            const slidesCount = storyData?.slides?.length || 0;
                                             return (
                                               <div className="text-xs text-purple-700">
                                                 <div className="flex items-center gap-2">
@@ -1898,37 +1921,52 @@ export default function ContentPage() {
                     <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
                     <h3 className="text-lg font-medium text-purple-900 mb-2">Instagram Stories</h3>
                     
-                    {currentContent.metadata?.slides ? (
-                      <div className="space-y-3">
-                        <p className="text-purple-600">
-                          Создано слайдов: {currentContent.metadata.slides.length}
-                        </p>
-                        <div className="flex gap-2 justify-center">
-                          <Button 
-                            onClick={() => {
-                              navigate(`/stories/${currentContent.id}/edit`);
-                            }}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Layers className="mr-2 h-4 w-4" />
-                            Редактировать Stories
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-purple-600">Stories не созданы</p>
-                        <Button 
-                          onClick={() => {
-                            navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
-                          }}
-                          className="bg-purple-600 hover:bg-purple-700"
-                        >
-                          <Layers className="mr-2 h-4 w-4" />
-                          Создать Stories
-                        </Button>
-                      </div>
-                    )}
+                    {(() => {
+                      // Получаем данные Stories из content или metadata
+                      let storyData;
+                      if (typeof currentContent.content === 'string' && currentContent.content.startsWith('{')) {
+                        try {
+                          storyData = JSON.parse(currentContent.content);
+                        } catch {
+                          storyData = currentContent.metadata;
+                        }
+                      } else {
+                        storyData = currentContent.metadata;
+                      }
+                      
+                      const slidesCount = storyData?.slides?.length || 0;
+                      
+                      return slidesCount > 0 ? (
+                        <div className="space-y-3">
+                          <p className="text-purple-600">
+                            Создано слайдов: {slidesCount}
+                          </p>
+                          <div className="flex gap-2 justify-center">
+                            <Button 
+                              onClick={() => {
+                                navigate(`/stories/${currentContent.id}/edit`);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Layers className="mr-2 h-4 w-4" />
+                              Редактировать Stories
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <p className="text-purple-600">Stories не созданы</p>
+                            <Button 
+                              onClick={() => {
+                                navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Layers className="mr-2 h-4 w-4" />
+                              Создать Stories
+                            </Button>
+                          </div>
+                        );
+                    })()}
                   </div>
                 </div>
               )}
