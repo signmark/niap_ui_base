@@ -594,6 +594,20 @@ class FalAiUniversalService {
     }
     // Нормализуем модель еще раз (на случай, если мы изменили её в процессе)
     
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем сетевое подключение к FAL.AI
+    try {
+      const dns = require('dns');
+      await new Promise((resolve, reject) => {
+        dns.lookup('hub.fal.ai', (err) => {
+          if (err) reject(new Error('FAL.AI API недоступен: проблемы с сетью'));
+          else resolve(true);
+        });
+      });
+    } catch (networkError) {
+      console.error(`[fal-ai-universal] Сетевая ошибка FAL.AI:`, networkError);
+      throw new Error('FAL.AI API временно недоступен. Проверьте подключение к интернету.');
+    }
+
     // Сначала проверяем, является ли модель Flux или другой моделью с путём (vendor/model)
     if (model.includes('/')) {
       // Для Flux и других моделей с путём используем официальный клиент с SDK

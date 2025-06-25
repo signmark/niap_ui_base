@@ -8,6 +8,7 @@ interface AuthState {
   userId: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  lastAdminCheck: number | null;
   setAuth: (token: string | null, userId: string | null) => void;
   clearAuth: () => void;
   getAuthToken: () => string | null;
@@ -26,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
       userId: localStorage.getItem('user_id') || null,
       isAuthenticated: !!(localStorage.getItem('auth_token') && localStorage.getItem('user_id')),
       isAdmin: localStorage.getItem('is_admin') === 'true',
+      lastAdminCheck: null,
       setAuth: (token, userId) => {
         // Сохраняем токен и userId в localStorage для прямого доступа
         if (token) {
@@ -90,13 +92,23 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkIsAdmin: async () => {
+        const currentTime = Date.now();
+        const lastCheck = get().lastAdminCheck || 0;
+        const cacheTimeout = 30000; // 30 секунд кеша
+        
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: используем кеш для предотвращения бесконечных запросов
+        if (currentTime - lastCheck < cacheTimeout && get().isAdmin !== undefined) {
+          console.log('Используем кешированный статус администратора:', get().isAdmin);
+          return get().isAdmin;
+        }
+        
         console.log('Проверка статуса администратора');
         try {
           // Получаем текущий токен
           const token = get().getAuthToken();
           if (!token) {
             console.log('Невозможно проверить права администратора - пользователь не авторизован');
-            get().setIsAdmin(false); // Очищаем статус администратора при отсутствии токена
+            set({ isAdmin: false, lastAdminCheck: currentTime });
             return false;
           }
 
@@ -114,15 +126,18 @@ export const useAuthStore = create<AuthState>()(
           const data = await response.json();
           console.log('Ответ сервера на запрос проверки админа:', data);
           
-          if (data && data.success && data.isAdmin === true) {
+          const isAdminResult = data && data.success && data.isAdmin === true;
+          set({ 
+            isAdmin: isAdminResult,
+            lastAdminCheck: currentTime
+          });
+          localStorage.setItem('is_admin', isAdminResult.toString());
+          
+          if (isAdminResult) {
             console.log('Пользователь является администратором');
-            // Сохраняем статус администратора
-            get().setIsAdmin(true);
             return true;
           } else {
             console.log('Пользователь не является администратором');
-            // Сохраняем статус не-администратора
-            get().setIsAdmin(false);
             return false;
           }
         } catch (error) {

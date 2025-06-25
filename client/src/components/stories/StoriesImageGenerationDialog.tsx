@@ -454,7 +454,11 @@ export function StoriesImageGenerationDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog 
+      key={`stories-dialog-${contentId}`}
+      open={isOpen} 
+      onOpenChange={onClose}
+    >
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Генерация изображения для Stories</DialogTitle>
