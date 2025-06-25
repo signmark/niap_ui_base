@@ -4,7 +4,7 @@ import StoryEditor from "@/components/stories/StoryEditor";
 import { useCampaignStore } from "@/lib/campaignStore";
 
 export default function StoriesPage() {
-  const { campaignId } = useParams();
+  const { campaignId, storyId } = useParams();
   const selectedCampaign = useCampaignStore((state) => state.selectedCampaign);
   
   // Стабилизируем campaignId с приоритетом URL параметру
@@ -23,7 +23,11 @@ export default function StoriesPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-full mx-auto">
-        <StoryEditor key="story-editor-stable" campaignId={activeCampaignId} />
+        <StoryEditor 
+          key={storyId ? `story-editor-edit-${storyId}` : "story-editor-new"} 
+          campaignId={activeCampaignId} 
+          storyId={storyId}
+        />
       </div>
     </div>
   );

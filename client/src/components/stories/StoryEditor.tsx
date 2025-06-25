@@ -55,8 +55,8 @@ interface StoryEditorProps {
   storyId?: string;
 }
 
-export default function StoryEditor({ campaignId }: StoryEditorProps) {
-  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId);
+export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
+  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId, 'storyId:', storyId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -82,17 +82,54 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [storyId, setStoryId] = useState<string | null>(null);
 
-  // Инициализация при монтировании
+  // Загрузка существующих данных при редактировании
   useEffect(() => {
-    console.log('🔥 StoryEditor EFFECT RUN - initializing slides');
-    console.log('🔥 Current slides count:', slides.length);
-    initializeSlides(); // Всегда вызываем, store сам решит что делать
-    return () => {
-      console.log('💀 StoryEditor UNMOUNTING');
-    };
-  }, [initializeSlides]);
+    if (storyId) {
+      console.log('🔥 Loading existing story:', storyId);
+      // Загружаем данные существующей истории
+      fetch(`/api/campaign-content/${storyId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.metadata && data.metadata.slides) {
+          console.log('🔥 Loading story data:', data);
+          setStoryTitle(data.title || 'Новая история');
+          // Инициализируем слайды из метаданных
+          const storySlides = data.metadata.slides.map((slide: any, index: number) => ({
+            id: `slide-${index}`,
+            order: slide.order || index,
+            duration: slide.duration || 5,
+            background: slide.background || { type: 'color', value: '#ffffff' },
+            elements: slide.elements || []
+          }));
+          initializeSlides(storySlides);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading story:', error);
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить историю',
+          variant: 'destructive'
+        });
+      });
+    } else {
+      console.log('🔥 Creating new story - initializing default slides');
+      if (slides.length === 0) {
+        initializeSlides([{
+          id: 'slide-1',
+          order: 0,
+          duration: 5,
+          background: { type: 'color', value: '#ffffff' },
+          elements: []
+        }]);
+      }
+    }
+  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -294,30 +331,39 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       const storyData = {
         title: storyTitle,
         campaignId: campaignId,
-        type: 'story',
+        contentType: 'story',
         status: 'draft',
-        slides: slides.map(slide => ({
-          order: slide.order,
-          duration: slide.duration,
-          background: slide.background,
-          elements: slide.elements.map(element => ({
-            type: element.type,
-            position: { 
-              x: element.position.x, 
-              y: element.position.y,
-              width: 100,
-              height: 100
-            },
-            rotation: element.rotation,
-            zIndex: element.zIndex,
-            content: element.content,
-            style: element.style
+        metadata: {
+          slides: slides.map(slide => ({
+            order: slide.order,
+            duration: slide.duration,
+            background: slide.background,
+            elements: slide.elements.map(element => ({
+              type: element.type,
+              position: { 
+                x: element.position.x, 
+                y: element.position.y,
+                width: 100,
+                height: 100
+              },
+              rotation: element.rotation,
+              zIndex: element.zIndex,
+              content: element.content,
+              style: element.style
+            }))
           }))
-        }))
+        }
       };
 
-      const response = await fetch('/api/stories', {
-        method: 'POST',
+      // Определяем метод и URL в зависимости от того, редактируем или создаем
+      const isEdit = !!storyId;
+      const url = isEdit ? `/api/campaign-content/${storyId}` : '/api/campaign-content';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('authToken')}`
@@ -326,17 +372,22 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка сохранения истории');
+        throw new Error(`Ошибка ${isEdit ? 'обновления' : 'создания'} истории`);
       }
 
       const result = await response.json();
       
       toast({
-        title: 'Сохранено',
-        description: `История "${storyTitle}" сохранена с ${slides.length} слайдами`
+        title: isEdit ? 'Обновлено' : 'Создано',
+        description: `История "${storyTitle}" ${isEdit ? 'обновлена' : 'создана'} с ${slides.length} слайдами`
       });
       
       console.log('Stories сохранена:', result);
+      
+      // После успешного сохранения, если это было создание, переходим в режим редактирования
+      if (!isEdit && result.data && result.data.id) {
+        navigate(`/stories/${result.data.id}/edit`);
+      }
     } catch (error) {
       console.error('Ошибка сохранения Stories:', error);
       toast({
