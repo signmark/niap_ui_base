@@ -71,13 +71,22 @@ export const useStoryStore = create<StoryState>()(
   },
 
   resetStore: () => {
+    console.log('Resetting store and creating initial slide');
+    const initialSlide = {
+      id: 'slide-1',
+      order: 0,
+      duration: 5,
+      background: { type: 'color' as const, value: '#6366f1' },
+      elements: []
+    };
+    
     set({
-      slides: [],
+      slides: [initialSlide],
       currentSlideIndex: 0,
       storyTitle: '',
       selectedElement: null
     });
-    console.log('Story store reset - ready for new story');
+    console.log('Story store reset with initial slide created');
   },
 
   setSlides: (slides) => {

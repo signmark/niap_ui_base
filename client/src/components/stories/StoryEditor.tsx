@@ -93,29 +93,23 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
+    console.log('StoryEditor useEffect triggered:', { 
+      storyId, 
+      shouldClear, 
+      slidesLength: slides.length,
+      hasSlides: slides.length > 0 
+    });
+    
     // Если требуется очистка состояния (создание через диалог)
     if (!storyId && shouldClear) {
       console.log('Clearing store and initializing new story');
       resetStore();
-      // После сброса создаём базовый слайд
-      setTimeout(() => {
-        const newSlides = [{
-          id: 'slide-1',
-          order: 0,
-          duration: 5,
-          background: { type: 'color', value: '#6366f1' },
-          elements: []
-        }];
-        setSlides(newSlides);
-        setStoryTitle('');
-        setCurrentSlideIndex(0);
-        console.log('New story initialized with empty slide after reset');
-      }, 100);
       return;
     }
     
     // Для новых Stories создаем базовый слайд если его нет
     if (!storyId && slides.length === 0) {
+      console.log('Creating initial slide for new story');
       const newSlides = [{
         id: 'slide-1',
         order: 0,
@@ -132,6 +126,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     
     // Если это новая Stories и слайды уже есть - не перезаписываем
     if (!storyId && slides.length > 0) {
+      console.log('Story already has slides, skipping initialization');
       return;
     }
     
@@ -173,7 +168,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, shouldClear, slides.length, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+  }, [storyId, shouldClear, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
