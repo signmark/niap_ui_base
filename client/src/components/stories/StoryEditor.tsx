@@ -95,7 +95,22 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   useEffect(() => {
     // Если требуется очистка состояния (создание через диалог)
     if (!storyId && shouldClear) {
+      console.log('Clearing store and initializing new story');
       resetStore();
+      // После сброса создаём базовый слайд
+      setTimeout(() => {
+        const newSlides = [{
+          id: 'slide-1',
+          order: 0,
+          duration: 5,
+          background: { type: 'color', value: '#6366f1' },
+          elements: []
+        }];
+        setSlides(newSlides);
+        setStoryTitle('');
+        setCurrentSlideIndex(0);
+        console.log('New story initialized with empty slide after reset');
+      }, 100);
       return;
     }
     
@@ -320,14 +335,34 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
   const addElement = useCallback((elementType: StoryElement['type']) => {
     console.log('🔧 Adding element type:', elementType, 'to slide:', currentSlideIndex);
+    console.log('Current slides count:', slides.length);
+    console.log('Current slide exists:', !!slides[currentSlideIndex]);
+    
+    if (!slides[currentSlideIndex]) {
+      console.error('No slide available at index:', currentSlideIndex);
+      toast({
+        title: 'Ошибка',
+        description: 'Слайд не найден. Попробуйте обновить страницу.',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     const newElement = storeAddElement(elementType);
     
-    toast({
-      title: 'Элемент добавлен',
-      description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
-    });
-  }, [currentSlideIndex, storeAddElement, toast]);
+    if (newElement) {
+      toast({
+        title: 'Элемент добавлен',
+        description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
+      });
+    } else {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось добавить элемент',
+        variant: 'destructive'
+      });
+    }
+  }, [currentSlideIndex, slides, storeAddElement, toast]);
 
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
