@@ -34,6 +34,7 @@ export class SocialPublishingService {
     authToken?: string
   ): Promise<any> {
     log(`Публикация контента в ${platform}`, 'social-publishing');
+    log(`Полученные данные кампании: ${JSON.stringify(campaign)}`, 'social-publishing');
     
     try {
       // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем, не опубликована ли уже платформа
@@ -60,7 +61,8 @@ export class SocialPublishingService {
       }
       
       // Получаем настройки социальных сетей из объекта кампании
-      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      const settings = campaign.social_media_settings || campaign.socialMediaSettings || campaign.settings || {};
+      log(`Настройки для ${platform}: ${JSON.stringify(settings[platform])}`, 'social-publishing');
       
       // Прямая публикация для Facebook и YouTube
       if (platform === 'facebook') {
