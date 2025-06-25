@@ -349,6 +349,11 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     const newElement = storeAddElement(elementType);
     
     if (newElement) {
+      // Принудительно обновляем локальное состояние
+      const updatedStoreSlides = useStoryStore.getState().slides;
+      console.log('🔄 Force updating slides after element add:', updatedStoreSlides.length);
+      setSlides([...updatedStoreSlides]);
+      
       toast({
         title: 'Элемент добавлен',
         description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
@@ -474,11 +479,20 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     navigate('/content');
   };
 
-  // Current slide data - получаем напрямую из состояния
-  const currentSlide = slides[currentSlideIndex];
+  // Current slide data - СИНХРОНИЗИРУЕМ с storyStore
+  const storeSlides = useStoryStore(state => state.slides);
+  const currentSlide = storeSlides[currentSlideIndex] || slides[currentSlideIndex];
   
   // Принудительно отслеживаем элементы
   const elementsCount = currentSlide?.elements?.length || 0;
+  
+  // Синхронизация локального состояния со store
+  useEffect(() => {
+    if (storeSlides.length > 0 && storeSlides !== slides) {
+      console.log('🔄 Syncing slides from store:', storeSlides.length, 'slides');
+      setSlides(storeSlides);
+    }
+  }, [storeSlides, slides, setSlides]);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
