@@ -47,12 +47,7 @@ export async function apiRequest(
   const userId = useAuthStore.getState().userId;
 
   // Логирование для отладки
-  console.log(`📤 API Запрос: ${method} ${url}`);
-  console.log(`🔐 Статус авторизации:`, { 
-    hasToken: !!token, 
-    userId,
-    tokenPrefix: token ? token.substring(0, 10) + '...' : null
-  });
+  // API запрос выполняется (детальное логирование отключено)
 
   const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
 

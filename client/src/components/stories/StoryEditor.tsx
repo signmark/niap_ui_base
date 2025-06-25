@@ -57,7 +57,7 @@ interface StoryEditorProps {
 }
 
 export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
-  console.log('🔥 StoryEditor MOUNTED with campaignId:', campaignId, 'storyId:', storyId);
+  // Уменьшен уровень логирования для снижения спама в консоли
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,7 +89,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
     if (!storyId && slides.length === 0) {
-      console.log('🆕 Creating new Stories - initializing first slide');
+      // Создание нового слайда (логирование уменьшено)
       const newSlides = [{
         id: 'slide-1',
         order: 0,
@@ -100,25 +100,25 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       setSlides(newSlides);
       setStoryTitle('');
       setCurrentSlideIndex(0);
-      console.log('🆕 New story initialized with slides:', newSlides.length);
+      // Инициализация выполнена
       return;
     }
     
     if (!storyId && slides.length > 0) {
-      console.log('🆕 New Stories already has slides, skipping initialization');
+      // Слайды уже инициализированы
       return;
     }
     
     // Загрузка существующих данных при редактировании
     if (storyId) {
-      console.log('🔥 Loading existing story:', storyId);
+      // Загрузка существующей Stories
       // Загружаем данные существующей истории с помощью apiRequest
       
       apiRequest(`/api/campaign-content/${storyId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
-          console.log('🔥 Loading story data:', content);
+          // Данные Stories загружены
           setStoryTitle(content.title || 'Новая история');
           
           // Инициализируем слайды из метаданных
@@ -144,17 +144,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         });
       });
     } else {
-      console.log('🔥 Creating new story - default slide already created in cleanup effect');
+      // Новая Stories - слайд уже создан
     }
   }, [storyId, slides.length, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
     const count = slides[currentSlideIndex]?.elements?.length || 0;
-    console.log('📊 Store slides updated, elements count:', count);
-    if (count > 0) {
-      console.log('🎯 Elements found in slide:', slides[currentSlideIndex]?.elements?.map(el => el.id));
-    }
+    // Состояние слайдов обновлено (детальное логирование отключено)
     
     // Обновляем selectedElement если он изменился в store
     if (selectedElement) {
