@@ -93,6 +93,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   
   // Флаг для предотвращения повторных загрузок
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Ключ для localStorage
+  const localStorageKey = storyId ? `story-${storyId}` : 'new-story';
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
@@ -354,6 +357,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       console.log('🔄 Force updating slides after element add:', updatedStoreSlides.length);
       setSlides([...updatedStoreSlides]);
       
+      // Сохраняем в localStorage
+      const dataToSave = { slides: updatedStoreSlides, title: storyTitle };
+      localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
+      
       toast({
         title: 'Элемент добавлен',
         description: `${getElementTypeName(elementType)} добавлен на слайд ${currentSlideIndex + 1}`
@@ -486,13 +493,26 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   // Принудительно отслеживаем элементы
   const elementsCount = currentSlide?.elements?.length || 0;
   
-  // Синхронизация локального состояния со store
+  // Синхронизация локального состояния со store и сохранение в localStorage
   useEffect(() => {
     if (storeSlides.length > 0 && storeSlides !== slides) {
       console.log('🔄 Syncing slides from store:', storeSlides.length, 'slides');
       setSlides(storeSlides);
+      
+      // Сохраняем в localStorage
+      const dataToSave = { slides: storeSlides, title: storyTitle };
+      localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
     }
-  }, [storeSlides, slides, setSlides]);
+  }, [storeSlides, slides, storyTitle, localStorageKey, setSlides]);
+  
+  // Сохранение в localStorage при изменении slides
+  useEffect(() => {
+    if (slides.length > 0) {
+      const dataToSave = { slides, title: storyTitle };
+      localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
+      console.log('💾 Saved to localStorage:', slides.length, 'slides');
+    }
+  }, [slides, storyTitle, localStorageKey]);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
