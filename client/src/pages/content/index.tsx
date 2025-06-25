@@ -1399,12 +1399,7 @@ export default function ContentPage() {
                                               storyData = metadata;
                                             }
                                             
-                                            console.log('📋 Content list: Stories data for', content.id, {
-                                              metadata,
-                                              storyData,
-                                              contentType: typeof content.content,
-                                              contentPreview: typeof content.content === 'string' ? content.content.substring(0, 100) : 'not string'
-                                            });
+                                            // Удален избыточный лог для уменьшения спама в консоли
                                             
                                             const slidesCount = storyData?.slides?.length || 0;
                                             return (

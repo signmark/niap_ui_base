@@ -376,15 +376,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       const url = isEdit ? `/api/campaign-content/${storyId}` : '/api/campaign-content';
       const method = isEdit ? 'PATCH' : 'POST';
 
-      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { 
-        url, 
-        method, 
-        campaignId, 
-        slidesCount: slides.length,
-        slidesData: slides.map(s => ({ id: s.id, elementsCount: s.elements?.length || 0 })),
-        storyDataKeys: Object.keys(storyData),
-        storyData 
-      });
+      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories с ${slides.length} слайдами`);
 
       // Используем apiRequest для автоматического обновления токена
       const result = await apiRequest(url, {
@@ -398,7 +390,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         description: `История "${storyTitle}" ${isEdit ? 'обновлена' : 'создана'} с ${actualSlidesCount} слайдами`
       });
       
-      console.log('Stories сохранена:', result);
+      console.log('Stories успешно сохранена');
       
       // Инвалидируем кэш для обновления списка контента
       queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });

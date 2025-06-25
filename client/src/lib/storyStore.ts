@@ -54,7 +54,6 @@ export const useStoryStore = create<StoryState>()(
   initializeSlides: () => {
     const { slides } = get();
     if (slides.length === 0) {
-      console.log('🏪 Store: Initializing slides (first time)');
       set({
         slides: [
           {
@@ -67,17 +66,10 @@ export const useStoryStore = create<StoryState>()(
         ],
         currentSlideIndex: 0
       });
-    } else {
-      console.log('🏪 Store: Slides already exist, count:', slides.length);
-      console.log('🏪 Store: Elements in current slide:', slides[get().currentSlideIndex]?.elements?.length || 0);
     }
   },
 
   setSlides: (slides) => {
-    console.log('🏪 Store: Setting slides, count:', slides.length);
-    if (slides.length > 0) {
-      console.log('🏪 Store: First slide ID:', slides[0].id, 'elements:', slides[0].elements?.length || 0);
-    }
     set({ slides });
   },
 
