@@ -434,6 +434,14 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       
       console.log('Stories сохранена:', result);
       
+      // Инвалидируем кэш для обновления списка контента
+      queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-content'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/campaign-content/${storyId}`] });
+      
+      // Принудительно перезагружаем все данные контента
+      await queryClient.refetchQueries({ queryKey: ['/api/campaign-content'] });
+      
       // После успешного сохранения, если это было создание, переходим в режим редактирования
       if (!isEdit && result.data && result.data.id) {
         navigate(`/stories/${result.data.id}/edit`);

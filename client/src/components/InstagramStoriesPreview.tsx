@@ -14,7 +14,9 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   let parsedData;
   try {
     parsedData = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+    console.log('🎬 InstagramStoriesPreview: Parsing metadata:', parsedData);
   } catch (e) {
+    console.error('🎬 InstagramStoriesPreview: Error parsing metadata:', e);
     return (
       <div className="bg-red-100 border border-red-300 rounded-lg p-4 text-center">
         <p className="text-red-800">Ошибка при загрузке данных Stories</p>
@@ -23,8 +25,10 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   }
 
   const slides = parsedData?.slides || [];
+  console.log('🎬 InstagramStoriesPreview: Found slides:', slides.length);
   
   if (slides.length === 0) {
+    console.log('🎬 InstagramStoriesPreview: No slides found');
     return (
       <div className="text-center text-muted-foreground p-8">
         <p>Нет слайдов для отображения</p>
@@ -34,6 +38,13 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
 
   const currentSlide = slides[currentSlideIndex];
   const slidesDuration = 5000; // 5 seconds per slide
+  
+  // Force re-render when metadata changes
+  useEffect(() => {
+    console.log('🎬 InstagramStoriesPreview: Metadata changed, resetting to first slide');
+    setCurrentSlideIndex(0);
+    setProgress(0);
+  }, [metadata]);
 
   // Auto advance slides
   useEffect(() => {

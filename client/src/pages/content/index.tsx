@@ -1382,6 +1382,7 @@ export default function ContentPage() {
                                             const metadata = typeof content.metadata === 'string' 
                                               ? JSON.parse(content.metadata) 
                                               : content.metadata;
+                                            console.log('📋 Content list: Stories metadata for', content.id, metadata);
                                             const slidesCount = metadata?.slides?.length || 0;
                                             return (
                                               <div className="text-xs text-purple-700">
