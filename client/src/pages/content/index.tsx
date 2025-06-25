@@ -113,6 +113,7 @@ const processMarkdownSyntax = (content: string): string => {
 export default function ContentPage() {
   // Используем глобальный стор выбранной кампании
   const { selectedCampaign } = useCampaignStore();
+  const [location, navigate] = useLocation();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
@@ -296,7 +297,6 @@ export default function ContentPage() {
   }, [selectedCampaignId, queryClient]);
 
   // Track location changes to reload data when navigating to content page
-  const [location] = useLocation();
   const [hasNavigated, setHasNavigated] = useState(false);
 
   // Force refetch data when navigating to content page
