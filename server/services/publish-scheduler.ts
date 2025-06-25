@@ -366,7 +366,7 @@ export class PublishScheduler {
 
       // Используем социальный сервис для публикации
       const { socialPublishingService } = await import('./social/index');
-      const result = await socialPublishingService.publishToPlatform('youtube', content, campaign.social_media_settings, authToken);
+      const result = await socialPublishingService.publishToPlatform(content, 'youtube', campaign, authToken);
 
       if (result.status === 'published') {
         log(`YouTube публикация успешна для контента ${content.id}: ${result.postUrl}`, 'scheduler');

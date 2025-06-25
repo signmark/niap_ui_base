@@ -71,7 +71,8 @@ export class SocialPublishingService {
       
       if (platform === 'youtube') {
         const youtubeService = new YouTubeService();
-        const result = await youtubeService.publishContent(content, settings, content.user_id);
+        log(`Передаем в YouTube сервис настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
+        const result = await youtubeService.publishContent(content, settings.youtube || {}, content.user_id);
         
         return {
           platform: 'youtube',
