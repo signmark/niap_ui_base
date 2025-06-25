@@ -1594,7 +1594,7 @@ export default function ContentPage() {
                         });
                         return;
                       }
-                      window.location.href = `/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(newContent.title)}`;
+                      navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(newContent.title)}`);
                     }}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
@@ -1905,7 +1905,7 @@ export default function ContentPage() {
                         <div className="flex gap-2 justify-center">
                           <Button 
                             onClick={() => {
-                              window.location.href = `/stories/${currentContent.id}/edit`;
+                              navigate(`/stories/${currentContent.id}/edit`);
                             }}
                             className="bg-purple-600 hover:bg-purple-700"
                           >
@@ -1919,7 +1919,7 @@ export default function ContentPage() {
                         <p className="text-purple-600">Stories не созданы</p>
                         <Button 
                           onClick={() => {
-                            window.location.href = `/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`;
+                            navigate(`/campaigns/${selectedCampaignId}/stories/new?title=${encodeURIComponent(currentContent.title || '')}`);
                           }}
                           className="bg-purple-600 hover:bg-purple-700"
                         >
@@ -2840,7 +2840,7 @@ export default function ContentPage() {
         onClose={() => setIsContentTypeDialogOpen(false)}
         onSelectType={(type) => {
           if (type === 'story') {
-            window.location.href = `/campaigns/${selectedCampaignId}/stories/new`;
+            navigate(`/campaigns/${selectedCampaignId}/stories/new`);
           } else {
             setIsCreateDialogOpen(true);
           }

@@ -26,6 +26,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
+import { useLocation } from 'wouter';
 
 // Local interfaces for component
 interface StorySlide {

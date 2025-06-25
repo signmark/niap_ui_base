@@ -114,6 +114,7 @@ Environment-specific settings managed through:
 ## Changelog
 - June 24, 2025. Initial setup
 - June 24, 2025. Implemented Instagram Stories Preview with visual interface replacing technical metadata display
+- June 25, 2025. Implemented smooth navigation for Stories editor using wouter router, eliminating full page reloads
 
 ## User Preferences
 
