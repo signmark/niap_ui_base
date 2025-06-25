@@ -85,13 +85,26 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Сброс состояния при создании новой Stories
+  // Инициализация для новой Stories - только один раз
   useEffect(() => {
-    if (!storyId) {
-      console.log('🆕 Creating new Stories - clearing state');
-      setSlides([]);
+    if (!storyId && slides.length === 0) {
+      console.log('🆕 Creating new Stories - initializing first slide');
+      const newSlides = [{
+        id: 'slide-1',
+        order: 0,
+        duration: 5,
+        background: { type: 'color', value: '#6366f1' },
+        elements: []
+      }];
+      setSlides(newSlides);
       setStoryTitle('');
       setCurrentSlideIndex(0);
+      console.log('🆕 New story initialized with slides:', newSlides.length);
+      return;
+    }
+    
+    if (!storyId && slides.length > 0) {
+      console.log('🆕 New Stories already has slides, skipping initialization');
       return;
     }
     
@@ -159,17 +172,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         });
       });
     } else {
-      console.log('🔥 Creating new story - initializing default slides');
-      if (slides.length === 0) {
-        setSlides([{
-          id: 'slide-1',
-          order: 0,
-          duration: 5,
-          background: { type: 'color', value: '#ffffff' },
-          elements: []
-        }]);
-        setCurrentSlideIndex(0);
-      }
+      console.log('🔥 Creating new story - default slide already created in cleanup effect');
     }
   }, [storyId, slides.length, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 

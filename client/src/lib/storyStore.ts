@@ -75,6 +75,9 @@ export const useStoryStore = create<StoryState>()(
 
   setSlides: (slides) => {
     console.log('🏪 Store: Setting slides, count:', slides.length);
+    if (slides.length > 0) {
+      console.log('🏪 Store: First slide ID:', slides[0].id, 'elements:', slides[0].elements?.length || 0);
+    }
     set({ slides });
   },
 
@@ -84,6 +87,11 @@ export const useStoryStore = create<StoryState>()(
 
   addElement: (elementType) => {
     const { slides, currentSlideIndex } = get();
+    
+    if (slides.length === 0) {
+      console.log('🏪 Store: No slides available, cannot add element');
+      return null;
+    }
     
     const newElement: StoryElement = {
       id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -113,6 +121,8 @@ export const useStoryStore = create<StoryState>()(
         slides: newSlides,
         selectedElement: newElement
       });
+    } else {
+      console.log('🏪 Store: Target slide not found at index', currentSlideIndex);
     }
 
     return newElement;
