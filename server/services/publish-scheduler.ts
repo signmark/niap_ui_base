@@ -36,6 +36,14 @@ export class PublishScheduler {
   }
 
   /**
+   * Принудительно очищает кэш для конкретного контента
+   */
+  public clearContentCache(contentId: string) {
+    this.processedContentCache.delete(contentId);
+    log(`Кэш очищен для контента ${contentId}`, 'scheduler');
+  }
+
+  /**
    * Проверяет, была ли уже обработана публикация для данной платформы
    */
   private isAlreadyProcessed(contentId: string, platform: string): boolean {
@@ -355,7 +363,7 @@ export class PublishScheduler {
 
       // Используем социальный сервис для публикации
       const { socialPublishingService } = await import('./social/index');
-      const result = await socialPublishingService.publishToPlatform('youtube', content, campaign, authToken);
+      const result = await socialPublishingService.publishToPlatform('youtube', content, campaign.social_media_settings, authToken);
 
       if (result.status === 'published') {
         log(`YouTube публикация успешна для контента ${content.id}: ${result.postUrl}`, 'scheduler');
@@ -458,8 +466,12 @@ export class PublishScheduler {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
+        },
+        params: {
+          fields: 'id,name,social_media_settings'
         }
       });
+      log(`Получены данные кампании ${campaignId}: ${JSON.stringify(response.data.data)}`, 'scheduler');
       return response.data.data;
     } catch (error: any) {
       log(`Ошибка получения данных кампании ${campaignId}: ${error.message}`, 'scheduler');
