@@ -1045,7 +1045,8 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем ключевые слова при возвращении результата
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
+        metadata: item.metadata || {} // КРИТИЧЕСКИ ВАЖНО: возвращаем metadata для Stories
       };
     } catch (error) {
       console.error('Error creating campaign content in Directus:', error);
@@ -1284,7 +1285,8 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем ключевые слова
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
+        metadata: item.metadata || {} // КРИТИЧЕСКИ ВАЖНО: возвращаем metadata для Stories
       }));
       
       return content;
@@ -1358,7 +1360,8 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [],
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : []
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [],
+        metadata: item.metadata || {} // КРИТИЧЕСКИ ВАЖНО: возвращаем metadata для Stories
       }));
       
       console.log(`[Scheduled] Возвращается ${content.length} запланированных публикаций`);
