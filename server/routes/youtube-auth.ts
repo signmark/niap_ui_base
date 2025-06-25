@@ -24,7 +24,7 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
     // Получаем конфигурацию YouTube из переменных окружения
     const clientId = process.env.YOUTUBE_CLIENT_ID;
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI || `${process.env.FRONTEND_URL}/youtube/callback`;
+    const redirectUri = process.env.YOUTUBE_REDIRECT_URI;
 
     if (!clientId || !clientSecret) {
       return res.status(500).json({ 
@@ -101,7 +101,7 @@ router.get('/youtube/auth/callback', async (req, res) => {
 
     const clientId = process.env.YOUTUBE_CLIENT_ID!;
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI || `${process.env.FRONTEND_URL}/youtube/callback`;
+    const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
 
     const youtubeService = new YouTubeService({
       clientId,
@@ -148,7 +148,7 @@ router.post('/youtube/test', authMiddleware, async (req, res) => {
 
     const clientId = process.env.YOUTUBE_CLIENT_ID!;
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI || `${process.env.FRONTEND_URL}/youtube/callback`;
+    const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
 
     const youtubeService = new YouTubeService({
       clientId,

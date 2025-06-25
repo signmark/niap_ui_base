@@ -122,6 +122,9 @@ function Router() {
       <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />
       <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
       
+      {/* YouTube OAuth callback */}
+      <Route path="/api/auth/youtube/callback" component={YouTubeCallback} />
+      
       {/* Stories routes */}
       <Route path="/campaigns/:campaignId/stories/new">
         {(params) => (

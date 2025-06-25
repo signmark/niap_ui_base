@@ -121,6 +121,7 @@ Environment-specific settings managed through:
 - June 25, 2025. Integrated video thumbnail support into Additional Images field in Directus: thumbnails now save to additional_images array (first position) instead of separate field, with AI generation support
 - June 25, 2025. Fixed video thumbnail AI generation: both create and edit mode "Сгенерировать обложку" buttons now properly set videoThumbnailMode flag and auto-populate thumbnail URL field
 - June 25, 2025. Added video thumbnail display in content preview dialog: thumbnails now show alongside video player with proper styling and error handling
+- June 25, 2025. Implemented YouTube OAuth2 integration: added Google Cloud OAuth setup with proper redirect handling, YouTube service for video uploads, callback page for auth flow, and environment variables configuration
 
 ## User Preferences
 
