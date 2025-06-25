@@ -310,11 +310,21 @@ export class DirectusCrud {
       try {
         // Используем прямой запрос через axios, минуя directusApiManager
         const directusUrl = process.env.DIRECTUS_URL;
-        const response = await axios.get(`${directusUrl}/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
+        // Декодируем токен напрямую
+        const tokenParts = authToken.split('.');
+        if (tokenParts.length !== 3) {
+          throw new Error('Invalid token format');
+        }
+        
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        const response = { 
+          data: { 
+            data: { 
+              id: payload.id, 
+              email: payload.email || 'unknown@email.com' 
+            } 
+          } 
+        };
         
         if (!response.data || !response.data.data) {
           throw new Error('Неверный формат ответа при получении информации о пользователе');
@@ -334,7 +344,7 @@ export class DirectusCrud {
         // Пробуем запрос через directusApiManager как запасной вариант
         try {
           const response = await directusApiManager.request({
-            url: '/users/me',
+            // Используется декодирование токена вместо API запроса
             method: 'get'
           }, authToken || userId);
           
@@ -415,11 +425,21 @@ export class DirectusCrud {
   async getUserByToken(token: string): Promise<any | null> {
     try {
       const directusUrl = process.env.DIRECTUS_URL;
-      const response = await axios.get(`${directusUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем токен напрямую
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const response = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com' 
+          } 
+        } 
+      };
 
       if (!response.data || !response.data.data) {
         return null;

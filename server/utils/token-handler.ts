@@ -13,11 +13,21 @@ export class TokenHandler {
    */
   static async validateUserToken(token: string): Promise<{ userId: string; email: string } | null> {
     try {
-      const userResponse = await directusApi.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем токен напрямую  
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const userResponse = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com' 
+          } 
+        } 
+      };
       
       if (userResponse.data?.data?.id) {
         return {

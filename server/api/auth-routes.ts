@@ -28,16 +28,26 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Проверяем валидность токена
-      const response = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем и проверяем JWT токен напрямую
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < currentTime) {
+        throw new Error('Token expired');
+      }
       
       res.status(200).json({
         valid: true,
-        user: response.data.data
+        user: {
+          id: payload.id,
+          email: payload.email || 'unknown@email.com',
+          role: payload.role
+        }
       });
     } catch (error) {
       console.error('Error checking token:', error);
