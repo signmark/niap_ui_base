@@ -2085,6 +2085,7 @@ export default function ContentPage() {
                         size="sm"
                         className="flex items-center gap-1"
                         onClick={() => {
+                          localStorage.setItem('videoThumbnailMode', 'true');
                           setCurrentContentSafe(currentContent);
                           setIsImageGenerationDialogOpen(true);
                         }}
