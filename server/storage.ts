@@ -1155,6 +1155,12 @@ export class DatabaseStorage implements IStorage {
         directusUpdates.keywords = Array.isArray(updates.keywords) ? updates.keywords : [];
       }
       
+      // КРИТИЧЕСКИ ВАЖНО: Обработка metadata для Stories
+      if (updates.metadata !== undefined) {
+        console.log(`🎬 Обновляем metadata для Stories контента ${id}:`, JSON.stringify(updates.metadata, null, 2));
+        directusUpdates.metadata = updates.metadata;
+      }
+      
       // Выводим данные, которые будем отправлять
       console.log(`Отправляем обновление в Directus для контента ${id}:`, JSON.stringify(directusUpdates));
       
@@ -1176,7 +1182,8 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(item.created_at),
         socialPlatforms: item.social_platforms,
         keywords: item.keywords || [], // Добавляем возврат ключевых слов
-        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [] // Добавляем дополнительные изображения
+        additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [], // Добавляем дополнительные изображения
+        metadata: item.metadata || {} // КРИТИЧЕСКИ ВАЖНО: возвращаем metadata для Stories
       };
     } catch (error) {
       console.error('Error updating campaign content in Directus:', error);

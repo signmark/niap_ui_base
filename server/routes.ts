@@ -7713,8 +7713,12 @@ Return your response as a JSON array in this exact format:
         return res.status(404).json({ error: "Контент не найден" });
       }
       
+      console.log(`📝 PATCH /api/campaign-content/${contentId}: Updating content with:`, JSON.stringify(req.body, null, 2));
+      
       // Обновляем контент напрямую через storage API
       const updatedContent = await storage.updateCampaignContent(contentId, req.body, token);
+      
+      console.log(`✅ PATCH /api/campaign-content/${contentId}: Content updated successfully:`, updatedContent);
       
       return res.status(200).json({
         success: true,
