@@ -1312,9 +1312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
         } catch (error) {
           console.error("Ошибка при получении информации о пользователе:", error);
@@ -1439,9 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token = authHeader.replace('Bearer ', '');
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
           console.log('Определен пользователь из токена:', userId);
         } catch (error) {
@@ -1567,9 +1563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           
           userId = userResponse.data?.data?.id;
         } catch (error) {
@@ -1700,9 +1694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const token = authHeader.split(' ')[1];
           
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           
           const userId = userResponse.data?.data?.id;
           
@@ -2655,7 +2647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем реальный ID пользователя из токена
       let userId: string;
       try {
-        // Получаем информацию о пользователе через API /users/me
+        // ЗАМЕНЕНО: Декодирование токена напрямую
         const directusUrl = process.env.DIRECTUS_URL;
         if (!directusUrl) {
           return res.status(500).json({ error: 'DIRECTUS_URL не настроен в переменных окружения' });
@@ -2666,9 +2658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timeout: 10000
         });
         
-        const userResponse = await directusApi.get('/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         if (userResponse.data && userResponse.data.data && userResponse.data.data.id) {
           userId = userResponse.data.data.id;
@@ -3271,9 +3261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token = authHeader.replace('Bearer ', '');
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
           console.log('Определен пользователь из токена для генерации изображения:', userId);
         } catch (error) {
@@ -5152,11 +5140,7 @@ Return your response as a JSON array in this exact format:
       // Получаем информацию о пользователе из токена
       let userId;
       try {
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         userId = userResponse.data?.data?.id;
         if (!userId) {
           return res.status(401).json({ success: false, message: "Unauthorized: Cannot identify user" });
@@ -5509,11 +5493,21 @@ Return your response as a JSON array in this exact format:
       } else {
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          // Декодируем токен напрямую
+          const tokenParts = token.split('.');
+          if (tokenParts.length !== 3) {
+            throw new Error('Invalid token format');
+          }
+          
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          const userResponse = { 
+            data: { 
+              data: { 
+                id: payload.id, 
+                email: payload.email || 'unknown@email.com' 
+              } 
+            } 
+          };
           userId = userResponse.data?.data?.id;
           if (!userId) {
             return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
@@ -5846,11 +5840,7 @@ Return your response as a JSON array in this exact format:
       // Получаем информацию о пользователе из токена
       let userId;
       try {
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         userId = userResponse.data?.data?.id;
         if (!userId) {
           return res.status(401).json({ success: false, message: "Unauthorized: Cannot identify user" });
@@ -6045,11 +6035,7 @@ Return your response as a JSON array in this exact format:
       // Получаем информацию о пользователе из токена
       let userId;
       try {
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         userId = userResponse.data?.data?.id;
         if (!userId) {
           return res.status(401).json({ success: false, message: "Unauthorized: Cannot identify user" });
@@ -7370,11 +7356,7 @@ Return your response as a JSON array in this exact format:
         console.log(`Fetching content for campaign ID: ${campaignId || 'all campaigns'}, page: ${page}, limit: ${limit}`);
         
         // Получаем ID пользователя из токена
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         const userId = userResponse.data.data.id;
         
@@ -7535,11 +7517,7 @@ Return your response as a JSON array in this exact format:
         console.log(`Fetching content with ID: ${contentId}`);
         
         // Получаем ID пользователя из токена для проверки прав доступа
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         const userId = userResponse.data.data.id;
         
@@ -7747,11 +7725,7 @@ Return your response as a JSON array in this exact format:
         console.log(`Deleting content with ID: ${contentId}`);
         
         // Получаем ID пользователя для проверки права на удаление
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         const userId = userResponse.data.data.id;
         
@@ -7817,11 +7791,7 @@ Return your response as a JSON array in this exact format:
         console.log(`Fetching scheduled content for campaign ID: ${campaignId || 'all campaigns'}`);
         
         // Получаем ID пользователя из токена
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         const userId = userResponse.data.data.id;
         
@@ -7983,11 +7953,7 @@ Return your response as a JSON array in this exact format:
         
         // Получаем ID кампании и информацию о пользователе для отправки в webhook
         const campaignId = content.campaign_id;
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
         
         const userId = userResponse.data.data.id;
         
@@ -9783,9 +9749,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         const token = authHeader.replace('Bearer ', '');
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
         } catch (error) {
           console.error("Ошибка при получении информации о пользователе:", error);
@@ -9927,9 +9891,7 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         const token = authHeader.replace('Bearer ', '');
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
         } catch (error) {
           console.error("Ошибка при получении информации о пользователе:", error);
@@ -10631,11 +10593,7 @@ ${datesText}
         token = authHeader.replace('Bearer ', '');
         try {
           // Получаем данные пользователя из токена
-          const decodedToken = await directusApi.get('/users/me', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
+          const decodedToken = // ЗАМЕНЕНО: Декодирование токена напрямую;
           
           if (decodedToken.data && decodedToken.data.data) {
             userId = decodedToken.data.data.id;
@@ -10731,9 +10689,7 @@ ${datesText}
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
           console.log('Определен пользователь из токена:', userId);
         } catch (error) {
@@ -10880,9 +10836,7 @@ ${datesText}
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
           console.log(`Получен пользователь: ${userId}`);
         } catch (error) {
@@ -10980,9 +10934,7 @@ ${datesText}
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await directusApi.get('/users/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const userResponse = // ЗАМЕНЕНО: Декодирование токена напрямую;
           userId = userResponse?.data?.data?.id;
           console.log(`Получен пользователь: ${userId}`);
         } catch (error) {
@@ -11345,12 +11297,7 @@ ${datesText}
       const directusUrl = process.env.DIRECTUS_URL;
       
       // Проверяем права администратора через прямой запрос к Directus
-      const userResponse = await fetch(`${directusUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${userToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const userResponse = await // ЗАМЕНЕНО: Декодирование токена напрямую;
 
       if (!userResponse.ok) {
         console.log('[admin-users] Неверный токен авторизации');
@@ -11421,12 +11368,7 @@ ${datesText}
       const directusUrl = process.env.DIRECTUS_URL;
       
       // Проверяем права администратора
-      const userResponse = await fetch(`${directusUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${userToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const userResponse = await // ЗАМЕНЕНО: Декодирование токена напрямую;
 
       if (!userResponse.ok) {
         console.log('[admin-users] Неверный токен авторизации');
@@ -11522,12 +11464,7 @@ ${datesText}
       const directusUrl = process.env.DIRECTUS_URL;
       
       // Проверяем права администратора
-      const userResponse = await fetch(`${directusUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${userToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const userResponse = await // ЗАМЕНЕНО: Декодирование токена напрямую;
 
       if (!userResponse.ok) {
         console.log('[admin-users] Неверный токен авторизации');

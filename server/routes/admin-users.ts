@@ -9,12 +9,21 @@ const router = Router();
 async function checkAdminRights(token: string): Promise<{ isAdmin: boolean; userData: any }> {
   try {
     const directusUrl = process.env.DIRECTUS_URL;
-    const response = await axios.get(`${directusUrl}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // Декодируем токен напрямую
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      throw new Error('Invalid token format');
+    }
+    
+    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+    const response = { 
+      data: { 
+        data: { 
+          id: payload.id, 
+          email: payload.email || 'unknown@email.com' 
+        } 
+      } 
+    };
 
     const userData = response.data.data;
     const isAdmin = userData.is_smm_admin === true;

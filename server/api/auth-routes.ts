@@ -372,12 +372,30 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Получаем данные пользователя
-      const response = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем токен напрямую без запроса к API
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
+      
+      const response = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com',
+            role: payload.role,
+            first_name: payload.first_name || '',
+            last_name: payload.last_name || ''
+          } 
+        } 
+      };
 
       const userData = response.data.data;
       

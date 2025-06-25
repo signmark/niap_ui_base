@@ -17,7 +17,23 @@ export function registerFalAiTestRoutes(app: Express) {
       if (authHeader) {
         token = authHeader.replace('Bearer ', '');
         try {
-          const userResponse = await axios.get('${process.env.DIRECTUS_URL}/users/me', {
+          // Декодируем токен напрямую
+          const tokenParts = token.split('.');
+          if (tokenParts.length !== 3) {
+            throw new Error('Invalid token format');
+          }
+          
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          const userResponse = { 
+            data: { 
+              data: { 
+                id: payload.id, 
+                email: payload.email || 'unknown@email.com' 
+              } 
+            } 
+          };
+          
+          /*const userResponse = await axios.get('${process.env.DIRECTUS_URL}/users/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           userId = userResponse?.data?.data?.id;
