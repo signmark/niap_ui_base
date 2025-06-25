@@ -433,7 +433,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       }
 
       const storyData = {
-        campaign_id: campaignId, // ПЕРВЫМ ПОЛЕМ - обязательно!
+        campaign_id: finalCampaignId, // ПЕРВЫМ ПОЛЕМ - обязательно!
         title: storyTitle || 'Новая история',
         content_type: 'story',
         status: 'draft',
