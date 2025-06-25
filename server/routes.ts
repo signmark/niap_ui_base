@@ -986,84 +986,53 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
     }
 
     try {
-      // Попытка получить информацию о пользователе с обработкой истекшего токена
-      let response;
+      // Декодируем токен напрямую для получения информации о пользователе
+      // Это избегает дополнительных запросов к Directus API
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        return res.status(401).json({ error: 'Не авторизован: Неверный формат токена' });
+      }
+
       try {
-        response = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      } catch (authError: any) {
-        // Если токен истек (401), пытаемся использовать административный токен для внутренних процессов
-        if (authError.response?.status === 401) {
-          console.log('[AUTH] Пользовательский токен истек, проверяем административные права');
-          
-          // Для административных операций используем админский токен из переменной окружения
-          const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
-          if (adminToken) {
-            try {
-              // Декодируем пользовательский токен для получения ID пользователя
-              const tokenParts = token.split('.');
-              if (tokenParts.length === 3) {
-                const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-                const userId = payload.id;
-                
-                if (userId) {
-                  // Получаем информацию о пользователе через админский токен
-                  const adminResponse = await directusApi.get(`/users/${userId}`, {
-                    headers: {
-                      'Authorization': `Bearer ${adminToken}`
-                    }
-                  });
-                  
-                  if (adminResponse.data?.data) {
-                    console.log(`[AUTH] Пользователь ${userId} авторизован через админский токен`);
-                    
-                    // Устанавливаем информацию о пользователе
-                    req.user = {
-                      id: adminResponse.data.data.id,
-                      token: token, // Сохраняем оригинальный токен
-                      email: adminResponse.data.data.email,
-                      firstName: adminResponse.data.data.first_name,
-                      lastName: adminResponse.data.data.last_name
-                    };
-                    
-                    (req as any).userId = adminResponse.data.data.id;
-                    return next();
-                  }
-                }
-              }
-            } catch (adminError) {
-              console.error('[AUTH] Ошибка при использовании админского токена:', adminError);
-            }
-          }
-          
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        const userId = payload.id;
+        const userEmail = payload.email || 'unknown@email.com';
+        
+        if (!userId) {
+          return res.status(401).json({ error: 'Не авторизован: Отсутствует ID пользователя в токене' });
+        }
+
+        // Проверяем срок действия токена
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          console.log(`[AUTH] Токен истек для пользователя ${userId}`);
           return res.status(401).json({ 
             error: 'Не авторизован: Токен истек и требует обновления' 
           });
         }
+
+        // Устанавливаем информацию о пользователе из токена
+        req.user = {
+          id: userId,
+          token: token,
+          email: userEmail,
+          firstName: payload.first_name || 'User',
+          lastName: payload.last_name || ''
+        };
         
-        throw authError;
+        // Поддержка старого интерфейса
+        (req as any).userId = userId;
+        
+        console.log(`[AUTH] Пользователь авторизован из токена: ${userId} (${userEmail})`);
+        next();
+        
+      } catch (decodeError) {
+        console.error('[AUTH] Ошибка декодирования токена:', decodeError);
+        return res.status(401).json({ error: 'Не авторизован: Ошибка декодирования токена' });
       }
-
-      if (!response.data?.data?.id) {
-        return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
-      }
-
-      req.user = {
-        id: response.data.data.id,
-        token: token,
-        email: response.data.data.email,
-        firstName: response.data.data.first_name,
-        lastName: response.data.data.last_name
-      };
-      
-      (req as any).userId = response.data.data.id;
-      next();
       
     } catch (error: any) {
-      console.error('[AUTH] Ошибка авторизации:', error.message);
+      console.error('[AUTH] Критическая ошибка авторизации:', error.message);
       return res.status(401).json({ 
         error: 'Не авторизован: Ошибка проверки токена'
       });

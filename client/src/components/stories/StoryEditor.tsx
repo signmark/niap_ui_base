@@ -346,31 +346,23 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       }
 
       const storyData = {
-        title: storyTitle,
-        campaign_id: campaignId,  // Директус требует snake_case
-        content_type: 'story',    // Директус требует snake_case
-        content: storyTitle,      // Директус требует поле content
+        title: storyTitle || 'Новая история',
+        campaign_id: campaignId,
+        content_type: 'story',
         status: 'draft',
-        metadata: {
+        content: JSON.stringify({
+          title: storyTitle || 'Новая история',
           slides: slides.map(slide => ({
-            order: slide.order,
-            duration: slide.duration,
-            background: slide.background,
+            id: slide.id,
             elements: slide.elements.map(element => ({
+              id: element.id,
               type: element.type,
-              position: { 
-                x: element.position.x, 
-                y: element.position.y,
-                width: 100,
-                height: 100
-              },
-              rotation: element.rotation,
-              zIndex: element.zIndex,
               content: element.content,
+              position: element.position,
               style: element.style
             }))
           }))
-        }
+        })
       };
 
       // Определяем метод и URL в зависимости от того, редактируем или создаем
