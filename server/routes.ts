@@ -7618,7 +7618,13 @@ Return your response as a JSON array in this exact format:
     try {
       console.log('📝 POST /api/campaign-content - Creating new content');
       console.log('✅ User authenticated:', req.user?.id, req.user?.email);
-      console.log('📄 Content data:', JSON.stringify(req.body, null, 2));
+      console.log('📄 Content data received:', JSON.stringify(req.body, null, 2));
+      
+      // Проверяем наличие campaign_id
+      if (!req.body.campaign_id) {
+        console.error('❌ Missing campaign_id in request body');
+        return res.status(400).json({ error: 'Отсутствует обязательное поле: campaign_id' });
+      }
       
       const userId = req.user?.id;
       const token = req.user?.token;

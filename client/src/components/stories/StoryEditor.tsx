@@ -374,6 +374,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         url, 
         method, 
         campaignId, 
+        slidesCount: slides.length,
+        slidesData: slides.map(s => ({ id: s.id, elementsCount: s.elements?.length || 0 })),
         storyDataKeys: Object.keys(storyData),
         storyData 
       });
@@ -384,9 +386,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         data: storyData  // ИСПРАВЛЕНО: используем data вместо body
       });
       
+      const actualSlidesCount = slides?.length || 0;
       toast({
         title: isEdit ? 'Обновлено' : 'Создано',
-        description: `История "${storyTitle}" ${isEdit ? 'обновлена' : 'создана'} с ${slides.length} слайдами`
+        description: `История "${storyTitle}" ${isEdit ? 'обновлена' : 'создана'} с ${actualSlidesCount} слайдами`
       });
       
       console.log('Stories сохранена:', result);
