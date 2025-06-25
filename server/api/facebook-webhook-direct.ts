@@ -509,6 +509,11 @@ async function updateSocialPlatformsStatus(contentId: string, token: string, pos
       }
       
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
       // Имитируем ответ API
       const mockResponse = { 
         data: { 

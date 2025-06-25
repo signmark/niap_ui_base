@@ -310,13 +310,18 @@ export class DirectusCrud {
       try {
         // Используем прямой запрос через axios, минуя directusApiManager
         const directusUrl = process.env.DIRECTUS_URL;
-        // Декодируем токен напрямую
+        // Декодируем токен напрямую без проверки времени жизни
         const tokenParts = authToken.split('.');
         if (tokenParts.length !== 3) {
           throw new Error('Invalid token format');
         }
         
         const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        
+        // Проверяем наличие обязательных полей
+        if (!payload.id) {
+          throw new Error('Invalid token payload');
+        }
         const response = { 
           data: { 
             data: { 
@@ -425,13 +430,18 @@ export class DirectusCrud {
   async getUserByToken(token: string): Promise<any | null> {
     try {
       const directusUrl = process.env.DIRECTUS_URL;
-      // Декодируем токен напрямую
+      // Декодируем токен напрямую без проверки времени жизни
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
       
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
       const response = { 
         data: { 
           data: { 

@@ -28,17 +28,17 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Декодируем и проверяем JWT токен напрямую
+      // Декодируем JWT токен напрямую без проверки времени жизни
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
       
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      const currentTime = Math.floor(Date.now() / 1000);
       
-      if (payload.exp && payload.exp < currentTime) {
-        throw new Error('Token expired');
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
       }
       
       res.status(200).json({

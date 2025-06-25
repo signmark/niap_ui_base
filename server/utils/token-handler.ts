@@ -13,13 +13,18 @@ export class TokenHandler {
    */
   static async validateUserToken(token: string): Promise<{ userId: string; email: string } | null> {
     try {
-      // Декодируем токен напрямую  
+      // Декодируем токен напрямую без проверки времени жизни
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
       
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
       const userResponse = { 
         data: { 
           data: { 
