@@ -108,7 +108,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     
     // Если требуется очистка состояния (создание через диалог)
     if (!storyId && shouldClear) {
-      console.log('Clearing store and initializing new story');
+      console.log('Clearing store and localStorage for new story');
+      localStorage.removeItem(localStorageKey);
+      localStorage.removeItem('new-story');
+      localStorage.removeItem('story-undefined');
       resetStore();
       return;
     }
@@ -116,6 +119,11 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     // Для новых Stories создаем базовый слайд если его нет
     if (!storyId && slides.length === 0) {
       console.log('Creating initial slide for new story');
+      
+      // Очищаем localStorage перед созданием новой Stories
+      localStorage.removeItem('new-story');
+      localStorage.removeItem('story-undefined');
+      
       const newSlides = [{
         id: 'slide-1',
         order: 0,
@@ -123,10 +131,19 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         background: { type: 'color', value: '#6366f1' },
         elements: []
       }];
+      
+      // Устанавливаем слайды в store тоже
+      useStoryStore.setState({ 
+        slides: newSlides,
+        currentSlideIndex: 0,
+        selectedElement: null
+      });
+      
       setSlides(newSlides);
       setStoryTitle('');
       setCurrentSlideIndex(0);
-      console.log('New story initialized with empty slide');
+      localStorage.setItem(localStorageKey, JSON.stringify({ slides: newSlides, title: '' }));
+      console.log('New story initialized with empty slide in both state and store');
       return;
     }
     
