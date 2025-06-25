@@ -238,6 +238,7 @@ export default function ContentPage() {
     imageUrl: "",
     additionalImages: [] as string[], // Массив URL-адресов дополнительных изображений
     videoUrl: "",
+    videoThumbnail: "", // Обложка для видео (thumbnail)
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
@@ -756,6 +757,7 @@ export default function ContentPage() {
       content: newContent.content,
       image_url: newContent.imageUrl,
       video_url: newContent.videoUrl,
+      video_thumbnail: newContent.videoThumbnail,
       keywords: newContent.keywords || [],
       status: 'draft'
     });
@@ -1671,15 +1673,39 @@ export default function ContentPage() {
               </div>
             )}
             {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
-              <div className="space-y-2">
-                <Label htmlFor="videoUrl">URL видео</Label>
-                <VideoUploader
-                  id="videoUrl"
-                  value={newContent.videoUrl}
-                  onChange={(url) => setNewContent({...newContent, videoUrl: url})}
-                  placeholder="Введите URL видео или загрузите файл"
-                  forcePreview={true}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">URL видео</Label>
+                  <VideoUploader
+                    id="videoUrl"
+                    value={newContent.videoUrl}
+                    onChange={(url) => setNewContent({...newContent, videoUrl: url})}
+                    placeholder="Введите URL видео или загрузите файл"
+                    forcePreview={true}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="videoThumbnail">Обложка видео (рекомендуется для YouTube, Rutube)</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => setIsImageGenerationDialogOpen(true)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Сгенерировать обложку
+                    </Button>
+                  </div>
+                  <ImageUploader
+                    id="videoThumbnail"
+                    value={newContent.videoThumbnail}
+                    onChange={(url) => setNewContent({...newContent, videoThumbnail: url})}
+                    placeholder="Введите URL обложки или загрузите изображение"
+                    forcePreview={true}
+                  />
+                </div>
               </div>
             )}
             
@@ -2019,18 +2045,48 @@ export default function ContentPage() {
                 </div>
               )}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
-                <div className="space-y-2">
-                  <Label htmlFor="videoUrl">URL видео</Label>
-                  <VideoUploader
-                    id="videoUrl"
-                    value={currentContent.videoUrl || ""}
-                    onChange={(url) => {
-                      const updatedContent = {...currentContent, videoUrl: url};
-                      setCurrentContentSafe(updatedContent);
-                    }}
-                    placeholder="Введите URL видео или загрузите файл"
-                    forcePreview={true}
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="videoUrl">URL видео</Label>
+                    <VideoUploader
+                      id="videoUrl"
+                      value={currentContent.videoUrl || ""}
+                      onChange={(url) => {
+                        const updatedContent = {...currentContent, videoUrl: url};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      placeholder="Введите URL видео или загрузите файл"
+                      forcePreview={true}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="videoThumbnailEdit">Обложка видео (рекомендуется для YouTube, Rutube)</Label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() => {
+                          setCurrentContentSafe(currentContent);
+                          setIsImageGenerationDialogOpen(true);
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Сгенерировать обложку
+                      </Button>
+                    </div>
+                    <ImageUploader
+                      id="videoThumbnailEdit"
+                      value={currentContent.videoThumbnail || ""}
+                      onChange={(url) => {
+                        const updatedContent = {...currentContent, videoThumbnail: url};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      placeholder="Введите URL обложки или загрузите изображение"
+                      forcePreview={true}
+                    />
+                  </div>
                 </div>
               )}
               

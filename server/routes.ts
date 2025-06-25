@@ -7669,6 +7669,7 @@ Return your response as a JSON array in this exact format:
         // Дополнительные поля из body если есть (поддерживаем оба формата)
         image_url: req.body.image_url || req.body.imageUrl || null,
         video_url: req.body.video_url || req.body.videoUrl || null,
+        video_thumbnail: req.body.video_thumbnail || req.body.videoThumbnail || null,
         keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
         hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
         social_platforms: req.body.social_platforms || {},
