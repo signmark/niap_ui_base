@@ -2613,16 +2613,14 @@ export default function ContentPage() {
               localStorage.removeItem('additionalImageMode');
               localStorage.removeItem('currentAdditionalImageIndex');
             } else {
-              // Обычный режим для основного изображения
+              // Обычный режим (основное изображение)
               if (currentContent) {
-                // Обновляем URL изображения и промт в форме редактирования
-                const updatedContent = {
-                  ...currentContent, 
+                // Для режима редактирования
+                setCurrentContent({
+                  ...currentContent,
                   imageUrl,
-                  // Сохраняем промт только если он был передан
                   ...(promptText ? { prompt: promptText } : {})
-                };
-                setCurrentContentSafe(updatedContent);
+                });
               } else {
                 // Обновляем URL изображения и промт в форме создания контента
                 setNewContent({
@@ -2632,10 +2630,10 @@ export default function ContentPage() {
                   ...(promptText ? { prompt: promptText } : {})
                 });
               }
+              
+              // Закрываем диалог только для обычного режима
+              setIsImageGenerationDialogOpen(false);
             }
-            
-            // Закрываем диалог после выбора изображения
-            setIsImageGenerationDialogOpen(false);
           }}
           onClose={() => {
             // Очищаем localStorage при закрытии диалога
