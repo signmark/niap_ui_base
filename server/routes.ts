@@ -7474,6 +7474,9 @@ Return your response as a JSON array in this exact format:
             contentType: item.content_type,
             imageUrl: item.image_url,
             additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [],
+            videoThumbnail: Array.isArray(item.additional_images) && item.additional_images.length > 0 && 
+                            (item.content_type === 'video' || item.content_type === 'video-text') 
+                            ? item.additional_images[0] : '', // Первое изображение как thumbnail видео
             videoUrl: item.video_url,
             prompt: item.prompt,
             keywords: keywords,

@@ -117,6 +117,8 @@ Environment-specific settings managed through:
 - June 25, 2025. Implemented smooth navigation for Stories editor using wouter router, eliminating full page reloads
 - June 25, 2025. Fixed Stories creation and element management: resolved disappearing elements issue, implemented clean Stories creation through content type dialog, and improved store state management
 - June 25, 2025. Fixed Stories navigation to use clean /stories/new route without query parameters, resolved campaign_id validation errors, and implemented comprehensive localStorage clearing for new Stories creation
+- June 25, 2025. Removed "Видео редактор" and "Stories Canvas" menu items, unified all content management through main content interface
+- June 25, 2025. Integrated video thumbnail support into Additional Images field in Directus: thumbnails now save to additional_images array (first position) instead of separate field, with AI generation support
 
 ## User Preferences
 

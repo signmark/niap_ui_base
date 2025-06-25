@@ -750,6 +750,12 @@ export default function ContentPage() {
       return;
     }
 
+    // Подготавливаем дополнительные изображения включая thumbnail видео
+    const additionalImages = [...(newContent.additionalImages || [])];
+    if (newContent.videoThumbnail && !additionalImages.includes(newContent.videoThumbnail)) {
+      additionalImages.unshift(newContent.videoThumbnail); // Thumbnail в начале списка
+    }
+
     createContentMutation.mutate({
       campaign_id: selectedCampaignId,
       content_type: newContent.contentType,
@@ -758,6 +764,7 @@ export default function ContentPage() {
       image_url: newContent.imageUrl,
       video_url: newContent.videoUrl,
       video_thumbnail: newContent.videoThumbnail,
+      additional_images: additionalImages,
       keywords: newContent.keywords || [],
       status: 'draft'
     });
@@ -810,14 +817,21 @@ export default function ContentPage() {
     
 
 
+    // Подготавливаем дополнительные изображения включая thumbnail видео
+    const additionalImages = [...(currentContent.additionalImages || [])];
+    if (currentContent.videoThumbnail && !additionalImages.includes(currentContent.videoThumbnail)) {
+      additionalImages.unshift(currentContent.videoThumbnail); // Thumbnail в начале списка
+    }
+
     // Создаем типизированный объект для обновления
     const updateData = {
       title: currentContent.title,
       content: currentContent.content,
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
-      additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
+      additionalImages: additionalImages,
       videoUrl: currentContent.videoUrl,
+      videoThumbnail: currentContent.videoThumbnail,
       additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
