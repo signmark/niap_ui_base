@@ -27,7 +27,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
-import { useLocation } from 'wouter';
+import { useLocation, useParams, useNavigate } from 'wouter';
 
 // Local interfaces for component
 interface StorySlide {
@@ -56,12 +56,21 @@ interface StoryEditorProps {
   storyId?: string;
 }
 
-export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
+export default function StoryEditor({ campaignId: propCampaignId, storyId: propStoryId }: StoryEditorProps) {
   // Уменьшен уровень логирования для снижения спама в консоли
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, navigate] = useLocation();
+  const { storyId } = useParams();
+  const [location, navigate] = useLocation();
+  const { campaignId } = useCampaignStore();
+  
+  // Используем параметры из пропсов или из URL/store
+  const finalCampaignId = propCampaignId || campaignId;
+  const finalStoryId = propStoryId || storyId;
+  
+  // Проверяем, является ли это созданием новой Stories
+  const isNewStory = location.includes('/new') || location === '/stories';
   
   // Используем глобальный store вместо локального состояния
   const {
@@ -93,19 +102,19 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   // Ключ для localStorage
-  const localStorageKey = storyId ? `story-${storyId}` : 'new-story';
+  const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
 
   // Инициализация для новой Stories - только один раз
   useEffect(() => {
     console.log('StoryEditor useEffect triggered:', { 
-      storyId, 
+      storyId: finalStoryId, 
       isNewStory,
       slidesLength: slides.length,
       hasSlides: slides.length > 0 
     });
     
     // Если это создание новой Stories - очищаем localStorage
-    if (isNewStory && !storyId) {
+    if (isNewStory && !finalStoryId) {
       console.log('Creating new story - clearing localStorage');
       localStorage.removeItem('new-story');
       localStorage.removeItem('story-undefined');
@@ -191,7 +200,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, isNewStory, isLoaded, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+  }, [finalStoryId, isNewStory, isLoaded, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
