@@ -286,16 +286,7 @@ export default function Campaigns() {
                     <Search className="mr-2 h-4 w-4" />
                     Управлять
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigate(`/campaigns/${campaign.id}/stories/new`);
-                    }}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Истории
-                  </Button>
+
                   <Button
                     variant="outline"
                     size="sm"
