@@ -640,78 +640,115 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="youtube.apiKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>API Key</FormLabel>
-                    <div className="flex space-x-2">
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                  <span className="font-medium">Требуется для YouTube:</span>
+                  <br />• <span className="font-medium">API Key</span> - для базовых операций с YouTube API
+                  <br />• <span className="font-medium">ID Канала</span> - для указания канала для загрузки
+                  <br />• <span className="font-medium">OAuth авторизация</span> - для загрузки видео (см. ниже)
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="youtube.apiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>API Key (обязательно)</FormLabel>
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Введите API ключ YouTube" 
+                            {...field} 
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={validateYoutubeApiKey}
+                          disabled={youtubeStatus.isLoading}
+                        >
+                          {youtubeStatus.isLoading ? 
+                            <Loader2 className="h-4 w-4 animate-spin" /> : 
+                            <AlertCircle className="h-4 w-4" />
+                          }
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Получите в Google Cloud Console → APIs & Services → Credentials
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="youtube.channelId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID Канала (обязательно)</FormLabel>
                       <FormControl>
                         <Input 
-                          type="password" 
-                          placeholder="Введите API ключ" 
+                          placeholder="Например: UCxxxxxxxxxxxxxxxxxxxxxxx" 
                           {...field} 
                           value={field.value || ''}
                         />
                       </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateYoutubeApiKey}
-                        disabled={youtubeStatus.isLoading}
-                      >
-                        {youtubeStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
-                        }
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="youtube.channelId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Канала</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: UCxyz123abc..." 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <div className="text-xs text-muted-foreground">
+                        ID канала можно найти в YouTube Studio → Настройки → Канал → Основная информация
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               {/* YouTube OAuth Setup */}
               <div className="border-t pt-4 mt-4">
-                <h4 className="text-sm font-medium mb-3">OAuth Авторизация YouTube</h4>
-                <YouTubeOAuthSetup 
-                  onAuthComplete={(authData) => {
-                    console.log('YouTube авторизация завершена:', authData);
-                    
-                    // Обновляем форму с полученными токенами
-                    if (authData.accessToken) {
-                      form.setValue('youtube.accessToken', authData.accessToken);
-                    }
-                    if (authData.refreshToken) {
-                      form.setValue('youtube.refreshToken', authData.refreshToken);
-                    }
-                    if (authData.channelId) {
-                      form.setValue('youtube.channelId', authData.channelId);
-                    }
-                    
-                    // Сохраняем настройки автоматически
-                    form.handleSubmit(onSubmit)();
-                  }} 
-                />
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium">OAuth Авторизация (для загрузки видео)</h4>
+                  <div className="text-xs text-muted-foreground">
+                    После ввода API Key и Channel ID выполните OAuth авторизацию для возможности загрузки видео
+                  </div>
+                  
+                  {/* Показываем статус OAuth токенов */}
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-muted-foreground">Access Token:</span>
+                      <span className={form.watch('youtube.accessToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                        {form.watch('youtube.accessToken') ? 'Получен' : 'Отсутствует'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-muted-foreground">Refresh Token:</span>
+                      <span className={form.watch('youtube.refreshToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                        {form.watch('youtube.refreshToken') ? 'Получен' : 'Отсутствует'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <YouTubeOAuthSetup 
+                    onAuthComplete={(authData) => {
+                      console.log('YouTube авторизация завершена:', authData);
+                      
+                      // Обновляем форму с полученными токенами
+                      if (authData.accessToken) {
+                        form.setValue('youtube.accessToken', authData.accessToken);
+                      }
+                      if (authData.refreshToken) {
+                        form.setValue('youtube.refreshToken', authData.refreshToken);
+                      }
+                      if (authData.channelId) {
+                        form.setValue('youtube.channelId', authData.channelId);
+                      }
+                      
+                      // Сохраняем настройки автоматически
+                      form.handleSubmit(onSubmit)();
+                    }} 
+                  />
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
