@@ -346,8 +346,8 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       }
 
       const storyData = {
+        campaign_id: campaignId, // ПЕРВЫМ ПОЛЕМ - обязательно!
         title: storyTitle || 'Новая история',
-        campaign_id: campaignId,
         content_type: 'story',
         status: 'draft',
         content: JSON.stringify({
@@ -370,7 +370,13 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       const url = isEdit ? `/api/campaign-content/${storyId}` : '/api/campaign-content';
       const method = isEdit ? 'PATCH' : 'POST';
 
-      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { url, method, storyData });
+      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories:`, { 
+        url, 
+        method, 
+        campaignId, 
+        storyDataKeys: Object.keys(storyData),
+        storyData 
+      });
 
       // Используем apiRequest для автоматического обновления токена
       const result = await apiRequest(url, {
