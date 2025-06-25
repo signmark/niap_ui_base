@@ -199,9 +199,7 @@ export function TextEnhancementDialog({
     }
   };
   
-  // Логирование в консоль для отладки
-  console.log(`TextEnhancementDialog: будет использован API эндпоинт ${getApiEndpoint()}`);
-  console.log(`TextEnhancementDialog: выбранный сервис - ${selectedService}, модель - ${selectedModelId}`);
+
   
   // Мутация для улучшения текста через единый эндпоинт генерации контента
   const { mutate: improveText, isPending } = useMutation({
