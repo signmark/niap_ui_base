@@ -98,3 +98,30 @@ export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
 
 export type BusinessQuestionnaire = typeof businessQuestionnaires.$inferSelect;
 export type InsertBusinessQuestionnaire = z.infer<typeof insertBusinessQuestionnaireSchema>;
+
+// Типы для настроек социальных сетей
+export interface SocialMediaSettings {
+  telegram?: {
+    token?: string | null;
+    chatId?: string | null;
+  };
+  vk?: {
+    token?: string | null;
+    groupId?: string | null;
+  };
+  instagram?: {
+    token?: string | null;
+    accessToken?: string | null;
+    businessAccountId?: string | null;
+  };
+  facebook?: {
+    token?: string | null;
+    pageId?: string | null;
+  };
+  youtube?: {
+    apiKey?: string | null;
+    channelId?: string | null;
+    accessToken?: string | null;
+    refreshToken?: string | null;
+  };
+}

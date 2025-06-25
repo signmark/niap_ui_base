@@ -53,6 +53,8 @@ const socialMediaSettingsSchema = z.object({
   youtube: z.object({
     apiKey: z.string().nullable(),
     channelId: z.string().nullable(),
+    accessToken: z.string().nullable(),
+    refreshToken: z.string().nullable(),
   }),
 });
 
@@ -90,7 +92,7 @@ export function SocialMediaSettings({
       vk: { token: null, groupId: null },
       instagram: { token: null, accessToken: null, businessAccountId: null },
       facebook: { token: null, pageId: null },
-      youtube: { apiKey: null, channelId: null }
+      youtube: { apiKey: null, channelId: null, accessToken: null, refreshToken: null }
     }
   });
 
@@ -694,7 +696,20 @@ export function SocialMediaSettings({
                 <YouTubeOAuthSetup 
                   onAuthComplete={(authData) => {
                     console.log('YouTube авторизация завершена:', authData);
-                    // Можно дополнительно обновить форму или показать статус
+                    
+                    // Обновляем форму с полученными токенами
+                    if (authData.accessToken) {
+                      form.setValue('youtube.accessToken', authData.accessToken);
+                    }
+                    if (authData.refreshToken) {
+                      form.setValue('youtube.refreshToken', authData.refreshToken);
+                    }
+                    if (authData.channelId) {
+                      form.setValue('youtube.channelId', authData.channelId);
+                    }
+                    
+                    // Сохраняем настройки автоматически
+                    form.handleSubmit(onSubmit)();
                   }} 
                 />
               </div>
