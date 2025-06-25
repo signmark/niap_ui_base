@@ -1011,6 +1011,22 @@ export function SettingsDialog() {
               </div>
             </div>
           )}
+
+          {/* YouTube OAuth section */}
+          <div className="space-y-2 mb-6 border-b pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Youtube className="h-5 w-5 text-red-600" />
+                <h3 className="text-lg font-medium">YouTube</h3>
+              </div>
+              <Badge variant="outline" className="ml-2">
+                Видео публикации
+              </Badge>
+            </div>
+            <YouTubeOAuthSetup onAuthComplete={(authData) => {
+              console.log('YouTube авторизация завершена:', authData);
+            }} />
+          </div>
         </div>
 
         <Button 

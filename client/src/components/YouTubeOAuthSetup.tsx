@@ -5,16 +5,15 @@
 
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { Youtube, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Youtube, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/lib/store';
 import axios from 'axios';
 
 interface YouTubeOAuthSetupProps {
   onAuthComplete?: (authData: any) => void;
-  userId: string;
 }
 
 interface YouTubeAuthData {
@@ -24,18 +23,23 @@ interface YouTubeAuthData {
   channelTitle?: string;
 }
 
-export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupProps) {
+export function YouTubeOAuthSetup({ onAuthComplete }: YouTubeOAuthSetupProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authData, setAuthData] = useState<YouTubeAuthData | null>(null);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connected' | 'error'>('idle');
   const { toast } = useToast();
+  const token = useAuthStore((state) => state.token);
 
   const startYouTubeAuth = async () => {
     try {
       setIsAuthenticating(true);
       
-      const response = await axios.post('/api/auth/youtube/auth/start');
+      const response = await axios.post('/api/auth/youtube/auth/start', {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (response.data.success && response.data.authUrl) {
         // Открываем окно авторизации
@@ -113,6 +117,10 @@ export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupP
         accessToken: authData.accessToken,
         refreshToken: authData.refreshToken,
         channelId: authData.channelId
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.data.success) {
@@ -141,18 +149,8 @@ export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupP
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Youtube className="h-5 w-5 text-red-600" />
-          YouTube Integration
-        </CardTitle>
-        <CardDescription>
-          Подключите ваш YouTube канал для автоматической публикации видео
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {connectionStatus === 'idle' && (
+    <div className="space-y-4">
+      {connectionStatus === 'idle' && (
           <div className="space-y-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
@@ -179,10 +177,10 @@ export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupP
                 </>
               )}
             </Button>
-          </div>
-        )}
+        </div>
+      )}
 
-        {connectionStatus === 'connected' && authData && (
+      {connectionStatus === 'connected' && authData && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -228,11 +226,11 @@ export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupP
               >
                 Переподключить
               </Button>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {connectionStatus === 'error' && (
+      {connectionStatus === 'error' && (
           <div className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -247,16 +245,15 @@ export function YouTubeOAuthSetup({ onAuthComplete, userId }: YouTubeOAuthSetupP
               className="w-full"
             >
               Повторить подключение
-            </Button>
-          </div>
-        )}
-
-        <div className="text-xs text-muted-foreground space-y-1">
-          <div>• Для работы требуется настроенное OAuth2 приложение в Google Cloud Console</div>
-          <div>• Необходимы переменные YOUTUBE_CLIENT_ID и YOUTUBE_CLIENT_SECRET</div>
-          <div>• Поддерживается загрузка видео с обложками</div>
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="text-xs text-muted-foreground space-y-1">
+        <div>• Для работы требуется настроенное OAuth2 приложение в Google Cloud Console</div>
+        <div>• Необходимы переменные YOUTUBE_CLIENT_ID и YOUTUBE_CLIENT_SECRET</div>
+        <div>• Поддерживается загрузка видео с обложками</div>
+      </div>
+    </div>
   );
 }
