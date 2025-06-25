@@ -353,8 +353,12 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
     });
   };
 
+  const [, navigate] = useLocation();
+  
   const handleGoBack = () => {
-    window.location.href = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
+    // Плавная навигация без перезагрузки страницы
+    const backUrl = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
+    navigate(backUrl);
   };
 
   // Current slide data - получаем напрямую из состояния
