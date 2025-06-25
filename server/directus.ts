@@ -40,13 +40,12 @@ class DirectusApiManager {
       timeout: 15000,
     });
 
-    // Добавляем интерцептор для обработки ошибок
+    // Добавляем интерцептор для автоматического обновления токенов
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
         // Сбрасываем счетчик неудачных попыток при успешном запросе
         if (response.config.headers?.Authorization) {
           const token = response.config.headers.Authorization.toString().replace('Bearer ', '');
-          // Находим userId по токену
           const userId = this.findUserIdByToken(token);
           if (userId) {
             this.failedRefreshCount[userId] = 0;
