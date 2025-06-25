@@ -357,9 +357,8 @@ export default function StoryEditor({ campaignId }: StoryEditorProps) {
   const [, navigate] = useLocation();
   
   const handleGoBack = () => {
-    // Плавная навигация без перезагрузки страницы
-    const backUrl = campaignId ? `/campaigns/${campaignId}/content` : '/campaigns';
-    navigate(backUrl);
+    // Плавная навигация без перезагрузки страницы - всегда возвращаемся на /content
+    navigate('/content');
   };
 
   // Current slide data - получаем напрямую из состояния
