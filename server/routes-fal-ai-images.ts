@@ -72,6 +72,98 @@ router.get('/api/fal-ai-models', async (req, res) => {
   }
 });
 
+// Маршрут для Stories генератора изображений
+router.post('/api/generate-image', async (req, res) => {
+  try {
+    console.log(`[generate-image] Получен запрос на генерацию изображения для Stories`);
+    
+    const { 
+      prompt, 
+      negative_prompt, 
+      num_images, 
+      model, 
+      style_preset, 
+      image_size, 
+      save_prompt, 
+      campaign_id, 
+      content_id 
+    } = req.body;
+
+    // Получаем токен пользователя
+    const userToken = req.headers.authorization?.replace('Bearer ', '');
+    if (!userToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Требуется авторизация'
+      });
+    }
+
+    // Парсим размеры из строки формата "1024x1024"
+    let width = 1024;
+    let height = 1024;
+    
+    if (image_size && typeof image_size === 'string' && image_size.includes('x')) {
+      const [w, h] = image_size.split('x').map(s => parseInt(s.trim()));
+      width = w || 1024;
+      height = h || 1024;
+    }
+
+    console.log(`[generate-image] Параметры: промт="${prompt?.substring(0, 50)}...", модель=${model}, размер=${width}x${height}, количество=${num_images}`);
+
+    // Получаем токен FAL.AI из переменных окружения
+    const falAiToken = process.env.FAL_AI_API_KEY;
+    if (!falAiToken) {
+      return res.status(500).json({
+        success: false,
+        error: 'API ключ FAL.AI не настроен на сервере'
+      });
+    }
+
+    // Создаем параметры для генерации
+    const generateOptions = {
+      prompt: prompt || '',
+      negativePrompt: negative_prompt || '',
+      width,
+      height,
+      numImages: parseInt(num_images) || 1,
+      model: model || 'schnell',
+      token: falAiToken,
+      stylePreset: style_preset
+    };
+
+    console.log(`[generate-image] Вызываем falAiUniversalService.generateImages`);
+    
+    // Генерируем изображения
+    const imageUrls = await falAiUniversalService.generateImages(generateOptions);
+    
+    console.log(`[generate-image] Получен результат:`, {
+      imageCount: imageUrls?.length || 0,
+      firstImageUrl: imageUrls?.[0]?.substring(0, 50) + '...' || 'нет изображений'
+    });
+
+    // Проверяем результат
+    if (!imageUrls || imageUrls.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Изображения не были сгенерированы. Попробуйте другую модель или промт.'
+      });
+    }
+
+    // Возвращаем успешный результат
+    return res.json({
+      success: true,
+      images: imageUrls
+    });
+
+  } catch (error: any) {
+    console.error('[generate-image] Ошибка:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Внутренняя ошибка сервера'
+    });
+  }
+});
+
 // Генерация изображения с использованием универсального сервиса по API
 router.post('/api/fal-ai-images', async (req, res) => {
   try {
