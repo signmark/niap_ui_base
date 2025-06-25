@@ -220,16 +220,19 @@ export class PublishScheduler {
           
           // Определяем платформы готовые к публикации с учетом времени
           const readyPlatforms = [];
+          log(`Планировщик: Анализируем платформы для контента ${content.id}: ${Object.keys(platforms).join(', ')}`, 'scheduler');
+          
           for (const [platformName, platformData] of Object.entries(platforms)) {
             const data = platformData as any;
+            log(`Планировщик: Платформа ${platformName} - статус: ${data.status}, enabled: ${data.enabled}`, 'scheduler');
             
             // Пропускаем уже опубликованные платформы (строгая проверка)
             if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
               continue;
             }
             
-            // Пропускаем платформы с ошибками - не публикуем пока не будет исправлен контент
-            if (data.error || data.status === 'failed') {
+            // Пропускаем платформы с критическими ошибками, но разрешаем повторные попытки для failed
+            if (data.error && data.error.includes('CRITICAL')) {
               continue;
             }
 
@@ -270,10 +273,10 @@ export class PublishScheduler {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус partial)`, 'scheduler');
             }
-            // Платформа в статусе pending без времени - публикуем сразу
-            else if (data.status === 'pending') {
+            // Платформа в статусе pending или failed без времени - публикуем сразу
+            else if (data.status === 'pending' || data.status === 'failed') {
               shouldPublish = true;
-              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус pending)`, 'scheduler');
+              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус ${data.status})`, 'scheduler');
             }
 
             if (shouldPublish) {
