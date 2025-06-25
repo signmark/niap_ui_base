@@ -2554,25 +2554,14 @@ export default function ContentPage() {
             newContent.prompt ? newContent.prompt : ""
           }
           onImageGenerated={(imageUrl, promptText) => {
-            console.log("Изображение успешно сгенерировано:", imageUrl);
-            console.log("Промт использованный для генерации:", promptText?.substring(0, 100) + "...");
-            
             // Проверяем режим обложки видео
             const videoThumbnailMode = localStorage.getItem('videoThumbnailMode');
             const additionalImageMode = localStorage.getItem('additionalImageMode');
             const imageIndex = localStorage.getItem('currentAdditionalImageIndex');
             
-            console.log("Флаги localStorage:", {
-              videoThumbnailMode,
-              additionalImageMode,
-              imageIndex
-            });
-            
             if (videoThumbnailMode === 'true') {
-              console.log("🎬 Режим генерации обложки видео активен!");
               // Режим генерации обложки видео
               if (currentContent) {
-                console.log("📝 Обновляем обложку видео в режиме редактирования");
                 // Для режима редактирования
                 setCurrentContent({
                   ...currentContent,
@@ -2580,7 +2569,6 @@ export default function ContentPage() {
                   ...(promptText && !currentContent.prompt ? { prompt: promptText } : {})
                 });
               } else {
-                console.log("➕ Обновляем обложку видео в режиме создания");
                 // Для режима создания
                 setNewContent({
                   ...newContent,
@@ -2589,7 +2577,6 @@ export default function ContentPage() {
                 });
               }
               
-              console.log("🧹 Очищаем флаг videoThumbnailMode и закрываем диалог");
               // Очищаем флаг режима
               localStorage.removeItem('videoThumbnailMode');
               setIsImageGenerationDialogOpen(false);
