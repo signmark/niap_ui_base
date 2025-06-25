@@ -464,12 +464,15 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       const method = isEdit ? 'PATCH' : 'POST';
 
       console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories с ${slides.length} слайдами`);
+      console.log('🌐 Отправляем запрос:', { url, method, storyData });
 
       // Используем apiRequest для автоматического обновления токена
       const result = await apiRequest(url, {
         method: method,
         data: storyData  // ИСПРАВЛЕНО: используем data вместо body
       });
+      
+      console.log('✅ Ответ от сервера:', result);
       
       const actualSlidesCount = slides?.length || 0;
       toast({
