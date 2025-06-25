@@ -7666,37 +7666,16 @@ Return your response as a JSON array in this exact format:
           success: true,
           data: response.data.data
         });
-          userId: item.user_id,
-          title: item.title,
-          content: item.content,
-          contentType: item.content_type,
-          imageUrl: item.image_url,
-          videoUrl: item.video_url,
-          prompt: item.prompt,
-          keywords: parseArrayField(item.keywords, item.id),
-          hashtags: parseArrayField(item.hashtags, item.id),
-          links: parseArrayField(item.links, item.id),
-          createdAt: item.created_at,
-          scheduledAt: item.scheduled_at,
-          publishedAt: item.published_at,
-          status: item.status,
-          socialPlatforms: item.social_platforms || {},
-          metadata: item.metadata || {}
-        };
-        
-        res.status(201).json({ data: content });
-      } catch (error) {
-        console.error('Error creating campaign content:', error);
-        if (error.response) {
-          console.error('Directus API error details:', error.response.data);
-        }
-        return res.status(401).json({ error: "Invalid token or failed to create content" });
+      } catch (directusError: any) {
+        console.error("Directus API error:", directusError.response?.data || directusError.message);
+        console.error("Directus API error details:", directusError.response?.data);
+        return res.status(directusError.response?.status || 500).json({ 
+          error: "Invalid token or failed to create content",
+          details: directusError.response?.data
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating campaign content:", error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid data", details: error.errors });
-      }
       res.status(500).json({ error: "Failed to create campaign content" });
     }
   });
