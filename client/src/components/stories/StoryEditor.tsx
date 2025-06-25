@@ -26,7 +26,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
-import { useLocation, useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 // Local interfaces for component
 interface StorySlide {
@@ -60,7 +60,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   
   // Используем глобальный store вместо локального состояния
   const {
@@ -159,7 +159,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
         }]);
       }
     }
-  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast, navigate]);
+  }, [storyId, initializeSlides, slides.length, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement
   useEffect(() => {
@@ -455,8 +455,6 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     });
   };
 
-  const [, navigate] = useLocation();
-  
   const handleGoBack = () => {
     // Плавная навигация без перезагрузки страницы - всегда возвращаемся на /content
     navigate('/content');
