@@ -99,9 +99,22 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
   useEffect(() => {
     console.log('StoryEditor useEffect triggered:', { 
       storyId, 
+      isNewStory,
       slidesLength: slides.length,
       hasSlides: slides.length > 0 
     });
+    
+    // Если это создание новой Stories - очищаем localStorage
+    if (isNewStory && !storyId) {
+      console.log('Creating new story - clearing localStorage');
+      localStorage.removeItem('new-story');
+      localStorage.removeItem('story-undefined');
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('story-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     
     // Для новых Stories создаем базовый слайд если его нет
     if (!storyId && slides.length === 0) {
@@ -178,7 +191,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [storyId, shouldClear, isLoaded, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+  }, [storyId, isNewStory, isLoaded, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
