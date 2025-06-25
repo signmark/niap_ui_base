@@ -1706,7 +1706,10 @@ export default function ContentPage() {
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => setIsImageGenerationDialogOpen(true)}
+                      onClick={() => {
+                        localStorage.setItem('videoThumbnailMode', 'true');
+                        setIsImageGenerationDialogOpen(true);
+                      }}
                     >
                       <Sparkles className="h-4 w-4" />
                       Сгенерировать обложку
