@@ -27,6 +27,7 @@ import {
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
+import { useCampaignStore } from '@/lib/campaignStore';
 import { useLocation, useParams, useNavigate } from 'wouter';
 
 // Local interfaces for component
