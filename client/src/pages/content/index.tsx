@@ -343,7 +343,7 @@ export default function ContentPage() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log('Загрузка контента для кампании:', selectedCampaignId);
+
 
       const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -356,7 +356,7 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
-      console.log('Загружено контента:', (data.data || []).length);
+
       return data.data || [];
     },
     enabled: !!selectedCampaignId,
@@ -371,7 +371,7 @@ export default function ContentPage() {
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 
-      console.log('Загрузка ключевых слов для кампании:', selectedCampaignId);
+
 
       const response = await fetch(`/api/keywords?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -384,7 +384,7 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
-      console.log('Загружено ключевых слов:', (data.data || []).length);
+
       return data.data || [];
     },
     enabled: !!selectedCampaignId,
@@ -797,12 +797,11 @@ export default function ContentPage() {
         // Если ключевое слово не из предопределенных в кампании, добавляем его
         if (!isAlreadyIncluded && !isAlreadySelected) {
           selectedKeywordTexts.push(normalizedKeyword);
-          console.log(`Adding custom keyword: "${normalizedKeyword}"`);
         }
       });
     }
     
-    console.log('FINAL Selected keywords from React state + extras:', selectedKeywordTexts);
+
 
     // Создаем типизированный объект для обновления
     const updateData = {
@@ -1184,7 +1183,7 @@ export default function ContentPage() {
                             from: dateRange.from,
                             to: dateRange.to,
                           }}
-                          onSelect={(range) => {
+                          onSelect={useCallback((range: any) => {
                             if (range?.from) {
                               setDateRange({
                                 from: range.from,
@@ -1193,7 +1192,7 @@ export default function ContentPage() {
                             } else {
                               resetDateFilter();
                             }
-                          }}
+                          }, [resetDateFilter])}
                           numberOfMonths={2}
                           locale={ru}
                         />
