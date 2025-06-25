@@ -347,8 +347,9 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
 
       const storyData = {
         title: storyTitle,
-        campaignId: campaignId,
-        contentType: 'story',
+        campaign_id: campaignId,  // Директус требует snake_case
+        content_type: 'story',    // Директус требует snake_case
+        content: storyTitle,      // Директус требует поле content
         status: 'draft',
         metadata: {
           slides: slides.map(slide => ({

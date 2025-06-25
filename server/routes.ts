@@ -7597,59 +7597,75 @@ Return your response as a JSON array in this exact format:
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        console.log("Creating new campaign content");
+        console.log("Creating new campaign content with data:", req.body);
         
-        // Получаем ID пользователя из токена - это обязательное поле для Directus
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Проверяем наличие обязательных полей в соответствии с ошибкой Directus
+        const { title, campaign_id, content_type, content, status = 'draft', metadata } = req.body;
         
-        const userId = userResponse.data.data.id;
+        if (!campaign_id) {
+          return res.status(400).json({ 
+            error: "Missing required field: campaign_id" 
+          });
+        }
+        
+        if (!content) {
+          return res.status(400).json({ 
+            error: "Missing required field: content" 
+          });
+        }
+        
+        if (!content_type) {
+          return res.status(400).json({ 
+            error: "Missing required field: content_type" 
+          });
+        }
+        
+        // Получаем ID пользователя из токена
+        let userId;
+        try {
+          const userResponse = await directusApi.get('/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          userId = userResponse.data.data.id;
+        } catch (userError: any) {
+          console.error("Failed to get user ID from token:", userError.response?.data || userError.message);
+          return res.status(401).json({ 
+            error: "Invalid token or failed to get user information" 
+          });
+        }
         
         if (!userId) {
           throw new Error('User ID not found');
         }
         
-        // Создаем контент кампании напрямую через Directus API
-        const directusPayload = {
-          campaign_id: req.body.campaignId,
-          content_type: req.body.contentType, 
-          title: req.body.title,
-          content: req.body.content,
-          image_url: req.body.imageUrl,
-          video_url: req.body.videoUrl,
-          // Добавляем поле additional_images
-          additional_images: Array.isArray(req.body.additionalImages) ? req.body.additionalImages : [],
-          // Проверяем, что keywords это массив
-          keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
-          // Сохраняем поле prompt, который приходит от клиента
-          prompt: req.body.prompt || null,
-          status: req.body.status || "draft",
-          user_id: userId
-          // created_at генерируется автоматически в БД
+        // Создаем новый контент с полученными данными
+        const contentData = {
+          title,
+          campaign_id,
+          content_type,
+          content,
+          status,
+          metadata,
+          user_id: userId // Добавляем user_id для связи с пользователем
         };
         
-        console.log("Creating campaign content:", JSON.stringify(directusPayload).substring(0, 200));
+        console.log("Content data to create:", contentData);
         
-        // Создаем запись через Directus API
-        const response = await directusApi.post('/items/campaign_content', directusPayload, {
+        // Используем прямой вызов к Directus API для создания контента
+        const response = await directusApi.post('/items/campaign_content', contentData, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
-        if (!response.data || !response.data.data) {
-          throw new Error('Failed to create content, invalid response from Directus');
-        }
+        console.log("Content created successfully:", response.data);
         
-        const item = response.data.data;
-        
-        // Преобразуем данные из формата Directus в наш формат
-        const content = {
-          id: item.id,
-          campaignId: item.campaign_id,
+        res.json({
+          success: true,
+          data: response.data.data
+        });
           userId: item.user_id,
           title: item.title,
           content: item.content,
