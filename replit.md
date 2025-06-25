@@ -116,6 +116,7 @@ Environment-specific settings managed through:
 - June 24, 2025. Implemented Instagram Stories Preview with visual interface replacing technical metadata display
 - June 25, 2025. Implemented smooth navigation for Stories editor using wouter router, eliminating full page reloads
 - June 25, 2025. Fixed Stories creation and element management: resolved disappearing elements issue, implemented clean Stories creation through content type dialog, and improved store state management
+- June 25, 2025. Fixed Stories navigation to use clean /stories/new route without query parameters, resolved campaign_id validation errors, and implemented comprehensive localStorage clearing for new Stories creation
 
 ## User Preferences
 
@@ -128,4 +129,5 @@ Preferred communication style: Simple, everyday language.
 - **Testing**: For API testing only, can use DIRECTUS_TOKEN environment variable for direct Directus access.
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
 - **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.
-- **Stories Store Management**: Stories creation through content type dialog uses ?clear=true parameter to reset store and create clean state. Store automatically creates initial slide on reset for immediate usability.
+- **Stories Store Management**: Stories creation through /stories/new route automatically clears localStorage and resets store state. System ensures clean slate for new Stories without old content interference.
+- **Stories Navigation**: All Stories creation routes use simple /stories/new path without query parameters. localStorage clearing is handled internally by StoryEditor component.
