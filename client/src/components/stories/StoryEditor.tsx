@@ -381,7 +381,7 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       // Используем apiRequest для автоматического обновления токена
       const result = await apiRequest(url, {
         method: method,
-        body: storyData
+        data: storyData  // ИСПРАВЛЕНО: используем data вместо body
       });
       
       toast({
