@@ -2799,12 +2799,27 @@ export default function ContentPage() {
             )}
             
             {previewContent?.contentType !== 'story' && (previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
-              <div className="mt-4">
+              <div className="mt-4 space-y-4">
+                <h4 className="text-sm font-medium">Видео</h4>
                 <video
                   src={previewContent.videoUrl}
                   controls
                   className="rounded-md max-h-[400px] max-w-full mx-auto"
                 />
+                
+                {previewContent.videoThumbnail && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Обложка видео</h4>
+                    <img
+                      src={previewContent.videoThumbnail}
+                      alt="Обложка видео"
+                      className="rounded-md max-h-[300px] max-w-full object-contain mx-auto border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Обложка+не+найдена";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
