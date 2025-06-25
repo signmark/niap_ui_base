@@ -173,6 +173,10 @@ export default function StoryEditor({ campaignId, storyId }: StoryEditorProps) {
       const updatedElement = currentSlide.elements?.find(el => el.id === selectedElement.id);
       if (updatedElement && JSON.stringify(updatedElement) !== JSON.stringify(selectedElement)) {
         setSelectedElement(updatedElement);
+      } else if (!updatedElement) {
+        // Если выбранный элемент исчез из слайда, сбрасываем выделение
+        console.log(`Selected element ${selectedElement.id} not found in current slide, clearing selection`);
+        setSelectedElement(null);
       }
     }
   }, [slides, currentSlideIndex, selectedElement, setSelectedElement]);
