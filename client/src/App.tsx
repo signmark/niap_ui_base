@@ -42,6 +42,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
 import VideoEditor from "@/pages/video";
+import YouTubeCallback from "@/pages/youtube-callback";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
