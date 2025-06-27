@@ -33,8 +33,7 @@ export class SocialPublishingService {
     campaign: any,
     authToken?: string
   ): Promise<any> {
-    log(`Публикация контента в ${platform}`, 'social-publishing');
-    log(`Получен контент: ${content.id}, платформа: ${platform}`, 'social-publishing');
+    log(`Публикация контента ${content.id} в ${platform}`, 'social-publishing');
     
     try {
       // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем, не опубликована ли уже платформа
@@ -71,6 +70,7 @@ export class SocialPublishingService {
       
       if (platform === 'youtube') {
         const youtubeService = new YouTubeService();
+        log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
         const result = await youtubeService.publishContent(content, settings.youtube || {}, content.user_id);
         
         return {
