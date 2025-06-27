@@ -606,12 +606,13 @@ export default function ContentPage() {
         throw new Error('ID контента не указан');
       }
       
-      // Если платформы не указаны, используем значения по умолчанию
+      // Если платформы не указаны, используем пустой объект
       const platformsToPublish = platforms || {
-        telegram: true,
-        vk: true,
+        telegram: false,
+        vk: false,
         instagram: false,
-        facebook: false
+        facebook: false,
+        youtube: false
       };
       
       console.log("🚀 Подготовленные данные для публикации через новый API:");
@@ -1332,12 +1333,13 @@ export default function ContentPage() {
                                             
                                             // Устанавливаем текущий контент и открываем диалог выбора платформ
                                             setCurrentContentSafe(content);
-                                            // Сбрасываем выбранные платформы на дефолтные значения
+                                            // Сбрасываем выбранные платформы
                                             setSelectedPlatforms({
                                               instagram: false,
-                                              telegram: true, // По умолчанию включаем Telegram
-                                              vk: true,      // По умолчанию включаем VK
-                                              facebook: false
+                                              telegram: false,
+                                              vk: false,
+                                              facebook: false,
+                                              youtube: false
                                             });
                                             setIsScheduleDialogOpen(true);
                                           }}
@@ -2389,7 +2391,8 @@ export default function ContentPage() {
                     instagram: selectedPlatforms.instagram || false,
                     telegram: selectedPlatforms.telegram || false,
                     vk: selectedPlatforms.vk || false,
-                    facebook: selectedPlatforms.facebook || false
+                    facebook: selectedPlatforms.facebook || false,
+                    youtube: selectedPlatforms.youtube || false
                   }}
                   onChange={(platform, isSelected) => {
                     setSelectedPlatforms(prev => ({
@@ -2400,7 +2403,10 @@ export default function ContentPage() {
                   content={{
                     contentType: currentContent.contentType,
                     imageUrl: currentContent.imageUrl,
-                    images: currentContent.images
+                    images: currentContent.images,
+                    videoUrl: currentContent.videoUrl,
+                    additionalImages: currentContent.additionalImages,
+                    additionalVideos: currentContent.additionalVideos
                   }}
                 />
                 

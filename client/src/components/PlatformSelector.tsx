@@ -12,6 +12,9 @@ interface PlatformSelectorProps {
     contentType?: string;
     imageUrl?: string;
     images?: string[];
+    videoUrl?: string;
+    additionalImages?: string[];
+    additionalVideos?: string[];
   };
 }
 
