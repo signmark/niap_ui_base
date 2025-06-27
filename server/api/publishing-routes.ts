@@ -128,7 +128,8 @@ export function registerPublishingRoutes(app: Express): void {
     try {
       const { content, campaignSettings, userId } = req.body;
       
-      log('youtube', `Прямая публикация YouTube для контента ${content.id}`);
+      console.log('🎬 [YouTube] Прямая публикация YouTube для контента:', content.id);
+      console.log('📺 [YouTube] Настройки YouTube:', campaignSettings.youtube);
       
       const { YouTubeService } = await import('../services/social-platforms/youtube-service');
       const youtubeService = new YouTubeService();
@@ -139,10 +140,11 @@ export function registerPublishingRoutes(app: Express): void {
         userId
       );
       
+      console.log('📊 [YouTube] Результат публикации:', result);
       res.json(result);
       
     } catch (error: any) {
-      log('youtube', `Ошибка прямой публикации: ${error.message}`);
+      console.error('💥 [YouTube] Ошибка прямой публикации:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
