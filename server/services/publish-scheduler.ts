@@ -174,14 +174,25 @@ export class PublishScheduler {
         
         log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
         
-        // Проверяем наш тестовый YouTube контент
-        const testContent = allContent.find((item: any) => item.id === 'bea24ff7-9c75-4404-812b-06d355bd98ac');
-        if (testContent) {
-            log(`🎯 ТЕСТОВЫЙ YouTube КОНТЕНТ НАЙДЕН: ${testContent.id} - статус: ${testContent.status}`, 'scheduler');
-            log(`🎯 YouTube платформы: ${JSON.stringify(testContent.social_platforms)}`, 'scheduler');
+        // Проверяем наши тестовые YouTube контенты
+        const testContentIds = ['bea24ff7-9c75-4404-812b-06d355bd98ac', 'fd9b54a9-24ad-41ab-b1fa-4da777154b3d', '9d2c6b9a-0aa9-44c0-b37d-538b6c6193c3', '654701b6-a865-44f4-8453-0ea433cd5f90', 'ea5a4482-8885-408e-9495-bca8293b7f85', 'e2469bd4-416e-4258-8c34-5822c3759c77', '6eff52ab-7623-414c-8a0c-5744f4c0be55'];
+        
+        // Принудительно очищаем весь кэш обработки для свежего старта
+        if (this.processedContentCache.size > 0) {
+          log(`Принудительно очищаем весь кэш обработки (${this.processedContentCache.size} записей)`, 'scheduler');
+          this.processedContentCache.clear();
+        }
+        const foundTestContent = allContent.filter((item: any) => testContentIds.includes(item.id));
+        
+        if (foundTestContent.length > 0) {
+            log(`🎯 НАЙДЕНО ${foundTestContent.length} тестовых YouTube контентов:`, 'scheduler');
+            foundTestContent.forEach((content: any) => {
+                log(`🎯 Контент ${content.id} - статус: ${content.status}, запланирован на: ${content.scheduled_at}`, 'scheduler');
+                log(`🎯 YouTube платформы: ${JSON.stringify(content.social_platforms?.youtube)}`, 'scheduler');
+            });
         } else {
-            log(`❌ ТЕСТОВЫЙ YouTube КОНТЕНТ НЕ НАЙДЕН в списке ${allContent.length} элементов`, 'scheduler');
-            log(`📋 Все ID контентов: ${allContent.map((item: any) => item.id).join(', ')}`, 'scheduler');
+            log(`❌ ТЕСТОВЫЕ YouTube КОНТЕНТЫ НЕ НАЙДЕНЫ в списке ${allContent.length} элементов`, 'scheduler');
+            log(`📋 Все ID контентов: ${allContent.map((item: any) => item.id).slice(0, 10).join(', ')}...`, 'scheduler');
         }
         
         if (allContent.length > 0) {

@@ -42,14 +42,114 @@ export class YouTubeService extends BaseSocialService {
         process.env.YOUTUBE_REDIRECT_URI
       );
 
+      log('youtube', 'Настраиваем OAuth2 клиент и проверяем токены');
+      
       oauth2Client.setCredentials({
         access_token: youtubeSettings.accessToken,
         refresh_token: youtubeSettings.refreshToken,
       });
 
-      // Автоматически обновляем токен если он истек
+      // ВСЕГДА принудительно обновляем токены перед публикацией
+      log('youtube', 'Принудительно обновляем токены для гарантии свежести');
+      try {
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        log('youtube', 'Токены принудительно обновлены');
+        
+        // Применяем новые токены немедленно
+        oauth2Client.setCredentials({
+          access_token: credentials.access_token,
+          refresh_token: credentials.refresh_token || youtubeSettings.refreshToken,
+        });
+        
+        // Сохраняем обновленные токены в базу данных
+        if (credentials.access_token) {
+          log('youtube', 'Сохраняем принудительно обновленные токены в базу данных');
+          const updatedSettings = {
+            ...campaignSettings.youtube,
+            accessToken: credentials.access_token
+          };
+          
+          if (credentials.refresh_token) {
+            log('youtube', 'Обновляем также refresh_token при принудительном обновлении');
+            updatedSettings.refreshToken = credentials.refresh_token;
+          }
+
+          const campaignId = content.campaign_id;
+          if (campaignId) {
+            const updateResponse = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                social_media_settings: {
+                  ...campaignSettings,
+                  youtube: updatedSettings
+                }
+              })
+            });
+            
+            if (updateResponse.ok) {
+              log('youtube', `Принудительно обновленные токены сохранены в кампании ${campaignId}`);
+            } else {
+              log('youtube', `Ошибка сохранения принудительно обновленных токенов: ${updateResponse.status}`);
+            }
+          }
+        }
+        
+        log('youtube', 'Токены принудительно обновлены и готовы к использованию');
+      } catch (tokenError: any) {
+        log('youtube', `Access_token недействителен (${tokenError.message}), обновляем через refresh_token`);
+        try {
+          const { credentials } = await oauth2Client.refreshAccessToken();
+          log('youtube', 'Токены успешно обновлены через refresh_token');
+          
+          // Сохраняем обновленные токены в базу данных
+          if (credentials.access_token) {
+            log('youtube', 'Сохраняем обновленные токены в базу данных');
+            const updatedSettings = {
+              ...campaignSettings.youtube,
+              accessToken: credentials.access_token
+            };
+            
+            if (credentials.refresh_token) {
+              log('youtube', 'Обновляем также refresh_token');
+              updatedSettings.refreshToken = credentials.refresh_token;
+            }
+
+            const campaignId = content.campaign_id;
+            if (campaignId) {
+              const updateResponse = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  social_media_settings: {
+                    ...campaignSettings,
+                    youtube: updatedSettings
+                  }
+                })
+              });
+              
+              if (updateResponse.ok) {
+                log('youtube', `Обновленные токены сохранены в кампании ${campaignId}`);
+              } else {
+                log('youtube', `Ошибка сохранения обновленных токенов: ${updateResponse.status}`);
+              }
+            }
+          }
+        } catch (refreshError: any) {
+          log('youtube', `Критическая ошибка: не удалось обновить токены - ${refreshError.message}`);
+          throw new Error('YouTube OAuth токены истекли и не могут быть обновлены. Требуется повторная авторизация.');
+        }
+      }
+
+      // Автоматически обновляем токен если он истечет во время работы
       oauth2Client.on('tokens', async (tokens) => {
-        log('youtube', 'Получены новые токены от Google');
+        log('youtube', 'Получены новые токены от Google во время работы');
         if (tokens.access_token) {
           log('youtube', `Обновляем access_token, истекает: ${tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : 'неизвестно'}`);
           
@@ -62,7 +162,7 @@ export class YouTubeService extends BaseSocialService {
             
             // Обновляем refresh_token если получен новый
             if (tokens.refresh_token) {
-              log('youtube', 'Обновляем refresh_token');
+              log('youtube', 'Обновляем refresh_token во время работы');
               updatedSettings.refreshToken = tokens.refresh_token;
             }
 
@@ -84,13 +184,13 @@ export class YouTubeService extends BaseSocialService {
               });
               
               if (updateResponse.ok) {
-                log('youtube', `Токены обновлены в кампании ${campaignId}`);
+                log('youtube', `Токены обновлены в кампании ${campaignId} во время работы`);
               } else {
-                log('youtube', `Ошибка сохранения токенов: ${updateResponse.status} ${updateResponse.statusText}`);
+                log('youtube', `Ошибка сохранения токенов во время работы: ${updateResponse.status} ${updateResponse.statusText}`);
               }
             }
           } catch (error: any) {
-            log('youtube', `Ошибка сохранения обновленных токенов: ${error.message}`);
+            log('youtube', `Ошибка сохранения обновленных токенов во время работы: ${error.message}`);
           }
         }
       });
