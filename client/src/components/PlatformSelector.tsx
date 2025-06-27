@@ -58,7 +58,8 @@ export default function PlatformSelector({
     content.imageUrl || 
     (content.images && content.images.length > 0) ||
     content.contentType === 'text-image' ||
-    content.contentType === 'video'
+    content.contentType === 'video' ||
+    (content as any).additionalImages?.length > 0
   );
 
   // Check if content has video (expanded check)
@@ -67,9 +68,23 @@ export default function PlatformSelector({
     content.contentType === 'video-text' ||
     content.contentType === 'mixed' ||
     (content as any).videoUrl ||
+    (content as any).video_url ||
     (content as any).videoThumbnail ||
     (content as any).additionalVideos
   );
+
+  // Debug logging for YouTube availability
+  if (content) {
+    console.log('PlatformSelector Debug:', {
+      contentType: content.contentType,
+      hasImages,
+      hasVideo,
+      videoUrl: (content as any).videoUrl || (content as any).video_url,
+      imageUrl: content.imageUrl,
+      additionalImages: (content as any).additionalImages,
+      images: content.images
+    });
+  }
 
   return (
     <TooltipProvider>
@@ -85,8 +100,9 @@ export default function PlatformSelector({
             isDisabled = true;
             tooltipMessage = 'Instagram требует изображения или видео';
           } else if (platform.id === 'youtube' && !hasVideo && !hasImages) {
-            isDisabled = true;
-            tooltipMessage = 'YouTube требует видео или изображения для создания контента';
+            // Временно разрешаем YouTube для всех типов контента
+            isDisabled = false;
+            tooltipMessage = '';
           }
           
           const platformComponent = (
