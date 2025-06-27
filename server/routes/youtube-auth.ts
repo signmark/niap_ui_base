@@ -3,7 +3,7 @@
  */
 
 import { Router } from 'express';
-import { YouTubeService } from '../services/social-platforms/youtube-service';
+import { YouTubeOAuth } from '../utils/youtube-oauth';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -33,13 +33,13 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
       });
     }
 
-    const youtubeService = new YouTubeService();
+    const youtubeOAuth = new YouTubeOAuth();
 
     // Генерируем уникальный state для защиты от CSRF
     const state = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     oauthStates.set(state, { userId, timestamp: Date.now() });
 
-    const authUrl = youtubeService.getAuthUrl();
+    const authUrl = youtubeOAuth.getAuthUrl();
     const authUrlWithState = `${authUrl}&state=${state}`;
 
     res.json({ 
@@ -98,10 +98,10 @@ router.get('/youtube/auth/callback', async (req, res) => {
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
     const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
 
-    const youtubeService = new YouTubeService();
+    const youtubeOAuth = new YouTubeOAuth();
 
     // Обмениваем code на токены
-    const tokens = await youtubeService.exchangeCodeForTokens(code as string);
+    const tokens = await youtubeOAuth.exchangeCodeForTokens(code as string);
 
     // Сохраняем токены в активную кампанию пользователя
     try {
@@ -178,24 +178,15 @@ router.post('/youtube/test', authMiddleware, async (req, res) => {
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
     const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
 
-    const youtubeService = new YouTubeService({
-      clientId,
-      clientSecret,
-      redirectUri,
-      accessToken,
-      refreshToken,
-      channelId
-    });
-
-    const channelInfo = await youtubeService.getChannelInfo();
+    const youtubeOAuth = new YouTubeOAuth();
+    const channelInfo = await youtubeOAuth.getChannelInfo(accessToken);
 
     res.json({
       success: true,
       message: 'YouTube соединение работает',
       channelInfo: {
-        title: channelInfo?.snippet?.title,
-        subscriberCount: channelInfo?.statistics?.subscriberCount,
-        videoCount: channelInfo?.statistics?.videoCount
+        channelId: channelInfo.channelId,
+        title: channelInfo.channelTitle
       }
     });
   } catch (error) {
