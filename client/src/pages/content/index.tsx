@@ -2997,6 +2997,11 @@ export default function ContentPage() {
             // Это гарантирует чистое состояние при создании через диалог
             navigate(`/campaigns/${selectedCampaignId}/stories/new`);
           } else {
+            // Устанавливаем выбранный тип контента в состояние
+            setNewContent({
+              ...newContent,
+              contentType: type
+            });
             setIsCreateDialogOpen(true);
           }
         }}

@@ -130,6 +130,7 @@ Environment-specific settings managed through:
 - June 27, 2025. Fixed YouTube thumbnail/cover image upload: added thumbnail support to YouTube service, videos now publish with generated cover images from videoThumbnail or additional_images fields. Fixed data mapping between scheduler and YouTube service to properly pass campaign settings.
 - June 27, 2025. Updated content creation interface: renamed "Контент" → "Описание" throughout the interface. YouTube platform now available ONLY for video content type with proper validation.
 - June 27, 2025. Fixed ContentTypeDialog to show all content types with proper names: "Обычный пост", "Instagram Stories", "Видео" while maintaining YouTube video-only restriction through PlatformSelector validation.
+- June 27, 2025. Implemented detailed content type structure: "Текст", "Текст с картинкой", "Видео", "Instagram Stories" with dynamic field labeling - video content uses "Описание" and "Теги", text content uses "Контент" and "Ключевые слова". Fixed automatic content type selection from ContentTypeDialog to form fields.
 
 ## User Preferences
 
