@@ -133,6 +133,7 @@ Environment-specific settings managed through:
 - June 27, 2025. Implemented detailed content type structure: "Текст", "Текст с картинкой", "Видео", "Instagram Stories" with dynamic field labeling - video content uses "Описание" and "Теги", text content uses "Контент" and "Ключевые слова". Fixed automatic content type selection from ContentTypeDialog to form fields.
 - June 27, 2025. Fixed platform selection system: added YouTube to available platforms, removed default platform selection (all platforms now start unchecked), and implemented instant dialog closure on "Publish Now" button click to prevent duplicate submissions.
 - June 27, 2025. Fixed YouTube disappearing from platform list after publication: added YouTube to supported platforms in social-publishing-router.ts, created direct API handler for YouTube publications, and ensured YouTube status is properly preserved in database responses.
+- June 27, 2025. Fixed YouTube publication results not saving to database: enhanced YouTube service to return complete status data (status, postUrl, platform, publishedAt, videoId) and updated publish-scheduler to properly save YouTube results to social_platforms field in database.
 
 ## User Preferences
 

@@ -381,6 +381,27 @@ export class PublishScheduler {
       if (result.status === 'published') {
         log(`YouTube публикация успешна для контента ${content.id}: ${result.postUrl}`, 'scheduler');
         
+        // Сохраняем результат в базу данных
+        try {
+          const updateData = {
+            social_platforms: {
+              ...content.social_platforms,
+              youtube: {
+                status: 'published',
+                postUrl: result.postUrl,
+                platform: 'youtube',
+                publishedAt: result.publishedAt || new Date().toISOString(),
+                videoId: result.videoId || null
+              }
+            }
+          };
+          
+          await storage.updateCampaignContent(content.id, updateData, authToken);
+          log(`YouTube результат сохранен в базу данных для контента ${content.id}`, 'scheduler');
+        } catch (saveError: any) {
+          log(`Ошибка сохранения YouTube результата: ${saveError.message}`, 'scheduler');
+        }
+        
         // Отправляем уведомление
         try {
           const { broadcastNotification } = await import('../index');

@@ -149,7 +149,11 @@ export class YouTubeService extends BaseSocialService {
 
       return {
         success: true,
-        postUrl: videoUrl
+        status: 'published',
+        postUrl: videoUrl,
+        platform: 'youtube',
+        publishedAt: new Date().toISOString(),
+        videoId: videoId
       };
 
     } catch (error: any) {
