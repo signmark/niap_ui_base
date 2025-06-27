@@ -76,10 +76,10 @@ export function registerPublishingRoutes(app: Express): void {
       const { YouTubeService } = await import('../services/social-platforms/youtube-service');
       const youtubeService = new YouTubeService();
       
-      // Пытаемся опубликовать
+      // Пытаемся опубликовать - передаем настройки в правильном формате
       const result = await youtubeService.publishContent(
         { id: contentId, ...content },
-        youtubeSettings,
+        { youtube: youtubeSettings }, // Оборачиваем в структуру campaignSettings
         userId
       );
       
