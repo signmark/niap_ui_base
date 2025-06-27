@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { google } from 'googleapis';
 import { log } from '../../utils/logger';
-import { CampaignContent, SocialMediaSettings } from '@shared/schema';
+// Типы для YouTube сервиса
+interface YouTubeContent {
+  id: string;
+  title: string;
+  content: string;
+  video_url: string;
+  description?: string;
+}
 import { BaseSocialService } from './base-service';
 
 export class YouTubeService extends BaseSocialService {
@@ -10,8 +17,8 @@ export class YouTubeService extends BaseSocialService {
   }
 
   async publishContent(
-    content: CampaignContent, 
-    campaignSettings: SocialMediaSettings,
+    content: any, 
+    campaignSettings: any,
     userId: string
   ): Promise<{ success: boolean; postUrl?: string; error?: string }> {
     try {

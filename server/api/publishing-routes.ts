@@ -122,6 +122,33 @@ export function registerPublishingRoutes(app: Express): void {
       });
     }
   });
+
+  // Прямой роут для тестирования YouTube публикации
+  app.post('/api/publish/direct-youtube', async (req: Request, res: Response) => {
+    try {
+      const { content, campaignSettings, userId } = req.body;
+      
+      log('youtube', `Прямая публикация YouTube для контента ${content.id}`);
+      
+      const { YouTubeService } = await import('../services/social-platforms/youtube-service');
+      const youtubeService = new YouTubeService();
+      
+      const result = await youtubeService.publishContent(
+        content,
+        campaignSettings,
+        userId
+      );
+      
+      res.json(result);
+      
+    } catch (error: any) {
+      log('youtube', `Ошибка прямой публикации: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   
   // Восстановлена проверка запланированных публикаций после исправления критических ошибок
   app.all('/api/publish/check-scheduled', async (req: Request, res: Response) => {

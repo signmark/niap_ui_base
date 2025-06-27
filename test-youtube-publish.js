@@ -36,16 +36,17 @@ async function testYouTubePublish() {
     console.log('📺 Channel ID:', campaignSettings.youtube.channelId);
     console.log('🎫 Access Token:', campaignSettings.youtube.accessToken ? 'ЕСТЬ' : 'НЕТ');
     
-    // Вызываем YouTube сервис напрямую
+    // Вызываем прямой YouTube роут с правильными параметрами
     const publishData = {
       content: content,
       campaignSettings: campaignSettings,
-      userId: content.user_id
+      userId: content.user_id,
+      platforms: ['youtube']
     };
     
     console.log('🚀 Отправляем запрос на публикацию в YouTube...');
     
-    const publishResponse = await fetch('http://localhost:5000/api/publish/youtube', {
+    const publishResponse = await fetch('http://localhost:5000/api/publish/direct-youtube', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
