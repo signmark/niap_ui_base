@@ -2443,6 +2443,9 @@ export default function ContentPage() {
                 type="button" 
                 variant="default" 
                 onClick={async () => {
+                  // Сразу закрываем диалог для предотвращения повторных нажатий
+                  setIsScheduleDialogOpen(false);
+                  
                   // Проверка на выбор хотя бы одной платформы
                   if (!Object.values(selectedPlatforms).some(Boolean)) {
                     toast({
@@ -2491,8 +2494,6 @@ export default function ContentPage() {
                       variant: "destructive"
                     });
                   }
-                  
-                  setIsScheduleDialogOpen(false);
                 }}
                 disabled={
                   publishContentMutation.isPending || 
