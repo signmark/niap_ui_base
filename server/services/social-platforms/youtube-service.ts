@@ -16,6 +16,7 @@ export class YouTubeService extends BaseSocialService {
   ): Promise<{ success: boolean; postUrl?: string; error?: string }> {
     try {
       log('youtube', `Начинаем публикацию в YouTube для контента ${content.id}`);
+      log('youtube', `Данные контента: ${JSON.stringify(content)}`);
 
       const youtubeSettings = campaignSettings.youtube;
       log('youtube', `YouTube настройки: ${JSON.stringify(youtubeSettings)}`);
@@ -40,6 +41,7 @@ export class YouTubeService extends BaseSocialService {
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
       // Проверяем наличие видео
+      log('youtube', `Проверяем video_url: ${content.video_url}`);
       if (!content.video_url) {
         throw new Error('Video URL is required for YouTube publishing');
       }

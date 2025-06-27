@@ -77,8 +77,16 @@ export function registerPublishingRoutes(app: Express): void {
       const youtubeService = new YouTubeService();
       
       // Пытаемся опубликовать - передаем настройки в правильном формате
+      const contentData = { 
+        id: contentId, 
+        title: content.title,
+        content: content.description,
+        video_url: content.videoUrl, // Исправляем имя поля
+        keywords: JSON.stringify(content.tags || [])
+      };
+      
       const result = await youtubeService.publishContent(
-        { id: contentId, ...content },
+        contentData,
         { youtube: youtubeSettings }, // Оборачиваем в структуру campaignSettings
         userId
       );
