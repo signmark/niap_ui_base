@@ -30,6 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
+import { InstagramOAuthSetup } from "./InstagramOAuthSetup";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -494,76 +495,84 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="instagram.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="Введите токен доступа" 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateInstagramToken}
-                        disabled={instagramStatus.isLoading}
-                      >
-                        {instagramStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
-                        }
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              {/* Instagram OAuth Setup */}
+              <InstagramOAuthSetup 
+                campaignId={campaignId}
+                onAuthComplete={() => {
+                  // Обновляем статус после успешной авторизации
+                  setInstagramStatus({
+                    isLoading: false,
+                    isValid: true,
+                    message: 'Instagram OAuth авторизация настроена'
+                  });
+                  onSettingsUpdated?.();
+                }}
               />
-              <FormField
-                control={form.control}
-                name="instagram.accessToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дополнительный токен</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите дополнительный токен" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="instagram.businessAccountId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID бизнес-аккаунта</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: 17841409299499997" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                <h4 className="text-sm font-medium mb-2">Альтернативный способ - API ключи</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Если OAuth не работает, вы можете настроить Instagram через API ключи вручную
+                </p>
+                
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="instagram.token"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Access Token</FormLabel>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Введите токен доступа" 
+                              {...field} 
+                              value={field.value || ''}
+                              className="text-xs"
+                            />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={validateInstagramToken}
+                            disabled={instagramStatus.isLoading}
+                          >
+                            {instagramStatus.isLoading ? 
+                              <Loader2 className="h-4 w-4 animate-spin" /> : 
+                              <AlertCircle className="h-4 w-4" />
+                            }
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="instagram.businessAccountId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">ID бизнес-аккаунта</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Например: 17841409299499997" 
+                            {...field} 
+                            value={field.value || ''}
+                            className="text-xs"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
 

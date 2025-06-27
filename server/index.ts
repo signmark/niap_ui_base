@@ -326,6 +326,14 @@ app.use((req, res, next) => {
     console.log("YouTube OAuth routes registered");
     log("YouTube OAuth routes registered successfully");
     
+    // Регистрируем Instagram OAuth маршруты
+    console.log("Registering Instagram OAuth routes...");
+    log("Registering Instagram OAuth routes...");
+    const instagramOAuthRouter = (await import('./routes/instagram-oauth')).default;
+    app.use('/api/social/instagram/oauth', instagramOAuthRouter);
+    console.log("Instagram OAuth routes registered");
+    log("Instagram OAuth routes registered successfully");
+    
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
     log("Registering Stories routes...");
