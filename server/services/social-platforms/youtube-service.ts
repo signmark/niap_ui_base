@@ -38,6 +38,15 @@ export class YouTubeService extends BaseSocialService {
         refresh_token: youtubeSettings.refreshToken,
       });
 
+      // Автоматически обновляем токен если он истек
+      oauth2Client.on('tokens', (tokens) => {
+        log('youtube', 'Получены новые токены от Google');
+        if (tokens.refresh_token) {
+          log('youtube', 'Обновляем refresh_token');
+        }
+        // TODO: Сохранить новые токены в базу данных
+      });
+
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
       // Проверяем наличие видео
