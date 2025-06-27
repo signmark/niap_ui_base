@@ -6,7 +6,7 @@ import { socialPublishingService } from '../services/social/index';
 // Не используем старый сервис, заменив его на новый модульный
 import { getPublishScheduler } from '../services/publish-scheduler';
 // Определяем тип SocialPlatform локально
-type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';
+type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk' | 'youtube';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
 import { directusStorageAdapter } from '../services/directus';
@@ -36,7 +36,7 @@ export function registerPublishingRoutes(app: Express): void {
         // Принудительно запустить планировщик
         const publishScheduler = getPublishScheduler();
         if (publishScheduler) {
-          await publishScheduler.processContent();
+          await publishScheduler.checkScheduledContent();
           
           return res.json({
             success: true,
@@ -443,8 +443,56 @@ export function registerPublishingRoutes(app: Express): void {
           try {
             log(`Публикация контента в ${platform}`, 'api');
             
-            // Публикуем контент в выбранную платформу
-            const result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);
+            let result;
+            
+            // Специальная обработка для YouTube - прямая публикация через API
+            if (platform === 'youtube') {
+              log(`YouTube: Прямая публикация контента ${content.id}`, 'api');
+              
+              const { YouTubeService } = await import('../services/social-platforms/youtube-service');
+              const youtubeService = new YouTubeService();
+              
+              // Получаем настройки YouTube из кампании
+              const youtubeSettings = campaign.social_media_settings?.youtube;
+              if (!youtubeSettings) {
+                throw new Error('YouTube настройки не найдены в кампании');
+              }
+              
+              result = await youtubeService.publishContent(
+                content,
+                { youtube: youtubeSettings },
+                userId || content.user_id
+              );
+              
+              log(`YouTube: Результат публикации - ${JSON.stringify(result)}`, 'api');
+              
+              // Обновляем статус публикации YouTube в базе данных
+              if (content.id && systemToken) {
+                try {
+                  const socialPlatforms = content.socialPlatforms || {};
+                  const updateData = {
+                    socialPlatforms: {
+                      ...socialPlatforms,
+                      youtube: {
+                        ...(socialPlatforms.youtube || {}),
+                        status: result.success ? 'published' : 'failed',
+                        postUrl: result.postUrl || null,
+                        error: result.success ? null : result.error,
+                        publishedAt: result.success ? new Date().toISOString() : null
+                      }
+                    }
+                  };
+                  
+                  await storage.updateCampaignContent(content.id, updateData, systemToken);
+                  log(`YouTube: Статус обновлен в базе данных - ${result.success ? 'published' : 'failed'}`, 'api');
+                } catch (updateError: any) {
+                  log(`YouTube: Ошибка обновления статуса в базе: ${updateError.message}`, 'api');
+                }
+              }
+            } else {
+              // Обычная публикация через N8N для остальных платформ
+              result = await socialPublishingService.publishToPlatform(platform, content, campaign, systemToken || undefined);
+            }
             
             results[platform] = {
               success: true,
@@ -458,8 +506,10 @@ export function registerPublishingRoutes(app: Express): void {
               log(`Публикация в ${platform} успешна, messageId: ${result.messageId}`, 'api');
             } else if (result && result.url) {
               log(`Публикация в ${platform} успешна, url: ${result.url}`, 'api');
+            } else if (result && result.postUrl) {
+              log(`Публикация в ${platform} успешна, postUrl: ${result.postUrl}`, 'api');
             } else {
-              log(`Публикация в ${platform} успешна, результат без messageId`, 'api');
+              log(`Публикация в ${platform} успешна, результат без URL`, 'api');
             }
           } catch (platformError: any) {
             results[platform] = {
