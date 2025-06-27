@@ -33,12 +33,7 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
       });
     }
 
-    const youtubeService = new YouTubeService({
-      clientId,
-      clientSecret,
-      redirectUri,
-      channelId: '' // Будет получен после авторизации
-    });
+    const youtubeService = new YouTubeService();
 
     // Генерируем уникальный state для защиты от CSRF
     const state = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -103,12 +98,7 @@ router.get('/youtube/auth/callback', async (req, res) => {
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
     const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
 
-    const youtubeService = new YouTubeService({
-      clientId,
-      clientSecret,
-      redirectUri,
-      channelId: ''
-    });
+    const youtubeService = new YouTubeService();
 
     // Обмениваем code на токены
     const tokens = await youtubeService.exchangeCodeForTokens(code as string);
