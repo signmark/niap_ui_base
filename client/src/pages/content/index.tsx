@@ -1602,7 +1602,7 @@ export default function ContentPage() {
             </div>
             {newContent.contentType !== "story" && (
               <div className="space-y-2">
-                <Label htmlFor="content">Контент</Label>
+                <Label htmlFor="content">Описание</Label>
                 <div>
                   <RichTextEditor
                     value={newContent.content || ''}
@@ -1940,7 +1940,7 @@ export default function ContentPage() {
               
               {currentContent.contentType !== "story" && (
                 <div className="space-y-2">
-                  <Label htmlFor="content">Контент</Label>
+                  <Label htmlFor="content">Описание</Label>
                   <div>
                     <RichTextEditor
                       value={currentContent.content || ''}
@@ -2222,9 +2222,9 @@ export default function ContentPage() {
                 </Card>
               </div>
               
-              {/* Поле для ввода дополнительных ключевых слов */}
+              {/* Поле для ввода дополнительных тегов */}
               <div className="space-y-2">
-                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+                <Label htmlFor="editAdditionalKeywords">Дополнительные теги (введите и нажмите Enter)</Label>
                 <Input
                   id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
@@ -2287,10 +2287,10 @@ export default function ContentPage() {
                 />
               </div>
               
-              {/* Предпросмотр выбранных ключевых слов */}
+              {/* Предпросмотр выбранных тегов */}
               {currentContent.keywords && currentContent.keywords.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Выбранные ключевые слова:</Label>
+                  <Label>Выбранные теги:</Label>
                   <div className="flex flex-wrap gap-2">
                     {Array.isArray(currentContent.keywords) ? (
                       currentContent.keywords.map((keyword, index) => (
@@ -2322,7 +2322,7 @@ export default function ContentPage() {
                         </Badge>
                       ))
                     ) : (
-                      <div>Нет ключевых слов</div>
+                      <div>Нет тегов</div>
                     )}
                   </div>
                 </div>
@@ -2823,10 +2823,10 @@ export default function ContentPage() {
               </div>
             )}
 
-            {/* Ключевые слова */}
+            {/* Теги */}
             {previewContent?.contentType !== 'story' && previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                <h4 className="text-sm font-medium mb-2">Теги:</h4>
                 <div className="flex flex-wrap gap-2">
                   {previewContent.keywords.map((keyword, index) => (
                     <Badge key={index} variant="secondary">

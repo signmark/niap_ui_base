@@ -99,10 +99,9 @@ export default function PlatformSelector({
           if (platform.id === 'instagram' && !hasImages) {
             isDisabled = true;
             tooltipMessage = 'Instagram требует изображения или видео';
-          } else if (platform.id === 'youtube' && !hasVideo && !hasImages) {
-            // Временно разрешаем YouTube для всех типов контента
-            isDisabled = false;
-            tooltipMessage = '';
+          } else if (platform.id === 'youtube' && !hasVideo) {
+            isDisabled = true;
+            tooltipMessage = 'YouTube доступен только для видео контента';
           }
           
           const platformComponent = (
