@@ -8,6 +8,8 @@ interface YouTubeContent {
   content: string;
   video_url: string;
   description?: string;
+  videoThumbnail?: string;
+  additional_images?: string[];
 }
 import { BaseSocialService } from './base-service';
 
@@ -110,9 +112,40 @@ export class YouTubeService extends BaseSocialService {
       });
 
       const videoId = uploadResponse.data.id;
-      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      if (!videoId) {
+        throw new Error('YouTube API не вернул ID видео');
+      }
 
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
       log('youtube', `Видео успешно загружено на YouTube: ${videoUrl}`);
+
+      // Проверяем и загружаем обложку, если она есть
+      if (content.videoThumbnail || content.additional_images?.[0]) {
+        try {
+          const thumbnailUrl = content.videoThumbnail || content.additional_images[0];
+          log('youtube', `Загружаем обложку для видео: ${thumbnailUrl}`);
+          
+          // Скачиваем обложку
+          const thumbnailResponse = await axios.get(thumbnailUrl, {
+            responseType: 'stream'
+          });
+
+          // Загружаем обложку через YouTube API
+          await youtube.thumbnails.set({
+            videoId: videoId,
+            media: {
+              body: thumbnailResponse.data
+            }
+          });
+
+          log('youtube', `Обложка успешно установлена для видео ${videoId}`);
+        } catch (thumbnailError: any) {
+          log('youtube', `Ошибка установки обложки: ${thumbnailError.message}`);
+          // Не падаем, если обложка не загрузилась - видео уже опубликовано
+        }
+      } else {
+        log('youtube', `Обложка не найдена для видео ${videoId}`);
+      }
 
       return {
         success: true,
