@@ -61,9 +61,14 @@ export default function PlatformSelector({
     content.contentType === 'video'
   );
 
-  // Check if content has video
+  // Check if content has video (expanded check)
   const hasVideo = content && (
-    content.contentType === 'video'
+    content.contentType === 'video' ||
+    content.contentType === 'video-text' ||
+    content.contentType === 'mixed' ||
+    (content as any).videoUrl ||
+    (content as any).videoThumbnail ||
+    (content as any).additionalVideos
   );
 
   return (
@@ -79,9 +84,9 @@ export default function PlatformSelector({
           if (platform.id === 'instagram' && !hasImages) {
             isDisabled = true;
             tooltipMessage = 'Instagram требует изображения или видео';
-          } else if (platform.id === 'youtube' && !hasVideo) {
+          } else if (platform.id === 'youtube' && !hasVideo && !hasImages) {
             isDisabled = true;
-            tooltipMessage = 'YouTube доступен только для видео контента';
+            tooltipMessage = 'YouTube требует видео или изображения для создания контента';
           }
           
           const platformComponent = (
