@@ -55,7 +55,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     // Поддерживаем два формата: объект {platformName: boolean} и массив строк ["platform1", "platform2"]
     log(`[Social Publishing] Проверка формата объекта platforms: ${JSON.stringify(platforms)}`);
-    const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook'];
+    const validPlatformKeys = ['telegram', 'vk', 'instagram', 'facebook', 'youtube'];
     
     let selectedPlatforms: string[] = [];
     
@@ -159,7 +159,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
       for (const platform of selectedPlatforms) {
         try {
           // Проверяем, поддерживается ли эта платформа
-          if (!['telegram', 'vk', 'instagram', 'facebook'].includes(platform)) {
+          if (!['telegram', 'vk', 'instagram', 'facebook', 'youtube'].includes(platform)) {
             publishResults.push({
               platform,
               success: false,
@@ -182,7 +182,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           
           log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
           
-          // Для Facebook используем прямой API вместо n8n
+          // Для Facebook и YouTube используем прямой API вместо n8n
           let result;
           if (platform === 'facebook') {
             log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
@@ -194,6 +194,19 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             
             const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
             result = facebookResponse.data;
+          } else if (platform === 'youtube') {
+            log(`[Social Publishing] Использование прямого API для YouTube вместо n8n вебхука`);
+            // Для YouTube используем планировщик напрямую
+            const { getPublishScheduler } = require('../services/publish-scheduler');
+            const publishScheduler = getPublishScheduler();
+            
+            if (publishScheduler) {
+              log(`[Social Publishing] Запуск планировщика для YouTube публикации ${contentId}`);
+              await publishScheduler.checkScheduledContent();
+              result = { success: true, message: 'YouTube publication started via scheduler' };
+            } else {
+              throw new Error('Планировщик YouTube не инициализирован');
+            }
           } else {
             // Для остальных платформ используем n8n вебхук
             result = await publishViaN8nAsync(contentId, platform);
