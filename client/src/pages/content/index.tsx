@@ -1935,7 +1935,8 @@ export default function ContentPage() {
                     <SelectValue placeholder="Выберите тип контента" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="post">Обычный пост</SelectItem>
+                    <SelectItem value="text">Текст</SelectItem>
+                    <SelectItem value="text-image">Текст с картинкой</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="story">Instagram Stories</SelectItem>
                   </SelectContent>
@@ -1944,7 +1945,9 @@ export default function ContentPage() {
               
               {currentContent.contentType !== "story" && (
                 <div className="space-y-2">
-                  <Label htmlFor="content">Описание</Label>
+                  <Label htmlFor="content">
+                    {currentContent.contentType === 'video' ? 'Описание' : 'Контент'}
+                  </Label>
                   <div>
                     <RichTextEditor
                       value={currentContent.content || ''}
@@ -2230,7 +2233,9 @@ export default function ContentPage() {
               
               {/* Поле для ввода дополнительных ключевых слов */}
               <div className="space-y-2">
-                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+                <Label htmlFor="editAdditionalKeywords">
+                  {currentContent.contentType === 'video' ? 'Дополнительные теги (введите и нажмите Enter)' : 'Дополнительные ключевые слова (введите и нажмите Enter)'}
+                </Label>
                 <Input
                   id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
