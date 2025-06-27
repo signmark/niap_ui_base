@@ -125,11 +125,14 @@ router.get('/youtube/auth/callback', async (req, res) => {
       if (campaignsData.data && campaignsData.data.length > 0) {
         const campaign = campaignsData.data[0];
         
-        // Обновляем YouTube настройки в кампании
+        // Обновляем YouTube настройки в кампании, сохраняя существующие
+        const currentSettings = campaign.social_media_settings || {};
+        const currentYouTubeSettings = currentSettings.youtube || {};
+        
         const updatedSettings = {
-          ...campaign.social_media_settings,
+          ...currentSettings,
           youtube: {
-            ...campaign.social_media_settings?.youtube,
+            ...currentYouTubeSettings,
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken
           }
