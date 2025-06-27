@@ -19,6 +19,20 @@ interface ContentTypeDialogProps {
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
   const contentTypes = [
     {
+      id: 'post',
+      title: 'Пост',
+      description: 'Обычный текстовый пост или с изображением',
+      icon: FileText,
+      color: 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+    },
+    {
+      id: 'story',
+      title: 'Сторис',
+      description: 'Создание интерактивных историй',
+      icon: Layers,
+      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
+    },
+    {
       id: 'video',
       title: 'Видео',
       description: 'Видео контент для YouTube, VK, Telegram',

@@ -128,7 +128,8 @@ Environment-specific settings managed through:
 - June 27, 2025. YouTube OAuth2 authorization fully completed: fixed callback token saving, created YouTubeOAuth utility class, resolved all constructor and state parameter issues. New access and refresh tokens successfully saved to campaign settings. YouTube publishing now ready for production use.
 - June 27, 2025. YouTube publishing integration fully tested and working: successfully published test video (ID: TuK26D_Qfyg) to YouTube channel UC_Z5lVPGWcpmwEZAkOd_JSA via direct API call. All components verified including OAuth2 tokens, video upload, and database status updates. YouTube integration production-ready.
 - June 27, 2025. Fixed YouTube thumbnail/cover image upload: added thumbnail support to YouTube service, videos now publish with generated cover images from videoThumbnail or additional_images fields. Fixed data mapping between scheduler and YouTube service to properly pass campaign settings.
-- June 27, 2025. Simplified content creation interface: restricted ContentTypeDialog to only show "Video" option, renamed "Контент" → "Описание" and "Ключевые слова" → "Теги" throughout the interface. YouTube platform now available ONLY for video content type with proper validation.
+- June 27, 2025. Simplified content creation interface: renamed "Контент" → "Описание" and "Ключевые слова" → "Теги" throughout the interface. YouTube platform now available ONLY for video content type with proper validation.
+- June 27, 2025. Fixed ContentTypeDialog to show all content types (post, story, video) while maintaining YouTube video-only restriction through PlatformSelector validation.
 
 ## User Preferences
 
