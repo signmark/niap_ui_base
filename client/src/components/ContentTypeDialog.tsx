@@ -20,15 +20,15 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
   const contentTypes = [
     {
       id: 'post',
-      title: 'Пост',
-      description: 'Обычный текстовый пост или с изображением',
+      title: 'Обычный пост',
+      description: 'Текстовый пост или с изображением для соцсетей',
       icon: FileText,
       color: 'bg-blue-50 border-blue-200 hover:bg-blue-100'
     },
     {
       id: 'story',
-      title: 'Сторис',
-      description: 'Создание интерактивных историй',
+      title: 'Instagram Stories',
+      description: 'Создание интерактивных историй для Instagram',
       icon: Layers,
       color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
     },
