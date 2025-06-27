@@ -64,6 +64,43 @@ export function registerPublishingRoutes(app: Express): void {
     }
   });
   
+  // Тестовый маршрут для прямой YouTube публикации
+  app.post('/api/test-youtube-publish', async (req: Request, res: Response) => {
+    try {
+      const { contentId, content, youtubeSettings, userId } = req.body;
+      
+      console.log(`[test-youtube] Тестирование YouTube публикации для ${contentId}`);
+      console.log(`[test-youtube] YouTube настройки:`, youtubeSettings);
+      
+      // Импортируем YouTube сервис
+      const { YouTubeService } = await import('../services/social-platforms/youtube-service');
+      const youtubeService = new YouTubeService();
+      
+      // Пытаемся опубликовать
+      const result = await youtubeService.publishContent(
+        { id: contentId, ...content },
+        youtubeSettings,
+        userId
+      );
+      
+      console.log(`[test-youtube] Результат публикации:`, result);
+      
+      return res.json({
+        success: true,
+        result: result,
+        message: 'YouTube публикация протестирована'
+      });
+      
+    } catch (error: any) {
+      console.error(`[test-youtube] Ошибка: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        stack: error.stack
+      });
+    }
+  });
+  
   // Восстановлена проверка запланированных публикаций после исправления критических ошибок
   app.all('/api/publish/check-scheduled', async (req: Request, res: Response) => {
     try {

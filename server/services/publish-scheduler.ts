@@ -181,6 +181,7 @@ export class PublishScheduler {
             log(`🎯 YouTube платформы: ${JSON.stringify(testContent.social_platforms)}`, 'scheduler');
         } else {
             log(`❌ ТЕСТОВЫЙ YouTube КОНТЕНТ НЕ НАЙДЕН в списке ${allContent.length} элементов`, 'scheduler');
+            log(`📋 Все ID контентов: ${allContent.map((item: any) => item.id).join(', ')}`, 'scheduler');
         }
         
         if (allContent.length > 0) {
