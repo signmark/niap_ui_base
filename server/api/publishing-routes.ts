@@ -18,6 +18,52 @@ import { directusStorageAdapter } from '../services/directus';
 export function registerPublishingRoutes(app: Express): void {
   console.log('[publishing-routes] Регистрация маршрутов управления публикациями...');
   
+  // Маршрут для ручной публикации YouTube (для тестирования)
+  app.post('/api/manual-publish', async (req: Request, res: Response) => {
+    try {
+      const { contentId, platform } = req.body;
+      
+      if (!contentId || !platform) {
+        return res.status(400).json({
+          success: false,
+          message: 'Требуются contentId и platform'
+        });
+      }
+
+      console.log(`[manual-publish] Ручная публикация ${contentId} в ${platform}`);
+      
+      if (platform === 'youtube') {
+        // Принудительно запустить планировщик
+        const publishScheduler = getPublishScheduler();
+        if (publishScheduler) {
+          await publishScheduler.processContent();
+          
+          return res.json({
+            success: true,
+            message: `Запущена обработка планировщика для ${contentId}`
+          });
+        } else {
+          return res.status(500).json({
+            success: false,
+            message: 'Планировщик не инициализирован'
+          });
+        }
+      }
+      
+      res.status(400).json({
+        success: false,
+        message: `Платформа ${platform} не поддерживается`
+      });
+      
+    } catch (error: any) {
+      console.error(`[manual-publish] Ошибка: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+  
   // Восстановлена проверка запланированных публикаций после исправления критических ошибок
   app.all('/api/publish/check-scheduled', async (req: Request, res: Response) => {
     try {
