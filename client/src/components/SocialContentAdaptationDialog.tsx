@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, Instagram, MessageCircle, Facebook, Check } from "lucide-react";
+import { Loader2, CheckCircle2, Instagram, MessageCircle, Facebook, Check, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "./RichTextEditor";
 
 // Определение типов
-type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook';
+type SocialPlatform = 'instagram' | 'telegram' | 'vk' | 'facebook' | 'youtube';
 
 interface SocialContentAdaptationDialogProps {
   contentId: string;
@@ -37,7 +37,8 @@ export function SocialContentAdaptationDialog({
     instagram: { content: adaptContentForPlatform('instagram', originalContent), isEnabled: true, isEdited: false },
     telegram: { content: adaptContentForPlatform('telegram', originalContent), isEnabled: false, isEdited: false },
     vk: { content: adaptContentForPlatform('vk', originalContent), isEnabled: false, isEdited: false },
-    facebook: { content: adaptContentForPlatform('facebook', originalContent), isEnabled: false, isEdited: false }
+    facebook: { content: adaptContentForPlatform('facebook', originalContent), isEnabled: false, isEdited: false },
+    youtube: { content: adaptContentForPlatform('youtube', originalContent), isEnabled: false, isEdited: false }
   });
 
   // Мутация для сохранения адаптированного контента
@@ -173,6 +174,11 @@ export function SocialContentAdaptationDialog({
         // Стиль более профессиональный, акцент на бизнес-аудиторию
         return baseContent + "\n\nНе забудьте подписаться на нашу страницу, чтобы не пропустить новые публикации.";
         
+      case 'youtube':
+        // YouTube описания могут быть длинными (до 5000 символов)
+        // Стиль оптимизированный для видео контента
+        return baseContent + "\n\n👍 Поставьте лайк, если видео было полезным!\n📺 Подписывайтесь на канал для новых видео!";
+        
       default:
         return baseContent;
     }
@@ -201,6 +207,8 @@ export function SocialContentAdaptationDialog({
         return <MessageCircle className="h-4 w-4" />;
       case 'facebook':
         return <Facebook className="h-4 w-4" />;
+      case 'youtube':
+        return <Video className="h-4 w-4" />;
       default:
         return null;
     }
@@ -253,11 +261,11 @@ export function SocialContentAdaptationDialog({
                   </div>
                   <div className="max-h-[400px] overflow-y-auto border rounded-md">
                     <RichTextEditor
-                      content={platformsContent[platform].content}
+                      value={platformsContent[platform].content}
                       onChange={(html: string) => handleContentChange(platform, html)}
                       placeholder={`Введите текст для ${platform}...`}
                       className={!platformsContent[platform].isEnabled ? "opacity-50 pointer-events-none" : ""}
-                      minHeight="200px"
+                      minHeight={200}
                     />
                   </div>
                 </div>

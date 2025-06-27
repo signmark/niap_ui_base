@@ -5,7 +5,8 @@ export const safeSocialPlatforms: SocialPlatform[] = [
   'instagram',
   'facebook',
   'telegram',
-  'vk'
+  'vk',
+  'youtube'
 ];
 
 // Тип для более безопасной работы с платформами
@@ -19,7 +20,8 @@ export const platformNames: Record<SocialPlatform, string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
   telegram: 'Telegram',
-  vk: 'ВКонтакте'
+  vk: 'ВКонтакте',
+  youtube: 'YouTube'
 };
 
 // Иконки для платформ (можно расширить при необходимости)
@@ -27,7 +29,8 @@ export const platformIcons: Record<SocialPlatform, string> = {
   instagram: 'instagram',
   facebook: 'facebook',
   telegram: 'send',
-  vk: 'message-circle'
+  vk: 'message-circle',
+  youtube: 'play'
 };
 
 // Перечисление для удобства доступа к цветам платформ
@@ -35,5 +38,6 @@ export const platformColors: Record<SocialPlatform, string> = {
   instagram: 'bg-gradient-to-r from-purple-500 to-pink-500',
   facebook: 'bg-blue-600',
   telegram: 'bg-blue-400',
-  vk: 'bg-blue-500'
+  vk: 'bg-blue-500',
+  youtube: 'bg-red-600'
 };

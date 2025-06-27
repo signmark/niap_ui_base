@@ -52,7 +52,7 @@ export interface SocialCredentials {
 export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'partial';
 
 // Типы социальных платформ
-export type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk';
+export type SocialPlatform = 'instagram' | 'facebook' | 'telegram' | 'vk' | 'youtube';
 
 // Типы статусов публикации на платформе
 export type PlatformPublishStatus = 'pending' | 'scheduled' | 'published' | 'failed' | 'cancelled';
