@@ -54,7 +54,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       }
 
       if (selectedKeywords.length === 0) {
-        throw new Error('Выберите теги');
+        throw new Error('Выберите ключевые слова');
       }
 
       setIsGenerating(true);
@@ -250,7 +250,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
           <DialogTitle>{generationResult ? "Результат генерации контента" : "Генерация контента"}</DialogTitle>
           {!generationResult && (
             <DialogDescription className="text-xs">
-              Используйте AI для генерации контента на основе тегов и промта
+              Используйте AI для генерации контента на основе ключевых слов и промта
             </DialogDescription>
           )}
         </DialogHeader>
@@ -355,12 +355,12 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
             <div className="grid grid-cols-4 items-start gap-3">
               <Label className="text-right pt-2 text-sm">
-                Теги
+                Ключевые слова
               </Label>
               <div className="col-span-3 grid grid-cols-2 gap-1 max-h-[150px] overflow-y-auto border rounded p-1">
                 {keywords.length === 0 ? (
                   <p className="text-xs text-muted-foreground col-span-2">
-                    Нет доступных тегов. Добавьте их в раздел "Теги".
+                    Нет доступных ключевых слов. Добавьте их в раздел "Ключевые слова".
                   </p>
                 ) : (
                   // Отфильтруем ключевые слова, оставив только с положительным трендом

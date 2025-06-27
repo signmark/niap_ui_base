@@ -2224,7 +2224,7 @@ export default function ContentPage() {
               
               {/* Поле для ввода дополнительных тегов */}
               <div className="space-y-2">
-                <Label htmlFor="editAdditionalKeywords">Дополнительные теги (введите и нажмите Enter)</Label>
+                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
                 <Input
                   id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
@@ -2290,7 +2290,7 @@ export default function ContentPage() {
               {/* Предпросмотр выбранных тегов */}
               {currentContent.keywords && currentContent.keywords.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Выбранные теги:</Label>
+                  <Label>Выбранные ключевые слова:</Label>
                   <div className="flex flex-wrap gap-2">
                     {Array.isArray(currentContent.keywords) ? (
                       currentContent.keywords.map((keyword, index) => (
@@ -2322,7 +2322,7 @@ export default function ContentPage() {
                         </Badge>
                       ))
                     ) : (
-                      <div>Нет тегов</div>
+                      <div>Нет ключевых слов</div>
                     )}
                   </div>
                 </div>
@@ -2823,10 +2823,10 @@ export default function ContentPage() {
               </div>
             )}
 
-            {/* Теги */}
+            {/* Ключевые слова */}
             {previewContent?.contentType !== 'story' && previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Теги:</h4>
+                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
                 <div className="flex flex-wrap gap-2">
                   {previewContent.keywords.map((keyword, index) => (
                     <Badge key={index} variant="secondary">
