@@ -174,6 +174,15 @@ export class PublishScheduler {
         
         log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
         
+        // Проверяем наш тестовый YouTube контент
+        const testContent = allContent.find((item: any) => item.id === 'bea24ff7-9c75-4404-812b-06d355bd98ac');
+        if (testContent) {
+            log(`🎯 ТЕСТОВЫЙ YouTube КОНТЕНТ НАЙДЕН: ${testContent.id} - статус: ${testContent.status}`, 'scheduler');
+            log(`🎯 YouTube платформы: ${JSON.stringify(testContent.social_platforms)}`, 'scheduler');
+        } else {
+            log(`❌ ТЕСТОВЫЙ YouTube КОНТЕНТ НЕ НАЙДЕН в списке ${allContent.length} элементов`, 'scheduler');
+        }
+        
         if (allContent.length > 0) {
           log(`Планировщик: Статусы найденного контента: ${allContent.map((c: any) => c.status).join(', ')}`, 'scheduler');
         }
