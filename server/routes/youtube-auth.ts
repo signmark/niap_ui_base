@@ -113,12 +113,50 @@ router.get('/youtube/auth/callback', async (req, res) => {
     // Обмениваем code на токены
     const tokens = await youtubeService.exchangeCodeForTokens(code as string);
 
-    // TODO: Сохранить токены в базу данных для пользователя stateData.userId
-    // Пока что возвращаем их в ответе (не безопасно для продакшена)
+    // Сохраняем токены в активную кампанию пользователя
+    try {
+      // Получаем активную кампанию пользователя
+      const campaignsResponse = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns?filter[user_id][_eq]=${stateData.userId}&limit=1`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`
+        }
+      });
+      
+      const campaignsData = await campaignsResponse.json();
+      
+      if (campaignsData.data && campaignsData.data.length > 0) {
+        const campaign = campaignsData.data[0];
+        
+        // Обновляем YouTube настройки в кампании
+        const updatedSettings = {
+          ...campaign.social_media_settings,
+          youtube: {
+            ...campaign.social_media_settings?.youtube,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
+          }
+        };
+        
+        await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaign.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            social_media_settings: updatedSettings
+          })
+        });
+        
+        console.log(`[youtube-auth] Токены обновлены для кампании ${campaign.id}`);
+      }
+    } catch (error) {
+      console.error('[youtube-auth] Ошибка сохранения токенов:', error);
+    }
 
     res.json({
       success: true,
-      message: 'YouTube успешно подключен',
+      message: 'YouTube успешно подключен и токены обновлены',
       tokens: {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken
