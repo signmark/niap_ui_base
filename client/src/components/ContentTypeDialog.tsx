@@ -13,24 +13,24 @@ import {
 interface ContentTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectType: (type: 'post' | 'story' | 'video') => void;
+  onSelectType: (type: 'text' | 'text-image' | 'video' | 'story') => void;
 }
 
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
   const contentTypes = [
     {
-      id: 'post',
-      title: 'Обычный пост',
-      description: 'Текстовый пост или с изображением для соцсетей',
+      id: 'text',
+      title: 'Текст',
+      description: 'Только текстовый контент без изображений',
       icon: FileText,
       color: 'bg-blue-50 border-blue-200 hover:bg-blue-100'
     },
     {
-      id: 'story',
-      title: 'Instagram Stories',
-      description: 'Создание интерактивных историй для Instagram',
-      icon: Layers,
-      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
+      id: 'text-image',
+      title: 'Текст с картинкой',
+      description: 'Текстовая публикация с изображениями',
+      icon: Image,
+      color: 'bg-green-50 border-green-200 hover:bg-green-100'
     },
     {
       id: 'video',
@@ -38,10 +38,17 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
       description: 'Видео контент для YouTube, VK, Telegram',
       icon: Video,
       color: 'bg-red-50 border-red-200 hover:bg-red-100'
+    },
+    {
+      id: 'story',
+      title: 'Instagram Stories',
+      description: 'Создание интерактивных историй для Instagram',
+      icon: Layers,
+      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
     }
   ];
 
-  const handleSelect = (type: 'post' | 'story' | 'video') => {
+  const handleSelect = (type: 'text' | 'text-image' | 'video' | 'story') => {
     onSelectType(type);
     onClose();
   };
@@ -60,7 +67,7 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
               <Card 
                 key={type.id}
                 className={`cursor-pointer transition-colors ${type.color}`}
-                onClick={() => handleSelect(type.id as 'post' | 'story' | 'video')}
+                onClick={() => handleSelect(type.id as 'text' | 'text-image' | 'video' | 'story')}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">

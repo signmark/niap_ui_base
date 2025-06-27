@@ -274,7 +274,7 @@ export default function ContentPage() {
     if (currentContent && isScheduleDialogOpen) {
       const hasImages = currentContent.imageUrl || 
         (currentContent.images && currentContent.images.length > 0) ||
-        currentContent.contentType === 'text-image' ||
+        currentContent.contentType === 'post' ||
         currentContent.contentType === 'video';
       
       if (!hasImages && selectedPlatforms.instagram) {
@@ -739,9 +739,8 @@ export default function ContentPage() {
 
     // Проверяем корректность URL для изображения или видео
     if (
-      (newContent.contentType === "text-image" && !newContent.imageUrl) ||
-      (newContent.contentType === "video" && !newContent.videoUrl) ||
-      (newContent.contentType === "video-text" && !newContent.videoUrl)
+      (newContent.contentType === "post" && !newContent.content) ||
+      (newContent.contentType === "video" && !newContent.videoUrl)
     ) {
       toast({
         description: "Добавьте URL изображения или видео",
@@ -1592,17 +1591,18 @@ export default function ContentPage() {
                   <SelectValue placeholder="Выберите тип контента" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Только текст</SelectItem>
-                  <SelectItem value="text-image">Текст с изображением</SelectItem>
+                  <SelectItem value="text">Текст</SelectItem>
+                  <SelectItem value="text-image">Текст с картинкой</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
-                  <SelectItem value="video-text">Видео с текстом</SelectItem>
                   <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {newContent.contentType !== "story" && (
               <div className="space-y-2">
-                <Label htmlFor="content">Описание</Label>
+                <Label htmlFor="content">
+                  {newContent.contentType === "video" ? "Описание" : "Контент"}
+                </Label>
                 <div>
                   <RichTextEditor
                     value={newContent.content || ''}
@@ -1740,7 +1740,9 @@ export default function ContentPage() {
             {/* Список ключевых слов кампании */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label>Выберите ключевые слова</Label>
+                <Label>
+                  {newContent.contentType === 'video' ? 'Выберите теги' : 'Выберите ключевые слова'}
+                </Label>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -1808,7 +1810,9 @@ export default function ContentPage() {
             
             {/* Поле для ввода дополнительных ключевых слов */}
             <div className="space-y-2">
-              <Label htmlFor="additionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+              <Label htmlFor="additionalKeywords">
+                {newContent.contentType === 'video' ? 'Дополнительные теги (введите и нажмите Enter)' : 'Дополнительные ключевые слова (введите и нажмите Enter)'}
+              </Label>
               <Input
                 id="additionalKeywords"
                 placeholder="Например: здоровье, диета, питание"
@@ -1929,10 +1933,8 @@ export default function ContentPage() {
                     <SelectValue placeholder="Выберите тип контента" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="text">Только текст</SelectItem>
-                    <SelectItem value="text-image">Текст с изображением</SelectItem>
+                    <SelectItem value="post">Обычный пост</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
-                    <SelectItem value="video-text">Видео с текстом</SelectItem>
                     <SelectItem value="story">Instagram Stories</SelectItem>
                   </SelectContent>
                 </Select>
@@ -2124,7 +2126,9 @@ export default function ContentPage() {
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label>Выберите ключевые слова</Label>
+                  <Label>
+                    {currentContent.contentType === 'video' ? 'Выберите теги' : 'Выберите ключевые слова'}
+                  </Label>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -2222,7 +2226,7 @@ export default function ContentPage() {
                 </Card>
               </div>
               
-              {/* Поле для ввода дополнительных тегов */}
+              {/* Поле для ввода дополнительных ключевых слов */}
               <div className="space-y-2">
                 <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
                 <Input
@@ -2287,7 +2291,7 @@ export default function ContentPage() {
                 />
               </div>
               
-              {/* Предпросмотр выбранных тегов */}
+              {/* Предпросмотр выбранных ключевых слов */}
               {currentContent.keywords && currentContent.keywords.length > 0 && (
                 <div className="space-y-2">
                   <Label>Выбранные ключевые слова:</Label>
@@ -2826,7 +2830,9 @@ export default function ContentPage() {
             {/* Ключевые слова */}
             {previewContent?.contentType !== 'story' && previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                <h4 className="text-sm font-medium mb-2">
+                  {previewContent?.contentType === 'video' ? 'Теги:' : 'Ключевые слова:'}
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {previewContent.keywords.map((keyword, index) => (
                     <Badge key={index} variant="secondary">
