@@ -340,11 +340,9 @@ export default function ContentPage() {
 
   // Запрос списка контента для выбранной кампании
   const { data: campaignContent = [], isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery<CampaignContent[]>({
-    queryKey: ["/api/campaign-content", selectedCampaignId],
+    queryKey: ["/api/campaign-content", selectedCampaignId || ""],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-
-
 
       const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -360,19 +358,16 @@ export default function ContentPage() {
 
       return data.data || [];
     },
-    enabled: !!selectedCampaignId,
     refetchOnMount: true,
     staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000, // Автоматически обновлять данные каждые 10 секунд
+    refetchInterval: selectedCampaignId ? 10000 : false, // Автоматически обновлять данные каждые 10 секунд только если есть кампания
   });
   
   // Запрос ключевых слов кампании
   const { data: campaignKeywords = [], isLoading: isLoadingKeywords } = useQuery<any[]>({
-    queryKey: ["/api/keywords", selectedCampaignId],
+    queryKey: ["/api/keywords", selectedCampaignId || ""],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-
-
 
       const response = await fetch(`/api/keywords?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -388,10 +383,9 @@ export default function ContentPage() {
 
       return data.data || [];
     },
-    enabled: !!selectedCampaignId,
     refetchOnMount: true,
     staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000 // Автоматически обновлять данные каждые 10 секунд
+    refetchInterval: selectedCampaignId ? 10000 : false // Автоматически обновлять данные каждые 10 секунд только если есть кампания
   });
 
   // Эффект для отслеживания изменений статуса контента и показа тостов
