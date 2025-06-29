@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createRef, useCallback } from "react";
+import { useState, useEffect, useRef, createRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -1198,7 +1198,7 @@ export default function ContentPage() {
                             from: dateRange.from,
                             to: dateRange.to,
                           }}
-                          onSelect={useCallback((range: any) => {
+                          onSelect={(range: any) => {
                             if (range?.from) {
                               setDateRange({
                                 from: range.from,
@@ -1207,7 +1207,7 @@ export default function ContentPage() {
                             } else {
                               resetDateFilter();
                             }
-                          }, [resetDateFilter])}
+                          }}
                           numberOfMonths={2}
                           locale={ru}
                         />
