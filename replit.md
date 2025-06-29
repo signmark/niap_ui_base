@@ -134,6 +134,7 @@ Environment-specific settings managed through:
 - June 27, 2025. Fixed platform selection system: added YouTube to available platforms, removed default platform selection (all platforms now start unchecked), and implemented instant dialog closure on "Publish Now" button click to prevent duplicate submissions.
 - June 27, 2025. Fixed YouTube disappearing from platform list after publication: added YouTube to supported platforms in social-publishing-router.ts, created direct API handler for YouTube publications, and ensured YouTube status is properly preserved in database responses.
 - June 27, 2025. Fixed YouTube publication results not saving to database: enhanced YouTube service to return complete status data (status, postUrl, platform, publishedAt, videoId) and updated publish-scheduler to properly save YouTube results to social_platforms field in database.
+- June 29, 2025. Fixed critical React hooks violation error: removed conditional useCallback usage that violated Rules of Hooks, eliminated conditional enabled flags from useQuery hooks, and stabilized content editing interface. Application now runs without hook-related crashes and supports full content type editing including "Текст с картинкой" option.
 
 ## User Preferences
 
