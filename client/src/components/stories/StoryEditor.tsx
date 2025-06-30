@@ -147,15 +147,22 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
-    // ЕДИНАЯ проверка на изменение Stories ID в URL - КЛЮЧЕВАЯ ЛОГИКА
-    if (finalStoryId && currentStoryIdRef.current !== finalStoryId) {
-      console.log('🔄 Stories ID изменение:', currentStoryIdRef.current, '->', finalStoryId);
+    // Инициализация currentStoryIdRef при первом запуске
+    if (finalStoryId && currentStoryIdRef.current === null) {
+      console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
+      currentStoryIdRef.current = finalStoryId;
+      isLoadedRef.current = false; // Нужно загрузить данные при первом запуске
+    }
+    
+    // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
+    if (finalStoryId && currentStoryIdRef.current !== null && currentStoryIdRef.current !== finalStoryId) {
+      console.log('🔄 РЕАЛЬНОЕ изменение Stories ID:', currentStoryIdRef.current, '->', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
       isLoadedRef.current = false; // Сбрасываем флаг загрузки для новой Stories
       resetStore(); // Очищаем Store для новой Stories
     }
 
-    // Загрузка данных ТОЛЬКО если Stories ID изменился в URL
+    // Загрузка данных ТОЛЬКО если это первый запуск или Stories ID изменился
     if (finalStoryId && !isLoadedRef.current) {
       console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
       
