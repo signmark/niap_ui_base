@@ -19,13 +19,37 @@ interface AuthState {
 
 import { api } from './api';
 
+// Функция для проверки истекшего токена
+const checkTokenExpiration = (token: string | null): boolean => {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp && payload.exp > now;
+  } catch {
+    return false;
+  }
+};
+
+// Проверяем токен при загрузке
+const storedToken = localStorage.getItem('auth_token');
+const isTokenValid = checkTokenExpiration(storedToken);
+
+// Если токен истек, очищаем localStorage
+if (storedToken && !isTokenValid) {
+  console.log('Токен истек при загрузке, очищаем данные');
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('is_admin');
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      token: localStorage.getItem('auth_token') || null,
-      userId: localStorage.getItem('user_id') || null,
-      isAuthenticated: !!(localStorage.getItem('auth_token') && localStorage.getItem('user_id')),
-      isAdmin: localStorage.getItem('is_admin') === 'true',
+      token: isTokenValid ? storedToken : null,
+      userId: isTokenValid ? localStorage.getItem('user_id') : null,
+      isAuthenticated: isTokenValid && !!(localStorage.getItem('auth_token') && localStorage.getItem('user_id')),
+      isAdmin: isTokenValid ? localStorage.getItem('is_admin') === 'true' : false,
       setAuth: (token, userId) => {
         // Сохраняем токен и userId в localStorage для прямого доступа
         if (token) {

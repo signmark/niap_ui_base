@@ -46,6 +46,25 @@ export async function apiRequest(
   const token = useAuthStore.getState().token;
   const userId = useAuthStore.getState().userId;
 
+  // Проверяем, не истек ли токен перед запросом
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < now) {
+        console.log('Токен истек, принудительный logout');
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return;
+      }
+    } catch (e) {
+      console.log('Ошибка проверки токена, принудительный logout');
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+      return;
+    }
+  }
+
   // Логирование для отладки
   // API запрос выполняется (детальное логирование отключено)
 
