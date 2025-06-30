@@ -102,18 +102,7 @@ export class PublishScheduler {
     this.isProcessing = false;
   }
 
-  /**
-   * Получает системный токен для доступа к API
-   */
-  public async getSystemToken(): Promise<string | null> {
-    try {
-      const { adminTokenManager } = await import('./admin-token-manager');
-      return await adminTokenManager.getAdminToken();
-    } catch (error: any) {
-      log(`Ошибка при получении системного токена: ${error.message}`, 'scheduler');
-      return null;
-    }
-  }
+
 
   /**
    * Проверяет и публикует запланированный контент с учетом индивидуального времени платформ
@@ -129,8 +118,8 @@ export class PublishScheduler {
       // Очищаем кэш при необходимости
       this.cleanupCache();
       
-      // Получаем системный токен
-      const authToken = await this.getSystemToken();
+      // Используем статический токен напрямую для планировщика
+      const authToken = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
       if (!authToken) {
         return;
       }
@@ -138,7 +127,6 @@ export class PublishScheduler {
       // Получаем весь контент для проверки времени публикации платформ
       const directusUrl = process.env.DIRECTUS_URL;
       if (!directusUrl) {
-        log('DIRECTUS_URL не настроен в переменных окружения', 'scheduler');
         return;
       }
 
@@ -375,9 +363,19 @@ export class PublishScheduler {
         }
         
       } catch (error: any) {
-        log(`Планировщик: Ошибка запроса к Directus API: ${error.message}`, 'scheduler');
-        if (error.response) {
-          log(`Планировщик: Статус ошибки: ${error.response.status}, Данные: ${JSON.stringify(error.response.data)}`, 'scheduler');
+        // Тихо обрабатываем ошибки аутентификации
+        if (error.response?.status === 401) {
+          // Сбрасываем кэш токена и получаем новый
+          try {
+            const { adminTokenManager } = await import('./admin-token-manager');
+            adminTokenManager.clearToken();
+          } catch {}
+          return;
+        }
+        
+        // Логируем только критические ошибки
+        if (error.response?.status !== 401 && error.response?.status !== 403) {
+          log(`Планировщик: Ошибка API: ${error.message}`, 'scheduler');
         }
         return;
       }
@@ -511,7 +509,7 @@ export class PublishScheduler {
         log(`YouTube quota exceeded в исключении для контента ${content.id}`, 'scheduler');
         
         try {
-          const authToken = await this.getSystemToken();
+          const authToken = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
           const updateData = {
             social_platforms: {
               ...content.social_platforms,

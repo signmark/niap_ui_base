@@ -138,6 +138,7 @@ Environment-specific settings managed through:
 - June 30, 2025. Fixed critical social media settings bug: PATCH /api/campaigns/:id endpoint now properly merges existing social platform settings with new ones instead of replacing them. Fixed token declaration issue and collection name error. Users can now safely configure individual platforms without losing settings for other platforms.
 - June 30, 2025. Fixed YouTube OAuth integration: updated REDIRECT_URI to current Replit domain, added fallback for expired state parameters, and successfully completed end-to-end OAuth flow. YouTube publishing now fully operational with valid access and refresh tokens saved to campaign settings.
 - June 30, 2025. Implemented quota_exceeded status handling: added comprehensive blocking logic to prevent retry loops when API quotas are exceeded. System now treats quota_exceeded status same as published for blocking duplicate attempts while preserving original status. Enhanced error handling with intelligent retry prevention across all social services.
+- June 30, 2025. Optimized scheduler token management: Planning scheduler now uses static environment tokens (DIRECTUS_TOKEN/DIRECTUS_ADMIN_TOKEN) directly instead of dynamic token management. UI completely isolated from admin tokens. Eliminated authentication errors and cleaned server logs. Only scheduler and test scripts use admin tokens.
 
 ## User Preferences
 

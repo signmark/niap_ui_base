@@ -13,12 +13,12 @@ import fetch from 'node-fetch';
 export class SocialPublishingService {
   /**
    * Получает токен для доступа к API
-   * Делегирует получение токена модулю publishScheduler
+   * Использует статический токен из переменных окружения
    * 
    * @returns {Promise<string|null>} Токен для авторизации запросов к API
    */
   public async getSystemToken(): Promise<string | null> {
-    return await getPublishScheduler().getSystemToken();
+    return process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN || null;
   }
   /**
    * Публикует контент в выбранную социальную платформу
