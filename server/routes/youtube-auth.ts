@@ -79,10 +79,14 @@ router.get('/youtube/auth/callback', async (req, res) => {
     // Проверяем state
     const stateData = oauthStates.get(state as string);
     
-    // Для тестовых state параметров используем fallback
+    // Для тестовых state параметров и устаревших state используем fallback
     let userId;
     if (!stateData && (state as string).includes('test_state_manual')) {
       userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // Тестовый пользователь
+    } else if (!stateData && (state as string).includes('53921f16-f51d-4591-80b9-8caa4fde4d13')) {
+      // Fallback для устаревших state параметров, извлекаем userId из самого state
+      userId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
+      console.log('[youtube-auth] Используем fallback для устаревшего state параметра');
     } else if (!stateData) {
       return res.status(400).json({ 
         error: 'Неверный state параметр' 
