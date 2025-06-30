@@ -37,53 +37,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Используем хук проверки принадлежности кампании текущему пользователю
   useCampaignOwnershipCheck();
 
-  // Здесь мы получаем информацию о пользователе и проверяем админ. права по is_smm_admin
+  // Используем существующую проверку администратора из AuthStore
   useEffect(() => {
-    const fetchUserData = async () => {
+    const checkAdminStatus = async () => {
+      if (!token) return;
+      
       try {
-        if (!token) return;
+        // Используем тот же endpoint, что и в store.ts
+        const adminStatus = await checkIsAdmin();
+        setIsSmmAdmin(adminStatus);
         
-        // Получаем данные пользователя с сервера
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-          },
-        });
-        
-        if (!response.ok) {
-          console.error('Ошибка при получении данных пользователя:', response.status);
-          return;
-        }
-        
-        const data = await response.json();
-        // User data retrieved
-        
-        if (data.user && data.user.email) {
-          setUserEmail(data.user.email);
-          
-          // Основная проверка - через поле is_smm_admin
-          const adminStatus = data.user.is_smm_admin === true || 
-                           data.user.is_smm_admin === 1 || 
-                           data.user.is_smm_admin === '1' || 
-                           data.user.is_smm_admin === 'true';
-          
-          // Admin status checked
-          setIsSmmAdmin(adminStatus);
-          
-          // Дополнительная проверка - через email
-          const isAdminByEmail = ADMIN_EMAILS.includes(data.user.email);
-          if (isAdminByEmail) {
-            // User is admin by email verification
+        // Получаем email из токена для дополнительной проверки
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) {
+            setUserEmail(payload.email);
           }
+        } catch (e) {
+          console.error('Ошибка парсинга токена для получения email:', e);
         }
       } catch (error) {
         console.error('Ошибка при проверке администратора:', error);
+        setIsSmmAdmin(false);
       }
     };
     
-    fetchUserData();
-  }, [token]);
+    checkAdminStatus();
+  }, [token, checkIsAdmin]);
 
   useEffect(() => {
     // Проверяем, находимся ли мы на странице входа
