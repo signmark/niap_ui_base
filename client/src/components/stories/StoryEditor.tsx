@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -99,9 +99,10 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   
   // Убираем проверку параметра clear - просто очищаем localStorage для новых Stories
   
-  // Флаг для предотвращения повторных загрузок
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [currentStoryId, setCurrentStoryId] = useState<string | null>(storyId || null);
+  // Флаг для предотвращения повторных загрузок - используем useRef для стабильности
+  const isLoadedRef = useRef(false);
+  // Используем useRef для стабильного хранения currentStoryId
+  const currentStoryIdRef = useRef<string | null>(storyId || null);
   
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
@@ -147,16 +148,16 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     }
     
     // Проверка на изменение storyId - если изменился, сбрасываем флаг загрузки
-    if (storyId && currentStoryId !== storyId) {
-      console.log('🔄 Story ID changed from', currentStoryId, 'to', storyId, '- resetting load state');
-      setCurrentStoryId(storyId);
-      setIsLoaded(false);
+    if (storyId && currentStoryIdRef.current !== storyId) {
+      console.log('🔄 Story ID changed from', currentStoryIdRef.current, 'to', storyId, '- resetting load state');
+      currentStoryIdRef.current = storyId;
+      isLoadedRef.current = false;
       resetStore(); // Очищаем Store при переходе к другой Stories
       return; // Прерываем выполнение, чтобы избежать повторной загрузки в том же цикле
     }
 
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
-    if (storyId && !isLoaded) {
+    if (storyId && !isLoadedRef.current) {
       console.log('🔄 Loading story data for:', storyId, 'Current slides count:', slides.length);
       
       apiRequest(`/api/campaign-content/${storyId}`)
@@ -185,7 +186,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
             console.log('📝 No slides found in metadata, creating default slide');
             initializeSlides();
           }
-          setIsLoaded(true);
+          isLoadedRef.current = true;
         }
       })
       .catch(error => {
@@ -196,7 +197,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           variant: 'destructive'
         });
       });
-    } else if (finalStoryId && (isLoaded || slides.length > 0)) {
+    } else if (finalStoryId && (isLoadedRef.current || slides.length > 0)) {
       console.log('Story already loaded, not reloading to preserve changes');
     } else {
       // Новая Stories - слайд уже создан
@@ -211,7 +212,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     }, 1000);
 
     return () => clearTimeout(fallbackTimer);
-  }, [finalStoryId, isNewStory, isLoaded, slides.length, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
+  }, [finalStoryId, isNewStory, slides.length, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
@@ -254,7 +255,8 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       const result = await response.json();
       
       if (result.success) {
-        setStoryId(result.data.id);
+        // Обновляем ref - store не содержит storyId
+        currentStoryIdRef.current = result.data.id;
         toast({
           title: "История сохранена!",
           description: `История "${storyTitle}" успешно сохранена в базу данных.`,
