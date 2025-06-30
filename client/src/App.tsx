@@ -1,8 +1,38 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+
+// Принудительная очистка истекшего токена
+const clearExpiredToken = () => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < now) {
+        console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ИСТЕКШЕГО ТОКЕНА');
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login';
+      }
+    } catch (e) {
+      console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ПОВРЕЖДЕННОГО ТОКЕНА');
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+  }
+};
+
+// Вызываем при загрузке
+clearExpiredToken();
+
+// Повторная проверка через интервал
+setInterval(() => {
+  clearExpiredToken();
+}, 1000);
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import Campaigns from "@/pages/campaigns";
