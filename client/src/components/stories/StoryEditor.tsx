@@ -111,6 +111,23 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
 
+  // Cleanup при покидании компонента - ВСЕГДА очищаем Store
+  useEffect(() => {
+    return () => {
+      console.log('🧹 CLEANUP: Покидаем StoryEditor - полная очистка Store');
+      resetStore();
+      // Очищаем все localStorage ключи Stories
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('story-') || key.startsWith('storyLoaded_') || key === 'new-story')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    };
+  }, []); // Пустые зависимости - срабатывает только при размонтировании
+
   // Инициализация и очистка для Stories - исправлена логика
   useEffect(() => {
     console.log('StoryEditor useEffect triggered:', { 
@@ -231,6 +248,10 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     
     if (shouldLoadData) {
       console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
+      
+      // ВСЕГДА очищаем Store перед загрузкой новых данных
+      console.log('🧹 Принудительная очистка Store перед загрузкой данных');
+      resetStore();
       
       // Обновляем текущий ID сразу чтобы избежать повторных запросов
       currentStoryIdRef.current = finalStoryId;
