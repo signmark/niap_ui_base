@@ -140,10 +140,30 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       hasSlides: slides.length > 0 
     });
 
+    // СНАЧАЛА проверяем смену Stories ID ДО любых обновлений ref
+    const previousStoryId = currentStoryIdRef.current;
+    const storyChanged = previousStoryId !== null && previousStoryId !== finalStoryId;
+    
+    if (storyChanged) {
+      console.log('🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА при смене Stories:', previousStoryId, '->', finalStoryId);
+      resetStore();
+      isLoadedRef.current = false;
+      
+      // Очищаем все localStorage флаги
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('storyLoaded_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    }
+    
     // При первом входе в компонент ВСЕГДА сбрасываем флаги загрузки
-    isLoadedRef.current = false;
     if (currentStoryIdRef.current === null) {
       console.log('🔧 Первый вход в StoryEditor - сброс всех флагов загрузки');
+      isLoadedRef.current = false;
     }
     
     // КРИТИЧЕСКИ ВАЖНО: очищаем store ТОЛЬКО для новых Stories (без ID)
@@ -221,31 +241,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       }
     }
     
-    // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
-    if (finalStoryId && currentStoryIdRef.current !== null && currentStoryIdRef.current !== finalStoryId) {
-      console.log('🔄 ПЕРЕКЛЮЧЕНИЕ Stories:', currentStoryIdRef.current, '->', finalStoryId);
-      console.log('🧹 ПРИНУДИТЕЛЬНАЯ очистка Store при переключении');
-      
-      // ВСЕГДА очищаем Store при переключении между Stories
-      resetStore();
-      
-      // Обновляем текущий ID и сбрасываем все флаги
-      currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = false;
-      
-      // Удаляем localStorage флаги для всех Stories
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('storyLoaded_')) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-    }
-
-    // При смене Stories ID принудительно загружаем новые данные
-    const storyChanged = currentStoryIdRef.current !== finalStoryId;
+    // Теперь используем уже вычисленное значение storyChanged
     // ВСЕГДА загружаем данные если Stories ID изменился
     const shouldLoadData = finalStoryId && (storyChanged || !isLoadedRef.current);
     
