@@ -71,22 +71,33 @@ export const useStoryStore = create<StoryState>()(
   },
 
   resetStore: () => {
-    console.log('Resetting store and creating initial slide');
+    console.log('ПОЛНАЯ ОЧИСТКА STORY STORE');
+    
+    // 1. Очищаем persist storage
+    try {
+      localStorage.removeItem('story-store');
+    } catch (e) {
+      console.warn('Error clearing localStorage:', e);
+    }
+    
+    // 2. Создаем новый чистый слайд с уникальным ID
     const initialSlide = {
-      id: 'slide-1',
+      id: `slide-${Date.now()}`,
       order: 0,
       duration: 5,
       background: { type: 'color' as const, value: '#6366f1' },
       elements: []
     };
     
+    // 3. Устанавливаем полностью чистое состояние
     set({
       slides: [initialSlide],
       currentSlideIndex: 0,
       storyTitle: '',
       selectedElement: null
     });
-    console.log('Story store reset with initial slide created');
+    
+    console.log('Story store полностью очищен и пересоздан:', initialSlide.id);
   },
 
   setSlides: (slides) => {

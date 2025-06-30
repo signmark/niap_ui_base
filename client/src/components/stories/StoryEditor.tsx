@@ -105,7 +105,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
 
-  // Инициализация для новой Stories - только один раз
+  // Инициализация и очистка для Stories - исправлена логика
   useEffect(() => {
     console.log('StoryEditor useEffect triggered:', { 
       storyId: finalStoryId, 
@@ -114,52 +114,25 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       hasSlides: slides.length > 0 
     });
     
-    // Если это создание новой Stories - очищаем localStorage
+    // КРИТИЧЕСКИ ВАЖНО: всегда сначала очищаем store для новых Stories
     if (isNewStory && !finalStoryId) {
-      console.log('Creating new story - clearing localStorage');
-      localStorage.removeItem('new-story');
-      localStorage.removeItem('story-undefined');
+      console.log('Creating new story - ПОЛНАЯ ОЧИСТКА');
+      
+      // 1. Полная очистка всех данных Stories из store
+      resetStore();
+      
+      // 2. Дополнительная очистка всех localStorage ключей
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('story-')) {
+        if (key.startsWith('story-') || key.includes('story') || key === 'new-story') {
           localStorage.removeItem(key);
+          console.log('Removed localStorage key:', key);
         }
       });
-    }
-    
-    // Для новых Stories создаем базовый слайд если его нет
-    if (!finalStoryId && slides.length === 0) {
-      console.log('Creating initial slide for new story');
       
-      // Очищаем localStorage перед созданием новой Stories
-      localStorage.removeItem('new-story');
-      localStorage.removeItem('story-undefined');
+      // 3. Принудительная очистка persist storage
+      localStorage.removeItem('story-store');
       
-      const newSlides = [{
-        id: 'slide-1',
-        order: 0,
-        duration: 5,
-        background: { type: 'color', value: '#6366f1' },
-        elements: []
-      }];
-      
-      // Устанавливаем слайды в store тоже
-      useStoryStore.setState({ 
-        slides: newSlides,
-        currentSlideIndex: 0,
-        selectedElement: null
-      });
-      
-      setSlides(newSlides);
-      setStoryTitle('');
-      setCurrentSlideIndex(0);
-      localStorage.setItem(localStorageKey, JSON.stringify({ slides: newSlides, title: '' }));
-      console.log('New story initialized with empty slide in both state and store');
-      return;
-    }
-    
-    // Если это новая Stories и слайды уже есть - не перезаписываем
-    if (!storyId && slides.length > 0) {
-      console.log('Story already has slides, skipping initialization');
+      console.log('✅ Новая Stories полностью очищена и готова к созданию');
       return;
     }
     
