@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Copy, Trash2, GripVertical } from 'lucide-react';
 import { StorySlide } from '../../../shared/stories-schema';
+import { useStoryStore } from '@/lib/storyStore';
 
 interface SlidePanelProps {
   slides: StorySlide[];
@@ -22,6 +23,7 @@ export default function SlidePanel({
 }: SlidePanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { addSlide } = useStoryStore();
 
   // Add new slide mutation
   const addSlideMutation = useMutation({
@@ -69,18 +71,13 @@ export default function SlidePanel({
   });
 
   const handleAddSlide = () => {
-    if (!storyId) return;
-
-    const newSlideData = {
-      order: slides.length,
-      duration: 5,
-      background: {
-        type: 'color',
-        value: '#ffffff'
-      }
-    };
-
-    addSlideMutation.mutate(newSlideData);
+    console.log('➕ Adding new slide via Store');
+    addSlide();
+    
+    toast({
+      title: 'Слайд добавлен',
+      description: 'Новый слайд успешно создан'
+    });
   };
 
   const handleDuplicateSlide = (slideIndex: number) => {
