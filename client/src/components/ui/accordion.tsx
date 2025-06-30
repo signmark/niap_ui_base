@@ -95,16 +95,10 @@ const AccordionTrigger = React.forwardRef<
   // Функция для проверки, имеет ли аккордеон соответствующую полноэкранную страницу
   const hasFullscreenPage = (): boolean => {
     if (!value) {
-      console.log('hasFullscreenPage: value is undefined or not passed');
       return false;
     }
     
-    // Для отладки: показать все доступные страницы
-    console.log('Available expandable pages:', Object.keys(expandablePages));
-    
-    const hasPage = Boolean(expandablePages[value] !== undefined);
-    console.log('Checking fullscreen page for value:', value, 'exists:', hasPage, 'url:', expandablePages[value]);
-    return hasPage;
+    return Boolean(expandablePages[value] !== undefined);
   };
   
   return (

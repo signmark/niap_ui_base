@@ -36,6 +36,14 @@ export class PublishScheduler {
   }
 
   /**
+   * Принудительно очищает кэш для конкретного контента
+   */
+  public clearContentCache(contentId: string) {
+    this.processedContentCache.delete(contentId);
+    log(`Кэш очищен для контента ${contentId}`, 'scheduler');
+  }
+
+  /**
    * Проверяет, была ли уже обработана публикация для данной платформы
    */
   private isAlreadyProcessed(contentId: string, platform: string): boolean {
@@ -166,6 +174,27 @@ export class PublishScheduler {
         
         log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
         
+        // Проверяем наши тестовые YouTube контенты
+        const testContentIds = ['bea24ff7-9c75-4404-812b-06d355bd98ac', 'fd9b54a9-24ad-41ab-b1fa-4da777154b3d', '9d2c6b9a-0aa9-44c0-b37d-538b6c6193c3', '654701b6-a865-44f4-8453-0ea433cd5f90', 'ea5a4482-8885-408e-9495-bca8293b7f85', 'e2469bd4-416e-4258-8c34-5822c3759c77', '6eff52ab-7623-414c-8a0c-5744f4c0be55'];
+        
+        // Принудительно очищаем весь кэш обработки для свежего старта
+        if (this.processedContentCache.size > 0) {
+          log(`Принудительно очищаем весь кэш обработки (${this.processedContentCache.size} записей)`, 'scheduler');
+          this.processedContentCache.clear();
+        }
+        const foundTestContent = allContent.filter((item: any) => testContentIds.includes(item.id));
+        
+        if (foundTestContent.length > 0) {
+            log(`🎯 НАЙДЕНО ${foundTestContent.length} тестовых YouTube контентов:`, 'scheduler');
+            foundTestContent.forEach((content: any) => {
+                log(`🎯 Контент ${content.id} - статус: ${content.status}, запланирован на: ${content.scheduled_at}`, 'scheduler');
+                log(`🎯 YouTube платформы: ${JSON.stringify(content.social_platforms?.youtube)}`, 'scheduler');
+            });
+        } else {
+            log(`❌ ТЕСТОВЫЕ YouTube КОНТЕНТЫ НЕ НАЙДЕНЫ в списке ${allContent.length} элементов`, 'scheduler');
+            log(`📋 Все ID контентов: ${allContent.map((item: any) => item.id).slice(0, 10).join(', ')}...`, 'scheduler');
+        }
+        
         if (allContent.length > 0) {
           log(`Планировщик: Статусы найденного контента: ${allContent.map((c: any) => c.status).join(', ')}`, 'scheduler');
         }
@@ -212,16 +241,56 @@ export class PublishScheduler {
           
           // Определяем платформы готовые к публикации с учетом времени
           const readyPlatforms = [];
+          log(`Планировщик: Анализируем платформы для контента ${content.id}: ${Object.keys(platforms).join(', ')}`, 'scheduler');
+          
           for (const [platformName, platformData] of Object.entries(platforms)) {
             const data = platformData as any;
+            log(`Планировщик: Платформа ${platformName} - статус: ${data.status}, enabled: ${data.enabled}`, 'scheduler');
             
             // Пропускаем уже опубликованные платформы (строгая проверка)
             if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
               continue;
             }
             
-            // Пропускаем платформы с ошибками - не публикуем пока не будет исправлен контент
-            if (data.error || data.status === 'failed') {
+            // Пропускаем платформы с критическими ошибками и конфигурационными проблемами
+            if (data.error && (
+              data.error.includes('CRITICAL') ||
+              data.error.includes('не найдены в кампании') ||
+              data.error.includes('not found in campaign') ||
+              data.error.includes('настройки') ||
+              data.error.includes('Настройки') ||
+              data.error.includes('не найден или отсутствует') ||
+              data.error.includes('not found or missing') ||
+              data.error.includes('отсутствует изображение') ||
+              data.error.includes('missing image')
+            )) {
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - конфигурационная ошибка: ${data.error}`, 'scheduler');
+              continue;
+            }
+            
+            // Пропускаем старые failed статусы (старше 24 часов) чтобы не спамить
+            if (data.status === 'failed' && data.lastAttempt) {
+              const lastAttempt = new Date(data.lastAttempt);
+              const hoursOld = (currentTime.getTime() - lastAttempt.getTime()) / (1000 * 60 * 60);
+              if (hoursOld > 24) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 24 часов`, 'scheduler');
+                continue;
+              }
+            }
+            
+            // Временная агрессивная фильтрация: пропускаем все failed Instagram/Facebook статусы старше 1 часа
+            if (data.status === 'failed' && (platformName === 'instagram' || platformName === 'facebook') && data.updatedAt) {
+              const lastUpdate = new Date(data.updatedAt);
+              const hoursOld = (currentTime.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+              if (hoursOld > 1) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 1 часа (вероятно конфигурационная ошибка)`, 'scheduler');
+                continue;
+              }
+            }
+            
+            // Пропускаем YouTube контент с превышенной квотой
+            if (platformName === 'youtube' && data.status === 'quota_exceeded') {
+              log(`Планировщик: Пропускаем YouTube ${content.id} - превышена квота API`, 'scheduler');
               continue;
             }
 
@@ -262,10 +331,10 @@ export class PublishScheduler {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус partial)`, 'scheduler');
             }
-            // Платформа в статусе pending без времени - публикуем сразу
-            else if (data.status === 'pending') {
+            // Платформа в статусе pending или failed без времени - публикуем сразу
+            else if (data.status === 'pending' || data.status === 'failed') {
               shouldPublish = true;
-              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус pending)`, 'scheduler');
+              log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус ${data.status})`, 'scheduler');
             }
 
             if (shouldPublish) {
@@ -315,76 +384,18 @@ export class PublishScheduler {
   }
 
   /**
-   * Публикует контент в указанные платформы через N8N
+   * Публикует контент в указанные платформы через прямые сервисы или N8N
    */
   private async publishContentToPlatforms(content: any, platforms: string[], authToken: string) {
-    // Создаем промисы для параллельной публикации через N8N
+    // Создаем промисы для параллельной публикации
     const publishPromises = platforms.map(async (platform) => {
       try {
-        // Маппинг платформ на N8N webhook endpoints
-        const webhookMap: Record<string, string> = {
-          'telegram': 'publish-telegram',
-          'vk': 'publish-vk',
-          'instagram': 'publish-instagram', 
-          'facebook': 'publish-facebook'
-        };
-
-        const platformString = platform.toLowerCase();
-        const webhookName = webhookMap[platformString] || `publish-${platformString}`;
-
-        // Формируем URL для N8N webhook
-        const n8nBaseUrl = process.env.N8N_URL;
-        if (!n8nBaseUrl) {
-          throw new Error('N8N_URL не настроен в переменных окружения');
+        // YouTube публикуется напрямую через API, остальные через N8N
+        if (platform.toLowerCase() === 'youtube') {
+          return await this.publishToYouTubeDirect(content, authToken);
+        } else {
+          return await this.publishThroughN8nWebhook(content, platform);
         }
-
-        const baseUrl = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
-        const webhookUrl = baseUrl.includes('/webhook') 
-          ? `${baseUrl}/${webhookName}`
-          : `${baseUrl}/webhook/${webhookName}`;
-
-        // КРИТИЧЕСКАЯ ЗАЩИТА: Финальная проверка перед отправкой запроса в N8N
-        log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
-        log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
-        
-        await axios.post(webhookUrl, {
-          contentId: content.id,
-          platform: platformString,
-          source: 'scheduler', // Добавляем метку источника запроса
-          timestamp: new Date().toISOString()
-        }, {
-          timeout: 30000,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        log(`Контент ${content.id} успешно опубликован в ${platform}`, 'scheduler');
-        
-        // Отправляем уведомление в UI об успешной публикации
-        try {
-          const { broadcastNotification } = await import('../index');
-          const platformNames: Record<string, string> = {
-            'instagram': 'Instagram',
-            'facebook': 'Facebook', 
-            'vk': 'ВКонтакте',
-            'telegram': 'Telegram'
-          };
-          const platformName = platformNames[platform.toLowerCase()] || platform;
-          
-          broadcastNotification('content_published', {
-            contentId: content.id,
-            platform: platform,
-            message: `Успешно опубликовано в ${platformName}`
-          });
-        } catch (error) {
-          // Игнорируем ошибки уведомлений
-        }
-        
-        // Блокировки отключены для планировщика
-        
-        return { platform, success: true };
-
       } catch (error: any) {
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
@@ -399,9 +410,239 @@ export class PublishScheduler {
   }
 
   /**
+   * Публикует контент в YouTube напрямую через API
+   */
+  private async publishToYouTubeDirect(content: any, authToken: string) {
+    try {
+      log(`Планировщик: Прямая публикация в YouTube для контента ${content.id}`, 'scheduler');
+      
+      // Получаем данные кампании
+      const campaign = await this.getCampaignData(content.campaign_id, authToken);
+      if (!campaign) {
+        throw new Error('Не удалось получить данные кампании');
+      }
+
+      // Используем социальный сервис для публикации
+      const { socialPublishingService } = await import('./social/index');
+      const result = await socialPublishingService.publishToPlatform(content, 'youtube', campaign, authToken);
+      log(`Результат от социального сервиса: ${JSON.stringify(result)}`, 'scheduler');
+
+      log(`Проверяем флаг quotaExceeded в результате: ${result.quotaExceeded}`, 'scheduler');
+
+      if (result.status === 'published') {
+        log(`YouTube публикация успешна для контента ${content.id}: ${result.postUrl}`, 'scheduler');
+        
+        // Сохраняем результат в базу данных
+        try {
+          const updateData = {
+            socialPlatforms: {
+              ...content.social_platforms,
+              youtube: {
+                status: 'published',
+                postUrl: result.postUrl,
+                platform: 'youtube',
+                publishedAt: result.publishedAt || new Date().toISOString(),
+                videoId: result.videoId || null
+              }
+            }
+          };
+          
+          await storage.updateCampaignContent(content.id, updateData, authToken);
+          log(`YouTube результат сохранен в базу данных для контента ${content.id}`, 'scheduler');
+        } catch (saveError: any) {
+          log(`Ошибка сохранения YouTube результата: ${saveError.message}`, 'scheduler');
+        }
+        
+        // Отправляем уведомление
+        try {
+          const { broadcastNotification } = await import('../index');
+          broadcastNotification('content_published', {
+            contentId: content.id,
+            platform: 'youtube',
+            message: 'Успешно опубликовано в YouTube'
+          });
+        } catch (error) {
+          // Игнорируем ошибки уведомлений
+        }
+        
+        return { platform: 'youtube', success: true };
+      } else {
+        // Проверяем специальный флаг превышения квоты
+        if (result.quotaExceeded) {
+          // Специальная обработка ошибки квоты - сразу помечаем статус
+          log(`YouTube квота превышена для контента ${content.id}, помечаем как quota_exceeded`, 'scheduler');
+          log(`Результат от YouTube сервиса: ${JSON.stringify(result)}`, 'scheduler');
+          
+          try {
+            const authToken = await this.getSystemToken();
+            if (authToken) {
+              console.log(`🔍 Исходные social_platforms для ${content.id}:`, JSON.stringify(content.social_platforms, null, 2));
+              
+              const updateData = {
+                socialPlatforms: {
+                  ...content.social_platforms,
+                  youtube: {
+                    ...content.social_platforms?.youtube,
+                    status: 'quota_exceeded',
+                    error: 'Превышена квота YouTube API',
+                    lastAttempt: new Date().toISOString()
+                  }
+                }
+              };
+              
+              console.log(`📤 Отправляем обновление в Directus для контента ${content.id}:`, JSON.stringify(updateData, null, 2));
+              await storage.updateCampaignContent(content.id, updateData, authToken);
+              log(`Статус quota_exceeded установлен для контента ${content.id}`, 'scheduler');
+              
+              // Проверяем и обновляем общий статус контента после установки quota_exceeded
+              await this.updateContentStatus(content.id, authToken);
+            }
+          } catch (updateError: any) {
+            log(`Ошибка обновления статуса quota_exceeded: ${updateError.message}`, 'scheduler');
+          }
+          
+          return { platform: 'youtube', success: false, error: result.error };
+        }
+        
+        throw new Error(result.error || 'Неизвестная ошибка YouTube API');
+      }
+
+    } catch (error: any) {
+      log(`Ошибка прямой публикации YouTube ${content.id}: ${error.message}`, 'scheduler');
+      
+      // Если это ошибка превышения квоты - помечаем контент как quota_exceeded
+      if (error.message?.includes('you have exceeded your quota') || 
+          error.message?.includes('quotaExceeded') ||
+          error.message?.includes('quota') ||
+          error.message?.includes('Превышена квота YouTube API')) {
+        log(`YouTube квота превышена для контента ${content.id}, помечаем как quota_exceeded`, 'scheduler');
+        
+        try {
+          const authToken = await this.getSystemToken();
+          const updateData = {
+            social_platforms: {
+              ...content.social_platforms,
+              youtube: {
+                ...content.social_platforms?.youtube,
+                status: 'quota_exceeded',
+                error: 'Превышена квота YouTube API',
+                lastAttempt: new Date().toISOString()
+              }
+            }
+          };
+          
+          if (authToken) {
+            await storage.updateCampaignContent(content.id, updateData, authToken);
+            log(`Статус quota_exceeded установлен для контента ${content.id}`, 'scheduler');
+            
+            // Проверяем и обновляем общий статус контента после установки quota_exceeded
+            await this.updateContentStatus(content.id, authToken);
+          }
+        } catch (updateError: any) {
+          log(`Ошибка обновления статуса quota_exceeded: ${updateError.message}`, 'scheduler');
+        }
+      }
+      
+      return { platform: 'youtube', success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Публикует контент через N8N webhook
+   */
+  private async publishThroughN8nWebhook(content: any, platform: string) {
+    // Маппинг платформ на N8N webhook endpoints
+    const webhookMap: Record<string, string> = {
+      'telegram': 'publish-telegram',
+      'vk': 'publish-vk',
+      'instagram': 'publish-instagram', 
+      'facebook': 'publish-facebook'
+    };
+
+    const platformString = platform.toLowerCase();
+    const webhookName = webhookMap[platformString] || `publish-${platformString}`;
+
+    // Формируем URL для N8N webhook
+    const n8nBaseUrl = process.env.N8N_URL;
+    if (!n8nBaseUrl) {
+      throw new Error('N8N_URL не настроен в переменных окружения');
+    }
+
+    const baseUrl = n8nBaseUrl.endsWith('/') ? n8nBaseUrl.slice(0, -1) : n8nBaseUrl;
+    const webhookUrl = baseUrl.includes('/webhook') 
+      ? `${baseUrl}/${webhookName}`
+      : `${baseUrl}/webhook/${webhookName}`;
+
+    log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
+    log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
+    
+    await axios.post(webhookUrl, {
+      contentId: content.id,
+      platform: platformString,
+      source: 'scheduler',
+      timestamp: new Date().toISOString()
+    }, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    log(`Контент ${content.id} успешно отправлен в N8N для ${platform}`, 'scheduler');
+    
+    // Отправляем уведомление в UI
+    try {
+      const { broadcastNotification } = await import('../index');
+      const platformNames: Record<string, string> = {
+        'instagram': 'Instagram',
+        'facebook': 'Facebook', 
+        'vk': 'ВКонтакте',
+        'telegram': 'Telegram'
+      };
+      const platformName = platformNames[platform.toLowerCase()] || platform;
+      
+      broadcastNotification('content_published', {
+        contentId: content.id,
+        platform: platform,
+        message: `Отправлено в N8N для публикации в ${platformName}`
+      });
+    } catch (error) {
+      // Игнорируем ошибки уведомлений
+    }
+    
+    return { platform, success: true };
+  }
+
+  /**
+   * Получает данные кампании
+   */
+  private async getCampaignData(campaignId: string, authToken: string) {
+    try {
+      const response = await axios.get(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        params: {
+          fields: 'id,name,social_media_settings'
+        }
+      });
+      log(`Получены данные кампании ${campaignId}: ${JSON.stringify(response.data.data)}`, 'scheduler');
+      return response.data.data;
+    } catch (error: any) {
+      log(`Ошибка получения данных кампании ${campaignId}: ${error.message}`, 'scheduler');
+      return null;
+    }
+  }
+
+  /**
    * Обновляет общий статус контента на основе статусов всех платформ
    */
-  private async updateContentStatus(contentId: string, authToken: string) {
+  private async updateContentStatus(contentId: string, authToken: string | null) {
+    if (!authToken) {
+      log(`Нет токена для обновления статуса контента ${contentId}`, 'scheduler');
+      return;
+    }
     try {
       // Получаем актуальные данные контента
       const freshContent = await storage.getCampaignContentById(contentId, authToken);
@@ -416,10 +657,17 @@ export class PublishScheduler {
       const publishedCount = Object.values(platforms).filter((data: any) => 
         data.status === 'published' && data.postUrl
       ).length;
+      
+      // Считаем платформы с quota_exceeded как "завершенные" 
+      const quotaExceededCount = Object.values(platforms).filter((data: any) => 
+        data.status === 'quota_exceeded'
+      ).length;
+      
+      const completedCount = publishedCount + quotaExceededCount;
 
       // Определяем новый статус
       let newStatus = freshContent.status;
-      if (publishedCount === allPlatforms.length) {
+      if (completedCount === allPlatforms.length) {
         newStatus = 'published';
       } else if (publishedCount > 0) {
         newStatus = 'partially_published';

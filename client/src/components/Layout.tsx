@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users, Video, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { DIRECTUS_URL } from "@/lib/directus";
@@ -195,7 +195,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
               <div className="mb-6 px-4 sidebar-title text-center">
-                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1" />
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1 select-none pointer-events-none" style={{userSelect: 'none'}} />
               </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (
@@ -257,7 +257,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="h-full sidebar border-r">
             <div className="px-3 py-4">
               <div className="mb-6 px-4 sidebar-title text-center">
-                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1" />
+                <img src="/images/smm-logo.png" alt="SMM Manager Logo" className="h-auto w-[160px] mx-auto pt-1 pb-1 select-none pointer-events-none" style={{userSelect: 'none'}} />
               </div>
               <div className="space-y-1">
                 {navItems.map(({ path, label, icon: Icon }) => (

@@ -1,0 +1,228 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SettingsDialog.tsx:102 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+auth.ts:94 Токен успешно обновлен через API
+store.ts:43 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+store.ts:93 Проверка статуса администратора
+store.ts:103 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+CampaignSelector.tsx:54 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ CampaignSelector.tsx:54
+fetchFn @ @tanstack_react-query.js?v=44182660:840
+run @ @tanstack_react-query.js?v=44182660:494
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384
+CampaignSelector.tsx:72 Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (CampaignSelector.tsx:65:17)
+overrideMethod @ hook.js:608
+queryFn @ CampaignSelector.tsx:72
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=44182660:840
+run @ @tanstack_react-query.js?v=44182660:494
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384
+SettingsDialog.tsx:105 Successfully fetched 8 API keys
+store.ts:115 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750689252819}
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true
+store.ts:115 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1750689253104}
+store.ts:118 Пользователь является администратором
+store.ts:83 Устанавливаем статус администратора: true
+CampaignSelector.tsx:54 
+            
+            
+           GET https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaigns 500 (Internal Server Error)
+queryFn @ CampaignSelector.tsx:54
+fetchFn @ @tanstack_react-query.js?v=44182660:840
+run @ @tanstack_react-query.js?v=44182660:494
+(anonymous) @ @tanstack_react-query.js?v=44182660:519
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=44182660:515
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384
+CampaignSelector.tsx:72 Error loading campaigns: Error: Не удалось загрузить кампании (500)
+    at queryFn (CampaignSelector.tsx:65:17)
+overrideMethod @ hook.js:608
+queryFn @ CampaignSelector.tsx:72
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=44182660:840
+run @ @tanstack_react-query.js?v=44182660:494
+(anonymous) @ @tanstack_react-query.js?v=44182660:519
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=44182660:515
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384
+logger.ts:118 Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Не удалось загрузить кампании (500)
+    at queryFn (CampaignSelector.tsx:65:17)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:118
+systemError @ logger.ts:151
+handleError @ error-handler.ts:125
+globalErrorHandler @ queryClient.ts:117
+onError @ @tanstack_react-query.js?v=44182660:867
+reject @ @tanstack_react-query.js?v=44182660:465
+(anonymous) @ @tanstack_react-query.js?v=44182660:508
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+(anonymous) @ @tanstack_react-query.js?v=44182660:519
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=44182660:515
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384
+queryClient.ts:121 Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ queryClient.ts:121
+onError @ @tanstack_react-query.js?v=44182660:867
+reject @ @tanstack_react-query.js?v=44182660:465
+(anonymous) @ @tanstack_react-query.js?v=44182660:508
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+(anonymous) @ @tanstack_react-query.js?v=44182660:519
+Promise.then
+(anonymous) @ @tanstack_react-query.js?v=44182660:515
+Promise.catch
+run @ @tanstack_react-query.js?v=44182660:498
+start @ @tanstack_react-query.js?v=44182660:536
+fetch @ @tanstack_react-query.js?v=44182660:926
+executeFetch_fn @ @tanstack_react-query.js?v=44182660:2211
+onSubscribe @ @tanstack_react-query.js?v=44182660:1898
+subscribe @ @tanstack_react-query.js?v=44182660:24
+(anonymous) @ @tanstack_react-query.js?v=44182660:3022
+subscribeToStore @ chunk-276SZO74.js?v=44182660:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=44182660:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=44182660:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=44182660:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=44182660:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=44182660:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=44182660:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=44182660:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=44182660:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=44182660:9119
+commitRootImpl @ chunk-276SZO74.js?v=44182660:19432
+commitRoot @ chunk-276SZO74.js?v=44182660:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=44182660:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=44182660:18718
+workLoop @ chunk-276SZO74.js?v=44182660:197
+flushWork @ chunk-276SZO74.js?v=44182660:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=44182660:384

@@ -1,155 +1,111 @@
 /**
- * Script to fix admin permissions for user creation in Directus
- * Grants the administrator role proper permissions to create users
+ * Скрипт для исправления прав администратора для пользователя lbrspb@gmail.com
+ * Обновляет роль пользователя на Administrator в Directus
  */
 
-import axios from 'axios';
-
-const DIRECTUS_URL = 'https://directus.roboflow.tech';
-
-async function getWorkingAdminToken() {
-  // Try different admin credentials that might be working
-  const credentials = [
-    { email: 'admin@roboflow.tech', password: 'admin123' },
-    { email: 'admin@roboflow.tech', password: 'admin1234' },
-    { email: 'lbrspb@gmail.com', password: 'QtpZ3dh7' }
-  ];
-
-  for (const cred of credentials) {
-    try {
-      console.log(`Trying to authenticate with ${cred.email}...`);
-      const response = await axios.post(`${DIRECTUS_URL}/auth/login`, {
-        email: cred.email,
-        password: cred.password
-      });
-      
-      if (response.data.data && response.data.data.access_token) {
-        console.log(`✓ Successfully authenticated with ${cred.email}`);
-        return {
-          token: response.data.data.access_token,
-          user: response.data.data.user
-        };
-      }
-    } catch (error) {
-      console.log(`✗ Failed to authenticate with ${cred.email}`);
-    }
-  }
+async function fixAdminPermissions() {
+  const DIRECTUS_URL = 'https://directus.roboflow.tech';
   
-  throw new Error('No working admin credentials found');
-}
-
-async function getCurrentUserRole(token) {
+  console.log('🔧 Исправляем права администратора для lbrspb@gmail.com...');
+  
   try {
-    const response = await axios.get(`${DIRECTUS_URL}/users/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    // Получаем токен администратора из переменных среды
+    const adminToken = process.env.DIRECTUS_TOKEN;
+    if (!adminToken) {
+      console.error('❌ Отсутствует DIRECTUS_TOKEN в переменных среды');
+      process.exit(1);
+    }
     
-    console.log('Current user info:', {
-      id: response.data.data.id,
-      email: response.data.data.email,
-      role: response.data.data.role
-    });
-    
-    return response.data.data.role;
-  } catch (error) {
-    console.error('Error getting current user:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-async function getRolePermissions(token, roleId) {
-  try {
-    const response = await axios.get(`${DIRECTUS_URL}/permissions`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      params: {
-        'filter[role][_eq]': roleId
+    // 1. Получаем информацию о пользователе
+    console.log('📋 Получаем информацию о пользователе...');
+    const userResponse = await fetch(`${DIRECTUS_URL}/users?filter[email][_eq]=lbrspb@gmail.com`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
       }
     });
     
-    console.log(`Role ${roleId} has ${response.data.data.length} permissions`);
-    return response.data.data;
-  } catch (error) {
-    console.error('Error getting role permissions:', error.response?.data || error.message);
-    return [];
-  }
-}
-
-async function createUserPermission(token, roleId) {
-  try {
-    // Check if permission already exists
-    const existingPermissions = await getRolePermissions(token, roleId);
-    const userPermission = existingPermissions.find(p => 
-      p.collection === 'directus_users' && p.action === 'create'
-    );
-    
-    if (userPermission) {
-      console.log('✓ User creation permission already exists');
-      return userPermission;
+    if (!userResponse.ok) {
+      throw new Error(`Ошибка получения пользователя: ${userResponse.status}`);
     }
     
-    // Create the permission
-    const permissionData = {
-      role: roleId,
-      collection: 'directus_users',
-      action: 'create',
-      permissions: {},
-      validation: {},
-      presets: {},
-      fields: ['*']
-    };
+    const userData = await userResponse.json();
+    console.log('👤 Данные пользователя:', JSON.stringify(userData, null, 2));
     
-    const response = await axios.post(`${DIRECTUS_URL}/permissions`, permissionData, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    if (!userData.data || userData.data.length === 0) {
+      console.error('❌ Пользователь lbrspb@gmail.com не найден');
+      process.exit(1);
+    }
+    
+    const user = userData.data[0];
+    console.log(`📧 Найден пользователь: ${user.email} (ID: ${user.id})`);
+    console.log(`🔖 Текущая роль: ${user.role || 'не назначена'}`);
+    
+    // 2. Получаем роль Administrator
+    console.log('🔍 Поиск роли Administrator...');
+    const rolesResponse = await fetch(`${DIRECTUS_URL}/roles?filter[name][_eq]=Administrator`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
     });
     
-    console.log('✓ Created user creation permission for role:', roleId);
-    return response.data.data;
-    
-  } catch (error) {
-    console.error('Error creating user permission:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-async function main() {
-  try {
-    console.log('🔧 Fixing admin permissions for user creation...');
-    
-    // Get working admin token
-    const auth = await getWorkingAdminToken();
-    const token = auth.token;
-    
-    // Get current user's role
-    const roleId = await getCurrentUserRole(token);
-    
-    if (!roleId) {
-      throw new Error('No role found for current user');
+    if (!rolesResponse.ok) {
+      throw new Error(`Ошибка получения ролей: ${rolesResponse.status}`);
     }
     
-    // Check current permissions
-    await getRolePermissions(token, roleId);
+    const rolesData = await rolesResponse.json();
+    console.log('🔐 Данные ролей:', JSON.stringify(rolesData, null, 2));
     
-    // Create user creation permission
-    await createUserPermission(token, roleId);
+    if (!rolesData.data || rolesData.data.length === 0) {
+      console.error('❌ Роль Administrator не найдена');
+      process.exit(1);
+    }
     
-    // Verify the permission was created
-    console.log('\n📋 Verifying permissions...');
-    const updatedPermissions = await getRolePermissions(token, roleId);
-    const userCreatePermission = updatedPermissions.find(p => 
-      p.collection === 'directus_users' && p.action === 'create'
-    );
+    const adminRole = rolesData.data[0];
+    console.log(`🛡️ Найдена роль Administrator: ${adminRole.name} (ID: ${adminRole.id})`);
     
-    if (userCreatePermission) {
-      console.log('✅ Admin permissions successfully configured for user creation');
-      console.log('Registration system should now work properly');
-    } else {
-      console.log('❌ Failed to create user creation permission');
+    // 3. Обновляем роль пользователя
+    console.log('⚡ Назначаем права администратора...');
+    const updateResponse = await fetch(`${DIRECTUS_URL}/users/${user.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        role: adminRole.id
+      })
+    });
+    
+    if (!updateResponse.ok) {
+      const errorData = await updateResponse.json();
+      throw new Error(`Ошибка обновления пользователя: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
+    }
+    
+    const updatedUser = await updateResponse.json();
+    console.log('✅ Пользователь успешно обновлен:', JSON.stringify(updatedUser, null, 2));
+    
+    // 4. Проверяем результат
+    console.log('🔍 Проверяем результат...');
+    const verifyResponse = await fetch(`${DIRECTUS_URL}/users/${user.id}`, {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (verifyResponse.ok) {
+      const verifyData = await verifyResponse.json();
+      console.log(`✅ Пользователь ${verifyData.data.email} теперь имеет роль: ${verifyData.data.role}`);
+      console.log('🎉 Права администратора успешно назначены!');
     }
     
   } catch (error) {
-    console.error('❌ Error fixing admin permissions:', error.message);
+    console.error('❌ Ошибка при исправлении прав:', error.message);
     process.exit(1);
   }
 }
 
-main();
+// Запускаем скрипт
+fixAdminPermissions();

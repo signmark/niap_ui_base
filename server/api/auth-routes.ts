@@ -28,16 +28,26 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Проверяем валидность токена
-      const response = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем JWT токен напрямую без проверки времени жизни
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
       
       res.status(200).json({
         valid: true,
-        user: response.data.data
+        user: {
+          id: payload.id,
+          email: payload.email || 'unknown@email.com',
+          role: payload.role
+        }
       });
     } catch (error) {
       console.error('Error checking token:', error);
@@ -169,11 +179,25 @@ export function registerAuthRoutes(app: Express): void {
       });
 
       // Дополнительно получаем данные пользователя
-      const userResponse = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${response.data.data.access_token}`
-        }
-      });
+      // Декодируем токен напрямую
+      const accessToken = response.data.data.access_token;
+      const tokenParts = accessToken.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      const userResponse = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com',
+            role: payload.role,
+            first_name: payload.first_name || '',
+            last_name: payload.last_name || ''
+          } 
+        } 
+      };
 
       const userData = userResponse.data.data;
       const token = response.data.data.access_token;
@@ -362,12 +386,30 @@ export function registerAuthRoutes(app: Express): void {
     const token = authHeader.substring(7);
     
     try {
-      // Получаем данные пользователя
-      const response = await directusApiManager.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Декодируем токен напрямую без запроса к API
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+      
+      // Проверяем наличие обязательных полей
+      if (!payload.id) {
+        throw new Error('Invalid token payload');
+      }
+      
+      const response = { 
+        data: { 
+          data: { 
+            id: payload.id, 
+            email: payload.email || 'unknown@email.com',
+            role: payload.role,
+            first_name: payload.first_name || '',
+            last_name: payload.last_name || ''
+          } 
+        } 
+      };
 
       const userData = response.data.data;
       

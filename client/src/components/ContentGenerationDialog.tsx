@@ -208,10 +208,10 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       return await apiRequest('/api/campaign-content', {
         method: 'POST',
         data: {
-          campaignId: campaignId,
+          campaign_id: campaignId,
           title: title,
           content: generationResult,
-          contentType: 'text',
+          content_type: 'text',
           prompt: prompt,
           keywords: selectedKeywords,
           status: 'draft'

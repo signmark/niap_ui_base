@@ -88,37 +88,37 @@ class PublicationStatusChecker {
       return this.adminTokenCache;
     }
     
-    // Пробуем получить токен из активных сессий DirectusAuthManager
-    const activeSessions = directusAuthManager.getAllActiveSessions();
-    if (activeSessions && activeSessions.length > 0) {
-      const firstSession = activeSessions[0];
-      if (isVerboseMode) {
-        log(`Использование токена из активной сессии пользователя ${firstSession.userId}`, 'status-checker');
-      }
-      
-      // Кэшируем токен
-      this.adminTokenCache = firstSession.token;
+    // Сначала пробуем получить токен из переменной окружения
+    const envToken = process.env.DIRECTUS_ADMIN_TOKEN;
+    if (envToken) {
+      this.adminTokenCache = envToken;
       this.adminTokenTimestamp = Date.now();
-      return firstSession.token;
+      return envToken;
+    }
+    
+    // Пробуем получить токен из активных сессий DirectusAuthManager
+    try {
+      const activeSessions = directusAuthManager.getAllActiveSessions();
+      if (activeSessions && activeSessions.length > 0) {
+        const firstSession = activeSessions[0];
+        this.adminTokenCache = firstSession.token;
+        this.adminTokenTimestamp = Date.now();
+        return firstSession.token;
+      }
+    } catch (error) {
+      // Игнорируем ошибки получения активных сессий
     }
     
     // Если нет активных сессий, запрашиваем сессию администратора
     try {
-      const adminSession = await directusAuthManager.getAdminSession();
+      const adminSession = directusAuthManager.getAdminSession();
       if (adminSession && adminSession.token) {
-        if (isVerboseMode) {
-          log(`Использование токена из сессии администратора ${adminSession.id}`, 'status-checker');
-        }
-        
-        // Кэшируем токен
         this.adminTokenCache = adminSession.token;
         this.adminTokenTimestamp = Date.now();
         return adminSession.token;
       }
     } catch (error: any) {
-      if (isVerboseMode) {
-        log(`Ошибка при получении сессии администратора: ${error.message}`, 'status-checker');
-      }
+      log(`Ошибка при получении сессии администратора: ${error.message}`, 'status-checker');
     }
     
     // Если не удалось получить токен через DirectusAuthManager, 

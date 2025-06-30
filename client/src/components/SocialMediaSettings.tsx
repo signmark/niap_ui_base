@@ -29,6 +29,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
+import { InstagramOAuthSetup } from "./InstagramOAuthSetup";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -52,6 +54,8 @@ const socialMediaSettingsSchema = z.object({
   youtube: z.object({
     apiKey: z.string().nullable(),
     channelId: z.string().nullable(),
+    accessToken: z.string().nullable(),
+    refreshToken: z.string().nullable(),
   }),
 });
 
@@ -89,7 +93,7 @@ export function SocialMediaSettings({
       vk: { token: null, groupId: null },
       instagram: { token: null, accessToken: null, businessAccountId: null },
       facebook: { token: null, pageId: null },
-      youtube: { apiKey: null, channelId: null }
+      youtube: { apiKey: null, channelId: null, accessToken: null, refreshToken: null }
     }
   });
 
@@ -491,76 +495,84 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="instagram.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="Введите токен доступа" 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateInstagramToken}
-                        disabled={instagramStatus.isLoading}
-                      >
-                        {instagramStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
-                        }
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              {/* Instagram OAuth Setup */}
+              <InstagramOAuthSetup 
+                campaignId={campaignId}
+                onAuthComplete={() => {
+                  // Обновляем статус после успешной авторизации
+                  setInstagramStatus({
+                    isLoading: false,
+                    isValid: true,
+                    message: 'Instagram OAuth авторизация настроена'
+                  });
+                  onSettingsUpdated?.();
+                }}
               />
-              <FormField
-                control={form.control}
-                name="instagram.accessToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Дополнительный токен</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Введите дополнительный токен" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="instagram.businessAccountId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID бизнес-аккаунта</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: 17841409299499997" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                <h4 className="text-sm font-medium mb-2">Альтернативный способ - API ключи</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Если OAuth не работает, вы можете настроить Instagram через API ключи вручную
+                </p>
+                
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="instagram.token"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Access Token</FormLabel>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Введите токен доступа" 
+                              {...field} 
+                              value={field.value || ''}
+                              className="text-xs"
+                            />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={validateInstagramToken}
+                            disabled={instagramStatus.isLoading}
+                          >
+                            {instagramStatus.isLoading ? 
+                              <Loader2 className="h-4 w-4 animate-spin" /> : 
+                              <AlertCircle className="h-4 w-4" />
+                            }
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="instagram.businessAccountId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">ID бизнес-аккаунта</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Например: 17841409299499997" 
+                            {...field} 
+                            value={field.value || ''}
+                            className="text-xs"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
 
@@ -637,55 +649,116 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="youtube.apiKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>API Key</FormLabel>
-                    <div className="flex space-x-2">
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                  <span className="font-medium">Требуется для YouTube:</span>
+                  <br />• <span className="font-medium">API Key</span> - для базовых операций с YouTube API
+                  <br />• <span className="font-medium">ID Канала</span> - для указания канала для загрузки
+                  <br />• <span className="font-medium">OAuth авторизация</span> - для загрузки видео (см. ниже)
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="youtube.apiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>API Key (обязательно)</FormLabel>
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Введите API ключ YouTube" 
+                            {...field} 
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={validateYoutubeApiKey}
+                          disabled={youtubeStatus.isLoading}
+                        >
+                          {youtubeStatus.isLoading ? 
+                            <Loader2 className="h-4 w-4 animate-spin" /> : 
+                            <AlertCircle className="h-4 w-4" />
+                          }
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Получите в Google Cloud Console → APIs & Services → Credentials
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="youtube.channelId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID Канала (обязательно)</FormLabel>
                       <FormControl>
                         <Input 
-                          type="password" 
-                          placeholder="Введите API ключ" 
+                          placeholder="Например: UCxxxxxxxxxxxxxxxxxxxxxxx" 
                           {...field} 
                           value={field.value || ''}
                         />
                       </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateYoutubeApiKey}
-                        disabled={youtubeStatus.isLoading}
-                      >
-                        {youtubeStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
-                        }
-                      </Button>
+                      <div className="text-xs text-muted-foreground">
+                        ID канала можно найти в YouTube Studio → Настройки → Канал → Основная информация
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {/* YouTube OAuth Setup */}
+              <div className="border-t pt-4 mt-4">
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium">OAuth Авторизация (для загрузки видео)</h4>
+                  <div className="text-xs text-muted-foreground">
+                    После ввода API Key и Channel ID выполните OAuth авторизацию для возможности загрузки видео
+                  </div>
+                  
+                  {/* Показываем статус OAuth токенов */}
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-muted-foreground">Access Token:</span>
+                      <span className={form.watch('youtube.accessToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                        {form.watch('youtube.accessToken') ? 'Получен' : 'Отсутствует'}
+                      </span>
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="youtube.channelId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID Канала</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: UCxyz123abc..." 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <div className="flex items-center space-x-1">
+                      <span className="text-muted-foreground">Refresh Token:</span>
+                      <span className={form.watch('youtube.refreshToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                        {form.watch('youtube.refreshToken') ? 'Получен' : 'Отсутствует'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <YouTubeOAuthSetup 
+                    onAuthComplete={(authData) => {
+                      console.log('YouTube авторизация завершена:', authData);
+                      
+                      // Обновляем форму с полученными токенами
+                      if (authData.accessToken) {
+                        form.setValue('youtube.accessToken', authData.accessToken);
+                      }
+                      if (authData.refreshToken) {
+                        form.setValue('youtube.refreshToken', authData.refreshToken);
+                      }
+                      if (authData.channelId) {
+                        form.setValue('youtube.channelId', authData.channelId);
+                      }
+                      
+                      // Сохраняем настройки автоматически
+                      form.handleSubmit(onSubmit)();
+                    }} 
+                  />
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

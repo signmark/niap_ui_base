@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash, Settings } from "lucide-react";
+import { Plus, Search, Pencil, Trash, Settings, FileText } from "lucide-react";
 import { CampaignForm } from "@/components/CampaignForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/store";
@@ -286,6 +286,7 @@ export default function Campaigns() {
                     <Search className="mr-2 h-4 w-4" />
                     Управлять
                   </Button>
+
                   <Button
                     variant="outline"
                     size="sm"

@@ -1,0 +1,332 @@
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaign-content 400 (Bad Request)
+apiRequest @ src/lib/queryClient.ts:36
+mutationFn @ src/components/Conte…ationDialog.tsx:163
+fn @ @fs/home/runner/work….js?v=fd0d1f8e:1189
+run @ @fs/home/runner/work…y.js?v=fd0d1f8e:494
+start @ @fs/home/runner/work…y.js?v=fd0d1f8e:536
+execute @ @fs/home/runner/work….js?v=fd0d1f8e:1225
+await in execute
+mutate @ @fs/home/runner/work….js?v=fd0d1f8e:2630
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:3295
+onClick @ src/components/Conte…ationDialog.tsx:727
+callCallback2 @ @fs/home/runner/work….js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ @fs/home/runner/work….js?v=fd0d1f8e:3699
+invokeGuardedCallback @ @fs/home/runner/work….js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ @fs/home/runner/work….js?v=fd0d1f8e:3736
+executeDispatch @ @fs/home/runner/work….js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ @fs/home/runner/work….js?v=fd0d1f8e:7034
+processDispatchQueue @ @fs/home/runner/work….js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ @fs/home/runner/work….js?v=fd0d1f8e:7051
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:7174
+batchedUpdates$1 @ @fs/home/runner/work…js?v=fd0d1f8e:18913
+batchedUpdates @ @fs/home/runner/work….js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=fd0d1f8e:5478
+dispatchEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5449
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ Системная ошибка: Неожиданная ошибка API (400). Свяжитесь с поддержкой. Error: 400: {"error":"Отсутствует обязательное поле: campaign_id"}
+    at throwIfResNotOk (src/lib/queryClient.ts:19:19)
+    at async apiRequest (src/lib/queryClient.ts:42:3)
+    at async Object.mutationFn (src/components/ContentGenerationDialog.tsx:163:14)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:72
+systemError @ logger.ts:96
+handleApiError @ src/utils/error-handler.ts:52
+handleError @ src/utils/error-handler.ts:84
+globalErrorHandler @ src/lib/queryClient.ts:65
+execute @ @fs/home/runner/work….js?v=fd0d1f8e:1247
+await in execute
+mutate @ @fs/home/runner/work….js?v=fd0d1f8e:2630
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:3295
+onClick @ src/components/Conte…ationDialog.tsx:727
+callCallback2 @ @fs/home/runner/work….js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ @fs/home/runner/work….js?v=fd0d1f8e:3699
+invokeGuardedCallback @ @fs/home/runner/work….js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ @fs/home/runner/work….js?v=fd0d1f8e:3736
+executeDispatch @ @fs/home/runner/work….js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ @fs/home/runner/work….js?v=fd0d1f8e:7034
+processDispatchQueue @ @fs/home/runner/work….js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ @fs/home/runner/work….js?v=fd0d1f8e:7051
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:7174
+batchedUpdates$1 @ @fs/home/runner/work…js?v=fd0d1f8e:18913
+batchedUpdates @ @fs/home/runner/work….js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=fd0d1f8e:5478
+dispatchEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5449
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ src/lib/queryClient.ts:67
+execute @ @fs/home/runner/work….js?v=fd0d1f8e:1247
+await in execute
+mutate @ @fs/home/runner/work….js?v=fd0d1f8e:2630
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:3295
+onClick @ src/components/Conte…ationDialog.tsx:727
+callCallback2 @ @fs/home/runner/work….js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ @fs/home/runner/work….js?v=fd0d1f8e:3699
+invokeGuardedCallback @ @fs/home/runner/work….js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ @fs/home/runner/work….js?v=fd0d1f8e:3736
+executeDispatch @ @fs/home/runner/work….js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ @fs/home/runner/work….js?v=fd0d1f8e:7034
+processDispatchQueue @ @fs/home/runner/work….js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ @fs/home/runner/work….js?v=fd0d1f8e:7051
+(anonymous) @ @fs/home/runner/work….js?v=fd0d1f8e:7174
+batchedUpdates$1 @ @fs/home/runner/work…js?v=fd0d1f8e:18913
+batchedUpdates @ @fs/home/runner/work….js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=fd0d1f8e:5478
+dispatchEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=fd0d1f8e:5449
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ hasFullscreenPage: value is undefined or not passed
+ TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+ TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022

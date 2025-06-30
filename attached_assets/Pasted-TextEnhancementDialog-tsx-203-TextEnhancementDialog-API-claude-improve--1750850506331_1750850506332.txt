@@ -1,0 +1,125 @@
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+index.tsx:387 Загружено ключевых слов: 22
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+queryClient.ts:60 
+            
+            
+           POST https://d9a1dedf-ca5f-473e-a359-300c4629f03a-00-16xsuv5u2l2mj.worf.replit.dev/api/campaign-content 400 (Bad Request)
+apiRequest @ queryClient.ts:60
+mutationFn @ ContentGenerationDialog.tsx:208
+fn @ @tanstack_react-query.js?v=fd0d1f8e:1189
+run @ @tanstack_react-query.js?v=fd0d1f8e:494
+start @ @tanstack_react-query.js?v=fd0d1f8e:536
+execute @ @tanstack_react-query.js?v=fd0d1f8e:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=fd0d1f8e:2630
+(anonymous) @ @tanstack_react-query.js?v=fd0d1f8e:3295
+onClick @ ContentGenerationDialog.tsx:458
+callCallback2 @ chunk-276SZO74.js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=fd0d1f8e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=fd0d1f8e:3736
+executeDispatch @ chunk-276SZO74.js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=fd0d1f8e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=fd0d1f8e:7051
+(anonymous) @ chunk-276SZO74.js?v=fd0d1f8e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=fd0d1f8e:18913
+batchedUpdates @ chunk-276SZO74.js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=fd0d1f8e:5478
+dispatchEvent @ chunk-276SZO74.js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=fd0d1f8e:5449
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+index.tsx:346 Загрузка контента для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+logger.ts:118 Системная ошибка: Неожиданная ошибка API (400). Свяжитесь с поддержкой. Error: 400: {"error":"Отсутствует обязательное поле: content_type"}
+    at throwIfResNotOk (queryClient.ts:26:19)
+    at async apiRequest (queryClient.ts:67:3)
+    at async Object.mutationFn (ContentGenerationDialog.tsx:208:14)
+overrideMethod @ hook.js:608
+systemError @ logger.ts:118
+systemError @ logger.ts:151
+handleApiError @ error-handler.ts:73
+handleError @ error-handler.ts:116
+globalErrorHandler @ queryClient.ts:112
+execute @ @tanstack_react-query.js?v=fd0d1f8e:1247
+await in execute
+mutate @ @tanstack_react-query.js?v=fd0d1f8e:2630
+(anonymous) @ @tanstack_react-query.js?v=fd0d1f8e:3295
+onClick @ ContentGenerationDialog.tsx:458
+callCallback2 @ chunk-276SZO74.js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=fd0d1f8e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=fd0d1f8e:3736
+executeDispatch @ chunk-276SZO74.js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=fd0d1f8e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=fd0d1f8e:7051
+(anonymous) @ chunk-276SZO74.js?v=fd0d1f8e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=fd0d1f8e:18913
+batchedUpdates @ chunk-276SZO74.js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=fd0d1f8e:5478
+dispatchEvent @ chunk-276SZO74.js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=fd0d1f8e:5449
+queryClient.ts:116 Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+overrideMethod @ hook.js:608
+globalErrorHandler @ queryClient.ts:116
+execute @ @tanstack_react-query.js?v=fd0d1f8e:1247
+await in execute
+mutate @ @tanstack_react-query.js?v=fd0d1f8e:2630
+(anonymous) @ @tanstack_react-query.js?v=fd0d1f8e:3295
+onClick @ ContentGenerationDialog.tsx:458
+callCallback2 @ chunk-276SZO74.js?v=fd0d1f8e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=fd0d1f8e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=fd0d1f8e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=fd0d1f8e:3736
+executeDispatch @ chunk-276SZO74.js?v=fd0d1f8e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=fd0d1f8e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=fd0d1f8e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=fd0d1f8e:7051
+(anonymous) @ chunk-276SZO74.js?v=fd0d1f8e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=fd0d1f8e:18913
+batchedUpdates @ chunk-276SZO74.js?v=fd0d1f8e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=fd0d1f8e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=fd0d1f8e:5478
+dispatchEvent @ chunk-276SZO74.js?v=fd0d1f8e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=fd0d1f8e:5449
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+index.tsx:359 Загружено контента: 143
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022
+TextEnhancementDialog.tsx:203 TextEnhancementDialog: будет использован API эндпоинт /claude/improve-text
+TextEnhancementDialog.tsx:204 TextEnhancementDialog: выбранный сервис - claude, модель - claude-3-5-sonnet-20241022

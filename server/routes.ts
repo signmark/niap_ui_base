@@ -48,6 +48,8 @@ import { registerTestInstagramRoute } from './api/test-instagram-route';
 import { registerTestSocialRoutes } from './api/test-social-routes';
 import { registerTestInstagramCarouselRoute } from './api/test-instagram-carousel-route';
 import { getPublishScheduler } from './services/publish-scheduler';
+import storiesRouter from './routes/stories';
+import videoRouter from './routes/video';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
@@ -66,6 +68,7 @@ import instagramCarouselWebhookRoutes from './api/instagram-carousel-direct';
 import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
+import youtubeAuthRouter from './routes/youtube-auth';
 
 
 /**
@@ -968,7 +971,6 @@ function mergeSources(sources: any[]): any[] {
 // Middleware для проверки авторизации
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Пытаемся получить токен из заголовка Authorization или из cookie
     const authHeader = req.headers.authorization;
     const cookieToken = req.cookies?.directus_session_token;
     
@@ -981,46 +983,63 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
     }
     
     if (!token) {
-      console.log('No token provided in header or cookie');
       return res.status(401).json({ error: 'Не авторизован: Отсутствует токен авторизации' });
     }
 
     try {
-      // Получаем информацию о пользователе из Directus API
-      const response = await directusApi.get('/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.data?.data?.id) {
-        console.log('Invalid token: cannot get user info');
-        return res.status(401).json({ error: 'Не авторизован: Недействительный токен' });
+      // Декодируем токен напрямую для получения информации о пользователе
+      // Это избегает дополнительных запросов к Directus API
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        return res.status(401).json({ error: 'Не авторизован: Неверный формат токена' });
       }
 
-      // Устанавливаем информацию о пользователе в объект запроса
-      req.user = {
-        id: response.data.data.id,
-        token: token,
-        email: response.data.data.email,
-        firstName: response.data.data.first_name,
-        lastName: response.data.data.last_name
-      };
+      try {
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        const userId = payload.id;
+        const userEmail = payload.email || 'unknown@email.com';
+        
+        if (!userId) {
+          return res.status(401).json({ error: 'Не авторизован: Отсутствует ID пользователя в токене' });
+        }
+
+        // Проверяем срок действия токена
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          console.log(`[AUTH] Токен истек для пользователя ${userId}`);
+          return res.status(401).json({ 
+            error: 'Не авторизован: Токен истек и требует обновления' 
+          });
+        }
+
+        // Устанавливаем информацию о пользователе из токена
+        req.user = {
+          id: userId,
+          token: token,
+          email: userEmail,
+          firstName: payload.first_name || 'User',
+          lastName: payload.last_name || ''
+        };
+        
+        // Поддержка старого интерфейса
+        (req as any).userId = userId;
+        
+        console.log(`[AUTH] Пользователь авторизован из токена: ${userId} (${userEmail})`);
+        next();
+        
+      } catch (decodeError) {
+        console.error('[AUTH] Ошибка декодирования токена:', decodeError);
+        return res.status(401).json({ error: 'Не авторизован: Ошибка декодирования токена' });
+      }
       
-      // Оставляем поддержку старого интерфейса для обратной совместимости
-      (req as any).userId = response.data.data.id;
-      
-      console.log(`User authenticated: ${req.user.id} (${req.user.email || 'no email'})`);
-      next();
-    } catch (error) {
-      console.error('Auth error:', error);
+    } catch (error: any) {
+      console.error('[AUTH] Критическая ошибка авторизации:', error.message);
       return res.status(401).json({ 
-        error: 'Не авторизован: Ошибка проверки токена',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Не авторизован: Ошибка проверки токена'
       });
     }
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('[AUTH] Критическая ошибка middleware:', error);
     return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
 };
@@ -1249,10 +1268,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       token = authHeader.replace('Bearer ', '');
       try {
         // Получаем информацию о пользователе из токена
-        const userResponse = await directusApi.get('/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        userId = userResponse?.data?.data?.id;
+        // Декодируем токен напрямую
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          userId = payload.id;
+        }
       } catch (error) {
         console.error("Ошибка при получении информации о пользователе:", error);
       }
@@ -3761,6 +3782,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', socialPlatformStatusWebhookRoutes); // Универсальный вебхук для обновления статусов соцсетей
   app.use('/api', instagramCarouselWebhookRoutes); // Прямая интеграция с Instagram API для карусели
   
+  // Stories and Video content routes
+  app.use('/api/stories', storiesRouter);
+  app.use('/api/video', videoRouter);
+  
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
   // чтобы его специфичные маршруты (например, /api/publish/now) не перехватывались
   // маршрутами с параметрами (например, /api/publish/:contentId) из publishing-routes
@@ -5485,11 +5510,21 @@ Return your response as a JSON array in this exact format:
       } else {
         try {
           // Получаем информацию о пользователе из токена
-          const userResponse = await directusApi.get('/users/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          // Декодируем токен напрямую
+          const tokenParts = token.split('.');
+          if (tokenParts.length !== 3) {
+            throw new Error('Invalid token format');
+          }
+          
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          const userResponse = { 
+            data: { 
+              data: { 
+                id: payload.id, 
+                email: payload.email || 'unknown@email.com' 
+              } 
+            } 
+          };
           userId = userResponse.data?.data?.id;
           if (!userId) {
             return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
@@ -6725,6 +6760,20 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // Stories API routes
+  app.use('/api', storiesRouter);
+  
+  // Stories preview generation
+  app.post('/api/stories/generate-preview', authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { handleGenerateStoryPreviews } = await import('./api/stories-generator');
+      await handleGenerateStoryPreviews(req, res);
+    } catch (error) {
+      console.error('Error loading stories generator:', error);
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  });
+
   app.get("/api/campaigns", authenticateUser, async (req, res) => {
     try {
       // Получаем userId двумя способами - из middleware authenticateUser или из заголовка
@@ -6862,7 +6911,7 @@ Return your response as a JSON array in this exact format:
       }
     } catch (error) {
       console.error("Error in campaigns route:", error);
-      res.status(500).json({ error: "Failed to fetch campaigns" });
+      res.status(500).json({ error: "Не удалось загрузить кампании", details: error.message });
     }
   });
 
@@ -7426,6 +7475,9 @@ Return your response as a JSON array in this exact format:
             contentType: item.content_type,
             imageUrl: item.image_url,
             additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [],
+            videoThumbnail: Array.isArray(item.additional_images) && item.additional_images.length > 0 && 
+                            (item.content_type === 'video' || item.content_type === 'video-text') 
+                            ? item.additional_images[0] : '', // Первое изображение как thumbnail видео
             videoUrl: item.video_url,
             prompt: item.prompt,
             keywords: keywords,
@@ -7566,102 +7618,115 @@ Return your response as a JSON array in this exact format:
     }
   });
 
-  app.post("/api/campaign-content", async (req, res) => {
+  app.post("/api/campaign-content", authenticateUser, async (req, res) => {
     try {
-      const authHeader = req.headers['authorization'];
+      console.log('📝 POST /api/campaign-content - Creating new content');
+      console.log('✅ User authenticated:', req.user?.id, req.user?.email);
+      console.log('📄 Content data received:', JSON.stringify(req.body, null, 2));
       
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
+      // Проверяем наличие campaign_id (поддерживаем оба формата)
+      const campaign_id = req.body.campaign_id || req.body.campaignId;
+      if (!campaign_id) {
+        console.error('❌ Missing campaign_id in request body');
+        return res.status(400).json({ error: 'Отсутствует обязательное поле: campaign_id' });
       }
       
-      const token = authHeader.replace('Bearer ', '');
+      const userId = req.user?.id;
+      const token = req.user?.token;
       
-      try {
-        console.log("Creating new campaign content");
-        
-        // Получаем ID пользователя из токена - это обязательное поле для Directus
-        const userResponse = await directusApi.get('/users/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+      if (!userId || !token) {
+        console.error('❌ Missing user authentication data');
+        return res.status(401).json({ error: 'Не авторизован' });
+      }
+      
+      // Проверяем наличие обязательных полей (поддерживаем оба формата)
+      const content_type = req.body.content_type || req.body.contentType;
+      const { title, content, status = 'draft', metadata } = req.body;
+      
+      if (!campaign_id) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: campaign_id" 
         });
-        
-        const userId = userResponse.data.data.id;
-        
-        if (!userId) {
-          throw new Error('User ID not found');
-        }
-        
-        // Создаем контент кампании напрямую через Directus API
-        const directusPayload = {
-          campaign_id: req.body.campaignId,
-          content_type: req.body.contentType, 
-          title: req.body.title,
-          content: req.body.content,
-          image_url: req.body.imageUrl,
-          video_url: req.body.videoUrl,
-          // Добавляем поле additional_images
-          additional_images: Array.isArray(req.body.additionalImages) ? req.body.additionalImages : [],
-          // Проверяем, что keywords это массив
-          keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
-          // Сохраняем поле prompt, который приходит от клиента
-          prompt: req.body.prompt || null,
-          status: req.body.status || "draft",
-          user_id: userId
-          // created_at генерируется автоматически в БД
-        };
-        
-        console.log("Creating campaign content:", JSON.stringify(directusPayload).substring(0, 200));
-        
-        // Создаем запись через Directus API
-        const response = await directusApi.post('/items/campaign_content', directusPayload, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+      }
+      
+      if (!content) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: content" 
         });
-        
-        if (!response.data || !response.data.data) {
-          throw new Error('Failed to create content, invalid response from Directus');
-        }
-        
-        const item = response.data.data;
-        
-        // Преобразуем данные из формата Directus в наш формат
-        const content = {
-          id: item.id,
-          campaignId: item.campaign_id,
-          userId: item.user_id,
-          title: item.title,
-          content: item.content,
-          contentType: item.content_type,
-          imageUrl: item.image_url,
-          videoUrl: item.video_url,
-          prompt: item.prompt,
-          keywords: parseArrayField(item.keywords, item.id),
-          hashtags: parseArrayField(item.hashtags, item.id),
-          links: parseArrayField(item.links, item.id),
-          createdAt: item.created_at,
-          scheduledAt: item.scheduled_at,
-          publishedAt: item.published_at,
-          status: item.status,
-          socialPlatforms: item.social_platforms || {},
-          metadata: item.metadata || {}
-        };
-        
-        res.status(201).json({ data: content });
-      } catch (error) {
-        console.error('Error creating campaign content:', error);
-        if (error.response) {
-          console.error('Directus API error details:', error.response.data);
-        }
-        return res.status(401).json({ error: "Invalid token or failed to create content" });
       }
-    } catch (error) {
-      console.error("Error creating campaign content:", error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      
+      if (!content_type) {
+        return res.status(400).json({ 
+          error: "Отсутствует обязательное поле: content_type" 
+        });
       }
-      res.status(500).json({ error: "Failed to create campaign content" });
+      
+      // Создаем новый контент с данными пользователя
+      const contentData = {
+        title: title || '',
+        campaign_id,
+        content_type,
+        content: content || '',
+        status: status || 'draft',
+        metadata: metadata || {},
+        user_id: userId,
+        // Дополнительные поля из body если есть (поддерживаем оба формата)
+        image_url: req.body.image_url || req.body.imageUrl || null,
+        video_url: req.body.video_url || req.body.videoUrl || null,
+        // video_thumbnail теперь сохраняется в additional_images
+        keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
+        hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
+        social_platforms: req.body.social_platforms || {},
+        scheduled_at: req.body.scheduled_at || null,
+        // Дополнительные изображения включая thumbnail видео
+        additional_images: (() => {
+          let images = Array.isArray(req.body.additional_images) 
+            ? req.body.additional_images 
+            : Array.isArray(req.body.additionalImages) 
+              ? req.body.additionalImages 
+              : [];
+          
+          // Добавляем thumbnail видео в дополнительные изображения если есть
+          const videoThumbnail = req.body.video_thumbnail || req.body.videoThumbnail;
+          if (videoThumbnail && !images.includes(videoThumbnail)) {
+            images = [videoThumbnail, ...images]; // Thumbnail в начале списка
+          }
+          
+          return images;
+        })()
+      };
+      
+      console.log('🚀 Creating content with data:', JSON.stringify(contentData, null, 2));
+      
+      // Используем токен пользователя для создания контента
+      const response = await directusApi.post('/items/campaign_content', contentData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Content created successfully:', response.data?.data?.id);
+      
+      res.json({
+        success: true,
+        data: response.data.data
+      });
+    } catch (error: any) {
+      console.error('❌ Error creating campaign content:', error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        console.error('401 error details:', error.response.data);
+        return res.status(401).json({ 
+          error: 'Ошибка авторизации при создании контента',
+          details: error.response?.data 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: 'Не удалось создать контент',
+        details: error.response?.data || error.message 
+      });
     }
   });
 
@@ -7693,8 +7758,12 @@ Return your response as a JSON array in this exact format:
         return res.status(404).json({ error: "Контент не найден" });
       }
       
+      console.log(`📝 PATCH /api/campaign-content/${contentId}: Updating content with:`, JSON.stringify(req.body, null, 2));
+      
       // Обновляем контент напрямую через storage API
       const updatedContent = await storage.updateCampaignContent(contentId, req.body, token);
+      
+      console.log(`✅ PATCH /api/campaign-content/${contentId}: Content updated successfully:`, updatedContent);
       
       return res.status(200).json({
         success: true,

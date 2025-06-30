@@ -314,9 +314,33 @@ app.use((req, res, next) => {
     console.log("Claude routes registered");
     log("Claude routes registered successfully");
 
-    log("Registering routes...");
+    log("Registering main routes first...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
+    
+    // Регистрируем YouTube OAuth маршруты
+    console.log("Registering YouTube OAuth routes...");
+    log("Registering YouTube OAuth routes...");
+    const youtubeAuthRouter = (await import('./routes/youtube-auth')).default;
+    app.use('/api/auth', youtubeAuthRouter);
+    console.log("YouTube OAuth routes registered");
+    log("YouTube OAuth routes registered successfully");
+    
+    // Регистрируем Instagram OAuth маршруты
+    console.log("Registering Instagram OAuth routes...");
+    log("Registering Instagram OAuth routes...");
+    const instagramOAuthRouter = (await import('./routes/instagram-oauth')).default;
+    app.use('/api/social/instagram/oauth', instagramOAuthRouter);
+    console.log("Instagram OAuth routes registered");
+    log("Instagram OAuth routes registered successfully");
+    
+    // Register stories routes with proper API fixes
+    console.log("Registering Stories routes...");
+    log("Registering Stories routes...");
+    const storiesRoutes = (await import('./routes/stories')).default;
+    app.use('/api/stories', storiesRoutes);
+    console.log("Stories routes registered");
+    log("Stories routes registered successfully");
     
     // Регистрируем маршруты аналитики
     log("Registering Analytics routes...");

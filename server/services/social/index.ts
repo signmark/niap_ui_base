@@ -2,6 +2,7 @@ import { telegramService } from './telegram-service';
 import { vkService } from './vk-service';
 import { instagramService } from './instagram-service';
 import { facebookSocialService } from './facebook';
+import { YouTubeService } from '../social-platforms/youtube-service';
 import { log } from '../../utils/logger';
 import { getPublishScheduler } from '../publish-scheduler';
 import fetch from 'node-fetch';
@@ -27,12 +28,12 @@ export class SocialPublishingService {
    * @returns Результат публикации
    */
   public async publishToPlatform(
-    platform: string,
     content: any,
+    platform: string,
     campaign: any,
     authToken?: string
   ): Promise<any> {
-    log(`Публикация контента в ${platform}`, 'social-publishing');
+    log(`Публикация контента ${content.id} в ${platform}`, 'social-publishing');
     
     try {
       // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем, не опубликована ли уже платформа
@@ -59,15 +60,32 @@ export class SocialPublishingService {
       }
       
       // Получаем настройки социальных сетей из объекта кампании
-      const settings = campaign.socialMediaSettings || campaign.settings || {};
+      const settings = campaign.social_media_settings || campaign.socialMediaSettings || campaign.settings || {};
+      log(`Настройки для ${platform}: ${JSON.stringify(settings[platform])}`, 'social-publishing');
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: ВК, Telegram, Instagram только через n8n webhooks
-      // Facebook публикуется напрямую
+      // Прямая публикация для Facebook и YouTube
       if (platform === 'facebook') {
         return await facebookSocialService.publish(content, settings.facebook || {});
       }
       
-      // Все остальные платформы только через n8n webhook
+      if (platform === 'youtube') {
+        const youtubeService = new YouTubeService();
+        log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
+        const result = await youtubeService.publishContent(content, { youtube: settings.youtube || {} }, content.user_id);
+        
+        // Передаем флаг quotaExceeded для специальной обработки в планировщике
+        return {
+          platform: 'youtube',
+          status: result.success ? 'published' : 'failed',
+          publishedAt: result.success ? new Date().toISOString() : null,
+          postUrl: result.postUrl || null,
+          url: result.postUrl || null,
+          error: result.error || null,
+          quotaExceeded: result.quotaExceeded || false  // Передаем флаг превышения квоты
+        };
+      }
+      
+      // ВК, Telegram, Instagram только через n8n webhook
       return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');

@@ -40,6 +40,9 @@ import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
+import StoriesPage from "@/pages/stories";
+import VideoEditor from "@/pages/video";
+import YouTubeCallback from "@/pages/youtube-callback";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -85,6 +88,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
+      <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
@@ -112,6 +117,26 @@ function Router() {
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
+      
+      {/* Video and Stories routes */}
+      <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />
+      <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
+      
+      {/* YouTube OAuth callback */}
+      <Route path="/api/auth/youtube/callback" component={YouTubeCallback} />
+      
+      {/* Stories routes */}
+      <Route path="/campaigns/:campaignId/stories/new">
+        {(params) => (
+          <WithLayout Component={() => <StoryEditor campaignId={params.campaignId} />} />
+        )}
+      </Route>
+      <Route path="/stories/:storyId/edit">
+        {(params) => (
+          <WithLayout Component={() => <StoryEditor storyId={params.storyId} />} />
+        )}
+      </Route>
+      
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />
       {/* NotFound должен быть последним */}

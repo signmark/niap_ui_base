@@ -10,7 +10,7 @@ import {
   Loader2, Plus, Pencil, Calendar, Send, SendHorizontal, Trash2, FileText, 
   ImageIcon, Video, FilePlus2, CheckCircle2, Clock, RefreshCw, Play,
   Wand2, Share, Sparkles, CalendarDays, ChevronDown, ChevronRight,
-  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, AlertCircle
+  CalendarIcon, XCircle, Filter, Ban, CheckCircle, Upload, AlertCircle, Layers
 } from "lucide-react";
 import {
   AlertDialog,
@@ -28,6 +28,8 @@ import { PublishingStatus } from "@/components/PublishingStatus";
 import { ScheduledPostInfo } from "@/components/ScheduledPostInfo";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import ContentTypeDialog from "@/components/ContentTypeDialog";
+import { InstagramStoriesPreview } from "@/components/InstagramStoriesPreview";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +113,7 @@ const processMarkdownSyntax = (content: string): string => {
 export default function ContentPage() {
   // Используем глобальный стор выбранной кампании
   const { selectedCampaign } = useCampaignStore();
+  const [location, navigate] = useLocation();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
@@ -126,6 +129,7 @@ export default function ContentPage() {
   const [isAdaptDialogOpen, setIsAdaptDialogOpen] = useState(false);
   const [isImageGenerationDialogOpen, setIsImageGenerationDialogOpen] = useState(false);
   const [isContentPlanDialogOpen, setIsContentPlanDialogOpen] = useState(false);
+  const [isContentTypeDialogOpen, setIsContentTypeDialogOpen] = useState(false);
   const [currentContent, setCurrentContent] = useState<CampaignContent | null>(null);
   const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set());
   
@@ -147,7 +151,7 @@ export default function ContentPage() {
             }
             // Если это простой объект без специфической структуры
             if (k && typeof k === 'object') {
-              console.log('Обнаружен объект ключевого слова без поля keyword:', k);
+
               return JSON.stringify(k);
             }
             // Если это строка - используем как есть
@@ -173,7 +177,7 @@ export default function ContentPage() {
           }
         } else if (content.keywords !== null) {
           // Для всех других случаев
-          console.log('Нестандартный формат ключевых слов:', content.keywords);
+
           if (typeof content.keywords === 'object') {
             // Пытаемся извлечь информацию из объекта
             const extractedKeywords = Object.values(content.keywords)
@@ -195,7 +199,7 @@ export default function ContentPage() {
         keywords: processedKeywords
       };
       
-      console.log('Setting content with processed keywords:', safeContent.keywords);
+
       setCurrentContent(safeContent);
       
       // Сбрасываем и заново устанавливаем выбранные ключевые слова
@@ -203,7 +207,7 @@ export default function ContentPage() {
       
       // Добавляем ID из предопределенных ключевых слов
       if (Array.isArray(safeContent.keywords)) {
-        console.log('Comparing keywords for selection:', safeContent.keywords);
+
         
         campaignKeywords.forEach(kw => {
           // Строгое сравнение и нормализация строк для более надежного сопоставления
@@ -234,6 +238,7 @@ export default function ContentPage() {
     imageUrl: "",
     additionalImages: [] as string[], // Массив URL-адресов дополнительных изображений
     videoUrl: "",
+    videoThumbnail: "", // Обложка для видео (thumbnail)
     additionalVideos: [] as string[], // Массив URL-адресов дополнительных видео
     prompt: "", // Добавляем поле промта для генерации изображений
     keywords: [] as string[]
@@ -269,7 +274,7 @@ export default function ContentPage() {
     if (currentContent && isScheduleDialogOpen) {
       const hasImages = currentContent.imageUrl || 
         (currentContent.images && currentContent.images.length > 0) ||
-        currentContent.contentType === 'text-image' ||
+        currentContent.contentType === 'post' ||
         currentContent.contentType === 'video';
       
       if (!hasImages && selectedPlatforms.instagram) {
@@ -293,7 +298,6 @@ export default function ContentPage() {
   }, [selectedCampaignId, queryClient]);
 
   // Track location changes to reload data when navigating to content page
-  const [location] = useLocation();
   const [hasNavigated, setHasNavigated] = useState(false);
 
   // Force refetch data when navigating to content page
@@ -336,11 +340,9 @@ export default function ContentPage() {
 
   // Запрос списка контента для выбранной кампании
   const { data: campaignContent = [], isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery<CampaignContent[]>({
-    queryKey: ["/api/campaign-content", selectedCampaignId],
+    queryKey: ["/api/campaign-content", selectedCampaignId || ""],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-
-      console.log('Загрузка контента для кампании:', selectedCampaignId);
 
       const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -353,22 +355,19 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
-      console.log('Загружено контента:', (data.data || []).length);
+
       return data.data || [];
     },
-    enabled: !!selectedCampaignId,
     refetchOnMount: true,
     staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000, // Автоматически обновлять данные каждые 10 секунд
+    refetchInterval: selectedCampaignId ? 10000 : false, // Автоматически обновлять данные каждые 10 секунд только если есть кампания
   });
   
   // Запрос ключевых слов кампании
   const { data: campaignKeywords = [], isLoading: isLoadingKeywords } = useQuery<any[]>({
-    queryKey: ["/api/keywords", selectedCampaignId],
+    queryKey: ["/api/keywords", selectedCampaignId || ""],
     queryFn: async () => {
       if (!selectedCampaignId) return [];
-
-      console.log('Загрузка ключевых слов для кампании:', selectedCampaignId);
 
       const response = await fetch(`/api/keywords?campaignId=${selectedCampaignId}`, {
         headers: {
@@ -381,13 +380,12 @@ export default function ContentPage() {
       }
       
       const data = await response.json();
-      console.log('Загружено ключевых слов:', (data.data || []).length);
+
       return data.data || [];
     },
-    enabled: !!selectedCampaignId,
     refetchOnMount: true,
     staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем
-    refetchInterval: 10000 // Автоматически обновлять данные каждые 10 секунд
+    refetchInterval: selectedCampaignId ? 10000 : false // Автоматически обновлять данные каждые 10 секунд только если есть кампания
   });
 
   // Эффект для отслеживания изменений статуса контента и показа тостов
@@ -602,12 +600,13 @@ export default function ContentPage() {
         throw new Error('ID контента не указан');
       }
       
-      // Если платформы не указаны, используем значения по умолчанию
+      // Если платформы не указаны, используем пустой объект
       const platformsToPublish = platforms || {
-        telegram: true,
-        vk: true,
+        telegram: false,
+        vk: false,
         instagram: false,
-        facebook: false
+        facebook: false,
+        youtube: false
       };
       
       console.log("🚀 Подготовленные данные для публикации через новый API:");
@@ -735,9 +734,8 @@ export default function ContentPage() {
 
     // Проверяем корректность URL для изображения или видео
     if (
-      (newContent.contentType === "text-image" && !newContent.imageUrl) ||
-      (newContent.contentType === "video" && !newContent.videoUrl) ||
-      (newContent.contentType === "video-text" && !newContent.videoUrl)
+      (newContent.contentType === "post" && !newContent.content) ||
+      (newContent.contentType === "video" && !newContent.videoUrl)
     ) {
       toast({
         description: "Добавьте URL изображения или видео",
@@ -746,9 +744,22 @@ export default function ContentPage() {
       return;
     }
 
+    // Подготавливаем дополнительные изображения включая thumbnail видео
+    const additionalImages = [...(newContent.additionalImages || [])];
+    if (newContent.videoThumbnail && !additionalImages.includes(newContent.videoThumbnail)) {
+      additionalImages.unshift(newContent.videoThumbnail); // Thumbnail в начале списка
+    }
+
     createContentMutation.mutate({
-      campaignId: selectedCampaignId,
-      ...newContent,
+      campaign_id: selectedCampaignId,
+      content_type: newContent.contentType,
+      title: newContent.title,
+      content: newContent.content,
+      image_url: newContent.imageUrl,
+      video_url: newContent.videoUrl,
+      video_thumbnail: newContent.videoThumbnail,
+      additional_images: additionalImages,
+      keywords: newContent.keywords || [],
       status: 'draft'
     });
   };
@@ -794,12 +805,17 @@ export default function ContentPage() {
         // Если ключевое слово не из предопределенных в кампании, добавляем его
         if (!isAlreadyIncluded && !isAlreadySelected) {
           selectedKeywordTexts.push(normalizedKeyword);
-          console.log(`Adding custom keyword: "${normalizedKeyword}"`);
         }
       });
     }
     
-    console.log('FINAL Selected keywords from React state + extras:', selectedKeywordTexts);
+
+
+    // Подготавливаем дополнительные изображения включая thumbnail видео
+    const additionalImages = [...(currentContent.additionalImages || [])];
+    if (currentContent.videoThumbnail && !additionalImages.includes(currentContent.videoThumbnail)) {
+      additionalImages.unshift(currentContent.videoThumbnail); // Thumbnail в начале списка
+    }
 
     // Создаем типизированный объект для обновления
     const updateData = {
@@ -807,8 +823,9 @@ export default function ContentPage() {
       content: currentContent.content,
       contentType: currentContent.contentType,
       imageUrl: currentContent.imageUrl,
-      additionalImages: currentContent.additionalImages || [], // Добавляем поддержку дополнительных изображений
+      additionalImages: additionalImages,
       videoUrl: currentContent.videoUrl,
+      videoThumbnail: currentContent.videoThumbnail,
       additionalVideos: currentContent.additionalVideos || [], // Добавляем поддержку дополнительных видео
       // НЕ включаем поле prompt, чтобы сохранить промт, созданный при генерации изображения
       // Убедимся, что мы отправляем именно массив, а не объект
@@ -986,6 +1003,8 @@ export default function ContentPage() {
         return <Video className="h-4 w-4" />;
       case "video-text":
         return <FilePlus2 className="h-4 w-4" />;
+      case "story":
+        return <Layers className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -1108,8 +1127,9 @@ export default function ContentPage() {
             <Wand2 className="mr-2 h-4 w-4" />
             Генерация через AI
           </Button>
+
           <Button 
-            onClick={() => setIsCreateDialogOpen(true)} 
+            onClick={() => setIsContentTypeDialogOpen(true)} 
             disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -1178,7 +1198,7 @@ export default function ContentPage() {
                             from: dateRange.from,
                             to: dateRange.to,
                           }}
-                          onSelect={(range) => {
+                          onSelect={(range: any) => {
                             if (range?.from) {
                               setDateRange({
                                 from: range.from,
@@ -1307,12 +1327,13 @@ export default function ContentPage() {
                                             
                                             // Устанавливаем текущий контент и открываем диалог выбора платформ
                                             setCurrentContentSafe(content);
-                                            // Сбрасываем выбранные платформы на дефолтные значения
+                                            // Сбрасываем выбранные платформы
                                             setSelectedPlatforms({
                                               instagram: false,
-                                              telegram: true, // По умолчанию включаем Telegram
-                                              vk: true,      // По умолчанию включаем VK
-                                              facebook: false
+                                              telegram: false,
+                                              vk: false,
+                                              facebook: false,
+                                              youtube: false
                                             });
                                             setIsScheduleDialogOpen(true);
                                           }}
@@ -1355,7 +1376,9 @@ export default function ContentPage() {
                                 {/* Content title */}
                                 {content.title && (
                                   <div className="mb-1.5">
-                                    <h3 className="text-base font-medium line-clamp-1">{typeof content.title === 'string' ? content.title : String(content.title)}</h3>
+                                    <h3 className="text-base font-medium line-clamp-1">
+                                      {typeof content.title === 'string' ? content.title : String(content.title || '')}
+                                    </h3>
                                   </div>
                                 )}
                                 
@@ -1363,26 +1386,73 @@ export default function ContentPage() {
                                 <div className="flex gap-3">
                                   {/* Text content */}
                                   <div className="flex-1">
-                                    <div className="max-h-14 overflow-hidden relative card-content mb-2">
-                                      <div 
-                                        className="prose prose-sm max-w-none text-xs"
-                                        dangerouslySetInnerHTML={{ 
-                                          __html: typeof content.content === 'string' 
-                                            ? (content.content.startsWith('<') 
-                                              ? content.content 
-                                              : processMarkdownSyntax(content.content))
-                                            : ''
-                                        }}
-                                      />
-                                      <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
-                                    </div>
+                                    {content.contentType === 'story' && content.metadata ? (
+                                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Layers className="h-4 w-4 text-purple-600" />
+                                          <span className="text-purple-800 font-medium text-xs">Instagram Stories</span>
+                                        </div>
+                                        {(() => {
+                                          try {
+                                            // Парсим метаданные Stories
+                                            let metadata;
+                                            if (typeof content.metadata === 'string') {
+                                              metadata = JSON.parse(content.metadata);
+                                            } else {
+                                              metadata = content.metadata;
+                                            }
+                                            
+                                            // Получаем данные Stories из content или metadata
+                                            let storyData;
+                                            if (typeof content.content === 'string' && content.content.startsWith('{')) {
+                                              try {
+                                                storyData = JSON.parse(content.content);
+                                              } catch {
+                                                storyData = metadata;
+                                              }
+                                            } else {
+                                              storyData = metadata;
+                                            }
+                                            
+                                            // Удален избыточный лог для уменьшения спама в консоли
+                                            
+                                            const slidesCount = storyData?.slides?.length || 0;
+                                            return (
+                                              <div className="text-xs text-purple-700">
+                                                <div className="flex items-center gap-2">
+                                                  <span>Слайдов: {slidesCount}</span>
+                                                  <span className="text-purple-500">•</span>
+                                                  <span>Формат: {metadata?.format || '9:16'}</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          } catch (e) {
+                                            return <span className="text-xs text-purple-600">Stories контент</span>;
+                                          }
+                                        })()}
+                                      </div>
+                                    ) : (
+                                      <div className="max-h-14 overflow-hidden relative card-content mb-2">
+                                        <div 
+                                          className="prose prose-sm max-w-none text-xs"
+                                          dangerouslySetInnerHTML={{ 
+                                            __html: typeof content.content === 'string' 
+                                              ? (content.content.startsWith('<') 
+                                                ? content.content 
+                                                : processMarkdownSyntax(content.content))
+                                              : ''
+                                          }}
+                                        />
+                                        <div className="absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-background"></div>
+                                      </div>
+                                    )}
                                     
                                     {/* Keywords */}
                                     {content.keywords && Array.isArray(content.keywords) && content.keywords.length > 0 && (
                                       <div className="flex flex-wrap gap-1 mt-2">
                                         {content.keywords.slice(0, 3).map((keyword, index) => (
                                           <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 h-5">
-                                            {keyword}
+                                            {typeof keyword === 'string' ? keyword : String(keyword || '')}
                                           </Badge>
                                         ))}
                                         {content.keywords.length > 3 && (
@@ -1517,26 +1587,58 @@ export default function ContentPage() {
                   <SelectValue placeholder="Выберите тип контента" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Только текст</SelectItem>
-                  <SelectItem value="text-image">Текст с изображением</SelectItem>
+                  <SelectItem value="text">Текст</SelectItem>
+                  <SelectItem value="text-image">Текст с картинкой</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
-                  <SelectItem value="video-text">Видео с текстом</SelectItem>
+                  <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="content">Контент</Label>
-              <div>
-                <RichTextEditor
-                  value={newContent.content || ''}
-                  onChange={(html: string) => setNewContent({...newContent, content: html})}
-                  minHeight={150}
-                  className="tiptap"
-                  enableResize={true}
-                  placeholder="Введите текст контента..."
-                />
+            {newContent.contentType !== "story" && (
+              <div className="space-y-2">
+                <Label htmlFor="content">
+                  {newContent.contentType === "video" ? "Описание" : "Контент"}
+                </Label>
+                <div>
+                  <RichTextEditor
+                    value={newContent.content || ''}
+                    onChange={(html: string) => setNewContent({...newContent, content: html})}
+                    minHeight={150}
+                    className="tiptap"
+                    enableResize={true}
+                    placeholder="Введите текст контента..."
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {newContent.contentType === "story" && (
+              <div className="space-y-4">
+                <div className="p-6 border-2 border-dashed border-purple-300 bg-purple-50 rounded-lg text-center">
+                  <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
+                  <h3 className="text-lg font-medium text-purple-900 mb-2">Instagram Stories</h3>
+                  <p className="text-purple-600 mb-4">Создайте интерактивные Stories со слайдами, элементами и анимацией</p>
+                  <Button 
+                    onClick={() => {
+                      // Сохраняем базовую информацию и переходим к редактору Stories
+                      if (!newContent.title.trim()) {
+                        toast({
+                          title: "Ошибка",
+                          description: "Введите название для Stories",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      navigate(`/campaigns/${selectedCampaignId}/stories/new`);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Layers className="mr-2 h-4 w-4" />
+                    Открыть редактор Stories
+                  </Button>
+                </div>
+              </div>
+            )}
             {(newContent.contentType === "text-image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1581,15 +1683,42 @@ export default function ContentPage() {
               </div>
             )}
             {(newContent.contentType === "video" || newContent.contentType === "video-text") && (
-              <div className="space-y-2">
-                <Label htmlFor="videoUrl">URL видео</Label>
-                <VideoUploader
-                  id="videoUrl"
-                  value={newContent.videoUrl}
-                  onChange={(url) => setNewContent({...newContent, videoUrl: url})}
-                  placeholder="Введите URL видео или загрузите файл"
-                  forcePreview={true}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">URL видео</Label>
+                  <VideoUploader
+                    id="videoUrl"
+                    value={newContent.videoUrl}
+                    onChange={(url) => setNewContent({...newContent, videoUrl: url})}
+                    placeholder="Введите URL видео или загрузите файл"
+                    forcePreview={true}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="videoThumbnail">Обложка видео (рекомендуется для YouTube, Rutube)</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={() => {
+                        localStorage.setItem('videoThumbnailMode', 'true');
+                        setIsImageGenerationDialogOpen(true);
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Сгенерировать обложку
+                    </Button>
+                  </div>
+                  <ImageUploader
+                    id="videoThumbnail"
+                    value={newContent.videoThumbnail}
+                    onChange={(url) => setNewContent({...newContent, videoThumbnail: url})}
+                    placeholder="Введите URL обложки или загрузите изображение"
+                    forcePreview={true}
+                  />
+                </div>
               </div>
             )}
             
@@ -1607,7 +1736,9 @@ export default function ContentPage() {
             {/* Список ключевых слов кампании */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label>Выберите ключевые слова</Label>
+                <Label>
+                  {newContent.contentType === 'video' ? 'Выберите теги' : 'Выберите ключевые слова'}
+                </Label>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -1675,7 +1806,9 @@ export default function ContentPage() {
             
             {/* Поле для ввода дополнительных ключевых слов */}
             <div className="space-y-2">
-              <Label htmlFor="additionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+              <Label htmlFor="additionalKeywords">
+                {newContent.contentType === 'video' ? 'Дополнительные теги (введите и нажмите Enter)' : 'Дополнительные ключевые слова (введите и нажмите Enter)'}
+              </Label>
               <Input
                 id="additionalKeywords"
                 placeholder="Например: здоровье, диета, питание"
@@ -1796,30 +1929,91 @@ export default function ContentPage() {
                     <SelectValue placeholder="Выберите тип контента" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="text">Только текст</SelectItem>
-                    <SelectItem value="text-image">Текст с изображением</SelectItem>
+                    <SelectItem value="text">Текст</SelectItem>
+                    <SelectItem value="text-image">Текст с картинкой</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
-                    <SelectItem value="video-text">Видео с текстом</SelectItem>
+                    <SelectItem value="story">Instagram Stories</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="content">Контент</Label>
-                <div>
-                  <RichTextEditor
-                    value={currentContent.content || ''}
-                    onChange={(html: string) => {
-                      const updatedContent = {...currentContent, content: html};
-                      setCurrentContentSafe(updatedContent);
-                    }}
-                    minHeight={150}
-                    className="tiptap"
-                    enableResize={true}
-                    placeholder="Введите текст контента..."
-                  />
+              {currentContent.contentType !== "story" && (
+                <div className="space-y-2">
+                  <Label htmlFor="content">
+                    {currentContent.contentType === 'video' ? 'Описание' : 'Контент'}
+                  </Label>
+                  <div>
+                    <RichTextEditor
+                      value={currentContent.content || ''}
+                      onChange={(html: string) => {
+                        const updatedContent = {...currentContent, content: html};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      minHeight={150}
+                      className="tiptap"
+                      enableResize={true}
+                      placeholder="Введите текст контента..."
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {currentContent.contentType === "story" && (
+                <div className="space-y-4">
+                  <div className="p-6 border-2 border-dashed border-purple-300 bg-purple-50 rounded-lg text-center">
+                    <Layers className="mx-auto h-12 w-12 text-purple-400 mb-3" />
+                    <h3 className="text-lg font-medium text-purple-900 mb-2">Instagram Stories</h3>
+                    
+                    {(() => {
+                      // Получаем данные Stories из content или metadata
+                      let storyData;
+                      if (typeof currentContent.content === 'string' && currentContent.content.startsWith('{')) {
+                        try {
+                          storyData = JSON.parse(currentContent.content);
+                        } catch {
+                          storyData = currentContent.metadata;
+                        }
+                      } else {
+                        storyData = currentContent.metadata;
+                      }
+                      
+                      const slidesCount = storyData?.slides?.length || 0;
+                      
+                      return slidesCount > 0 ? (
+                        <div className="space-y-3">
+                          <p className="text-purple-600">
+                            Создано слайдов: {slidesCount}
+                          </p>
+                          <div className="flex gap-2 justify-center">
+                            <Button 
+                              onClick={() => {
+                                navigate(`/stories/${currentContent.id}/edit`);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Layers className="mr-2 h-4 w-4" />
+                              Редактировать Stories
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-purple-600">Stories не созданы</p>
+                          <Button 
+                            onClick={() => {
+                              navigate(`/campaigns/${selectedCampaignId}/stories/new`);
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Layers className="mr-2 h-4 w-4" />
+                            Создать Stories
+                          </Button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
               {(currentContent.contentType === "text-image") && (
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -1869,18 +2063,49 @@ export default function ContentPage() {
                 </div>
               )}
               {(currentContent.contentType === "video" || currentContent.contentType === "video-text") && (
-                <div className="space-y-2">
-                  <Label htmlFor="videoUrl">URL видео</Label>
-                  <VideoUploader
-                    id="videoUrl"
-                    value={currentContent.videoUrl || ""}
-                    onChange={(url) => {
-                      const updatedContent = {...currentContent, videoUrl: url};
-                      setCurrentContentSafe(updatedContent);
-                    }}
-                    placeholder="Введите URL видео или загрузите файл"
-                    forcePreview={true}
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="videoUrl">URL видео</Label>
+                    <VideoUploader
+                      id="videoUrl"
+                      value={currentContent.videoUrl || ""}
+                      onChange={(url) => {
+                        const updatedContent = {...currentContent, videoUrl: url};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      placeholder="Введите URL видео или загрузите файл"
+                      forcePreview={true}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="videoThumbnailEdit">Обложка видео (рекомендуется для YouTube, Rutube)</Label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={() => {
+                          localStorage.setItem('videoThumbnailMode', 'true');
+                          setCurrentContentSafe(currentContent);
+                          setIsImageGenerationDialogOpen(true);
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Сгенерировать обложку
+                      </Button>
+                    </div>
+                    <ImageUploader
+                      id="videoThumbnailEdit"
+                      value={currentContent.videoThumbnail || ""}
+                      onChange={(url) => {
+                        const updatedContent = {...currentContent, videoThumbnail: url};
+                        setCurrentContentSafe(updatedContent);
+                      }}
+                      placeholder="Введите URL обложки или загрузите изображение"
+                      forcePreview={true}
+                    />
+                  </div>
                 </div>
               )}
               
@@ -1900,7 +2125,9 @@ export default function ContentPage() {
               {/* Список ключевых слов кампании */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label>Выберите ключевые слова</Label>
+                  <Label>
+                    {currentContent.contentType === 'video' ? 'Выберите теги' : 'Выберите ключевые слова'}
+                  </Label>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -2000,7 +2227,9 @@ export default function ContentPage() {
               
               {/* Поле для ввода дополнительных ключевых слов */}
               <div className="space-y-2">
-                <Label htmlFor="editAdditionalKeywords">Дополнительные ключевые слова (введите и нажмите Enter)</Label>
+                <Label htmlFor="editAdditionalKeywords">
+                  {currentContent.contentType === 'video' ? 'Дополнительные теги (введите и нажмите Enter)' : 'Дополнительные ключевые слова (введите и нажмите Enter)'}
+                </Label>
                 <Input
                   id="editAdditionalKeywords"
                   placeholder="Например: здоровье, диета, питание"
@@ -2161,7 +2390,8 @@ export default function ContentPage() {
                     instagram: selectedPlatforms.instagram || false,
                     telegram: selectedPlatforms.telegram || false,
                     vk: selectedPlatforms.vk || false,
-                    facebook: selectedPlatforms.facebook || false
+                    facebook: selectedPlatforms.facebook || false,
+                    youtube: selectedPlatforms.youtube || false
                   }}
                   onChange={(platform, isSelected) => {
                     setSelectedPlatforms(prev => ({
@@ -2172,7 +2402,10 @@ export default function ContentPage() {
                   content={{
                     contentType: currentContent.contentType,
                     imageUrl: currentContent.imageUrl,
-                    images: currentContent.images
+                    images: currentContent.images,
+                    videoUrl: currentContent.videoUrl,
+                    additionalImages: currentContent.additionalImages,
+                    additionalVideos: currentContent.additionalVideos
                   }}
                 />
                 
@@ -2209,6 +2442,9 @@ export default function ContentPage() {
                 type="button" 
                 variant="default" 
                 onClick={async () => {
+                  // Сразу закрываем диалог для предотвращения повторных нажатий
+                  setIsScheduleDialogOpen(false);
+                  
                   // Проверка на выбор хотя бы одной платформы
                   if (!Object.values(selectedPlatforms).some(Boolean)) {
                     toast({
@@ -2257,8 +2493,6 @@ export default function ContentPage() {
                       variant: "destructive"
                     });
                   }
-                  
-                  setIsScheduleDialogOpen(false);
                 }}
                 disabled={
                   publishContentMutation.isPending || 
@@ -2330,14 +2564,34 @@ export default function ContentPage() {
             newContent.prompt ? newContent.prompt : ""
           }
           onImageGenerated={(imageUrl, promptText) => {
-            console.log("Изображение успешно сгенерировано:", imageUrl);
-            console.log("Промт использованный для генерации:", promptText?.substring(0, 100) + "...");
-            
-            // Проверяем режим дополнительного изображения
+            // Проверяем режим обложки видео
+            const videoThumbnailMode = localStorage.getItem('videoThumbnailMode');
             const additionalImageMode = localStorage.getItem('additionalImageMode');
             const imageIndex = localStorage.getItem('currentAdditionalImageIndex');
             
-            if (additionalImageMode) {
+            if (videoThumbnailMode === 'true') {
+              // Режим генерации обложки видео
+              if (currentContent) {
+                // Для режима редактирования
+                setCurrentContent({
+                  ...currentContent,
+                  videoThumbnail: imageUrl,
+                  ...(promptText && !currentContent.prompt ? { prompt: promptText } : {})
+                });
+              } else {
+                // Для режима создания
+                setNewContent({
+                  ...newContent,
+                  videoThumbnail: imageUrl,
+                  ...(promptText && !newContent.prompt ? { prompt: promptText } : {})
+                });
+              }
+              
+              // Очищаем флаг режима
+              localStorage.removeItem('videoThumbnailMode');
+              setIsImageGenerationDialogOpen(false);
+              
+            } else if (additionalImageMode) {
               // Если это режим дополнительного изображения
               const index = parseInt(imageIndex || '0', 10);
               
@@ -2367,16 +2621,14 @@ export default function ContentPage() {
               localStorage.removeItem('additionalImageMode');
               localStorage.removeItem('currentAdditionalImageIndex');
             } else {
-              // Обычный режим для основного изображения
+              // Обычный режим (основное изображение)
               if (currentContent) {
-                // Обновляем URL изображения и промт в форме редактирования
-                const updatedContent = {
-                  ...currentContent, 
+                // Для режима редактирования
+                setCurrentContent({
+                  ...currentContent,
                   imageUrl,
-                  // Сохраняем промт только если он был передан
                   ...(promptText ? { prompt: promptText } : {})
-                };
-                setCurrentContentSafe(updatedContent);
+                });
               } else {
                 // Обновляем URL изображения и промт в форме создания контента
                 setNewContent({
@@ -2386,15 +2638,16 @@ export default function ContentPage() {
                   ...(promptText ? { prompt: promptText } : {})
                 });
               }
+              
+              // Закрываем диалог только для обычного режима
+              setIsImageGenerationDialogOpen(false);
             }
-            
-            // Закрываем диалог после выбора изображения
-            setIsImageGenerationDialogOpen(false);
           }}
           onClose={() => {
             // Очищаем localStorage при закрытии диалога
             localStorage.removeItem('additionalImageMode');
             localStorage.removeItem('currentAdditionalImageIndex');
+            localStorage.removeItem('videoThumbnailMode');
             setIsImageGenerationDialogOpen(false);
           }}
         />
@@ -2477,35 +2730,43 @@ export default function ContentPage() {
             <DialogTitle>{previewContent?.title || "Просмотр контента"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Тип контента */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              {previewContent?.contentType === "text" && <FileText size={16} />}
-              {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
-              {previewContent?.contentType === "video" && <Video size={16} />}
-              {previewContent?.contentType === "video-text" && <Video size={16} />}
-              <span>
-                {previewContent?.contentType === "text" && "Текстовый контент"}
-                {previewContent?.contentType === "text-image" && "Контент с изображением"}
-                {previewContent?.contentType === "video" && "Видео контент"}
-                {previewContent?.contentType === "video-text" && "Видео с текстом"}
-              </span>
-            </div>
+            {/* Stories Preview */}
+            {previewContent?.contentType === 'story' && previewContent?.metadata ? (
+              <div className="space-y-4">
+                <InstagramStoriesPreview metadata={previewContent.metadata} />
+              </div>
+            ) : (
+              <div>
+                {/* Тип контента */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                  {previewContent?.contentType === "text" && <FileText size={16} />}
+                  {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
+                  {previewContent?.contentType === "video" && <Video size={16} />}
+                  {previewContent?.contentType === "video-text" && <Video size={16} />}
+                  <span>
+                    {previewContent?.contentType === "text" && "Текстовый контент"}
+                    {previewContent?.contentType === "text-image" && "Контент с изображением"}
+                    {previewContent?.contentType === "video" && "Видео контент"}
+                    {previewContent?.contentType === "video-text" && "Видео с текстом"}
+                  </span>
+                </div>
 
-            {/* Основной контент */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: previewContent && typeof previewContent.content === 'string' 
-                    ? (previewContent.content.startsWith('<') 
-                      ? previewContent.content 
-                      : processMarkdownSyntax(previewContent.content))
-                    : ''
-                }}
-              />
-            </div>
+                {/* Основной контент */}
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div 
+                    dangerouslySetInnerHTML={{ 
+                      __html: previewContent && typeof previewContent.content === 'string' 
+                        ? (previewContent.content.startsWith('<') 
+                          ? previewContent.content 
+                          : processMarkdownSyntax(previewContent.content))
+                        : ''
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
-            {/* Медиа-контент */}
-            {previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
+            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
@@ -2519,8 +2780,7 @@ export default function ContentPage() {
               </div>
             )}
             
-            {/* Дополнительные изображения */}
-            {previewContent?.contentType === "text-image" && 
+            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && 
              Array.isArray(previewContent?.additionalImages) && 
              previewContent.additionalImages.filter(url => url && url.trim() !== '').length > 0 && (
               <div className="mt-6">
@@ -2548,20 +2808,37 @@ export default function ContentPage() {
               </div>
             )}
             
-            {(previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
-              <div className="mt-4">
+            {previewContent?.contentType !== 'story' && (previewContent?.contentType === "video" || previewContent?.contentType === "video-text") && previewContent?.videoUrl && (
+              <div className="mt-4 space-y-4">
+                <h4 className="text-sm font-medium">Видео</h4>
                 <video
                   src={previewContent.videoUrl}
                   controls
                   className="rounded-md max-h-[400px] max-w-full mx-auto"
                 />
+                
+                {previewContent.videoThumbnail && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Обложка видео</h4>
+                    <img
+                      src={previewContent.videoThumbnail}
+                      alt="Обложка видео"
+                      className="rounded-md max-h-[300px] max-w-full object-contain mx-auto border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://placehold.co/800x400?text=Обложка+не+найдена";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Ключевые слова */}
-            {previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
+            {previewContent?.contentType !== 'story' && previewContent?.keywords && Array.isArray(previewContent.keywords) && previewContent.keywords.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Ключевые слова:</h4>
+                <h4 className="text-sm font-medium mb-2">
+                  {previewContent?.contentType === 'video' ? 'Теги:' : 'Ключевые слова:'}
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {previewContent.keywords.map((keyword, index) => (
                     <Badge key={index} variant="secondary">
@@ -2715,6 +2992,26 @@ export default function ContentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Диалог выбора типа контента */}
+      <ContentTypeDialog
+        isOpen={isContentTypeDialogOpen}
+        onClose={() => setIsContentTypeDialogOpen(false)}
+        onSelectType={(type) => {
+          if (type === 'story') {
+            // Очищаем состояние Stories store перед созданием новой Stories
+            // Это гарантирует чистое состояние при создании через диалог
+            navigate(`/campaigns/${selectedCampaignId}/stories/new`);
+          } else {
+            // Устанавливаем выбранный тип контента в состояние
+            setNewContent({
+              ...newContent,
+              contentType: type
+            });
+            setIsCreateDialogOpen(true);
+          }
+        }}
+      />
     </div>
   );
 }

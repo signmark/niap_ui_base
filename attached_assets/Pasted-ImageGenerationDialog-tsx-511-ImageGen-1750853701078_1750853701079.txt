@@ -1,0 +1,36 @@
+ImageGenerationDialog.tsx:511 Сначала сохраняем промт в БД, а потом генерируем изображение
+ImageGenerationDialog.tsx:522 Добавлен стиль photographic в промт: "photographic style. photographic style. A tarnished brass belt buckle, heavy with age, reflecting a single, harsh ray of sunlight. Its intricate, worn design hints at forgotten battles and long journeys. A silent testament to resilience."
+ImageGenerationDialog.tsx:406 Очищенный текст от HTML: photographic style. photographic style. A tarnished brass belt buckle, heavy with age, reflecting a single, harsh ray of sunlight. Its intricate, worn design hints at forgotten battles and long journeys. A silent testament to resilience.
+ImageGenerationDialog.tsx:411 Текст уже на английском, перевод не требуется
+ImageGenerationDialog.tsx:441 Сохраняем промт для контента с ID: bea24ff7-9c75-4404-812b-06d355bd98ac ДО генерации
+ImageGenerationDialog.tsx:445 Отправляем запрос PATCH к /campaign-content/bea24ff7-9c75-4404-812b-06d355bd98ac
+ImageGenerationDialog.tsx:446 Данные запроса: {prompt: 'photographic style. A tarnished brass belt buckle,… long journeys. A silent testament to resilience.'}
+ImageGenerationDialog.tsx:529 ОТПРАВЛЯЕМ английский промт через модель schnell: photographic style. photographic style. A tarnished brass belt buckle, heavy with age, reflecting a single, harsh ray of sunlight. Its intricate, worn design hints at forgotten battles and long journeys. A silent testament to resilience.
+ImageGenerationDialog.tsx:713 Отправка запроса на генерацию изображения: {"prompt":"photographic style. photographic style. A tarnished brass belt buckle, heavy with age, re...
+ImageGenerationDialog.tsx:726 🔍 Модель: schnell, используем универсальный интерфейс FAL.AI с userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ImageGenerationDialog.tsx:453 Ответ от сервера: {status: 200, statusText: 'OK', data: {…}}
+ImageGenerationDialog.tsx:460 ✅ Промт успешно сохранен в базе данных
+ImageGenerationDialog.tsx:738 API ответ для модели schnell: {"success":true,"data":["https://v3.fal.media/files/lion/og5UogimkNZWquVCfhqiR.png","https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3UePCYoLd.png","https://v3.fal.media/files/elephant/CLf6FkGMMrUdxQS
+ImageGenerationDialog.tsx:753 Ответ от API генерации изображений: {"success":true,"data":["https://v3.fal.media/files/lion/og5UogimkNZWquVCfhqiR.png","https://v3.fal....
+ImageGenerationDialog.tsx:755 Структура ответа: {
+  "success": true,
+  "data": [
+    "https://v3.fal.media/files/lion/og5UogimkNZWquVCfhqiR.png",
+    "https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3UePCYoLd.png",
+    "https://v3.fal.media/files/e
+ImageGenerationDialog.tsx:761 Структура данных изображений: [
+  "https://v3.fal.media/files/lion/og5UogimkNZWquVCfhqiR.png",
+  "https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3UePCYoLd.png",
+  "https://v3.fal.media/files/elephant/CLf6FkGMMrUdxQSB2UayJ.png"
+]
+ImageGenerationDialog.tsx:764 Запрошено 3 изображений от модели schnell
+ImageGenerationDialog.tsx:784 Обнаружен массив в корне ответа API
+ImageGenerationDialog.tsx:837 Извлеченные URL изображений: (3) ['https://v3.fal.media/files/lion/og5UogimkNZWquVCfhqiR.png', 'https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3UePCYoLd.png', 'https://v3.fal.media/files/elephant/CLf6FkGMMrUdxQSB2UayJ.png']
+ImageGenerationDialog.tsx:901 Выбрано изображение с индексом 1: https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3U...
+ImageGenerationDialog.tsx:929 Возвращаем изображение с промтом: photographic style. A tarnished brass belt buckle,...
+index.tsx:2557 Изображение успешно сгенерировано: https://v3.fal.media/files/kangaroo/8RioT6xqaFkD3UePCYoLd.png
+index.tsx:2558 Промт использованный для генерации: photographic style. A tarnished brass belt buckle, heavy with age, reflecting a single, harsh ray of...
+index.tsx:2565 Флаги localStorage: {videoThumbnailMode: 'true', additionalImageMode: null, imageIndex: null}
+index.tsx:2572 🎬 Режим генерации обложки видео активен!
+index.tsx:2575 📝 Обновляем обложку видео в режиме редактирования
+index.tsx:2592 🧹 Очищаем флаг videoThumbnailMode и закрываем диалог

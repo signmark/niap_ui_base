@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeSocialPlatform } from '@/lib/social-platforms';
-import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
+import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,6 +12,9 @@ interface PlatformSelectorProps {
     contentType?: string;
     imageUrl?: string;
     images?: string[];
+    videoUrl?: string;
+    additionalImages?: string[];
+    additionalVideos?: string[];
   };
 }
 
@@ -44,16 +47,47 @@ export default function PlatformSelector({
       name: 'Facebook',
       icon: SiFacebook,
       color: 'text-indigo-600'
+    },
+    {
+      id: 'youtube' as SafeSocialPlatform,
+      name: 'YouTube',
+      icon: SiYoutube,
+      color: 'text-red-600'
     }
   ];
 
-  // Check if content has images
+  // Check if content has images or video
   const hasImages = content && (
     content.imageUrl || 
     (content.images && content.images.length > 0) ||
     content.contentType === 'text-image' ||
-    content.contentType === 'video'
+    content.contentType === 'video' ||
+    (content as any).additionalImages?.length > 0
   );
+
+  // Check if content has video (expanded check)
+  const hasVideo = content && (
+    content.contentType === 'video' ||
+    content.contentType === 'video-text' ||
+    content.contentType === 'mixed' ||
+    (content as any).videoUrl ||
+    (content as any).video_url ||
+    (content as any).videoThumbnail ||
+    (content as any).additionalVideos
+  );
+
+  // Debug logging for YouTube availability
+  if (content) {
+    console.log('PlatformSelector Debug:', {
+      contentType: content.contentType,
+      hasImages,
+      hasVideo,
+      videoUrl: (content as any).videoUrl || (content as any).video_url,
+      imageUrl: content.imageUrl,
+      additionalImages: (content as any).additionalImages,
+      images: content.images
+    });
+  }
 
   return (
     <TooltipProvider>
@@ -61,8 +95,17 @@ export default function PlatformSelector({
         {platforms.map((platform) => {
           const isSelected = selectedPlatforms[platform.id] || false;
           
-          // Instagram requires images, so disable it if no images
-          const isDisabled = platform.id === 'instagram' && !hasImages;
+          // Platform-specific requirements
+          let isDisabled = false;
+          let tooltipMessage = '';
+          
+          if (platform.id === 'instagram' && !hasImages) {
+            isDisabled = true;
+            tooltipMessage = 'Instagram требует изображения или видео';
+          } else if (platform.id === 'youtube' && !hasVideo) {
+            isDisabled = true;
+            tooltipMessage = 'YouTube доступен только для видео контента';
+          }
           
           const platformComponent = (
             <div 
@@ -95,15 +138,15 @@ export default function PlatformSelector({
             </div>
           );
 
-          // Wrap Instagram with tooltip when disabled
-          if (isDisabled && platform.id === 'instagram') {
+          // Wrap disabled platforms with tooltip
+          if (isDisabled) {
             return (
               <Tooltip key={platform.id}>
                 <TooltipTrigger asChild>
                   {platformComponent}
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Instagram требует изображения для публикации</p>
+                  <p>{tooltipMessage}</p>
                 </TooltipContent>
               </Tooltip>
             );

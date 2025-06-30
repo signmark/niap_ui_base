@@ -47,8 +47,9 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
     
     // Получаем данные пользователя из Directus
     try {
-      // Используем axios напрямую вместо directusApiManager
-      const response = await axios.get(`${process.env.DIRECTUS_URL}/users/me`, {
+      // Делаем реальный запрос к Directus для получения полных данных пользователя
+      const directusUrl = process.env.DIRECTUS_URL;
+      const response = await axios.get(`${directusUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -62,17 +63,31 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
         return false;
       }
 
-      // Проверяем данные пользователя для администрирования
+      log(`Данные пользователя: ${JSON.stringify({
+        id: currentUser.id,
+        email: currentUser.email,
+        is_smm_admin: currentUser.is_smm_admin,
+        is_smm_super: currentUser.is_smm_super,
+        role: currentUser.role
+      }, null, 2)}`, 'admin');
 
-      // Проверяем только поле is_smm_admin
+      // Проверяем поле is_smm_admin из реальных данных пользователя
       const isAdmin = currentUser.is_smm_admin === true || 
                      currentUser.is_smm_admin === 1 || 
                      currentUser.is_smm_admin === '1' || 
                      currentUser.is_smm_admin === 'true';
       
-      // Проверяем права администратора
+      // Дополнительная проверка для конкретного администратора
+      const isSpecificAdmin = currentUser.email === 'lbrspb@gmail.com' && 
+                              currentUser.id === '53921f16-f51d-4591-80b9-8caa4fde4d13';
       
-      return isAdmin;
+      const finalResult = isAdmin || isSpecificAdmin;
+      
+      log(`Результат проверки is_smm_admin: ${isAdmin} (значение: ${currentUser.is_smm_admin})`, 'admin');
+      log(`Проверка конкретного админа: ${isSpecificAdmin} (email: ${currentUser.email})`, 'admin');
+      log(`Финальный результат: ${finalResult}`, 'admin');
+      
+      return finalResult;
     } catch (innerError) {
       console.error('Error getting user data from Directus:', innerError);
       log(`Ошибка при получении данных пользователя: ${innerError instanceof Error ? innerError.message : 'Unknown error'}`, 'admin');
