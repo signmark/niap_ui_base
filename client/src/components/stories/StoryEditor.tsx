@@ -215,17 +215,25 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       }
     }
 
-    // Загрузка данных ТОЛЬКО если НЕ загружено глобально
+    // При смене Stories ID принудительно загружаем новые данные
+    const storyChanged = currentStoryIdRef.current !== finalStoryId;
+    const shouldLoadData = finalStoryId && (storyChanged || (!isLoadedRef.current && !isGloballyLoaded));
+    
     console.log('🔍 Проверка загрузки для Stories:', { 
       finalStoryId, 
+      currentStoryId: currentStoryIdRef.current,
+      storyChanged,
       isLoadedRefCurrent: isLoadedRef.current, 
       isGloballyLoaded, 
       globalLoadKey,
-      shouldLoad: finalStoryId && !isLoadedRef.current && !isGloballyLoaded 
+      shouldLoadData
     });
     
-    if (finalStoryId && !isLoadedRef.current && !isGloballyLoaded) {
+    if (shouldLoadData) {
       console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
+      
+      // Обновляем текущий ID сразу чтобы избежать повторных запросов
+      currentStoryIdRef.current = finalStoryId;
       
       apiRequest(`/api/campaign-content/${finalStoryId}`)
       .then(data => {
