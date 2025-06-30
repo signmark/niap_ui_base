@@ -101,6 +101,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   
   // Флаг для предотвращения повторных загрузок
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentStoryId, setCurrentStoryId] = useState<string | null>(null);
   
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
@@ -145,8 +146,16 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
+    // Проверка на изменение storyId - если изменился, сбрасываем флаг загрузки
+    if (storyId && currentStoryId !== storyId) {
+      console.log('🔄 Story ID changed from', currentStoryId, 'to', storyId, '- resetting load state');
+      setCurrentStoryId(storyId);
+      setIsLoaded(false);
+      resetStore(); // Очищаем Store при переходе к другой Stories
+    }
+
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
-    if (storyId && !isLoaded && slides.length === 0) {
+    if (storyId && !isLoaded) {
       console.log('🔄 Loading story data for:', storyId, 'Current slides count:', slides.length);
       
       apiRequest(`/api/campaign-content/${storyId}`)
