@@ -145,19 +145,20 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
-    // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ
-    if (storyId && !isLoaded) {
-      console.log('Loading story data for:', storyId);
+    // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
+    if (storyId && !isLoaded && slides.length === 0) {
+      console.log('🔄 Loading story data for:', storyId, 'Current slides count:', slides.length);
       
       apiRequest(`/api/campaign-content/${storyId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
-          console.log('Loaded content:', content);
+          console.log('📥 Loaded content:', content);
           setStoryTitle(content.title || 'Новая история');
           
-          if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
-            console.log('Found slides in metadata:', content.metadata.slides.length);
+          // ВАЖНО: Загружаем только если Store пустой, чтобы не перезаписать локальные изменения
+          if (slides.length === 0 && content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
+            console.log('📋 Found slides in metadata:', content.metadata.slides.length, 'Loading to Store...');
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
               order: slide.order || index,
@@ -165,21 +166,16 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
               background: slide.background || { type: 'color', value: '#6366f1' },
               elements: slide.elements || []
             }));
+            
+            // Используем Store метод для инициализации вместо прямого setSlides
             setSlides(storySlides);
             setCurrentSlideIndex(0);
-            console.log('✅ Loaded story with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
+            console.log('✅ Initialized Store with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
+          } else if (slides.length === 0) {
+            console.log('📝 No slides found in metadata, creating default slide');
+            initializeSlides();
           } else {
-            console.log('No slides found in metadata, creating default slide');
-            // Если нет слайдов в метаданных, создаем один по умолчанию
-            const defaultSlide = {
-              id: `slide-${Date.now()}`,
-              order: 0,
-              duration: 5,
-              background: { type: 'color' as const, value: '#6366f1' },
-              elements: []
-            };
-            setSlides([defaultSlide]);
-            setCurrentSlideIndex(0);
+            console.log('⚠️ Store already has slides, skipping API load to preserve local changes');
           }
           setIsLoaded(true);
         }

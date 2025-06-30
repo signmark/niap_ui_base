@@ -44,9 +44,7 @@ interface StoryState {
   updateSlide: (updates: Partial<StorySlide>) => void;
 }
 
-export const useStoryStore = create<StoryState>()(
-  persist(
-    (set, get) => ({
+export const useStoryStore = create<StoryState>()((set, get) => ({
   slides: [],
   currentSlideIndex: 0,
   storyTitle: '',
@@ -224,13 +222,6 @@ export const useStoryStore = create<StoryState>()(
     
     set({ slides: newSlides });
   }
-}), {
-  name: 'story-editor-storage',
-  partialize: (state) => ({ 
-    slides: state.slides,
-    currentSlideIndex: state.currentSlideIndex,
-    storyTitle: state.storyTitle
-  })
 }));
 
 // Helper functions
