@@ -252,8 +252,51 @@ export class PublishScheduler {
               continue;
             }
             
-            // Пропускаем платформы с критическими ошибками, но разрешаем повторные попытки для failed
-            if (data.error && data.error.includes('CRITICAL')) {
+            // Пропускаем платформы с критическими ошибками и конфигурационными проблемами
+            if (data.error && (
+              data.error.includes('CRITICAL') ||
+              data.error.includes('не найдены в кампании') ||
+              data.error.includes('not found in campaign') ||
+              data.error.includes('настройки') ||
+              data.error.includes('Настройки') ||
+              data.error.includes('не найден или отсутствует') ||
+              data.error.includes('not found or missing') ||
+              data.error.includes('отсутствует изображение') ||
+              data.error.includes('missing image') ||
+              data.error.includes('Invalid access token') ||
+              data.error.includes('Application does not have permission') ||
+              data.error.includes('токен недействителен') ||
+              data.error.includes('токен истек') ||
+              data.error.includes('настройки платформы не настроены') ||
+              data.error.includes('platform settings not configured')
+            )) {
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - конфигурационная ошибка: ${data.error}`, 'scheduler');
+              continue;
+            }
+            
+            // Пропускаем старые failed статусы (старше 24 часов) чтобы не спамить
+            if (data.status === 'failed' && data.lastAttempt) {
+              const lastAttempt = new Date(data.lastAttempt);
+              const hoursOld = (currentTime.getTime() - lastAttempt.getTime()) / (1000 * 60 * 60);
+              if (hoursOld > 24) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 24 часов`, 'scheduler');
+                continue;
+              }
+            }
+            
+            // Временная агрессивная фильтрация: пропускаем все failed Instagram/Facebook статусы старше 1 часа
+            if (data.status === 'failed' && (platformName === 'instagram' || platformName === 'facebook') && data.updatedAt) {
+              const lastUpdate = new Date(data.updatedAt);
+              const hoursOld = (currentTime.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+              if (hoursOld > 1) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 1 часа (вероятно конфигурационная ошибка)`, 'scheduler');
+                continue;
+              }
+            }
+            
+            // Пропускаем YouTube контент с превышенной квотой
+            if (platformName === 'youtube' && data.status === 'quota_exceeded') {
+              log(`Планировщик: Пропускаем YouTube ${content.id} - превышена квота API`, 'scheduler');
               continue;
             }
 
@@ -427,11 +470,72 @@ export class PublishScheduler {
         
         return { platform: 'youtube', success: true };
       } else {
+        // Проверяем на quota exceeded ошибку
+        if (result.quotaExceeded || (result.error && result.error.includes('quota'))) {
+          log(`YouTube quota exceeded для контента ${content.id}, устанавливаем специальный статус`, 'scheduler');
+          
+          // Сохраняем quota_exceeded статус
+          try {
+            const updateData = {
+              social_platforms: {
+                ...content.social_platforms,
+                youtube: {
+                  status: 'quota_exceeded',
+                  platform: 'youtube',
+                  error: result.error || 'YouTube quota exceeded',
+                  updatedAt: new Date().toISOString()
+                }
+              }
+            };
+            
+            if (authToken) {
+              await storage.updateCampaignContent(content.id, updateData, authToken);
+              log(`Статус quota_exceeded установлен для контента ${content.id}`, 'scheduler');
+              
+              // Проверяем и обновляем общий статус контента после установки quota_exceeded
+              await this.updateContentStatus(content.id, authToken);
+            }
+          } catch (updateError: any) {
+            log(`Ошибка обновления статуса quota_exceeded: ${updateError.message}`, 'scheduler');
+          }
+        }
+        
         throw new Error(result.error || 'Неизвестная ошибка YouTube API');
       }
 
     } catch (error: any) {
       log(`Ошибка прямой публикации YouTube ${content.id}: ${error.message}`, 'scheduler');
+      
+      // Проверяем на quota exceeded ошибку и в обычных исключениях
+      if (error.message && (error.message.includes('quota') || error.message.includes('Quota'))) {
+        log(`YouTube quota exceeded в исключении для контента ${content.id}`, 'scheduler');
+        
+        try {
+          const authToken = await this.getSystemToken();
+          const updateData = {
+            social_platforms: {
+              ...content.social_platforms,
+              youtube: {
+                status: 'quota_exceeded',
+                platform: 'youtube', 
+                error: error.message,
+                updatedAt: new Date().toISOString()
+              }
+            }
+          };
+          
+          if (authToken) {
+            await storage.updateCampaignContent(content.id, updateData, authToken);
+            log(`Статус quota_exceeded установлен для контента ${content.id}`, 'scheduler');
+            
+            // Проверяем и обновляем общий статус контента после установки quota_exceeded
+            await this.updateContentStatus(content.id, authToken);
+          }
+        } catch (updateError: any) {
+          log(`Ошибка обновления статуса quota_exceeded: ${updateError.message}`, 'scheduler');
+        }
+      }
+      
       return { platform: 'youtube', success: false, error: error.message };
     }
   }
@@ -542,10 +646,17 @@ export class PublishScheduler {
       const publishedCount = Object.values(platforms).filter((data: any) => 
         data.status === 'published' && data.postUrl
       ).length;
+      
+      // Считаем платформы с quota_exceeded как "завершенные" 
+      const quotaExceededCount = Object.values(platforms).filter((data: any) => 
+        data.status === 'quota_exceeded'
+      ).length;
+      
+      const completedCount = publishedCount + quotaExceededCount;
 
       // Определяем новый статус
       let newStatus = freshContent.status;
-      if (publishedCount === allPlatforms.length) {
+      if (completedCount === allPlatforms.length) {
         newStatus = 'published';
       } else if (publishedCount > 0) {
         newStatus = 'partially_published';

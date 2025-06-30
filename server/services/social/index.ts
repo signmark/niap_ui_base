@@ -41,11 +41,14 @@ export class SocialPublishingService {
         const platformData = content.socialPlatforms[platform];
         
         // Если статус published И есть postUrl - блокируем повторную публикацию
-        if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
-          log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl})`, 'social-publishing');
+        // Также блокируем quota_exceeded статус чтобы избежать повторных попыток
+        if ((platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') || 
+            platformData.status === 'quota_exceeded') {
+          const reason = platformData.status === 'quota_exceeded' ? 'квота превышена' : `уже опубликована (postUrl: ${platformData.postUrl})`;
+          log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} ${reason}`, 'social-publishing');
           return {
             platform,
-            status: 'published',
+            status: platformData.status === 'quota_exceeded' ? 'quota_exceeded' : 'published',
             publishedAt: platformData.publishedAt || new Date().toISOString(),
             messageId: platformData.messageId || null,
             url: platformData.postUrl,
@@ -73,13 +76,15 @@ export class SocialPublishingService {
         log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
         const result = await youtubeService.publishContent(content, { youtube: settings.youtube || {} }, content.user_id);
         
+        // Передаем флаг quotaExceeded для специальной обработки в планировщике
         return {
           platform: 'youtube',
           status: result.success ? 'published' : 'failed',
           publishedAt: result.success ? new Date().toISOString() : null,
           postUrl: result.postUrl || null,
           url: result.postUrl || null,
-          error: result.error || null
+          error: result.error || null,
+          quotaExceeded: result.quotaExceeded || false  // Передаем флаг превышения квоты
         };
       }
       

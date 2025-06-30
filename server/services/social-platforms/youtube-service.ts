@@ -22,7 +22,7 @@ export class YouTubeService extends BaseSocialService {
     content: any, 
     campaignSettings: any,
     userId: string
-  ): Promise<{ success: boolean; postUrl?: string; error?: string }> {
+  ): Promise<{ success: boolean; postUrl?: string; error?: string; quotaExceeded?: boolean }> {
     try {
       log('youtube', `Начинаем публикацию в YouTube для контента ${content.id}`);
       log('youtube', `Данные контента: ${JSON.stringify(content)}`);
@@ -303,10 +303,11 @@ export class YouTubeService extends BaseSocialService {
       }
 
       // Обработка ошибок квот
-      if (error.message?.includes('quotaExceeded')) {
+      if (error.message?.includes('quotaExceeded') || error.message?.includes('quota')) {
         return {
           success: false,
-          error: 'Превышена квота YouTube API. Попробуйте позже.'
+          error: 'Превышена квота YouTube API. Попробуйте позже.',
+          quotaExceeded: true
         };
       }
 
