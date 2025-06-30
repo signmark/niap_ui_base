@@ -36,10 +36,20 @@ export function SimpleStoryEditor({ storyId }: { storyId: string }) {
       
       // Простая установка данных без сложной логики
       const story = storyData as any;
-      if (story?.metadata?.slides) {
+      
+      // Проверяем разные варианты структуры данных
+      if (story?.slides) {
+        // Данные напрямую в slides
+        setSlides(story.slides);
+        setStoryTitle(story.title || '');
+        console.log('✅ Stories данные установлены (прямо):', story.slides.length, 'слайдов');
+      } else if (story?.metadata?.slides) {
+        // Данные в metadata.slides  
         setSlides(story.metadata.slides);
         setStoryTitle(story.title || '');
-        console.log('✅ Stories данные установлены:', story.metadata.slides.length, 'слайдов');
+        console.log('✅ Stories данные установлены (metadata):', story.metadata.slides.length, 'слайдов');
+      } else {
+        console.log('⚠️ Структура данных Stories не распознана:', story);
       }
     }
   }, [storyData, setSlides, setStoryTitle]);

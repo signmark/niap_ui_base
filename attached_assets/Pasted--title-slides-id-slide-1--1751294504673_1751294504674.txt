@@ -1,0 +1,110 @@
+{
+    "title": "Сториизззз",
+    "slides": [
+        {
+            "id": "slide-1",
+            "order": 0,
+            "duration": 5,
+            "background": {
+                "type": "color",
+                "value": "#6366f1"
+            },
+            "elements": [
+                {
+                    "id": "element-1750845030155-x3f3y8zwu",
+                    "type": "text",
+                    "content": {
+                        "text": "Новый текст"
+                    },
+                    "position": {
+                        "x": 65,
+                        "y": 154
+                    },
+                    "rotation": 0,
+                    "zIndex": 1,
+                    "style": {
+                        "fontSize": 16,
+                        "fontFamily": "Arial",
+                        "color": "#000000",
+                        "fontWeight": "normal",
+                        "textAlign": "center"
+                    }
+                },
+                {
+                    "id": "element-1750845118049-4gmz4azeb",
+                    "type": "text",
+                    "content": {
+                        "text": "Новый текст"
+                    },
+                    "position": {
+                        "x": 65,
+                        "y": 90
+                    },
+                    "rotation": 0,
+                    "zIndex": 2,
+                    "style": {
+                        "fontSize": 16,
+                        "fontFamily": "Arial",
+                        "color": "#000000",
+                        "fontWeight": "normal",
+                        "textAlign": "center"
+                    }
+                },
+                {
+                    "id": "element-1750845177653-fvl8md9c2",
+                    "type": "text",
+                    "content": {
+                        "text": "Новый текст"
+                    },
+                    "position": {
+                        "x": 67,
+                        "y": 226
+                    },
+                    "rotation": 0,
+                    "zIndex": 3,
+                    "style": {
+                        "fontSize": 16,
+                        "fontFamily": "Arial",
+                        "color": "#000000",
+                        "fontWeight": "normal",
+                        "textAlign": "center"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "slide-1751291730198",
+            "order": 2,
+            "duration": 5,
+            "background": {
+                "type": "color",
+                "value": "#6366f1"
+            },
+            "elements": [
+                {
+                    "id": "element-1751291732606-pq31jrkpm",
+                    "type": "poll",
+                    "content": {
+                        "question": "Сука",
+                        "options": [
+                            "Я",
+                            "Ты",
+                            "Мы"
+                        ]
+                    },
+                    "position": {
+                        "x": 127,
+                        "y": 104
+                    },
+                    "rotation": 0,
+                    "zIndex": 1,
+                    "style": {
+                        "backgroundColor": "rgba(255, 255, 255, 0.9)",
+                        "borderRadius": 12,
+                        "padding": 16
+                    }
+                }
+            ]
+        }
+    ]
+}
