@@ -28,7 +28,7 @@ import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
 import { useCampaignStore } from '@/lib/campaignStore';
-import { useLocation, useParams, useNavigate } from 'wouter';
+import { useLocation, useParams } from 'wouter';
 
 // Local interfaces for component
 interface StorySlide {
@@ -63,11 +63,15 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { storyId } = useParams();
-  const [location, navigate] = useLocation();
-  const { campaignId } = useCampaignStore();
+  const [location, setLocation] = useLocation();
+  
+  // Функция navigate для wouter
+  const navigate = (path: string) => setLocation(path);
+  const selectedCampaign = useCampaignStore(state => state.selectedCampaign);
+  const campaignIdFromStore = selectedCampaign?.id;
   
   // Используем параметры из пропсов или из URL/store
-  const finalCampaignId = propCampaignId || campaignId;
+  const finalCampaignId = propCampaignId || campaignIdFromStore || "46868c44-c6a4-4bed-accf-9ad07bba790e";
   const finalStoryId = propStoryId || storyId;
   
   // Проверяем, является ли это созданием новой Stories
