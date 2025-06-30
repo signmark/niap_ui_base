@@ -171,6 +171,14 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     }
 
     // Загрузка данных ТОЛЬКО если НЕ загружено глобально
+    console.log('🔍 Проверка загрузки для Stories:', { 
+      finalStoryId, 
+      isLoadedRefCurrent: isLoadedRef.current, 
+      isGloballyLoaded, 
+      globalLoadKey,
+      shouldLoad: finalStoryId && !isLoadedRef.current && !isGloballyLoaded 
+    });
+    
     if (finalStoryId && !isLoadedRef.current && !isGloballyLoaded) {
       console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
       
