@@ -121,13 +121,15 @@ export class GlobalApiKeysService {
    * @returns Токен доступа или null в случае ошибки
    */
   private async getSystemToken(): Promise<string | null> {
-    try {
-      const { adminTokenManager } = await import('./admin-token-manager');
-      return await adminTokenManager.getAdminToken();
-    } catch (error) {
-      console.error('Ошибка при получении токена системного администратора:', error);
-      return null;
+    // Используем статический токен из переменных окружения (как в планировщике)
+    const staticToken = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
+    
+    if (staticToken) {
+      return staticToken;
     }
+    
+    console.error('[global-api-keys] Отсутствует DIRECTUS_TOKEN или DIRECTUS_ADMIN_TOKEN в переменных окружения');
+    return null;
   }
   
   /**
