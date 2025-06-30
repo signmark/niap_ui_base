@@ -153,7 +153,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       currentStoryIdRef.current = storyId;
       isLoadedRef.current = false;
       resetStore(); // Очищаем Store при переходе к другой Stories
-      return; // Прерываем выполнение, чтобы избежать повторной загрузки в том же цикле
+      // НЕ используем return - позволяем загрузке продолжиться в том же цикле
     }
 
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
