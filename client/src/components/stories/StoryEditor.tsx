@@ -170,8 +170,16 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       console.log('🔄 РЕАЛЬНОЕ изменение Stories ID:', currentStoryIdRef.current, '->', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
       const newGlobalLoadKey = `storyLoaded_${finalStoryId}`;
-      const newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
-      isLoadedRef.current = newIsGloballyLoaded; // Устанавливаем флаг для новой Stories
+      let newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем валидность флага для новой Stories тоже
+      if (newIsGloballyLoaded && slides.length === 0) {
+        console.log('🚨 ИСПРАВЛЕНИЕ для новой Stories: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
+        localStorage.removeItem(newGlobalLoadKey);
+        newIsGloballyLoaded = false;
+      }
+      
+      isLoadedRef.current = newIsGloballyLoaded; // Устанавливаем исправленный флаг для новой Stories
       if (!newIsGloballyLoaded) {
         resetStore(); // Очищаем Store только если данные для новой Stories не загружены
       }
