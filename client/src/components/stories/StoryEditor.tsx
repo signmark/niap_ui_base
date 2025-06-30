@@ -165,8 +165,8 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           console.log('📥 Loaded content:', content);
           setStoryTitle(content.title || 'Новая история');
           
-          // ВАЖНО: Загружаем только если Store пустой, чтобы не перезаписать локальные изменения
-          if (slides.length === 0 && content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
+          // Загружаем метаданные если они есть в контенте
+          if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
             console.log('📋 Found slides in metadata:', content.metadata.slides.length, 'Loading to Store...');
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
@@ -180,11 +180,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
             setSlides(storySlides);
             setCurrentSlideIndex(0);
             console.log('✅ Initialized Store with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
-          } else if (slides.length === 0) {
+          } else {
             console.log('📝 No slides found in metadata, creating default slide');
             initializeSlides();
-          } else {
-            console.log('⚠️ Store already has slides, skipping API load to preserve local changes');
           }
           setIsLoaded(true);
         }
