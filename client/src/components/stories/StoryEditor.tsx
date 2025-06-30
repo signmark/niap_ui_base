@@ -101,8 +101,8 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   
   // Флаг для предотвращения повторных загрузок - используем useRef для стабильности
   const isLoadedRef = useRef(false);
-  // Используем useRef для стабильного хранения currentStoryId
-  const currentStoryIdRef = useRef<string | null>(storyId || null);
+  // Используем useRef для стабильного хранения currentStoryId ИЗ URL
+  const currentStoryIdRef = useRef<string | null>(null);
   
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
@@ -147,32 +147,17 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
-    // Проверка на изменение storyId - если изменился, сбрасываем флаг загрузки
-    if (storyId && currentStoryIdRef.current !== storyId) {
-      console.log('🔄 Story ID changed from', currentStoryIdRef.current, 'to', storyId, '- resetting load state');
-      currentStoryIdRef.current = storyId;
-      isLoadedRef.current = false;
-      resetStore(); // Очищаем Store при переходе к другой Stories
-      // НЕ используем return - позволяем загрузке продолжиться в том же цикле
-    }
-    
-    // Инициализация currentStoryIdRef при первой загрузке
-    if (finalStoryId && !currentStoryIdRef.current) {
-      console.log('📍 Initializing currentStoryIdRef with:', finalStoryId);
+    // ЕДИНАЯ проверка на изменение Stories ID в URL - КЛЮЧЕВАЯ ЛОГИКА
+    if (finalStoryId && currentStoryIdRef.current !== finalStoryId) {
+      console.log('🔄 Stories ID изменение:', currentStoryIdRef.current, '->', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
-    }
-    
-    // Проверка на реальное изменение Stories ID (не при каждом ререндере)
-    if (finalStoryId && currentStoryIdRef.current && currentStoryIdRef.current !== finalStoryId) {
-      console.log('🔥 РЕАЛЬНОЕ изменение Story ID:', currentStoryIdRef.current, '->', finalStoryId);
-      currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = false;
-      resetStore(); // Сбрасываем Store только при реальной смене Stories
+      isLoadedRef.current = false; // Сбрасываем флаг загрузки для новой Stories
+      resetStore(); // Очищаем Store для новой Stories
     }
 
-    // Загрузка данных ТОЛЬКО если это действительно новая Stories (изменился ID)
+    // Загрузка данных ТОЛЬКО если Stories ID изменился в URL
     if (finalStoryId && !isLoadedRef.current) {
-      console.log('🔄 Загрузка данных для новой Stories ID:', finalStoryId);
+      console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
       
       apiRequest(`/api/campaign-content/${finalStoryId}`)
       .then(data => {
@@ -229,6 +214,17 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
 
     return () => clearTimeout(fallbackTimer);
   }, [finalStoryId, isNewStory, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
+
+  // Очистка состояния при выходе из редактора (размонтирование компонента)
+  useEffect(() => {
+    return () => {
+      console.log('🧹 StoryEditor unmounting - очищаем состояние');
+      // Сбрасываем все флаги и состояние при выходе из редактора
+      isLoadedRef.current = false;
+      currentStoryIdRef.current = null;
+      resetStore(); // Полная очистка store
+    };
+  }, [resetStore]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
