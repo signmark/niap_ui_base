@@ -170,28 +170,20 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       resetStore(); // Агрессивно сбрасываем Store
     }
 
-    // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
-    if (storyId && !isLoadedRef.current) {
-      console.log('🔄 Loading story data for:', storyId, 'Current slides count:', slides.length);
+    // ПРИНУДИТЕЛЬНАЯ загрузка данных при любом изменении finalStoryId
+    if (finalStoryId) {
+      console.log('🔥 ПРИНУДИТЕЛЬНАЯ загрузка для Stories ID:', finalStoryId);
       
-      apiRequest(`/api/campaign-content/${storyId}`)
+      apiRequest(`/api/campaign-content/${finalStoryId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
-          console.log('📥 Loaded content:', content);
+          console.log('📥 Загружены данные контента:', content);
           setStoryTitle(content.title || 'Новая история');
           
-          // Загружаем метаданные если они есть в контенте
+          // ВСЕГДА загружаем слайды из базы данных, игнорируя текущее состояние Store
           if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
-            console.log('📋 Found slides in metadata:', content.metadata.slides.length, 'Loading to Store...');
-            
-            // КРИТИЧЕСКИ ВАЖНО: НЕ перезаписывать Store если в нем уже есть элементы 
-            // (это означает, что пользователь уже внес изменения)
-            const currentSlideElements = slides[currentSlideIndex]?.elements?.length || 0;
-            if (currentSlideElements > 0) {
-              console.log('🚫 БЛОКИРОВКА: Store уже содержит элементы, НЕ перезаписываем данными из базы');
-              return;
-            }
+            console.log('📋 Найдены слайды в метаданных:', content.metadata.slides.length, 'ПРИНУДИТЕЛЬНО загружаем...');
             
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
@@ -201,29 +193,29 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
               elements: slide.elements || []
             }));
             
-            // Используем Store метод для инициализации вместо прямого setSlides
+            // ПРИНУДИТЕЛЬНАЯ загрузка в Store
             setSlides(storySlides);
             setCurrentSlideIndex(0);
-            console.log('✅ Initialized Store with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
+            console.log('✅ ПРИНУДИТЕЛЬНО загружены слайды:', storySlides.length, 'Элементов в первом слайде:', storySlides[0]?.elements?.length || 0);
           } else {
-            console.log('📝 No slides found in metadata, creating default slide');
+            console.log('📝 Слайды не найдены в метаданных, создаем дефолтный слайд');
             initializeSlides();
           }
           isLoadedRef.current = true;
         }
       })
       .catch(error => {
-        console.error('Error loading story:', error);
+        console.error('❌ Ошибка загрузки Stories:', error);
         toast({
-          title: 'Ошибка',
+          title: 'Ошибка загрузки',
           description: 'Не удалось загрузить историю',
           variant: 'destructive'
         });
       });
-    } else if (finalStoryId && isLoadedRef.current) {
-      console.log('Story already loaded, not reloading to preserve changes');
     } else {
-      // Новая Stories - слайд уже создан
+      // Новая Stories - инициализируем пустые слайды
+      console.log('📝 Новая Stories - инициализация дефолтного слайда');
+      initializeSlides();
     }
 
     // Фолбэк: если через 1 секунду слайдов все еще нет, создаем один по умолчанию
