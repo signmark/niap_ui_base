@@ -147,23 +147,31 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
+    // Создаем глобальный ключ для отслеживания загрузки по всем инстансам компонента
+    const globalLoadKey = `storyLoaded_${finalStoryId}`;
+    const isGloballyLoaded = localStorage.getItem(globalLoadKey) === 'true';
+    
     // Инициализация currentStoryIdRef при первом запуске
     if (finalStoryId && currentStoryIdRef.current === null) {
       console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = false; // Нужно загрузить данные при первом запуске
+      isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из глобального состояния
     }
     
     // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
     if (finalStoryId && currentStoryIdRef.current !== null && currentStoryIdRef.current !== finalStoryId) {
       console.log('🔄 РЕАЛЬНОЕ изменение Stories ID:', currentStoryIdRef.current, '->', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = false; // Сбрасываем флаг загрузки для новой Stories
-      resetStore(); // Очищаем Store для новой Stories
+      const newGlobalLoadKey = `storyLoaded_${finalStoryId}`;
+      const newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
+      isLoadedRef.current = newIsGloballyLoaded; // Устанавливаем флаг для новой Stories
+      if (!newIsGloballyLoaded) {
+        resetStore(); // Очищаем Store только если данные для новой Stories не загружены
+      }
     }
 
-    // Загрузка данных ТОЛЬКО если это первый запуск или Stories ID изменился
-    if (finalStoryId && !isLoadedRef.current) {
+    // Загрузка данных ТОЛЬКО если НЕ загружено глобально
+    if (finalStoryId && !isLoadedRef.current && !isGloballyLoaded) {
       console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
       
       apiRequest(`/api/campaign-content/${finalStoryId}`)
@@ -194,6 +202,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
             initializeSlides();
           }
           isLoadedRef.current = true;
+          localStorage.setItem(globalLoadKey, 'true'); // Устанавливаем глобальный флаг загрузки
         }
       })
       .catch(error => {
@@ -222,16 +231,14 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     return () => clearTimeout(fallbackTimer);
   }, [finalStoryId, isNewStory, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
 
-  // Очистка состояния при выходе из редактора (размонтирование компонента)
+  // НЕ очищаем состояние при размонтировании - только сохраняем в localStorage
   useEffect(() => {
     return () => {
-      console.log('🧹 StoryEditor unmounting - очищаем состояние');
-      // Сбрасываем все флаги и состояние при выходе из редактора
-      isLoadedRef.current = false;
-      currentStoryIdRef.current = null;
-      resetStore(); // Полная очистка store
+      console.log('🧹 StoryEditor unmounting - БЕЗ очистки состояния');
+      // НЕ сбрасываем флаги - пусть остаются для следующего монтирования
+      // localStorage уже сохранен, этого достаточно
     };
-  }, [resetStore]);
+  }, []);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
