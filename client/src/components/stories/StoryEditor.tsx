@@ -170,6 +170,15 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           // Загружаем метаданные если они есть в контенте
           if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
             console.log('📋 Found slides in metadata:', content.metadata.slides.length, 'Loading to Store...');
+            
+            // КРИТИЧЕСКИ ВАЖНО: НЕ перезаписывать Store если в нем уже есть элементы 
+            // (это означает, что пользователь уже внес изменения)
+            const currentSlideElements = slides[currentSlideIndex]?.elements?.length || 0;
+            if (currentSlideElements > 0) {
+              console.log('🚫 БЛОКИРОВКА: Store уже содержит элементы, НЕ перезаписываем данными из базы');
+              return;
+            }
+            
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
               order: slide.order || index,
@@ -197,22 +206,23 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           variant: 'destructive'
         });
       });
-    } else if (finalStoryId && (isLoadedRef.current || slides.length > 0)) {
+    } else if (finalStoryId && isLoadedRef.current) {
       console.log('Story already loaded, not reloading to preserve changes');
     } else {
       // Новая Stories - слайд уже создан
     }
 
     // Фолбэк: если через 1 секунду слайдов все еще нет, создаем один по умолчанию
+    // ТОЛЬКО для новых Stories, НЕ для существующих 
     const fallbackTimer = setTimeout(() => {
-      if (slides.length === 0 && !isNewStory) {
+      if (slides.length === 0 && !isNewStory && !finalStoryId) {
         console.log('⚠️ FALLBACK: No slides found after timeout, creating default slide');
         initializeSlides();
       }
     }, 1000);
 
     return () => clearTimeout(fallbackTimer);
-  }, [finalStoryId, isNewStory, slides.length, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
+  }, [finalStoryId, isNewStory, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
