@@ -47,7 +47,7 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
     
     // Получаем данные пользователя из Directus используя пользовательский токен
     try {
-      const directusUrl = process.env.DIRECTUS_URL;
+      const directusUrl = process.env.DIRECTUS_URL?.replace(/\/$/, ''); // Убираем слэш в конце
       const response = await axios.get(`${directusUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,

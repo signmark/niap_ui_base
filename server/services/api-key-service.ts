@@ -22,7 +22,8 @@ export class ApiKeyService {
       // Если есть токен пользователя, пытаемся получить API ключ из Directus
       if (token) {
         // Получаем API ключи пользователя из базы данных
-        const response = await axios.get(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
+        const directusUrl = process.env.DIRECTUS_URL?.replace(/\/$/, ''); // Убираем слэш в конце
+        const response = await axios.get(`${directusUrl}/items/user_api_keys`, {
           params: {
             filter: {
               user: userId,
@@ -67,7 +68,8 @@ export class ApiKeyService {
   async saveApiKey(userId: string, serviceName: string, apiKey: string, token: string): Promise<boolean> {
     try {
       // Сохраняем API ключ в базе данных
-      await axios.post(`${process.env.DIRECTUS_URL}/items/user_api_keys`, {
+      const directusUrl = process.env.DIRECTUS_URL?.replace(/\/$/, ''); // Убираем слэш в конце
+      await axios.post(`${directusUrl}/items/user_api_keys`, {
         user: userId,
         service: serviceName,
         api_key: apiKey,
