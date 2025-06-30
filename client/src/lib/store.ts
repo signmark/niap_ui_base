@@ -120,19 +120,39 @@ export const useAuthStore = create<AuthState>()(
           const token = get().getAuthToken();
           if (!token) {
             console.log('Невозможно проверить права администратора - пользователь не авторизован');
-            get().setIsAdmin(false); // Очищаем статус администратора при отсутствии токена
+            get().setIsAdmin(false);
+            return false;
+          }
+
+          // ПРИНУДИТЕЛЬНАЯ проверка токена перед запросом
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const now = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < (now + 30)) {
+              console.log('Не удалось обновить токен авторизации, перенаправляем на страницу входа');
+              localStorage.clear();
+              sessionStorage.clear();
+              get().logout();
+              window.location.href = '/login';
+              return false;
+            }
+          } catch (e) {
+            console.log('Поврежденный токен, перенаправляем на страницу входа');
+            localStorage.clear();
+            sessionStorage.clear();
+            get().logout();
+            window.location.href = '/login';
             return false;
           }
 
           console.log('Отправка API запроса на /auth/is-admin c токеном', token.substring(0, 10) + '...');
-          // Запрашиваем проверку администратора через явный fetch запрос с отключением кэширования
           const response = await fetch('/api/auth/is-admin', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            cache: 'no-cache' // Важно! Предотвращает кэширование
+            cache: 'no-cache'
           });
           
           const data = await response.json();
@@ -140,18 +160,15 @@ export const useAuthStore = create<AuthState>()(
           
           if (data && data.success && data.isAdmin === true) {
             console.log('Пользователь является администратором');
-            // Сохраняем статус администратора
             get().setIsAdmin(true);
             return true;
           } else {
             console.log('Пользователь не является администратором');
-            // Сохраняем статус не-администратора
             get().setIsAdmin(false);
             return false;
           }
         } catch (error) {
           console.error('Ошибка при проверке статуса администратора:', error);
-          // При ошибке считаем пользователя не администратором
           get().setIsAdmin(false);
           return false;
         }

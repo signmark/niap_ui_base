@@ -25,14 +25,6 @@ const clearExpiredToken = () => {
     }
   }
 };
-
-// Вызываем при загрузке
-clearExpiredToken();
-
-// Повторная проверка через интервал
-setInterval(() => {
-  clearExpiredToken();
-}, 1000);
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import Campaigns from "@/pages/campaigns";
@@ -178,6 +170,19 @@ function Router() {
 function App() {
   // Инициализируем WebSocket соединение для real-time уведомлений
   useWebSocket();
+
+  // ПРИНУДИТЕЛЬНАЯ проверка токенов каждую секунду
+  useEffect(() => {
+    // Первоначальная проверка
+    clearExpiredToken();
+    
+    // Интервальная проверка
+    const interval = setInterval(() => {
+      clearExpiredToken();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
