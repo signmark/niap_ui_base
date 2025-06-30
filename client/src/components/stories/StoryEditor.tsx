@@ -101,7 +101,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   
   // Флаг для предотвращения повторных загрузок
   const [isLoaded, setIsLoaded] = useState(false);
-  const [currentStoryId, setCurrentStoryId] = useState<string | null>(null);
+  const [currentStoryId, setCurrentStoryId] = useState<string | null>(storyId || null);
   
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
@@ -152,6 +152,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       setCurrentStoryId(storyId);
       setIsLoaded(false);
       resetStore(); // Очищаем Store при переходе к другой Stories
+      return; // Прерываем выполнение, чтобы избежать повторной загрузки в том же цикле
     }
 
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE

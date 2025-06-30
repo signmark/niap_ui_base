@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 // Local interfaces for story state
 interface StorySlide {
@@ -69,16 +68,9 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
   },
 
   resetStore: () => {
-    console.log('ПОЛНАЯ ОЧИСТКА STORY STORE');
+    console.log('ПОЛНАЯ ОЧИСТКА STORY STORE (только память)');
     
-    // 1. Очищаем persist storage
-    try {
-      localStorage.removeItem('story-store');
-    } catch (e) {
-      console.warn('Error clearing localStorage:', e);
-    }
-    
-    // 2. Создаем новый чистый слайд с уникальным ID
+    // Создаем новый чистый слайд с уникальным ID
     const initialSlide = {
       id: `slide-${Date.now()}`,
       order: 0,
@@ -87,7 +79,7 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
       elements: []
     };
     
-    // 3. Устанавливаем полностью чистое состояние
+    // Устанавливаем полностью чистое состояние
     set({
       slides: [initialSlide],
       currentSlideIndex: 0,
