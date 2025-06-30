@@ -155,6 +155,20 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       resetStore(); // Очищаем Store при переходе к другой Stories
       // НЕ используем return - позволяем загрузке продолжиться в том же цикле
     }
+    
+    // Инициализация currentStoryIdRef при первой загрузке
+    if (storyId && !currentStoryIdRef.current) {
+      console.log('📍 Initializing currentStoryIdRef with:', storyId);
+      currentStoryIdRef.current = storyId;
+    }
+    
+    // ПРИНУДИТЕЛЬНАЯ проверка на любые изменения finalStoryId (включая параметры URL)
+    if (finalStoryId && currentStoryIdRef.current !== finalStoryId) {
+      console.log('🔥 ПРИНУДИТЕЛЬНОЕ изменение Story ID:', currentStoryIdRef.current, '->', finalStoryId);
+      currentStoryIdRef.current = finalStoryId;
+      isLoadedRef.current = false;
+      resetStore(); // Агрессивно сбрасываем Store
+    }
 
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ БЕЗ ПЕРЕЗАПИСИ STORE
     if (storyId && !isLoadedRef.current) {
