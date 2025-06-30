@@ -140,24 +140,26 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       hasSlides: slides.length > 0 
     });
 
-    // СНАЧАЛА проверяем смену Stories ID ДО любых обновлений ref
-    const previousStoryId = currentStoryIdRef.current;
-    const storyChanged = previousStoryId !== null && previousStoryId !== finalStoryId;
-    
-    if (storyChanged) {
-      console.log('🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА при смене Stories:', previousStoryId, '->', finalStoryId);
-      resetStore();
-      isLoadedRef.current = false;
+    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА при каждом заходе в Stories если есть слайды от другой Stories
+    const currentStoryTitle = storyTitle;
+    if (finalStoryId && slides.length > 0) {
+      // Проверяем загруженные данные через API чтобы точно знать ID текущей Stories в Store
+      const shouldClearStore = currentStoryIdRef.current !== finalStoryId || 
+                              (currentStoryIdRef.current === null && slides.length > 0);
       
-      // Очищаем все localStorage флаги
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('storyLoaded_')) {
-          keysToRemove.push(key);
-        }
+      if (shouldClearStore) {
+        console.log('🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА Store - обнаружены слайды от другой Stories');
+        console.log('Store имеет слайды:', slides.length, 'нужен ID:', finalStoryId, 'текущий ID:', currentStoryIdRef.current);
+        resetStore();
+        isLoadedRef.current = false;
+        
+        // Очищаем все localStorage флаги
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('storyLoaded_')) {
+            localStorage.removeItem(key);
+          }
+        });
       }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
     }
     
     // При первом входе в компонент ВСЕГДА сбрасываем флаги загрузки
