@@ -158,11 +158,37 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       isGloballyLoaded = false;
     }
     
+    // Проверка переключения Stories через localStorage (для случаев размонтирования компонента)
+    const lastStoryId = localStorage.getItem('lastStoryId');
+    
     // Инициализация currentStoryIdRef при первом запуске
     if (finalStoryId && currentStoryIdRef.current === null) {
-      console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
-      currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из исправленного глобального состояния
+      // Проверяем, это действительно первая инициализация или переключение Stories
+      if (lastStoryId && lastStoryId !== finalStoryId) {
+        console.log('🔄 ПЕРЕКЛЮЧЕНИЕ Stories после размонтирования:', lastStoryId, '->', finalStoryId);
+        // Это переключение Stories - нужно сбросить данные для новой Stories
+        const newGlobalLoadKey = `storyLoaded_${finalStoryId}`;
+        let newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
+        
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем валидность флага для новой Stories
+        if (newIsGloballyLoaded && slides.length === 0) {
+          console.log('🚨 ИСПРАВЛЕНИЕ при переключении Stories: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
+          localStorage.removeItem(newGlobalLoadKey);
+          newIsGloballyLoaded = false;
+        }
+        
+        currentStoryIdRef.current = finalStoryId;
+        localStorage.setItem('lastStoryId', finalStoryId);
+        isLoadedRef.current = newIsGloballyLoaded;
+        if (!newIsGloballyLoaded) {
+          resetStore(); // Очищаем Store для новой Stories
+        }
+      } else {
+        console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
+        currentStoryIdRef.current = finalStoryId;
+        localStorage.setItem('lastStoryId', finalStoryId);
+        isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из исправленного глобального состояния
+      }
     }
     
     // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
