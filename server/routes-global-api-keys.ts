@@ -70,20 +70,16 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
         role: currentUser.role
       }, null, 2)}`, 'admin');
 
-      // Проверяем поле is_smm_admin из реальных данных пользователя
+      // Проверяем поле is_smm_admin из реальных данных пользователя - любой админ с этим полем
       const isAdmin = currentUser.is_smm_admin === true || 
                      currentUser.is_smm_admin === 1 || 
                      currentUser.is_smm_admin === '1' || 
                      currentUser.is_smm_admin === 'true';
       
-      // Дополнительная проверка для конкретного администратора
-      const isSpecificAdmin = currentUser.email === 'lbrspb@gmail.com' && 
-                              currentUser.id === '53921f16-f51d-4591-80b9-8caa4fde4d13';
-      
-      const finalResult = isAdmin || isSpecificAdmin;
+      const finalResult = isAdmin;
       
       log(`Результат проверки is_smm_admin: ${isAdmin} (значение: ${currentUser.is_smm_admin})`, 'admin');
-      log(`Проверка конкретного админа: ${isSpecificAdmin} (email: ${currentUser.email})`, 'admin');
+      log(`Проверка админа для пользователя: ${currentUser.email}`, 'admin');
       log(`Финальный результат: ${finalResult}`, 'admin');
       
       return finalResult;
@@ -119,9 +115,7 @@ function requireAdmin(req: Request, res: Response, next: Function) {
     return res.status(401).json({ success: false, message: 'Требуется токен авторизации' });
   }
   
-  // Для текущей версии разрешаем доступ всем авторизованным пользователям
-  return next();
-  
+  // Проверяем права администратора используя пользовательский токен
   isUserAdmin(req).then(isAdmin => {
     if (isAdmin) {
       next();
