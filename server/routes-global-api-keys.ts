@@ -45,9 +45,8 @@ export async function isUserAdmin(req: Request, directusToken?: string): Promise
 
     log(`Проверка прав администратора с токеном: ${token.substring(0, 10)}...`, 'admin');
     
-    // Получаем данные пользователя из Directus
+    // Получаем данные пользователя из Directus используя пользовательский токен
     try {
-      // Делаем реальный запрос к Directus для получения полных данных пользователя
       const directusUrl = process.env.DIRECTUS_URL;
       const response = await axios.get(`${directusUrl}/users/me`, {
         headers: {
