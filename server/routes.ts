@@ -8604,7 +8604,7 @@ Return your response as a JSON array in this exact format:
       const directusAuth = directusApiManager.instance;
       
       // Получаем данные кампании через Directus
-      const campaignData = await directusAuth.directusCrud.readItem('campaigns', id, token);
+      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', id, token);
       
       if (!campaignData) {
         return res.status(404).json({
@@ -8650,31 +8650,7 @@ Return your response as a JSON array in this exact format:
       if (!campaignId) {
         return res.status(400).json({ error: "ID кампании обязателен" });
       }
-      
-      // Разрешаем обновление только определенных полей
-      // Удалим undefined значения, оставим только те, что нужно обновить
-      const updateFields: any = {};
-      
-      if (name !== undefined && name.trim() !== '') {
-        updateFields.name = name.trim();
-      }
-      
-      if (link !== undefined) {
-        updateFields.link = link.trim();
-      }
-      
-      if (social_media_settings !== undefined) {
-        updateFields.social_media_settings = social_media_settings;
-      }
-      
-      if (trend_analysis_settings !== undefined) {
-        updateFields.trend_analysis_settings = trend_analysis_settings;
-      }
-      
-      if (Object.keys(updateFields).length === 0) {
-        return res.status(400).json({ error: "Необходимо указать хотя бы одно поле для обновления" });
-      }
-      
+
       if (!userId || !authHeader) {
         return res.status(401).json({ error: "Не авторизован" });
       }
@@ -8682,7 +8658,7 @@ Return your response as a JSON array in this exact format:
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        // Получаем информацию о кампании из Directus, чтобы проверить владельца
+        // Сначала получаем информацию о кампании из Directus
         const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -8700,6 +8676,39 @@ Return your response as a JSON array in this exact format:
           return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
         }
         
+        // Разрешаем обновление только определенных полей
+        // Удалим undefined значения, оставим только те, что нужно обновить
+        const updateFields: any = {};
+        
+        if (name !== undefined && name.trim() !== '') {
+          updateFields.name = name.trim();
+        }
+        
+        if (link !== undefined) {
+          updateFields.link = link.trim();
+        }
+        
+        if (social_media_settings !== undefined) {
+          // Объединяем существующие настройки с новыми, чтобы не удалять другие платформы
+          const existingSettings = campaign.social_media_settings || {};
+          updateFields.social_media_settings = {
+            ...existingSettings,
+            ...social_media_settings
+          };
+          console.log('🔥 Объединяем настройки социальных сетей:');
+          console.log('🔥 Существующие:', existingSettings);
+          console.log('🔥 Новые:', social_media_settings);
+          console.log('🔥 Результат:', updateFields.social_media_settings);
+        }
+        
+        if (trend_analysis_settings !== undefined) {
+          updateFields.trend_analysis_settings = trend_analysis_settings;
+        }
+      
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json({ error: "Необходимо указать хотя бы одно поле для обновления" });
+      }
+      
         console.log(`Updating campaign ${campaignId} in Directus with fields:`, updateFields);
         
         const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, updateFields, {
