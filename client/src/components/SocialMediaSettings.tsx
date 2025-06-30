@@ -331,13 +331,19 @@ export function SocialMediaSettings({
   };
 
   const onSubmit = async (data: SocialMediaSettings) => {
+    console.log('🔥 onSubmit вызван с данными:', data);
+    console.log('🔥 Campaign ID:', campaignId);
+    
     try {
       setIsLoading(true);
+      console.log('🔥 Отправляю запрос на сервер...');
       
       // Используем наш API endpoint вместо прямого обращения к Directus
       const response = await api.patch(`/campaigns/${campaignId}`, {
         social_media_settings: data
       });
+
+      console.log('🔥 Ответ сервера:', response);
 
       toast({
         description: "Настройки соцсетей обновлены"
@@ -345,13 +351,14 @@ export function SocialMediaSettings({
 
       onSettingsUpdated?.();
     } catch (error: any) {
-      console.error('Error updating social media settings:', error);
+      console.error('🔥 Ошибка при обновлении настроек:', error);
       toast({
         variant: "destructive",
         description: error.response?.data?.message || error.message || "Ошибка при обновлении настроек"
       });
     } finally {
       setIsLoading(false);
+      console.log('🔥 onSubmit завершен');
     }
   };
 
