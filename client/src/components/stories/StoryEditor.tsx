@@ -170,9 +170,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       resetStore(); // Агрессивно сбрасываем Store
     }
 
-    // ПРИНУДИТЕЛЬНАЯ загрузка данных при любом изменении finalStoryId
-    if (finalStoryId) {
-      console.log('🔥 ПРИНУДИТЕЛЬНАЯ загрузка для Stories ID:', finalStoryId);
+    // Загрузка данных ТОЛЬКО если это действительно новая Stories (изменился ID)
+    if (finalStoryId && !isLoadedRef.current) {
+      console.log('🔄 Загрузка данных для новой Stories ID:', finalStoryId);
       
       apiRequest(`/api/campaign-content/${finalStoryId}`)
       .then(data => {
@@ -181,9 +181,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           console.log('📥 Загружены данные контента:', content);
           setStoryTitle(content.title || 'Новая история');
           
-          // ВСЕГДА загружаем слайды из базы данных, игнорируя текущее состояние Store
+          // Загружаем слайды из базы данных только при первой загрузке
           if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
-            console.log('📋 Найдены слайды в метаданных:', content.metadata.slides.length, 'ПРИНУДИТЕЛЬНО загружаем...');
+            console.log('📋 Найдены слайды в метаданных:', content.metadata.slides.length, 'загружаем в Store...');
             
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
@@ -193,10 +193,10 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
               elements: slide.elements || []
             }));
             
-            // ПРИНУДИТЕЛЬНАЯ загрузка в Store
+            // Загружаем данные в Store
             setSlides(storySlides);
             setCurrentSlideIndex(0);
-            console.log('✅ ПРИНУДИТЕЛЬНО загружены слайды:', storySlides.length, 'Элементов в первом слайде:', storySlides[0]?.elements?.length || 0);
+            console.log('✅ Загружены слайды:', storySlides.length, 'Элементов в первом слайде:', storySlides[0]?.elements?.length || 0);
           } else {
             console.log('📝 Слайды не найдены в метаданных, создаем дефолтный слайд');
             initializeSlides();
