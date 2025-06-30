@@ -114,9 +114,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       hasSlides: slides.length > 0 
     });
     
-    // КРИТИЧЕСКИ ВАЖНО: всегда сначала очищаем store для новых Stories
-    if (isNewStory && !finalStoryId) {
-      console.log('Creating new story - ПОЛНАЯ ОЧИСТКА');
+    // КРИТИЧЕСКИ ВАЖНО: очищаем store ТОЛЬКО для новых Stories (без ID)
+    if (isNewStory && !finalStoryId && !storyId) {
+      console.log('Creating NEW story - ПОЛНАЯ ОЧИСТКА И ИНИЦИАЛИЗАЦИЯ');
       
       // 1. Полная очистка всех данных Stories из store
       resetStore();
@@ -132,33 +132,56 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       // 3. Принудительная очистка persist storage
       localStorage.removeItem('story-store');
       
-      console.log('✅ Новая Stories полностью очищена и готова к созданию');
+      // 4. Проверяем, что у нас есть слайды после resetStore
+      setTimeout(() => {
+        console.log('Проверка слайдов после resetStore:', slides.length);
+        if (slides.length === 0) {
+          console.log('Принудительно создаем начальный слайд');
+          initializeSlides();
+        }
+      }, 100);
+      
+      console.log('✅ Новая Stories полностью очищена и инициализирована');
       return;
     }
     
     // Загрузка существующих данных при редактировании - ТОЛЬКО ОДИН РАЗ
-    if (storyId && !isLoaded && slides.length === 0) {
-      console.log('Loading story data for the first time:', storyId);
+    if (storyId && !isLoaded) {
+      console.log('Loading story data for:', storyId);
       
       apiRequest(`/api/campaign-content/${storyId}`)
       .then(data => {
         if (data && data.data) {
           const content = data.data;
+          console.log('Loaded content:', content);
           setStoryTitle(content.title || 'Новая история');
           
-          if (content.metadata && content.metadata.slides) {
+          if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
+            console.log('Found slides in metadata:', content.metadata.slides.length);
             const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
               id: slide.id || `slide-${index}`,
               order: slide.order || index,
               duration: slide.duration || 5,
-              background: slide.background || { type: 'color', value: '#ffffff' },
+              background: slide.background || { type: 'color', value: '#6366f1' },
               elements: slide.elements || []
             }));
             setSlides(storySlides);
             setCurrentSlideIndex(0);
-            setIsLoaded(true);
-            console.log('Loaded story with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
+            console.log('✅ Loaded story with slides:', storySlides.length, 'First slide elements:', storySlides[0]?.elements?.length || 0);
+          } else {
+            console.log('No slides found in metadata, creating default slide');
+            // Если нет слайдов в метаданных, создаем один по умолчанию
+            const defaultSlide = {
+              id: `slide-${Date.now()}`,
+              order: 0,
+              duration: 5,
+              background: { type: 'color' as const, value: '#6366f1' },
+              elements: []
+            };
+            setSlides([defaultSlide]);
+            setCurrentSlideIndex(0);
           }
+          setIsLoaded(true);
         }
       })
       .catch(error => {
@@ -174,7 +197,17 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     } else {
       // Новая Stories - слайд уже создан
     }
-  }, [finalStoryId, isNewStory, isLoaded, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast]);
+
+    // Фолбэк: если через 1 секунду слайдов все еще нет, создаем один по умолчанию
+    const fallbackTimer = setTimeout(() => {
+      if (slides.length === 0 && !isNewStory) {
+        console.log('⚠️ FALLBACK: No slides found after timeout, creating default slide');
+        initializeSlides();
+      }
+    }, 1000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [finalStoryId, isNewStory, isLoaded, slides.length, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
