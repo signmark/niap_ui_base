@@ -149,13 +149,20 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     
     // Создаем глобальный ключ для отслеживания загрузки по всем инстансам компонента
     const globalLoadKey = `storyLoaded_${finalStoryId}`;
-    const isGloballyLoaded = localStorage.getItem(globalLoadKey) === 'true';
+    let isGloballyLoaded = localStorage.getItem(globalLoadKey) === 'true';
+    
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: если данные помечены как загруженные, но слайдов нет - сбрасываем флаги
+    if (isGloballyLoaded && slides.length === 0 && finalStoryId) {
+      console.log('🚨 ИСПРАВЛЕНИЕ: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
+      localStorage.removeItem(globalLoadKey);
+      isGloballyLoaded = false;
+    }
     
     // Инициализация currentStoryIdRef при первом запуске
     if (finalStoryId && currentStoryIdRef.current === null) {
       console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
       currentStoryIdRef.current = finalStoryId;
-      isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из глобального состояния
+      isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из исправленного глобального состояния
     }
     
     // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
