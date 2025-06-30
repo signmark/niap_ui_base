@@ -116,6 +116,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     return () => {
       console.log('🧹 CLEANUP: Покидаем StoryEditor - полная очистка Store');
       resetStore();
+      // Сбрасываем флаги загрузки
+      isLoadedRef.current = false;
+      currentStoryIdRef.current = null;
       // Очищаем все localStorage ключи Stories
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -136,6 +139,12 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       slidesLength: slides.length,
       hasSlides: slides.length > 0 
     });
+
+    // При первом входе в компонент ВСЕГДА сбрасываем флаги загрузки
+    isLoadedRef.current = false;
+    if (currentStoryIdRef.current === null) {
+      console.log('🔧 Первый вход в StoryEditor - сброс всех флагов загрузки');
+    }
     
     // КРИТИЧЕСКИ ВАЖНО: очищаем store ТОЛЬКО для новых Stories (без ID)
     if (isNewStory && !finalStoryId && !storyId) {
@@ -214,27 +223,31 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     
     // Проверка на РЕАЛЬНОЕ изменение Stories ID в URL
     if (finalStoryId && currentStoryIdRef.current !== null && currentStoryIdRef.current !== finalStoryId) {
-      console.log('🔄 РЕАЛЬНОЕ изменение Stories ID:', currentStoryIdRef.current, '->', finalStoryId);
+      console.log('🔄 ПЕРЕКЛЮЧЕНИЕ Stories:', currentStoryIdRef.current, '->', finalStoryId);
+      console.log('🧹 ПРИНУДИТЕЛЬНАЯ очистка Store при переключении');
+      
+      // ВСЕГДА очищаем Store при переключении между Stories
+      resetStore();
+      
+      // Обновляем текущий ID и сбрасываем все флаги
       currentStoryIdRef.current = finalStoryId;
-      const newGlobalLoadKey = `storyLoaded_${finalStoryId}`;
-      let newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
+      isLoadedRef.current = false;
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем валидность флага для новой Stories тоже
-      if (newIsGloballyLoaded && slides.length === 0) {
-        console.log('🚨 ИСПРАВЛЕНИЕ для новой Stories: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
-        localStorage.removeItem(newGlobalLoadKey);
-        newIsGloballyLoaded = false;
+      // Удаляем localStorage флаги для всех Stories
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('storyLoaded_')) {
+          keysToRemove.push(key);
+        }
       }
-      
-      isLoadedRef.current = newIsGloballyLoaded; // Устанавливаем исправленный флаг для новой Stories
-      if (!newIsGloballyLoaded) {
-        resetStore(); // Очищаем Store только если данные для новой Stories не загружены
-      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 
     // При смене Stories ID принудительно загружаем новые данные
     const storyChanged = currentStoryIdRef.current !== finalStoryId;
-    const shouldLoadData = finalStoryId && (storyChanged || (!isLoadedRef.current && !isGloballyLoaded));
+    // ВСЕГДА загружаем данные если Stories ID изменился
+    const shouldLoadData = finalStoryId && (storyChanged || !isLoadedRef.current);
     
     console.log('🔍 Проверка загрузки для Stories:', { 
       finalStoryId, 
