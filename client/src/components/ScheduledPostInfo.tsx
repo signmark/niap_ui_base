@@ -92,7 +92,7 @@ const formatTelegramUrl = (url: string | null): string | null => {
 
 interface SocialPublicationStatus {
   platform: string;
-  status: 'pending' | 'published' | 'failed';
+  status: 'pending' | 'published' | 'failed' | 'quota_exceeded';
   publishedAt: string | null;
   postId?: string | null;
   postUrl?: string | null;
@@ -112,6 +112,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   telegram: <span className="text-xs">📱</span>,
   vk: <span className="text-xs">💬</span>,
   facebook: <span className="text-xs">👥</span>,
+  youtube: <span className="text-xs">📺</span>,
 };
 
 const platformNames: Record<string, string> = {
@@ -119,12 +120,14 @@ const platformNames: Record<string, string> = {
   telegram: "Telegram",
   vk: "ВКонтакте",
   facebook: "Facebook",
+  youtube: "YouTube",
 };
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/30",
   published: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/30",
   failed: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/30",
+  quota_exceeded: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/30",
 };
 
 export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, compact = false, className }: ScheduledPostInfoProps) {
@@ -252,7 +255,9 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       ? `Опубликовано ${formatDateWithTimezone(status.publishedAt)}`
                       : status.status === 'failed'
                         ? 'Не удалось опубликовать'
-                        : 'Ожидает публикации'
+                        : status.status === 'quota_exceeded'
+                          ? 'Превышена квота API'
+                          : 'Ожидает публикации'
                     }
                   </span>
                   {status.status === 'published' ? (
@@ -265,6 +270,17 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{status.error || 'Ошибка публикации'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : status.status === 'quota_exceeded' ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <AlertTriangle size={14} className="text-orange-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{status.error || 'Превышена квота API. Попробуйте позже.'}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
