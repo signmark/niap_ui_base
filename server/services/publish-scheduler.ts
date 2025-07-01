@@ -282,10 +282,40 @@ export class PublishScheduler {
               }
             }
             
-            // Пропускаем YouTube контент с превышенной квотой
+            // Умная обработка YouTube quota_exceeded - проверяем, не обновились ли квоты
             if (platformName === 'youtube' && data.status === 'quota_exceeded') {
-              log(`Планировщик: Пропускаем YouTube ${content.id} - превышена квота API`, 'scheduler');
-              continue;
+              // Проверяем, прошло ли время обновления квот (полночь PT)
+              const quotaExceededTime = data.updatedAt ? new Date(data.updatedAt) : null;
+              let shouldResetQuota = false;
+              
+              if (quotaExceededTime) {
+                // YouTube квоты обновляются в полночь PT (UTC-8 или UTC-7 в зависимости от DST)
+                const nowPT = new Date();
+                const ptOffset = -8 * 60; // Pacific Time offset in minutes (упрощенно)
+                const ptTime = new Date(nowPT.getTime() + ptOffset * 60000);
+                
+                // Если quota_exceeded был получен вчера или раньше, сбрасываем его
+                const quotaPTTime = new Date(quotaExceededTime.getTime() + ptOffset * 60000);
+                const daysDiff = Math.floor((ptTime.getTime() - quotaPTTime.getTime()) / (24 * 60 * 60 * 1000));
+                
+                if (daysDiff >= 1) {
+                  shouldResetQuota = true;
+                  log(`Планировщик: YouTube квоты обновились, сбрасываем quota_exceeded для контента ${content.id}`, 'scheduler');
+                }
+              } else {
+                // Если нет даты, сбрасываем статус (на всякий случай)
+                shouldResetQuota = true;
+                log(`Планировщик: Сбрасываем старый quota_exceeded статус без даты для контента ${content.id}`, 'scheduler');
+              }
+              
+              if (!shouldResetQuota) {
+                log(`Планировщик: Пропускаем YouTube ${content.id} - превышена квота API (квоты еще не обновились)`, 'scheduler');
+                continue;
+              } else {
+                // Сбрасываем quota_exceeded статус для повторной попытки
+                log(`Планировщик: Сбрасываем quota_exceeded статус для YouTube контента ${content.id}`, 'scheduler');
+                // Статус будет обновлен после попытки публикации
+              }
             }
 
             // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем кэш на предмет повторной обработки

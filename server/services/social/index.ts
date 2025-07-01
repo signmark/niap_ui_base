@@ -41,19 +41,54 @@ export class SocialPublishingService {
         const platformData = content.socialPlatforms[platform];
         
         // Если статус published И есть postUrl - блокируем повторную публикацию
-        // Также блокируем quota_exceeded статус чтобы избежать повторных попыток
-        if ((platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') || 
-            platformData.status === 'quota_exceeded') {
-          const reason = platformData.status === 'quota_exceeded' ? 'квота превышена' : `уже опубликована (postUrl: ${platformData.postUrl})`;
-          log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} ${reason}`, 'social-publishing');
+        if (platformData.status === 'published' && platformData.postUrl && platformData.postUrl.trim() !== '') {
+          log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} уже опубликована (postUrl: ${platformData.postUrl})`, 'social-publishing');
           return {
             platform,
-            status: platformData.status === 'quota_exceeded' ? 'quota_exceeded' : 'published',
+            status: 'published',
             publishedAt: platformData.publishedAt || new Date().toISOString(),
             messageId: platformData.messageId || null,
             url: platformData.postUrl,
             error: null
           };
+        }
+        
+        // Умная обработка quota_exceeded для YouTube - проверяем, не обновились ли квоты
+        if (platform === 'youtube' && platformData.status === 'quota_exceeded') {
+          const quotaExceededTime = platformData.updatedAt ? new Date(platformData.updatedAt) : null;
+          let shouldResetQuota = false;
+          
+          if (quotaExceededTime) {
+            // YouTube квоты обновляются в полночь PT
+            const nowPT = new Date();
+            const ptOffset = -8 * 60; // Pacific Time offset in minutes
+            const ptTime = new Date(nowPT.getTime() + ptOffset * 60000);
+            
+            const quotaPTTime = new Date(quotaExceededTime.getTime() + ptOffset * 60000);
+            const daysDiff = Math.floor((ptTime.getTime() - quotaPTTime.getTime()) / (24 * 60 * 60 * 1000));
+            
+            if (daysDiff >= 1) {
+              shouldResetQuota = true;
+              log(`YouTube квоты обновились, сбрасываем quota_exceeded для ${content.id}`, 'social-publishing');
+            }
+          } else {
+            shouldResetQuota = true;
+            log(`Сбрасываем старый quota_exceeded статус без даты для ${content.id}`, 'social-publishing');
+          }
+          
+          if (!shouldResetQuota) {
+            log(`БЛОКИРОВКА ДУБЛИРОВАНИЯ: Платформа ${platform} квота превышена (квоты еще не обновились)`, 'social-publishing');
+            return {
+              platform,
+              status: 'quota_exceeded',
+              publishedAt: platformData.publishedAt || new Date().toISOString(),
+              messageId: platformData.messageId || null,
+              url: platformData.postUrl,
+              error: 'YouTube API quota exceeded - waiting for daily reset'
+            };
+          }
+          // Если квоты обновились, продолжаем публикацию
+          log(`Квоты YouTube обновились, пробуем повторную публикацию для ${content.id}`, 'social-publishing');
         }
         
         // Сбрасываем некорректные published статусы без postUrl
