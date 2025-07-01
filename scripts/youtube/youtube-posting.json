@@ -226,6 +226,10 @@
               "value": "snippet,status"
             },
             {
+              "name": "uploadType",
+              "value": "multipart"
+            },
+            {
               "name": "access_token",
               "value": "={{ $('Prepare YouTube Data').item.json.youtubeSettings.accessToken }}"
             }
@@ -237,8 +241,13 @@
           "parameters": [
             {
               "parameterType": "formData",
-              "name": "metadata",
-              "value": "={{ $('Prepare YouTube Data').item.json.metadata }}"
+              "name": "snippet",
+              "value": "={{ JSON.stringify(JSON.parse($('Prepare YouTube Data').item.json.metadata).snippet) }}"
+            },
+            {
+              "parameterType": "formData", 
+              "name": "status",
+              "value": "={{ JSON.stringify(JSON.parse($('Prepare YouTube Data').item.json.metadata).status) }}"
             },
             {
               "parameterType": "formBinaryData",
