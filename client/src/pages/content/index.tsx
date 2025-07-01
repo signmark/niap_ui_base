@@ -1501,11 +1501,10 @@ export default function ContentPage() {
                                   </div>
                                 )}
                                 
-                                {/* Enhanced scheduled post information */}
-                                {((content.status === 'scheduled' && content.scheduledAt) || 
-                                  (content.status === 'published' && content.publishedAt)) && 
-                                 content.socialPlatforms && 
-                                 typeof content.socialPlatforms === 'object' && (
+                                {/* Enhanced social platforms information */}
+                                {content.socialPlatforms && 
+                                 typeof content.socialPlatforms === 'object' && 
+                                 Object.keys(content.socialPlatforms).length > 0 && (
                                   <ScheduledPostInfo 
                                     socialPlatforms={content.socialPlatforms as Record<string, any>} 
                                     scheduledAt={typeof content.scheduledAt === 'string' ? content.scheduledAt : content.scheduledAt?.toISOString() || null}
