@@ -311,6 +311,15 @@ export class YouTubeService extends BaseSocialService {
         };
       }
 
+      // Обработка ошибки лимита загрузок видео
+      if (error.message?.includes('exceeded the number of videos')) {
+        return {
+          success: false,
+          error: 'Превышен дневной лимит загрузок видео YouTube. Попробуйте завтра.',
+          quotaExceeded: true  // Используем тот же флаг для блокировки повторных попыток
+        };
+      }
+
       return {
         success: false,
         error: `Ошибка YouTube API: ${error.message}`

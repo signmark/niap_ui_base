@@ -309,7 +309,12 @@ export class PublishScheduler {
               }
               
               if (!shouldResetQuota) {
-                log(`Планировщик: Пропускаем YouTube ${content.id} - превышена квота API (квоты еще не обновились)`, 'scheduler');
+                // Проверяем тип ошибки для более точного логирования
+                const errorMessage = data.error || '';
+                const errorType = errorMessage.includes('exceeded the number of videos') ? 
+                  'достигнут дневной лимит загрузок видео' : 'превышена квота API';
+                
+                log(`Планировщик: Пропускаем YouTube ${content.id} - ${errorType} (квоты еще не обновились)`, 'scheduler');
                 continue;
               } else {
                 // Сбрасываем quota_exceeded статус для повторной попытки
