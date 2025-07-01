@@ -194,19 +194,6 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
             
             const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
             result = facebookResponse.data;
-          } else if (platform === 'youtube') {
-            log(`[Social Publishing] Использование прямого API для YouTube вместо n8n вебхука`);
-            // Для YouTube используем планировщик напрямую
-            const { getPublishScheduler } = require('../services/publish-scheduler');
-            const publishScheduler = getPublishScheduler();
-            
-            if (publishScheduler) {
-              log(`[Social Publishing] Запуск планировщика для YouTube публикации ${contentId}`);
-              await publishScheduler.checkScheduledContent();
-              result = { success: true, message: 'YouTube publication started via scheduler' };
-            } else {
-              throw new Error('Планировщик YouTube не инициализирован');
-            }
           } else {
             // Для остальных платформ используем n8n вебхук
             result = await publishViaN8nAsync(contentId, platform);
@@ -357,15 +344,20 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
  */
 router.post('/publish', authMiddleware, async (req, res) => {
   try {
+    console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Запрос на публикацию получен`);
+    console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Параметры:`, req.body);
+    
     const { contentId, platform } = req.body;
     
     if (!contentId || !platform) {
+      console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Ошибка: contentId или platform не указаны`);
       return res.status(400).json({
         success: false,
         error: 'Необходимо указать contentId и platform'
       });
     }
     
+    console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Запрос на публикацию контента ${contentId} в ${platform}`);
     log(`[Social Publishing] Запрос на публикацию контента ${contentId} в ${platform}`);
     
     // Маршрутизация запросов в зависимости от платформы
@@ -414,6 +406,29 @@ router.post('/publish', authMiddleware, async (req, res) => {
           });
         }
         
+      case 'youtube':
+        // ВРЕМЕННО: Прямая публикация YouTube вместо N8N workflow
+        log(`[Social Publishing] YouTube публикации - прямая интеграция`);
+        try {
+          const youtubeService = await import('../services/social/youtube').then(m => m.YouTubeService);
+          const youtube = new youtubeService();
+          const result = await youtube.publishContent(contentId, req.user.id);
+          return res.status(200).json({
+            success: true,
+            platform: 'youtube',
+            status: result.status,
+            postUrl: result.postUrl,
+            videoId: result.videoId,
+            message: 'Видео успешно опубликовано на YouTube'
+          });
+        } catch (error: any) {
+          log(`[Social Publishing] Ошибка при публикации YouTube: ${error.message}`);
+          return res.status(500).json({
+            success: false,
+            error: error.message
+          });
+        }
+        
       default:
         return res.status(400).json({
           success: false,
@@ -446,7 +461,8 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
       'instagram': 'publish-instagram',
-      'facebook': 'publish-facebook'
+      'facebook': 'publish-facebook',
+      'youtube': 'publish-youtube'
     };
     
     const webhookName = webhookMap[platform];
@@ -482,12 +498,13 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
     
     // Логируем URL для отладки
     log(`[Social Publishing] Сформирован URL для n8n webhook: ${webhookUrl}`);
-    // Для n8n вебхуков отправляем только contentId, как указано в требованиях
+    // Для n8n вебхуков отправляем contentId и platform для YouTube
     const webhookPayload = {
-      contentId
+      contentId,
+      platform
     };
     
-    // Отправляем запрос на n8n вебхук только с contentId
+    // Отправляем запрос на n8n вебхук с contentId и platform
     const response = await axios.post(webhookUrl, webhookPayload);
     
     log(`[Social Publishing] Отправлены данные в n8n вебхук: contentId=${contentId}, platform=${platform}`);
@@ -661,27 +678,35 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     const webhookMap: Record<string, string> = {
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
-      'instagram': 'publish-instagram'
+      'instagram': 'publish-instagram',
+      'youtube': 'publish-youtube'
       // 'facebook' удален из маппинга, так как теперь используется прямой код
     };
     
+    console.log(`🔍 [WEBHOOK-MAP] Ищем webhook для платформы: "${platform}"`);
+    console.log(`🔍 [WEBHOOK-MAP] Доступные webhooks:`, Object.keys(webhookMap));
+    
     const webhookName = webhookMap[platform];
+    console.log(`🔍 [WEBHOOK-MAP] Найденный webhook: "${webhookName}"`);
+    
     if (!webhookName) {
+      console.log(`🔍 [WEBHOOK-MAP] Ошибка: webhook не найден для платформы "${platform}"`);
       throw new Error(`Платформа ${platform} не имеет настроенного вебхука`);
     }
     
     // Формируем URL вебхука
     // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
-    const baseUrl = "https://n8n.nplanner.ru/webhook";
+    const baseUrl = "https://n8n.roboflow.tech/webhook";
     // Убираем возможный слеш в конце базового URL
     const baseUrlWithoutTrailingSlash = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
     
     // Логируем URL для отладки
     log(`[Social Publishing] Сформирован URL для n8n webhook: ${webhookUrl}`);
-    // Для n8n вебхуков отправляем только contentId, как указано в требованиях
+    // Для n8n вебхуков отправляем contentId и platform для YouTube
     const webhookPayload = {
-      contentId
+      contentId,
+      platform
     };
     
     // Отправляем запрос на n8n вебхук

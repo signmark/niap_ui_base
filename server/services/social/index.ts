@@ -106,24 +106,25 @@ export class SocialPublishingService {
         return await facebookSocialService.publish(content, settings.facebook || {});
       }
       
-      if (platform === 'youtube') {
-        const youtubeService = new YouTubeService();
-        log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
-        const result = await youtubeService.publishContent(content, { youtube: settings.youtube || {} }, content.user_id);
-        
-        // Передаем флаг quotaExceeded для специальной обработки в планировщике
-        return {
-          platform: 'youtube',
-          status: result.success ? 'published' : 'failed',
-          publishedAt: result.success ? new Date().toISOString() : null,
-          postUrl: result.postUrl || null,
-          url: result.postUrl || null,
-          error: result.error || null,
-          quotaExceeded: result.quotaExceeded || false  // Передаем флаг превышения квоты
-        };
-      }
+      // Убираем прямую публикацию в YouTube - все через N8N
+      // if (platform === 'youtube') {
+      //   const youtubeService = new YouTubeService();
+      //   log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
+      //   const result = await youtubeService.publishContent(content, { youtube: settings.youtube || {} }, content.user_id);
+      //   
+      //   // Передаем флаг quotaExceeded для специальной обработки в планировщике
+      //   return {
+      //     platform: 'youtube',
+      //     status: result.success ? 'published' : 'failed',
+      //     publishedAt: result.success ? new Date().toISOString() : null,
+      //     postUrl: result.postUrl || null,
+      //     url: result.postUrl || null,
+      //     error: result.error || null,
+      //     quotaExceeded: result.quotaExceeded || false  // Передаем флаг превышения квоты
+      //   };
+      // }
       
-      // ВК, Telegram, Instagram только через n8n webhook
+      // Все платформы (ВК, Telegram, Instagram, YouTube) идут через n8n webhook
       return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
@@ -149,7 +150,8 @@ export class SocialPublishingService {
     const webhookUrls = {
       'vk': `${baseN8nUrl}/webhook/publish-vk`,
       'telegram': `${baseN8nUrl}/webhook/publish-telegram`, 
-      'instagram': `${baseN8nUrl}/webhook/publish-instagram`
+      'instagram': `${baseN8nUrl}/webhook/publish-instagram`,
+      'youtube': `${baseN8nUrl}/webhook/publish-youtube`
     };
 
     const webhookUrl = webhookUrls[platform as keyof typeof webhookUrls];
