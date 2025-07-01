@@ -471,7 +471,7 @@ export class PublishScheduler {
         // Сохраняем результат в базу данных
         try {
           const updateData = {
-            social_platforms: {
+            socialPlatforms: {
               ...content.social_platforms,
               youtube: {
                 status: 'published',
@@ -510,7 +510,7 @@ export class PublishScheduler {
           // Сохраняем quota_exceeded статус
           try {
             const updateData = {
-              social_platforms: {
+              socialPlatforms: {
                 ...content.social_platforms,
                 youtube: {
                   status: 'quota_exceeded',
