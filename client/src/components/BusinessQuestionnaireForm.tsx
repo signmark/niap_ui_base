@@ -66,6 +66,7 @@ export function BusinessQuestionnaireForm({
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [isWebsiteDialogOpen, setIsWebsiteDialogOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [hasAnalyzedWebsite, setHasAnalyzedWebsite] = useState(false);
 
   // Создаем экземпляр формы
   const form = useForm<BusinessQuestionnaireFormValues>({
@@ -127,6 +128,7 @@ export function BusinessQuestionnaireForm({
         description: 'Анкета успешно сохранена',
       });
       setIsEditMode(false);
+      setHasAnalyzedWebsite(false); // Сбрасываем флаг после сохранения
       if (onQuestionnaireUpdated) {
         onQuestionnaireUpdated();
       }
@@ -178,6 +180,7 @@ export function BusinessQuestionnaireForm({
         description: 'Анкета успешно обновлена',
       });
       setIsEditMode(false);
+      setHasAnalyzedWebsite(false); // Сбрасываем флаг после сохранения
       if (onQuestionnaireUpdated) {
         onQuestionnaireUpdated();
       }
@@ -195,9 +198,9 @@ export function BusinessQuestionnaireForm({
     },
   });
 
-  // Подгружаем данные в форму при их получении
+  // Подгружаем данные в форму при их получении (но только если не анализировали сайт)
   useEffect(() => {
-    if (questionnaireData) {
+    if (questionnaireData && !hasAnalyzedWebsite) {
       form.reset({
         companyName: questionnaireData.companyName || '',
         contactInfo: questionnaireData.contactInfo || '',
@@ -214,7 +217,7 @@ export function BusinessQuestionnaireForm({
         marketingExpectations: questionnaireData.marketingExpectations || '',
       });
     }
-  }, [questionnaireData, form]);
+  }, [questionnaireData, form, hasAnalyzedWebsite]);
 
   // Обработка отправки формы
   const onSubmit = async (values: BusinessQuestionnaireFormValues) => {
@@ -324,24 +327,47 @@ export function BusinessQuestionnaireForm({
         
         // Обновляем поля формы данными, полученными из анализа сайта
         // Сохраняем старые значения, если новые отсутствуют
-        console.log('Setting companyName:', data.companyName, 'fallback:', prevValues.companyName);
-        console.log('Setting businessDescription:', data.businessDescription, 'fallback:', prevValues.businessDescription);
-        console.log('Setting productsServices:', data.productsServices, 'fallback:', prevValues.productsServices);
+        console.log('[FORM-UPDATE] Детальный анализ полученных данных:');
+        console.log('[FORM-UPDATE] Все ключи в data:', Object.keys(data));
+        console.log('[FORM-UPDATE] Количество полей с данными:', Object.values(data).filter(v => v && String(v).trim()).length);
         
-        // Заполняем все поля, которые могут прийти от API
-        form.setValue('companyName', data.companyName || prevValues.companyName);
-        form.setValue('contactInfo', data.contactInfo || prevValues.contactInfo);
-        form.setValue('businessDescription', data.businessDescription || prevValues.businessDescription);
-        form.setValue('mainDirections', data.mainDirections || prevValues.mainDirections);
-        form.setValue('brandImage', data.brandImage || prevValues.brandImage);
-        form.setValue('productsServices', data.productsServices || prevValues.productsServices);
-        form.setValue('targetAudience', data.targetAudience || prevValues.targetAudience);
-        form.setValue('customerResults', data.customerResults || prevValues.customerResults);
-        form.setValue('companyFeatures', data.companyFeatures || prevValues.companyFeatures);
-        form.setValue('businessValues', data.businessValues || prevValues.businessValues);
-        form.setValue('productBeliefs', data.productBeliefs || prevValues.productBeliefs);
-        form.setValue('competitiveAdvantages', data.competitiveAdvantages || prevValues.competitiveAdvantages);
-        form.setValue('marketingExpectations', data.marketingExpectations || prevValues.marketingExpectations);
+        // Проверяем каждое поле отдельно
+        const fieldMapping = {
+          companyName: 'Название компании',
+          contactInfo: 'Контактная информация',
+          businessDescription: 'Описание бизнеса',
+          mainDirections: 'Основные направления',
+          brandImage: 'Имидж бренда',
+          productsServices: 'Продукты и услуги',
+          targetAudience: 'Целевая аудитория',
+          customerResults: 'Результаты клиентов',
+          companyFeatures: 'Особенности компании',
+          businessValues: 'Ценности бизнеса',
+          productBeliefs: 'Убеждения о продукте',
+          competitiveAdvantages: 'Конкурентные преимущества',
+          marketingExpectations: 'Ожидания от маркетинга'
+        };
+        
+        Object.entries(fieldMapping).forEach(([field, label]) => {
+          const value = data[field];
+          const hasValue = value && String(value).trim();
+          console.log(`[FORM-UPDATE] ${label} (${field}): ${hasValue ? `"${String(value).substring(0, 50)}..."` : 'ПУСТОЕ'}`);
+        });
+        
+        // Заполняем все поля данными от API (полностью заменяем старые данные)
+        form.setValue('companyName', data.companyName || '');
+        form.setValue('contactInfo', data.contactInfo || '');
+        form.setValue('businessDescription', data.businessDescription || '');
+        form.setValue('mainDirections', data.mainDirections || '');
+        form.setValue('brandImage', data.brandImage || '');
+        form.setValue('productsServices', data.productsServices || '');
+        form.setValue('targetAudience', data.targetAudience || '');
+        form.setValue('customerResults', data.customerResults || '');
+        form.setValue('companyFeatures', data.companyFeatures || '');
+        form.setValue('businessValues', data.businessValues || '');
+        form.setValue('productBeliefs', data.productBeliefs || '');
+        form.setValue('competitiveAdvantages', data.competitiveAdvantages || '');
+        form.setValue('marketingExpectations', data.marketingExpectations || '');
         
         // Принудительно обновляем форму для отображения новых значений
         form.trigger();
@@ -354,6 +380,9 @@ export function BusinessQuestionnaireForm({
         // Получаем значения формы
         const formValues = form.getValues();
         console.log('After website analysis, form values:', formValues);
+        
+        // Устанавливаем флаг, что анализ сайта был выполнен
+        setHasAnalyzedWebsite(true);
         
         // Всегда устанавливаем режим редактирования после анализа сайта
         setIsEditMode(true);

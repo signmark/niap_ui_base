@@ -140,12 +140,16 @@ export class GeminiProxyService {
           }
         }
         
-        // Добавляем прокси-агент, если он доступен
-        if (this.agent) {
-          // @ts-ignore - Тип agent не совпадает с ожидаемым типом в RequestInit, но это работает
+        // Используем прокси для доступа к Gemini API (обязательно для продакшена)
+        if (this.agent && !isVertexAI) {
+          // Для стандартного Gemini API используем прокси
           fetchOptions.agent = this.agent;
+          logger.log(`[gemini-proxy] Используется SOCKS5 прокси: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
+        } else if (isVertexAI) {
+          // Для Vertex AI прокси пока не требуется
+          logger.log(`[gemini-proxy] Vertex AI - прямое соединение`, 'gemini');
         } else {
-          logger.warn(`[gemini-proxy] SOCKS5 прокси не настроен, используется прямое соединение`, 'gemini');
+          logger.log(`[gemini-proxy] Прокси недоступен - прямое соединение`, 'gemini');
         }
         
         // Выполняем запрос

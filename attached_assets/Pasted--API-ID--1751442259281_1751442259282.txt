@@ -1,0 +1,286 @@
+ Начинаем обновление токена
+ Используем локальный API для обновления токена
+ Сохраняем ID выбранной кампании для постоянного отображения: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+ Loading keywords for campaign: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+ Trends API: Запрос трендов для кампании 8e4a1018-72ff-48eb-a3ff-9bd41bf83253 с токеном: есть
+ Загрузка публикаций для кампании: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+ Загрузка данных кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+ Проверка доступа к кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253 с токеном: присутствует
+ Fetching user API keys using the API route
+ Проверка принадлежности кампании пользователю: Object
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Updated Directus URL to: https://directus.roboflow.tech/
+ Токен успешно обновлен через API
+ Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+ Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+ Токен успешно обновлен, длина нового токена: 321
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Campaigns loaded: 7
+ Восстанавливаем сохраненную кампанию: "Ещё одна кампания"
+ Установлена активная кампания: id=8e4a1018-72ff-48eb-a3ff-9bd41bf83253, name=Ещё одна кампания
+ Успешно получены данные кампании: Ещё одна кампания
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Кампания принадлежит текущему пользователю: Ещё одна кампания
+ Successfully fetched 8 API keys
+ Trends API: Статус ответа: 200
+ Trends API: Получено данных: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Ответ сервера на запрос проверки админа: Object
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Загружено публикаций: 0
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+ Social Media Settings Debug: Object
+ Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+store.ts:159 Ответ сервера на запрос проверки админа: Object
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+store.ts:159 Ответ сервера на запрос проверки админа: Object
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+store.ts:159 Ответ сервера на запрос проверки админа: Object
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+[id].tsx:71 Loading keywords for campaign: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+[id].tsx:209 Загрузка данных кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+[id].tsx:211 Проверка доступа к кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253 с токеном: присутствует
+[id].tsx:219 Успешно получены данные кампании: Ещё одна кампания
+BusinessQuestionnaireForm.tsx:285 Starting website analysis for URL: https://www.cybersport.ru/tournaments/cs2/blast-tv-major-2025
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:71 Loading keywords for campaign: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+[id].tsx:209 Загрузка данных кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253
+[id].tsx:211 Проверка доступа к кампании ID: 8e4a1018-72ff-48eb-a3ff-9bd41bf83253 с токеном: присутствует
+[id].tsx:219 Успешно получены данные кампании: Ещё одна кампания
+/api/website-analysis:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+hook.js:608 Error analyzing website: Error: 500: {"success":false,"error":"Ошибка при анализе данных сайта через AI. Проверьте API ключи DeepSeek или Gemini."}
+    at throwIfResNotOk (queryClient.ts:26:19)
+    at async apiRequest (queryClient.ts:91:3)
+    at async analyzeWebsite (BusinessQuestionnaireForm.tsx:287:24)
+overrideMethod @ hook.js:608
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: Object
+[id].tsx:731 Social Media Settings Debug: Object
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}
+[id].tsx:722 Trends Debug: {campaignTrends: Array(0), length: 0, type: 'object', isArray: true, completed: false}
+[id].tsx:731 Social Media Settings Debug: {keys: Array(5), values: Array(5), fullObject: {…}, hasEnabledPlatforms: true}

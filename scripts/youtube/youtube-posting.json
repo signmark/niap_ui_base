@@ -352,7 +352,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Формируем данные ошибки публикации\nconst error = $('Upload Video to YouTube').item.error || $input.item.json;\nconst contentId = $('Prepare YouTube Data').item.json.contentId;\n\nlet errorMessage = 'Неизвестная ошибка при загрузке видео';\nif (error.message) {\n  errorMessage = error.message;\n} else if (error.error && error.error.message) {\n  errorMessage = error.error.message;\n} else if (typeof error === 'string') {\n  errorMessage = error;\n}\n\nreturn {\n  contentId: contentId,\n  platform: 'youtube',\n  status: 'failed',\n  error: errorMessage,\n  updatedAt: new Date().toISOString()\n};"
+        "jsCode": "// Формируем данные ошибки публикации\nconst error = $('Upload Video to YouTube').item.error || $input.item.json;\nconst contentId = $('Prepare YouTube Data').item.json.contentId;\n\nlet errorMessage = 'Неизвестная ошибка при загрузке видео';\nlet status = 'failed';\n\nif (error.message) {\n  errorMessage = error.message;\n} else if (error.error && error.error.message) {\n  errorMessage = error.error.message;\n} else if (typeof error === 'string') {\n  errorMessage = error;\n}\n\n// Проверяем на quota exceeded ошибку\nif (errorMessage.includes('exceeded your quota') || error.status === 403) {\n  status = 'quota_exceeded';\n  errorMessage = 'YouTube API quota exceeded - попробуйте позже';\n}\n\nreturn {\n  contentId: contentId,\n  platform: 'youtube',\n  status: status,\n  error: errorMessage,\n  updatedAt: new Date().toISOString()\n};"
       },
       "id": "7fa851da-73d8-4ba0-b9b9-6cb74f2f66b2",
       "name": "Format Error Result",
