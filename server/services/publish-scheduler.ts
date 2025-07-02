@@ -272,6 +272,28 @@ export class PublishScheduler {
               }
             }
             
+            // ПРОВЕРКА НА КРИТИЧЕСКИЕ ОШИБКИ - ДЕЛАЕМ ЭТО ПЕРВЫМ ДЕЛОМ!
+            if (data.status === 'failed') {
+              const errorMessage = data.error || '';
+              const criticalErrors = [
+                'Bad request - please check your parameters',
+                'Authorization failed - please check your credentials',
+                'Invalid credentials',
+                'Permission denied',
+                'Account suspended',
+                'Content policy violation'
+              ];
+              
+              const isCriticalError = criticalErrors.some(error => 
+                errorMessage.toLowerCase().includes(error.toLowerCase())
+              );
+              
+              if (isCriticalError) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - критическая ошибка: ${errorMessage}`, 'scheduler');
+                continue;
+              }
+            }
+
             // Временная агрессивная фильтрация: пропускаем все failed Instagram/Facebook статусы старше 1 часа
             if (data.status === 'failed' && (platformName === 'instagram' || platformName === 'facebook') && data.updatedAt) {
               const lastUpdate = new Date(data.updatedAt);
@@ -377,29 +399,10 @@ export class PublishScheduler {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус ${data.status})`, 'scheduler');
             }
-            // Failed статус - проверяем на критические ошибки
+            // Failed статус - НЕ ПУБЛИКУЕМ, КРИТИЧЕСКИЕ ОШИБКИ УЖЕ ПРОВЕРЕНЫ ВЫШЕ
             else if (data.status === 'failed') {
-              const errorMessage = data.error || '';
-              const criticalErrors = [
-                'Bad request - please check your parameters',
-                'Authorization failed - please check your credentials',
-                'Invalid credentials',
-                'Permission denied',
-                'Account suspended',
-                'Content policy violation'
-              ];
-              
-              const isCriticalError = criticalErrors.some(error => 
-                errorMessage.toLowerCase().includes(error.toLowerCase())
-              );
-              
-              if (isCriticalError) {
-                log(`Планировщик: Пропускаем ${platformName} ${content.id} - критическая ошибка: ${errorMessage}`, 'scheduler');
-                continue;
-              } else {
-                shouldPublish = true;
-                log(`Планировщик: Платформа ${platformName} - повторная попытка (временная ошибка: ${errorMessage})`, 'scheduler');
-              }
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус (ошибка: ${data.error})`, 'scheduler');
+              continue;
             }
 
             if (shouldPublish) {
