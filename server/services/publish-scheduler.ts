@@ -435,18 +435,14 @@ export class PublishScheduler {
   }
 
   /**
-   * Публикует контент в указанные платформы через прямые сервисы или N8N
+   * Публикует контент в указанные платформы ТОЛЬКО через N8N webhooks
    */
   private async publishContentToPlatforms(content: any, platforms: string[], authToken: string) {
     // Создаем промисы для параллельной публикации
     const publishPromises = platforms.map(async (platform) => {
       try {
-        // YouTube публикуется напрямую через API, остальные через N8N
-        if (platform.toLowerCase() === 'youtube') {
-          return await this.publishToYouTubeDirect(content, authToken);
-        } else {
-          return await this.publishThroughN8nWebhook(content, platform);
-        }
+        // ВСЕ платформы публикуются ТОЛЬКО через N8N webhooks
+        return await this.publishThroughN8nWebhook(content, platform);
       } catch (error: any) {
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
@@ -549,7 +545,7 @@ export class PublishScheduler {
       }
 
     } catch (error: any) {
-      log(`Ошибка прямой публикации YouTube ${content.id}: ${error.message}`, 'scheduler');
+      log(`Ошибка публикации YouTube через N8N ${content.id}: ${error.message}`, 'scheduler');
       
       // Проверяем на quota exceeded ошибку и в обычных исключениях
       if (error.message && (error.message.includes('quota') || error.message.includes('Quota'))) {
