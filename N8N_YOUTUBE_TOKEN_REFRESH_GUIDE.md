@@ -130,7 +130,23 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 DIRECTUS_URL=https://directus.roboflow.tech
 DIRECTUS_TOKEN=your_directus_admin_token
+N8N_URL=https://n8n.roboflow.tech
 ```
+
+### ⚠️ Важно: Google OAuth Credentials
+
+Эти `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET` должны быть из того же Google Cloud проекта, который использовался для настройки YouTube OAuth в основном приложении. 
+
+**Где взять значения:**
+1. Перейдите в [Google Cloud Console](https://console.cloud.google.com/)
+2. Выберите проект, используемый для YouTube API
+3. Перейдите в "APIs & Services" → "Credentials"
+4. Найдите OAuth 2.0 Client ID, используемый в приложении
+5. Скопируйте Client ID и Client Secret
+
+**Проверить текущие значения можно в файле `.env` основного приложения:**
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
 ## 3. Автоматическое обновление токенов
 
