@@ -372,10 +372,33 @@ export class PublishScheduler {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус partial)`, 'scheduler');
             }
-            // Платформа в статусе pending или failed без времени - публикуем сразу
-            else if (data.status === 'pending' || data.status === 'failed') {
+            // Платформа в статусе pending - публикуем сразу
+            else if (data.status === 'pending') {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус ${data.status})`, 'scheduler');
+            }
+            // Failed статус - проверяем на критические ошибки
+            else if (data.status === 'failed') {
+              const errorMessage = data.error || '';
+              const criticalErrors = [
+                'Bad request - please check your parameters',
+                'Invalid credentials',
+                'Permission denied',
+                'Account suspended',
+                'Content policy violation'
+              ];
+              
+              const isCriticalError = criticalErrors.some(error => 
+                errorMessage.toLowerCase().includes(error.toLowerCase())
+              );
+              
+              if (isCriticalError) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - критическая ошибка: ${errorMessage}`, 'scheduler');
+                continue;
+              } else {
+                shouldPublish = true;
+                log(`Планировщик: Платформа ${platformName} - повторная попытка (временная ошибка: ${errorMessage})`, 'scheduler');
+              }
             }
 
             if (shouldPublish) {
