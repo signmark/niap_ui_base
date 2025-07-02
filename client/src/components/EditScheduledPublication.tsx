@@ -79,7 +79,8 @@ export default function EditScheduledPublication({
       instagram: false,
       telegram: false,
       vk: false,
-      facebook: false
+      facebook: false,
+      youtube: false
     };
     
     if (content.socialPlatforms) {
@@ -319,11 +320,11 @@ export default function EditScheduledPublication({
             onChange={handlePlatformChange}
             content={{
               contentType: content.contentType,
-              imageUrl: content.imageUrl,
-              images: content.images,
-              videoUrl: content.videoUrl || content.video_url,
-              additionalImages: content.additionalImages,
-              additionalVideos: content.additionalVideos
+              imageUrl: content.imageUrl ?? undefined,
+              images: (content as any).images ?? undefined,
+              videoUrl: content.videoUrl ?? (content as any).video_url ?? undefined,
+              additionalImages: content.additionalImages ?? undefined,
+              additionalVideos: content.additionalVideos ?? undefined
             }}
           />
           <FormDescription>
