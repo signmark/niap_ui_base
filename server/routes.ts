@@ -8403,6 +8403,77 @@ Return your response as a JSON array in this exact format:
     }
   });
   
+  // Endpoint для обновления YouTube токенов
+  app.post('/api/youtube/refresh-token', async (req, res) => {
+    try {
+      const { campaignId, refreshToken } = req.body;
+      
+      if (!campaignId || !refreshToken) {
+        return res.status(400).json({
+          error: 'campaignId и refreshToken обязательны'
+        });
+      }
+
+      // Импортируем сервис обновления токенов
+      const { YouTubeTokenRefresh } = await import('./services/youtube-token-refresh');
+      const tokenService = new YouTubeTokenRefresh();
+
+      // Обновляем токен
+      const newTokens = await tokenService.refreshAccessToken(refreshToken);
+
+      // Получаем текущую кампанию для обновления настроек
+      const authToken = req.headers.authorization;
+      if (!authToken) {
+        return res.status(401).json({ error: 'Токен авторизации отсутствует' });
+      }
+
+      const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+        headers: { 'Authorization': authToken }
+      });
+
+      if (!campaignResponse.data?.data) {
+        return res.status(404).json({ error: 'Кампания не найдена' });
+      }
+
+      const campaign = campaignResponse.data.data;
+      const currentSettings = campaign.social_media_settings || {};
+      
+      // Обновляем YouTube настройки с новыми токенами
+      const updatedSettings = {
+        ...currentSettings,
+        youtube: {
+          ...currentSettings.youtube,
+          accessToken: newTokens.accessToken,
+          refreshToken: newTokens.refreshToken,
+          expiresAt: newTokens.expiresAt
+        }
+      };
+
+      // Сохраняем обновленные настройки в кампанию
+      await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
+        social_media_settings: updatedSettings
+      }, {
+        headers: { 'Authorization': authToken }
+      });
+
+      log(`YouTube токены успешно обновлены для кампании ${campaignId}`, 'youtube-auth');
+
+      res.json({
+        success: true,
+        message: 'YouTube токены успешно обновлены',
+        expiresAt: newTokens.expiresAt,
+        expiresIn: newTokens.expiresIn
+      });
+
+    } catch (error: any) {
+      log(`Ошибка обновления YouTube токенов: ${error.message}`, 'youtube-auth');
+      res.status(500).json({
+        error: 'Ошибка обновления токенов',
+        details: error.message
+      });
+    }
+  });
+
   // Примечание: основной маршрут для удаления кампаний уже определен выше (строка ~6496)
   // Дублирующий маршрут удален, чтобы избежать конфликтов
   // Используйте маршрут /api/campaigns/:campaignId для удаления кампаний
