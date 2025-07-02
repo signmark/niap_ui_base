@@ -317,6 +317,14 @@ export default function EditScheduledPublication({
           <PlatformSelector 
             selectedPlatforms={form.watch('selectedPlatforms')}
             onChange={handlePlatformChange}
+            content={{
+              contentType: content.contentType,
+              imageUrl: content.imageUrl,
+              images: content.images,
+              videoUrl: content.videoUrl || content.video_url,
+              additionalImages: content.additionalImages,
+              additionalVideos: content.additionalVideos
+            }}
           />
           <FormDescription>
             Выберите платформы, на которых нужно опубликовать контент.
