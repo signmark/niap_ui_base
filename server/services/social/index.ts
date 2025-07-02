@@ -101,30 +101,8 @@ export class SocialPublishingService {
       const settings = campaign.social_media_settings || campaign.socialMediaSettings || campaign.settings || {};
       log(`Настройки для ${platform}: ${JSON.stringify(settings[platform])}`, 'social-publishing');
       
-      // Прямая публикация для Facebook и YouTube
-      if (platform === 'facebook') {
-        return await facebookSocialService.publish(content, settings.facebook || {});
-      }
-      
-      // Убираем прямую публикацию в YouTube - все через N8N
-      // if (platform === 'youtube') {
-      //   const youtubeService = new YouTubeService();
-      //   log(`YouTube настройки: ${JSON.stringify(settings.youtube)}`, 'social-publishing');
-      //   const result = await youtubeService.publishContent(content, { youtube: settings.youtube || {} }, content.user_id);
-      //   
-      //   // Передаем флаг quotaExceeded для специальной обработки в планировщике
-      //   return {
-      //     platform: 'youtube',
-      //     status: result.success ? 'published' : 'failed',
-      //     publishedAt: result.success ? new Date().toISOString() : null,
-      //     postUrl: result.postUrl || null,
-      //     url: result.postUrl || null,
-      //     error: result.error || null,
-      //     quotaExceeded: result.quotaExceeded || false  // Передаем флаг превышения квоты
-      //   };
-      // }
-      
-      // Все платформы (ВК, Telegram, Instagram, YouTube) идут через n8n webhook
+      // ВСЕ платформы (ВК, Telegram, Instagram, Facebook, YouTube) идут через n8n webhook
+      // Убираем все прямые публикации - только единый подход через N8N
       return await this.publishThroughN8nWebhook(content, platform, settings);
     } catch (error) {
       log(`Ошибка при публикации в ${platform}: ${error}`, 'social-publishing');
@@ -151,6 +129,7 @@ export class SocialPublishingService {
       'vk': `${baseN8nUrl}/webhook/publish-vk`,
       'telegram': `${baseN8nUrl}/webhook/publish-telegram`, 
       'instagram': `${baseN8nUrl}/webhook/publish-instagram`,
+      'facebook': `${baseN8nUrl}/webhook/publish-facebook`,
       'youtube': `${baseN8nUrl}/webhook/publish-youtube`
     };
 

@@ -594,7 +594,8 @@ export class PublishScheduler {
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
       'instagram': 'publish-instagram', 
-      'facebook': 'publish-facebook'
+      'facebook': 'publish-facebook',
+      'youtube': 'publish-youtube'
     };
 
     const platformString = platform.toLowerCase();
