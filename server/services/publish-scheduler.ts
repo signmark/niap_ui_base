@@ -382,6 +382,7 @@ export class PublishScheduler {
               const errorMessage = data.error || '';
               const criticalErrors = [
                 'Bad request - please check your parameters',
+                'Authorization failed - please check your credentials',
                 'Invalid credentials',
                 'Permission denied',
                 'Account suspended',
