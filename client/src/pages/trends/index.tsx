@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
@@ -179,8 +179,77 @@ export default function Trends() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Состояния для комментариев
+  const [trendComments, setTrendComments] = useState<any[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [collectingCommentsForTrend, setCollectingCommentsForTrend] = useState<string | null>(null);
+  
 
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
+
+  // Функция для сбора комментариев к тренду
+  const collectTrendComments = async (trendId: string, trendUrl: string) => {
+    try {
+      setCollectingCommentsForTrend(trendId);
+      
+      const response = await fetch('https://n8n.roboflow.tech/webhook/collect-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          trend_id: trendId,
+          url: trendUrl
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Сбор комментариев запущен",
+          description: "Комментарии будут собраны и появятся в соответствующем разделе",
+        });
+      } else {
+        throw new Error('Failed to start comment collection');
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка сбора комментариев",
+        description: "Не удалось запустить сбор комментариев",
+        variant: "destructive",
+      });
+    } finally {
+      setCollectingCommentsForTrend(null);
+    }
+  };
+
+  // Функция для загрузки комментариев выбранного тренда
+  const loadTrendComments = async (trendId: string) => {
+    try {
+      setIsLoadingComments(true);
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      const response = await fetch(`/api/trend-comments/${trendId}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTrendComments(data.data || []);
+      } else {
+        throw new Error('Failed to load comments');
+      }
+    } catch (error) {
+      console.error('Error loading trend comments:', error);
+      setTrendComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
   useEffect(() => {
@@ -1023,10 +1092,10 @@ export default function Trends() {
                       Тренды
                     </button>
                     <button
-                      className={`px-4 py-2 border-b-2 ${activeTab === 'source-posts' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
-                      onClick={() => setActiveTab('source-posts')}
+                      className={`px-4 py-2 border-b-2 ${activeTab === 'comments' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
+                      onClick={() => setActiveTab('comments')}
                     >
-                      Посты из источников
+                      Комментарии
                     </button>
                   </div>
                 </div>
@@ -1464,6 +1533,27 @@ export default function Trends() {
                                                 : formatRelativeTime(new Date())}
                                           </span>
                                         </div>
+                                        
+                                        {/* Кнопка сбора комментариев для ВК и ТГ */}
+                                        {(topic.urlPost?.includes('vk.com') || topic.urlPost?.includes('t.me') || 
+                                          topic.accountUrl?.includes('vk.com') || topic.accountUrl?.includes('t.me')) && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              collectTrendComments(topic.id, topic.urlPost || topic.accountUrl || '');
+                                            }}
+                                            disabled={collectingCommentsForTrend === topic.id}
+                                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Собрать комментарии"
+                                          >
+                                            {collectingCommentsForTrend === topic.id ? (
+                                              <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              <Download className="h-3 w-3" />
+                                            )}
+                                            <span>Комментарии</span>
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1474,67 +1564,83 @@ export default function Trends() {
                       </div>
                     )}
                   </>
-                ) : (
+                ) : activeTab === 'comments' ? (
                   <>
-                    <SourcePostsSearchForm
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                      sortField={sortField}
-                      setSortField={(value) => setSortField(value as SortField)}
-                      sortDirection={sortDirection}
-                      setSortDirection={setSortDirection}
-                      selectedPeriod={selectedPeriod}
-                      setSelectedPeriod={(value: string) => setSelectedPeriod(value as Period)}
-                      isValidPeriod={isValidPeriod}
-                    />
-                    <div className="max-h-[400px] overflow-y-auto pr-2">
-                      {/* Логируем состояние постов перед фильтрацией в useEffect */}
-                      <SourcePostsList
-                      posts={sourcePosts
-                        .filter(post => {
-                          // Обрабатываем случай, когда post_content может быть null
-                          const content = post.post_content || '';
-                          return content.toLowerCase().includes(searchQuery.toLowerCase());
-                        })
-                        // Сортировка постов
-                        .sort((a, b) => {
-                          if (sortField === 'none') return 0;
-                          
-                          let valueA, valueB;
-                          
-                          // Определяем значения для сравнения в зависимости от выбранного поля сортировки
-                          switch(sortField) {
-                            case 'reactions':
-                              valueA = a.likes || 0;
-                              valueB = b.likes || 0;
-                              break;
-                            case 'comments':
-                              valueA = a.comments || 0;
-                              valueB = b.comments || 0;
-                              break;
-                            case 'views':
-                              valueA = a.views || 0;
-                              valueB = b.views || 0;
-                              break;
-                            case 'date':
-                              valueA = new Date(a.date || 0).getTime();
-                              valueB = new Date(b.date || 0).getTime();
-                              break;
-                            default:
-                              return 0;
-                          }
-                          
-                          // Применяем выбранное направление сортировки
-                          return sortDirection === 'asc' 
-                            ? valueA - valueB 
-                            : valueB - valueA;
-                        })
-                      }
-                      isLoading={isLoadingSourcePosts}
-                    />
-                  </div>
+                    <div className="mb-4">
+                      {selectedTrendTopic ? (
+                        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                          <h3 className="font-medium text-sm text-blue-900 mb-2">
+                            Комментарии к тренду: {selectedTrendTopic.title}
+                          </h3>
+                          <p className="text-xs text-blue-700">
+                            Источник: {selectedTrendTopic.accountUrl || selectedTrendTopic.urlPost}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                          <p>Выберите тренд для просмотра комментариев</p>
+                          <p className="text-xs mt-1">
+                            Комментарии доступны для трендов ВК и Telegram
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedTrendTopic && (
+                      <div className="max-h-[400px] overflow-y-auto pr-2">
+                        {isLoadingComments ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                            <span>Загрузка комментариев...</span>
+                          </div>
+                        ) : trendComments.length > 0 ? (
+                          <div className="space-y-3">
+                            {trendComments.map((comment, index) => (
+                              <Card key={comment.id || index} className="p-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0">
+                                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                      <span className="text-xs font-medium text-gray-600">
+                                        {comment.author?.charAt(0)?.toUpperCase() || '?'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-sm text-gray-900">
+                                        {comment.author || 'Неизвестный автор'}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {comment.platform?.toUpperCase()}
+                                      </span>
+                                      {comment.date && (
+                                        <span className="text-xs text-gray-400">
+                                          {new Date(comment.date).toLocaleDateString('ru-RU')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                      {comment.text}
+                                    </p>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center text-gray-500 py-8">
+                            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                            <p>Комментарии к этому тренду еще не собраны</p>
+                            <p className="text-xs mt-1">
+                              Используйте кнопку "Комментарии" в списке трендов для их сбора
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
-                )}
+                ) : null}
               </CardContent>
             </Card>
 
