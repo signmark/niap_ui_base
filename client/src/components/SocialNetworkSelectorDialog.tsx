@@ -53,13 +53,13 @@ export function SocialNetworkSelectorDialog({
   };
 
   const handleCollectTrends = () => {
-    // Не отправляем collectSources, когда собираем тренды
-    onConfirm(selectedPlatforms);
+    // Собираем тренды с основными платформами и комментарии с выбранных комментарийных платформ
+    onConfirm(selectedPlatforms, false, selectedCommentPlatforms);
   };
   
   const handleCollectSources = () => {
-    // Отправляем true только для сбора источников и передаем выбранные платформы для источников
-    onConfirm(selectedCommentPlatforms, true, selectedCommentPlatforms);
+    // Собираем источники с основными платформами
+    onConfirm(selectedPlatforms, true, selectedCommentPlatforms);
   };
 
   return (
