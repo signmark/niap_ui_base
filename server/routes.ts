@@ -5496,7 +5496,7 @@ Return your response as a JSON array in this exact format:
         }
       }
 
-      const { campaignId, platforms = [] } = req.body;
+      const { campaignId, platforms = [], collectComments = [] } = req.body;
       // Принимаем collectSources как boolean или как число (1)
       const collectSources = req.body.collectSources === true || req.body.collectSources === 1 || req.body.collectSources === "1";
       
@@ -5506,6 +5506,7 @@ Return your response as a JSON array in this exact format:
       
       console.log('Received collectSources flag:', collectSources);
       console.log('Received platforms:', platforms);
+      console.log('Received collectComments platforms:', collectComments);
 
       // Проверяем существование кампании через Directus
       try {
@@ -5584,11 +5585,13 @@ Return your response as a JSON array in this exact format:
         const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
         const selectedPlatforms = platforms || ["instagram", "telegram", "vk"];
         
-        // Debug-логирование для проверки передачи флага collectSources
+        // Debug-логирование для проверки передачи параметров
         console.log('Request body from client:', {
           campaignId: req.body.campaignId,
           platformsCount: req.body.platforms?.length,
           collectSources: req.body.collectSources,
+          collectCommentsCount: req.body.collectComments?.length,
+          collectCommentsPlatforms: req.body.collectComments,
         });
         
         const n8nUrl = process.env.N8N_URL;
@@ -5602,6 +5605,7 @@ Return your response as a JSON array in this exact format:
           maxSourcesPerPlatform: maxSourcesPerPlatform,
           platforms: selectedPlatforms,
           collectSources: collectSources ? 1 : 0, // Отправляем как числовое значение для совместимости
+          collectComments: collectComments, // Добавляем массив платформ для сбора комментариев
           keywords: keywordsList,
           maxTrendsPerSource: maxTrendsPerSource,
           language: "ru",

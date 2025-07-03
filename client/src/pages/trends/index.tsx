@@ -684,7 +684,7 @@ export default function Trends() {
 
 
   const { mutate: collectTrendsWithPlatforms, isPending: isCollecting } = useMutation({
-    mutationFn: async ({ platforms, collectSources }: { platforms: string[], collectSources?: boolean }) => {
+    mutationFn: async ({ platforms, collectSources, collectComments }: { platforms: string[], collectSources?: boolean, collectComments?: string[] }) => {
       if (!selectedCampaignId) {
         throw new Error("Выберите кампанию");
       }
@@ -713,7 +713,8 @@ export default function Trends() {
           campaignId: selectedCampaignId,
           keywords: keywordsList,
           platforms: platforms,
-          collectSources: collectSources // Добавляем флаг сбора источников
+          collectSources: collectSources, // Добавляем флаг сбора источников
+          collectComments: collectComments // Добавляем массив платформ для сбора комментариев
         })
       });
       
@@ -747,11 +748,11 @@ export default function Trends() {
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       return trendData;
     },
-    onSuccess: (data, { platforms, collectSources }) => {
+    onSuccess: (data, { platforms, collectSources, collectComments }) => {
       toast({
         title: "Успешно",
         description: collectSources 
-          ? `Задача по сбору источников запущена. Данные будут обновляться автоматически.`
+          ? `Задача по сбору источников ${collectComments && collectComments.length > 0 ? 'и комментариев ' : ''}запущена. Данные будут обновляться автоматически.`
           : `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
       });
       
@@ -1599,9 +1600,9 @@ export default function Trends() {
       <SocialNetworkSelectorDialog
         isOpen={isSocialNetworkDialogOpen}
         onClose={() => setIsSocialNetworkDialogOpen(false)}
-        onConfirm={(platforms, collectSources) => {
+        onConfirm={(platforms, collectSources, collectComments) => {
           setIsSocialNetworkDialogOpen(false);
-          collectTrendsWithPlatforms({ platforms, collectSources });
+          collectTrendsWithPlatforms({ platforms, collectSources, collectComments });
         }}
         isLoading={isCollecting}
       />
