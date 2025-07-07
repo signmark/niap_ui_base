@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { CampaignSelector } from "@/components/CampaignSelector";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+
 import { SmmLogo } from "./SmmLogo";
 import { SubscriptionExpiredBanner } from "./SubscriptionExpiredBanner";
 import useCampaignOwnershipCheck from "@/hooks/useCampaignOwnershipCheck";
@@ -313,10 +313,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             
-            {/* Добавляем переключатель темы в правую часть топ-бара */}
-            <div className="flex items-center">
-              <ThemeSwitcher />
-            </div>
+
           </div>
           <main className="flex-1 p-4 lg:p-8">
             <SubscriptionExpiredBanner />
