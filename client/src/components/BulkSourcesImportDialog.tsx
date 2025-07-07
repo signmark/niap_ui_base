@@ -95,7 +95,7 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
     mutationFn: async ({ url, type, name }: { url: string; type: string; name: string }) => {
       const actualType = type === 'auto' ? detectSourceType(url) : type;
       
-      return await fetch('/api/sources', {
+      const response = await fetch('/api/sources', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +108,25 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
           campaignId: campaignId,
           isActive: true
         })
-      }).then(response => response.json());
+      });
+
+      const data = await response.json();
+      
+      // Если это ошибка дублирования, возвращаем специальный объект
+      if (!response.ok && response.status === 409 && data.code === 'DUPLICATE_SOURCE_URL') {
+        return {
+          success: false,
+          isDuplicate: true,
+          message: 'Источник уже существует'
+        };
+      }
+      
+      // Для других ошибок бросаем исключение
+      if (!response.ok) {
+        throw new Error(data.message || 'Ошибка при добавлении источника');
+      }
+      
+      return data;
     }
   });
 
@@ -171,7 +189,8 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
           url: cleanUrl,
           name: name || cleanUrl,
           success: response.success !== false,
-          message: response.message || (response.success === false ? 'Ошибка при добавлении' : 'Успешно добавлен')
+          message: response.isDuplicate ? 'Уже существует' : 
+                   (response.message || (response.success === false ? 'Ошибка при добавлении' : 'Успешно добавлен'))
         });
       } catch (error) {
         results.push({
@@ -194,10 +213,21 @@ export function BulkSourcesImportDialog({ campaignId, onClose }: BulkSourcesImpo
     queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
 
     // Показываем уведомление
-    const successCount = results.filter(r => r.success).length;
+    const successCount = results.filter(r => r.success && !r.message?.includes('Уже существует')).length;
+    const duplicateCount = results.filter(r => r.message?.includes('Уже существует')).length;
+    const errorCount = results.filter(r => !r.success && !r.message?.includes('Уже существует')).length;
+    
+    let description = `Добавлено ${successCount} источников`;
+    if (duplicateCount > 0) {
+      description += `, пропущено ${duplicateCount} дубликатов`;
+    }
+    if (errorCount > 0) {
+      description += `, ошибок: ${errorCount}`;
+    }
+
     toast({
       title: "Импорт завершен",
-      description: `Успешно добавлено ${successCount} из ${results.length} источников`,
+      description: description,
       variant: successCount > 0 ? "default" : "destructive"
     });
   };

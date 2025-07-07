@@ -1332,17 +1332,7 @@ export default function Trends() {
                             return finalResult;
                           })
                           .filter((topic: TrendTopic, index: number, array: TrendTopic[]) => {
-                            // Дедупликация по источнику - оставляем только один тренд от каждого источника
-                            const sourceId = topic.source_id || topic.sourceId;
-                            if (!sourceId) return true; // Оставляем тренды без source_id
-                            
-                            // Находим первый тренд с таким же источником в массиве
-                            const firstIndexWithThisSource = array.findIndex(t => 
-                              (t.source_id || t.sourceId) === sourceId
-                            );
-                            
-                            // Оставляем только первый тренд от каждого источника
-                            return index === firstIndexWithThisSource;
+                            return true;
                           })
                           // Сортировка трендов
                           .sort((a: TrendTopic, b: TrendTopic) => {

@@ -94,34 +94,59 @@ export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSource
         selectedSources.includes(source.url)
       );
 
+      const addedSources = [];
+      const skippedSources = [];
+      
       for (const source of sourcesToAdd) {
-        await fetch('/api/sources', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({
-            name: source.name,
-            url: source.url,
-            type: source.platform,
-            campaignId: campaignId,
-            isActive: true
-          })
-        }).then(response => {
+        try {
+          const response = await fetch('/api/sources', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              name: source.name,
+              url: source.url,
+              type: source.platform,
+              campaignId: campaignId,
+              isActive: true
+            })
+          });
+
           if (!response.ok) {
-            throw new Error(`Ошибка при добавлении источника ${source.name}`);
+            const errorData = await response.json();
+            
+            // Если это ошибка дублирования, пропускаем источник
+            if (response.status === 409 && errorData.code === 'DUPLICATE_SOURCE_URL') {
+              console.log(`Skipping duplicate source: ${source.name}`);
+              skippedSources.push(source.name);
+              continue;
+            }
+            
+            throw new Error(`Ошибка при добавлении источника ${source.name}: ${errorData.message || 'Неизвестная ошибка'}`);
           }
-          return response.json();
-        });
+          
+          await response.json();
+          addedSources.push(source.name);
+        } catch (sourceError) {
+          console.error(`Error adding source ${source.name}:`, sourceError);
+          throw sourceError;
+        }
       }
 
       // Инвалидируем запрос на получение источников для выбранной кампании
       await queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", campaignId] });
 
+      // Формируем сообщение с учетом пропущенных источников
+      let message = `Добавлено ${addedSources.length} источников`;
+      if (skippedSources.length > 0) {
+        message += `, пропущено ${skippedSources.length} дубликатов`;
+      }
+
       toast({
-        title: "Успешно",
-        description: `Добавлено ${sourcesToAdd.length} источников`
+        title: "Операция завершена",
+        description: message
       });
       onClose();
     } catch (error) {

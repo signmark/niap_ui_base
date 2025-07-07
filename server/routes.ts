@@ -5128,6 +5128,39 @@ Return your response as a JSON array in this exact format:
         return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
       }
 
+      // Проверяем на дублирование URL в рамках кампании
+      try {
+        console.log(`Checking for duplicate source URL: ${url} in campaign: ${campaignId}`);
+        
+        const existingSourcesResponse = await directusApi.get('/items/campaign_content_sources', {
+          params: {
+            filter: {
+              campaign_id: { _eq: campaignId },
+              url: { _eq: url }
+            }
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (existingSourcesResponse.data?.data && existingSourcesResponse.data.data.length > 0) {
+          console.log(`Duplicate source found: ${url} already exists in campaign ${campaignId}`);
+          return res.status(409).json({
+            success: false,
+            error: "Дублирование источника",
+            message: `Источник с URL "${url}" уже добавлен в эту кампанию`,
+            code: "DUPLICATE_SOURCE_URL"
+          });
+        }
+        
+        console.log(`No duplicate found, proceeding to create source: ${url}`);
+      } catch (duplicateCheckError) {
+        console.error("Error checking for duplicate sources:", duplicateCheckError);
+        // Продолжаем создание, если проверка на дублирование не удалась
+        console.log("Continuing with source creation despite duplicate check error");
+      }
+
       // Создаем новый источник в Directus
       try {
         console.log(`Creating source: ${name} (${url}) for campaign: ${campaignId}`);
