@@ -142,25 +142,25 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     // Проверяем, изменился ли Story ID (включая переход от null к ID)
     const storyIdChanged = prevStoryId !== finalStoryId;
     
-    if ((storyIdChanged && finalStoryId) || (finalStoryId && hasNoSlides && !isNewStory)) {
-      console.log('🔄 ЗАГРУЖАЕМ ДАННЫЕ: Story ID изменился или нет слайдов для существующей Stories');
+    if (storyIdChanged && finalStoryId && !isNewStory) {
+      console.log('🔄 ЗАГРУЖАЕМ СУЩЕСТВУЮЩУЮ STORIES: очищаем store и загружаем из БД');
       resetStore();
       setStoredStoryId(finalStoryId);
-      
-      if (!isNewStory) {
-        console.log('📥 РЕДАКТИРОВАНИЕ: загружаем Stories из БД для ID:', finalStoryId);
-        loadFromServer();
-      } else {
-        console.log('✨ СОЗДАНИЕ: новая Stories с 1 слайдом');
+      loadFromServer();
+    } else if (finalStoryId && hasNoSlides && !isNewStory) {
+      console.log('🔄 СУЩЕСТВУЮЩАЯ STORIES БЕЗ СЛАЙДОВ: загружаем из БД');
+      loadFromServer();
+    } else if (!finalStoryId && isNewStory) {
+      // Для новых Stories НИКОГДА не очищаем если есть данные
+      if (hasNoSlides) {
+        console.log('✨ СОЗДАНИЕ НОВОЙ STORIES - инициализируем первый слайд');
         initializeSlides();
+      } else {
+        console.log('✨ НОВАЯ STORIES УЖЕ ИМЕЕТ СЛАЙДЫ - работаем в памяти БЕЗ очистки');
       }
-    } else if (!finalStoryId && isNewStory && storyIdChanged) {
-      console.log('✨ СОЗДАНИЕ НОВОЙ STORIES БЕЗ ID');
-      resetStore();
-      initializeSlides();
-      setStoredStoryId(finalStoryId);
+      setStoredStoryId(null); // Для новых stories сохраняем null
     } else {
-      console.log('🔄 ТОТ ЖЕ STORY ID И ДАННЫЕ УЖЕ ЕСТЬ: пропускаем загрузку');
+      console.log('🔄 ДАННЫЕ УЖЕ КОРРЕКТНЫЕ: пропускаем загрузку');
     }
   }, [finalStoryId, isNewStory, slides.length]);
 
