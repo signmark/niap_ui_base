@@ -8,8 +8,16 @@ async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     
-    // Проверяем на истекший токен
-    if (res.status === 401 || res.status === 500) {
+    // Агрессивная проверка на 401 - всегда очищаем токен
+    if (res.status === 401) {
+      console.log('🔑 401 Unauthorized - токен недействителен, очищаем сессию');
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Проверяем на истекший токен в ответе сервера
+    if (res.status === 500) {
       try {
         const errorData = JSON.parse(text);
         if (errorData.details && errorData.details.includes('TOKEN_EXPIRED')) {

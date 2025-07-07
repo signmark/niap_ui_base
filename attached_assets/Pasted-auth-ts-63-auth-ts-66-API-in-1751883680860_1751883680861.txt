@@ -1,0 +1,149 @@
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:129 📥 ЗАГРУЖАЕМ Stories из БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:453 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+SettingsDialog.tsx:103 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+auth.ts:94 Токен успешно обновлен через API
+store.ts:67 Сохранение авторизации: token=true, userId=53921f16-f51d-4591-80b9-8caa4fde4d13
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+CampaignSelector.tsx:69 Campaigns loaded: 7
+CampaignSelector.tsx:92 Восстанавливаем сохраненную кампанию: "Нерудстрой"
+campaignStore.ts:88 Установлена активная кампания: id=8bde5bf9-ebf8-4cac-8269-785d7eca06e1, name=Нерудстрой
+SettingsDialog.tsx:106 Successfully fetched 8 API keys
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883666866}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:459 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:464 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:477 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+hook.js:608 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node Error Component Stack
+    at DraggableCore (react-draggable.js?v=77b761a8:1360:9)
+    at Draggable (react-draggable.js?v=77b761a8:1792:9)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at StoryEditor (StoryEditor.tsx:61:51)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at StoriesPage (index.tsx:7:35)
+    at main (<anonymous>)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at ThemeProvider (ThemeProvider.tsx:8:33)
+    at Layout (Layout.tsx:24:26)
+    at WithLayout (App.tsx:70:23)
+    at component (<anonymous>)
+    at Route (wouter.js?v=77b761a8:323:16)
+    at Switch (wouter.js?v=77b761a8:379:17)
+    at Router (<anonymous>)
+    at AuthGuard (AuthGuard.tsx:11:29)
+    at AuthProvider (use-auth.tsx:44:32)
+    at QueryClientProvider (@tanstack_react-query.js?v=77b761a8:2805:3)
+    at App (App.tsx:172:3)
+overrideMethod @ hook.js:608
+printWarning @ chunk-276SZO74.js?v=77b761a8:521
+error @ chunk-276SZO74.js?v=77b761a8:505
+findDOMNode @ chunk-276SZO74.js?v=77b761a8:21379
+findDOMNode @ react-draggable.js?v=77b761a8:1507
+componentDidMount @ react-draggable.js?v=77b761a8:1479
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=77b761a8:17030
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=77b761a8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=77b761a8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=77b761a8:17920
+commitRootImpl @ chunk-276SZO74.js?v=77b761a8:19353
+commitRoot @ chunk-276SZO74.js?v=77b761a8:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=77b761a8:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=77b761a8:9119
+(anonymous) @ chunk-276SZO74.js?v=77b761a8:18627
+StoryEditor.tsx:152 Slide 0 has 3 elements
+StoryEditor.tsx:540 💾 Saved to localStorage: 3 slides
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883667185}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883667497}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883667803}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:152 Slide 3 has 0 elements
+StoryEditor.tsx:540 💾 Saved to localStorage: 4 slides
+StoryEditor.tsx:306 🔧 Adding element type: text to slide: 3
+StoryEditor.tsx:307 Current slides count: 4
+StoryEditor.tsx:308 Current slide exists: true
+storyStore.ts:118 Adding element to slide index: 3
+storyStore.ts:119 Element added: element-1751883673745-l504r8v14 Type: text
+storyStore.ts:131 Total elements now: 1
+storyStore.ts:132 Story updated with new element in slide: slide-1751883669559
+StoryEditor.tsx:325 🔄 Force updating slides after element add: 4
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:118 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+StoryEditor.tsx:140 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:129 📥 ЗАГРУЖАЕМ Stories из БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:453 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:152 Slide 3 has 1 elements
+StoryEditor.tsx:540 💾 Saved to localStorage: 4 slides
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883674809}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:459 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:464 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:477 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+StoryEditor.tsx:152 Slide 0 has 3 elements
+StoryEditor.tsx:161 Selected element element-1751883673745-l504r8v14 not found in current slide, clearing selection
+StoryEditor.tsx:540 💾 Saved to localStorage: 3 slides
+StoryEditor.tsx:152 Slide 0 has 3 elements
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883675112}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:118 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+StoryEditor.tsx:140 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:129 📥 ЗАГРУЖАЕМ Stories из БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:453 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:152 Slide 0 has 3 elements
+StoryEditor.tsx:540 💾 Saved to localStorage: 3 slides
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883677520}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:459 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:464 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:477 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+StoryEditor.tsx:152 Slide 0 has 3 elements
+StoryEditor.tsx:540 💾 Saved to localStorage: 3 slides
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883677827}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true

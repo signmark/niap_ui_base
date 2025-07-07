@@ -72,12 +72,16 @@ export default function SlidePanel({
 
   const handleAddSlide = () => {
     console.log('➕ Adding new slide via Store');
+    
+    // Добавляем слайд только в локальный store - работа в памяти
     addSlide();
     
     toast({
       title: 'Слайд добавлен',
-      description: 'Новый слайд успешно создан'
+      description: 'Новый слайд добавлен (сохраните изменения для сохранения в БД)'
     });
+    
+    console.log('✅ Слайд добавлен в Store для работы в памяти');
   };
 
   const handleDuplicateSlide = (slideIndex: number) => {
@@ -216,7 +220,6 @@ export default function SlidePanel({
         </div>
         <Button
           onClick={handleAddSlide}
-          disabled={addSlideMutation.isPending}
           size="sm"
           className="w-full"
         >

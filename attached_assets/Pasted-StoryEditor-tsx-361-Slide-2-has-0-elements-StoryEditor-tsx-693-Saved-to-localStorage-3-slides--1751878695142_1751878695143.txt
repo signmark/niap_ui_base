@@ -1,0 +1,90 @@
+StoryEditor.tsx:361 Slide 2 has 0 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 3 slides
+StoryEditor.tsx:515 🔧 Adding element type: text to slide: 2
+StoryEditor.tsx:516 Current slides count: 3
+StoryEditor.tsx:517 Current slide exists: true
+ Adding element to slide index: 2
+ Element added: element-1751878687717-653gltq0c Type: text
+ Total elements now: 1
+ Story updated with new element in slide: slide-1751878684100
+StoryEditor.tsx:534 🔄 Force updating slides after element add: 3
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+StoryEditor.tsx:117 🧹 CLEANUP: Покидаем StoryEditor - полная очистка Store
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878687742
+StoryEditor.tsx:349 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+StoryEditor.tsx:136 StoryEditor useEffect triggered: {storyId: '51feb25e-891a-4da7-a363-0310423a0034', isNewStory: false, slidesLength: 3, hasSlides: true}
+StoryEditor.tsx:151 🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА Store - обнаружены слайды от другой Stories
+StoryEditor.tsx:152 Store имеет слайды: 3 нужен ID: 51feb25e-891a-4da7-a363-0310423a0034 текущий ID: null
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878687745
+StoryEditor.tsx:177 🔧 Первый вход в StoryEditor - сброс всех флагов загрузки
+StoryEditor.tsx:256 🔧 Первая инициализация currentStoryIdRef для Stories: 51feb25e-891a-4da7-a363-0310423a0034
+StoryEditor.tsx:269 🔍 Проверка загрузки для Stories: {finalStoryId: '51feb25e-891a-4da7-a363-0310423a0034', currentStoryId: '51feb25e-891a-4da7-a363-0310423a0034', storyChanged: false, isLoadedRefCurrent: false, isGloballyLoaded: false, …}
+StoryEditor.tsx:280 🔄 Загрузка данных для Stories ID: 51feb25e-891a-4da7-a363-0310423a0034 isLoadedRef.current: false currentStoryIdRef.current: 51feb25e-891a-4da7-a363-0310423a0034
+StoryEditor.tsx:283 🧹 Принудительная очистка Store перед загрузкой данных
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878687746
+StoryEditor.tsx:361 Slide 2 has 1 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 3 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+StoryEditor.tsx:361 Slide 0 has 0 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+StoryEditor.tsx:293 📥 Загружены данные контента: {id: '51feb25e-891a-4da7-a363-0310423a0034', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Сторя', content: 'Сторя', …}
+StoryEditor.tsx:298 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+StoryEditor.tsx:311 ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+StoryEditor.tsx:361 Slide 0 has 3 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 2 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751878688774}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751878689081}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+StoryEditor.tsx:117 🧹 CLEANUP: Покидаем StoryEditor - полная очистка Store
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878690748
+StoryEditor.tsx:349 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+StoryEditor.tsx:136 StoryEditor useEffect triggered: {storyId: '51feb25e-891a-4da7-a363-0310423a0034', isNewStory: false, slidesLength: 2, hasSlides: true}
+StoryEditor.tsx:151 🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА Store - обнаружены слайды от другой Stories
+StoryEditor.tsx:152 Store имеет слайды: 2 нужен ID: 51feb25e-891a-4da7-a363-0310423a0034 текущий ID: null
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878690751
+StoryEditor.tsx:177 🔧 Первый вход в StoryEditor - сброс всех флагов загрузки
+StoryEditor.tsx:256 🔧 Первая инициализация currentStoryIdRef для Stories: 51feb25e-891a-4da7-a363-0310423a0034
+StoryEditor.tsx:269 🔍 Проверка загрузки для Stories: {finalStoryId: '51feb25e-891a-4da7-a363-0310423a0034', currentStoryId: '51feb25e-891a-4da7-a363-0310423a0034', storyChanged: false, isLoadedRefCurrent: false, isGloballyLoaded: false, …}
+StoryEditor.tsx:280 🔄 Загрузка данных для Stories ID: 51feb25e-891a-4da7-a363-0310423a0034 isLoadedRef.current: false currentStoryIdRef.current: 51feb25e-891a-4da7-a363-0310423a0034
+StoryEditor.tsx:283 🧹 Принудительная очистка Store перед загрузкой данных
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751878690752
+StoryEditor.tsx:361 Slide 0 has 3 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+StoryEditor.tsx:361 Slide 0 has 0 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751878691500}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+StoryEditor.tsx:293 📥 Загружены данные контента: {id: '51feb25e-891a-4da7-a363-0310423a0034', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Сторя', content: 'Сторя', …}
+StoryEditor.tsx:298 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+StoryEditor.tsx:311 ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+StoryEditor.tsx:361 Slide 0 has 3 elements
+StoryEditor.tsx:693 💾 Saved to localStorage: 2 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751878692103}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true

@@ -1,0 +1,106 @@
+StoryEditor.tsx:173 Slide 3 has 0 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 4 slides
+StoryEditor.tsx:327 🔧 Adding element type: text to slide: 3
+StoryEditor.tsx:328 Current slides count: 4
+StoryEditor.tsx:329 Current slide exists: true
+storyStore.ts:118 Adding element to slide index: 3
+storyStore.ts:119 Element added: element-1751883522981-4p6eaem57 Type: text
+storyStore.ts:131 Total elements now: 1
+storyStore.ts:132 Story updated with new element in slide: slide-1751883521774
+StoryEditor.tsx:346 🔄 Force updating slides after element add: 4
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:118 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+StoryEditor.tsx:161 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:128 StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 4, currentStoryId: null, isLoaded: false}
+StoryEditor.tsx:138 🔄 Stories ID изменился с null на 2fb811d4-dd9c-448c-b5ca-e697642d0a97 - очищаем store
+storyStore.ts:71 ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+storyStore.ts:90 Story store полностью очищен и пересоздан: slide-1751883523003
+StoryEditor.tsx:149 🔄 АВТОМАТИЧЕСКАЯ ЗАГРУЗКА ИЗ ДИРЕКТУСА для редактирования ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:474 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:173 Slide 3 has 1 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 4 slides
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+StoryEditor.tsx:173 Slide 0 has 0 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 1 slides
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883524034}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:480 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:485 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:498 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+StoryEditor.tsx:173 Slide 0 has 3 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 3 slides
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883524339}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:118 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+StoryEditor.tsx:161 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:128 StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 3, currentStoryId: null, isLoaded: false}
+StoryEditor.tsx:138 🔄 Stories ID изменился с null на 2fb811d4-dd9c-448c-b5ca-e697642d0a97 - очищаем store
+storyStore.ts:71 ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+storyStore.ts:90 Story store полностью очищен и пересоздан: slide-1751883526012
+StoryEditor.tsx:149 🔄 АВТОМАТИЧЕСКАЯ ЗАГРУЗКА ИЗ ДИРЕКТУСА для редактирования ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:474 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:173 Slide 0 has 3 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 3 slides
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+StoryEditor.tsx:173 Slide 0 has 0 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 1 slides
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883526780}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:480 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:485 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:498 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+StoryEditor.tsx:173 Slide 0 has 3 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 3 slides
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883527096}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+index.tsx:19 🌟 Using campaignId from store: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+StoryEditor.tsx:118 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+StoryEditor.tsx:161 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 8bde5bf9-ebf8-4cac-8269-785d7eca06e1
+CampaignSelector.tsx:101 Используем глобально выбранную кампанию: "Нерудстрой"
+StoryEditor.tsx:128 StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 3, currentStoryId: null, isLoaded: false}
+StoryEditor.tsx:138 🔄 Stories ID изменился с null на 2fb811d4-dd9c-448c-b5ca-e697642d0a97 - очищаем store
+storyStore.ts:71 ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+storyStore.ts:90 Story store полностью очищен и пересоздан: slide-1751883528036
+StoryEditor.tsx:149 🔄 АВТОМАТИЧЕСКАЯ ЗАГРУЗКА ИЗ ДИРЕКТУСА для редактирования ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:474 📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+StoryEditor.tsx:173 Slide 0 has 3 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 3 slides
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '8bde5bf9-ebf8-4cac-8269-785d7eca06e1', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+store.ts:117 Проверка статуса администратора
+store.ts:148 Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+StoryEditor.tsx:173 Slide 0 has 0 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 1 slides
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: Нерудстрой
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883528797}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true
+StoryEditor.tsx:480 📥 Загружены данные из Директус БД: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+StoryEditor.tsx:485 📋 Найдены слайды в Директус БД: 3
+StoryEditor.tsx:498 ✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД: 3 слайдов
+StoryEditor.tsx:173 Slide 0 has 3 elements
+StoryEditor.tsx:561 💾 Saved to localStorage: 3 slides
+store.ts:159 Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751883529108}
+store.ts:162 Пользователь является администратором
+store.ts:107 Устанавливаем статус администратора: true

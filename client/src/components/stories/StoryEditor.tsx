@@ -22,13 +22,15 @@ import {
   ArrowLeft,
   Save,
   Play,
-  Plus
+  Plus,
+  Download
 } from 'lucide-react';
 import Draggable from 'react-draggable';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useLocation, useParams } from 'wouter';
+import SlidePanel from './SlidePanel';
 
 // Local interfaces for component
 interface StorySlide {
@@ -71,7 +73,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   const campaignIdFromStore = selectedCampaign?.id;
   
   // Используем параметры из пропсов или из URL/store
-  const finalCampaignId = propCampaignId || campaignIdFromStore || "46868c44-c6a4-4bed-accf-9ad07bba790e";
+  const finalCampaignId = propCampaignId || campaignIdFromStore;
   const finalStoryId = propStoryId || storyId;
   
   // Проверяем, является ли это созданием новой Stories
@@ -92,8 +94,8 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     addElement: storeAddElement,
     updateElement,
     deleteElement,
-    addSlide: storeAddSlide,
-    deleteSlide: storeDeleteSlide,
+    addSlide,
+    deleteSlide,
     updateSlide
   } = useStoryStore();
   
@@ -111,227 +113,56 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   // Ключ для localStorage
   const localStorageKey = finalStoryId ? `story-${finalStoryId}` : 'new-story';
 
-  // Cleanup при покидании компонента - ВСЕГДА очищаем Store
-  useEffect(() => {
-    return () => {
-      console.log('🧹 CLEANUP: Покидаем StoryEditor - полная очистка Store');
-      resetStore();
-      // Сбрасываем флаги загрузки
-      isLoadedRef.current = false;
-      currentStoryIdRef.current = null;
-      // Очищаем все localStorage ключи Stories
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('story-') || key.startsWith('storyLoaded_') || key === 'new-story')) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-    };
-  }, []); // Пустые зависимости - срабатывает только при размонтировании
-
-  // Инициализация и очистка для Stories - исправлена логика
-  useEffect(() => {
-    console.log('StoryEditor useEffect triggered:', { 
-      storyId: finalStoryId, 
-      isNewStory,
-      slidesLength: slides.length,
-      hasSlides: slides.length > 0 
-    });
-
-    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА при каждом заходе в Stories если есть слайды от другой Stories
-    const currentStoryTitle = storyTitle;
-    if (finalStoryId && slides.length > 0) {
-      // Проверяем загруженные данные через API чтобы точно знать ID текущей Stories в Store
-      const shouldClearStore = currentStoryIdRef.current !== finalStoryId || 
-                              (currentStoryIdRef.current === null && slides.length > 0);
-      
-      if (shouldClearStore) {
-        console.log('🔄 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА Store - обнаружены слайды от другой Stories');
-        console.log('Store имеет слайды:', slides.length, 'нужен ID:', finalStoryId, 'текущий ID:', currentStoryIdRef.current);
-        resetStore();
-        isLoadedRef.current = false;
-        
-        // Очищаем все localStorage флаги
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('storyLoaded_')) {
-            localStorage.removeItem(key);
-          }
-        });
-      }
-    }
-    
-    // При первом входе в компонент ВСЕГДА сбрасываем флаги загрузки
-    if (currentStoryIdRef.current === null) {
-      console.log('🔧 Первый вход в StoryEditor - сброс всех флагов загрузки');
-      isLoadedRef.current = false;
-    }
-    
-    // КРИТИЧЕСКИ ВАЖНО: очищаем store ТОЛЬКО для новых Stories (без ID)
-    if (isNewStory && !finalStoryId && !storyId) {
-      console.log('Creating NEW story - ПОЛНАЯ ОЧИСТКА И ИНИЦИАЛИЗАЦИЯ');
-      
-      // 1. Полная очистка всех данных Stories из store
-      resetStore();
-      
-      // 2. Дополнительная очистка всех localStorage ключей
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('story-') || key.includes('story') || key === 'new-story') {
-          localStorage.removeItem(key);
-          console.log('Removed localStorage key:', key);
-        }
-      });
-      
-      // 3. Принудительная очистка persist storage
-      localStorage.removeItem('story-store');
-      
-      // 4. Проверяем, что у нас есть слайды после resetStore
-      setTimeout(() => {
-        console.log('Проверка слайдов после resetStore:', slides.length);
-        if (slides.length === 0) {
-          console.log('Принудительно создаем начальный слайд');
-          initializeSlides();
-        }
-      }, 100);
-      
-      console.log('✅ Новая Stories полностью очищена и инициализирована');
-      return;
-    }
-    
-    // Создаем глобальный ключ для отслеживания загрузки по всем инстансам компонента
-    const globalLoadKey = `storyLoaded_${finalStoryId}`;
-    let isGloballyLoaded = localStorage.getItem(globalLoadKey) === 'true';
-    
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: если данные помечены как загруженные, но слайдов нет - сбрасываем флаги
-    if (isGloballyLoaded && slides.length === 0 && finalStoryId) {
-      console.log('🚨 ИСПРАВЛЕНИЕ: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
-      localStorage.removeItem(globalLoadKey);
-      isGloballyLoaded = false;
-    }
-    
-    // Проверка переключения Stories через localStorage (для случаев размонтирования компонента)
-    const lastStoryId = localStorage.getItem('lastStoryId');
-    
-    // Инициализация currentStoryIdRef при первом запуске
-    if (finalStoryId && currentStoryIdRef.current === null) {
-      // Проверяем, это действительно первая инициализация или переключение Stories
-      if (lastStoryId && lastStoryId !== finalStoryId) {
-        console.log('🔄 ПЕРЕКЛЮЧЕНИЕ Stories после размонтирования:', lastStoryId, '->', finalStoryId);
-        // Это переключение Stories - нужно сбросить данные для новой Stories
-        const newGlobalLoadKey = `storyLoaded_${finalStoryId}`;
-        let newIsGloballyLoaded = localStorage.getItem(newGlobalLoadKey) === 'true';
-        
-        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем валидность флага для новой Stories
-        if (newIsGloballyLoaded && slides.length === 0) {
-          console.log('🚨 ИСПРАВЛЕНИЕ при переключении Stories: данные помечены как загруженные, но слайдов нет - сбрасываем флаги');
-          localStorage.removeItem(newGlobalLoadKey);
-          newIsGloballyLoaded = false;
-        }
-        
-        currentStoryIdRef.current = finalStoryId;
-        localStorage.setItem('lastStoryId', finalStoryId);
-        isLoadedRef.current = newIsGloballyLoaded;
-        if (!newIsGloballyLoaded) {
-          resetStore(); // Очищаем Store для новой Stories
-        }
-      } else {
-        console.log('🔧 Первая инициализация currentStoryIdRef для Stories:', finalStoryId);
-        currentStoryIdRef.current = finalStoryId;
-        localStorage.setItem('lastStoryId', finalStoryId);
-        isLoadedRef.current = isGloballyLoaded; // Устанавливаем флаг исходя из исправленного глобального состояния
-      }
-    }
-    
-    // Теперь используем уже вычисленное значение storyChanged
-    // ВСЕГДА загружаем данные если Stories ID изменился
-    const shouldLoadData = finalStoryId && (storyChanged || !isLoadedRef.current);
-    
-    console.log('🔍 Проверка загрузки для Stories:', { 
-      finalStoryId, 
-      currentStoryId: currentStoryIdRef.current,
-      storyChanged,
-      isLoadedRefCurrent: isLoadedRef.current, 
-      isGloballyLoaded, 
-      globalLoadKey,
-      shouldLoadData
-    });
-    
-    if (shouldLoadData) {
-      console.log('🔄 Загрузка данных для Stories ID:', finalStoryId, 'isLoadedRef.current:', isLoadedRef.current, 'currentStoryIdRef.current:', currentStoryIdRef.current);
-      
-      // ВСЕГДА очищаем Store перед загрузкой новых данных
-      console.log('🧹 Принудительная очистка Store перед загрузкой данных');
-      resetStore();
-      
-      // Обновляем текущий ID сразу чтобы избежать повторных запросов
-      currentStoryIdRef.current = finalStoryId;
-      
-      apiRequest(`/api/campaign-content/${finalStoryId}`)
-      .then(data => {
-        if (data && data.data) {
-          const content = data.data;
-          console.log('📥 Загружены данные контента:', content);
-          setStoryTitle(content.title || 'Новая история');
-          
-          // Загружаем слайды из базы данных только при первой загрузке
-          if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
-            console.log('📋 Найдены слайды в метаданных:', content.metadata.slides.length, 'загружаем в Store...');
-            
-            const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
-              id: slide.id || `slide-${index}`,
-              order: slide.order || index,
-              duration: slide.duration || 5,
-              background: slide.background || { type: 'color', value: '#6366f1' },
-              elements: slide.elements || []
-            }));
-            
-            // Загружаем данные в Store
-            setSlides(storySlides);
-            setCurrentSlideIndex(0);
-            console.log('✅ Загружены слайды:', storySlides.length, 'Элементов в первом слайде:', storySlides[0]?.elements?.length || 0);
-          } else {
-            console.log('📝 Слайды не найдены в метаданных, создаем дефолтный слайд');
-            initializeSlides();
-          }
-          isLoadedRef.current = true;
-          localStorage.setItem(globalLoadKey, 'true'); // Устанавливаем глобальный флаг загрузки
-        }
-      })
-      .catch(error => {
-        console.error('❌ Ошибка загрузки Stories:', error);
-        toast({
-          title: 'Ошибка загрузки',
-          description: 'Не удалось загрузить историю',
-          variant: 'destructive'
-        });
-      });
-    } else {
-      // Новая Stories - инициализируем пустые слайды
-      console.log('📝 Новая Stories - инициализация дефолтного слайда');
-      initializeSlides();
-    }
-
-    // Фолбэк: если через 1 секунду слайдов все еще нет, создаем один по умолчанию
-    // ТОЛЬКО для новых Stories, НЕ для существующих 
-    const fallbackTimer = setTimeout(() => {
-      if (slides.length === 0 && !isNewStory && !finalStoryId) {
-        console.log('⚠️ FALLBACK: No slides found after timeout, creating default slide');
-        initializeSlides();
-      }
-    }, 1000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, [finalStoryId, isNewStory, localStorageKey, resetStore, setSlides, setCurrentSlideIndex, setStoryTitle, toast, initializeSlides]);
-
-  // НЕ очищаем состояние при размонтировании - только сохраняем в localStorage
+  // Cleanup при покидании компонента - НИКОГДА не очищаем Store при редактировании
   useEffect(() => {
     return () => {
       console.log('🧹 StoryEditor unmounting - БЕЗ очистки состояния');
-      // НЕ сбрасываем флаги - пусть остаются для следующего монтирования
-      // localStorage уже сохранен, этого достаточно
+      // НЕ очищаем store - элементы должны сохраняться в памяти
+      // resetStore(); - УБРАНО
+      // isLoadedRef.current = false; - УБРАНО
+      // currentStoryIdRef.current = null; - УБРАНО
     };
-  }, []);
+  }, []); // Пустые зависимости - срабатывает только при размонтировании
+
+  // Отслеживаем предыдущий Story ID через localStorage для сохранения между перемонтированиями
+  const getStoredStoryId = () => localStorage.getItem('lastStoryId');
+  const setStoredStoryId = (id: string | null) => {
+    if (id) {
+      localStorage.setItem('lastStoryId', id);
+    } else {
+      localStorage.removeItem('lastStoryId');
+    }
+  };
+  
+  useEffect(() => {
+    const prevStoryId = getStoredStoryId();
+    const hasNoSlides = slides.length === 0;
+    console.log(`🔍 ПРОВЕРКА ЗАГРУЗКИ: prevStoryId=${prevStoryId}, currentStoryId=${finalStoryId}, isNewStory=${isNewStory}, hasNoSlides=${hasNoSlides}`);
+    
+    // Проверяем, изменился ли Story ID (включая переход от null к ID)
+    const storyIdChanged = prevStoryId !== finalStoryId;
+    
+    if ((storyIdChanged && finalStoryId) || (finalStoryId && hasNoSlides && !isNewStory)) {
+      console.log('🔄 ЗАГРУЖАЕМ ДАННЫЕ: Story ID изменился или нет слайдов для существующей Stories');
+      resetStore();
+      setStoredStoryId(finalStoryId);
+      
+      if (!isNewStory) {
+        console.log('📥 РЕДАКТИРОВАНИЕ: загружаем Stories из БД для ID:', finalStoryId);
+        loadFromServer();
+      } else {
+        console.log('✨ СОЗДАНИЕ: новая Stories с 1 слайдом');
+        initializeSlides();
+      }
+    } else if (!finalStoryId && isNewStory && storyIdChanged) {
+      console.log('✨ СОЗДАНИЕ НОВОЙ STORIES БЕЗ ID');
+      resetStore();
+      initializeSlides();
+      setStoredStoryId(finalStoryId);
+    } else {
+      console.log('🔄 ТОТ ЖЕ STORY ID И ДАННЫЕ УЖЕ ЕСТЬ: пропускаем загрузку');
+    }
+  }, [finalStoryId, isNewStory, slides.length]);
 
   // Отслеживание изменений slides из store и обновление selectedElement  
   useEffect(() => {
@@ -437,9 +268,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
 
 
 
-  // Обертки для store actions
-  const addSlide = storeAddSlide;
-  const deleteSlide = storeDeleteSlide;
+  // Store actions уже доступны напрямую из useStoryStore
 
   const getDefaultContent = (elementType: StoryElement['type']) => {
     switch (elementType) {
@@ -507,16 +336,15 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       return;
     }
     
+    // Добавляем элемент только через store - никаких дополнительных обновлений
     const newElement = storeAddElement(elementType);
     
     if (newElement) {
-      // Принудительно обновляем локальное состояние
-      const updatedStoreSlides = useStoryStore.getState().slides;
-      console.log('🔄 Force updating slides after element add:', updatedStoreSlides.length);
-      setSlides([...updatedStoreSlides]);
+      console.log('✅ Элемент добавлен через store:', newElement.id);
       
-      // Сохраняем в localStorage
-      const dataToSave = { slides: updatedStoreSlides, title: storyTitle };
+      // Сохраняем в localStorage текущие данные из store
+      const currentStoreData = useStoryStore.getState();
+      const dataToSave = { slides: currentStoreData.slides, title: currentStoreData.storyTitle };
       localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
       
       toast({
@@ -530,7 +358,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
         variant: 'destructive'
       });
     }
-  }, [currentSlideIndex, slides, storeAddElement, toast]);
+  }, [currentSlideIndex, slides, storeAddElement, toast, localStorageKey]);
 
   const getElementTypeName = (type: StoryElement['type']) => {
     switch (type) {
@@ -635,6 +463,62 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     }
   };
 
+  // Функция ручной загрузки с сервера (Директус БД)
+  const loadFromServer = async () => {
+    if (!finalStoryId) return;
+    
+    try {
+      console.log('📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID:', finalStoryId);
+      
+      const data = await apiRequest(`/api/campaign-content/${finalStoryId}`);
+      
+      if (data && data.data) {
+        const content = data.data;
+        console.log('📥 Загружены данные из Директус БД:', content);
+        
+        setStoryTitle(content.title || 'Новая история');
+        
+        if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
+          console.log('📋 Найдены слайды в Директус БД:', content.metadata.slides.length);
+          
+          const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
+            id: slide.id || `slide-${index}`,
+            order: slide.order || index,
+            duration: slide.duration || 5,
+            background: slide.background || { type: 'color', value: '#6366f1' },
+            elements: slide.elements || []
+          }));
+          
+          // ПРИНУДИТЕЛЬНО перезаписываем данные в Store данными из Директус БД
+          setSlides(storySlides);
+          setCurrentSlideIndex(0);
+          console.log('✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД:', storySlides.length, 'слайдов');
+        } else {
+          console.log('📝 Слайды не найдены в Директус БД');
+          toast({
+            title: "Данные не найдены",
+            description: "В Директус БД нет сохраненных слайдов для этой истории",
+            variant: "destructive"
+          });
+        }
+      } else {
+        console.error('❌ Данные не найдены в ответе API');
+        toast({
+          title: 'Ошибка',
+          description: 'Данные не найдены в Директус БД',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Ошибка загрузки из Директус БД:', error);
+      toast({
+        title: 'Ошибка загрузки',
+        description: 'Не удалось загрузить данные из Директус БД',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handlePublish = () => {
     toast({
       title: 'Предпросмотр',
@@ -647,24 +531,13 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     navigate('/content');
   };
 
-  // Current slide data - СИНХРОНИЗИРУЕМ с storyStore
-  const storeSlides = useStoryStore(state => state.slides);
-  const currentSlide = storeSlides[currentSlideIndex] || slides[currentSlideIndex];
+  // Current slide data - используем только данные из store
+  const currentSlide = slides[currentSlideIndex];
   
   // Принудительно отслеживаем элементы
   const elementsCount = currentSlide?.elements?.length || 0;
   
-  // Синхронизация локального состояния со store и сохранение в localStorage
-  useEffect(() => {
-    if (storeSlides.length > 0 && storeSlides !== slides) {
-      console.log('🔄 Syncing slides from store:', storeSlides.length, 'slides');
-      setSlides(storeSlides);
-      
-      // Сохраняем в localStorage
-      const dataToSave = { slides: storeSlides, title: storyTitle };
-      localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
-    }
-  }, [storeSlides, slides, storyTitle, localStorageKey, setSlides]);
+  // УБРАНО - используем только store slides без синхронизации
   
   // Сохранение в localStorage при изменении slides
   useEffect(() => {
@@ -698,6 +571,18 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
         </div>
         
         <div className="flex items-center gap-2">
+          {finalStoryId && (
+            <Button variant="outline" size="sm" onClick={loadFromServer}>
+              <Download className="w-4 h-4 mr-2" />
+              Загрузить с сервера
+            </Button>
+          )}
+          {!isNewStory && finalStoryId && (
+            <Button variant="outline" size="sm" onClick={loadFromServer}>
+              <Download className="w-4 h-4 mr-2" />
+              Загрузить из БД
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" />
             {isSaving ? 'Сохранение...' : (storyId ? 'Обновить' : 'Сохранить')}
@@ -713,59 +598,12 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       <div className="flex-1 flex">
         {/* Left sidebar - Slides panel */}
         <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium">Слайды</h3>
-              <Button size="sm" variant="outline" onClick={addSlide}>
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {/* Slide thumbnails */}
-            <div className="space-y-2">
-              {slides.map((slide, index) => (
-                <div
-                  key={slide.id}
-                  onClick={() => setCurrentSlideIndex(index)}
-                  className={`relative border-2 rounded-lg p-2 cursor-pointer transition-colors group ${
-                    currentSlideIndex === index 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div 
-                    className="aspect-[9/16] rounded-md bg-gradient-to-br from-purple-400 to-blue-600 flex items-center justify-center text-white text-xs"
-                    style={{
-                      background: slide.background.type === 'color' 
-                        ? slide.background.value 
-                        : slide.background.type === 'image'
-                        ? `url(${slide.background.value}) center/cover`
-                        : '#6366f1'
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                  <div className="text-xs text-center mt-1 text-gray-600">
-                    {slide.duration}с
-                  </div>
-                  
-                  {slides.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteSlide(index);
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <SlidePanel
+            slides={slides}
+            currentSlideIndex={currentSlideIndex}
+            onSlideSelect={setCurrentSlideIndex}
+            storyId={finalStoryId}
+          />
         </div>
 
         {/* Center - Canvas */}

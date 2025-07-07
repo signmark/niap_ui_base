@@ -1,0 +1,1194 @@
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: ReferenceError: globalLoadKey is not defined
+    at /src/components/stor…ryEditor.tsx:132:32
+overrideMethod @ hook.js:608
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881952812
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881952921
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881953350}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: ReferenceError: globalLoadKey is not defined
+    at /src/components/stor…ryEditor.tsx:132:32
+overrideMethod @ hook.js:608
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881953268
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881953662}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881953428
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881953502
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881953987}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: ReferenceError: globalLoadKey is not defined
+    at /src/components/stor…ryEditor.tsx:132:32
+overrideMethod @ hook.js:608
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881953763
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881954307}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881953918
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954007
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954191
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881954624}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954444
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954621
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954726
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881954932
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881954947}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881955117
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881955263}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881955343
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881955426
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881955869}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881955559
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881956192}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881955823
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881956023
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881956506}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881956265
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881956825}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881956473
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881956743
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881957144}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881956956
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881957477}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881957183
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881957783}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881957404
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881957726
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881958115}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881958122
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881958193
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881958743}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881958561
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881958635
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881959158}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881959029
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881959466}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881959088
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881959788}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 1, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881959496
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ 📥 Загружены данные контента: {id: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13', title: 'Еще одна сторис', content: 'Еще одна сторис', …}
+ 📋 Найдены слайды в метаданных: 2 загружаем в Store...
+ ✅ Загружены слайды: 2 Элементов в первом слайде: 3
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ ❌ Ошибка загрузки Stories: 
+overrideMethod @ installHook.js:1
+(anonymous) @ /src/components/stor…StoryEditor.tsx:135
+Promise.catch
+(anonymous) @ /src/components/stor…StoryEditor.tsx:134
+commitHookEffectListMount @ /@fs/home/runner/wor…js?v=77b761a8:16915
+commitPassiveMountOnFiber @ /@fs/home/runner/wor…js?v=77b761a8:18156
+commitPassiveMountEffects_complete @ /@fs/home/runner/wor…js?v=77b761a8:18129
+commitPassiveMountEffects_begin @ /@fs/home/runner/wor…js?v=77b761a8:18119
+commitPassiveMountEffects @ /@fs/home/runner/wor…js?v=77b761a8:18109
+flushPassiveEffectsImpl @ /@fs/home/runner/wor…js?v=77b761a8:19490
+flushPassiveEffects @ /@fs/home/runner/wor…js?v=77b761a8:19447
+performSyncWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18868
+flushSyncCallbacks @ /@fs/home/runner/wor….js?v=77b761a8:9119
+commitRootImpl @ /@fs/home/runner/wor…js?v=77b761a8:19432
+commitRoot @ /@fs/home/runner/wor…js?v=77b761a8:19277
+finishConcurrentRender @ /@fs/home/runner/wor…js?v=77b761a8:18805
+performConcurrentWorkOnRoot @ /@fs/home/runner/wor…js?v=77b761a8:18718
+workLoop @ /@fs/home/runner/wor…4.js?v=77b761a8:197
+flushWork @ /@fs/home/runner/wor…4.js?v=77b761a8:176
+performWorkUntilDeadline @ /@fs/home/runner/wor…4.js?v=77b761a8:384
+ 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ 🧹 StoryEditor unmounting - БЕЗ очистки состояния
+ Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ Используем глобально выбранную кампанию: "NPlanner.ru"
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 2, hasSlides: true}
+ Stories инициализация: {finalStoryId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', slidesLength: 2, currentStoryId: null}
+ 🔄 Stories ID изменился, очищаем store и сбрасываем состояние
+ ПОЛНАЯ ОЧИСТКА STORY STORE (только память)
+ Story store полностью очищен и пересоздан: slide-1751881959547
+ 📥 Загрузка Stories данных для ID: 2fb811d4-dd9c-448c-b5ca-e697642d0a97
+ Slide 0 has 3 elements
+ 💾 Saved to localStorage: 2 slides
+ Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ Проверка статуса администратора
+ Отправка API запроса на /auth/is-admin c токеном eyJhbGciOi...
+ StoryEditor useEffect triggered: {storyId: '2fb811d4-dd9c-448c-b5ca-e697642d0a97', isNewStory: false, slidesLength: 1, hasSlides: true}
+ Slide 0 has 0 elements
+ 💾 Saved to localStorage: 1 slides
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Ответ сервера на запрос проверки админа: {success: true, isAdmin: true, timestamp: 1751881960093}
+ Пользователь является администратором
+ Устанавливаем статус администратора: true
+ Кампания принадлежит текущему пользователю: NPlanner.ru
+ Кампания принадлежит текущему пользователю: NPlanner.ru
