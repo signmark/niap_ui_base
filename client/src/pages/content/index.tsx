@@ -1293,35 +1293,13 @@ export default function ContentPage() {
                                     </Button>
                                     {content.status === "draft" && (
                                       <>
-                                        <Button 
-                                          variant="black" 
-                                          size="sm"
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation(); // Предотвращаем открытие превью
-                                            setCurrentContentSafe(content);
-                                            setIsScheduleDialogOpen(true);
-                                          }}
-                                        >
-                                          <Calendar className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button 
-                                          variant="black" 
-                                          size="sm"
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation(); // Предотвращаем открытие превью
-                                            setCurrentContentSafe(content);
-                                            setIsAdaptDialogOpen(true);
-                                          }}
-                                        >
-                                          <Share className="h-3.5 w-3.5" />
-                                        </Button>
+
+
                                         <Button 
                                           variant="ghost" 
                                           size="sm"
                                           className="h-7 w-7 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
-                                          title="Опубликовать сейчас"
+                                          title="Опубликовать сейчас или запланировать публикацию"
                                           onClick={(e) => {
                                             e.stopPropagation(); // Предотвращаем открытие превью
                                             

@@ -7639,7 +7639,7 @@ Return your response as a JSON array in this exact format:
       
       // Проверяем наличие обязательных полей (поддерживаем оба формата)
       const content_type = req.body.content_type || req.body.contentType;
-      const { title, content, status = 'draft', metadata } = req.body;
+      const { title, content, status = 'draft', metadata, prompt } = req.body;
       
       if (!campaign_id) {
         return res.status(400).json({ 
@@ -7674,6 +7674,7 @@ Return your response as a JSON array in this exact format:
         // video_thumbnail теперь сохраняется в additional_images
         keywords: Array.isArray(req.body.keywords) ? req.body.keywords : [],
         hashtags: Array.isArray(req.body.hashtags) ? req.body.hashtags : [],
+        prompt: prompt || null, // Добавляем поле prompt для сохранения промптов изображений
         social_platforms: req.body.social_platforms || {},
         scheduled_at: req.body.scheduled_at || null,
         // Дополнительные изображения включая thumbnail видео
