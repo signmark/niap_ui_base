@@ -26,6 +26,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     const token = authHeader.replace('Bearer ', '');
+    
     if (!token) {
         return res.status(401).json({ 
             success: false, 
@@ -33,9 +34,28 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         });
     }
 
+    // Специальная обработка для DIRECTUS_TOKEN (статический админский токен)
+    if (token === process.env.DIRECTUS_TOKEN) {
+        req.user = {
+            id: 'admin-directus-token',
+            token: token
+        };
+        
+        console.log('[DEV] [auth-middleware] Admin authenticated via DIRECTUS_TOKEN');
+        return next();
+    }
+
     try {
         // Декодируем JWT токен для получения реального user ID
+        if (!token.includes('.')) {
+            throw new Error('Token is not a valid JWT format');
+        }
+        
         const base64Payload = token.split('.')[1];
+        if (!base64Payload) {
+            throw new Error('Invalid JWT structure - missing payload');
+        }
+        
         const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
         
         req.user = {
