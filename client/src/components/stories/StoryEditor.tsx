@@ -151,12 +151,15 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       console.log('🔄 СУЩЕСТВУЮЩАЯ STORIES БЕЗ СЛАЙДОВ: загружаем из БД');
       loadFromServer();
     } else if (!finalStoryId && isNewStory) {
-      // Для новых Stories НИКОГДА не очищаем если есть данные
-      if (hasNoSlides) {
-        console.log('✨ СОЗДАНИЕ НОВОЙ STORIES - инициализируем первый слайд');
+      // Для новых Stories проверяем - если это переход от существующей Stories к новой
+      const wasViewingExistingStory = prevStoryId && prevStoryId !== 'null';
+      
+      if (wasViewingExistingStory || hasNoSlides) {
+        console.log('✨ СОЗДАНИЕ НОВОЙ STORIES - очищаем store и создаем чистый слайд');
+        resetStore();
         initializeSlides();
       } else {
-        console.log('✨ НОВАЯ STORIES УЖЕ ИМЕЕТ СЛАЙДЫ - работаем в памяти БЕЗ очистки');
+        console.log('✨ НОВАЯ STORIES УЖЕ В РАБОТЕ - продолжаем редактирование в памяти');
       }
       setStoredStoryId(null); // Для новых stories сохраняем null
     } else {
