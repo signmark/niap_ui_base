@@ -57,7 +57,7 @@ export function AddSourceDialog({ campaignId, onClose }: AddSourceDialogProps) {
         if (!response.ok) {
           if (response.status === 409) {
             const errorData = await response.json();
-            throw new Error(errorData.error || "Источник с таким URL уже существует в этой кампании");
+            throw new Error("Источник уже есть");
           }
           throw new Error("Ошибка при добавлении источника");
         }
