@@ -125,10 +125,11 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
     
     selectedPlatforms.forEach(platform => {
       platformsData[platform] = {
-        selected: true,
-        status: 'pending' // Начальный статус - ожидание публикации
+        status: 'pending' // Начальный статус - ожидание публикации перед отправкой к N8N
       };
     });
+    
+    log(`[Social Publishing] Предварительно заполняем social_platforms со статусом "pending": ${JSON.stringify(platformsData)}`);
     
     try {
       log(`[Social Publishing] Обновляем статусы платформ для контента ${contentId} с DIRECTUS_TOKEN`);
