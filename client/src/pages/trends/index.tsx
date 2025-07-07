@@ -1029,6 +1029,10 @@ export default function Trends() {
                 ) : (
                   <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                     {sources
+                      // Фильтрация дубликатов по URL - показываем только первый источник с уникальным URL
+                      .filter((source, index, array) => {
+                        return array.findIndex(s => s.url === source.url) === index;
+                      })
                       .sort((a, b) => {
                         // Сортировка по типу источника в алфавитном порядке
                         const typeA = a.type === 'website' ? 'Веб-сайт' :
