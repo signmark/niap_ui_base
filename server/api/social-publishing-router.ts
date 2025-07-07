@@ -183,22 +183,9 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           
           log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
           
-          // Для Facebook и YouTube используем прямой API вместо n8n
-          let result;
-          if (platform === 'facebook') {
-            log(`[Social Publishing] Использование прямого API для Facebook вместо n8n вебхука`);
-            // Отправляем запрос на прямой эндпоинт Facebook
-            const appBaseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
-            const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
-            
-            log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
-            
-            const facebookResponse = await axios.post(facebookWebhookUrl, { contentId });
-            result = facebookResponse.data;
-          } else {
-            // Для остальных платформ используем n8n вебхук
-            result = await publishViaN8nAsync(contentId, platform);
-          }
+          // ВСЕ платформы (VK, Facebook, Telegram, Instagram, YouTube) используют N8N вебхуки
+          log(`[Social Publishing] Публикация ${platform} через N8N вебхук`);
+          const result = await publishViaN8nAsync(contentId, platform);
           
           publishResults.push({
             platform,
@@ -645,32 +632,7 @@ async function publishViaN8n(contentId: string, platform: string, req: express.R
  */
 async function publishViaN8nAsync(contentId: string, platform: string): Promise<any> {
   try {
-    // Специальная логика для Facebook - используем прямую публикацию, а не n8n
-    if (platform.toLowerCase() === 'facebook') {
-      log(`[Social Publishing] Прямая публикация контента ${contentId} в Facebook через direct webhook`);
-      
-      // Вызываем напрямую Facebook webhook-direct
-      try {
-        // Получаем базовый URL приложения для формирования полного пути
-        const appBaseUrl = process.env.APP_URL || `http://0.0.0.0:${process.env.PORT || 5000}`;
-        const facebookWebhookUrl = `${appBaseUrl}/api/facebook-webhook-direct`;
-        
-        log(`[Social Publishing] Отправка запроса на Facebook webhook: ${facebookWebhookUrl}`);
-        
-        const response = await axios.post(facebookWebhookUrl, { contentId });
-        
-        log(`[Social Publishing] Facebook webhook-direct ответ: ${JSON.stringify(response.data)}`);
-        return response.data;
-      } catch (fbError: any) {
-        log(`[Social Publishing] Ошибка при прямой публикации в Facebook: ${fbError.message}`);
-        
-        if (fbError.response) {
-          log(`[Social Publishing] Детали ошибки Facebook публикации: ${JSON.stringify(fbError.response.data)}`);
-        }
-        
-        throw new Error(`Ошибка при публикации в Facebook: ${fbError.message}`);
-      }
-    }
+    // ВСЕ платформы идут через N8N вебхуки - никаких исключений!
     
     // Стандартная логика для других платформ через n8n
     log(`[Social Publishing] Асинхронная публикация контента ${contentId} в ${platform} через n8n вебхук`);
@@ -680,8 +642,8 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
       'instagram': 'publish-instagram',
-      'youtube': 'publish-youtube'
-      // 'facebook' удален из маппинга, так как теперь используется прямой код
+      'youtube': 'publish-youtube',
+      'facebook': 'publish-facebook'
     };
     
     console.log(`🔍 [WEBHOOK-MAP] Ищем webhook для платформы: "${platform}"`);
