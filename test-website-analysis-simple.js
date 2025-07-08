@@ -1,50 +1,44 @@
 /**
- * Простой тест анализа сайта с Wikipedia страницей о сале
+ * Простой тест анализа сайта с использованием переменной окружения
  */
 
 import axios from 'axios';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-async function testWebsiteAnalysis() {
-  const startTime = Date.now();
-  console.log('🧪 Тестируем анализ сайта Wikipedia...');
+async function testSingleWebsite() {
+  console.log('🧪 Тестирование анализа сайта...\n');
+  
+  const testUrl = 'https://example.com';
   
   try {
+    console.log(`📍 Анализируем: ${testUrl}`);
+    
     const response = await axios.post('http://localhost:5000/api/website-analysis', {
-      url: 'https://ru.wikipedia.org/wiki/Сало',
-      campaignId: '8e4a1018-72ff-48eb-a3ff-9bd41bf83253'
+      url: testUrl
     }, {
+      timeout: 15000,
       headers: {
-        'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000 // 30 секунд таймаут
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN || 'test-token'}`
+      }
     });
-    
-    const duration = Date.now() - startTime;
-    console.log(`✅ Анализ завершен за ${duration}ms`);
-    console.log('📄 Результат анализа:');
-    console.log(JSON.stringify(response.data, null, 2));
-    
-    // Проверяем что получили структурированные данные
-    if (response.data && response.data.companyName) {
-      console.log('✅ Данные структурированы правильно');
-      console.log(`- Название: ${response.data.companyName}`);
-      console.log(`- Описание: ${response.data.businessDescription?.substring(0, 100)}...`);
+
+    if (response.data.success) {
+      const data = response.data.data;
+      console.log(`✅ Анализ успешен`);
+      console.log(`📊 Название: ${data.companyName}`);
+      console.log(`🏢 Описание: ${data.businessDescription}`);
+      console.log(`💎 Ценности: ${data.businessValues}`);
+      console.log(`🔮 Философия: ${data.productBeliefs}`);
     } else {
-      console.log('❌ Данные не структурированы или отсутствуют');
+      console.log(`❌ Ошибка: ${response.data.error}`);
     }
     
   } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error(`❌ Ошибка анализа за ${duration}ms:`, error.response?.data || error.message);
-    
-    if (error.code === 'ECONNABORTED') {
-      console.log('⏰ Таймаут запроса - DeepSeek API не отвечает');
+    console.log(`💥 Ошибка: ${error.message}`);
+    if (error.response?.data) {
+      console.log(`📋 Детали: ${JSON.stringify(error.response.data, null, 2)}`);
     }
   }
 }
 
-testWebsiteAnalysis();
+testSingleWebsite().catch(console.error);
