@@ -9962,8 +9962,14 @@ ${websiteContent}`;
           // Анализируем содержимое по ключевым словам в РЕАЛЬНОМ контенте
           const contentLower = (websiteContent + ' ' + pageTitle + ' ' + url).toLowerCase();
           
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверяем содержимое на сало: ${contentLower.includes('сало')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверяем содержимое на мясн: ${contentLower.includes('мясн')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверяем на SMM ключевые слова:`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain.includes('smmniap'): ${domain.includes('smmniap')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain.includes('smm'): ${domain.includes('smm')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('социальн'): ${contentLower.includes('социальн')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('smm'): ${contentLower.includes('smm')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('manager'): ${contentLower.includes('manager')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('платформ'): ${contentLower.includes('платформ')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: pageTitle.toLowerCase().includes('smm'): ${pageTitle.toLowerCase().includes('smm')}`);
           
           // Определяем тип бизнеса по РЕАЛЬНОМУ содержимому
           let businessType = 'общий бизнес';
@@ -9973,17 +9979,21 @@ ${websiteContent}`;
           let businessValues = 'Качество, надежность, клиентоориентированность';
           let productBeliefs = 'Наши решения должны приносить реальную пользу клиентам';
           
-          // Специальная обработка для SMM-платформ и сервисов
-          if (domain.includes('smmniap') || domain.includes('smm') || contentLower.includes('социальн') || contentLower.includes('smm') || contentLower.includes('автоматизац') || contentLower.includes('контент') || contentLower.includes('публикац') || contentLower.includes('трен') || contentLower.includes('manager') || contentLower.includes('платформ') || contentLower.includes('управлени') || pageTitle.toLowerCase().includes('smm') || pageTitle.toLowerCase().includes('manager')) {
+          // ПРИОРИТЕТ 1: ПЕРВАЯ ПРОВЕРКА - SMM-платформы и сервисы (САМЫЙ ВЫСОКИЙ ПРИОРИТЕТ)
+          const isSMMPlatform = domain.includes('smmniap') || domain.includes('smm') || contentLower.includes('социальн') || contentLower.includes('smm') || contentLower.includes('автоматизац') || contentLower.includes('контент') || contentLower.includes('публикац') || contentLower.includes('трен') || contentLower.includes('manager') || contentLower.includes('платформ') || contentLower.includes('управлени') || pageTitle.toLowerCase().includes('smm') || pageTitle.toLowerCase().includes('manager');
+          
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: isSMMPlatform результат: ${isSMMPlatform}`);
+          
+          if (isSMMPlatform) {
             businessType = 'SMM и социальные сети';
             companyName = 'SMM Manager - AI-платформа для управления социальными сетями';
             businessDesc = 'Передовая AI-платформа для автоматизации SMM: анализ трендов, создание контента, управление публикациями в социальных сетях с помощью искусственного интеллекта';
             targetAudience = 'SMM-менеджеры, маркетологи, блогеры, агентства цифрового маркетинга, предприниматели';
             businessValues = 'Автоматизация рутинных задач, данные-ориентированный подход, креативность через AI, эффективность SMM';
             productBeliefs = 'Искусственный интеллект должен освободить креаторов от рутины и помочь создавать более качественный контент';
-            console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Определен тип: SMM ПЛАТФОРМА`);
+            console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: ✅ ОПРЕДЕЛЕН ТИП: SMM ПЛАТФОРМА`);
           }
-          // Специальная обработка для nplanner.ru - сервис диагностики здоровья и питания
+          // ПРИОРИТЕТ 2: Специальная обработка для nplanner.ru - сервис диагностики здоровья и питания
           else if (domain.includes('nplanner') || contentLower.includes('диагност') || contentLower.includes('рацион') || contentLower.includes('питани') || contentLower.includes('здоров') || contentLower.includes('персонализированн')) {
             businessType = 'медицинские технологии и диетология';
             companyName = 'НИАП - Облачный сервис диагностики здоровья';
