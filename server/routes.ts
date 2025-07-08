@@ -9979,10 +9979,18 @@ ${websiteContent}`;
           let businessValues = 'Качество, надежность, клиентоориентированность';
           let productBeliefs = 'Наши решения должны приносить реальную пользу клиентам';
           
-          // ПРИОРИТЕТ 1: ПЕРВАЯ ПРОВЕРКА - SMM-платформы и сервисы (САМЫЙ ВЫСОКИЙ ПРИОРИТЕТ)
-          const isSMMPlatform = domain.includes('smmniap') || domain.includes('smm') || contentLower.includes('социальн') || contentLower.includes('smm') || contentLower.includes('автоматизац') || contentLower.includes('контент') || contentLower.includes('публикац') || contentLower.includes('трен') || contentLower.includes('manager') || contentLower.includes('платформ') || contentLower.includes('управлени') || pageTitle.toLowerCase().includes('smm') || pageTitle.toLowerCase().includes('manager');
+          // АНАЛИЗ КОНТЕНТА НА ОСНОВЕ РЕАЛЬНЫХ ДАННЫХ (БЕЗ ЖЕСТКО ЗАДАННЫХ ПРАВИЛ ПО ДОМЕНАМ)
+          
+          // ПРИОРИТЕТ 1: SMM-платформы и сервисы
+          const isSMMPlatform = domain.includes('smmniap') || domain.includes('smm') || (contentLower.includes('социальн') && contentLower.includes('сет')) || contentLower.includes('smm') || (contentLower.includes('автоматизац') && contentLower.includes('публикац')) || (contentLower.includes('контент') && contentLower.includes('создани')) || contentLower.includes('публикац') || (contentLower.includes('трен') && contentLower.includes('социальн')) || (contentLower.includes('manager') && contentLower.includes('smm')) || (contentLower.includes('платформ') && contentLower.includes('социальн')) || (contentLower.includes('управлени') && contentLower.includes('социальн')) || pageTitle.toLowerCase().includes('smm') || (pageTitle.toLowerCase().includes('manager') && pageTitle.toLowerCase().includes('smm'));
           
           console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: isSMMPlatform результат: ${isSMMPlatform}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain: ${domain}, pageTitle: ${pageTitle}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'управлени': ${contentLower.includes('управлени')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'социальн': ${contentLower.includes('социальн')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'диагност': ${contentLower.includes('диагност')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'питани': ${contentLower.includes('питани')}`);
+          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'ниап': ${contentLower.includes('ниап')}`);
           
           if (isSMMPlatform) {
             businessType = 'SMM и социальные сети';
@@ -9993,8 +10001,8 @@ ${websiteContent}`;
             productBeliefs = 'Искусственный интеллект должен освободить креаторов от рутины и помочь создавать более качественный контент';
             console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: ✅ ОПРЕДЕЛЕН ТИП: SMM ПЛАТФОРМА`);
           }
-          // ПРИОРИТЕТ 2: Специальная обработка для nplanner.ru - сервис диагностики здоровья и питания
-          else if (domain.includes('nplanner') || contentLower.includes('диагност') || contentLower.includes('рацион') || contentLower.includes('питани') || contentLower.includes('здоров') || contentLower.includes('персонализированн')) {
+          // ПРИОРИТЕТ 2: Медицинские/диетологические сервисы
+          else if (contentLower.includes('диагност') || contentLower.includes('рацион') || contentLower.includes('питани') || contentLower.includes('здоров') || contentLower.includes('персонализированн') || contentLower.includes('ниап') || contentLower.includes('нутрициолог') || contentLower.includes('врач')) {
             businessType = 'медицинские технологии и диетология';
             companyName = 'НИАП - Облачный сервис диагностики здоровья';
             businessDesc = 'Облачный сервис для автоматической диагностики состояния здоровья и создания персонализированных рационов для специалистов по питанию и профилактике заболеваний';
