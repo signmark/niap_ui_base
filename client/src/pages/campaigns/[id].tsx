@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KeywordSelector } from "@/components/KeywordSelector";  
 import PublicationCalendar from "@/components/PublicationCalendar";
 import { directusApi } from "@/lib/directus";
+import { api } from "@/lib/api";
 import { Loader2, Search, Wand2, Check, CheckCircle, Circle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -305,66 +306,23 @@ export default function CampaignDetails() {
         throw new Error('Пожалуйста, введите корректный URL сайта');
       }
 
-      const requestBody = {
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          {
-            role: "system",
-            content: `Вы - специализированный SEO-эксперт, который анализирует сайты и генерирует релевантные ключевые слова для продвижения в социальных сетях. Следуйте этой инструкции строго:
-1. Сначала посетите указанный URL и определите тематику сайта - о чем он, какие товары/услуги предлагает
-2. Составьте список из 10-15 конкретных ключевых слов и фраз, относящихся именно к специфике данного сайта
-3. НЕ используйте общие слова о планировании, управлении, календарях, если сайт НЕ о планировании
-4. Ответ должен содержать ТОЛЬКО массив ключевых слов в формате JSON без дополнительных пояснений: ["keyword1", "keyword2"]
-5. Все слова должны быть на русском языке.`
-          },
-          {
-            role: "user",
-            content: `Пожалуйста, посетите сайт ${url}, определите его точную тематику, и сгенерируйте список из 10-15 самых релевантных ключевых слов, соответствующих именно ЭТОМУ конкретному сайту. Просто верните JSON-массив, без вступления и пояснений.`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.5
-      };
-
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer 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',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        throw new Error('Ошибка при получении ключевых слов');
+      // Нормализуем URL
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+        normalizedUrl = `https://${normalizedUrl}`;
       }
 
-      const data = await response.json();
-      const content = data.choices[0].message.content;
-
-      try {
-        // Попытка найти JSON массив в ответе
-        const match = content.match(/\[([\s\S]*?)\]/);
-        if (!match) {
-          throw new Error('Не удалось найти массив ключевых слов в ответе');
-        }
-
-        // Парсим найденный массив
-        const keywords = JSON.parse(`[${match[1]}]`);
-
-        if (!Array.isArray(keywords)) {
-          throw new Error('Некорректный формат данных');
-        }
-
-        // Проверяем и очищаем ключевые слова
-        return keywords
-          .filter(kw => typeof kw === 'string' && kw.trim().length > 0)
-          .map(kw => kw.trim());
-
-      } catch (e) {
-        console.error('Ошибка при обработке ключевых слов:', e, content);
-        throw new Error('Не удалось обработать ответ API. Пожалуйста, попробуйте еще раз.');
+      // Используем наш рабочий эндпоинт для анализа сайта
+      const encodedUrl = encodeURIComponent(normalizedUrl);
+      const nocache = Date.now(); // Добавляем параметр для предотвращения кеширования
+      const response = await api.get(`/analyze-site/${encodedUrl}?nocache=${nocache}`);
+      
+      if (!response.data?.data?.keywords?.length) {
+        throw new Error("Не удалось извлечь ключевые слова с сайта");
       }
+
+      // Возвращаем массив строк ключевых слов
+      return response.data.data.keywords.map((kw: any) => kw.keyword || kw);
     },
     onSuccess: (data) => {
       const formattedKeywords = data.map((keyword: string) => ({

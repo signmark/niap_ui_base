@@ -5,6 +5,7 @@ import { Loader2, Link, Globe, Search, CheckCircle, XCircle } from "lucide-react
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { directusApi } from "@/lib/directus";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
