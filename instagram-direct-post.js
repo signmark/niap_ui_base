@@ -53,6 +53,7 @@ async function publishToInstagram(postData) {
   
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: '/nix/store/58gnnsq47bm8zw871chaxm65zrnmnw53-ungoogled-chromium-108.0.5359.95/bin/chromium-browser',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -68,7 +69,9 @@ async function publishToInstagram(postData) {
       '--no-first-run',
       '--no-default-browser-check',
       '--disable-extensions',
-      '--disable-plugins'
+      '--disable-plugins',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor'
     ]
   });
   
@@ -82,34 +85,49 @@ async function publishToInstagram(postData) {
     console.log('🔐 Авторизация в Instagram...');
     
     // Переходим на страницу входа
+    console.log('🌐 Переходим на страницу входа Instagram...');
     await page.goto('https://www.instagram.com/accounts/login/', {
-      waitUntil: 'networkidle2'
+      waitUntil: 'networkidle2',
+      timeout: 30000
     });
     
     // Ждем загрузки формы входа
-    await page.waitForSelector('input[name="username"]', { timeout: 10000 });
+    console.log('⏳ Ожидаем загрузки формы входа...');
+    await page.waitForSelector('input[name="username"]', { timeout: 15000 });
     
     // Вводим данные для входа
-    await page.type('input[name="username"]', INSTAGRAM_USERNAME);
-    await page.type('input[name="password"]', INSTAGRAM_PASSWORD);
+    console.log('📝 Вводим учетные данные...');
+    await page.type('input[name="username"]', INSTAGRAM_USERNAME, {delay: 100});
+    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, {delay: 100});
     
     // Нажимаем кнопку входа
+    console.log('🔐 Нажимаем кнопку входа...');
     await page.click('button[type="submit"]');
     
     // Ждем перехода на главную страницу
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    console.log('⏳ Ожидаем авторизации...');
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
     
     console.log('✅ Авторизация успешна');
     
+    // Проверяем текущий URL для подтверждения авторизации
+    const currentUrl = page.url();
+    console.log('📍 Текущий URL:', currentUrl);
+    
     // Проверяем, не появилось ли предупреждение о подозрительной активности
     try {
-      const suspiciousActivity = await page.$('button[contains(text(), "Not Now")]');
-      if (suspiciousActivity) {
-        await suspiciousActivity.click();
+      console.log('🔍 Проверяем наличие дополнительных диалогов...');
+      await page.waitForTimeout(3000);
+      
+      // Попробуем найти кнопку "Not Now" или "Не сейчас"
+      const notNowButton = await page.$('button:contains("Not Now"), button:contains("Не сейчас")');
+      if (notNowButton) {
+        console.log('🔘 Нажимаем "Not Now"');
+        await notNowButton.click();
         await page.waitForTimeout(2000);
       }
     } catch (e) {
-      // Игнорируем ошибку, если элемент не найден
+      console.log('⚠️ Дополнительные диалоги не найдены');
     }
     
     console.log('📝 Создаю новый пост...');
