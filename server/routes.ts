@@ -7905,10 +7905,15 @@ Return your response as a JSON array in this exact format:
         selectedPlatforms.forEach(platform => {
           // Сохраняем существующие данные платформы (статус, URL и т.д.)
           const existingPlatformData = currentSocialPlatforms[platform] || {};
+          
+          // КРИТИЧНО: При публикации ВСЕГДА устанавливаем pending статус для всех выбранных платформ
           updatedSocialPlatforms[platform] = {
             ...existingPlatformData,
             ...socialPlatforms[platform],
-            selected: true // Отмечаем как выбранную
+            status: "pending", // ОБЯЗАТЕЛЬНО - pending статус для всех публикуемых платформ
+            selected: true,    // Отмечаем как выбранную
+            publishedAt: null, // Сбрасываем время публикации
+            postUrl: null      // Сбрасываем URL поста
           };
         });
         
