@@ -1,124 +1,116 @@
-#!/usr/bin/env node
-
 /**
- * Простой тест Instagram публикации через N8N
- * Использует demo данные без реальных учетных данных
+ * Простой тест Instagram через HTTP запросы
  */
+import axios from 'axios';
+import FormData from 'form-data';
 
-const axios = require('axios');
-
-// Тестовые данные для демонстрации
-const testData = {
-  content: "🚀 Тестовый пост из SMM Manager! #SMM #автоматизация #Instagram",
-  imageUrl: "https://picsum.photos/1080/1080",
-  contentId: `test-${Date.now()}`,
-  campaignId: "demo-campaign",
-  hashtags: ["#SMM", "#автоматизация", "#Instagram"],
-  caption: "🚀 Тестовый пост из SMM Manager! #SMM #автоматизация #Instagram",
-  
-  // Реальные настройки для тестирования
-  settings: {
-    username: "it.zhdanov",
-    password: "QtpZ3dh70307"
-  }
-};
-
-async function testInstagramWorkflow() {
-  console.log('🔥 Тестируем Instagram workflow...');
-  console.log('📝 Данные поста:', {
-    content: testData.content,
-    imageUrl: testData.imageUrl,
-    contentId: testData.contentId
-  });
-  
-  // Проверяем доступность N8N
-  const N8N_URL = process.env.N8N_WEBHOOK_URL || 'https://n8n.nplanner.ru/webhook/publish-instagram';
+async function testInstagramLogin() {
+  console.log('🧪 Тестируем Instagram логин через HTTP...');
   
   try {
-    console.log('📡 Отправляем запрос к N8N webhook:', N8N_URL);
-    
-    const response = await axios.post(N8N_URL, testData, {
+    // Создаем сессию
+    const session = axios.create({
+      timeout: 10000,
       headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SMM-Manager-Test/1.0'
-      },
-      timeout: 30000 // 30 секунд
-    });
-    
-    console.log('✅ Ответ от N8N:', response.status);
-    console.log('📄 Данные ответа:', JSON.stringify(response.data, null, 2));
-    
-    if (response.data.success) {
-      console.log('🎉 Workflow выполнен успешно!');
-      if (response.data.postUrl) {
-        console.log('🔗 URL поста:', response.data.postUrl);
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
-    } else {
-      console.log('❌ Workflow выполнился с ошибкой:', response.data.error);
-      console.log('📝 Сообщение:', response.data.message);
-    }
-    
-  } catch (error) {
-    console.error('❌ Ошибка при тестировании:', error.message);
-    
-    if (error.response) {
-      console.log('📄 Статус ответа:', error.response.status);
-      console.log('📝 Данные ошибки:', JSON.stringify(error.response.data, null, 2));
-    }
-    
-    if (error.code === 'ECONNREFUSED') {
-      console.log('🔧 N8N сервер недоступен. Проверьте, что сервер запущен.');
-    } else if (error.code === 'ENOTFOUND') {
-      console.log('🔧 Не удается найти N8N сервер. Проверьте URL.');
-    }
-  }
-}
-
-// Альтернативный тест через локальный webhook
-async function testLocalWebhook() {
-  console.log('🔄 Тестируем локальный webhook...');
-  
-  const LOCAL_URL = 'http://localhost:5000/webhook/publish-instagram';
-  
-  try {
-    const response = await axios.post(LOCAL_URL, testData, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000
     });
     
-    console.log('✅ Локальный webhook ответил:', response.status);
-    console.log('📄 Данные:', JSON.stringify(response.data, null, 2));
+    // Получаем главную страницу Instagram
+    console.log('📱 Получаем главную страницу Instagram...');
+    const mainPage = await session.get('https://www.instagram.com/');
+    
+    console.log('✅ Главная страница загружена, статус:', mainPage.status);
+    
+    // Ищем CSRF токен
+    const csrfMatch = mainPage.data.match(/"csrf_token":"([^"]+)"/);
+    const csrfToken = csrfMatch ? csrfMatch[1] : null;
+    
+    if (csrfToken) {
+      console.log('🔑 CSRF токен найден:', csrfToken.substring(0, 10) + '...');
+      
+      // Пытаемся авторизоваться
+      const loginData = {
+        username: 'it.zhdanov',
+        password: 'QtpZ3dh70307',
+        queryParams: '{}',
+        optIntoOneTap: 'false'
+      };
+      
+      console.log('🚪 Отправляем запрос авторизации...');
+      
+      const loginResponse = await session.post('https://www.instagram.com/accounts/login/ajax/', loginData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+          'Referer': 'https://www.instagram.com/',
+        }
+      });
+      
+      console.log('📋 Ответ авторизации:', loginResponse.status);
+      console.log('📄 Данные ответа:', loginResponse.data);
+      
+      if (loginResponse.data.authenticated) {
+        console.log('✅ Авторизация успешна!');
+        console.log('👤 Пользователь:', loginResponse.data.user?.username);
+      } else {
+        console.log('❌ Авторизация не удалась');
+        console.log('🔍 Ошибка:', loginResponse.data.message || 'Неизвестная ошибка');
+      }
+      
+    } else {
+      console.log('❌ CSRF токен не найден');
+    }
     
   } catch (error) {
-    console.log('❌ Локальный webhook недоступен:', error.message);
+    console.error('❌ Ошибка при тестировании Instagram:', error.message);
     
     if (error.response) {
-      console.log('📄 Статус:', error.response.status);
-      console.log('📝 Данные:', JSON.stringify(error.response.data, null, 2));
+      console.log('📊 Статус ответа:', error.response.status);
+      console.log('📄 Заголовки ответа:', Object.keys(error.response.headers));
     }
   }
 }
 
-// Главная функция
-async function main() {
-  console.log('🚀 Запуск простого теста Instagram публикации...');
+// Альтернативный подход - просто проверить доступность Instagram
+async function checkInstagramAvailability() {
+  console.log('🌐 Проверяем доступность Instagram...');
   
-  // Тестируем N8N webhook
-  await testInstagramWorkflow();
+  try {
+    const response = await axios.get('https://www.instagram.com/', {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log('✅ Instagram доступен, статус:', response.status);
+    console.log('📏 Размер страницы:', response.data.length, 'символов');
+    
+    // Ищем признаки страницы входа
+    if (response.data.includes('loginForm') || response.data.includes('Log In')) {
+      console.log('🔑 Страница входа обнаружена');
+    }
+    
+    if (response.data.includes('Instagram')) {
+      console.log('📱 Это действительно Instagram');
+    }
+    
+  } catch (error) {
+    console.error('❌ Instagram недоступен:', error.message);
+  }
+}
+
+// Запускаем тесты
+async function runTests() {
+  console.log('🚀 Запускаем тесты Instagram...\n');
   
+  await checkInstagramAvailability();
   console.log('\n' + '='.repeat(50) + '\n');
+  await testInstagramLogin();
   
-  // Тестируем локальный webhook
-  await testLocalWebhook();
-  
-  console.log('\n✅ Все тесты завершены!');
+  console.log('\n✅ Тесты завершены');
 }
 
-// Запуск
-if (require.main === module) {
-  main().catch(console.error);
-}
-
-module.exports = { testInstagramWorkflow, testData };
+runTests();

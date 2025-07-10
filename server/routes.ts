@@ -11898,6 +11898,152 @@ ${datesText}
       });
     }
   });
+
+  // YouTube Token Refresh API для N8N workflow
+  app.get("/api/youtube/refresh-token/:campaignId", async (req, res) => {
+    console.log(`[YouTube Token Refresh] ENDPOINT CALLED! campaignId: ${req.params.campaignId}`);
+    try {
+      const campaignId = req.params.campaignId;
+      const adminToken = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN;
+      
+      console.log(`[YouTube Token Refresh] Запрос refresh token для кампании: ${campaignId}`);
+      
+      if (!adminToken) {
+        return res.status(500).json({
+          success: false,
+          error: "DIRECTUS_TOKEN не настроен"
+        });
+      }
+
+      // Получаем настройки кампании
+      const campaignResponse = await fetch(`${DIRECTUS_URL}items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+
+      if (!campaignResponse.ok) {
+        console.error(`[YouTube Token Refresh] Ошибка получения кампании: ${campaignResponse.status}`);
+        return res.status(404).json({
+          success: false,
+          error: "Кампания не найдена"
+        });
+      }
+
+      const campaignData = await campaignResponse.json();
+      const campaign = campaignData.data;
+      
+      if (!campaign.social_media_settings) {
+        return res.status(400).json({
+          success: false,
+          error: "Настройки социальных сетей отсутствуют"
+        });
+      }
+
+      // Парсим social_media_settings
+      let settings;
+      try {
+        settings = typeof campaign.social_media_settings === 'string' 
+          ? JSON.parse(campaign.social_media_settings) 
+          : campaign.social_media_settings;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          error: "Ошибка парсинга настроек социальных сетей"
+        });
+      }
+
+      if (!settings.youtube || !settings.youtube.refreshToken) {
+        return res.status(400).json({
+          success: false,
+          error: "YouTube refresh token отсутствует в настройках кампании"
+        });
+      }
+
+      // Получаем YouTube credentials из global_api_keys
+      const credentialsResponse = await fetch(`${DIRECTUS_URL}items/global_api_keys`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+
+      if (!credentialsResponse.ok) {
+        return res.status(500).json({
+          success: false,
+          error: "Ошибка получения credentials из global_api_keys"
+        });
+      }
+
+      const credentialsData = await credentialsResponse.json();
+      const youtubeCredentials = credentialsData.data?.find(r => r.service_name === 'YouTube');
+      
+      if (!youtubeCredentials || !youtubeCredentials.api_key || !youtubeCredentials.api_secret) {
+        return res.status(500).json({
+          success: false,
+          error: "YouTube credentials не найдены в global_api_keys"
+        });
+      }
+
+      // Отправляем OAuth запрос к Google
+      console.log(`[YouTube Token Refresh] Отправляем OAuth запрос для кампании ${campaignId}`);
+      
+      const oauthResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          client_id: youtubeCredentials.api_key,
+          client_secret: youtubeCredentials.api_secret,
+          refresh_token: settings.youtube.refreshToken,
+          grant_type: 'refresh_token'
+        })
+      });
+
+      const oauthResult = await oauthResponse.json();
+
+      if (!oauthResponse.ok) {
+        console.error(`[YouTube Token Refresh] OAuth ошибка:`, oauthResult);
+        return res.status(400).json({
+          success: false,
+          error: `OAuth ошибка: ${oauthResult.error || 'Неизвестная ошибка'}`,
+          details: oauthResult
+        });
+      }
+
+      if (!oauthResult.access_token) {
+        return res.status(400).json({
+          success: false,
+          error: "Access token не получен от Google OAuth API"
+        });
+      }
+
+      console.log(`[YouTube Token Refresh] Успешно получен новый access_token для кампании ${campaignId}`);
+
+      // Возвращаем новый access_token
+      return res.json({
+        success: true,
+        data: {
+          access_token: oauthResult.access_token,
+          expires_in: oauthResult.expires_in,
+          scope: oauthResult.scope,
+          token_type: oauthResult.token_type,
+          campaign_id: campaignId,
+          youtube_settings: {
+            api_key: settings.youtube.apiKey,
+            channel_id: settings.youtube.channelId
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error(`[YouTube Token Refresh] Ошибка:`, error);
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   
   return httpServer;
 }
@@ -12128,6 +12274,8 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
   return contentPlan;
 }
+
+
 
 
 
