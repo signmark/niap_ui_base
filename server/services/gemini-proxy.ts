@@ -105,9 +105,10 @@ export class GeminiProxyService {
    * Отправляет запрос к Gemini API через SOCKS5 прокси
    * @param url URL для запроса
    * @param body Тело запроса
+   * @param isVertexAI Использовать ли Vertex AI
    * @returns Ответ от API в виде JSON
    */
-  async sendRequest(url: string, body: any): Promise<any> {
+  async sendRequest(url: string, body: any, isVertexAI = false): Promise<any> {
     let retries = 0;
     let lastError: Error | null = null;
     
@@ -206,7 +207,7 @@ export class GeminiProxyService {
       };
       
       // Отправляем запрос
-      await this.sendRequest(url, requestData);
+      await this.sendRequest(url, requestData, false);
       
       return true;
     } catch (error) {
@@ -262,7 +263,7 @@ export class GeminiProxyService {
       };
       
       // Отправляем запрос
-      const response = await this.sendRequest(url, requestData);
+      const response = await this.sendRequest(url, requestData, isVertexAI);
       
       // Обрабатываем ответ
       if (response.candidates && response.candidates.length > 0 && 
@@ -340,7 +341,7 @@ export class GeminiProxyService {
       };
       
       // Отправляем запрос
-      const response = await this.sendRequest(url, requestData);
+      const response = await this.sendRequest(url, requestData, isVertexAI);
       
       // Обрабатываем ответ
       if (response.candidates && response.candidates.length > 0 && 
