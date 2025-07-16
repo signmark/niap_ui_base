@@ -969,56 +969,19 @@ export default function Trends() {
       // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       
-      // Если запущен сбор комментариев, добавляем автоматическое обновление
-      if (collectComments && collectComments.length > 0) {
-        console.log('🔄 Запущен сбор комментариев, настраиваем автоматическое обновление');
+      // Если запущен сбор комментариев - сразу проверяем их для выбранного тренда
+      if (collectComments && collectComments.length > 0 && selectedTrendTopic) {
+        console.log('🔄 Запущен сбор комментариев, проверяем для тренда:', selectedTrendTopic.id);
         
-        // Сразу обновляем комментарии для выбранного тренда если он есть
-        if (selectedTrendTopic) {
-          // Получаем свежие данные и проверяем актуальность тренда
-          queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] }).then(() => {
-            const currentTrends = queryClient.getQueryData(["trends", selectedPeriod, selectedCampaignId]) as any;
-            if (currentTrends?.data) {
-              const updatedTrend = currentTrends.data.find((t: any) => t.id === selectedTrendTopic.id);
-              if (updatedTrend) {
-                loadTrendComments(updatedTrend.id);
-                console.log('🔄 Сразу обновили комментарии для актуального тренда:', updatedTrend.id);
-              } else {
-                console.log('⚠️ Выбранный тренд не найден в свежих данных, очищаем выбор');
-                setSelectedTrendTopic(null);
-                setTrendComments([]);
-                setSentimentData(null);
-              }
-            }
-          });
-        }
-        
-        // Проверяем комментарии через 5, 15, 30 и 45 секунд (когда N8N точно закончит)
-        const checkIntervals = [5000, 15000, 30000, 45000];
+        // Проверяем комментарии сразу и через несколько интервалов
+        const checkIntervals = [0, 5000, 15000, 30000, 45000];
         
         checkIntervals.forEach((delay, index) => {
           setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
-            
-            // Получаем свежие данные трендов и ищем актуальный выбранный тренд
-            queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] }).then(() => {
-              const currentTrends = queryClient.getQueryData(["trends", selectedPeriod, selectedCampaignId]) as any;
-              if (selectedTrendTopic && currentTrends?.data) {
-                // Находим актуальный тренд по ID в свежих данных
-                const updatedTrend = currentTrends.data.find((t: any) => t.id === selectedTrendTopic.id);
-                if (updatedTrend) {
-                  loadTrendComments(updatedTrend.id);
-                  console.log(`🔄 Проверка комментариев #${index + 1} через ${delay/1000}с для актуального тренда:`, updatedTrend.id);
-                } else {
-                  console.log(`⚠️ Тренд ${selectedTrendTopic.id} не найден в обновленных данных, очищаем выбор`);
-                  setSelectedTrendTopic(null);
-                  setTrendComments([]);
-                  setSentimentData(null);
-                }
-              }
-            });
-            
-            console.log(`🔄 Обновление данных #${index + 1} через ${delay/1000} секунд`);
+            if (selectedTrendTopic) {
+              loadTrendComments(selectedTrendTopic.id);
+              console.log(`🔄 Проверка комментариев #${index + 1} для тренда ${selectedTrendTopic.id}`);
+            }
           }, delay);
         });
       }
