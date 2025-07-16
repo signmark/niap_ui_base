@@ -984,7 +984,10 @@ export default function Trends() {
                 loadTrendComments(updatedTrend.id);
                 console.log('🔄 Сразу обновили комментарии для актуального тренда:', updatedTrend.id);
               } else {
-                console.log('⚠️ Выбранный тренд не найден в свежих данных, обновляем все тренды');
+                console.log('⚠️ Выбранный тренд не найден в свежих данных, очищаем выбор');
+                setSelectedTrendTopic(null);
+                setTrendComments([]);
+                setSentimentData(null);
               }
             }
           });
@@ -1007,7 +1010,10 @@ export default function Trends() {
                   loadTrendComments(updatedTrend.id);
                   console.log(`🔄 Проверка комментариев #${index + 1} через ${delay/1000}с для актуального тренда:`, updatedTrend.id);
                 } else {
-                  console.log(`⚠️ Тренд ${selectedTrendTopic.id} не найден в обновленных данных`);
+                  console.log(`⚠️ Тренд ${selectedTrendTopic.id} не найден в обновленных данных, очищаем выбор`);
+                  setSelectedTrendTopic(null);
+                  setTrendComments([]);
+                  setSentimentData(null);
                 }
               }
             });
