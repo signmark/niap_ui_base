@@ -263,29 +263,13 @@ export default function Trends() {
     }
   }, [selectedCampaign]);
 
-  // Загрузка существующего анализа настроения для тренда
-  const loadExistingSentimentAnalysis = async (trendId: string) => {
-    try {
-      const authToken = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/campaign-trends`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const trend = data.data.find((t: any) => t.id === trendId);
-        if (trend && trend.sentiment_analysis) {
-          setSentimentData(trend.sentiment_analysis);
-        } else {
-          setSentimentData(null);
-        }
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки анализа настроения:', error);
+  // Загрузка существующего анализа настроения для тренда из кэшированных данных
+  const loadExistingSentimentAnalysis = (selectedTrend: TrendTopic | null) => {
+    if (selectedTrend && (selectedTrend as any).sentiment_analysis) {
+      console.log('Загружаем существующий анализ для тренда:', selectedTrend.id, (selectedTrend as any).sentiment_analysis);
+      setSentimentData((selectedTrend as any).sentiment_analysis);
+    } else {
+      console.log('Анализ настроения не найден для тренда:', selectedTrend?.id);
       setSentimentData(null);
     }
   };
@@ -295,10 +279,10 @@ export default function Trends() {
     if (selectedTrendTopic && activeTab === 'comments') {
       loadTrendComments(selectedTrendTopic.id);
       // Загружаем существующий анализ настроения если есть
-      loadExistingSentimentAnalysis(selectedTrendTopic.id);
+      loadExistingSentimentAnalysis(selectedTrendTopic);
     } else if (selectedTrendTopic) {
       // Если просто меняется тренд, загружаем анализ
-      loadExistingSentimentAnalysis(selectedTrendTopic.id);
+      loadExistingSentimentAnalysis(selectedTrendTopic);
     } else {
       // Очищаем данные анализа настроения при отсутствии выбранного тренда
       setSentimentData(null);
@@ -1873,6 +1857,15 @@ export default function Trends() {
                                         // Обновляем локальные данные тренда, чтобы анализ сохранился
                                         if (selectedTrendTopic) {
                                           (selectedTrendTopic as any).sentiment_analysis = data.data;
+                                          // Также обновляем данные в основном массиве трендов
+                                          const updatedTrends = trends.map((trend: TrendTopic) => {
+                                            if (trend.id === selectedTrendTopic.id) {
+                                              return { ...trend, sentiment_analysis: data.data };
+                                            }
+                                            return trend;
+                                          });
+                                          // Если есть setter для обновления трендов, используем его
+                                          // setTrends(updatedTrends); // Раскомментировать если есть setter
                                         }
                                       } else {
                                         const errorText = await response.text();
