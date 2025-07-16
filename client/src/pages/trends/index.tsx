@@ -968,6 +968,26 @@ export default function Trends() {
       
       // Сразу же обновляем, чтобы не ждать 3 секунды до первого обновления
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+      
+      // Если запущен сбор комментариев, добавляем автоматическое обновление через 3 секунды
+      if (collectComments && collectComments.length > 0) {
+        console.log('🔄 Запущен сбор комментариев, настраиваем автоматическое обновление через 3 секунды');
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+          console.log('🔄 Обновили данные трендов через 3 секунды после сбора комментариев');
+          
+          // Дополнительные обновления через 10 и 20 секунд
+          setTimeout(() => {
+            queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+            console.log('🔄 Дополнительное обновление через 10 секунд');
+          }, 7000); // Еще через 7 секунд (итого 10)
+          
+          setTimeout(() => {
+            queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+            console.log('🔄 Финальное обновление через 20 секунд');
+          }, 17000); // Еще через 17 секунд (итого 20)
+        }, 3000);
+      }
     },
     onError: (error: Error) => {
       console.error('Error collecting trends:', error);
@@ -1864,11 +1884,17 @@ export default function Trends() {
                                         queryClient.invalidateQueries({ queryKey: ["trends"] });
                                         queryClient.invalidateQueries({ queryKey: ["trend-comments", selectedTrendTopic.id] });
                                         
-                                        // Добавляем небольшую задержку и обновляем данные
+                                        // Быстрое обновление комментариев через 3 секунды
+                                        setTimeout(() => {
+                                          queryClient.refetchQueries({ queryKey: ["trend-comments", selectedTrendTopic.id] });
+                                          console.log('🔄 Быстро обновили комментарии через 3 секунды');
+                                        }, 3000);
+                                        
+                                        // Полное обновление трендов через 10 секунд
                                         setTimeout(() => {
                                           queryClient.refetchQueries({ queryKey: ["trends"] });
-                                          console.log('🔄 Принудительно обновили данные трендов');
-                                        }, 1000);
+                                          console.log('🔄 Полностью обновили данные трендов через 10 секунд');
+                                        }, 10000);
                                         
                                         // Обновляем локальные данные тренда, чтобы анализ сохранился
                                         if (selectedTrendTopic) {
