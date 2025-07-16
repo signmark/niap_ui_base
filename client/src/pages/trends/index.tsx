@@ -1809,9 +1809,11 @@ export default function Trends() {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                disabled={isAnalyzingSentiment}
                                 onClick={() => {
                                   const analyzeSentiment = async () => {
                                     try {
+                                      setIsAnalyzingSentiment(true);
                                       const authToken = localStorage.getItem('auth_token');
                                       const response = await fetch(`/api/trend-sentiment/${selectedTrendTopic.id}`, {
                                         method: 'POST',
@@ -1823,33 +1825,90 @@ export default function Trends() {
                                       
                                       if (response.ok) {
                                         const data = await response.json();
-                                        console.log('Результат анализа настроения:', data);
-                                        // TODO: Заменить алерт на красивый диалог
-                                        alert(`Анализ настроения:
-Общее настроение: ${data.data.sentiment}
-Уверенность: ${data.data.confidence}%
-Положительные: ${data.data.details.positive}%
-Отрицательные: ${data.data.details.negative}%
-Нейтральные: ${data.data.details.neutral}%
-Описание: ${data.data.summary}`);
+                                        console.log('Результат анализа настроения (JSON):', JSON.stringify(data, null, 2));
+                                        setSentimentData(data.data);
+                                        toast({
+                                          title: "Анализ настроения завершен",
+                                          description: `Проанализировано ${data.commentsAnalyzed || trendComments.length} комментариев`,
+                                        });
                                       } else {
                                         const errorText = await response.text();
                                         console.error('Ошибка сервера:', response.status, errorText);
-                                        alert(`Ошибка при анализе настроения: ${response.status} - ${errorText}`);
+                                        toast({
+                                          title: "Ошибка анализа",
+                                          description: `Ошибка сервера: ${response.status}`,
+                                          variant: "destructive"
+                                        });
                                       }
                                     } catch (error) {
                                       console.error('Ошибка анализа:', error);
-                                      alert(`Ошибка при анализе настроения: ${error.message}`);
+                                      toast({
+                                        title: "Ошибка анализа",
+                                        description: `Ошибка подключения: ${error.message}`,
+                                        variant: "destructive"
+                                      });
+                                    } finally {
+                                      setIsAnalyzingSentiment(false);
                                     }
                                   };
                                   analyzeSentiment();
                                 }}
                                 className="gap-2"
                               >
-                                <BarChart className="h-4 w-4" />
-                                Анализ настроения
+                                {isAnalyzingSentiment ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <BarChart className="h-4 w-4" />
+                                )}
+                                {isAnalyzingSentiment ? 'Анализируем...' : 'Анализ настроения'}
                               </Button>
                             </div>
+                            
+                            {/* Блок результатов анализа настроения */}
+                            {sentimentData && (
+                              <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <BarChart className="h-5 w-5 text-blue-600" />
+                                  <h5 className="font-medium text-gray-900">Анализ настроения</h5>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                  <div className="text-center">
+                                    <div className="text-lg font-semibold text-green-600">
+                                      {sentimentData.details?.positive || 0}%
+                                    </div>
+                                    <div className="text-xs text-gray-600">Позитивные</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-lg font-semibold text-red-600">
+                                      {sentimentData.details?.negative || 0}%
+                                    </div>
+                                    <div className="text-xs text-gray-600">Негативные</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-lg font-semibold text-gray-600">
+                                      {sentimentData.details?.neutral || 0}%
+                                    </div>
+                                    <div className="text-xs text-gray-600">Нейтральные</div>
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="text-lg font-semibold text-blue-600">
+                                      {sentimentData.confidence || 0}%
+                                    </div>
+                                    <div className="text-xs text-gray-600">Уверенность</div>
+                                  </div>
+                                </div>
+                                <div className="text-sm text-gray-700 bg-white p-2 rounded border">
+                                  <strong>Общее настроение:</strong> {sentimentData.sentiment === 'positive' ? '😊 Позитивное' : sentimentData.sentiment === 'negative' ? '😔 Негативное' : '😐 Нейтральное'}
+                                  {sentimentData.summary && (
+                                    <>
+                                      <br />
+                                      <strong>Описание:</strong> {sentimentData.summary}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="space-y-3">
                               {trendComments.map((comment, index) => (
                                 <Card key={comment.id || index} className="p-3">
