@@ -258,6 +258,13 @@ export default function Trends() {
     }
   }, [selectedCampaign]);
 
+  // Автоматическая загрузка комментариев при выборе тренда и переходе на вкладку "Комментарии"
+  useEffect(() => {
+    if (selectedTrendTopic && activeTab === 'comments') {
+      loadTrendComments(selectedTrendTopic.id);
+    }
+  }, [selectedTrendTopic, activeTab]);
+
 
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({

@@ -7099,6 +7099,96 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // API эндпоинт для получения комментариев тренда
+  app.get("/api/trend-comments/:trendId", authenticateUser, async (req, res) => {
+    try {
+      const trendId = req.params.trendId;
+      const authHeader = req.headers['authorization'];
+      
+      console.log(`[GET /api/trend-comments] Запрос комментариев для тренда ${trendId}`);
+      
+      if (!trendId) {
+        console.log('[GET /api/trend-comments] Ошибка: ID тренда не указан');
+        return res.status(400).json({ error: "Trend ID is required" });
+      }
+      
+      if (!authHeader) {
+        console.log('[GET /api/trend-comments] Ошибка: отсутствует заголовок авторизации');
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      console.log(`[GET /api/trend-comments] Получен токен авторизации: ${token.substring(0, 10)}...`);
+      
+      try {
+        console.log(`[GET /api/trend-comments] Fetching comments for trend: ${trendId}`);
+        
+        // Получаем комментарии из Directus таблицы trend_comments
+        const response = await directusApi.get('/items/trend_comments', {
+          params: {
+            'filter[trend_id][_eq]': trendId,
+            'sort[]': ['-date_created'],
+            'limit': 100
+          },
+          headers: {
+            'Authorization': formatAuthToken(token)
+          }
+        });
+        
+        console.log(`[GET /api/trend-comments] Directus response:`, {
+          status: response.status,
+          dataLength: response.data?.data?.length,
+          trendId
+        });
+        
+        const comments = response.data?.data || [];
+        
+        console.log(`[GET /api/trend-comments] Возвращаем ${comments.length} комментариев для тренда ${trendId}`);
+        
+        res.json({ 
+          success: true,
+          data: comments,
+          count: comments.length 
+        });
+        
+      } catch (directusError) {
+        console.error(`[GET /api/trend-comments] Directus API error:`, directusError);
+        
+        if (axios.isAxiosError(directusError) && directusError.response) {
+          console.error("Directus API error details:", {
+            status: directusError.response.status,
+            data: directusError.response.data,
+            config: {
+              url: directusError.config?.url,
+              method: directusError.config?.method,
+              params: directusError.config?.params
+            }
+          });
+          
+          if (directusError.response.status === 404) {
+            return res.status(404).json({ 
+              success: false,
+              error: "Comments not found" 
+            });
+          }
+        }
+        
+        return res.status(500).json({ 
+          success: false,
+          error: "Failed to fetch comments",
+          message: directusError instanceof Error ? directusError.message : "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error("[GET /api/trend-comments] Error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to fetch comments",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Campaign Keywords routes
   // API эндпоинт для получения ключевых слов кампании по ID кампании
   // Используется в KeywordSelector и KeywordTable
