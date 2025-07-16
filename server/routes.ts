@@ -7135,10 +7135,18 @@ Return your response as a JSON array in this exact format:
         return res.status(401).json({ error: "Недействительный токен пользователя" });
       }
       
+      // Для доступа к комментариям используем системный токен (у пользователей может не быть прав)
+      const systemToken = process.env.DIRECTUS_TOKEN;
+      if (!systemToken) {
+        console.log('[GET /api/trend-comments] Ошибка: системный токен недоступен');
+        return res.status(500).json({ error: "Системная ошибка доступа" });
+      }
+      
       try {
         console.log(`[GET /api/trend-comments] Fetching comments for trend: ${trendId}`);
         
         // Получаем комментарии из Directus таблицы post_comment (поле называется trent_post_id, не trend_id)
+        console.log(`[GET /api/trend-comments] Используем системный токен для доступа к post_comment`);
         const response = await directusApi.get('/items/post_comment', {
           params: {
             'filter[trent_post_id][_eq]': trendId,
@@ -7147,7 +7155,7 @@ Return your response as a JSON array in this exact format:
             'fields': ['id', 'trent_post_id', 'text', 'author', 'date', 'comment_id', 'platform']
           },
           headers: {
-            'Authorization': formatAuthToken(token)
+            'Authorization': formatAuthToken(systemToken)
           }
         });
         
@@ -7170,7 +7178,7 @@ Return your response as a JSON array in this exact format:
                 'fields': ['id', 'trent_post_id', 'text']
               },
               headers: {
-                'Authorization': formatAuthToken(token)
+                'Authorization': formatAuthToken(systemToken)
               }
             });
             console.log(`[GET /api/trend-comments] Найдено комментариев всего: ${allCommentsResponse.data?.data?.length}`);
