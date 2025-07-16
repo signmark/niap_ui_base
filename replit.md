@@ -203,6 +203,10 @@ Preferred communication style: Simple, everyday language.
   - **Website Analysis Performance**: extractFullSiteContent functions ALWAYS hang server with regex forEach loops - replace with for loops, 8000ms timeout, 2MB limit
   - **Platform Field Names**: Always verify actual database field names in Directus admin before writing API queries
   - **403 Errors**: Usually wrong field names or collection permissions, NOT authentication issues
+- **TOKEN USAGE RULES**:
+  - **UI/Frontend**: ALWAYS use user tokens from headers/authorization for ALL user-facing operations
+  - **System Operations**: System tokens (DIRECTUS_TOKEN) ONLY for scheduler, automated tasks, and backend operations NOT triggered by user
+  - **Mixed Operations**: If API needs both user verification AND system access, verify user token first, then use system token for restricted collections
 - **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.
 - **Stories Store Management**: Stories creation through /stories/new route automatically clears localStorage and resets store state. System ensures clean slate for new Stories without old content interference.
 - **Stories Navigation**: All Stories creation routes use simple /stories/new path without query parameters. localStorage clearing is handled internally by StoryEditor component.
