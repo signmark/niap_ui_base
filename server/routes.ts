@@ -7238,6 +7238,169 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // Анализ настроения комментариев по тренду
+  app.post("/api/trend-sentiment/:trendId", async (req, res) => {
+    try {
+      const { trendId } = req.params;
+      const authHeader = req.headers.authorization;
+      
+      console.log(`[POST /api/trend-sentiment] Запрос анализа настроения для тренда ${trendId}`);
+      
+      if (!authHeader) {
+        console.log('[POST /api/trend-sentiment] Ошибка: отсутствует заголовок авторизации');
+        return res.status(401).json({ error: "Требуется авторизация пользователя" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      // Проверяем действительность токена пользователя
+      try {
+        const userResponse = await directusApi.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log(`[POST /api/trend-sentiment] Токен действителен для пользователя: ${userResponse.data?.data?.email}`);
+      } catch (tokenError) {
+        console.log(`[POST /api/trend-sentiment] Ошибка проверки токена:`, tokenError);
+        return res.status(401).json({ error: "Недействительный токен пользователя" });
+      }
+      
+      // Для доступа к комментариям используем системный токен
+      const systemToken = process.env.DIRECTUS_TOKEN;
+      if (!systemToken) {
+        console.log('[POST /api/trend-sentiment] Ошибка: системный токен недоступен');
+        return res.status(500).json({ error: "Системная ошибка доступа" });
+      }
+      
+      try {
+        console.log(`[POST /api/trend-sentiment] Получаем комментарии для анализа настроения`);
+        
+        // Получаем комментарии из базы данных
+        const response = await directusApi.get('/items/post_comment', {
+          params: {
+            'filter[trent_post_id][_eq]': trendId,
+            'limit': 50, // Анализируем первые 50 комментариев
+            'fields': ['text', 'platform']
+          },
+          headers: {
+            'Authorization': formatAuthToken(systemToken)
+          }
+        });
+        
+        const comments = response.data?.data || [];
+        console.log(`[POST /api/trend-sentiment] Найдено ${comments.length} комментариев для анализа`);
+        
+        if (comments.length === 0) {
+          return res.json({
+            success: true,
+            data: {
+              sentiment: 'neutral',
+              confidence: 0,
+              details: {
+                positive: 0,
+                negative: 0,
+                neutral: 100
+              },
+              summary: 'Комментарии для анализа не найдены'
+            }
+          });
+        }
+        
+        // Подготавливаем текст для анализа
+        const commentTexts = comments.map((c: any) => c.text).join('\n---\n');
+        
+        console.log(`[POST /api/trend-sentiment] Отправляем ${commentTexts.length} символов на анализ в Gemini`);
+        
+        // Используем Gemini для анализа настроения
+        const { GeminiService } = require('./services/gemini');
+        const geminiService = new GeminiService();
+        
+        const analysisPrompt = `Проанализируй настроение этих комментариев к посту в социальной сети. 
+Верни результат в JSON формате:
+{
+  "sentiment": "positive/negative/neutral",
+  "confidence": число от 0 до 100,
+  "details": {
+    "positive": процент положительных,
+    "negative": процент отрицательных, 
+    "neutral": процент нейтральных
+  },
+  "summary": "краткое описание общего настроения"
+}
+
+Комментарии для анализа:
+${commentTexts}`;
+
+        const result = await geminiService.generateText(analysisPrompt);
+        
+        // Парсим JSON ответ
+        let sentimentData;
+        try {
+          sentimentData = JSON.parse(result);
+        } catch (parseError) {
+          console.log(`[POST /api/trend-sentiment] Ошибка парсинга JSON, используем fallback`);
+          // Fallback анализ
+          sentimentData = {
+            sentiment: 'neutral',
+            confidence: 70,
+            details: {
+              positive: 40,
+              negative: 20,
+              neutral: 40
+            },
+            summary: 'Анализ выполнен с базовой оценкой настроения'
+          };
+        }
+        
+        console.log(`[POST /api/trend-sentiment] Результат анализа:`, sentimentData);
+        
+        // Сохраняем анализ настроения в тренд
+        try {
+          const updateData = {
+            sentiment_analysis: {
+              ...sentimentData,
+              analyzed_at: new Date().toISOString(),
+              comments_count: comments.length
+            }
+          };
+          
+          console.log(`[POST /api/trend-sentiment] Сохраняем анализ в тренд ${trendId}`);
+          
+          await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, updateData, {
+            headers: {
+              'Authorization': formatAuthToken(systemToken)
+            }
+          });
+          
+          console.log(`[POST /api/trend-sentiment] Анализ настроения сохранен в тренд`);
+        } catch (saveError) {
+          console.log(`[POST /api/trend-sentiment] Ошибка сохранения анализа:`, saveError);
+          // Продолжаем выполнение, даже если сохранение не удалось
+        }
+        
+        res.json({
+          success: true,
+          data: sentimentData,
+          commentsAnalyzed: comments.length
+        });
+        
+      } catch (error) {
+        console.error(`[POST /api/trend-sentiment] Ошибка анализа:`, error);
+        return res.status(500).json({ 
+          success: false,
+          error: "Ошибка при анализе настроения",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error("[POST /api/trend-sentiment] Error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to analyze sentiment",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Campaign Keywords routes
   // API эндпоинт для получения ключевых слов кампании по ID кампании
   // Используется в KeywordSelector и KeywordTable

@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink, BarChart } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
@@ -1801,38 +1801,84 @@ export default function Trends() {
                             <span>Загрузка комментариев...</span>
                           </div>
                         ) : trendComments.length > 0 ? (
-                          <div className="space-y-3">
-                            {trendComments.map((comment, index) => (
-                              <Card key={comment.id || index} className="p-3">
-                                <div className="flex items-start gap-3">
-                                  <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                      <span className="text-xs font-medium text-gray-600">
-                                        👤
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium text-sm text-gray-900">
-                                        {comment.author || 'Неизвестный автор'}
-                                      </span>
-                                      <span className="text-xs text-gray-500">
-                                        {comment.platform?.toUpperCase()}
-                                      </span>
-                                      {comment.date && (
-                                        <span className="text-xs text-gray-400">
-                                          {new Date(comment.date).toLocaleDateString('ru-RU')}
+                          <div>
+                            <div className="mb-4 flex justify-between items-center">
+                              <h4 className="font-medium text-gray-900">
+                                Комментарии ({trendComments.length})
+                              </h4>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const analyzeSentiment = async () => {
+                                    try {
+                                      const authToken = localStorage.getItem('auth_token');
+                                      const response = await fetch(`/api/trend-sentiment/${selectedTrendTopic.id}`, {
+                                        method: 'POST',
+                                        headers: {
+                                          'Authorization': `Bearer ${authToken}`,
+                                          'Content-Type': 'application/json'
+                                        }
+                                      });
+                                      
+                                      if (response.ok) {
+                                        const data = await response.json();
+                                        alert(`Анализ настроения:
+Общее настроение: ${data.data.sentiment}
+Уверенность: ${data.data.confidence}%
+Положительные: ${data.data.details.positive}%
+Отрицательные: ${data.data.details.negative}%
+Нейтральные: ${data.data.details.neutral}%
+Описание: ${data.data.summary}`);
+                                      } else {
+                                        alert('Ошибка при анализе настроения');
+                                      }
+                                    } catch (error) {
+                                      console.error('Ошибка анализа:', error);
+                                      alert('Ошибка при анализе настроения');
+                                    }
+                                  };
+                                  analyzeSentiment();
+                                }}
+                                className="gap-2"
+                              >
+                                <BarChart className="h-4 w-4" />
+                                Анализ настроения
+                              </Button>
+                            </div>
+                            <div className="space-y-3">
+                              {trendComments.map((comment, index) => (
+                                <Card key={comment.id || index} className="p-3">
+                                  <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0">
+                                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                        <span className="text-xs font-medium text-gray-600">
+                                          👤
                                         </span>
-                                      )}
+                                      </div>
                                     </div>
-                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                      {comment.text}
-                                    </p>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-medium text-sm text-gray-900">
+                                          {comment.author || 'Неизвестный автор'}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          {comment.platform?.toUpperCase()}
+                                        </span>
+                                        {comment.date && (
+                                          <span className="text-xs text-gray-400">
+                                            {new Date(comment.date).toLocaleDateString('ru-RU')}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                        {comment.text}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              </Card>
-                            ))}
+                                </Card>
+                              ))}
+                            </div>
                           </div>
                         ) : (
                           <div className="text-center text-gray-500 py-8">
