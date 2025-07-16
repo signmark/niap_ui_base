@@ -7336,12 +7336,22 @@ ${commentTexts}`;
           model: 'gemini-1.5-flash' 
         });
         
+        console.log(`[POST /api/trend-sentiment] 🔍 Сырой ответ от Gemini (первые 500 символов):`, result.substring(0, 500));
+        
         // Парсим JSON ответ
         let sentimentData;
         try {
-          sentimentData = JSON.parse(result);
+          // Попытка извлечь JSON из ответа Gemini (может содержать дополнительный текст)
+          const jsonMatch = result.match(/\{[\s\S]*\}/);
+          const jsonString = jsonMatch ? jsonMatch[0] : result;
+          
+          console.log(`[POST /api/trend-sentiment] 📝 Извлеченный JSON для парсинга:`, jsonString);
+          sentimentData = JSON.parse(jsonString);
+          console.log(`[POST /api/trend-sentiment] ✅ JSON успешно распарсен:`, sentimentData);
         } catch (parseError) {
-          console.log(`[POST /api/trend-sentiment] Ошибка парсинга JSON, используем fallback`);
+          console.log(`[POST /api/trend-sentiment] ❌ Ошибка парсинга JSON:`, parseError.message);
+          console.log(`[POST /api/trend-sentiment] ❌ Оригинальный ответ Gemini:`, result);
+          console.log(`[POST /api/trend-sentiment] 🔄 Используем fallback анализ`);
           // Fallback анализ
           sentimentData = {
             sentiment: 'neutral',
