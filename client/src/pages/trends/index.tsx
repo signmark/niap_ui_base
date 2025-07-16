@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
@@ -176,6 +176,7 @@ export default function Trends() {
   const [isSourceSearchDialogOpen, setIsSourceSearchDialogOpen] = useState(false);
   const [isBulkImportDialogOpen, setIsBulkImportDialogOpen] = useState(false);
   const [selectedTrendTopic, setSelectedTrendTopic] = useState<TrendTopic | null>(null);
+  const [previewTrendTopic, setPreviewTrendTopic] = useState<TrendTopic | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -1582,6 +1583,7 @@ export default function Trends() {
                                 onClick={() => {
                                   console.log('Выбран тренд для просмотра комментариев:', topic.id, topic.title);
                                   setSelectedTrendTopic(topic);
+                                  // НЕ открываем превью - только выбираем для комментариев
                                 }}
                               >
                                 <CardContent className="py-3 px-4">
@@ -1686,6 +1688,20 @@ export default function Trends() {
                                           </span>
                                         </div>
                                         
+                                        {/* Кнопка превью поста */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            console.log('Открываем превью тренда:', topic.id, topic.title);
+                                            setPreviewTrendTopic(topic);
+                                          }}
+                                          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+                                          title="Открыть превью"
+                                        >
+                                          <ExternalLink className="h-3 w-3" />
+                                          <span>Превью</span>
+                                        </button>
+                                        
                                         {/* Кнопка сбора комментариев для ВК и ТГ */}
                                         {(topic.urlPost?.includes('vk.com') || topic.urlPost?.includes('t.me') || 
                                           topic.accountUrl?.includes('vk.com') || topic.accountUrl?.includes('t.me')) && (
@@ -1739,8 +1755,9 @@ export default function Trends() {
                             <p className="text-xs text-yellow-800 font-medium mb-1">💡 Как посмотреть комментарии:</p>
                             <p className="text-xs text-yellow-700">
                               1. Перейдите на вкладку "Тренды"<br/>
-                              2. Кликните на карточку нужного тренда<br/>
-                              3. Вернитесь на вкладку "Комментарии"
+                              2. Кликните на карточку нужного тренда (не галочку!)<br/>
+                              3. Вернитесь на вкладку "Комментарии"<br/>
+                              4. Для просмотра поста используйте кнопку "Превью"
                             </p>
                           </div>
                         </div>
@@ -1874,13 +1891,13 @@ export default function Trends() {
       />
 
       {/* Модальное окно для детального просмотра тренда */}
-      {selectedTrendTopic && (
+      {previewTrendTopic && (
         <TrendDetailDialog
-          topic={selectedTrendTopic}
-          isOpen={!!selectedTrendTopic}
-          onClose={() => setSelectedTrendTopic(null)}
+          topic={previewTrendTopic}
+          isOpen={!!previewTrendTopic}
+          onClose={() => setPreviewTrendTopic(null)}
           onBookmark={(id, isBookmarked) => updateTrendBookmark({ id, isBookmarked })}
-          sourceName={sources.find(s => s.id === selectedTrendTopic.source_id || s.id === selectedTrendTopic.sourceId)?.name || selectedTrendTopic.sourceName}
+          sourceName={sources.find(s => s.id === previewTrendTopic.source_id || s.id === previewTrendTopic.sourceId)?.name || previewTrendTopic.sourceName}
         />
       )}
     </div>
