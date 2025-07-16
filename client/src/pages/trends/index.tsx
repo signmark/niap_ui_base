@@ -1823,6 +1823,8 @@ export default function Trends() {
                                       
                                       if (response.ok) {
                                         const data = await response.json();
+                                        console.log('Результат анализа настроения:', data);
+                                        // TODO: Заменить алерт на красивый диалог
                                         alert(`Анализ настроения:
 Общее настроение: ${data.data.sentiment}
 Уверенность: ${data.data.confidence}%
@@ -1831,11 +1833,13 @@ export default function Trends() {
 Нейтральные: ${data.data.details.neutral}%
 Описание: ${data.data.summary}`);
                                       } else {
-                                        alert('Ошибка при анализе настроения');
+                                        const errorText = await response.text();
+                                        console.error('Ошибка сервера:', response.status, errorText);
+                                        alert(`Ошибка при анализе настроения: ${response.status} - ${errorText}`);
                                       }
                                     } catch (error) {
                                       console.error('Ошибка анализа:', error);
-                                      alert('Ошибка при анализе настроения');
+                                      alert(`Ошибка при анализе настроения: ${error.message}`);
                                     }
                                   };
                                   analyzeSentiment();
