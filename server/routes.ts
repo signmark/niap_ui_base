@@ -7123,8 +7123,8 @@ Return your response as a JSON array in this exact format:
       try {
         console.log(`[GET /api/trend-comments] Fetching comments for trend: ${trendId}`);
         
-        // Получаем комментарии из Directus таблицы trend_comments
-        const response = await directusApi.get('/items/trend_comments', {
+        // Получаем комментарии из Directus таблицы Post Comments (не trend_comments)
+        const response = await directusApi.get('/items/PostComments', {
           params: {
             'filter[trend_id][_eq]': trendId,
             'sort[]': ['-date_created'],

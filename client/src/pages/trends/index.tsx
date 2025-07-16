@@ -1737,12 +1737,41 @@ export default function Trends() {
                     <div className="mb-4">
                       {selectedTrendTopic ? (
                         <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                          <h3 className="font-medium text-sm text-blue-900 mb-2">
-                            Комментарии к тренду: {selectedTrendTopic.title}
-                          </h3>
-                          <p className="text-xs text-blue-700">
-                            Источник: {selectedTrendTopic.accountUrl || selectedTrendTopic.urlPost}
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-medium text-sm text-blue-900 mb-2">
+                                Комментарии к тренду: {selectedTrendTopic.title}
+                              </h3>
+                              <p className="text-xs text-blue-700">
+                                Источник: {selectedTrendTopic.accountUrl || selectedTrendTopic.urlPost}
+                              </p>
+                            </div>
+                            {/* Кнопка для сбора комментариев если это ВК или ТГ тренд */}
+                            {(selectedTrendTopic.urlPost?.includes('vk.com') || selectedTrendTopic.urlPost?.includes('t.me') || 
+                              selectedTrendTopic.accountUrl?.includes('vk.com') || selectedTrendTopic.accountUrl?.includes('t.me')) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  collectTrendComments(selectedTrendTopic.id, selectedTrendTopic.urlPost || selectedTrendTopic.accountUrl || '');
+                                }}
+                                disabled={collectingCommentsForTrend === selectedTrendTopic.id}
+                                className="text-xs"
+                              >
+                                {collectingCommentsForTrend === selectedTrendTopic.id ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                    Собираем...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Собрать комментарии
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="text-center text-gray-500 py-8">
