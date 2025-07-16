@@ -7100,7 +7100,7 @@ Return your response as a JSON array in this exact format:
   });
 
   // API эндпоинт для получения комментариев тренда
-  app.get("/api/trend-comments/:trendId", authenticateUser, async (req, res) => {
+  app.get("/api/trend-comments/:trendId", async (req, res) => {
     try {
       const trendId = req.params.trendId;
       const authHeader = req.headers['authorization'];
@@ -7115,13 +7115,25 @@ Return your response as a JSON array in this exact format:
         return res.status(400).json({ error: "Trend ID is required" });
       }
       
+      // Обязательно требуем пользовательский токен
       if (!authHeader) {
         console.log('[GET /api/trend-comments] Ошибка: отсутствует заголовок авторизации');
-        return res.status(401).json({ error: "Unauthorized" });
+        return res.status(401).json({ error: "Требуется авторизация пользователя" });
       }
       
       const token = authHeader.replace('Bearer ', '');
-      console.log(`[GET /api/trend-comments] Получен токен авторизации: ${token.substring(0, 10)}...`);
+      console.log(`[GET /api/trend-comments] Используем пользовательский токен: ${token.substring(0, 10)}...`);
+      
+      // Проверяем действительность токена пользователя
+      try {
+        const userResponse = await directusApi.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log(`[GET /api/trend-comments] Токен действителен для пользователя: ${userResponse.data?.data?.email}`);
+      } catch (tokenError) {
+        console.log(`[GET /api/trend-comments] Ошибка проверки токена:`, tokenError);
+        return res.status(401).json({ error: "Недействительный токен пользователя" });
+      }
       
       try {
         console.log(`[GET /api/trend-comments] Fetching comments for trend: ${trendId}`);
