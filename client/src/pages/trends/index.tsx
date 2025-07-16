@@ -265,6 +265,107 @@ export default function Trends() {
     }
   }, [selectedTrendTopic, activeTab]);
 
+  // Функции для работы с выбором всех трендов
+  const selectAllVisibleTrends = () => {
+    const visibleTrends = trends.filter((topic: TrendTopic) => {
+      // Применяем те же фильтры, что и в основном рендере
+      const detectPlatform = () => {
+        const sourceType = (topic as any).sourceType || '';
+        if (!sourceType) return 'unknown';
+        
+        const normalized = sourceType.toLowerCase().trim();
+        if (normalized === 'instagram') return 'instagram';
+        if (normalized === 'vk' || normalized === 'vkontakte') return 'vk';
+        if (normalized === 'telegram') return 'telegram';
+        if (normalized === 'facebook') return 'facebook';
+        
+        return 'unknown';
+      };
+
+      const detectedPlatform = detectPlatform();
+      const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let platformMatches = false;
+      if (selectedPlatform === 'all') {
+        platformMatches = true;
+      } else {
+        switch (selectedPlatform) {
+          case 'instagram':
+            platformMatches = detectedPlatform === 'instagram';
+            break;
+          case 'vk':
+            platformMatches = detectedPlatform === 'vk';
+            break;
+          case 'telegram':
+            platformMatches = detectedPlatform === 'telegram';
+            break;
+          case 'facebook':
+            platformMatches = detectedPlatform === 'facebook';
+            break;
+          default:
+            platformMatches = true;
+        }
+      }
+      
+      return matchesSearch && platformMatches;
+    });
+
+    setSelectedTopics(visibleTrends);
+  };
+
+  const deselectAllTrends = () => {
+    setSelectedTopics([]);
+  };
+
+  const areAllVisibleTrendsSelected = () => {
+    const visibleTrends = trends.filter((topic: TrendTopic) => {
+      // Применяем те же фильтры, что и в основном рендере
+      const detectPlatform = () => {
+        const sourceType = (topic as any).sourceType || '';
+        if (!sourceType) return 'unknown';
+        
+        const normalized = sourceType.toLowerCase().trim();
+        if (normalized === 'instagram') return 'instagram';
+        if (normalized === 'vk' || normalized === 'vkontakte') return 'vk';
+        if (normalized === 'telegram') return 'telegram';
+        if (normalized === 'facebook') return 'facebook';
+        
+        return 'unknown';
+      };
+
+      const detectedPlatform = detectPlatform();
+      const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let platformMatches = false;
+      if (selectedPlatform === 'all') {
+        platformMatches = true;
+      } else {
+        switch (selectedPlatform) {
+          case 'instagram':
+            platformMatches = detectedPlatform === 'instagram';
+            break;
+          case 'vk':
+            platformMatches = detectedPlatform === 'vk';
+            break;
+          case 'telegram':
+            platformMatches = detectedPlatform === 'telegram';
+            break;
+          case 'facebook':
+            platformMatches = detectedPlatform === 'facebook';
+            break;
+          default:
+            platformMatches = true;
+        }
+      }
+      
+      return matchesSearch && platformMatches;
+    });
+
+    return visibleTrends.length > 0 && visibleTrends.every(trend => 
+      selectedTopics.some(selected => selected.id === trend.id)
+    );
+  };
+
 
 
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -1284,9 +1385,40 @@ export default function Trends() {
                       </div>
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        <div className="text-xs text-gray-500 mb-2">
-                          Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform}
-                          {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
+                        <div className="flex items-center justify-between mb-3 border-b pb-2">
+                          <div className="text-xs text-gray-500">
+                            Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform}
+                            {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={areAllVisibleTrendsSelected()}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  selectAllVisibleTrends();
+                                } else {
+                                  deselectAllTrends();
+                                }
+                              }}
+                              className="h-4 w-4 border-gray-400"
+                            />
+                            <span className="text-xs text-gray-600 cursor-pointer"
+                              onClick={() => {
+                                if (areAllVisibleTrendsSelected()) {
+                                  deselectAllTrends();
+                                } else {
+                                  selectAllVisibleTrends();
+                                }
+                              }}
+                            >
+                              Выбрать все
+                            </span>
+                            {selectedTopics.length > 0 && (
+                              <span className="text-xs text-blue-600 ml-2">
+                                ({selectedTopics.length} выбрано)
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {trends
                           .filter((topic: TrendTopic) => {
