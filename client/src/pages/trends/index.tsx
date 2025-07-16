@@ -1574,7 +1574,16 @@ export default function Trends() {
                             const firstImage = mediaData.images && mediaData.images.length > 0 ? mediaData.images[0] : undefined;
                             
                             return (
-                              <Card key={topic.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                              <Card 
+                                key={topic.id} 
+                                className={`hover:shadow-md transition-shadow cursor-pointer ${
+                                  selectedTrendTopic?.id === topic.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                                }`}
+                                onClick={() => {
+                                  console.log('Выбран тренд для просмотра комментариев:', topic.id, topic.title);
+                                  setSelectedTrendTopic(topic);
+                                }}
+                              >
                                 <CardContent className="py-3 px-4">
                                   <div className="flex items-start gap-3">
                                     {/* Чекбокс для выбора тренда */}
@@ -1723,9 +1732,17 @@ export default function Trends() {
                         <div className="text-center text-gray-500 py-8">
                           <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                           <p>Выберите тренд для просмотра комментариев</p>
-                          <p className="text-xs mt-1">
+                          <p className="text-xs mt-1 mb-2">
                             Комментарии доступны для трендов ВК и Telegram
                           </p>
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-left max-w-md mx-auto">
+                            <p className="text-xs text-yellow-800 font-medium mb-1">💡 Как посмотреть комментарии:</p>
+                            <p className="text-xs text-yellow-700">
+                              1. Перейдите на вкладку "Тренды"<br/>
+                              2. Кликните на карточку нужного тренда<br/>
+                              3. Вернитесь на вкладку "Комментарии"
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
