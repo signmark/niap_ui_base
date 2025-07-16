@@ -185,6 +185,10 @@ export default function Trends() {
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [collectingCommentsForTrend, setCollectingCommentsForTrend] = useState<string | null>(null);
   
+  // Состояние для анализа настроения
+  const [sentimentData, setSentimentData] = useState<any>(null);
+  const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
+  
 
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
 
@@ -264,6 +268,8 @@ export default function Trends() {
     if (selectedTrendTopic && activeTab === 'comments') {
       loadTrendComments(selectedTrendTopic.id);
     }
+    // Очищаем данные анализа настроения при смене тренда
+    setSentimentData(null);
   }, [selectedTrendTopic, activeTab]);
 
   // Функции для работы с выбором всех трендов
