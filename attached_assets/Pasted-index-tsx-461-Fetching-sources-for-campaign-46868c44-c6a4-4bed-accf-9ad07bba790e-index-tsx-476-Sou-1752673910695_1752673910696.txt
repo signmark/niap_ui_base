@@ -1,0 +1,39 @@
+index.tsx:461 Fetching sources for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:476 Sources API response: {status: 200, dataLength: 100, firstSource: {…}, allSources: Array(100)}
+index.tsx:1816  POST https://6813c5d2-7c73-4e24-8e70-d9b38d1135b3-00-1i11z1ktw30ct.worf.replit.dev/api/trend-sentiment/8877945c-33d3-4d0c-a4b4-e788ec133323 500 (Internal Server Error)
+analyzeSentiment @ index.tsx:1816
+onClick @ index.tsx:1845
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+index.tsx:1837 Ошибка сервера: 500 {"success":false,"error":"Ошибка при анализе настроения","message":"Cannot destructure property 'apiKey' of 'undefined' as it is undefined."}
+analyzeSentiment @ index.tsx:1837
+await in analyzeSentiment
+onClick @ index.tsx:1845
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
