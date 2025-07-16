@@ -142,7 +142,10 @@ export class GeminiProxyService {
         }
         
         // Используем прокси для доступа к Gemini API (обязательно для продакшена)
-        if (this.agent && !isVertexAI) {
+        // В Replit среде отключаем прокси для предотвращения ошибок подключения
+        const isReplit = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
+        
+        if (this.agent && !isVertexAI && !isReplit) {
           // Для стандартного Gemini API используем прокси
           fetchOptions.agent = this.agent;
           logger.log(`[gemini-proxy] Используется SOCKS5 прокси: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
@@ -150,7 +153,11 @@ export class GeminiProxyService {
           // Для Vertex AI прокси пока не требуется
           logger.log(`[gemini-proxy] Vertex AI - прямое соединение`, 'gemini');
         } else {
-          logger.log(`[gemini-proxy] Прокси недоступен - прямое соединение`, 'gemini');
+          if (isReplit) {
+            logger.log(`[gemini-proxy] Replit среда - прямое соединение без прокси`, 'gemini');
+          } else {
+            logger.log(`[gemini-proxy] Прокси недоступен - прямое соединение`, 'gemini');
+          }
         }
         
         // Выполняем запрос
