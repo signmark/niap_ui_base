@@ -7107,6 +7107,9 @@ Return your response as a JSON array in this exact format:
       
       console.log(`[GET /api/trend-comments] Запрос комментариев для тренда ${trendId}`);
       
+      // Добавляем дополнительную отладочную информацию
+      console.log(`[GET /api/trend-comments] Ищем комментарии с trend_id: ${trendId}`);
+      
       if (!trendId) {
         console.log('[GET /api/trend-comments] Ошибка: ID тренда не указан');
         return res.status(400).json({ error: "Trend ID is required" });
@@ -7138,10 +7141,35 @@ Return your response as a JSON array in this exact format:
         console.log(`[GET /api/trend-comments] Directus response:`, {
           status: response.status,
           dataLength: response.data?.data?.length,
-          trendId
+          trendId,
+          firstComment: response.data?.data?.[0]
         });
         
         const comments = response.data?.data || [];
+        
+        if (comments.length === 0) {
+          // Если комментариев не найдено, попробуем найти любые комментарии для отладки
+          console.log(`[GET /api/trend-comments] Комментарии не найдены для trend_id: ${trendId}, проверяем все доступные`);
+          try {
+            const allCommentsResponse = await directusApi.get('/items/post_comment', {
+              params: {
+                'limit': 5,
+                'fields': ['id', 'trend_id', 'text']
+              },
+              headers: {
+                'Authorization': formatAuthToken(token)
+              }
+            });
+            console.log(`[GET /api/trend-comments] Найдено комментариев всего: ${allCommentsResponse.data?.data?.length}`);
+            if (allCommentsResponse.data?.data?.length > 0) {
+              console.log(`[GET /api/trend-comments] Примеры trend_id в базе:`, 
+                allCommentsResponse.data.data.slice(0, 3).map((c: any) => c.trend_id)
+              );
+            }
+          } catch (debugError) {
+            console.log(`[GET /api/trend-comments] Ошибка при отладочном запросе:`, debugError);
+          }
+        }
         
         console.log(`[GET /api/trend-comments] Возвращаем ${comments.length} комментариев для тренда ${trendId}`);
         
