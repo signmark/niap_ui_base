@@ -1859,18 +1859,13 @@ export default function Trends() {
                                           title: "Анализ настроения завершен",
                                           description: `Проанализировано ${data.commentsAnalyzed || trendComments.length} комментариев`,
                                         });
+                                        // Принудительно обновляем кэш React Query для получения свежих данных с базы
+                                        console.log('🔄 Обновляем кэш трендов после сохранения анализа настроения');
+                                        queryClient.invalidateQueries({ queryKey: ["trends"] });
+                                        
                                         // Обновляем локальные данные тренда, чтобы анализ сохранился
                                         if (selectedTrendTopic) {
                                           (selectedTrendTopic as any).sentiment_analysis = data.data;
-                                          // Также обновляем данные в основном массиве трендов
-                                          const updatedTrends = trends.map((trend: TrendTopic) => {
-                                            if (trend.id === selectedTrendTopic.id) {
-                                              return { ...trend, sentiment_analysis: data.data };
-                                            }
-                                            return trend;
-                                          });
-                                          // Если есть setter для обновления трендов, используем его
-                                          // setTrends(updatedTrends); // Раскомментировать если есть setter
                                         }
                                       } else {
                                         const errorText = await response.text();

@@ -1,0 +1,27 @@
+3:13:49 PM [DEV] [gemini] [gemini-proxy] Mapped model gemini-1.5-flash to API model: gemini-1.5-flash-latest
+3:13:49 PM [DEV] [gemini] [gemini-proxy] Отправка запроса к: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=****
+3:13:49 PM [DEV] [gemini] [gemini-proxy] Replit среда - прямое соединение без прокси
+3:13:50 PM [DEV] [gemini] [gemini-proxy] Получен ответ со статусом: 200
+[POST /api/trend-sentiment] Ошибка парсинга JSON, используем fallback
+[POST /api/trend-sentiment] Результат анализа: {
+  sentiment: 'neutral',
+  confidence: 70,
+  details: { positive: 40, negative: 20, neutral: 40 },
+  summary: 'Анализ выполнен с базовой оценкой настроения'
+}
+[POST /api/trend-sentiment] Сохраняем анализ в тренд a9526fa7-4d53-4acd-a660-0a89bd81ca8e
+[POST /api/trend-sentiment] Анализ настроения сохранен в тренд
+3:13:50 PM [DEV] [express] POST /api/trend-sentiment/a9526fa7-4d53-4acd-a660-0a89bd81ca8e 200 in 1767ms ::…
+[AUTH] Пользователь авторизован из JWT токена: 53921f16-f51d-4591-80b9-8caa4fde4d13 (unknown@email.com)
+[GET /api/campaign-trends] Запрос трендов для кампании 46868c44-c6a4-4bed-accf-9ad07bba790e, period=7days
+[GET /api/campaign-trends] Получен токен авторизации: eyJhbGciOi...
+[GET /api/campaign-trends] Fetching trend topics for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e, period: 7days
+[GET /api/campaign-trends] Using date filter: 2025-07-09T15:14:00.345Z
+[GET /api/campaign-trends] Applying date filter for period: 7days
+[GET /api/campaign-trends] Directus API filter: {"campaign_id":{"_eq":"46868c44-c6a4-4bed-accf-9ad07bba790e"},"created_at":{"_gte":"2025-07-09T15:14:00.345Z"}}
+[GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics
+[GET /api/campaign-trends] Directus API response status: 200
+[GET /api/campaign-trends] Directus API response contains: 70 items
+[GET /api/campaign-trends] Period: 7days, Filter applied: date >= 2025-07-09T15:14:00.345Z, Loading ALL matching records
+Found 70 trend topics for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
+Found 70 trend topics for campaign 46868c44-c6a4-4bed-accf-9ad07bba790e
