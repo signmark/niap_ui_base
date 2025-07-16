@@ -1810,7 +1810,7 @@ export default function Trends() {
                                       <span className="text-xs font-medium text-gray-600">
                                         {comment.platform === 'telegram' ? 'T' : 
                                          comment.platform === 'vk' ? 'V' : 
-                                         comment.author?.charAt(0)?.toUpperCase() || '?'}
+                                         '👤'}
                                       </span>
                                     </div>
                                   </div>
