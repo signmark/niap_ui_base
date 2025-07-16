@@ -263,13 +263,46 @@ export default function Trends() {
     }
   }, [selectedCampaign]);
 
+  // Загрузка существующего анализа настроения для тренда
+  const loadExistingSentimentAnalysis = async (trendId: string) => {
+    try {
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/campaign-trends`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const trend = data.data.find((t: any) => t.id === trendId);
+        if (trend && trend.sentiment_analysis) {
+          setSentimentData(trend.sentiment_analysis);
+        } else {
+          setSentimentData(null);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки анализа настроения:', error);
+      setSentimentData(null);
+    }
+  };
+
   // Автоматическая загрузка комментариев при выборе тренда и переходе на вкладку "Комментарии"
   useEffect(() => {
     if (selectedTrendTopic && activeTab === 'comments') {
       loadTrendComments(selectedTrendTopic.id);
+      // Загружаем существующий анализ настроения если есть
+      loadExistingSentimentAnalysis(selectedTrendTopic.id);
+    } else if (selectedTrendTopic) {
+      // Если просто меняется тренд, загружаем анализ
+      loadExistingSentimentAnalysis(selectedTrendTopic.id);
+    } else {
+      // Очищаем данные анализа настроения при отсутствии выбранного тренда
+      setSentimentData(null);
     }
-    // Очищаем данные анализа настроения при смене тренда
-    setSentimentData(null);
   }, [selectedTrendTopic, activeTab]);
 
   // Функции для работы с выбором всех трендов
@@ -1837,6 +1870,10 @@ export default function Trends() {
                                           title: "Анализ настроения завершен",
                                           description: `Проанализировано ${data.commentsAnalyzed || trendComments.length} комментариев`,
                                         });
+                                        // Обновляем локальные данные тренда, чтобы анализ сохранился
+                                        if (selectedTrendTopic) {
+                                          (selectedTrendTopic as any).sentiment_analysis = data.data;
+                                        }
                                       } else {
                                         const errorText = await response.text();
                                         console.error('Ошибка сервера:', response.status, errorText);
