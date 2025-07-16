@@ -7138,12 +7138,13 @@ Return your response as a JSON array in this exact format:
       try {
         console.log(`[GET /api/trend-comments] Fetching comments for trend: ${trendId}`);
         
-        // Получаем комментарии из Directus таблицы post_comment
+        // Получаем комментарии из Directus таблицы post_comment (поле называется trent_post_id, не trend_id)
         const response = await directusApi.get('/items/post_comment', {
           params: {
-            'filter[trend_id][_eq]': trendId,
-            'sort[]': ['-date_created'],
-            'limit': 100
+            'filter[trent_post_id][_eq]': trendId,
+            'sort[]': ['-date'],
+            'limit': 100,
+            'fields': ['id', 'trent_post_id', 'text', 'author', 'date', 'comment_id', 'platform']
           },
           headers: {
             'Authorization': formatAuthToken(token)
@@ -7161,12 +7162,12 @@ Return your response as a JSON array in this exact format:
         
         if (comments.length === 0) {
           // Если комментариев не найдено, попробуем найти любые комментарии для отладки
-          console.log(`[GET /api/trend-comments] Комментарии не найдены для trend_id: ${trendId}, проверяем все доступные`);
+          console.log(`[GET /api/trend-comments] Комментарии не найдены для trent_post_id: ${trendId}, проверяем все доступные`);
           try {
             const allCommentsResponse = await directusApi.get('/items/post_comment', {
               params: {
                 'limit': 5,
-                'fields': ['id', 'trend_id', 'text']
+                'fields': ['id', 'trent_post_id', 'text']
               },
               headers: {
                 'Authorization': formatAuthToken(token)
@@ -7174,8 +7175,8 @@ Return your response as a JSON array in this exact format:
             });
             console.log(`[GET /api/trend-comments] Найдено комментариев всего: ${allCommentsResponse.data?.data?.length}`);
             if (allCommentsResponse.data?.data?.length > 0) {
-              console.log(`[GET /api/trend-comments] Примеры trend_id в базе:`, 
-                allCommentsResponse.data.data.slice(0, 3).map((c: any) => c.trend_id)
+              console.log(`[GET /api/trend-comments] Примеры trent_post_id в базе:`, 
+                allCommentsResponse.data.data.slice(0, 3).map((c: any) => c.trent_post_id)
               );
             }
           } catch (debugError) {

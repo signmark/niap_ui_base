@@ -197,6 +197,12 @@ Preferred communication style: Simple, everyday language.
   - Website analysis and other server-side operations
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
 - **DEBUG PHILOSOPHY**: ВСЕГДА ИЩИТЕ ПРОБЛЕМЫ В КОДЕ ПЕРВУЮ ОЧЕРЕДЬ, а не в сервисах/API. API работают - ищите баги в логике, кэше, выполнении кода. Промптируйте себя правильно для поиска багов в коде.
+- **CRITICAL RECURRING BUGS TO CHECK FIRST**:
+  - **Comments API Field Names**: Collection `post_comment` uses field `trent_post_id` (NOT `trend_id`), sorting by `date` (NOT `date_created`)
+  - **Comments API Authorization**: Use user token from headers, NOT system token. Check token validity first.
+  - **Website Analysis Performance**: extractFullSiteContent functions ALWAYS hang server with regex forEach loops - replace with for loops, 8000ms timeout, 2MB limit
+  - **Platform Field Names**: Always verify actual database field names in Directus admin before writing API queries
+  - **403 Errors**: Usually wrong field names or collection permissions, NOT authentication issues
 - **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.
 - **Stories Store Management**: Stories creation through /stories/new route automatically clears localStorage and resets store state. System ensures clean slate for new Stories without old content interference.
 - **Stories Navigation**: All Stories creation routes use simple /stories/new path without query parameters. localStorage clearing is handled internally by StoryEditor component.
