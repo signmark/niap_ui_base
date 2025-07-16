@@ -976,14 +976,28 @@ export default function Trends() {
           queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
           console.log('🔄 Обновили данные трендов через 3 секунды после сбора комментариев');
           
+          // Обновляем комментарии для выбранного тренда если он есть
+          if (selectedTrendTopic) {
+            loadTrendComments(selectedTrendTopic.id);
+            console.log('🔄 Принудительно обновили комментарии для выбранного тренда:', selectedTrendTopic.id);
+          }
+          
           // Дополнительные обновления через 10 и 20 секунд
           setTimeout(() => {
             queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+            if (selectedTrendTopic) {
+              loadTrendComments(selectedTrendTopic.id);
+              console.log('🔄 Дополнительное обновление комментариев через 10 секунд');
+            }
             console.log('🔄 Дополнительное обновление через 10 секунд');
           }, 7000); // Еще через 7 секунд (итого 10)
           
           setTimeout(() => {
             queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+            if (selectedTrendTopic) {
+              loadTrendComments(selectedTrendTopic.id);
+              console.log('🔄 Финальное обновление комментариев через 20 секунд');
+            }
             console.log('🔄 Финальное обновление через 20 секунд');
           }, 17000); // Еще через 17 секунд (итого 20)
         }, 3000);
