@@ -7311,7 +7311,7 @@ Return your response as a JSON array in this exact format:
         console.log(`[POST /api/trend-sentiment] Отправляем ${commentTexts.length} символов на анализ в Gemini`);
         
         // Используем Gemini для анализа настроения
-        const { GeminiService } = require('./services/gemini');
+        const { GeminiService } = await import('./services/gemini');
         const geminiService = new GeminiService();
         
         const analysisPrompt = `Проанализируй настроение этих комментариев к посту в социальной сети. 
