@@ -260,16 +260,19 @@ export default function Trends() {
   useEffect(() => {
     if (selectedCampaign?.id) {
       setSelectedCampaignId(selectedCampaign.id);
+      // Принудительно обновляем данные трендов для получения sentiment_analysis
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
     }
-  }, [selectedCampaign]);
+  }, [selectedCampaign, queryClient]);
 
   // Загрузка существующего анализа настроения для тренда из кэшированных данных
   const loadExistingSentimentAnalysis = (selectedTrend: TrendTopic | null) => {
     if (selectedTrend && (selectedTrend as any).sentiment_analysis) {
-      console.log('Загружаем существующий анализ для тренда:', selectedTrend.id, (selectedTrend as any).sentiment_analysis);
+      console.log('✅ Загружаем существующий анализ для тренда:', selectedTrend.id, (selectedTrend as any).sentiment_analysis);
       setSentimentData((selectedTrend as any).sentiment_analysis);
     } else {
-      console.log('Анализ настроения не найден для тренда:', selectedTrend?.id);
+      console.log('❌ Анализ настроения не найден для тренда:', selectedTrend?.id);
+      console.log('🔍 Все доступные поля тренда:', selectedTrend ? Object.keys(selectedTrend) : 'нет тренда');
       setSentimentData(null);
     }
   };
@@ -706,6 +709,8 @@ export default function Trends() {
 
   const { data: trends = [], isLoading: isLoadingTrends } = useQuery({
     queryKey: ["trends", selectedPeriod, selectedCampaignId],
+    staleTime: 0, // Принудительно загружаем свежие данные
+    gcTime: 0, // Не кэшируем данные
     queryFn: async () => {
       if (!selectedCampaignId) return [];
 

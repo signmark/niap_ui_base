@@ -6947,7 +6947,9 @@ Return your response as a JSON array in this exact format:
             campaignId: item.campaign_id,
             media_links: item.media_links,
             // Добавляем поле sourceType для корректной фильтрации платформ
-            sourceType: item.sourceType || null
+            sourceType: item.sourceType || null,
+            // ВАЖНО: Включаем данные анализа настроения
+            sentiment_analysis: item.sentiment_analysis || null
           };
         });
         
