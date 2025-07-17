@@ -69,6 +69,7 @@ import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
 import youtubeAuthRouter from './routes/youtube-auth';
+// import { getFeatureFlags, DEFAULT_FEATURE_FLAGS, FEATURE_DESCRIPTIONS } from './utils/feature-flags.js';
 
 
 /**
@@ -9078,9 +9079,21 @@ ${commentTexts}`;
   // Feature flags endpoint
   app.get('/api/feature-flags', (req, res) => {
     try {
-      const { getFeatureFlags } = require('@shared/feature-flags');
-      const flags = getFeatureFlags();
-      res.json(flags);
+      const featureFlags = {
+        instagramStories: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging',
+        videoEditor: true,
+        aiImageGeneration: true,
+        youtubePublishing: true,
+        instagramPublishing: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging',
+        telegramPublishing: true,
+        sentimentAnalysis: true,
+        trendsAnalysis: true,
+        commentCollection: true,
+        automatedPosting: true,
+        schedulerAdvanced: true,
+        multiCampaignManagement: true,
+      };
+      res.json(featureFlags);
     } catch (error) {
       console.error('Error getting feature flags:', error);
       res.status(500).json({ error: 'Failed to get feature flags' });
@@ -9090,11 +9103,40 @@ ${commentTexts}`;
   // Feature flags descriptions endpoint (for admin interface)
   app.get('/api/feature-flags/descriptions', (req, res) => {
     try {
-      const { getFeatureFlags, DEFAULT_FEATURE_FLAGS, FEATURE_DESCRIPTIONS } = require('@shared/feature-flags');
+      const featureFlags = {
+        instagramStories: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging',
+        videoEditor: true,
+        aiImageGeneration: true,
+        youtubePublishing: true,
+        instagramPublishing: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging',
+        telegramPublishing: true,
+        sentimentAnalysis: true,
+        trendsAnalysis: true,
+        commentCollection: true,
+        automatedPosting: true,
+        schedulerAdvanced: true,
+        multiCampaignManagement: true,
+      };
+      
+      const descriptions = {
+        instagramStories: 'Instagram Stories редактор и публикация',
+        videoEditor: 'Видео редактор и обработка',
+        aiImageGeneration: 'AI генерация изображений',
+        youtubePublishing: 'Публикация на YouTube',
+        instagramPublishing: 'Публикация в Instagram',
+        telegramPublishing: 'Публикация в Telegram',
+        sentimentAnalysis: 'Анализ настроения комментариев',
+        trendsAnalysis: 'Анализ трендов и источников',
+        commentCollection: 'Сбор комментариев из соцсетей',
+        automatedPosting: 'Автоматическая публикация по расписанию',
+        schedulerAdvanced: 'Расширенные функции планировщика',
+        multiCampaignManagement: 'Управление множественными кампаниями',
+      };
+      
       res.json({
-        flags: getFeatureFlags(),
-        descriptions: FEATURE_DESCRIPTIONS,
-        defaults: DEFAULT_FEATURE_FLAGS,
+        flags: featureFlags,
+        descriptions: descriptions,
+        defaults: featureFlags,
       });
     } catch (error) {
       console.error('Error getting feature descriptions:', error);
