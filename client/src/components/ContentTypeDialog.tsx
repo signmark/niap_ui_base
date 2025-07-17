@@ -9,7 +9,7 @@ import {
   Layers,
   Calendar
 } from 'lucide-react';
-import { useFeatureFlags, FeatureDisabledMessage } from '@/hooks/useFeatureFlags';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface ContentTypeDialogProps {
   isOpen: boolean;
