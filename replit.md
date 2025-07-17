@@ -188,6 +188,43 @@ Environment-specific settings managed through:
 - July 10, 2025. YOUTUBE CREDENTIALS DATABASE STRUCTURE FIXED: Resolved critical `invalid_client` error in YouTube OAuth by adding `api_secret` field to `global_api_keys` table and creating unified "YouTube" record with client_id in `api_key` and client_secret in `api_secret` fields. Updated N8N PostgreSQL workflow code to properly extract YouTube credentials from database. YouTube token refresh and publishing now ready for production with correct credential structure: YOUTUBE_CLIENT_ID (267968960436-f1fcdat2q3hrn029ine955v5d3t71b2k.apps.googleusercontent.com) and YOUTUBE_CLIENT_SECRET (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).
 - July 10, 2025. FIXED PENDING STATUS WRITING FOR ALL SOCIAL PLATFORMS: Resolved critical issue where social_platforms field remained empty during publication. Modified content adaptation endpoint in server/routes.ts to ALWAYS write pending status for all selected platforms during immediate publication. Now when user clicks "Publish Now", system automatically creates social_platforms entries with {"status": "pending"} for each selected platform before sending N8N webhook requests. This ensures proper status tracking and prevents empty social_platforms fields in database.
 
+## Development Roadmap - July 18, 2025
+
+### Priority Tasks for Tomorrow:
+
+1. **Website Analysis System Fixes**
+   - Fix website analysis for business questionnaire auto-filling
+   - Ensure content extraction works without server hangs
+   - Test with multiple website types (SMM, medical, IT, e-commerce)
+
+2. **Calendar Navigation Performance Issue**
+   - Fix full page reload when transitioning from Calendar to Content Creation
+   - Implement proper SPA navigation using wouter router
+   - Maintain state consistency during navigation
+
+3. **Stories Editor Slide Deletion**
+   - Implement slide deletion functionality in Stories editor
+   - Ensure proper state management and UI updates
+   - Test with multiple slides and element preservation
+
+4. **Bug Hunting and System Stability**
+   - Review recent logs for new issues
+   - Test critical user workflows end-to-end
+   - Fix any WebSocket connection issues
+   - Optimize scheduler performance
+
+5. **Deployment Preparation**
+   - Prepare staging environment configuration
+   - Create production deployment checklist
+   - Ensure all environment variables are documented
+   - Test Docker containers and infrastructure readiness
+
+### Known Issues to Address:
+- Calendar "Создать пост" button causing full page reload
+- Stories slide deletion not implemented
+- WebSocket disconnection errors in frontend
+- Scheduler Instagram failed status handling
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
