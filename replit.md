@@ -225,6 +225,12 @@ Environment-specific settings managed through:
 - WebSocket disconnection errors in frontend
 - Scheduler Instagram failed status handling
 
+6. **Feature Flags System Implementation** ✅
+   - ✅ Created feature flags system to disable experimental features
+   - ✅ Hide Instagram Stories functionality until fully developed
+   - ✅ Environment-based feature control (dev/staging/production)
+   - ✅ User-friendly messages for disabled features in ContentTypeDialog
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

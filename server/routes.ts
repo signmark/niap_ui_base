@@ -9075,6 +9075,33 @@ ${commentTexts}`;
     }
   });
 
+  // Feature flags endpoint
+  app.get('/api/feature-flags', (req, res) => {
+    try {
+      const { getFeatureFlags } = require('@shared/feature-flags');
+      const flags = getFeatureFlags();
+      res.json(flags);
+    } catch (error) {
+      console.error('Error getting feature flags:', error);
+      res.status(500).json({ error: 'Failed to get feature flags' });
+    }
+  });
+
+  // Feature flags descriptions endpoint (for admin interface)
+  app.get('/api/feature-flags/descriptions', (req, res) => {
+    try {
+      const { getFeatureFlags, DEFAULT_FEATURE_FLAGS, FEATURE_DESCRIPTIONS } = require('@shared/feature-flags');
+      res.json({
+        flags: getFeatureFlags(),
+        descriptions: FEATURE_DESCRIPTIONS,
+        defaults: DEFAULT_FEATURE_FLAGS,
+      });
+    } catch (error) {
+      console.error('Error getting feature descriptions:', error);
+      res.status(500).json({ error: 'Failed to get feature descriptions' });
+    }
+  });
+
   console.log('Route registration completed');
   // Webhook endpoint to receive trend topics from n8n
   app.post("/api/webhook/trend-topics", async (req, res) => {

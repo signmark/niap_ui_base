@@ -9,6 +9,7 @@ import {
   Layers,
   Calendar
 } from 'lucide-react';
+import { useFeatureFlags, FeatureDisabledMessage } from '@/hooks/useFeatureFlags';
 
 interface ContentTypeDialogProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface ContentTypeDialogProps {
 }
 
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
+  const { featureFlags, isEnabled } = useFeatureFlags();
+  
   const contentTypes = [
     {
       id: 'text',
@@ -63,6 +66,28 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
         <div className="grid gap-4 py-4">
           {contentTypes.map((type) => {
             const IconComponent = type.icon;
+            
+            // Check if Instagram Stories is disabled
+            if (type.id === 'story' && !isEnabled('instagramStories')) {
+              return (
+                <Card key={type.id} className="opacity-50 cursor-not-allowed bg-gray-50 border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-gray-100">
+                        <IconComponent className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-500">{type.title}</h3>
+                        <p className="text-sm text-gray-400">
+                          Функция временно отключена
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+            
             return (
               <Card 
                 key={type.id}
