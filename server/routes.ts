@@ -8178,6 +8178,12 @@ ${commentTexts}`;
       
       console.log(`📝 PATCH /api/campaign-content/${contentId}: Updating content with:`, JSON.stringify(req.body, null, 2));
       
+      // Если статус изменяется на draft, очищаем social_platforms
+      if (req.body.status === 'draft') {
+        console.log(`🧹 PATCH /api/campaign-content/${contentId}: Clearing social_platforms for draft status`);
+        req.body.social_platforms = null;
+      }
+      
       // Обновляем контент напрямую через storage API
       const updatedContent = await storage.updateCampaignContent(contentId, req.body, token);
       
