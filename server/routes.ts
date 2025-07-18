@@ -4697,6 +4697,7 @@ ${siteContent.substring(0, 2000)}
           }
         } catch (proxyError) {
           console.log(`[${requestId}] GeminiProxyService не сработал, создаем умные fallback ключевые слова`);
+          console.log(`[${requestId}] Анализируем контент (${siteContent.length} символов):`, siteContent.substring(0, 300));
           
           // Анализируем контент сайта для создания релевантных ключевых слов
           const contentLower = siteContent.toLowerCase();
