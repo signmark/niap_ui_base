@@ -4132,26 +4132,39 @@ ${text}
 
 Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
 
-      // Используем Gemini API для генерации ключевых слов
-      const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1000
-        }
+      // Используем Vertex AI для генерации ключевых слов через Gemini 2.5
+      console.log('Отправляем запрос к Vertex AI Gemini 2.5...');
+      const vertexAIService = new VertexAIService({
+        projectId: 'gen-lang-client-0492208227',
+        location: 'us-central1',
+        credentials: vertexAICredentials
+      });
+      const geminiResponse = await vertexAIService.generateText({
+        prompt: prompt,
+        model: 'gemini-2.5-flash'
       });
 
-      const geminiResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      
       if (!geminiResponse) {
-        throw new Error('Пустой ответ от Gemini API');
+        console.log('Пустой ответ от Vertex AI, используем fallback');
+        // Создаем fallback ключевые слова
+        const fallbackKeywords = [
+          { keyword: keyword, trend: 80, competition: 65 },
+          { keyword: `${keyword} маркетинг`, trend: 75, competition: 55 },
+          { keyword: `${keyword} SEO`, trend: 70, competition: 60 },
+          { keyword: `${keyword} оптимизация`, trend: 68, competition: 50 },
+          { keyword: `${keyword} продвижение`, trend: 72, competition: 58 }
+        ];
+        
+        return res.json({
+          data: {
+            keywords: fallbackKeywords
+          },
+          fallback: true,
+          error_message: "Использованы базовые ключевые слова - пустой ответ от Vertex AI"
+        });
       }
       
-      console.log('Ответ от Gemini для ключевых слов:', geminiResponse);
+      console.log('Ответ от Vertex AI Gemini для ключевых слов:', geminiResponse);
       
       // Попытка парсинга JSON ответа
       let keywords = [];
