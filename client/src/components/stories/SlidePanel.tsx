@@ -177,7 +177,7 @@ export default function SlidePanel({
                     e.stopPropagation();
                     handleDeleteSlide(index);
                   }}
-                  disabled={deleteSlideMutation.isPending || slides.length <= 1}
+                  disabled={slides.length <= 1}
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>

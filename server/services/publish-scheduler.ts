@@ -240,17 +240,11 @@ export class PublishScheduler {
               continue;
             }
             
-            // Пропускаем платформы с критическими ошибками и конфигурационными проблемами
+            // Пропускаем только КРИТИЧЕСКИЕ конфигурационные ошибки (НЕ блокируем временные проблемы)
             if (data.error && (
               data.error.includes('CRITICAL') ||
               data.error.includes('не найдены в кампании') ||
               data.error.includes('not found in campaign') ||
-              data.error.includes('настройки') ||
-              data.error.includes('Настройки') ||
-              data.error.includes('не найден или отсутствует') ||
-              data.error.includes('not found or missing') ||
-              data.error.includes('отсутствует изображение') ||
-              data.error.includes('missing image') ||
               data.error.includes('Invalid access token') ||
               data.error.includes('Application does not have permission') ||
               data.error.includes('токен недействителен') ||
@@ -294,12 +288,12 @@ export class PublishScheduler {
               }
             }
 
-            // Временная агрессивная фильтрация: пропускаем все failed Instagram/Facebook статусы старше 1 часа
+            // Умеренная фильтрация: пропускаем failed статусы старше 12 часов (вместо 1 часа)
             if (data.status === 'failed' && (platformName === 'instagram' || platformName === 'facebook') && data.updatedAt) {
               const lastUpdate = new Date(data.updatedAt);
               const hoursOld = (currentTime.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
-              if (hoursOld > 1) {
-                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 1 часа (вероятно конфигурационная ошибка)`, 'scheduler');
+              if (hoursOld > 12) {
+                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 12 часов`, 'scheduler');
                 continue;
               }
             }
