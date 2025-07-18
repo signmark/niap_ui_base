@@ -23,7 +23,7 @@ export default function SlidePanel({
 }: SlidePanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { addSlide } = useStoryStore();
+  const { addSlide, deleteSlide } = useStoryStore();
 
   // Add new slide mutation
   const addSlideMutation = useMutation({
@@ -48,31 +48,7 @@ export default function SlidePanel({
     }
   });
 
-  // Delete slide mutation
-  const deleteSlideMutation = useMutation({
-    mutationFn: (slideId: string) => 
-      apiRequest(`/api/stories/${storyId}/slides/${slideId}`, {
-        method: 'DELETE'
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['story', storyId] });
-      toast({
-        title: 'Слайд удален',
-        description: 'Слайд успешно удален из истории'
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Ошибка',
-        description: error.message || 'Не удалось удалить слайд',
-        variant: 'destructive'
-      });
-    }
-  });
-
   const handleAddSlide = () => {
-
-    
     // Добавляем слайд только в локальный store - работа в памяти
     addSlide();
     
@@ -80,25 +56,24 @@ export default function SlidePanel({
       title: 'Слайд добавлен',
       description: 'Новый слайд добавлен (сохраните изменения для сохранения в БД)'
     });
-    
-
   };
 
   const handleDuplicateSlide = (slideIndex: number) => {
-    if (!storyId || !slides[slideIndex]) return;
+    if (!slides[slideIndex]) return;
 
     const slideToClone = slides[slideIndex];
-    const newSlideData = {
-      order: slides.length,
-      duration: slideToClone.duration,
-      background: slideToClone.background
-    };
-
-    addSlideMutation.mutate(newSlideData);
+    
+    // Работаем в памяти через store
+    addSlide();
+    
+    toast({
+      title: 'Слайд скопирован',
+      description: 'Слайд скопирован (сохраните изменения для сохранения в БД)'
+    });
   };
 
   const handleDeleteSlide = (slideIndex: number) => {
-    if (!storyId || !slides[slideIndex] || slides.length <= 1) {
+    if (!slides[slideIndex] || slides.length <= 1) {
       if (slides.length <= 1) {
         toast({
           title: 'Нельзя удалить',
@@ -109,13 +84,18 @@ export default function SlidePanel({
       return;
     }
 
-    const slideToDelete = slides[slideIndex];
-    deleteSlideMutation.mutate(slideToDelete.id);
+    // Работаем в памяти через store
+    deleteSlide(slideIndex);
 
     // Adjust current slide index if needed
     if (currentSlideIndex >= slides.length - 1) {
       onSlideSelect(Math.max(0, currentSlideIndex - 1));
     }
+    
+    toast({
+      title: 'Слайд удален',
+      description: 'Слайд удален (сохраните изменения для сохранения в БД)'
+    });
   };
 
   const renderSlidePreview = (slide: StorySlide, index: number) => {
