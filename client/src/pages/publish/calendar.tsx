@@ -4,7 +4,7 @@ import { useCampaignStore } from '@/lib/campaignStore';
 import { useAuthStore } from '@/lib/store';
 import { CampaignContent } from '@/types';
 import PublicationCalendar from '@/components/PublicationCalendar';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { PenLine, ArrowLeft, SortDesc, SortAsc, Loader2 } from 'lucide-react';
 
@@ -13,6 +13,7 @@ export default function CalendarView() {
   const userId = useAuthStore((state) => state.userId);
   const getAuthToken = useAuthStore((state) => state.getAuthToken);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // По умолчанию сортировка от новых к старым
+  const [, setLocation] = useLocation();
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery({
@@ -91,8 +92,8 @@ export default function CalendarView() {
   }, [campaignContent]);
 
   const handleCreateClick = () => {
-    // Перенаправляем на страницу создания контента
-    window.location.href = '/content';
+    // Используем SPA навигацию через wouter
+    setLocation('/content');
   };
 
   return (
