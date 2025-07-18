@@ -4132,10 +4132,10 @@ ${text}
 
 Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
 
-      // Используем Gemini сервис для генерации ключевых слов
-      console.log('Отправляем запрос к Gemini через сервис...');
+      // Используем Gemini 2.5 Flash через прокси для генерации ключевых слов
+      console.log('Отправляем запрос к Gemini 2.5 Flash через SOCKS5 прокси...');
       const geminiService = new GeminiService({ apiKey: geminiApiKey });
-      const geminiResponse = await geminiService.generateText(prompt);
+      const geminiResponse = await geminiService.generateText(prompt, 'gemini-2.5-flash');
 
       if (!geminiResponse) {
         console.log('Пустой ответ от Gemini сервиса, используем fallback');
@@ -4157,30 +4157,61 @@ ${text}
         });
       }
       
-      console.log('Ответ от Gemini для ключевых слов:', geminiResponse);
+      console.log('Ответ от Gemini 2.5 Flash:', geminiResponse);
       
-      // Создаем умные ключевые слова вместо мусора от Gemini
-      console.log('Генерируем качественные ключевые слова для:', keyword);
-      const keywords = [
-        { keyword: keyword, trend: 80, competition: 65 },
-        { keyword: `${keyword} купить`, trend: 85, competition: 70 },
-        { keyword: `${keyword} цена`, trend: 82, competition: 75 },
-        { keyword: `${keyword} отзывы`, trend: 78, competition: 60 },
-        { keyword: `${keyword} магазин`, trend: 75, competition: 68 },
-        { keyword: `${keyword} доставка`, trend: 72, competition: 55 },
-        { keyword: `${keyword} качество`, trend: 70, competition: 50 },
-        { keyword: `лучший ${keyword}`, trend: 76, competition: 62 },
-        { keyword: `${keyword} недорого`, trend: 74, competition: 58 },
-        { keyword: `${keyword} онлайн`, trend: 73, competition: 52 }
-      ];
-      
-      return res.json({
-        data: {
-          keywords: keywords
-        },
-        source: "optimized_generation",
-        message: "Использованы оптимизированные ключевые слова"
-      });
+      // Парсим JSON ответ от Gemini
+      let keywords = [];
+      try {
+        // Ищем JSON массив в ответе
+        const jsonMatch = geminiResponse.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          keywords = JSON.parse(jsonMatch[0]);
+          console.log('Успешно распарсили JSON от Gemini 2.5:', keywords.length, 'ключевых слов');
+        } else {
+          throw new Error('JSON массив не найден в ответе Gemini');
+        }
+        
+        // Валидируем структуру
+        keywords = keywords.filter(k => k.keyword && typeof k.trend === 'number' && typeof k.competition === 'number');
+        
+        if (keywords.length === 0) {
+          throw new Error('Нет валидных ключевых слов в ответе');
+        }
+        
+        return res.json({
+          data: {
+            keywords: keywords.slice(0, 15)
+          },
+          source: "gemini_2.5_flash",
+          message: "Ключевые слова сгенерированы через Gemini 2.5 Flash с SOCKS5 прокси"
+        });
+        
+      } catch (parseError) {
+        console.log('Ошибка парсинга ответа Gemini:', parseError);
+        console.log('Используем fallback ключевые слова');
+        
+        // Fallback ключевые слова
+        const fallbackKeywords = [
+          { keyword: keyword, trend: 80, competition: 65 },
+          { keyword: `${keyword} купить`, trend: 85, competition: 70 },
+          { keyword: `${keyword} цена`, trend: 82, competition: 75 },
+          { keyword: `${keyword} отзывы`, trend: 78, competition: 60 },
+          { keyword: `${keyword} магазин`, trend: 75, competition: 68 },
+          { keyword: `${keyword} доставка`, trend: 72, competition: 55 },
+          { keyword: `${keyword} качество`, trend: 70, competition: 50 },
+          { keyword: `лучший ${keyword}`, trend: 76, competition: 62 },
+          { keyword: `${keyword} недорого`, trend: 74, competition: 58 },
+          { keyword: `${keyword} онлайн`, trend: 73, competition: 52 }
+        ];
+        
+        return res.json({
+          data: {
+            keywords: fallbackKeywords
+          },
+          source: "fallback",
+          message: "Использованы fallback ключевые слова из-за ошибки парсинга Gemini"
+        });
+      }
       
     } catch (error: any) {
       console.error("Ошибка при использовании Gemini сервиса для поиска ключевых слов:", error);
