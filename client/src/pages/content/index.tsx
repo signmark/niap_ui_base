@@ -2847,16 +2847,27 @@ export default function ContentPage() {
                         // Показываем все платформы которые имеют данные
                         const isPublished = platformData.status === 'published' || platformData.postUrl;
                         const isFailed = platformData.status === 'failed' || platformData.error;
+                        const isPending = platformData.status === 'pending';
                         const isScheduled = platformData.status === 'scheduled' || platformData.scheduledAt;
                         
                         // Показываем платформы с любым статусом
-                        if (!isPublished && !isFailed && !isScheduled && !platformData.selected) return null;
+                        if (!isPublished && !isFailed && !isScheduled && !isPending && !platformData.selected) return null;
                         
-                        const bgColor = isPublished ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
-                        const textColor = isPublished ? 'text-green-800' : 'text-red-800';
-                        const iconColor = isPublished ? 'text-green-600' : 'text-red-600';
-                        const statusText = isPublished ? 'Опубликовано' : 'Ошибка';
-                        const Icon = isPublished ? CheckCircle2 : AlertCircle;
+                        const bgColor = isPublished ? 'bg-green-100 border-green-300' : 
+                                       isPending ? 'bg-amber-100 border-amber-300' : 
+                                       'bg-red-100 border-red-300';
+                        const textColor = isPublished ? 'text-green-800' : 
+                                         isPending ? 'text-amber-800' : 
+                                         'text-red-800';
+                        const iconColor = isPublished ? 'text-green-600' : 
+                                         isPending ? 'text-amber-600' : 
+                                         'text-red-600';
+                        const statusText = isPublished ? 'Опубликовано' : 
+                                          isPending ? 'Ожидает публикации' : 
+                                          'Ошибка';
+                        const Icon = isPublished ? CheckCircle2 : 
+                                    isPending ? Clock : 
+                                    AlertCircle;
                         
                         const content = (
                           <div className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}>
@@ -2865,7 +2876,7 @@ export default function ContentPage() {
                               <span className={`text-sm font-medium ${textColor}`}>{platformNames[platform] || platform}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-sm ${isPublished ? 'text-green-700' : 'text-red-700'}`}>
+                              <span className={`text-sm ${isPublished ? 'text-green-700' : isPending ? 'text-amber-700' : 'text-red-700'}`}>
                                 {statusText} {isPublished && platformData.publishedAt && (() => {
                                   // Время publishedAt уже корректно в БД, не добавляем смещение
                                   const date = new Date(platformData.publishedAt);
@@ -2876,6 +2887,16 @@ export default function ContentPage() {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                   });
+                                })()} {isPending && (platformData.scheduledAt || platformData.scheduled_at) && (() => {
+                                  // Показываем время планируемой публикации для pending статуса
+                                  const scheduledTime = platformData.scheduledAt || platformData.scheduled_at;
+                                  const date = new Date(scheduledTime);
+                                  return `на ${date.toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}`;
                                 })()}
                               </span>
                               <Icon className={`h-4 w-4 ${iconColor}`} />
