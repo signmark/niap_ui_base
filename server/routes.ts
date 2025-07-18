@@ -1123,7 +1123,7 @@ async function getDirectusAdminToken(): Promise<string | null> {
  */
 async function extractFullSiteContent(url: string): Promise<string> {
   try {
-    console.log(`🚀 Простой скрапинг сайта: ${url}`);
+    console.log(`🚀 Улучшенный скрапинг сайта: ${url}`);
     
     // Нормализуем URL
     let normalizedUrl = url;
@@ -1131,33 +1131,60 @@ async function extractFullSiteContent(url: string): Promise<string> {
       normalizedUrl = `https://${normalizedUrl}`;
     }
     
-    // Простая загрузка без сложных fallback
+    // Загрузка с увеличенным лимитом для лучшего анализа
     const response = await axios.get(normalizedUrl, {
-      timeout: 5000,
-      maxContentLength: 1024 * 1024, // 1MB
+      timeout: 8000,
+      maxContentLength: 2 * 1024 * 1024, // 2MB для большего контента
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SiteAnalyzer/1.0)',
-        'Accept': 'text/html'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
       },
       validateStatus: (status) => status >= 200 && status < 400
     });
     
     const htmlContent = response.data;
     
-    // Простое извлечение основной информации
+    // Улучшенное извлечение контента
     const title = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || '';
     const description = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() || '';
+    const keywords = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() || '';
     
-    // Собираем контент для отправки ИИ
-    const content = [
+    // Извлекаем заголовки
+    const h1Tags = htmlContent.match(/<h1[^>]*>([^<]+)<\/h1>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 10) || [];
+    const h2Tags = htmlContent.match(/<h2[^>]*>([^<]+)<\/h2>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 15) || [];
+    const h3Tags = htmlContent.match(/<h3[^>]*>([^<]+)<\/h3>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 20) || [];
+    
+    // Извлекаем параграфы
+    const paragraphs = htmlContent.match(/<p[^>]*>([^<]+)<\/p>/gi)?.map(p => p.replace(/<[^>]+>/g, '').trim()).filter(p => p.length > 20).slice(0, 30) || [];
+    
+    // Извлекаем списки
+    const listItems = htmlContent.match(/<li[^>]*>([^<]+)<\/li>/gi)?.map(li => li.replace(/<[^>]+>/g, '').trim()).filter(li => li.length > 10).slice(0, 20) || [];
+    
+    // Собираем структурированный контент для ИИ
+    const contentParts = [
       `URL: ${url}`,
-      title ? `ЗАГОЛОВОК: ${title}` : '',
-      description ? `ОПИСАНИЕ: ${description}` : '',
-      `КОНТЕНТ ДЛЯ АНАЛИЗА:\n${htmlContent.substring(0, 8000)}`
-    ].filter(Boolean).join('\n\n');
+      title ? `ЗАГОЛОВОК СТРАНИЦЫ: ${title}` : '',
+      description ? `ОПИСАНИЕ САЙТА: ${description}` : '',
+      keywords ? `КЛЮЧЕВЫЕ СЛОВА: ${keywords}` : '',
+      h1Tags.length > 0 ? `ОСНОВНЫЕ ЗАГОЛОВКИ H1:\n${h1Tags.map(h => `- ${h}`).join('\n')}` : '',
+      h2Tags.length > 0 ? `ЗАГОЛОВКИ H2:\n${h2Tags.map(h => `- ${h}`).join('\n')}` : '',
+      h3Tags.length > 0 ? `ЗАГОЛОВКИ H3:\n${h3Tags.map(h => `- ${h}`).join('\n')}` : '',
+      paragraphs.length > 0 ? `ОСНОВНОЙ ТЕКСТ:\n${paragraphs.map(p => `- ${p}`).join('\n')}` : '',
+      listItems.length > 0 ? `СПИСКИ И ПУНКТЫ:\n${listItems.map(li => `- ${li}`).join('\n')}` : ''
+    ].filter(Boolean);
     
-    console.log(`✅ Скрапинг завершен (${content.length} символов)`);
-    return content;
+    let structuredContent = contentParts.join('\n\n');
+    
+    // Ограничиваем размер до 15KB для эффективной обработки ИИ
+    if (structuredContent.length > 15000) {
+      structuredContent = structuredContent.substring(0, 15000) + '\n\n[КОНТЕНТ ОБРЕЗАН ДЛЯ АНАЛИЗА]';
+    }
+    
+    console.log(`✅ Улучшенный скрапинг завершен (${structuredContent.length} символов)`);
+    console.log(`📊 Извлечено: ${h1Tags.length} H1, ${h2Tags.length} H2, ${h3Tags.length} H3, ${paragraphs.length} параграфов, ${listItems.length} элементов списков`);
+    
+    return structuredContent;
     
   } catch (error: any) {
     console.error(`❌ Ошибка анализа сайта ${url}:`, error.message);
@@ -9841,7 +9868,7 @@ ${websiteContent}`;
 
         console.log(`[WEBSITE-ANALYSIS] 🔍 Размер промпта: ${prompt.length} символов`);
         
-        console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini через прокси...');
+        console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini 2.5 через Vertex AI...');
         const geminiResponse = await geminiProxyService.improveText({
           text: websiteContent,
           prompt: prompt,
@@ -9849,7 +9876,7 @@ ${websiteContent}`;
         });
         
         analysisResponse = geminiResponse;
-        console.log('✅ Gemini API вернул ответ для анализа сайта');
+        console.log('✅ Gemini 2.5 через Vertex AI вернул ответ для анализа сайта');
         console.log(`[WEBSITE-ANALYSIS] ✅ Полный ответ от Gemini: ${analysisResponse.substring(0, 200)}...`);
         
       } catch (aiError) {
