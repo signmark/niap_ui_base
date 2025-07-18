@@ -1201,19 +1201,10 @@ export function registerPublishingRoutes(app: Express): void {
       }
       
       // Также очищаем если пришел пустой объект social_platforms
-      console.log(`🔍 PATCH /api/publish/update-content/${id}: Checking social_platforms:`, {
-        value: updates.social_platforms,
-        type: typeof updates.social_platforms,
-        keys: updates.social_platforms ? Object.keys(updates.social_platforms) : 'N/A',
-        isEmpty: updates.social_platforms && typeof updates.social_platforms === 'object' && Object.keys(updates.social_platforms).length === 0
-      });
-      
       if (updates.social_platforms && typeof updates.social_platforms === 'object' && Object.keys(updates.social_platforms).length === 0) {
         console.log(`🧹 PATCH /api/publish/update-content/${id}: Converting empty social_platforms object to null`);
         updates.social_platforms = null;
       }
-      
-      console.log(`🔍 PATCH /api/publish/update-content/${id}: Передаем в storage.updateCampaignContent:`, updates);
       
       // Обновляем контент с передачей токена авторизации
       const updatedContent = await storage.updateCampaignContent(id, updates, token);

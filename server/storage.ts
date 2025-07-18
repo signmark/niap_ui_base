@@ -1107,7 +1107,7 @@ export class DatabaseStorage implements IStorage {
       if (socialPlatformsUpdate !== undefined) {
         // Если явно передан null - значит нужно очистить все платформы (например, при переводе в draft)
         if (socialPlatformsUpdate === null) {
-          console.log(`🧹🧹🧹 STORAGE: Принудительная очистка social_platforms для контента ${id} 🧹🧹🧹`);
+          console.log(`🧹 STORAGE: Принудительная очистка social_platforms для контента ${id}`);
           directusUpdates.social_platforms = null;
         } else {
           // Получаем текущие данные контента
