@@ -32,7 +32,7 @@ export class GeminiProxyService {
     if (model === 'gemini-2.5-flash' || model === 'gemini-2.5-pro') {
       return {
         version: 'v1',
-        baseUrl: vertexAIAuth.getVertexAIUrl(model).replace(`:generateContent`, ''),
+        baseUrl: vertexAIAuth.getVertexAIUrl(model),
         isVertexAI: true
       };
     }
@@ -145,13 +145,10 @@ export class GeminiProxyService {
         // В Replit среде отключаем прокси для предотвращения ошибок подключения
         const isReplit = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
         
-        if (this.agent && !isVertexAI && !isReplit) {
-          // Для стандартного Gemini API используем прокси
+        if (this.agent && !isReplit) {
+          // Используем прокси для ВСЕХ запросов (включая Vertex AI)
           fetchOptions.agent = this.agent;
           logger.log(`[gemini-proxy] Используется SOCKS5 прокси: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
-        } else if (isVertexAI) {
-          // Для Vertex AI прокси пока не требуется
-          logger.log(`[gemini-proxy] Vertex AI - прямое соединение`, 'gemini');
         } else {
           if (isReplit) {
             logger.log(`[gemini-proxy] Replit среда - прямое соединение без прокси`, 'gemini');
@@ -243,8 +240,8 @@ export class GeminiProxyService {
       
       let url: string;
       if (isVertexAI) {
-        // Для Vertex AI используем другой формат URL
-        url = `${baseUrl}/${apiModel}:generateContent`;
+        // Для Vertex AI baseUrl уже содержит полный путь с моделью
+        url = baseUrl;
       } else {
         // Для генеративного API используем стандартный формат
         url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
@@ -321,8 +318,8 @@ export class GeminiProxyService {
       
       let url: string;
       if (isVertexAI) {
-        // Для Vertex AI используем другой формат URL
-        url = `${baseUrl}/${apiModel}:generateContent`;
+        // Для Vertex AI baseUrl уже содержит полный путь с моделью
+        url = baseUrl;
       } else {
         // Для генеративного API используем стандартный формат
         url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
@@ -332,6 +329,7 @@ export class GeminiProxyService {
       const requestData = {
         contents: [
           {
+            role: "user",
             parts: [
               {
                 text: prompt

@@ -9695,12 +9695,15 @@ ${commentTexts}`;
   app.post("/api/website-analysis", authenticateUser, async (req: any, res) => {
     console.log('[WEBSITE-ANALYSIS] Начало обработки запроса на анализ сайта');
     try {
-      const { url, campaignId } = req.body;
+      const { websiteUrl, url, campaignId } = req.body;
       const authHeader = req.headers['authorization'];
       
-      console.log(`[WEBSITE-ANALYSIS] Получен URL: ${url}, campaignId: ${campaignId}`);
+      // Поддерживаем оба параметра для совместимости
+      const siteUrl = websiteUrl || url;
       
-      if (!url) {
+      console.log(`[WEBSITE-ANALYSIS] Получен URL: ${siteUrl}, campaignId: ${campaignId}`);
+      
+      if (!siteUrl) {
         console.log('[WEBSITE-ANALYSIS] Ошибка: URL не указан');
         return res.status(400).json({ 
           success: false,
@@ -9728,7 +9731,7 @@ ${commentTexts}`;
       }
       
       // Нормализуем URL перед обработкой
-      let normalizedUrl = url.trim();
+      let normalizedUrl = siteUrl.trim();
       if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
         normalizedUrl = `https://${normalizedUrl}`;
       }
@@ -9870,8 +9873,7 @@ ${websiteContent}`;
         console.log(`[WEBSITE-ANALYSIS] 🔍 Размер промпта: ${prompt.length} символов`);
         
         console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini 2.5 через Vertex AI...');
-        const geminiResponse = await geminiProxyService.improveText({
-          text: websiteContent,
+        const geminiResponse = await geminiProxyService.generateText({ 
           prompt: prompt,
           model: 'gemini-2.5-flash'
         });
@@ -9885,7 +9887,7 @@ ${websiteContent}`;
         console.log(`[WEBSITE-ANALYSIS] Создаем простой fallback ответ для сайта`);
         
         // Создаем простой fallback ответ
-        const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+        const domain = normalizedUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
         const siteName = domain.split('.')[0];
         
         const baseData = {
