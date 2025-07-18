@@ -260,6 +260,16 @@ Environment-specific settings managed through:
    - Ensure all environment variables are documented
    - Test Docker containers and infrastructure readiness
 
+### Weekend Tasks:
+
+1. **Fix Scheduled Time Display Issues** 
+   - **CRITICAL**: Calendar shows 14:30 but post is scheduled for 17:30 - timezone discrepancy
+   - Investigate timezone handling in calendar view and scheduling interface
+   - Check time conversion between UI, API, and database storage (Moscow timezone vs UTC)
+   - Ensure consistent timezone handling across all scheduling components
+   - Test scheduled time accuracy in both calendar and content list views
+   - Verify time display matches actual scheduled time in database
+
 ### Known Issues to Address:
 - Calendar "Создать пост" button causing full page reload
 - WebSocket disconnection errors in frontend (Stories navigation tested)
