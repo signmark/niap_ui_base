@@ -193,7 +193,9 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                         {status.status === 'published' 
                           ? `Опубликовано ${formatDateWithTimezone(status.publishedAt)}`
                           : status.status === 'failed'
-                            ? `Не удалось опубликовать: ${status.error || 'Ошибка публикации'}`
+                            ? status.error 
+                              ? `Не удалось опубликовать: ${status.error}`
+                              : 'Публикация не удалась'
                             : 'Ожидает публикации'
                         }
                       </p>
@@ -263,27 +265,44 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                   {status.status === 'published' ? (
                     <CheckCircle2 size={14} className="text-green-500" />
                   ) : status.status === 'failed' ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <AlertTriangle size={14} className="text-red-500" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{status.error || 'Ошибка публикации'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    status.error ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AlertTriangle size={14} className="text-red-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{status.error}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <AlertTriangle size={14} className="text-red-500" />
+                    )
                   ) : status.status === 'quota_exceeded' ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <AlertTriangle size={14} className="text-orange-500" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{status.error || 'Превышена квота API. Попробуйте позже.'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    status.error ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AlertTriangle size={14} className="text-orange-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{status.error}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AlertTriangle size={14} className="text-orange-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Превышена квота API. Попробуйте позже.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
                   ) : (
                     <Clock size={14} className="text-amber-500" />
                   )}
