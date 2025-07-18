@@ -4696,98 +4696,26 @@ ${siteContent.substring(0, 2000)}
             console.log(`[${requestId}] Пустой ответ от GeminiProxyService`);
           }
         } catch (proxyError) {
-          console.log(`[${requestId}] GeminiProxyService не сработал, создаем умные fallback ключевые слова`);
-          console.log(`[${requestId}] Анализируем контент (${siteContent.length} символов):`, siteContent.substring(0, 300));
-          
-          // УНИВЕРСАЛЬНЫЙ АНАЛИЗ КОНТЕНТА - без привязки к конкретным сайтам
-          console.log(`[${requestId}] УНИВЕРСАЛЬНЫЙ анализ любого сайта без классификации`);
-          
-          // Извлекаем ключевую информацию из скрапленного контента
-          const titleMatch = siteContent.match(/ЗАГОЛОВОК:\s*([^\n]+)/);
-          const descMatch = siteContent.match(/ОПИСАНИЕ:\s*([^\n]+)/);
-          const title = titleMatch ? titleMatch[1] : '';
-          const description = descMatch ? descMatch[1] : '';
-          
-          console.log(`[${requestId}] Анализ контента: title="${title}", desc="${description}"`);
-          
-          let smartKeywords = [];
-          
-          // МОЩНЫЙ АНАЛИЗ всего контента - заголовок И описание
-          const allContent = (title + ' ' + description).toLowerCase();
-          
-          // Извлекаем ВСЕ значимые слова и фразы
-          const allWords = allContent
-            .replace(/[^\wа-яё\s]/g, ' ')
-            .split(/\s+/)
-            .filter(word => word.length > 3 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for', 'википедия', 'wiki', 'главная'].includes(word));
-          
-          console.log(`[${requestId}] ВСЕ слова из контента (${allWords.length}):`, allWords.slice(0, 10));
-          
-          // Создаем ключевые слова из всех найденных терминов
-          const uniqueWords = [...new Set(allWords)]; // убираем дубликаты
-          
-          uniqueWords.slice(0, 8).forEach((word, index) => {
-            smartKeywords.push({
-              keyword: word,
-              trend: 88 - index * 3,
-              competition: 58 + index * 2
-            });
+          console.log(`[${requestId}] ❌ ОШИБКА: GeminiProxyService не сработал:`, proxyError.message);
+          return res.status(500).json({ 
+            error: 'Не удалось проанализировать сайт с помощью ИИ. Попробуйте позже.',
+            details: proxyError.message
           });
-          
-          // Добавляем мощные комбинации из описания
-          if (description) {
-            // Ищем профессиональные фразы
-            const professionalPhrases = [];
-            const desc = description.toLowerCase();
-            
-            if (desc.includes('аналитический сервис')) professionalPhrases.push('аналитический сервис');
-            if (desc.includes('врачей и нутрициологов')) professionalPhrases.push('врачи нутрициологи');
-            if (desc.includes('персональные') && desc.includes('рационы')) professionalPhrases.push('персональные рационы');
-            if (desc.includes('сбалансированные рационы')) professionalPhrases.push('сбалансированные рационы');
-            if (desc.includes('оценка состояния')) professionalPhrases.push('оценка состояния');
-            if (desc.includes('профессиональный')) professionalPhrases.push('профессиональный сервис');
-            
-            professionalPhrases.forEach((phrase, index) => {
-              smartKeywords.push({
-                keyword: phrase,
-                trend: 85 - index * 2,
-                competition: 65 + index * 3
-              });
-            });
-            
-            console.log(`[${requestId}] Найдены профессиональные фразы:`, professionalPhrases);
-          }
-          
-          // Если не удалось извлечь ключевые слова, используем домен
-          if (smartKeywords.length === 0) {
-            const siteName = normalizedUrl.replace(/https?:\/\//, '').split('/')[0];
-            smartKeywords = [
-              { keyword: siteName, trend: 85, competition: 60 },
-              { keyword: 'информационный ресурс', trend: 75, competition: 50 },
-              { keyword: 'онлайн платформа', trend: 70, competition: 45 },
-              { keyword: 'веб-сайт', trend: 80, competition: 55 }
-            ];
-            console.log(`[${requestId}] Использован базовый fallback для домена: ${siteName}`);
-          } else {
-            console.log(`[${requestId}] Создано ${smartKeywords.length} ключевых слов на основе реального анализа контента`);
-          }
-          
-          deepseekKeywords = smartKeywords;
-          console.log(`[${requestId}] ✅ Создали ${smartKeywords.length} умных fallback ключевых слов на основе анализа контента`);
         }
         
-        // Возвращаем результат без XMLRiver обработки
+        // Возвращаем результат только если получен ответ от Gemini
         if (deepseekKeywords && deepseekKeywords.length > 0) {
-          console.log(`[${requestId}] Найдено ${deepseekKeywords.length} ключевых слов, возвращаем результат`);
+          console.log(`[${requestId}] ✅ Найдено ${deepseekKeywords.length} ключевых слов от Gemini:`, deepseekKeywords.map(k => k.keyword));
           return res.json({
             data: { keywords: deepseekKeywords },
-            source: deepseekKeywords.length > 6 ? 'gemini_proxy' : 'smart_fallback',
-            message: deepseekKeywords.length > 6 ? 'Ключевые слова созданы через Gemini API' : 'Умные ключевые слова на основе анализа контента'
+            source: 'gemini_ai',
+            message: 'Ключевые слова созданы через Gemini AI анализ'
           });
         } else {
-          console.log(`[${requestId}] Не удалось получить ключевые слова, возвращаем ошибку`);
+          console.log(`[${requestId}] ❌ Не удалось получить ключевые слова от Gemini`);
           return res.status(500).json({
-            error: 'Не удалось сгенерировать ключевые слова для данного сайта'
+            error: 'Не удалось сгенерировать ключевые слова через ИИ',
+            message: 'Попробуйте позже или проверьте URL'
           });
         }
         
