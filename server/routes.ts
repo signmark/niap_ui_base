@@ -4202,9 +4202,23 @@ ${text}
       
     } catch (error: any) {
       console.error("Ошибка при использовании Gemini API для поиска ключевых слов:", error);
-      return res.status(500).json({ 
-        error: "Ошибка при поиске ключевых слов", 
-        message: "Не удалось использовать Gemini API для генерации ключевых слов"
+      console.error("Детали ошибки:", error.response?.data || error.message);
+      
+      // Предоставляем fallback результат в случае ошибки API
+      const fallbackKeywords = [
+        { keyword: keyword, trend: 80, competition: 65 },
+        { keyword: `${keyword} маркетинг`, trend: 75, competition: 55 },
+        { keyword: `${keyword} SEO`, trend: 70, competition: 60 },
+        { keyword: `${keyword} оптимизация`, trend: 68, competition: 50 },
+        { keyword: `${keyword} продвижение`, trend: 72, competition: 58 }
+      ];
+      
+      return res.json({
+        data: {
+          keywords: fallbackKeywords
+        },
+        fallback: true,
+        error_message: "Использованы базовые ключевые слова из-за проблем с API"
       });
     }
   });
