@@ -179,7 +179,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        console.log('Не удалось обновить токен авторизации, перенаправляем на страницу входа');
+
         
         // Очищаем данные авторизации
         localStorage.removeItem('auth_token');

@@ -82,7 +82,7 @@ export default function Posts() {
         }
         
         const responseData = await response.json();
-        console.log('Загружено публикаций:', (responseData.data || []).length);
+
         return responseData;
       } catch (error) {
         console.error('Ошибка при загрузке контента:', error);

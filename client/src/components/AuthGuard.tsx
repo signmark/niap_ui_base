@@ -106,7 +106,7 @@ export function AuthGuard({ children }: Props) {
           const refreshedUserId = localStorage.getItem('user_id');
           
           if (refreshedToken && refreshedUserId) {
-            console.log('AuthGuard: Token successfully refreshed');
+
             setAuth(refreshedToken, refreshedUserId);
             setIsRefreshing(false);
             setIsSessionChecked(true);

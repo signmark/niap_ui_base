@@ -178,7 +178,7 @@ export function TrendContentGenerator({ selectedTopics, onGenerated, campaignId 
       }
       
       try {
-        console.log(`Генерация контента через ${values.modelType} API, с трендами: ${trendsContext}`);
+
         
         // Вызываем единый API генерации контента
         const response = await fetch('/api/generate-content', {

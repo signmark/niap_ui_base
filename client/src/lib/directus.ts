@@ -21,7 +21,7 @@ getServerConfig().then(url => {
   if (url && url !== directusUrl) {
     directusUrl = url;
     directusApi.defaults.baseURL = url;
-    console.log('Updated Directus URL to:', url);
+
   }
 });
 

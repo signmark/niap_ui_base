@@ -193,7 +193,7 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
         for (const keyword of selectedKeywordObjects) {
           // Проверяем, существует ли уже такое ключевое слово (независимо от регистра)
           if (existingKeywordsLower.includes(keyword.keyword.toLowerCase())) {
-            console.log(`Ключевое слово "${keyword.keyword}" уже существует - пропускаем`);
+
             skippedCount++;
             continue;
           }
@@ -207,31 +207,21 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
               date_created: new Date().toISOString(),
               last_checked: new Date().toISOString()
             };
-            console.log(`[KEYWORDS-WEBSITE] Сохраняем ключевое слово "${keyword.keyword}" в кампанию ${campaignId}:`, requestData);
-            console.log(`[KEYWORDS-WEBSITE] Используемый токен:`, localStorage.getItem('auth_token')?.substring(0, 20) + '...');
-            console.log(`[KEYWORDS-WEBSITE] Используемый URL:`, directusApi.defaults.baseURL);
+
+
+
             
             const response = await directusApi.post('items/campaign_keywords', requestData);
-            console.log(`[KEYWORDS-WEBSITE] Успешно добавлено ключевое слово "${keyword.keyword}", ответ:`, response.data);
+
             addedCount++;
           } catch (err) {
-            console.log(`[KEYWORDS-WEBSITE] ПОЛНАЯ ОШИБКА для "${keyword.keyword}":`, {
-              status: err.response?.status,
-              statusText: err.response?.statusText,
-              data: err.response?.data,
-              config: {
-                url: err.config?.url,
-                method: err.config?.method,
-                headers: err.config?.headers
-              }
-            });
             
             // Если ошибка связана с дубликатом, просто пропускаем это ключевое слово
             const errorMessage = err.response?.data?.errors?.[0]?.message || '';
             if (errorMessage.includes('Дубликат ключевого слова') || 
                 errorMessage.includes('duplicate') || 
                 errorMessage.includes('unique')) {
-              console.log(`[KEYWORDS-WEBSITE] Ключевое слово "${keyword.keyword}" вызвало ошибку дубликата - пропускаем`);
+
             }
             skippedCount++;
           }

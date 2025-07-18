@@ -107,7 +107,7 @@ export function BusinessQuestionnaireForm({
   const createQuestionnaireMutation = useMutation({
     mutationFn: async (values: BusinessQuestionnaireFormValues) => {
       try {
-        console.log('Creating questionnaire with data:', { ...values, campaignId });
+
         const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire`, {
           method: 'POST',
           data: {
@@ -115,7 +115,7 @@ export function BusinessQuestionnaireForm({
             campaignId,
           },
         });
-        console.log('Create questionnaire response:', response);
+
         return response;
       } catch (error) {
         console.error('Error in create mutation:', error);
@@ -154,13 +154,6 @@ export function BusinessQuestionnaireForm({
         return null;
       }
       
-      console.log('Updating questionnaire with ID:', questionnaireData.id, 'values:', values);
-      console.log(`Sending PATCH to /api/campaigns/${campaignId}/questionnaire with data:`, {
-        ...values,
-        id: questionnaireData.id,
-        campaignId: campaignId
-      });
-      
       const response = await apiRequest(`/api/campaigns/${campaignId}/questionnaire/${questionnaireData.id}`, {
         method: 'PATCH',
         data: { 
@@ -170,11 +163,11 @@ export function BusinessQuestionnaireForm({
         },
       });
       
-      console.log('Update questionnaire response:', response);
+
       return response;
     },
     onSuccess: (response) => {
-      console.log('Update successful with response:', response);
+
       toast({
         title: 'Анкета обновлена',
         description: 'Анкета успешно обновлена',
@@ -221,13 +214,13 @@ export function BusinessQuestionnaireForm({
 
   // Обработка отправки формы
   const onSubmit = async (values: BusinessQuestionnaireFormValues) => {
-    console.log('Form submit with values:', values);
+
     
     if (questionnaireData?.id) {
-      console.log('Updating existing questionnaire with ID:', questionnaireData.id);
+
       updateQuestionnaireMutation.mutate(values);
     } else {
-      console.log('Creating new questionnaire for campaign:', campaignId);
+
       createQuestionnaireMutation.mutate(values);
     }
   };
@@ -285,8 +278,6 @@ export function BusinessQuestionnaireForm({
     }, 1000);
     
     try {
-      console.log('Starting website analysis for URL:', websiteUrl);
-      
       const response = await apiRequest('/api/website-analysis', {
         method: 'POST',
         data: {
@@ -303,10 +294,6 @@ export function BusinessQuestionnaireForm({
         setProgress(100);
         
         const { data } = response;
-        
-        console.log('Received analysis data:', data);
-        console.log('Analysis data keys:', Object.keys(data));
-        console.log('Full response structure:', response);
         
         // Сохраняем предыдущие значения, чтобы использовать их, если новые не заполнены
         const prevValues = {
@@ -327,9 +314,9 @@ export function BusinessQuestionnaireForm({
         
         // Обновляем поля формы данными, полученными из анализа сайта
         // Сохраняем старые значения, если новые отсутствуют
-        console.log('[FORM-UPDATE] Детальный анализ полученных данных:');
-        console.log('[FORM-UPDATE] Все ключи в data:', Object.keys(data));
-        console.log('[FORM-UPDATE] Количество полей с данными:', Object.values(data).filter(v => v && String(v).trim()).length);
+
+
+
         
         // Проверяем каждое поле отдельно
         const fieldMapping = {
@@ -351,7 +338,7 @@ export function BusinessQuestionnaireForm({
         Object.entries(fieldMapping).forEach(([field, label]) => {
           const value = data[field];
           const hasValue = value && String(value).trim();
-          console.log(`[FORM-UPDATE] ${label} (${field}): ${hasValue ? `"${String(value).substring(0, 50)}..."` : 'ПУСТОЕ'}`);
+
         });
         
         // Заполняем все поля данными от API (полностью заменяем старые данные)
@@ -379,7 +366,7 @@ export function BusinessQuestionnaireForm({
         
         // Получаем значения формы
         const formValues = form.getValues();
-        console.log('After website analysis, form values:', formValues);
+
         
         // Устанавливаем флаг, что анализ сайта был выполнен
         setHasAnalyzedWebsite(true);

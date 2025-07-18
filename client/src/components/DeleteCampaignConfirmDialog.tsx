@@ -84,7 +84,7 @@ export function DeleteCampaignConfirmDialog({
               const keywordsData = await keywordsCheckResponse.json();
               relatedDataCounts.keywords = keywordsData.data?.length || 0;
               if (relatedDataCounts.keywords > 0) hasRelatedData = true;
-              console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.keywords} ключевых слов для кампании`);
+
             }
           } catch (e) {
             console.error('[УДАЛЕНИЕ] Ошибка при проверке ключевых слов:', e);
@@ -100,7 +100,7 @@ export function DeleteCampaignConfirmDialog({
               const trendsData = await trendsCheckResponse.json();
               relatedDataCounts.trends = trendsData.data?.length || 0;
               if (relatedDataCounts.trends > 0) hasRelatedData = true;
-              console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.trends} трендов для кампании`);
+
             }
           } catch (e) {
             console.error('[УДАЛЕНИЕ] Ошибка при проверке трендов:', e);
@@ -116,7 +116,7 @@ export function DeleteCampaignConfirmDialog({
               const contentData = await contentCheckResponse.json();
               relatedDataCounts.content = contentData.data?.length || 0;
               if (relatedDataCounts.content > 0) hasRelatedData = true;
-              console.log(`[УДАЛЕНИЕ] Найдено ${relatedDataCounts.content} контента для кампании`);
+
             }
           } catch (e) {
             console.error('[УДАЛЕНИЕ] Ошибка при проверке контента:', e);
@@ -143,7 +143,7 @@ export function DeleteCampaignConfirmDialog({
       }
       
       // Если подтверждено или нет связанных данных, удаляем кампанию
-      console.log(`[УДАЛЕНИЕ] Отправляем запрос на удаление кампании ${id}${forceDelete ? ' с принудительным удалением данных' : ''}`);
+
       
       const deleteUrl = `/api/campaigns/${id}${forceDelete ? '?forceDelete=true' : ''}`;
       

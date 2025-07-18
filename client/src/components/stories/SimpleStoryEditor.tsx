@@ -32,7 +32,7 @@ export function SimpleStoryEditor({ storyId }: { storyId: string }) {
   // Обработка данных после загрузки
   useEffect(() => {
     if (storyData && typeof storyData === 'object') {
-      console.log('📥 Загружены данные Stories:', storyData);
+
       
       // Простая установка данных без сложной логики
       const story = storyData as any;
@@ -42,14 +42,14 @@ export function SimpleStoryEditor({ storyId }: { storyId: string }) {
         // Данные напрямую в slides
         setSlides(story.slides);
         setStoryTitle(story.title || '');
-        console.log('✅ Stories данные установлены (прямо):', story.slides.length, 'слайдов');
+
       } else if (story?.metadata?.slides) {
         // Данные в metadata.slides  
         setSlides(story.metadata.slides);
         setStoryTitle(story.title || '');
-        console.log('✅ Stories данные установлены (metadata):', story.metadata.slides.length, 'слайдов');
+
       } else {
-        console.log('⚠️ Структура данных Stories не распознана:', story);
+
       }
     }
   }, [storyData, setSlides, setStoryTitle]);
@@ -57,7 +57,7 @@ export function SimpleStoryEditor({ storyId }: { storyId: string }) {
   // Очистка при размонтировании
   useEffect(() => {
     return () => {
-      console.log('🧹 Очистка SimpleStoryEditor');
+
       clearStore();
     };
   }, [clearStore]);
@@ -88,7 +88,7 @@ export function SimpleStoryEditor({ storyId }: { storyId: string }) {
         elements: []
       };
       setSlides([firstSlide]);
-      console.log('✅ Создан первый слайд');
+
     }
   };
 

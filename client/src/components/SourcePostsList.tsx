@@ -36,25 +36,10 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
   
   // Логируем информацию о полученных постах для диагностики
   useEffect(() => {
-    console.log("SourcePostsList received data:", {
-      postsCount: posts?.length || 0,
-      isLoading,
-      firstPost: posts?.[0] || null,
-      allPosts: posts || []
-    });
-    
-    // Проверка наличия null значений в post_content
-    const nullContentPosts = posts?.filter(post => post.post_content === null)?.length || 0;
-    if (nullContentPosts > 0) {
-      console.log(`[SourcePostsList] Найдено ${nullContentPosts} постов с null в post_content из ${posts?.length || 0}`);
-    }
-    
-    // Проверка наличия null значений в image_url
-    const nullImagePosts = posts?.filter(post => post.image_url === null)?.length || 0;
-    if (nullImagePosts > 0) {
-      console.log(`[SourcePostsList] Найдено ${nullImagePosts} постов с null в image_url из ${posts?.length || 0}`);
-    }
+    // Информация для диагностики доступна через React DevTools
   }, [posts, isLoading]);
+    
+
 
   if (isLoading) {
     return (
@@ -106,7 +91,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
           url.includes('scontent.') ||  // домены scontent часто встречаются в CDN Instagram
           (url.includes('.mp4') && (url.includes('ig_') || url.includes('instagram')))
       ) {
-        console.log(`[MediaProcessing] Распознано видео Instagram: ${url}`);
+
         return createStreamVideoUrl(url, postId, 'instagram');
       } else {
         return createStreamVideoUrl(url, postId);
@@ -116,7 +101,7 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
     else {
       // Проверяем, принадлежит ли изображение Instagram
       if (url.includes('instagram.') || url.includes('fbcdn.net') || url.includes('cdninstagram.com') || url.includes('scontent.')) {
-        console.log(`[MediaProcessing] Распознано изображение Instagram: ${url}`);
+
       }
       return createProxyImageUrl(url, postId);
     }
@@ -131,19 +116,14 @@ export function SourcePostsList({ posts, isLoading }: SourcePostsListProps) {
 
   // Обработчик ошибки загрузки изображения
   const handleImageError = (imageUrl: string) => {
-    console.log("Failed to load image:", imageUrl);
+
     setFailedImages(prev => new Set(prev).add(imageUrl));
   };
 
   return (
     <div className="space-y-2">
       {posts.map((post: SourcePost) => {
-        console.log("Post data:", {
-          id: post.id,
-          url: post.url,
-          source_id: post.source_id,
-          generatedUrl: getPostUrl(post)
-        });
+
         return (
           <Popover key={post.id} open={openPopover === post.id} onOpenChange={(open) => handlePopoverChange(open, post.id)}>
             <PopoverTrigger asChild>

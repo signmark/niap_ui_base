@@ -72,7 +72,7 @@ export function ImageUploader({
       setIsUploading(true);
 
       try {
-        console.log('Отправка запроса на загрузку файла...');
+
         const response = await axios.post('/api/imgur/upload-file', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -80,18 +80,18 @@ export function ImageUploader({
         });
 
         // НОВЫЙ КОД: выводим больше информации для отладки
-        console.log('СЫРОЙ ОТВЕТ:', response);
-        console.log('DATA:', response.data);
-        console.log('DATA.DATA:', response.data.data);
-        console.log('DUMP FULL JSON:', JSON.stringify(response.data, null, 2));
-        console.log('RESPONSE URL:', response.data.url);
-        console.log('RESPONSE LINK:', response.data.link);
+
+
+
+
+
+
 
         // Просто берем URL из корня ответа - после изменения серверного кода
         const imageUrl = response.data.url || response.data.link;
 
         if (imageUrl) {
-          console.log('ИТОГОВЫЙ URL изображения для вставки (из корня):', imageUrl);
+
           onChange(imageUrl);
           // Используем прокси URL для превью изображения
           setPreviewUrl(getProxiedImageUrl(imageUrl));
@@ -109,15 +109,15 @@ export function ImageUploader({
           if (response.data.data) {
             if (response.data.data.url) {
               nestedUrl = response.data.data.url;
-              console.log('Найден URL в response.data.data.url:', nestedUrl);
+
             } else if (response.data.data.link) {
               nestedUrl = response.data.data.link;
-              console.log('Найден URL в response.data.data.link:', nestedUrl);
+
             }
           }
 
           if (nestedUrl) {
-            console.log('ИТОГОВЫЙ URL изображения для вставки (из data):', nestedUrl);
+
             onChange(nestedUrl);
             // Используем прокси URL для превью изображения
             setPreviewUrl(getProxiedImageUrl(nestedUrl));

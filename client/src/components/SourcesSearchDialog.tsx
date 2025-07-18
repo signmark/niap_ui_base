@@ -119,13 +119,13 @@ export function SourcesSearchDialog({
   const handleSearch = async () => {
     const selectedPlatforms = platforms.filter(p => p.checked).map(p => p.value);
     
-    console.log("🔍 Начинаем поиск источников:");
-    console.log("🔑 Ключевое слово:", keyword);
-    console.log("📂 ID кампании:", campaignId);
-    console.log("📱 Выбранные платформы:", selectedPlatforms);
+
+
+
+
     
     if (selectedPlatforms.length === 0) {
-      console.log("❌ Ошибка: не выбраны платформы");
+
       toast({
         title: "Выберите платформы",
         description: "Пожалуйста, выберите хотя бы одну платформу для поиска",

@@ -33,7 +33,7 @@ export function KeywordTable({
   onSelectAll,
   onSaveSelected
 }: KeywordTableProps) {
-  console.log("KeywordTable props:", { keywords, searchResults });
+
   
   // Состояние для сортировки результатов поиска
   const [searchSortField, setSearchSortField] = useState<SortField>('keyword');

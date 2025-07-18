@@ -74,7 +74,7 @@ export function VideoUploader({
       setIsUploading(true);
 
       try {
-        console.log('Отправка запроса на загрузку видео файла...');
+
 
         // Получаем токен авторизации из localStorage
         const token = localStorage.getItem('auth_token');
@@ -86,7 +86,7 @@ export function VideoUploader({
           }
         });
 
-        console.log('Ответ от API загрузки видео:', response.data);
+
 
         if (response.data && response.data.success && (response.data.url || response.data.videoUrl)) {
           const videoUrl = response.data.url || response.data.videoUrl;

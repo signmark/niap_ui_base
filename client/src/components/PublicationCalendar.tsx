@@ -349,29 +349,29 @@ export default function PublicationCalendar({
       const scheduledPosts = content.filter(post => post.status === 'scheduled');
       const publishedPosts = content.filter(post => post.status === 'published');
       
-      console.log(`КАЛЕНДАРЬ ОТЛАДКА: Всего публикаций: ${content.length}`);
-      console.log(`КАЛЕНДАРЬ ОТЛАДКА: С socialPlatforms: ${withSocialPlatforms.length}`);
-      console.log(`КАЛЕНДАРЬ ОТЛАДКА: Запланированных: ${scheduledPosts.length}`);
-      console.log(`КАЛЕНДАРЬ ОТЛАДКА: Опубликованных: ${publishedPosts.length}`);
+
+
+
+
       
       if (scheduledPosts.length > 0) {
-        console.log(`КАЛЕНДАРЬ ОТЛАДКА: Запланированные посты:`);
+
         scheduledPosts.slice(0, 3).forEach((post, i) => {
-          console.log(`  ${i + 1}. ID: ${post.id}, status: ${post.status}, scheduledAt: ${post.scheduledAt}, platforms: ${Object.keys(post.socialPlatforms || {}).join(', ')}`);
+
           
           // Подробная информация о платформах
           if (post.socialPlatforms) {
             Object.entries(post.socialPlatforms).forEach(([platform, data]) => {
-              console.log(`    Platform ${platform}: status=${data?.status}, scheduledAt=${data?.scheduledAt}`);
+
             });
           }
         });
       }
       
       if (withSocialPlatforms.length > 0) {
-        console.log(`КАЛЕНДАРЬ ОТЛАДКА: Первые 3 публикации с платформами:`);
+
         withSocialPlatforms.slice(0, 3).forEach((post, i) => {
-          console.log(`  ${i + 1}. publishedAt: ${post.publishedAt}, scheduledAt: ${post.scheduledAt}, platforms: ${Object.keys(post.socialPlatforms || {}).join(', ')}`);
+
         });
       }
     }
@@ -416,7 +416,7 @@ export default function PublicationCalendar({
       
       // Отладка для запланированных постов на 13 июня
       if (day.getDate() === 13 && index < 5) {
-        console.log(`КАЛЕНДАРЬ 13 ИЮНЯ: Post ${post.id} - status: ${post.status}`);
+
       }
       
       // Проверяем ТОЛЬКО scheduledAt для запланированных постов
@@ -455,7 +455,7 @@ export default function PublicationCalendar({
       
       // Отладочная информация для первых 5 постов
       if (postsForDay.length <= 5 && day.getDate() === 13) {
-        console.log(`КАЛЕНДАРЬ 13 ИЮНЯ: Post ${post.id.substring(0, 8)} - status: ${status}, type: ${type}`);
+
       }
       
       // Инициализация записи, если она еще не существует

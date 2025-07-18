@@ -34,7 +34,7 @@ export async function refreshAuthToken(): Promise<boolean> {
         if (data.token && data.user_id) {
           // Обновляем токен в хранилище
           useAuthStore.getState().setAuth(data.token, data.user_id);
-          console.log('Токен успешно обновлен через refresh token');
+
           return true;
         }
       } else {
@@ -61,7 +61,7 @@ export async function refreshAuthToken(): Promise<boolean> {
         if (data.token && data.user_id) {
           // Обновляем токен в хранилище
           useAuthStore.getState().setAuth(data.token, data.user_id);
-          console.log('Токен успешно обновлен через повторную авторизацию');
+
           return true;
         }
       }

@@ -231,7 +231,7 @@ ${text}`;
       return response.data.content || response.data.text || response.data.improvedText;
     },
     onSuccess: (data) => {
-      console.log('Исходный ответ AI:', data);
+
       
       let processedText = data;
       
@@ -270,7 +270,7 @@ ${text}`;
           .replace(/`(.*?)`/g, '<code>$1</code>'); // `код` -> моноширинный
       }
       
-      console.log('Обработанный HTML:', processedText);
+
       
       setEnhancedText(processedText);
       

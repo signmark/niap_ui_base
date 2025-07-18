@@ -179,7 +179,7 @@ export function ContentPlanGenerator({
   // Мутация для генерации контент-плана через n8n
   const generateContentPlanMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('Отправляем запрос на генерацию контент-плана:', data);
+
       
       // Основной запрос через API бэкенда (без прямого вызова n8n webhook)
       return await apiRequest('/api/content-plan/generate', {
@@ -189,12 +189,12 @@ export function ContentPlanGenerator({
     },
     onSuccess: (response) => {
       setIsGenerating(false);
-      console.log('Успешный ответ от API генерации контент-плана:', response);
+
       
       try {
         // Подробное логирование для отладки структуры ответа
-        console.log('Тип ответа:', typeof response);
-        console.log('Ответ является массивом?', Array.isArray(response));
+
+
         
         // Обрабатываем различные форматы ответа
         let contentPlanData = null;
@@ -202,38 +202,38 @@ export function ContentPlanGenerator({
         // Формат 1: { success: true, data: { contentPlan: [...] } }
         if (response.success && response.data && response.data.contentPlan) {
           contentPlanData = response.data.contentPlan;
-          console.log('Обнаружен формат 1: success->data->contentPlan');
-          console.log('Содержимое contentPlan:', JSON.stringify(response.data.contentPlan).substring(0, 300) + '...');
+
+
         } 
         // Формат 2: [{ success: true, data: { contentPlan: [...] } }]
         else if (Array.isArray(response) && response.length > 0 && response[0].data?.contentPlan) {
           contentPlanData = response[0].data.contentPlan;
-          console.log('Обнаружен формат 2: [0]->data->contentPlan');
+
         }
         // Формат 3: [{ success: true, contentPlan: [...] }]
         else if (Array.isArray(response) && response.length > 0 && response[0].contentPlan) {
           contentPlanData = response[0].contentPlan;
-          console.log('Обнаружен формат 3: [0]->contentPlan');
+
         }
         // Формат 4: { data: { contentPlan: [...] } }
         else if (response.data?.contentPlan) {
           contentPlanData = response.data.contentPlan;
-          console.log('Обнаружен формат 4: data->contentPlan');
+
         }
         // Формат 5: { contentPlan: [...] }
         else if (response.contentPlan) {
           contentPlanData = response.contentPlan;
-          console.log('Обнаружен формат 5: contentPlan');
+
         }
         // Формат 6: просто массив элементов контент-плана
         else if (Array.isArray(response) && response.length > 0 && response[0].title) {
           contentPlanData = response;
-          console.log('Обнаружен формат 6: массив элементов контента');
+
         }
         
         // Проверяем, что получили валидные данные
         if (contentPlanData && Array.isArray(contentPlanData) && contentPlanData.length > 0) {
-          console.log(`Успешно извлечен контент-план (${contentPlanData.length} элементов)`);
+
           toast({
             description: `Контент-план успешно сгенерирован (${contentPlanData.length} постов)`,
           });

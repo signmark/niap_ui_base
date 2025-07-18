@@ -37,7 +37,6 @@ const isTokenValid = checkTokenExpiration(storedToken);
 
 // Если токен истек, очищаем localStorage
 if (storedToken && !isTokenValid) {
-  console.log('Токен истек при загрузке, очищаем данные');
   localStorage.removeItem('auth_token');
   localStorage.removeItem('user_id');
   localStorage.removeItem('is_admin');
@@ -64,7 +63,6 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('user_id');
         }
 
-        console.log(`Сохранение авторизации: token=${!!token}, userId=${userId}`);
         set({ 
           token, 
           userId, 
@@ -72,7 +70,6 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       clearAuth: () => {
-        console.log('Очистка данных авторизации');
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('refresh_token');
@@ -81,7 +78,6 @@ export const useAuthStore = create<AuthState>()(
         // Сбрасываем выбранную кампанию при выходе пользователя из системы
         const clearCampaign = useCampaignStore.getState().clearSelectedCampaign;
         if (clearCampaign) {
-          console.log('Сброс выбранной кампании при смене пользователя');
           clearCampaign();
         }
         
@@ -96,15 +92,11 @@ export const useAuthStore = create<AuthState>()(
         // Получить действующий токен авторизации
         const state = get();
         const token = state.token || localStorage.getItem('auth_token');
-        if (!token) {
-          console.log('Токен авторизации не найден');
-        }
         return token;
       },
 
       setIsAdmin: (isAdmin) => {
         // Сохраняем статус администратора
-        console.log('Устанавливаем статус администратора:', isAdmin);
         if (isAdmin) {
           localStorage.setItem('is_admin', 'true');
         } else {
@@ -114,12 +106,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkIsAdmin: async () => {
-        console.log('Проверка статуса администратора');
         try {
           // Получаем текущий токен
           const token = get().getAuthToken();
           if (!token) {
-            console.log('Невозможно проверить права администратора - пользователь не авторизован');
             get().setIsAdmin(false);
             return false;
           }
@@ -129,7 +119,6 @@ export const useAuthStore = create<AuthState>()(
             const payload = JSON.parse(atob(token.split('.')[1]));
             const now = Math.floor(Date.now() / 1000);
             if (payload.exp && payload.exp < (now + 30)) {
-              console.log('Не удалось обновить токен авторизации, перенаправляем на страницу входа');
               localStorage.clear();
               sessionStorage.clear();
               get().logout();
@@ -137,15 +126,12 @@ export const useAuthStore = create<AuthState>()(
               return false;
             }
           } catch (e) {
-            console.log('Поврежденный токен, перенаправляем на страницу входа');
             localStorage.clear();
             sessionStorage.clear();
             get().logout();
             window.location.href = '/login';
             return false;
           }
-
-          console.log('Отправка API запроса на /auth/is-admin c токеном', token.substring(0, 10) + '...');
           const response = await fetch('/api/auth/is-admin', {
             method: 'GET',
             headers: {
@@ -156,14 +142,11 @@ export const useAuthStore = create<AuthState>()(
           });
           
           const data = await response.json();
-          console.log('Ответ сервера на запрос проверки админа:', data);
           
           if (data && data.success && data.isAdmin === true) {
-            console.log('Пользователь является администратором');
             get().setIsAdmin(true);
             return true;
           } else {
-            console.log('Пользователь не является администратором');
             get().setIsAdmin(false);
             return false;
           }

@@ -36,7 +36,7 @@ export const setupTokenRefresh = (expires: number) => {
   // Планируем обновление на 80% от времени жизни токена
   const refreshIn = Math.max(Math.floor(expiresMs * 0.8), 1000); // Минимум 1 секунда
   
-  console.log(`Токен истечет через ${expiresMs/1000} секунд, обновление запланировано через ${refreshIn/1000} секунд`);
+
   
   refreshTimeout = setTimeout(() => {
     console.log('Запущено обновление токена по расписанию');
@@ -60,10 +60,10 @@ export const refreshAccessToken = async () => {
   }
 
   try {
-    console.log('Начинаем обновление токена');
+
     
     // Используем только локальный API endpoint для обновления токена
-    console.log('Используем локальный API для обновления токена');
+
     const apiResponse = await fetch('/api/auth/refresh', {
       method: 'POST',
       headers: {
@@ -91,7 +91,7 @@ export const refreshAccessToken = async () => {
       throw new Error('Неверный формат ответа при обновлении токена');
     }
     
-    console.log('Токен успешно обновлен через API');
+
     
     // Обновляем токены в localStorage
     localStorage.setItem('auth_token', data.token);
@@ -107,7 +107,7 @@ export const refreshAccessToken = async () => {
     const expires = data.expires_at || 900000; // 15 минут по умолчанию
     setupTokenRefresh(expires);
     
-    console.log('Токен успешно обновлен, длина нового токена:', data.token.length);
+
     
     return data.token;
   } catch (error) {

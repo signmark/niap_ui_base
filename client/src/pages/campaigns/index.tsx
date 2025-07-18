@@ -41,8 +41,6 @@ export default function Campaigns() {
       const token = localStorage.getItem('auth_token');
       const storedUserId = localStorage.getItem('user_id');
       
-      console.log(`Авторизован с токеном, длина: ${token ? token.length : 'токен отсутствует'}`);
-      
       if (!token) {
         throw new Error("Отсутствует токен авторизации");
       }
@@ -64,7 +62,6 @@ export default function Campaigns() {
       }
       
       const result = await response.json();
-      console.log('Campaigns loaded:', result.data?.length || 0);
       return result;
     },
     enabled: !!(userId || localStorage.getItem('user_id')), // Запрос выполняется только при наличии userId
@@ -278,7 +275,6 @@ export default function Campaigns() {
                     onClick={() => {
                       // Устанавливаем кампанию как выбранную
                       setSelectedCampaign(campaign.id, campaign.name);
-                      console.log(`Выбрана кампания: ${campaign.name} (${campaign.id})`);
                       // Перенаправляем на страницу кампании
                       navigate(`/campaigns/${campaign.id}`);
                     }}

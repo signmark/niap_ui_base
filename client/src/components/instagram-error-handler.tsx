@@ -45,7 +45,7 @@ export function InstagramErrorDisplay({ videoUrl }: { videoUrl: string }) {
  * @param videoUrl URL оригинального видео для перенаправления
  */
 export function handleInstagramVideoError(videoElement: HTMLVideoElement, videoUrl: string) {
-  console.log(`[TrendDetail] Ошибка воспроизведения видео Instagram: ${videoUrl}`);
+
   
   // Скрываем видеоэлемент
   videoElement.style.display = 'none';

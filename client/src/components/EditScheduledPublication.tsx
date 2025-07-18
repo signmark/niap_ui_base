@@ -156,7 +156,7 @@ export default function EditScheduledPublication({
       try {
         // Пытаемся обновить токен перед отправкой запроса
         await refreshAuthToken();
-        console.log("Попытка обновления токена выполнена");
+
       } catch (refreshError) {
         console.warn('Ошибка обновления токена:', refreshError);
       }
@@ -181,7 +181,7 @@ export default function EditScheduledPublication({
           
           // ЗАЩИТА: Обновляем только время, но сохраняем статус published если он есть
           const preservedStatus = existingData.status === 'published' ? 'published' : 'scheduled';
-          console.log(`🔒 ЗАЩИТА СТАТУСА для ${platform}: существующий статус = ${existingData.status}, сохраняем = ${preservedStatus}`);
+
           
           socialPlatforms[platform] = {
             ...existingData,
@@ -219,7 +219,7 @@ export default function EditScheduledPublication({
       
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
-        console.log('Добавлен токен авторизации в заголовки запроса:', authToken.substring(0, 10) + '...');
+
       } else {
         console.warn('Токен авторизации не найден в localStorage!');
         toast({
@@ -262,9 +262,9 @@ export default function EditScheduledPublication({
 
   // Обработчик изменения выбора платформы
   const handlePlatformChange = (platform: SafeSocialPlatform, isSelected: boolean) => {
-    console.log(`Platform ${platform} changed to: ${isSelected}`);
+
     form.setValue(`selectedPlatforms.${platform}`, isSelected);
-    console.log('Updated selectedPlatforms:', form.getValues('selectedPlatforms'));
+
   };
 
   return (

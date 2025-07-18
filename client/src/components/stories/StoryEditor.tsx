@@ -116,7 +116,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   // Cleanup при покидании компонента - НИКОГДА не очищаем Store при редактировании
   useEffect(() => {
     return () => {
-      console.log('🧹 StoryEditor unmounting - БЕЗ очистки состояния');
+
       // НЕ очищаем store - элементы должны сохраняться в памяти
       // resetStore(); - УБРАНО
       // isLoadedRef.current = false; - УБРАНО
@@ -137,33 +137,33 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   useEffect(() => {
     const prevStoryId = getStoredStoryId();
     const hasNoSlides = slides.length === 0;
-    console.log(`🔍 ПРОВЕРКА ЗАГРУЗКИ: prevStoryId=${prevStoryId}, currentStoryId=${finalStoryId}, isNewStory=${isNewStory}, hasNoSlides=${hasNoSlides}`);
+
     
     // Проверяем, изменился ли Story ID (включая переход от null к ID)
     const storyIdChanged = prevStoryId !== finalStoryId;
     
     if (storyIdChanged && finalStoryId && !isNewStory) {
-      console.log('🔄 ЗАГРУЖАЕМ СУЩЕСТВУЮЩУЮ STORIES: очищаем store и загружаем из БД');
+
       resetStore();
       setStoredStoryId(finalStoryId);
       loadFromServer();
     } else if (finalStoryId && hasNoSlides && !isNewStory) {
-      console.log('🔄 СУЩЕСТВУЮЩАЯ STORIES БЕЗ СЛАЙДОВ: загружаем из БД');
+
       loadFromServer();
     } else if (!finalStoryId && isNewStory) {
       // Для новых Stories проверяем - если это переход от существующей Stories к новой
       const wasViewingExistingStory = prevStoryId && prevStoryId !== 'null';
       
       if (wasViewingExistingStory || hasNoSlides) {
-        console.log('✨ СОЗДАНИЕ НОВОЙ STORIES - очищаем store и создаем чистый слайд');
+
         resetStore();
         initializeSlides();
       } else {
-        console.log('✨ НОВАЯ STORIES УЖЕ В РАБОТЕ - продолжаем редактирование в памяти');
+
       }
       setStoredStoryId(null); // Для новых stories сохраняем null
     } else {
-      console.log('🔄 ДАННЫЕ УЖЕ КОРРЕКТНЫЕ: пропускаем загрузку');
+
     }
   }, [finalStoryId, isNewStory, slides.length]);
 
@@ -173,7 +173,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     if (!currentSlide) return;
     
     const elementsCount = currentSlide.elements?.length || 0;
-    console.log(`Slide ${currentSlideIndex} has ${elementsCount} elements`);
+
     
     // Обновляем selectedElement если он изменился в store
     if (selectedElement) {
@@ -182,7 +182,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
         setSelectedElement(updatedElement);
       } else if (!updatedElement) {
         // Если выбранный элемент исчез из слайда, сбрасываем выделение
-        console.log(`Selected element ${selectedElement.id} not found in current slide, clearing selection`);
+
         setSelectedElement(null);
       }
     }
@@ -325,9 +325,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
   };
 
   const addElement = useCallback((elementType: StoryElement['type']) => {
-    console.log('🔧 Adding element type:', elementType, 'to slide:', currentSlideIndex);
-    console.log('Current slides count:', slides.length);
-    console.log('Current slide exists:', !!slides[currentSlideIndex]);
+
+
+
     
     if (!slides[currentSlideIndex]) {
       console.error('No slide available at index:', currentSlideIndex);
@@ -343,7 +343,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     const newElement = storeAddElement(elementType);
     
     if (newElement) {
-      console.log('✅ Элемент добавлен через store:', newElement.id);
+
       
       // Сохраняем в localStorage текущие данные из store
       const currentStoreData = useStoryStore.getState();
@@ -425,8 +425,8 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
       const url = isEdit ? `/api/campaign-content/${storyId}` : '/api/campaign-content';
       const method = isEdit ? 'PATCH' : 'POST';
 
-      console.log(`${isEdit ? 'Обновление' : 'Создание'} Stories с ${slides.length} слайдами`);
-      console.log('🌐 Отправляем запрос:', { url, method, storyData });
+
+
 
       // Используем apiRequest для автоматического обновления токена
       const result = await apiRequest(url, {
@@ -434,7 +434,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
         data: storyData  // ИСПРАВЛЕНО: используем data вместо body
       });
       
-      console.log('✅ Ответ от сервера:', result);
+
       
       const actualSlidesCount = slides?.length || 0;
       toast({
@@ -442,7 +442,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
         description: `История "${storyTitle}" ${isEdit ? 'обновлена' : 'создана'} с ${actualSlidesCount} слайдами`
       });
       
-      console.log('Stories успешно сохранена');
+
       
       // Инвалидируем кэш для обновления списка контента
       queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
@@ -471,18 +471,18 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     if (!finalStoryId) return;
     
     try {
-      console.log('📥 ЗАГРУЖАЕМ STORIES ИЗ ДИРЕКТУС БД для ID:', finalStoryId);
+
       
       const data = await apiRequest(`/api/campaign-content/${finalStoryId}`);
       
       if (data && data.data) {
         const content = data.data;
-        console.log('📥 Загружены данные из Директус БД:', content);
+
         
         setStoryTitle(content.title || 'Новая история');
         
         if (content.metadata && content.metadata.slides && content.metadata.slides.length > 0) {
-          console.log('📋 Найдены слайды в Директус БД:', content.metadata.slides.length);
+
           
           const storySlides = content.metadata.slides.map((slide: any, index: number) => ({
             id: slide.id || `slide-${index}`,
@@ -495,9 +495,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
           // ПРИНУДИТЕЛЬНО перезаписываем данные в Store данными из Директус БД
           setSlides(storySlides);
           setCurrentSlideIndex(0);
-          console.log('✅ ДАННЫЕ ЗАГРУЖЕНЫ ИЗ ДИРЕКТУС БД:', storySlides.length, 'слайдов');
+
         } else {
-          console.log('📝 Слайды не найдены в Директус БД');
+
           toast({
             title: "Данные не найдены",
             description: "В Директус БД нет сохраненных слайдов для этой истории",
@@ -547,7 +547,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
     if (slides.length > 0) {
       const dataToSave = { slides, title: storyTitle };
       localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
-      console.log('💾 Saved to localStorage:', slides.length, 'slides');
+
     }
   }, [slides, storyTitle, localStorageKey]);
 
@@ -653,7 +653,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
                           className="px-2 py-1 border-2 border-transparent group-hover:border-white/50 rounded cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            console.log('🔤 Text element clicked, selecting:', element.id);
+
                             setSelectedElement(element);
                           }}
                           title="Кликните для выбора и редактирования в панели"
@@ -818,7 +818,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
                         id="text-content"
                         value={selectedElement.content.text || ''}
                         onChange={(e) => {
-                          console.log('🔤 Text changing to:', e.target.value);
+
                           const newContent = { ...selectedElement.content, text: e.target.value };
                           
                           // Сначала обновляем локальный selectedElement
@@ -852,7 +852,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
                         step={2}
                         value={[selectedElement.content.fontSize || 24]}
                         onValueChange={(value) => {
-                          console.log('📏 Font size changing to:', value[0]);
+
                           const newContent = { ...selectedElement.content, fontSize: value[0] };
                           
                           setSelectedElement({
@@ -874,7 +874,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
                         type="color"
                         value={selectedElement.content.color || '#ffffff'}
                         onChange={(e) => {
-                          console.log('🎨 Color changing to:', e.target.value);
+
                           const newContent = { ...selectedElement.content, color: e.target.value };
                           
                           setSelectedElement({

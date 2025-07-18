@@ -100,10 +100,10 @@ export function SettingsDialog() {
     queryKey: ["user_api_keys"],
     queryFn: async () => {
       try {
-        console.log('Fetching user API keys using the API route');
+
         const response = await api.get('/user-api-keys');
         if (response.data?.success) {
-          console.log(`Successfully fetched ${response.data?.data?.length || 0} API keys`);
+
           return response.data?.data || [];
         } else {
           console.error('Error in API response:', response.data);
@@ -154,7 +154,7 @@ export function SettingsDialog() {
   // Delete API key mutation
   const deleteMutation = useMutation({
     mutationFn: async (keyId: string) => {
-      console.log(`Удаление ключа с ID: ${keyId}`);
+
       // Фиксим проблему с двойным префиксом /api/api/ при работе с маршрутами
       await api.delete(`/user-api-keys/${keyId}`);
     },
@@ -264,7 +264,7 @@ export function SettingsDialog() {
     
     try {
       // First save the key
-      console.log('Saving API settings before testing');
+
       const saveSuccess = await saveSettings();
       if (!saveSuccess) {
         setTestingState({ status: 'error', message: 'Не удалось сохранить ключ перед тестированием' });
@@ -323,13 +323,13 @@ export function SettingsDialog() {
       // Special endpoint for Claude API testing
       if (keyType === 'claude') {
         try {
-          console.log('Sending Claude key for verification, length:', keyValue.length);
+
           
           const response = await api.post('/claude/test-api-key', {
             apiKey: keyValue
           });
           
-          console.log('Server response for Claude key test:', response.data);
+
           
           if (response.data.success && response.data.isValid === true) {
             console.log('Claude API key passed validation');

@@ -37,13 +37,13 @@ export default function Register() {
 
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
-      console.log('Attempting registration with:', values.email);
+
 
       // Отправляем запрос на регистрацию через наш API
       const { getFullApiUrl } = await import('@/lib/api-config');
       const apiUrl = getFullApiUrl('REGISTER');
       
-      console.log('Registration API URL:', apiUrl);
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -64,7 +64,7 @@ export default function Register() {
       }
 
       const result = await response.json();
-      console.log('Registration successful:', result);
+
 
       toast({
         title: "Регистрация успешна! 🎉",

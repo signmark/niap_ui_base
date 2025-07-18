@@ -75,7 +75,7 @@ export function KeywordSelector({
 
   useEffect(() => {
     if (campaignId) {
-      console.log("Loading keywords for campaign:", campaignId);
+
       loadExistingKeywords();
     }
   }, [campaignId]);
@@ -231,9 +231,9 @@ export function KeywordSelector({
       // Получаем только строковые значения ключевых слов для обновления UI
       const newKeywordStrings = newKeywords.map(item => item.keyword);
       
-      console.log("Выбранные ключевые слова для сохранения:", allSelectedKeywords);
-      console.log("Новые ключевые слова:", newKeywords);
-      console.log("Дубликаты ключевых слов:", duplicateKeywords);
+
+
+
       
       // Формируем информативное сообщение
       let message = '';
@@ -282,12 +282,12 @@ export function KeywordSelector({
   const handleRemoveKeyword = (keyword: string) => {
     // Проверяем, что ключевое слово есть в существующих (чтобы не пытаться удалить то, чего нет)
     if (!existingKeywords.includes(keyword)) {
-      console.log(`Ключевое слово "${keyword}" не найдено в списке существующих`);
+
       return;
     }
     
     // Логируем действие для отладки
-    console.log(`Удаление ключевого слова "${keyword}" через KeywordSelector`);
+
     
     // Оптимистично удаляем ключевое слово из нашего локального состояния
     setSelectedItems(prev => prev.filter(item => item !== keyword));

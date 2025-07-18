@@ -168,12 +168,12 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
   };
 
   const renderElements = () => {
-    console.log('Rendering elements. Slide:', slide);
-    console.log('Elements:', slide?.elements);
-    console.log('Elements count:', slide?.elements?.length || 0);
+
+
+
     
     if (!slide?.elements || slide.elements.length === 0) {
-      console.log('No elements to render - showing placeholder');
+
       return (
         <div className="absolute inset-0 flex items-center justify-center text-white/70">
           <div className="text-center">
@@ -184,9 +184,9 @@ export default function StoryCanvas({ slide, storyId, onSlideUpdate }: StoryCanv
       );
     }
 
-    console.log('Rendering elements:', slide.elements.length);
+
     return slide.elements.map((element, index) => {
-      console.log(`Rendering element ${index}:`, element);
+
       return (
         <StoryElement
           key={element.id}

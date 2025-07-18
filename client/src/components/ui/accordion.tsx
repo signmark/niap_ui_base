@@ -83,7 +83,6 @@ const AccordionTrigger = React.forwardRef<
     
     if (value && campaignId) {
       const url = getFullscreenUrl(value, campaignId);
-      console.log('Navigating to URL:', url, 'for value:', value, 'campaignId:', campaignId);
       
       if (url) {
         // Используем wouter для навигации вместо window.location

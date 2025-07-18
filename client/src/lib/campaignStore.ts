@@ -55,7 +55,6 @@ export const useCampaignStore = create<CampaignState>()(
           // Проверяем, не удалена ли кампания
           const { isDeleted } = get();
           if (isDeleted(campaign.id)) {
-            console.log(`Попытка выбрать удаленную кампанию: ${campaign.id}`);
             return;
           }
           
@@ -63,7 +62,6 @@ export const useCampaignStore = create<CampaignState>()(
           localStorage.setItem('selected_campaign_id', campaign.id);
           localStorage.setItem('selected_campaign_name', campaign.name);
           
-          console.log(`Установлена активная кампания: id=${campaign.id}, name=${campaign.name}`);
           set({ 
             selectedCampaign: campaign,
             selectedCampaignId: campaign.id, 
@@ -77,7 +75,6 @@ export const useCampaignStore = create<CampaignState>()(
           // Проверяем, не удалена ли кампания
           const { isDeleted } = get();
           if (isDeleted(id)) {
-            console.log(`Попытка выбрать удаленную кампанию: ${id}`);
             return;
           }
           
@@ -85,7 +82,6 @@ export const useCampaignStore = create<CampaignState>()(
           localStorage.setItem('selected_campaign_id', id);
           localStorage.setItem('selected_campaign_name', name);
           
-          console.log(`Установлена активная кампания: id=${id}, name=${name}`);
           set({ 
             selectedCampaign: { id, name },
             selectedCampaignId: id, 
@@ -95,7 +91,6 @@ export const useCampaignStore = create<CampaignState>()(
       },
       
       clearSelectedCampaign: () => {
-        console.log('Очистка данных о выбранной кампании');
         localStorage.removeItem('selected_campaign_id');
         localStorage.removeItem('selected_campaign_name');
         set({ 
@@ -107,7 +102,6 @@ export const useCampaignStore = create<CampaignState>()(
       
       // Новая функция для отметки кампании как удаленной
       markCampaignAsDeleted: (id: string) => {
-        console.log(`Кампания ${id} помечена как удаленная`);
         const { deletedCampaignIds, selectedCampaignId } = get();
         
         // Добавляем ID в список удаленных
@@ -116,7 +110,6 @@ export const useCampaignStore = create<CampaignState>()(
         
         // Если удаленная кампания была выбрана, сбрасываем выбор
         if (selectedCampaignId === id) {
-          console.log('Сброс выбранной кампании, так как она была удалена');
           localStorage.removeItem('selected_campaign_id');
           localStorage.removeItem('selected_campaign_name');
           set({
@@ -134,7 +127,6 @@ export const useCampaignStore = create<CampaignState>()(
           queryClient.setQueryData(['/api/campaigns', userId], (oldData: any) => {
             if (!oldData || !oldData.data) return oldData;
             
-            console.log('Удаляем кампанию из кэша React Query:', id);
             return {
               ...oldData,
               data: oldData.data.filter((campaign: any) => campaign.id !== id)

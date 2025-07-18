@@ -50,16 +50,11 @@ export function TrendDetailDialog({
   // Обработка медиа данных из темы
   if (topic) {
     try {
-      console.log("[TrendDetail] Исходные данные медиа в теме:", {
-        mediaLinks: topic.mediaLinks,
-        media_links: topic.media_links,
-        hasVideoProp: topic.hasVideos || topic.hasVideo,
-        hasVideo: Boolean(topic.hasVideos || topic.hasVideo)
-      });
+      // Диагностическая информация доступна через React DevTools
 
       // Проверяем, есть ли явное указание на наличие видео
       if (topic.hasVideos || topic.hasVideo) {
-        console.log("[TrendDetail] Тренд имеет явное указание на видео");
+
       }
       
       // Пробуем сначала обработать новое поле mediaLinks
@@ -80,10 +75,10 @@ export function TrendDetailDialog({
               cleanMediaLinks = cleanMediaLinks.replace(/\\"/g, '"');
             }
             
-            console.log("[TrendDetail] Очищенная строка mediaLinks:", cleanMediaLinks);
+
             
             const parsedData = JSON.parse(cleanMediaLinks);
-            console.log("[TrendDetail] Распарсенные данные:", parsedData);
+
             
             // Обработка разных форматов структуры данных
             if (parsedData.images && Array.isArray(parsedData.images) && parsedData.images.length > 0) {
@@ -92,7 +87,7 @@ export function TrendDetailDialog({
             
             if (parsedData.videos && Array.isArray(parsedData.videos) && parsedData.videos.length > 0) {
               mediaData.videos = parsedData.videos.filter((url: string) => url && typeof url === 'string' && url.trim() !== '');
-              console.log("[TrendDetail] Найдены URL видео после фильтрации:", mediaData.videos);
+
             }
             
             // Проверка формата с постами
@@ -103,7 +98,7 @@ export function TrendDetailDialog({
                 }
                 if (post.video_url) {
                   mediaData.videos.push(post.video_url);
-                  console.log("[TrendDetail] Найдено видео в посте:", post.video_url);
+
                 }
               }
             }
@@ -146,15 +141,7 @@ export function TrendDetailDialog({
   // Используем либо найденное видео URL, либо явный флаг hasVideo из темы
   const hasVideo = Boolean(videoUrl) || Boolean(topic.hasVideos || topic.hasVideo);
 
-  // Отладочная информация
-  console.log("[TrendDetail] Видеоданные:", {
-    mediaData,
-    videoUrl,
-    hasVideo,
-    mediaLinksSource: topic.mediaLinks || topic.media_links,
-    topicHasVideo: topic.hasVideo,
-    topicHasVideos: topic.hasVideos
-  });
+  // Отладочная информация доступна через React DevTools
   
   // Обрабатываем случай, когда в videoUrl приходит еще экранированная строка
   let processedVideoUrl = videoUrl;
@@ -167,7 +154,7 @@ export function TrendDetailDialog({
       }
       // Удаляем лишние экранирования
       tempUrl = tempUrl.replace(/\\\"/g, '"').replace(/\\\\/g, '\\');
-      console.log("[TrendDetail] Обработан экранированный URL видео:", tempUrl);
+
       processedVideoUrl = tempUrl;
     } catch (e) {
       console.error("[TrendDetail] Ошибка при обработке экранированного URL видео:", e);
@@ -192,7 +179,7 @@ export function TrendDetailDialog({
   );
     
   if (isInstagramVideo) {
-    console.log(`[TrendDetail] Определено как Instagram видео: ${isInstagramVideo}`);
+
   }
   
   // Состояние для хранения информации о видео ВКонтакте
@@ -219,12 +206,12 @@ export function TrendDetailDialog({
   React.useEffect(() => {
     // Специальная обработка для видео ВКонтакте
     if (videoUrl && videoUrl.includes('vk.com/video')) {
-      console.log("[TrendDetail] Обрабатываем видео ВКонтакте:", videoUrl);
+
       
       fetch(`/api/vk-video-info?url=${encodeURIComponent(videoUrl)}`)
         .then(response => response.json())
         .then(data => {
-          console.log("[TrendDetail] Получена информация о видео ВК:", data);
+
           if (data.success) {
             setVkVideoInfo(data);
           } else {
@@ -330,10 +317,10 @@ export function TrendDetailDialog({
                       crossOrigin="anonymous"
                       onLoadStart={() => {
                         setVideoLoadError(false);
-                        console.log("[TrendDetail] Начало загрузки Instagram видео напрямую");
+
                       }}
                       onError={(e) => {
-                        console.log(`[TrendDetail] Ошибка воспроизведения Instagram видео напрямую: ${processedVideoUrl}`, e);
+
                         setVideoLoadError(true);
                         // При ошибке воспроизведения предлагаем открыть оригинальный источник
                         e.currentTarget.style.display = 'none';
@@ -373,10 +360,10 @@ export function TrendDetailDialog({
                         crossOrigin="anonymous"
                         onLoadStart={() => {
                           setVideoLoadError(false);
-                          console.log("[TrendDetail] Начало загрузки обычного видео");
+
                         }}
                         onError={(e) => {
-                          console.log(`[TrendDetail] Ошибка воспроизведения обычного видео: ${videoUrl}`, e);
+
                           setVideoLoadError(true);
                           // При ошибке воспроизведения предлагаем открыть оригинальный источник
                           e.currentTarget.style.display = 'none';
@@ -445,7 +432,7 @@ export function TrendDetailDialog({
                 className="w-full h-auto max-h-[350px] max-w-full rounded-md object-contain mx-auto"
                 crossOrigin="anonymous"
                 onError={(e) => {
-                  console.log(`[TrendDetail] Ошибка загрузки изображения: ${imageUrl}`, e);
+
                   // При ошибке загрузки изображения пробуем другое из массива или показываем ошибку
                   if (mediaData.images && mediaData.images.length > 0) {
                     handleImageError(mediaData.images[0]);

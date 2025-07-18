@@ -215,11 +215,11 @@ export default function Trends() {
         });
         
         // Автоматически проверяем комментарии через интервалы
-        console.log('🔄 Запущен сбор комментариев для тренда:', trendId);
+
         
         // Если тренд выбран - сразу загружаем комментарии
         if (selectedTrendTopic?.id === trendId) {
-          console.log('🔄 Загружаем комментарии сразу для выбранного тренда:', trendId);
+
           loadTrendComments(trendId);
         }
         
@@ -231,9 +231,9 @@ export default function Trends() {
             // Если этот тренд сейчас выбран - загружаем комментарии
             if (selectedTrendTopic?.id === trendId) {
               loadTrendComments(trendId);
-              console.log(`🔄 Проверка комментариев #${index + 1} для выбранного тренда ${trendId}`);
+
             } else {
-              console.log(`📋 Проверка комментариев #${index + 1} для тренда ${trendId} (не выбран)`);
+
             }
           }, delay);
         });
@@ -292,11 +292,11 @@ export default function Trends() {
   // Загрузка существующего анализа настроения для тренда из кэшированных данных
   const loadExistingSentimentAnalysis = (selectedTrend: TrendTopic | null) => {
     if (selectedTrend && (selectedTrend as any).sentiment_analysis) {
-      console.log('✅ Загружаем существующий анализ для тренда:', selectedTrend.id, (selectedTrend as any).sentiment_analysis);
+
       setSentimentData((selectedTrend as any).sentiment_analysis);
     } else {
-      console.log('❌ Анализ настроения не найден для тренда:', selectedTrend?.id);
-      console.log('🔍 Все доступные поля тренда:', selectedTrend ? Object.keys(selectedTrend) : 'нет тренда');
+
+
       setSentimentData(null);
     }
   };
@@ -508,7 +508,7 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
-      console.log('Fetching sources for campaign:', selectedCampaignId);
+
 
       // Убираем фильтр is_active для получения всех источников кампании
       try {
@@ -521,13 +521,6 @@ export default function Trends() {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
-        });
-
-        console.log('Sources API response:', {
-          status: response.status,
-          dataLength: response.data?.data?.length,
-          firstSource: response.data?.data?.[0],
-          allSources: response.data?.data
         });
         
         // Сбрасываем флаг обновления
@@ -650,7 +643,7 @@ export default function Trends() {
       }
     },
     onSuccess: (data) => {
-      console.log('Success Data:', data);
+
       setFoundSourcesData(data);
       setIsSearchingNewSources(true);
       toast({

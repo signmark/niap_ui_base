@@ -20,7 +20,7 @@ export function useWebSocket() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('WebSocket подключен');
+
     };
 
     ws.onmessage = (event) => {
@@ -61,7 +61,7 @@ export function useWebSocket() {
             break;
             
           default:
-            console.log('Неизвестный тип WebSocket сообщения:', message.type);
+
         }
       } catch (error) {
         console.error('Ошибка обработки WebSocket сообщения:', error);
@@ -69,11 +69,11 @@ export function useWebSocket() {
     };
 
     ws.onclose = () => {
-      console.log('WebSocket отключен');
+
     };
 
     ws.onerror = (error) => {
-      console.error('Ошибка WebSocket:', error);
+
     };
 
     // Cleanup при размонтировании

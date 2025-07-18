@@ -95,7 +95,7 @@ export default function ScheduledPublicationDetails({
           updatedContent.socialPlatforms = platforms;
         }
         
-        console.log('Локально обновленный контент после отмены:', updatedContent);
+
         
         // Вызываем колбэк в случае успешной отмены, передавая обновленный контент
         if (onCancelSuccess) {
@@ -118,7 +118,7 @@ export default function ScheduledPublicationDetails({
   // Обработчик перевода в черновик
   const handleMoveToDraft = async () => {
     try {
-      console.log(`Перемещение контента ${content.id} в черновики`);
+
       
       // Используем API для обновления контента вместо отмены публикации
       const response = await apiRequest(`/api/publish/update-content/${content.id}`, {
@@ -165,7 +165,7 @@ export default function ScheduledPublicationDetails({
           updatedContent.socialPlatforms = platforms;
         }
         
-        console.log('Локально обновленный контент после перемещения в черновики:', updatedContent);
+
         
         // Вызываем колбэк в случае успешной отмены, передавая обновленный контент
         if (onCancelSuccess) {

@@ -71,7 +71,7 @@ export default function SlidePanel({
   });
 
   const handleAddSlide = () => {
-    console.log('➕ Adding new slide via Store');
+
     
     // Добавляем слайд только в локальный store - работа в памяти
     addSlide();
@@ -81,7 +81,7 @@ export default function SlidePanel({
       description: 'Новый слайд добавлен (сохраните изменения для сохранения в БД)'
     });
     
-    console.log('✅ Слайд добавлен в Store для работы в памяти');
+
   };
 
   const handleDuplicateSlide = (slideIndex: number) => {

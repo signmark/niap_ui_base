@@ -12,13 +12,11 @@ const clearExpiredToken = () => {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < now) {
-        console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ИСТЕКШЕГО ТОКЕНА');
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = '/login';
       }
     } catch (e) {
-      console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ПОВРЕЖДЕННОГО ТОКЕНА');
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = '/login';

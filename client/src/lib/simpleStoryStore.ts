@@ -55,7 +55,7 @@ export const useSimpleStoryStore = create<SimpleStoryState>((set, get) => ({
     const { slides, currentSlideIndex } = get();
     
     if (slides.length === 0) {
-      console.log('No slides available to add element');
+
       return null;
     }
 

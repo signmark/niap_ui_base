@@ -37,7 +37,7 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
   useEffect(() => {
     if (persistSelection && selectedCampaignId && !initiallySelectedId) {
       setInitiallySelectedId(selectedCampaignId);
-      console.log(`Сохраняем ID выбранной кампании для постоянного отображения: ${selectedCampaignId}`);
+
     }
   }, [persistSelection, selectedCampaignId, initiallySelectedId]);
 
@@ -66,7 +66,7 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
         }
 
         const data = await response.json();
-        console.log("Campaigns loaded:", data.data ? data.data.length : 0);
+
         return data;
       } catch (error) {
         console.error("Error loading campaigns:", error);
@@ -89,7 +89,7 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
     if (persistSelection && initiallySelectedId) {
       const savedCampaign = campaignsResponse.data.find((c: Campaign) => c.id === initiallySelectedId);
       if (savedCampaign) {
-        console.log(`Восстанавливаем сохраненную кампанию: "${savedCampaign.name}"`);
+
         setSelectedCampaign(savedCampaign.id, savedCampaign.name);
         setIsFirstLoad(false);
         return;
@@ -98,14 +98,14 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
     
     // Если кампания уже выбрана в сторе, просто завершаем первичную загрузку
     if (selectedCampaignId) {
-      console.log(`Используем глобально выбранную кампанию: "${selectedCampaignName}"`);
+
       setIsFirstLoad(false);
       return;
     }
     
     // Если нет, выбираем первую из списка
     const firstCampaign = campaignsResponse.data[0];
-    console.log(`Auto-selected campaign: "${firstCampaign.name}"`);
+
     setSelectedCampaign(firstCampaign.id, firstCampaign.name);
     setIsFirstLoad(false);
   }, [campaignsResponse, selectedCampaignId, selectedCampaignName, setSelectedCampaign, isFirstLoad, persistSelection, initiallySelectedId]);
@@ -113,7 +113,7 @@ export function CampaignSelector({ persistSelection = false }: CampaignSelectorP
   const handleCampaignChange = (campaignId: string) => {
     const campaign = campaignsResponse?.data?.find((c: Campaign) => c.id === campaignId);
     if (campaign) {
-      console.log(`Выбрана кампания: "${campaign.name}" (id: ${campaign.id})`);
+
       setSelectedCampaign(campaign.id, campaign.name);
       
       // Если используется режим сохранения выбора, обновляем сохраненный ID

@@ -76,18 +76,7 @@ export default function PlatformSelector({
     (content as any).additionalVideos
   );
 
-  // Debug logging for YouTube availability
-  if (content) {
-    console.log('PlatformSelector Debug:', {
-      contentType: content.contentType,
-      hasImages,
-      hasVideo,
-      videoUrl: (content as any).videoUrl || (content as any).video_url,
-      imageUrl: content.imageUrl,
-      additionalImages: (content as any).additionalImages,
-      images: content.images
-    });
-  }
+
 
   return (
     <TooltipProvider>

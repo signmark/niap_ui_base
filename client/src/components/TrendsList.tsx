@@ -111,7 +111,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
           throw new Error("Требуется авторизация");
         }
         
-        console.log("Authorization token from localStorage:", authToken ? `${authToken.substring(0, 10)}...` : 'not found');
+
 
         // Используем fetch вместо axios/api для обеспечения одинакового поведения с страницей трендов
         const response = await fetch(`/api/campaign-trends?campaignId=${campaignId}&period=${selectedPeriod}`, {
@@ -130,16 +130,16 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
         
         // Отладочный вывод для первого элемента
         if (data && data.data && data.data.length > 0) {
-          console.log("Sample trend data from server:", data.data[0]);
+
         }
         
         // Преобразуем полученные данные в правильный формат
         const trendTopics = (data?.data || []).map((trend: any) => {
           // Выводим значение created_at для отладки
           if (trend.id === data.data[0].id) {
-            console.log("Raw created_at value:", trend.created_at);
-            console.log("Raw date type:", typeof trend.created_at);
-            console.log("Is valid date:", !isNaN(new Date(trend.created_at).getTime()));
+
+
+
           }
 
           const result = {
@@ -167,21 +167,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
             urlPost: trend.urlPost
           };
           
-          // Отладочный вывод для поля даты и trendScore
-          if (data && data.data && data.data.length > 0 && trend.id === data.data[0].id) {
-            console.log("Date fields for first trend:", {
-              createdAtFromServer: trend.createdAt,
-              created_atFromServer: trend.created_at,
-              finalCreatedAt: result.createdAt
-            });
-            
-            // Отладочная информация для поля trendScore
-            console.log("TrendScore data:", {
-              trendScoreFromServer: trend.trendScore,
-              trendScoreType: typeof trend.trendScore,
-              trendScoreValue: result.trendScore
-            });
-          }
+          // Отладочная информация доступна через React DevTools
           
           return result;
         });
@@ -209,7 +195,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
         throw new Error("Требуется авторизация");
       }
       
-      console.log("Bookmark mutation using token:", authToken ? `${authToken.substring(0, 10)}...` : 'not found');
+
 
       // Используем fetch вместо axios/api для обеспечения одинакового поведения с страницей трендов
       return await fetch(`/api/campaign-trends/${id}/bookmark`, {
@@ -248,7 +234,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
 
   // Обработчик ошибки загрузки изображения
   const handleImageError = (imageUrl: string) => {
-    console.log("Failed to load image:", imageUrl);
+
     setFailedImages(prev => new Set(prev).add(imageUrl));
   };
 
@@ -529,7 +515,7 @@ export function TrendsList({ campaignId, onSelectTrends, selectable = false }: T
                       <Checkbox 
                         checked={isTrendSelected(trend.id)}
                         onCheckedChange={(checked) => {
-                          console.log("Checkbox changed:", checked, "for trend:", trend.id);
+
                           handleTrendSelect(trend);
                         }}
                         className="mt-1"

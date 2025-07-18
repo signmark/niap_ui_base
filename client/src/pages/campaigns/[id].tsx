@@ -57,7 +57,7 @@ export default function CampaignDetails() {
   // Используем useCallback для стабилизации функции обратного вызова
   const handleSelectTrends = useCallback((trends: any[]) => {
     if (Array.isArray(trends)) {
-      console.log("handleSelectTrends received:", trends.length, "trends");
+
       setSelectedTrends(trends);
     } else {
       console.warn("handleSelectTrends received non-array:", trends);
@@ -69,7 +69,7 @@ export default function CampaignDetails() {
   const { data: keywordList } = useQuery({
     queryKey: ["/api/keywords", id],
     queryFn: async () => {
-      console.log("Loading keywords for campaign:", id);
+
       const response = await directusApi.get('/items/campaign_keywords', {
         params: {
           filter: {
@@ -91,7 +91,7 @@ export default function CampaignDetails() {
     queryFn: async () => {
       try {
         const token = localStorage.getItem('auth_token') || localStorage.getItem('user_token') || localStorage.getItem('token');
-        console.log('Trends API: Запрос трендов для кампании', id, 'с токеном:', token ? 'есть' : 'нет');
+
         
         const response = await fetch(`/api/campaign-trends?campaignId=${id}`, {
           headers: {
@@ -99,7 +99,7 @@ export default function CampaignDetails() {
           }
         });
         
-        console.log('Trends API: Статус ответа:', response.status);
+
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -108,7 +108,7 @@ export default function CampaignDetails() {
         }
         
         const data = await response.json();
-        console.log('Trends API: Получено данных:', data);
+
         return data.data || [];
       } catch (error) {
         console.error("Ошибка при загрузке трендов:", error);
@@ -125,7 +125,7 @@ export default function CampaignDetails() {
       if (!id) return [];
       
       try {
-        console.log('Загрузка публикаций для кампании:', id);
+
         const token = localStorage.getItem("auth_token");
         
         const response = await fetch(`/api/campaign-content?campaignId=${id}`, {
@@ -139,7 +139,7 @@ export default function CampaignDetails() {
         }
         
         const responseData = await response.json();
-        console.log('Загружено публикаций:', (responseData.data || []).length);
+
         return responseData.data || [];
       } catch (error) {
         console.error('Ошибка при загрузке контента:', error);
@@ -207,9 +207,9 @@ export default function CampaignDetails() {
     queryKey: ["/api/campaigns", id],
     queryFn: async () => {
       try {
-        console.log(`Загрузка данных кампании ID: ${id}`);
+
         const token = localStorage.getItem("auth_token");
-        console.log(`Проверка доступа к кампании ID: ${id} с токеном: ${token ? 'присутствует' : 'отсутствует'}`);
+
         
         const response = await directusApi.get(`/items/user_campaigns/${id}`, {
           headers: {
@@ -217,7 +217,7 @@ export default function CampaignDetails() {
           }
         });
         
-        console.log("Успешно получены данные кампании:", response.data?.data?.name);
+
         return response.data?.data;
       } catch (err: any) {
         console.error("Error fetching campaign:", err);
@@ -251,7 +251,7 @@ export default function CampaignDetails() {
     onSuccess: (data) => {
       // Устанавливаем загруженную кампанию как активную в глобальном хранилище
       if (data && data.id && data.name) {
-        console.log(`Устанавливаем кампанию из страницы детализации: ${data.name} (${data.id})`);
+
         setSelectedCampaign(data.id, data.name);
       }
     },
@@ -676,26 +676,6 @@ export default function CampaignDetails() {
 
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
-    // Отладка для понимания структуры данных
-    console.log('Trends Debug:', {
-      campaignTrends: campaignTrends,
-      length: campaignTrends?.length,
-      type: typeof campaignTrends,
-      isArray: Array.isArray(campaignTrends),
-      completed: Boolean(campaignTrends && campaignTrends.length > 0)
-    });
-
-    if (campaign?.social_media_settings) {
-      console.log('Social Media Settings Debug:', {
-        keys: Object.keys(campaign.social_media_settings),
-        values: Object.values(campaign.social_media_settings),
-        fullObject: campaign.social_media_settings,
-        hasEnabledPlatforms: Object.values(campaign.social_media_settings).some((setting: any) => 
-          setting && typeof setting === 'object' && 
-          (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
-        )
-      });
-    }
     
     const sections = {
       site: {

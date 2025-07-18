@@ -29,7 +29,6 @@ import { SUPPORTED_STYLES, STYLE_DESCRIPTIONS, ASPECT_RATIOS } from "../../../sh
  * Это нужно чтобы избежать передачи данных между разными постами
  */
 async function extractKeywordsFromText(text: string): Promise<string[]> {
-  console.log("Автоматическое извлечение ключевых слов отключено");
   return []; // Всегда возвращаем пустой массив
 }
 
@@ -125,12 +124,7 @@ export function ImageGenerationDialog({
       if (!html || typeof html !== 'string') return '';
       return html.replace(/<[^>]*>/g, '');
     };
-    
-    console.log("🔄 Сброс состояния ImageGenerationDialog при открытии", { 
-      contentId, 
-      hasInitialPrompt: !!initialPrompt, 
-      hasInitialContent: !!initialContent 
-    });
+
     
     // Полный сброс всех состояний
     setNegativePrompt("");
@@ -156,38 +150,31 @@ export function ImageGenerationDialog({
     // Проверяем наличие всех возможных полей для использования как промпт
     const originalContent = contentObject?.prompt || contentObject?.originalContent || contentObject?.imagePrompt || null;
     
-    // Добавляем отладку для проверки полей
-    if (contentObject) {
-      console.log('Доступные поля контента для использования как промпт:', {
-        prompt: contentObject.prompt || 'отсутствует',
-        originalContent: contentObject.originalContent || 'отсутствует',
-        imagePrompt: contentObject.imagePrompt || 'отсутствует'
-      });
-    }
+
     
     if (contentId && initialPrompt) {
       // Редактирование с сохраненным промтом - используем его
       const cleanPrompt = simpleCleanHtml(initialPrompt);
       setPrompt(cleanPrompt);
       setGeneratedPrompt(cleanPrompt);
-      console.log('Использован сохраненный промт из БД:', cleanPrompt.substring(0, 100) + '...');
+
     } else if (originalContent) {
       // Используем originalContent как промпт
       const cleanPrompt = simpleCleanHtml(originalContent);
       setPrompt(cleanPrompt);
       setGeneratedPrompt(cleanPrompt);
-      console.log('Использован оригинальный контент как промпт:', cleanPrompt.substring(0, 100) + '...');
+
     } else {
       // Либо новый контент, либо редактирование без промта - в любом случае сбрасываем
       setPrompt("");
       setGeneratedPrompt("");
       
       if (!contentId) {
-        console.log('Создание нового контента - промт сброшен');
+
       } else if (initialContent) {
-        console.log('Редактирование без промта - подготовлен контент для генерации нового промта');
+
       } else {
-        console.log('Сброс промта - новый пустой промт для нового редактирования');
+
       }
     }
     
@@ -206,7 +193,7 @@ export function ImageGenerationDialog({
       // Очищаем теги из начального контента
       const cleanedContent = simpleCleanHtml(contentText);
       setContent(cleanedContent);
-      console.log('Установлен контент для текущего поста:', cleanedContent.substring(0, 100) + '...');
+
     } else {
       // Сбрасываем контент если его нет
       setContent("");
@@ -216,18 +203,18 @@ export function ImageGenerationDialog({
     if (initialPrompt) {
       // Если есть промт, переключаемся на вкладку прямого промта
       setActiveTab("prompt");
-      console.log('Выбрана вкладка прямого промта, так как есть сохраненный промт');
+
       
       // Дополнительный лог для отладки
-      console.log(`Используем готовый промт из текущего поста: contentId=${contentId}`);
+
     } else if (initialContent) {
       // Если нет промта, но есть контент
       setActiveTab("social"); // Переключаемся на вкладку социальных сетей
-      console.log('Выбрана вкладка для генерации на основе текста');
+
     } else {
       // Если вообще нет данных
       setActiveTab("prompt"); // По умолчанию открываем вкладку произвольного запроса
-      console.log('Выбрана вкладка прямого промта (по умолчанию)');
+
     }
     
   }, [contentId, initialContent, initialPrompt]); // Добавляем зависимость от всех важных параметров
@@ -239,11 +226,11 @@ export function ImageGenerationDialog({
         // Добавляем случайный параметр для предотвращения кеширования
         const response = await api.get('/api/fal-ai-models?nocache=' + Date.now());
         if (response.data?.success && response.data?.models) {
-          console.log('Загружены модели для генерации:', response.data.models);
+
           
           // Подробное логирование моделей для отладки
           response.data.models.forEach((model: any, index: number) => {
-            console.log(`Модель ${index + 1}:`, model.id, model.name, model.description);
+
           });
           
           setAvailableModels(response.data.models);
@@ -271,13 +258,13 @@ export function ImageGenerationDialog({
         throw new Error("Необходимо ввести текст для генерации промта");
       }
       
-      console.log("Генерация промта на основе текста через DeepSeek (оптимизированный метод)");
+
       
       try {
         // Очищаем текст перед отправкой на генерацию промта
         // Очистка от HTML-тегов произойдёт через stripHtml
         const cleanedText = stripHtml(content);
-        console.log("Очищенный текст перед отправкой:", cleanedText);
+
         
         // Пытаемся извлечь ключевые слова из очищенного текста, если функция доступна
         let keywords: string[] = [];
@@ -285,7 +272,7 @@ export function ImageGenerationDialog({
           try {
             keywords = await extractKeywordsFromText(cleanedText) || [];
           } catch (e) {
-            console.log("Автоматическое извлечение ключевых слов отключено");
+            // Автоматическое извлечение ключевых слов отключено
           }
         }
         
@@ -307,7 +294,7 @@ export function ImageGenerationDialog({
       }
     },
     onSuccess: (promptText) => {
-      console.log("Промт успешно сгенерирован:", promptText);
+
       
       // Сохраняем сгенерированный промт для отображения
       setGeneratedPrompt(promptText);
@@ -403,20 +390,20 @@ export function ImageGenerationDialog({
       
       // Очищаем текст от HTML-тегов перед дальнейшей обработкой
       const cleanedText = stripHtml(text);
-      console.log('Очищенный текст от HTML:', cleanedText);
+
       
       // Если текст уже на английском, возвращаем как есть
       const englishPattern = /^[a-zA-Z0-9\s.,!?;:'"()\-_\[\]@#$%^&*+=<>/\\|{}~`]+$/;
       if (englishPattern.test(cleanedText)) {
-        console.log('Текст уже на английском, перевод не требуется');
+
         return cleanedText;
       }
       
-      console.log('Переводим промт на английский для улучшения качества генерации');
+
       const response = await api.post('/translate-to-english', { text: cleanedText });
       
       if (response.data?.success && response.data?.translatedText) {
-        console.log('Промт переведен:', response.data.translatedText);
+
         return response.data.translatedText;
       } else {
         console.warn('Не удалось перевести промт, используем очищенный текст');
@@ -438,26 +425,21 @@ export function ImageGenerationDialog({
         return false;
       }
       
-      console.log(`Сохраняем промт для контента с ID: ${contentId} ДО генерации`);
+
       
       try {
         // Добавляем детальное логирование запроса
-        console.log('Отправляем запрос PATCH к /campaign-content/' + contentId);
-        console.log('Данные запроса:', { prompt: promptText });
+
+
         
         const response = await api.patch(`/campaign-content/${contentId}`, {
           prompt: promptText
         });
         
-        // Добавляем детальное логирование ответа
-        console.log('Ответ от сервера:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: response.data
-        });
+
         
         if (response.data && response.status === 200) {
-          console.log('✅ Промт успешно сохранен в базе данных');
+
           return true;
         } else {
           console.warn('⚠️ Сохранение промта вернуло неожиданный ответ:', response.status);
@@ -508,7 +490,7 @@ export function ImageGenerationDialog({
 
         // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем (только для вкладки prompt)
         if (activeTab === "prompt" && savePrompt && contentId && prompt) {
-          console.log('Сначала сохраняем промт в БД, а потом генерируем изображение');
+
           await savePromptToDb(prompt);
         }
         
@@ -519,14 +501,14 @@ export function ImageGenerationDialog({
           const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
           // Добавляем стиль в начало промта
           enhancedPrompt = `${styleName} style. ${prompt}`;
-          console.log(`Добавлен стиль ${styleName} в промт: "${enhancedPrompt}"`);
+
         }
         
         // Переводим промт на английский для улучшения качества генерации
         const translatedPrompt = await translateToEnglish(enhancedPrompt);
         const translatedNegativePrompt = negativePrompt ? await translateToEnglish(negativePrompt) : negativePrompt;
         
-        console.log(`ОТПРАВЛЯЕМ английский промт через модель ${modelType}:`, translatedPrompt);
+
         
         requestData = {
           prompt: translatedPrompt, // <-- Отправляем переведенный промт на английском со стилем
@@ -542,14 +524,6 @@ export function ImageGenerationDialog({
           savePrompt: activeTab === "prompt" ? false : false // Отключаем флаг сохранения на сервере для тестирования моделей
         };
         
-        // Дополнительное логирование для вкладки тестирования моделей
-        if (activeTab === "models") {
-          console.log(`Тестирование модели ${modelType} с параметрами:`, {
-            numImages,
-            imageSize: `${width}x${height}`,
-            hasNegativePrompt: !!negativePrompt
-          });
-        }
       // Единственным другим активным табом является "text",
       // который заменяет собой предыдущие табы social и business
       } else if (activeTab === "text") {
@@ -560,7 +534,7 @@ export function ImageGenerationDialog({
         
         // Если у нас уже есть сгенерированный промт, используем его напрямую
         if (generatedPrompt) {
-          console.log("Используем ранее сгенерированный промт:", generatedPrompt.substring(0, 100) + "...");
+
           
           // Добавляем стиль в начало промта, если он выбран
           let enhancedPrompt = generatedPrompt;
@@ -569,12 +543,12 @@ export function ImageGenerationDialog({
             const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
             // Добавляем стиль в начало промта
             enhancedPrompt = `${styleName} style. ${generatedPrompt}`;
-            console.log(`Добавлен стиль ${styleName} в текстовый промт: "${enhancedPrompt}"`);
+
           }
           
           // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
           if (savePrompt && contentId && enhancedPrompt) {
-            console.log('Сначала сохраняем текстовый промт в БД, а потом генерируем изображение');
+
             await savePromptToDb(enhancedPrompt);
           }
           
@@ -590,12 +564,12 @@ export function ImageGenerationDialog({
           };
         } else {
           // Если промт еще не был сгенерирован
-          console.log("Генерация нового промта на основе текста через DeepSeek");
+
           
           try {
             // Очищаем текст от HTML-тегов перед генерацией промта
             const cleanedText = stripHtml(content);
-            console.log("Очищенный текст перед отправкой в DeepSeek (оптимизированный метод):", cleanedText);
+
             
             // Пытаемся извлечь ключевые слова из очищенного текста
             let keywords: string[] = [];
@@ -603,7 +577,7 @@ export function ImageGenerationDialog({
               try {
                 keywords = await extractKeywordsFromText(cleanedText) || [];
               } catch (e) {
-                console.log("Автоматическое извлечение ключевых слов отключено");
+                // Автоматическое извлечение ключевых слов отключено
               }
             }
             
@@ -615,14 +589,14 @@ export function ImageGenerationDialog({
             });
             
             if (response.data?.success && response.data?.prompt) {
-              console.log("Промт успешно сгенерирован через DeepSeek:", response.data.prompt);
+
               
               // Сохраняем сгенерированный промт для отображения
               setGeneratedPrompt(response.data.prompt);
               
               // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
               if (savePrompt && contentId && response.data.prompt) {
-                console.log('Сначала сохраняем DeepSeek-промт в БД, а потом генерируем изображение');
+
                 await savePromptToDb(response.data.prompt);
               }
               
@@ -652,7 +626,7 @@ export function ImageGenerationDialog({
                 const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
                 // Добавляем стиль в начало промта
                 enhancedContent = `${styleName} style. ${translatedContent}`;
-                console.log(`Добавлен стиль ${styleName} в резервный промт: "${enhancedContent}"`);
+    
               }
               
               // Устанавливаем переведенный текст как промт для отображения в интерфейсе
@@ -660,7 +634,7 @@ export function ImageGenerationDialog({
               
               // Если стоит галочка "Сохранить промт" и есть contentId, сначала сохраняем
               if (savePrompt && contentId && enhancedContent) {
-                console.log('Сначала сохраняем резервный переведенный промт в БД, а потом генерируем изображение');
+    
                 await savePromptToDb(enhancedContent);
               }
               
@@ -690,7 +664,7 @@ export function ImageGenerationDialog({
               const styleName = Object.entries(SUPPORTED_STYLES).find(([key]) => key === stylePreset)?.[1] || stylePreset;
               // Добавляем стиль в начало промта
               finalPrompt = `${styleName} style. ${translatedContent}`;
-              console.log(`Добавлен стиль ${styleName} в резервный промт: "${finalPrompt}"`);
+
             }
             
             // Устанавливаем переведенный текст как промт для отображения в интерфейсе
@@ -710,7 +684,7 @@ export function ImageGenerationDialog({
         }
       }
       
-      console.log("Отправка запроса на генерацию изображения:", JSON.stringify(requestData).substring(0, 100) + "...");
+
       
       // Для всех моделей используем одинаковую универсальную обработку
       // Устанавливаем общие параметры для всех моделей
@@ -723,7 +697,7 @@ export function ImageGenerationDialog({
       // userId уже будет добавлен в запрос через интерцептор в api.ts
       const userId = localStorage.getItem('user_id');
       
-      console.log(`🔍 Модель: ${requestData.modelName}, используем универсальный интерфейс FAL.AI с userId=${userId}`);
+
       
       // Устанавливаем увеличенный таймаут для запроса
       try {
@@ -735,7 +709,7 @@ export function ImageGenerationDialog({
           }
         });
         
-        console.log(`API ответ для модели ${requestData.modelName}:`, JSON.stringify(response.data).substring(0, 200));
+
         return response.data;
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -750,21 +724,21 @@ export function ImageGenerationDialog({
       }
     },
     onSuccess: (data) => {
-      console.log('Ответ от API генерации изображений:', JSON.stringify(data).substring(0, 100) + '...');
+
       
-      console.log('Структура ответа:', JSON.stringify(data, null, 2).substring(0, 200));
+
       
       if (data.success) {
         // Обработка разных форматов ответа от API
         let images: string[] = [];
         
-        console.log('Структура данных изображений:', JSON.stringify(data.data, null, 2).substring(0, 500));
+
         
         // Дополнительное логирование запрошенного количества изображений
-        console.log(`Запрошено ${numImages} изображений от модели ${modelType}`);
+
         
         if (data.data?.images && Array.isArray(data.data.images)) {
-          console.log(`Обнаружен массив images в ответе API с ${data.data.images.length} элементами`);
+
           // Формат с вложенным массивом images
           // Обрабатываем оба варианта: массив URL-строк и массив объектов с полем url
           images = data.data.images.map((img: any) => {
@@ -772,16 +746,16 @@ export function ImageGenerationDialog({
             // Если объект, то ищем поле url (стандартный формат FAL.AI)
             if (img && typeof img === 'object') {
               const imageUrl = img.url || img.image || '';
-              console.log(`Извлечен URL изображения из объекта: ${imageUrl.substring(0, 50)}...`);
+
               return imageUrl;
             }
             return '';
           }).filter(Boolean);
           
-          console.log(`Извлечено ${images.length} URL изображений из массива images`);
+
         }
         else if (Array.isArray(data.data)) {
-          console.log('Обнаружен массив в корне ответа API');
+
           // Прямой массив URL-ов или объектов изображений
           images = data.data.map((img: any) => {
             if (typeof img === 'string') return img;
@@ -793,12 +767,12 @@ export function ImageGenerationDialog({
           }).filter(Boolean);
         }
         else if (typeof data.data === 'string') {
-          console.log('Обнаружена строка в корне ответа API');
+
           // Один URL в виде строки
           images = [data.data];
         }
         else if (data.data && typeof data.data === 'object') {
-          console.log('Обнаружен объект в корне ответа API:', Object.keys(data.data));
+
           // Проверяем разные варианты структуры объекта
           
           // Вариант где сам data.data содержит поля url или image
@@ -834,7 +808,7 @@ export function ImageGenerationDialog({
           }
         }
         
-        console.log('Извлеченные URL изображений:', images);
+
         
         if (images.length > 0) {
           setGeneratedImages(images);
@@ -898,7 +872,7 @@ export function ImageGenerationDialog({
   // Выбор изображения (только выделение, без вызова callback)
   const handleSelectImage = (index: number) => {
     if (index >= 0 && index < generatedImages.length) {
-      console.log(`Выбрано изображение с индексом ${index}: ${generatedImages[index].substring(0, 50)}...`);
+
       setSelectedImageIndex(index);
       // Мы больше не вызываем onImageGenerated здесь
       // Теперь он вызывается только в confirmSelection

@@ -216,7 +216,7 @@ export default function ContentPage() {
             k => typeof k === 'string' && k.trim().toLowerCase() === normalizedKeyword
           );
           
-          console.log(`Keyword "${kw.keyword}" (${kw.id}) match:`, hasKeyword);
+
           
           if (hasKeyword) {
             newSelectedKeywords.add(kw.id);
@@ -225,7 +225,7 @@ export default function ContentPage() {
       }
       
       setSelectedKeywordIds(newSelectedKeywords);
-      console.log('Selected keyword IDs updated:', Array.from(newSelectedKeywords));
+
     } else {
       setCurrentContent(null);
       setSelectedKeywordIds(new Set());
@@ -291,7 +291,7 @@ export default function ContentPage() {
   // Force refetch data when campaign changes
   useEffect(() => {
     if (selectedCampaignId) {
-      console.log('Принудительная перезагрузка данных для кампании:', selectedCampaignId);
+
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
     }
@@ -303,7 +303,7 @@ export default function ContentPage() {
   // Force refetch data when navigating to content page
   useEffect(() => {
     if (location === '/content' && selectedCampaignId) {
-      console.log('Переход на страницу контента, принудительная загрузка данных');
+
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
       // Принудительная перезагрузка данных
@@ -316,7 +316,7 @@ export default function ContentPage() {
   // Also force reload when component first mounts
   useEffect(() => {
     if (!hasNavigated && selectedCampaignId) {
-      console.log('Компонент контента смонтирован, принудительная загрузка данных');
+
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
       queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
@@ -399,7 +399,7 @@ export default function ContentPage() {
 
       // Если статус изменился с любого на "published", показываем тост
       if (previousStatus && previousStatus !== 'published' && currentStatus === 'published') {
-        console.log(`Контент ${contentId} изменил статус с "${previousStatus}" на "published"`);
+
         toast({
           title: "Контент опубликован",
           description: `"${content.title}" успешно опубликован во всех социальных сетях`,
@@ -462,7 +462,7 @@ export default function ContentPage() {
     mutationFn: async ({ id, data }: { id: string, data: any }) => {
       // Убедимся, что keywords всегда массив и JSON-сериализуем его
       if (data.keywords) {
-        console.log('Updating content with keywords:', data.keywords);
+
         
         // Проверяем, что keywords это массив
         if (!Array.isArray(data.keywords)) {
@@ -477,7 +477,7 @@ export default function ContentPage() {
       });
     },
     onSuccess: (data) => {
-      console.log('Content update success response:', data);
+
       
       // Принудительное обновление
       if (data?.data) {
@@ -551,12 +551,7 @@ export default function ContentPage() {
         });
       }
 
-      // Подробное логирование для отладки
-      console.log("🚀 Подготовленные данные для планирования публикации:");
-      console.log("ID контента:", id);
-      console.log("Дата публикации:", scheduledAt);
-      console.log("Выбранные платформы:", platforms);
-      console.log("Данные socialPlatforms для сохранения:", JSON.stringify(socialPlatformsData, null, 2));
+
 
       const requestData = {
         scheduledAt,
@@ -564,7 +559,7 @@ export default function ContentPage() {
         socialPlatforms: socialPlatformsData // Всегда передаем объект, даже если он пустой
       };
 
-      console.log("Финальный запрос:", JSON.stringify(requestData, null, 2));
+
 
       // Используем новый маршрут direct-schedule вместо patch к campaign-content
       return await apiRequest(`/api/direct-schedule/${id}`, { 
@@ -609,9 +604,9 @@ export default function ContentPage() {
         youtube: false
       };
       
-      console.log("🚀 Подготовленные данные для публикации через новый API:");
-      console.log("ID контента:", id);
-      console.log("Выбранные платформы:", platforms || {});
+
+
+
       
       // Вызываем новый API эндпоинт, который сразу публикует во все выбранные платформы
       // и сохраняет информацию о выбранных платформах в Directus
@@ -635,18 +630,18 @@ export default function ContentPage() {
       
       // Получаем результат публикации
       const result = await response.json();
-      console.log("✅ Результат публикации через новый API:", result);
+
       
       return result;
     },
     onSuccess: async (data, variables) => {
-      console.log("Результат публикации:", data);
+
       
       // Обновляем данные в интерфейсе БЕЗ тоста
       // Тост покажется автоматически когда планировщик обновит статус на "published"
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       
-      console.log("Публикация отправлена в очередь. Тост появится когда все платформы будут опубликованы.");
+
     },
     onError: (error: Error) => {
       console.error("Ошибка публикации:", error);

@@ -32,13 +32,13 @@ export default function Login() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log('Attempting login with:', values.email);
+
 
       // Используем наш API для аутентификации
       const { getFullApiUrl } = await import('@/lib/api-config');
       const apiUrl = getFullApiUrl('LOGIN');
       
-      console.log('Sending login request to:', apiUrl);
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -67,8 +67,8 @@ export default function Login() {
       const expires = authData.expires || 900000; // Если не указан, используем 15 минут по умолчанию
       const userId = authData.user?.id;
       
-      console.log('Received auth tokens, access token length:', access_token.length);
-      console.log('Login successful, user ID:', userId);
+
+
       
       // Сохраняем в localStorage и в state
       localStorage.setItem('auth_token', access_token);

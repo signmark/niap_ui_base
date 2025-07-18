@@ -68,7 +68,7 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
   },
 
   resetStore: () => {
-    console.log('ПОЛНАЯ ОЧИСТКА STORY STORE (только память)');
+
     
     // Создаем новый чистый слайд с уникальным ID
     const initialSlide = {
@@ -87,7 +87,7 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
       selectedElement: null
     });
     
-    console.log('Story store полностью очищен и пересоздан:', initialSlide.id);
+
   },
 
   setSlides: (slides) => {
@@ -115,8 +115,7 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
       style: getDefaultStyle(elementType)
     };
 
-    console.log('Adding element to slide index:', currentSlideIndex);
-    console.log('Element added:', newElement.id, 'Type:', elementType);
+
 
     const newSlides = [...slides];
     const targetSlide = newSlides[currentSlideIndex];
@@ -128,15 +127,14 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
       };
       newSlides[currentSlideIndex] = updatedSlide;
       
-      console.log('Total elements now:', updatedSlide.elements.length);
-      console.log('Story updated with new element in slide:', targetSlide.id);
+
       
       set({ 
         slides: newSlides,
         selectedElement: newElement
       });
     } else {
-      console.log('ERROR: Target slide not found at index', currentSlideIndex);
+
       return null;
     }
 
@@ -158,7 +156,7 @@ export const useStoryStore = create<StoryState>()((set, get) => ({
         elements: updatedElements
       };
       
-      console.log('🏪 Store: Element updated', elementId, 'with:', updates);
+
       
       set({ slides: newSlides });
     }

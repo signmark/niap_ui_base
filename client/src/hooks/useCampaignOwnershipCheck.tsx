@@ -16,7 +16,7 @@ function useCampaignOwnershipCheck() {
   useEffect(() => {
     const checkCampaignOwnership = async () => {
       if (selectedCampaignId && userId) {
-        console.log("Проверка принадлежности кампании пользователю:", {campaignId: selectedCampaignId, userId});
+
         
         try {
           const response = await directusApi.get('/items/user_campaigns', {
@@ -31,7 +31,7 @@ function useCampaignOwnershipCheck() {
           const campaignExists = response.data?.data && response.data.data.length > 0;
           
           if (!campaignExists) {
-            console.log("Кампания не принадлежит текущему пользователю, сбрасываем выбор");
+
             toast({
               title: "Доступ ограничен",
               description: "Выбранная кампания недоступна или принадлежит другому пользователю",
@@ -39,7 +39,7 @@ function useCampaignOwnershipCheck() {
             });
             clearSelectedCampaign();
           } else {
-            console.log("Кампания принадлежит текущему пользователю:", selectedCampaignName);
+
           }
         } catch (error) {
           console.error("Ошибка при проверке кампании:", error);

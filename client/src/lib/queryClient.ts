@@ -10,7 +10,7 @@ async function throwIfResNotOk(res: Response) {
     
     // Агрессивная проверка на 401 - всегда очищаем токен
     if (res.status === 401) {
-      console.log('🔑 401 Unauthorized - токен недействителен, очищаем сессию');
+
       useAuthStore.getState().logout();
       window.location.href = '/login';
       return;
@@ -21,7 +21,7 @@ async function throwIfResNotOk(res: Response) {
       try {
         const errorData = JSON.parse(text);
         if (errorData.details && errorData.details.includes('TOKEN_EXPIRED')) {
-          console.log('Токен истек, перенаправляем на страницу входа...');
+
           useAuthStore.getState().logout();
           window.location.href = '/login';
           return;
@@ -61,7 +61,7 @@ export async function apiRequest(
       const now = Math.floor(Date.now() / 1000);
       // Добавляем буфер в 30 секунд для предотвращения пограничных случаев
       if (payload.exp && payload.exp < (now + 30)) {
-        console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА: Токен истек или истекает скоро');
+
         localStorage.clear();
         sessionStorage.clear();
         useAuthStore.getState().logout();

@@ -40,26 +40,26 @@ interface NewSourcesDialogProps {
 }
 
 export function NewSourcesDialog({ campaignId, onClose, sourcesData }: NewSourcesDialogProps) {
-  console.log('NewSourcesDialog received data:', sourcesData);
+
   
   // Получаем список источников из ответа API
   const allSources = sourcesData?.data?.sources || [];
-  console.log('All sources extracted from data:', allSources);
+
   
   // Используем React Query для получения существующих источников
   const queryClient = useQueryClient();
   
   // Получаем существующие источники из кеша React Query
   const cachedSources = queryClient.getQueryData<any[]>(["campaign_content_sources", campaignId]) || [];
-  console.log('Cached sources from React Query:', cachedSources);
+
   
   // Извлекаем URL-адреса из кешированных источников
   const existingSourceUrls = cachedSources.map((source: any) => source.url);
-  console.log('Existing source URLs from cache:', existingSourceUrls);
+
   
   // Фильтруем источники, исключая те, которые уже добавлены в кампанию
   const filteredSources = allSources.filter(source => !existingSourceUrls.includes(source.url));
-  console.log('Filtered sources (excluding existing):', filteredSources);
+
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);

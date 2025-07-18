@@ -68,17 +68,6 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
       // Выбираем правильный API маршрут в зависимости от выбранного сервиса
       let apiEndpoint = '/api/generate-content'; // Единый маршрут для всех сервисов
       
-      console.log(`Генерация контента через ${selectedService} API`);
-      console.log('Параметры запроса:', {
-        prompt: prompt,
-        keywords: selectedKeywords,
-        tone,
-        campaignId,
-        platform: platform,
-        service: selectedService,
-        useCampaignData: useCampaignData
-      });
-
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
@@ -103,7 +92,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
 
       const data = await response.json();
       
-      console.log('Получен ответ от API генерации контента:', data);
+
       
       // Проверяем наличие контента и добавляем информацию о используемом сервисе
       if (!data.content) {
@@ -118,16 +107,16 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
     },
     onSuccess: (data) => {
       // Преобразуем контент в формат, подходящий для редактора
-      console.log('Получены данные для форматирования:', data);
+
       
       const content = data.content || '';
       const service = data.service || 'AI';
       
-      console.log('Начинаем форматирование контента:', content);
+
       
       // Простая проверка на наличие HTML-тегов
       if (content.includes('<p>') || content.includes('<div>') || content.includes('<h1>')) {
-        console.log('Контент уже содержит HTML-теги, используем как есть');
+
         setGenerationResult(content);
       } else {
         // Форматируем обычный текст в HTML
@@ -139,7 +128,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
             .map(p => p.trim())
             .filter(p => p.length > 0);
           
-          console.log('Разбито на параграфы:', paragraphs.length);
+
           
           if (paragraphs.length > 0) {
             formattedContent = paragraphs
@@ -169,7 +158,7 @@ export function ContentGenerationDialog({ campaignId, keywords, onClose }: Conte
               .replace(/\*(.*?)\*/g, '<em>$1</em>')}</p>`;
           }
           
-          console.log('Отформатированный контент:', formattedContent);
+
           setGenerationResult(formattedContent);
         } catch (error) {
           console.error('Ошибка при форматировании контента:', error);

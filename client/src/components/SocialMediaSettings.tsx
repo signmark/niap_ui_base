@@ -331,19 +331,19 @@ export function SocialMediaSettings({
   };
 
   const onSubmit = async (data: SocialMediaSettings) => {
-    console.log('🔥 onSubmit вызван с данными:', data);
-    console.log('🔥 Campaign ID:', campaignId);
+
+
     
     try {
       setIsLoading(true);
-      console.log('🔥 Отправляю запрос на сервер...');
+
       
       // Используем наш API endpoint вместо прямого обращения к Directus
       const response = await api.patch(`/campaigns/${campaignId}`, {
         social_media_settings: data
       });
 
-      console.log('🔥 Ответ сервера:', response);
+
 
       toast({
         description: "Настройки соцсетей обновлены"
@@ -358,7 +358,7 @@ export function SocialMediaSettings({
       });
     } finally {
       setIsLoading(false);
-      console.log('🔥 onSubmit завершен');
+
     }
   };
 
@@ -749,7 +749,7 @@ export function SocialMediaSettings({
                   
                   <YouTubeOAuthSetup 
                     onAuthComplete={(authData) => {
-                      console.log('YouTube авторизация завершена:', authData);
+
                       
                       // Обновляем форму с полученными токенами
                       if (authData.accessToken) {

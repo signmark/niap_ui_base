@@ -54,7 +54,7 @@ export default function Keywords() {
           const campaignExists = response.data?.data && response.data.data.length > 0;
           
           if (!campaignExists) {
-            console.log("Кампания не принадлежит текущему пользователю, сбрасываем выбор");
+
             toast({
               title: "Доступ ограничен",
               description: "Выбранная кампания недоступна или принадлежит другому пользователю",

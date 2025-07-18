@@ -1,0 +1,82 @@
+chunk-276SZO74.js?v=a627230e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+auth.ts:63 Начинаем обновление токена
+auth.ts:66 Используем локальный API для обновления токена
+CampaignSelector.tsx:40 Сохраняем ID выбранной кампании для постоянного отображения: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:72 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:94 Trends API: Запрос трендов для кампании 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: есть
+[id].tsx:128 Загрузка публикаций для кампании: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:210 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:212 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+SettingsDialog.tsx:103 Fetching user API keys using the API route
+useCampaignOwnershipCheck.tsx:19 Проверка принадлежности кампании пользователю: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', userId: '53921f16-f51d-4591-80b9-8caa4fde4d13'}
+auth.ts:94 Токен успешно обновлен через API
+auth.ts:39 Токен истечет через 900 секунд, обновление запланировано через 720 секунд
+auth.ts:110 Токен успешно обновлен, длина нового токена: 321
+directus.ts:24 Updated Directus URL to: https://directus.roboflow.tech/
+[id].tsx:220 Успешно получены данные кампании: NPlanner.ru
+useCampaignOwnershipCheck.tsx:42 Кампания принадлежит текущему пользователю: NPlanner.ru
+CampaignSelector.tsx:64 Campaigns loaded: 7
+CampaignSelector.tsx:81 Восстанавливаем сохраненную кампанию: "NPlanner.ru"
+SettingsDialog.tsx:106 Successfully fetched 8 API keys
+[id].tsx:102 Trends API: Статус ответа: 200
+[id].tsx:111 Trends API: Получено данных: {success: true, data: Array(65)}
+[id].tsx:142 Загружено публикаций: 210
+use-websocket.ts:82 WebSocket connection to 'wss://6813c5d2-7c73-4e24-8e70-d9b38d1135b3-00-1i11z1ktw30ct.worf.replit.dev/' failed: WebSocket is closed before the connection is established.
+(anonymous) @ use-websocket.ts:82
+safelyCallDestroy @ chunk-276SZO74.js?v=a627230e:16748
+commitHookEffectListUnmount @ chunk-276SZO74.js?v=a627230e:16875
+commitPassiveUnmountOnFiber @ chunk-276SZO74.js?v=a627230e:18232
+commitPassiveUnmountEffects_complete @ chunk-276SZO74.js?v=a627230e:18213
+commitPassiveUnmountEffects_begin @ chunk-276SZO74.js?v=a627230e:18204
+commitPassiveUnmountEffects @ chunk-276SZO74.js?v=a627230e:18169
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19489
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+flushSync @ chunk-276SZO74.js?v=a627230e:18959
+scheduleRefresh @ chunk-276SZO74.js?v=a627230e:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ App.tsx?v=Wi-Ixoc4MaVyFn6JZgzKY:593
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+use-websocket.ts:76 Ошибка WebSocket: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
+ws.onerror @ use-websocket.ts:76
+use-websocket.ts:72 WebSocket отключен
+[id].tsx:72 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:210 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:212 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+[id].tsx:220 Успешно получены данные кампании: NPlanner.ru
+BusinessQuestionnaireForm.tsx:324 [FORM-UPDATE] Детальный анализ полученных данных:
+BusinessQuestionnaireForm.tsx:325 [FORM-UPDATE] Все ключи в data: (13) ['companyName', 'contactInfo', 'businessDescription', 'mainDirections', 'brandImage', 'productsServices', 'targetAudience', 'customerResults', 'companyFeatures', 'businessValues', 'productBeliefs', 'competitiveAdvantages', 'marketingExpectations']
+BusinessQuestionnaireForm.tsx:326 [FORM-UPDATE] Количество полей с данными: 13
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Название компании (companyName): "НИАП..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Контактная информация (contactInfo): "Не указано на данной странице..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Описание бизнеса (businessDescription): "Профессиональный аналитический и интеллектуальный ..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Основные направления (mainDirections): "Создание персональных сбалансированных рационов, о..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Имидж бренда (brandImage): "Профессиональный, интеллектуальный, высокотехнолог..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Продукты и услуги (productsServices): "Аналитический онлайн-сервис, программное обеспечен..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Целевая аудитория (targetAudience): "Врачи, нутрициологи, диетологи, фитнес-тренеры..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Результаты клиентов (customerResults): "Ускорение создания персональных рационов до 80%, т..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Особенности компании (companyFeatures): "Высокая скорость работы (до 80% быстрее), професси..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Ценности бизнеса (businessValues): "Профессионализм, эффективность, технологичность, з..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Убеждения о продукте (productBeliefs): "Технологии улучшают здоровье и качество жизни, пер..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Конкурентные преимущества (competitiveAdvantages): "Значительное ускорение процесса составления рацион..."
+BusinessQuestionnaireForm.tsx:348 [FORM-UPDATE] Ожидания от маркетинга (marketingExpectations): "Привлечение врачей, нутрициологов и фитнес-тренеро..."
+BusinessQuestionnaireForm.tsx:376 After website analysis, form values: {companyName: 'НИАП', contactInfo: 'Не указано на данной странице', businessDescription: 'Профессиональный аналитический и интеллектуальный … проводить комплексную оценку состояния клиентов.', mainDirections: 'Создание персональных сбалансированных рационов, о…еская поддержка специалистов по питанию и фитнесу', brandImage: 'Профессиональный, интеллектуальный, высокотехнолог…ированный на здоровье и эффективность, экспертный', …}
+[id].tsx:72 Loading keywords for campaign: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:210 Загрузка данных кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e
+[id].tsx:212 Проверка доступа к кампании ID: 46868c44-c6a4-4bed-accf-9ad07bba790e с токеном: присутствует
+[id].tsx:220 Успешно получены данные кампании: NPlanner.ru

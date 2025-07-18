@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const storedUserId = localStorage.getItem('user_id');
     
     if (!token && storedToken && storedUserId) {
-      console.log('Восстанавливаем сессию из localStorage');
+
       setAuth(storedToken, storedUserId);
       return;
     }
@@ -104,7 +104,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      console.log('Attempting to logout...');
+
       const response = await fetch(`${DIRECTUS_URL}/auth/logout`, {
         method: 'POST',
         headers: {
@@ -117,12 +117,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         throw new Error('Logout request failed');
       }
 
-      console.log('Logout successful, clearing auth state');
+
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Очищаем выбранную кампанию при выходе из системы
-      console.log('Очищаем выбранную кампанию при выходе');
+
       clearSelectedCampaign();
       
       // Очищаем все данные авторизации из localStorage
@@ -134,7 +134,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       // Очищаем состояние авторизации в store
       setAuth(null, null);
       
-      console.log('Session cleared, redirecting to login page');
+
       // Перенаправляем на страницу входа
       navigate("/auth/login");
     }
