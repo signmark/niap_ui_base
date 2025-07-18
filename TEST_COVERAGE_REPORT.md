@@ -111,7 +111,7 @@
 7. **Performance**: Bulk processing, memory efficiency, API optimization, caching strategies
 8. **Security**: Input sanitization, XSS prevention, sensitive data protection
 
-## FAILING TESTS ANALYSIS (3 out of 47)
+## FAILING TESTS ANALYSIS (4 out of 52)
 
 ### Data Processing (2 tests)
 **Issues**: 
@@ -124,6 +124,25 @@
 **Issue**: Edge case in maxTokens validation (0 value handling)
 **Impact**: Low - validation logic improvement
 **Estimated Fix**: 2 minutes
+
+### Performance Tests (1 test)
+**Issue**: Syntax error in search optimization test code
+**Impact**: Low - JavaScript syntax fix needed
+**Estimated Fix**: 2 minutes
+
+## WEEKEND TECHNICAL DEBT IDENTIFIED
+
+### Social Platform JSON Structure Issue 
+**Discovered by User**: July 18, 2025
+**Problem**: Ugly duplication of `scheduledAt` and `scheduled_at` fields in platform status objects
+**Files Affected**: 
+- EditScheduledPublication.tsx
+- social-platform-status-webhook.ts  
+- publish-scheduler.ts
+- Directus database records
+
+**Recommended Solution**: Unify on camelCase `scheduledAt` standard, remove snake_case duplicates
+**Estimated Fix Time**: 30-45 minutes (weekend cleanup task)
 
 ## MASSIVE IMPROVEMENT ACHIEVED
 
