@@ -259,7 +259,11 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                         ? 'Не удалось опубликовать'
                         : status.status === 'quota_exceeded'
                           ? 'Превышена квота API'
-                          : 'Ожидает публикации'
+                          : status.status === 'pending'
+                            ? 'Ожидает публикации'
+                            : status.status === 'scheduled'
+                              ? 'Запланировано'
+                              : 'Ожидает публикации'
                     }
                   </span>
                   {status.status === 'published' ? (

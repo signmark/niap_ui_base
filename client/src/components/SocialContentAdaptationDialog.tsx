@@ -78,8 +78,8 @@ export function SocialContentAdaptationDialog({
                 hashtags: extractHashtags(data.content), // Извлекаем хэштеги для метаданных
                 publishedAt: null,
                 postId: null,
-                postUrl: null,
-                error: null
+                postUrl: null
+                // НЕ добавляем error: null - поле error добавляется только при наличии реальной ошибки
               };
               return acc;
             }, {})

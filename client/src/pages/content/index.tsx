@@ -545,7 +545,7 @@ export default function ContentPage() {
               publishedAt: null,
               postId: null,
               postUrl: null,
-              error: null
+              // НЕ добавляем error: null - поле error добавляется только при наличии реальной ошибки
             };
           }
         });
