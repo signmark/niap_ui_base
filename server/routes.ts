@@ -9854,53 +9854,8 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         });
       }
       
-      // Получаем API ключ DeepSeek через централизованный сервис API ключей
-      try {
-        // Инициализируем DeepSeek сервис с ключом из apiKeyService
-        console.log(`Инициализация DeepSeek сервиса для пользователя: ${userId}`);
-        const initialized = await deepseekService.initialize(userId, token);
-        
-        if (!initialized || !deepseekService.hasApiKey()) {
-          // Пробуем получить ключ напрямую
-          const deepseekKey = await apiKeyService.getApiKey(userId, 'deepseek', token);
-          
-          if (!deepseekKey) {
-            return res.status(400).json({
-              success: false,
-              error: "DeepSeek API ключ не настроен в профиле пользователя. Пожалуйста, добавьте API ключ в настройках."
-            });
-          }
-          
-          // Обновляем API ключ в сервисе напрямую
-          deepseekService.updateApiKey(deepseekKey);
-        }
-        
-        console.log('DeepSeek сервис инициализирован успешно для анализа сайта');
-      } catch (error) {
-        console.error("Ошибка при инициализации DeepSeek API:", error);
-        
-        // Проверим, можно ли использовать глобальный ключ
-        try {
-          const globalKeys = await apiKeyService.getGlobalKeys();
-          const deepseekKey = globalKeys?.deepseek;
-          
-          if (deepseekKey) {
-            console.log('Используем глобальный ключ DeepSeek для анализа сайта');
-            deepseekService.updateApiKey(deepseekKey);
-          } else {
-            return res.status(500).json({
-              success: false,
-              error: "Не удалось получить API ключ для анализа сайта"
-            });
-          }
-        } catch (keyError) {
-          console.error("Ошибка при получении глобального ключа DeepSeek:", keyError);
-          return res.status(500).json({
-            success: false,
-            error: "Не удалось получить API ключ для анализа сайта"
-          });
-        }
-      }
+      // Пропускаем DeepSeek, используем только Gemini для анализа сайтов
+      console.log('[WEBSITE-ANALYSIS] DeepSeek отключен, используем только Gemini для анализа');
       
       // Системное сообщение с инструкциями для анализа
       const messages = [
@@ -9947,12 +9902,30 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
         }
       ];
       
-      // Запрос к DeepSeek API для анализа содержимого сайта
+      // Используем только Gemini API для анализа содержимого сайта
       let analysisResponse = '';
+      
+      console.log('[WEBSITE-ANALYSIS] Начинаем анализ сайта через Gemini API...');
+      console.log(`[WEBSITE-ANALYSIS] 🔍 Размер контента для анализа: ${websiteContent.length} символов`);
+      console.log(`[WEBSITE-ANALYSIS] 🔍 Первые 500 символов контента: ${websiteContent.substring(0, 500)}...`);
+      
       try {
-        console.log('[WEBSITE-ANALYSIS] Начинаем анализ сайта через DeepSeek API...');
-        console.log(`[WEBSITE-ANALYSIS] 🔍 Размер контента для анализа: ${websiteContent.length} символов`);
-        console.log(`[WEBSITE-ANALYSIS] 🔍 Первые 500 символов контента: ${websiteContent.substring(0, 500)}...`);
+        // Пробуем получить Gemini ключ
+        let geminiKey;
+        try {
+          geminiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
+        } catch (error) {
+          console.log('Пробуем получить глобальный Gemini ключ...');
+          const globalKeys = await apiKeyService.getGlobalKeys();
+          geminiKey = globalKeys?.gemini;
+        }
+        
+        if (!geminiKey) {
+          throw new Error('Gemini API ключ недоступен');
+        }
+        
+        // Используем Gemini через прокси
+        const { geminiProxyService } = await import('./services/gemini-proxy');
         
         // Создаем умный промпт для любых типов сайтов
         const prompt = `Ты - эксперт по анализу веб-сайтов и бизнеса. Проанализируй содержимое ЛЮБОГО сайта и заполни бизнес-анкету в формате JSON.
@@ -9994,194 +9967,44 @@ ${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы н�
 ${websiteContent}`;
 
         console.log(`[WEBSITE-ANALYSIS] 🔍 Размер промпта: ${prompt.length} символов`);
-
-        // Добавляем таймаут для DeepSeek запроса
-        const deepseekPromise = deepseekService.generateText(prompt, {
-          model: 'deepseek-chat',
+        
+        console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini через прокси...');
+        const geminiResponse = await geminiProxyService.generateText(prompt, {
+          model: 'gemini-2.5-flash',
           temperature: 0.3,
-          max_tokens: 2000
+          maxTokens: 2000
         });
         
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('DeepSeek API timeout')), 10000); // Сократил до 10 сек
-        });
+        analysisResponse = geminiResponse;
+        console.log('✅ Gemini API вернул ответ для анализа сайта');
+        console.log(`[WEBSITE-ANALYSIS] ✅ Полный ответ от Gemini: ${analysisResponse.substring(0, 200)}...`);
         
-        console.log('[WEBSITE-ANALYSIS] Отправляем запрос к DeepSeek API...');
-        analysisResponse = await Promise.race([deepseekPromise, timeoutPromise]);
-        console.log('DeepSeek API вернул ответ:', analysisResponse ? 'ответ получен' : 'пустой ответ');
-        console.log(`[WEBSITE-ANALYSIS] ✅ Полный ответ от DeepSeek: ${analysisResponse}`);
       } catch (aiError) {
-        console.error("❌ DeepSeek API недоступен:", aiError);
+        console.error("❌ Gemini API недоступен:", aiError);
+        console.log(`[WEBSITE-ANALYSIS] Создаем простой fallback ответ для сайта`);
         
-        // Сразу переключаемся на Gemini
-        try {
-          console.log('🔄 Переключаемся на Gemini API для анализа сайта...');
-          
-          // Пробуем получить Gemini ключ
-          let geminiKey;
-          try {
-            geminiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
-          } catch (error) {
-            console.log('Пробуем получить глобальный Gemini ключ...');
-            const globalKeys = await apiKeyService.getGlobalKeys();
-            geminiKey = globalKeys?.gemini;
-          }
-          
-          if (geminiKey) {
-            // Используем Gemini через SOCKS5 прокси
-            const { geminiProxyService } = await import('./services/gemini-proxy');
-            
-            // Используем тот же улучшенный prompt для Gemini
-            const fullPrompt = `Ты - эксперт по анализу веб-сайтов и бизнеса. Проанализируй содержимое ЛЮБОГО сайта и заполни бизнес-анкету в формате JSON.
-
-КРИТИЧЕСКИ ВАЖНО: 
-1. Анализируй РЕАЛЬНЫЙ контент сайта, а не придумывай
-2. Для полей businessValues и productBeliefs ОБЯЗАТЕЛЬНО заполни на основе анализа
-3. Если прямой информации нет - делай ЛОГИЧЕСКИЕ выводы из типа деятельности
-4. Работай с ЛЮБЫМИ сайтами: бизнес, блоги, порталы, магазины, услуги, информационные
-
-СТРАТЕГИЯ АНАЛИЗА:
-- SMM/Маркетинг → businessValues="Эффективное продвижение, результативность", productBeliefs="Социальные сети - ключ к успеху"
-- Интернет-магазин → businessValues="Качество товаров, клиентский сервис", productBeliefs="Покупки должны быть удобными и выгодными"
-- IT/Разработка → businessValues="Инновации, качество кода", productBeliefs="Технологии улучшают жизнь людей"
-- Медицина → businessValues="Здоровье пациентов, профессионализм", productBeliefs="Здоровье - главная ценность"
-- Образование → businessValues="Качественные знания, развитие", productBeliefs="Образование открывает возможности"
-- Ресторан/Еда → businessValues="Качественные продукты, гостеприимство", productBeliefs="Еда объединяет людей"
-- Универсальный → businessValues="Профессионализм, качество, клиентоориентированность", productBeliefs="Стремимся к excellence в своей области"
-
-Верни ТОЛЬКО валидный JSON без дополнительного текста:
-
-{
-  "companyName": "Название компании из сайта или логичное из домена",
-  "contactInfo": "Реальная контактная информация с сайта",
-  "businessDescription": "Детальное описание деятельности на основе контента",
-  "mainDirections": "Конкретные направления работы компании",
-  "brandImage": "Стиль, позиционирование, образ бренда",
-  "productsServices": "Что именно предлагает компания",
-  "targetAudience": "Кто клиенты и покупатели",
-  "customerResults": "Какую пользу получают клиенты",
-  "companyFeatures": "Уникальные особенности и преимущества",
-  "businessValues": "ОБЯЗАТЕЛЬНО: ценности и принципы работы",
-  "productBeliefs": "ОБЯЗАТЕЛЬНО: философия продукта/услуги",
-  "competitiveAdvantages": "Преимущества перед конкурентами",
-  "marketingExpectations": "Цели продвижения и маркетинга"
-}
-
-АНАЛИЗИРУЕМЫЙ КОНТЕНТ САЙТА:
-${websiteContent}`;
-            
-            console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini через прокси...');
-            const geminiResponse = await geminiProxyService.improveText({
-              text: websiteContent,
-              prompt: fullPrompt,
-              model: 'gemini-2.5-flash'
-            });
-            analysisResponse = geminiResponse;
-            console.log('✅ Gemini API вернул ответ для анализа сайта');
-          } else {
-            throw new Error('Gemini API ключ недоступен');
-          }
-        } catch (geminiError) {
-          console.error("❌ Gemini API также недоступен:", geminiError);
-          console.log(`[WEBSITE-ANALYSIS] Создаем fallback ответ для сайта`);
-          
-          // Создаем умный fallback на основе URL и доступной информации  
-          const urlType = url.toLowerCase();
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: URL для анализа типа: "${urlType}"`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверка wiki: ${urlType.includes('wiki')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверка cybersport: ${urlType.includes('cybersport')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: ПОЛНЫЙ URL: "${url}"`);
-          let baseData;
-          
-          // УМНЫЙ АНАЛИЗ РЕАЛЬНОГО КОНТЕНТА - анализируем содержимое ЛЮБОГО сайта
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Создаем умный fallback для URL: "${url}"`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Анализируем реальный контент: "${websiteContent.slice(0, 200)}..."`);
-          
-          // Извлекаем домен и анализируем
-          let domain = '';
-          let siteName = '';
-          try {
-            const urlObj = new URL(url);
-            domain = urlObj.hostname.toLowerCase();
-            siteName = domain.replace(/^www\./, '').split('.')[0];
-          } catch (e) {
-            domain = url.toLowerCase();
-            siteName = 'сайт';
-          }
-          
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Извлечен домен: "${domain}", имя сайта: "${siteName}"`);
-          
-          // Извлекаем заголовок страницы из реального контента
-          const titleMatch = websiteContent.match(/ЗАГОЛОВОК САЙТА:\s*([^\n]+)/);
-          const pageTitle = titleMatch ? titleMatch[1].replace(/\s*—\s*.*$/, '').trim() : siteName;
-          
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Заголовок страницы: "${pageTitle}"`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Полный контент для анализа: "${websiteContent}"`);
-          
-          // Анализируем содержимое по ключевым словам в РЕАЛЬНОМ контенте
-          const contentLower = (websiteContent + ' ' + pageTitle + ' ' + url).toLowerCase();
-          
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Проверяем на SMM ключевые слова:`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain.includes('smmniap'): ${domain.includes('smmniap')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain.includes('smm'): ${domain.includes('smm')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('социальн'): ${contentLower.includes('социальн')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('smm'): ${contentLower.includes('smm')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('manager'): ${contentLower.includes('manager')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower.includes('платформ'): ${contentLower.includes('платформ')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: pageTitle.toLowerCase().includes('smm'): ${pageTitle.toLowerCase().includes('smm')}`);
-          
-          // Определяем тип бизнеса по РЕАЛЬНОМУ содержимому
-          let businessType = 'общий бизнес';
-          let companyName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
-          let businessDesc = `Компания ${companyName}, предоставляющая качественные услуги`;
-          let targetAudience = 'Широкая аудитория клиентов';
-          let businessValues = 'Качество, надежность, клиентоориентированность';
-          let productBeliefs = 'Наши решения должны приносить реальную пользу клиентам';
-          
-          // АНАЛИЗ КОНТЕНТА НА ОСНОВЕ РЕАЛЬНЫХ ДАННЫХ (БЕЗ ЖЕСТКО ЗАДАННЫХ ПРАВИЛ ПО ДОМЕНАМ)
-          
-          // ПРИОРИТЕТ 1: SMM-платформы и сервисы
-          const isSMMPlatform = domain.includes('smmniap') || domain.includes('smm') || (contentLower.includes('социальн') && contentLower.includes('сет')) || contentLower.includes('smm') || (contentLower.includes('автоматизац') && contentLower.includes('публикац')) || (contentLower.includes('контент') && contentLower.includes('создани')) || contentLower.includes('публикац') || (contentLower.includes('трен') && contentLower.includes('социальн')) || (contentLower.includes('manager') && contentLower.includes('smm')) || (contentLower.includes('платформ') && contentLower.includes('социальн')) || (contentLower.includes('управлени') && contentLower.includes('социальн')) || pageTitle.toLowerCase().includes('smm') || (pageTitle.toLowerCase().includes('manager') && pageTitle.toLowerCase().includes('smm'));
-          
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: isSMMPlatform результат: ${isSMMPlatform}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: domain: ${domain}, pageTitle: ${pageTitle}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'управлени': ${contentLower.includes('управлени')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'социальн': ${contentLower.includes('социальн')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'диагност': ${contentLower.includes('диагност')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'питани': ${contentLower.includes('питани')}`);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: contentLower contains 'ниап': ${contentLower.includes('ниап')}`);
-          
-          // Простая базовая классификация только для заполнения полей
-          businessType = 'веб-сайт';
-          companyName = pageTitle || siteName;
-          businessDesc = `Веб-сайт ${companyName}`;
-          targetAudience = 'Интернет-пользователи';
-          businessValues = 'Качественный контент, удобство использования';
-          productBeliefs = 'Хороший веб-сайт должен быть полезным и удобным для пользователей';
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Используется базовая классификация без попыток угадывания типа бизнеса`);
-          
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: Определен тип бизнеса: "${businessType}"`);
-          
-          baseData = {
-            companyName: companyName,
-            contactInfo: `Контактная информация доступна на сайте ${domain}`,
-            businessDescription: businessDesc,
-            mainDirections: `Основная деятельность в сфере ${businessType.replace('общий бизнес', 'предоставления услуг')}`,
-            brandImage: `Надежный и профессиональный ${businessType.replace('общий бизнес', 'партнер')}`,
-            productsServices: `Качественные ${businessType.includes('магазин') ? 'товары' : 'услуги'} для клиентов`,
-            targetAudience: targetAudience,
-            customerResults: `Получение качественных ${businessType.includes('магазин') ? 'товаров' : 'решений'}, достижение поставленных целей`,
-            companyFeatures: `Профессиональный подход, ${businessType.includes('IT') ? 'современные технологии' : businessType.includes('магазин') ? 'широкий ассортимент' : 'индивидуальные решения'}`,
-            businessValues: businessValues,
-            productBeliefs: productBeliefs,
-            competitiveAdvantages: `Опыт работы, ${businessType.includes('IT') ? 'техническая экспертиза' : businessType.includes('магазин') ? 'конкурентные цены' : 'качественный сервис'}`,
-            marketingExpectations: `Привлечение ${businessType.includes('информационный') ? 'читателей' : 'клиентов'}, повышение узнаваемости бренда`
-          };
-          
-          analysisResponse = JSON.stringify(baseData);
-          console.log(`[WEBSITE-ANALYSIS] 🔧 DEBUG: analysisResponse для fallback: ${analysisResponse.substring(0, 100)}...`);
-          console.log(`[WEBSITE-ANALYSIS] Создан умный fallback ответ для сайта`);
-        }
+        // Создаем простой fallback ответ
+        const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+        const siteName = domain.split('.')[0];
+        
+        const baseData = {
+          companyName: siteName.charAt(0).toUpperCase() + siteName.slice(1),
+          contactInfo: `Контактная информация доступна на сайте ${domain}`,
+          businessDescription: `Веб-сайт ${siteName}`,
+          mainDirections: 'Основная деятельность компании',
+          brandImage: 'Надежный и профессиональный партнер',
+          productsServices: 'Качественные услуги для клиентов',
+          targetAudience: 'Интернет-пользователи',
+          customerResults: 'Получение качественных решений',
+          companyFeatures: 'Профессиональный подход',
+          businessValues: 'Качество, надежность, клиентоориентированность',
+          productBeliefs: 'Наши решения должны приносить реальную пользу клиентам',
+          competitiveAdvantages: 'Опыт работы, качественный сервис',
+          marketingExpectations: 'Привлечение клиентов, повышение узнаваемости бренда'
+        };
+        
+        analysisResponse = JSON.stringify(baseData);
+        console.log(`[WEBSITE-ANALYSIS] Создан fallback ответ для сайта`);
       }
       
       // Парсим ответ для извлечения JSON
@@ -10209,32 +10032,8 @@ ${websiteContent}`;
         console.log('[WEBSITE-ANALYSIS] 🔧 DEBUG: businessValues после парсинга:', JSON.stringify(result.businessValues || ''));
         console.log('[WEBSITE-ANALYSIS] 🔧 DEBUG: productBeliefs после парсинга:', JSON.stringify(result.productBeliefs || ''));
         
-        // POST-PROCESSING: Заполняем пустые критические поля
-        if (!result.businessValues || (typeof result.businessValues === 'string' && result.businessValues.trim() === '')) {
-          if (url.toLowerCase().includes('cybersport') || url.toLowerCase().includes('gaming') || url.toLowerCase().includes('esport')) {
-            result.businessValues = "Честная игра, развитие киберспорта, поддержка игрового сообщества";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены businessValues для киберспорта');
-          } else if (result.businessDescription && result.businessDescription.toLowerCase().includes('портал')) {
-            result.businessValues = "Достоверность информации, актуальность контента, служение сообществу";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены businessValues для портала');
-          } else {
-            result.businessValues = "Качество услуг, клиентоориентированность, профессионализм";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены общие businessValues');
-          }
-        }
-        
-        if (!result.productBeliefs || result.productBeliefs.trim() === '') {
-          if (url.toLowerCase().includes('cybersport') || url.toLowerCase().includes('gaming') || url.toLowerCase().includes('esport')) {
-            result.productBeliefs = "Киберспорт - это спорт будущего, заслуживающий профессионального освещения";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены productBeliefs для киберспорта');
-          } else if (result.productsServices && result.productsServices.toLowerCase().includes('информация')) {
-            result.productBeliefs = "Информация должна быть доступной, понятной и полезной для каждого";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены productBeliefs для информационного ресурса');
-          } else {
-            result.productBeliefs = "Продукт должен решать реальные потребности пользователей";
-            console.log('[WEBSITE-ANALYSIS] 🔧 Добавлены общие productBeliefs');
-          }
-        }
+        // Все поля уже заполнены в fallback или Gemini ответе
+        console.log('[WEBSITE-ANALYSIS] Пропускаем дополнительную обработку полей');
       } catch (parseError) {
         console.error('Ошибка при парсинге JSON:', parseError);
         return res.status(500).json({ 
