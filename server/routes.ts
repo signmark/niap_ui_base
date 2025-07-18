@@ -1161,34 +1161,74 @@ async function extractFullSiteContent(url: string): Promise<string> {
     // Извлекаем списки
     const listItems = htmlContent.match(/<li[^>]*>([^<]+)<\/li>/gi)?.map(li => li.replace(/<[^>]+>/g, '').trim()).filter(li => li.length > 10).slice(0, 20) || [];
     
-    // ИЗВЛЕКАЕМ КОНТАКТНУЮ ИНФОРМАЦИЮ
-    const contactPatterns = [
-      // Телефоны
-      /(\+7\s*[\(\-\s]*\d{3}[\)\-\s]*\d{3}[\-\s]*\d{2}[\-\s]*\d{2})/gi,
-      /(\+7\s*\d{3}\s*\d{3}\s*\d{2}\s*\d{2})/gi,
-      /(8\s*[\(\-\s]*\d{3}[\)\-\s]*\d{3}[\-\s]*\d{2}[\-\s]*\d{2})/gi,
-      /(8\s*\d{3}\s*\d{3}\s*\d{2}\s*\d{2})/gi,
-      /(\(\d{3,4}\)\s*\d{3}[\-\s]*\d{2}[\-\s]*\d{2})/gi,
-      // Email адреса
-      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
-      // Другие паттерны телефонов
-      /(\d{3}[\-\s]*\d{3}[\-\s]*\d{2}[\-\s]*\d{2})/gi
-    ];
+    // ИЗВЛЕКАЕМ КОНТАКТНУЮ ИНФОРМАЦИЮ С ФОКУСОМ НА FOOTER И КОНЕЦ СТРАНИЦЫ
     
-    let contactInfo = [];
+    // Сначала ищем footer и контактные секции
+    const footerRegex = /<footer[^>]*>[\s\S]*?<\/footer>/gi;
+    const contactSectionRegex = /<[^>]*(?:class|id)=["'][^"']*(?:contact|контакт|связ|phone|email|адрес|address|footer|подвал)[^"']*["'][^>]*>[\s\S]*?<\/[^>]+>/gi;
     
-    for (const pattern of contactPatterns) {
-      const matches = htmlContent.match(pattern);
-      if (matches) {
-        contactInfo.push(...matches);
+    let footerContent = '';
+    const footerMatches = htmlContent.match(footerRegex);
+    if (footerMatches) {
+      footerContent = footerMatches.join(' ');
+    }
+    
+    const contactSectionMatches = htmlContent.match(contactSectionRegex) || [];
+    const contactSectionsContent = contactSectionMatches.join(' ');
+    
+    // Также берем последние 20% страницы, где обычно находятся контакты
+    const pageEnd = htmlContent.slice(-Math.floor(htmlContent.length * 0.2));
+    
+    // Объединяем приоритетные области для поиска контактов
+    const priorityContent = footerContent + ' ' + contactSectionsContent + ' ' + pageEnd;
+    
+    console.log(`🔍 Ищем контакты в footer (${footerContent.length} симв.), контактных секциях (${contactSectionsContent.length} симв.) и конце страницы (${pageEnd.length} симв.)`);
+    
+    // Ищем российские телефоны (более точные паттерны)
+    const phoneRegex = /(\+7[\s\-\(\)]?\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}|8[\s\-\(\)]?\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}|8[\s\-]*800[\s\-]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2})/gi;
+    
+    // Ищем email адреса (более точный паттерн)
+    const emailRegex = /([a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+    
+    let phones = [];
+    let emails = [];
+    
+    // Сначала ищем в приоритетных областях (footer, контактные секции, конец страницы)
+    const priorityPhones = priorityContent.match(phoneRegex) || [];
+    const priorityEmails = priorityContent.match(emailRegex) || [];
+    
+    // Если в приоритетных областях ничего не нашли, ищем по всей странице
+    const allPhones = priorityPhones.length > 0 ? priorityPhones : (htmlContent.match(phoneRegex) || []);
+    const allEmails = priorityEmails.length > 0 ? priorityEmails : (htmlContent.match(emailRegex) || []);
+    
+    // Обрабатываем телефоны
+    for (const phone of allPhones) {
+      const cleanPhone = phone.trim();
+      const digits = cleanPhone.replace(/\D/g, '');
+      // Проверяем что это действительно телефон (10-11 цифр)
+      if (digits.length >= 10 && digits.length <= 11 && 
+          (digits.startsWith('7') || digits.startsWith('8'))) {
+        phones.push(cleanPhone);
       }
     }
     
-    // Удаляем дубликаты и очищаем
-    contactInfo = [...new Set(contactInfo)]
-      .map(contact => contact.trim())
-      .filter(contact => contact.length > 5)
-      .slice(0, 10); // максимум 10 контактов
+    // Обрабатываем email
+    for (const email of allEmails) {
+      const cleanEmail = email.trim().toLowerCase();
+      // Проверяем что это не служебный email (избегаем false positive)
+      if (!cleanEmail.includes('example.') && !cleanEmail.includes('@example') && 
+          !cleanEmail.includes('test@') && !cleanEmail.includes('name@') &&
+          !cleanEmail.includes('noreply') && !cleanEmail.includes('no-reply') &&
+          cleanEmail.includes('.') && cleanEmail.length >= 5) {
+        emails.push(email.trim());
+      }
+    }
+    
+    // Удаляем дубликаты
+    phones = [...new Set(phones)].slice(0, 5);
+    emails = [...new Set(emails)].slice(0, 5);
+    
+    const allContacts = [...phones, ...emails];
     
     // Ищем разделы с контактной информацией
     const contactSections = htmlContent.match(/<[^>]*(?:class|id)=["'][^"']*(?:contact|контакт|связ|phone|email|адрес|address)[^"']*["'][^>]*>[\s\S]*?<\/[^>]+>/gi) || [];
@@ -1197,24 +1237,41 @@ async function extractFullSiteContent(url: string): Promise<string> {
       .filter(text => text.length > 10 && text.length < 200)
       .slice(0, 5);
     
-    console.log(`📞 Найдено контактов: ${contactInfo.length}, контактных разделов: ${contactTexts.length}`);
+    console.log(`📞 Найдено телефонов: ${phones.length}, email: ${emails.length}, контактных разделов: ${contactTexts.length}`);
+    if (phones.length > 0) console.log(`📞 Телефоны:`, phones);
+    if (emails.length > 0) console.log(`📧 Email:`, emails);
     
     // Собираем структурированный контент для ИИ
     const contentParts = [
       `URL: ${url}`,
       title ? `ЗАГОЛОВОК СТРАНИЦЫ: ${title}` : '',
       description ? `ОПИСАНИЕ САЙТА: ${description}` : '',
-      keywords ? `КЛЮЧЕВЫЕ СЛОВА: ${keywords}` : '',
-      contactInfo.length > 0 ? `НАЙДЕННЫЕ КОНТАКТЫ:\n${contactInfo.map(c => `- ${c}`).join('\n')}` : '',
-      contactTexts.length > 0 ? `КОНТАКТНЫЕ РАЗДЕЛЫ:\n${contactTexts.map(ct => `- ${ct}`).join('\n')}` : '',
-      h1Tags.length > 0 ? `ОСНОВНЫЕ ЗАГОЛОВКИ H1:\n${h1Tags.map(h => `- ${h}`).join('\n')}` : '',
-      h2Tags.length > 0 ? `ЗАГОЛОВКИ H2:\n${h2Tags.map(h => `- ${h}`).join('\n')}` : '',
-      h3Tags.length > 0 ? `ЗАГОЛОВКИ H3:\n${h3Tags.map(h => `- ${h}`).join('\n')}` : '',
-      paragraphs.length > 0 ? `ОСНОВНОЙ ТЕКСТ:\n${paragraphs.map(p => `- ${p}`).join('\n')}` : '',
-      listItems.length > 0 ? `СПИСКИ И ПУНКТЫ:\n${listItems.map(li => `- ${li}`).join('\n')}` : ''
-    ].filter(Boolean);
+      keywords ? `КЛЮЧЕВЫЕ СЛОВА: ${keywords}` : ''
+    ];
     
-    let structuredContent = contentParts.join('\n\n');
+    // Добавляем найденные контакты в специальном формате для ИИ
+    if (allContacts.length > 0) {
+      contentParts.push(`НАЙДЕННЫЕ КОНТАКТЫ:`);
+      if (phones.length > 0) {
+        contentParts.push(`Телефоны: ${phones.join(', ')}`);
+      }
+      if (emails.length > 0) {
+        contentParts.push(`Email: ${emails.join(', ')}`);
+      }
+    }
+    
+    if (contactTexts.length > 0) {
+      contentParts.push(`КОНТАКТНЫЕ РАЗДЕЛЫ:\n${contactTexts.map(ct => `- ${ct}`).join('\n')}`);
+    }
+    
+    // Добавляем остальной контент
+    if (h1Tags.length > 0) contentParts.push(`ОСНОВНЫЕ ЗАГОЛОВКИ H1:\n${h1Tags.map(h => `- ${h}`).join('\n')}`);
+    if (h2Tags.length > 0) contentParts.push(`ЗАГОЛОВКИ H2:\n${h2Tags.map(h => `- ${h}`).join('\n')}`);
+    if (h3Tags.length > 0) contentParts.push(`ЗАГОЛОВКИ H3:\n${h3Tags.map(h => `- ${h}`).join('\n')}`);
+    if (paragraphs.length > 0) contentParts.push(`ОСНОВНОЙ ТЕКСТ:\n${paragraphs.map(p => `- ${p}`).join('\n')}`);
+    if (listItems.length > 0) contentParts.push(`СПИСКИ И ПУНКТЫ:\n${listItems.map(li => `- ${li}`).join('\n')}`);
+    
+    let structuredContent = contentParts.filter(Boolean).join('\n\n');
     
     // Ограничиваем размер до 15KB для эффективной обработки ИИ
     if (structuredContent.length > 15000) {
@@ -1222,7 +1279,7 @@ async function extractFullSiteContent(url: string): Promise<string> {
     }
     
     console.log(`✅ Улучшенный скрапинг завершен (${structuredContent.length} символов)`);
-    console.log(`📊 Извлечено: ${contactInfo.length} контактов, ${h1Tags.length} H1, ${h2Tags.length} H2, ${h3Tags.length} H3, ${paragraphs.length} параграфов, ${listItems.length} элементов списков`);
+    console.log(`📊 Извлечено: ${allContacts.length} контактов (${phones.length} тел., ${emails.length} email), ${h1Tags.length} H1, ${h2Tags.length} H2, ${h3Tags.length} H3, ${paragraphs.length} параграфов, ${listItems.length} элементов списков`);
     
     return structuredContent;
     
@@ -4777,10 +4834,10 @@ ${siteContent.substring(0, 2000)}
     }
   });
   
-  // УПРОЩЕННАЯ ФУНКЦИЯ - БЕЗ КЛАССИФИКАЦИИ
+  // УЛУЧШЕННАЯ ФУНКЦИЯ С ФОКУСОМ НА КОНТАКТЫ В FOOTER
   async function extractFullSiteContent(url: string): Promise<string> {
     try {
-      console.log(`🚀 Простой скрапинг сайта: ${url}`);
+      console.log(`🚀 Скрапинг сайта с извлечением контактов: ${url}`);
       
       // Нормализуем URL
       let normalizedUrl = url;
@@ -4788,13 +4845,14 @@ ${siteContent.substring(0, 2000)}
         normalizedUrl = `https://${normalizedUrl}`;
       }
       
-      // Простая загрузка
+      // Загрузка с увеличенным лимитом для лучшего анализа
       const response = await axios.get(normalizedUrl, {
-        timeout: 5000,
-        maxContentLength: 1024 * 1024, // 1MB
+        timeout: 8000,
+        maxContentLength: 2 * 1024 * 1024, // 2MB для большего контента
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; SiteAnalyzer/1.0)',
-          'Accept': 'text/html'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
         },
         validateStatus: (status) => status >= 200 && status < 400
       });
@@ -4805,15 +4863,103 @@ ${siteContent.substring(0, 2000)}
       const title = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || '';
       const description = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() || '';
       
-      // Собираем контент для отправки ИИ
-      const content = [
+      // ИЗВЛЕКАЕМ КОНТАКТНУЮ ИНФОРМАЦИЮ С ФОКУСОМ НА FOOTER И КОНЕЦ СТРАНИЦЫ
+      
+      // Сначала ищем footer и контактные секции
+      const footerRegex = /<footer[^>]*>[\s\S]*?<\/footer>/gi;
+      const contactSectionRegex = /<[^>]*(?:class|id)=["'][^"']*(?:contact|контакт|связ|phone|email|адрес|address|footer|подвал)[^"']*["'][^>]*>[\s\S]*?<\/[^>]+>/gi;
+      
+      let footerContent = '';
+      const footerMatches = htmlContent.match(footerRegex);
+      if (footerMatches) {
+        footerContent = footerMatches.join(' ');
+      }
+      
+      const contactSectionMatches = htmlContent.match(contactSectionRegex) || [];
+      const contactSectionsContent = contactSectionMatches.join(' ');
+      
+      // Также берем последние 20% страницы, где обычно находятся контакты
+      const pageEnd = htmlContent.slice(-Math.floor(htmlContent.length * 0.2));
+      
+      // Объединяем приоритетные области для поиска контактов
+      const priorityContent = footerContent + ' ' + contactSectionsContent + ' ' + pageEnd;
+      
+      console.log(`🔍 Ищем контакты в footer (${footerContent.length} симв.), контактных секциях (${contactSectionsContent.length} симв.) и конце страницы (${pageEnd.length} симв.)`);
+      
+      // Ищем российские телефоны (более точные паттерны)
+      const phoneRegex = /(\+7[\s\-\(\)]?\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}|8[\s\-\(\)]?\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}|8[\s\-]*800[\s\-]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2})/gi;
+      
+      // Ищем email адреса (более точный паттерн)
+      const emailRegex = /([a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+      
+      let phones = [];
+      let emails = [];
+      
+      // Сначала ищем в приоритетных областях (footer, контактные секции, конец страницы)
+      const priorityPhones = priorityContent.match(phoneRegex) || [];
+      const priorityEmails = priorityContent.match(emailRegex) || [];
+      
+      // Если в приоритетных областях ничего не нашли, ищем по всей странице
+      const allPhones = priorityPhones.length > 0 ? priorityPhones : (htmlContent.match(phoneRegex) || []);
+      const allEmails = priorityEmails.length > 0 ? priorityEmails : (htmlContent.match(emailRegex) || []);
+      
+      // Обрабатываем телефоны
+      for (const phone of allPhones) {
+        const cleanPhone = phone.trim();
+        const digits = cleanPhone.replace(/\D/g, '');
+        // Проверяем что это действительно телефон (10-11 цифр)
+        if (digits.length >= 10 && digits.length <= 11 && 
+            (digits.startsWith('7') || digits.startsWith('8'))) {
+          phones.push(cleanPhone);
+        }
+      }
+      
+      // Обрабатываем email
+      for (const email of allEmails) {
+        const cleanEmail = email.trim().toLowerCase();
+        // Проверяем что это не служебный email (избегаем false positive)
+        if (!cleanEmail.includes('example.') && !cleanEmail.includes('@example') && 
+            !cleanEmail.includes('test@') && !cleanEmail.includes('name@') &&
+            !cleanEmail.includes('noreply') && !cleanEmail.includes('no-reply') &&
+            cleanEmail.includes('.') && cleanEmail.length >= 5) {
+          emails.push(email.trim());
+        }
+      }
+      
+      // Удаляем дубликаты
+      phones = [...new Set(phones)].slice(0, 5);
+      emails = [...new Set(emails)].slice(0, 5);
+      
+      const allContacts = [...phones, ...emails];
+      
+      console.log(`📞 Найдено телефонов: ${phones.length}, email: ${emails.length}`);
+      if (phones.length > 0) console.log(`📞 Телефоны:`, phones);
+      if (emails.length > 0) console.log(`📧 Email:`, emails);
+      
+      // Собираем контент для отправки ИИ с выделенными контактами
+      const contentParts = [
         `URL: ${url}`,
         title ? `ЗАГОЛОВОК: ${title}` : '',
-        description ? `ОПИСАНИЕ: ${description}` : '',
-        `КОНТЕНТ ДЛЯ АНАЛИЗА:\n${htmlContent.substring(0, 8000)}`
-      ].filter(Boolean).join('\n\n');
+        description ? `ОПИСАНИЕ: ${description}` : ''
+      ];
       
-      console.log(`✅ Скрапинг завершен (${content.length} символов)`);
+      // Добавляем найденные контакты в специальном формате для ИИ
+      if (allContacts.length > 0) {
+        contentParts.push(`=== НАЙДЕННЫЕ КОНТАКТЫ ===`);
+        if (phones.length > 0) {
+          contentParts.push(`ТЕЛЕФОНЫ: ${phones.join(', ')}`);
+        }
+        if (emails.length > 0) {
+          contentParts.push(`EMAIL: ${emails.join(', ')}`);
+        }
+      }
+      
+      // Добавляем основной контент (сокращенный)
+      contentParts.push(`КОНТЕНТ ДЛЯ АНАЛИЗА:\n${htmlContent.substring(0, 6000)}`);
+      
+      const content = contentParts.filter(Boolean).join('\n\n');
+      
+      console.log(`✅ Улучшенный скрапинг завершен (${content.length} символов, ${allContacts.length} контактов)`);
       return content;
       
     } catch (error: any) {
@@ -9792,6 +9938,13 @@ ${commentTexts}`;
           11. customerResults - результаты для клиентов, какую пользу получают
           12. marketingExpectations - ожидания от маркетинга, цели продвижения
           13. contactInfo - контактная информация
+          
+          ВАЖНО ДЛЯ КОНТАКТНОЙ ИНФОРМАЦИИ:
+          - Если в тексте есть раздел "НАЙДЕННЫЕ КОНТАКТЫ:", обязательно используй эти данные для поля contactInfo
+          - Если есть "КОНТАКТНЫЕ РАЗДЕЛЫ:", также используй эту информацию
+          - Приоритет: конкретные найденные телефоны и email > контактные разделы > общая информация
+          - Если контакты найдены, указывай их точно как они представлены на сайте
+          - Если контактов нет, укажи "Контактная информация не представлена на данной странице"
           
           Ответ должен быть структурированным JSON объектом, содержащим только запрашиваемые поля:
           {

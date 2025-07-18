@@ -5,7 +5,8 @@ const testWebsiteContactAnalysis = async () => {
 
   const testSites = [
     'https://nplanner.ru',
-    'https://smmniap.pw',
+    'https://smmniap.pw', 
+    'https://yandex.ru',
     'https://example.com'
   ];
 
