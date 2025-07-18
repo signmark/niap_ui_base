@@ -3989,39 +3989,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Если DeepSeek инициализирован, используем его для извлечения ключевых слов
-      console.log(`Извлечение ключевых слов с помощью DeepSeek из текста длиной ${text.length} символов`);
+      // Используем Gemini для извлечения ключевых слов
+      console.log(`Извлечение ключевых слов с помощью Gemini из текста длиной ${text.length} символов`);
       
-      // Используем встроенный системный промт DeepSeek для извлечения ключевых слов
-      const systemPrompt = `You are a keyword extraction specialist. 
-      Extract the most important and relevant keywords from the given text in Russian language.
+      const geminiApiKey = process.env.GEMINI_API_KEY;
       
-      RULES:
-      1. Return ONLY keywords, no explanations or additional text
-      2. Extract up to ${maxKeywords} keywords
-      3. Keywords should be single words or short phrases (max 3 words)
-      4. Keywords should be in the original language (Russian)
-      5. Keywords should represent the main topics and concepts in the text
-      6. Return the keywords as a JSON array, for example: ["keyword1", "keyword2", "keyword3"]
-      7. Don't include common stopwords like "и", "в", "на", "с", etc.`;
+      if (!geminiApiKey) {
+        return res.status(400).json({
+          error: "Gemini API ключ не найден в переменных окружения"
+        });
+      }
       
-      const userPrompt = `Extract keywords from this text:
-      
-      ${text}
-      
-      Remember to return ONLY a JSON array of keywords.`;
+      // Промт для извлечения ключевых слов
+      const prompt = `Извлеки ${maxKeywords} наиболее важных ключевых слов из следующего текста на русском языке.
+
+Правила:
+1. Верни ТОЛЬКО массив ключевых слов в формате JSON: ["слово1", "фраза2", "термин3"]
+2. Максимум ${maxKeywords} ключевых слов
+3. Ключевые слова должны быть на русском языке
+4. Избегай стоп-слов ("и", "в", "на", "с" и т.д.)
+5. Включай слова и короткие фразы (до 3 слов)
+
+Текст для анализа:
+${text}
+
+Верни только JSON массив ключевых слов:`;
       
       try {
-        const result = await deepseekService.generateText(
-          [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          {
-            temperature: 0.2,  // Низкая температура для стабильности результата
-            max_tokens: 100    // Ограничиваем длину ответа
+        const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 200
           }
-        );
+        });
+
+        const result = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         // Парсим результат как JSON массив
         let keywords = [];
@@ -4039,7 +4046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .filter(Boolean);
           }
         } catch (parseError) {
-          console.error("Ошибка при парсинге результата DeepSeek:", parseError);
+          console.error("Ошибка при парсинге результата Gemini:", parseError);
           // Если не удалось распарсить как JSON, используем простое разделение по запятым
           keywords = result
             .replace(/[\[\]"]/g, '')
@@ -4051,19 +4058,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Ограничиваем количество ключевых слов
         keywords = keywords.slice(0, maxKeywords);
         
-        console.log(`Извлечено ${keywords.length} ключевых слов из текста с помощью DeepSeek:`, keywords);
+        console.log(`Извлечено ${keywords.length} ключевых слов из текста с помощью Gemini:`, keywords);
         
         return res.json({
           success: true,
           keywords,
-          service: 'deepseek'
+          service: 'gemini'
         });
       } catch (aiError) {
-        console.error("Ошибка при использовании DeepSeek API для извлечения ключевых слов:", aiError);
+        console.error("Ошибка при использовании Gemini API для извлечения ключевых слов:", aiError);
         // Возвращаемся к простому алгоритму
         return res.status(400).json({ 
           error: "Ошибка при извлечении ключевых слов", 
-          details: "Не удалось использовать DeepSeek API" 
+          details: "Не удалось использовать Gemini API" 
         });
       }
     } catch (error: any) {
@@ -4091,40 +4098,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers['authorization'] as string;
       const token = authHeader.replace('Bearer ', '');
       
-      console.log(`Получение DeepSeek ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
+      console.log(`Получение Gemini ключа из глобальных настроек для поиска ключевых слов: ${keyword}`);
       
-      // Получаем DeepSeek ключ из Directus используя токен пользователя
-      const { directusApiManager } = await import('./directus');
+      // Получаем Gemini ключ из переменных окружения
+      const geminiApiKey = process.env.GEMINI_API_KEY;
       
-      const keysResponse = await directusApiManager.instance.get('/items/global_api_keys', {
-        params: {
-          fields: ['service_name', 'api_key'],
-          filter: {
-            service_name: { _eq: 'deepseek' },
-            is_active: { _eq: true }
-          }
-        },
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      const deepseekData = keysResponse.data?.data?.[0];
-      const deepseekApiKey = deepseekData?.api_key;
-      
-      if (!deepseekApiKey) {
+      if (!geminiApiKey) {
         return res.status(400).json({
           key_missing: true,
-          service: "DeepSeek",
-          error: "DeepSeek API ключ не найден в глобальных настройках системы."
+          service: "Gemini",
+          error: "Gemini API ключ не найден в переменных окружения."
         });
       }
       
-      // Обновляем API ключ в сервисе напрямую
-      deepseekService.updateApiKey(deepseekApiKey);
-      console.log('DeepSeek ключ получен из глобальных настроек и установлен в сервис');
-      
-      console.log('DeepSeek сервис инициализирован успешно для поиска ключевых слов');
+      console.log('Gemini API ключ найден, используем для поиска ключевых слов');
       
       // Формируем промт для генерации связанных ключевых слов
       const prompt = `Сгенерируй список из 10-15 связанных ключевых слов и фраз для основного ключевого слова "${keyword}". 
@@ -4145,19 +4132,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
 
-      const deepseekResponse = await deepseekService.generateText(prompt);
+      // Используем Gemini API для генерации ключевых слов
+      const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000
+        }
+      });
+
+      const geminiResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      if (!deepseekResponse) {
-        throw new Error('Пустой ответ от DeepSeek API');
+      if (!geminiResponse) {
+        throw new Error('Пустой ответ от Gemini API');
       }
       
-      console.log('Ответ от DeepSeek для ключевых слов:', deepseekResponse);
+      console.log('Ответ от Gemini для ключевых слов:', geminiResponse);
       
       // Попытка парсинга JSON ответа
       let keywords = [];
       try {
         // Ищем JSON массив в ответе
-        const jsonMatch = deepseekResponse.match(/\[[\s\S]*\]/);
+        const jsonMatch = geminiResponse.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           keywords = JSON.parse(jsonMatch[0]);
         } else {
@@ -4166,7 +4166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (parseError) {
         console.log('Не удалось распарсить как JSON, используем простое извлечение');
         // Если не удалось распарсить как JSON, извлекаем ключевые слова из текста
-        const lines = deepseekResponse.split('\n').filter(line => line.includes(keyword) || line.includes(':') || line.includes('-'));
+        const lines = geminiResponse.split('\n').filter(line => line.includes(keyword) || line.includes(':') || line.includes('-'));
         keywords = lines.slice(0, 15).map((line, index) => {
           const cleanLine = line.replace(/[-*•\d\.\s:]/g, '').trim();
           return {
@@ -4201,10 +4201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error: any) {
-      console.error("Ошибка при использовании DeepSeek API для поиска ключевых слов:", error);
+      console.error("Ошибка при использовании Gemini API для поиска ключевых слов:", error);
       return res.status(500).json({ 
         error: "Ошибка при поиске ключевых слов", 
-        message: "Не удалось использовать DeepSeek API для генерации ключевых слов"
+        message: "Не удалось использовать Gemini API для генерации ключевых слов"
       });
     }
   });
@@ -4596,21 +4596,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "URL не указан" });
       }
       
-      // Инициализируем DeepSeek с API ключом пользователя
+      // Используем Gemini для анализа сайта
       const userId = req.userId;
       const token = req.headers.authorization?.split(' ')[1];
-      const initialized = await deepseekService.initialize(userId, token);
       
-      if (!initialized) {
+      const geminiApiKey = process.env.GEMINI_API_KEY;
+      
+      if (!geminiApiKey) {
         return res.status(400).json({
           success: false,
-          error: "Не удалось инициализировать DeepSeek API. Убедитесь, что у вас установлен API ключ в настройках."
+          error: "Gemini API ключ не найден в переменных окружения."
         });
       }
 
       // Нормализуем URL
       const normalizedUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
-      console.log(`Анализируем сайт: ${normalizedUrl} с помощью DeepSeek`);
+      console.log(`Анализируем сайт: ${normalizedUrl} с помощью Gemini`);
       
       // Создаем уникальный requestId для отслеживания запроса
       const requestId = crypto.randomUUID();
@@ -4622,14 +4623,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[${parseRequestId}] Начинаем глубокий парсинг сайта`);
         const siteContent = await extractFullSiteContent(normalizedUrl);
         
-        // Получаем ключевые слова от DeepSeek
-        // Создаем новый requestId для запроса к DeepSeek
-        const deepseekRequestId = crypto.randomUUID();
-        const deepseekKeywords = await deepseekService.generateKeywordsForUrl(
-          normalizedUrl, 
-          siteContent, 
-          deepseekRequestId
-        );
+        // Получаем ключевые слова от Gemini
+        // Создаем новый requestId для запроса к Gemini
+        const geminiRequestId = crypto.randomUUID();
+        
+        const keywordPrompt = `Проанализируй сайт ${normalizedUrl} и извлеки 15-20 ключевых слов для SEO и маркетинга.
+
+Контент сайта:
+${siteContent.substring(0, 2000)}
+
+Верни результат в формате JSON массива объектов:
+[
+  {"keyword": "ключевое слово", "trend": 85, "competition": 60},
+  {"keyword": "другое ключевое слово", "trend": 75, "competition": 45}
+]
+
+Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
+
+        const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+          contents: [{
+            parts: [{
+              text: keywordPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1500
+          }
+        });
+
+        const geminiResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        let deepseekKeywords = [];
+        try {
+          const jsonMatch = geminiResponse.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            deepseekKeywords = JSON.parse(jsonMatch[0]);
+          }
+        } catch (parseError) {
+          console.log('Не удалось распарсить ответ Gemini, создаем базовые ключевые слова');
+          deepseekKeywords = [
+            { keyword: 'SEO', trend: 80, competition: 70 },
+            { keyword: 'маркетинг', trend: 85, competition: 75 }
+          ];
+        }
         
         // Если нашли ключевые слова, попытаемся проверить их через XMLRiver для получения точных метрик
         if (deepseekKeywords && deepseekKeywords.length > 0) {
