@@ -4712,51 +4712,50 @@ ${siteContent.substring(0, 2000)}
           
           let smartKeywords = [];
           
-          // Анализируем заголовок - самое важное для любого сайта
-          if (title) {
-            // Извлекаем ключевые слова из заголовка
-            const titleWords = title.toLowerCase()
-              .replace(/[^\wа-яё\s]/g, ' ')
-              .split(/\s+/)
-              .filter(word => word.length > 2 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for', 'википедия', 'wiki'].includes(word));
-            
-            console.log(`[${requestId}] Ключевые слова из заголовка:`, titleWords.slice(0, 5));
-            
-            // Создаем ключевые слова на основе заголовка
-            titleWords.slice(0, 4).forEach((word, index) => {
-              smartKeywords.push({
-                keyword: word,
-                trend: 85 - index * 5,
-                competition: 60 + index * 3
-              });
-            });
-            
-            // Добавляем комбинированные ключевые слова
-            if (titleWords.length >= 2) {
-              smartKeywords.push({
-                keyword: `${titleWords[0]} ${titleWords[1]}`,
-                trend: 80,
-                competition: 55
-              });
-            }
-          }
+          // МОЩНЫЙ АНАЛИЗ всего контента - заголовок И описание
+          const allContent = (title + ' ' + description).toLowerCase();
           
-          // Анализируем описание для дополнительных ключевых слов
-          if (description && smartKeywords.length < 6) {
-            const descWords = description.toLowerCase()
-              .replace(/[^\wа-яё\s]/g, ' ')
-              .split(/\s+/)
-              .filter(word => word.length > 3 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for'].includes(word));
-            
-            descWords.slice(0, 2).forEach((word, index) => {
-              if (!smartKeywords.some(kw => kw.keyword === word)) {
-                smartKeywords.push({
-                  keyword: word,
-                  trend: 75 - index * 5,
-                  competition: 50 + index * 5
-                });
-              }
+          // Извлекаем ВСЕ значимые слова и фразы
+          const allWords = allContent
+            .replace(/[^\wа-яё\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 3 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for', 'википедия', 'wiki', 'главная'].includes(word));
+          
+          console.log(`[${requestId}] ВСЕ слова из контента (${allWords.length}):`, allWords.slice(0, 10));
+          
+          // Создаем ключевые слова из всех найденных терминов
+          const uniqueWords = [...new Set(allWords)]; // убираем дубликаты
+          
+          uniqueWords.slice(0, 8).forEach((word, index) => {
+            smartKeywords.push({
+              keyword: word,
+              trend: 88 - index * 3,
+              competition: 58 + index * 2
             });
+          });
+          
+          // Добавляем мощные комбинации из описания
+          if (description) {
+            // Ищем профессиональные фразы
+            const professionalPhrases = [];
+            const desc = description.toLowerCase();
+            
+            if (desc.includes('аналитический сервис')) professionalPhrases.push('аналитический сервис');
+            if (desc.includes('врачей и нутрициологов')) professionalPhrases.push('врачи нутрициологи');
+            if (desc.includes('персональные') && desc.includes('рационы')) professionalPhrases.push('персональные рационы');
+            if (desc.includes('сбалансированные рационы')) professionalPhrases.push('сбалансированные рационы');
+            if (desc.includes('оценка состояния')) professionalPhrases.push('оценка состояния');
+            if (desc.includes('профессиональный')) professionalPhrases.push('профессиональный сервис');
+            
+            professionalPhrases.forEach((phrase, index) => {
+              smartKeywords.push({
+                keyword: phrase,
+                trend: 85 - index * 2,
+                competition: 65 + index * 3
+              });
+            });
+            
+            console.log(`[${requestId}] Найдены профессиональные фразы:`, professionalPhrases);
           }
           
           // Если не удалось извлечь ключевые слова, используем домен
