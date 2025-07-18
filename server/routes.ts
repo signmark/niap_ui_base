@@ -4655,13 +4655,11 @@ ${text}
         // Создаем новый requestId для запроса к Gemini
         const geminiRequestId = crypto.randomUUID();
         
-        // Используем сразу GeminiProxyService для надежности
-        console.log(`[${requestId}] Используем GeminiProxyService для анализа ключевых слов`);
+        // Используем прямой Gemini API для анализа ключевых слов
         
-        let deepseekKeywords = [];
+        let geminiKeywords = [];
         try {
-          const { GeminiProxyService } = await import('./services/gemini-proxy');
-          const geminiProxy = new GeminiProxyService();
+          console.log(`[${requestId}] Используем GeminiProxyService через SOCKS5 прокси для анализа ключевых слов`);
           
           const contextualPrompt = `Проанализируй содержимое сайта ${normalizedUrl} и создай 10-15 релевантных ключевых слов именно для этого бизнеса.
 
@@ -4681,19 +4679,26 @@ ${siteContent.substring(0, 2000)}
   {"keyword": "другое релевантное слово", "trend": 75, "competition": 45}
 ]`;
 
-          const proxyResponse = await geminiProxy.generateText(contextualPrompt, 'gemini-2.5-flash');
+          // Используем GeminiProxyService через SOCKS5 прокси
+          const { GeminiProxyService } = await import('./services/gemini-proxy');
+          const geminiProxy = new GeminiProxyService({ apiKey: geminiApiKey });
           
-          if (proxyResponse) {
-            console.log(`[${requestId}] Ответ от GeminiProxyService:`, proxyResponse.substring(0, 200));
-            const jsonMatch = proxyResponse.match(/\[[\s\S]*\]/);
+          const geminiText = await geminiProxy.generateText({ 
+            prompt: contextualPrompt, 
+            model: 'gemini-2.5-flash' 
+          });
+          
+          if (geminiText) {
+            console.log(`[${requestId}] Ответ от GeminiProxyService:`, geminiText.substring(0, 200));
+            const jsonMatch = geminiText.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
-              deepseekKeywords = JSON.parse(jsonMatch[0]);
-              console.log(`[${requestId}] ✅ Получены контекстуальные ключевые слова через GeminiProxyService:`, deepseekKeywords.length);
+              geminiKeywords = JSON.parse(jsonMatch[0]);
+              console.log(`[${requestId}] ✅ Получены контекстуальные ключевые слова через GeminiProxyService:`, geminiKeywords.length);
             } else {
-              console.log(`[${requestId}] Не найден JSON массив в ответе GeminiProxyService`);
+              console.log(`[${requestId}] Не найден JSON массив в ответе GeminiService`);
             }
           } else {
-            console.log(`[${requestId}] Пустой ответ от GeminiProxyService`);
+            console.log(`[${requestId}] Пустой ответ от GeminiService`);
           }
         } catch (proxyError) {
           console.log(`[${requestId}] ❌ ОШИБКА: GeminiProxyService не сработал:`, proxyError.message);
@@ -4704,10 +4709,10 @@ ${siteContent.substring(0, 2000)}
         }
         
         // Возвращаем результат только если получен ответ от Gemini
-        if (deepseekKeywords && deepseekKeywords.length > 0) {
-          console.log(`[${requestId}] ✅ Найдено ${deepseekKeywords.length} ключевых слов от Gemini:`, deepseekKeywords.map(k => k.keyword));
+        if (geminiKeywords && geminiKeywords.length > 0) {
+          console.log(`[${requestId}] ✅ Найдено ${geminiKeywords.length} ключевых слов от Gemini:`, geminiKeywords.map(k => k.keyword));
           return res.json({
-            data: { keywords: deepseekKeywords },
+            data: { keywords: geminiKeywords },
             source: 'gemini_ai',
             message: 'Ключевые слова созданы через Gemini AI анализ'
           });
