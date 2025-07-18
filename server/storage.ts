@@ -1101,17 +1101,25 @@ export class DatabaseStorage implements IStorage {
       if (updates.scheduledAt !== undefined) directusUpdates.scheduled_at = updates.scheduledAt?.toISOString() || null;
       
       // КРИТИЧЕСКИ ВАЖНО: при обновлении socialPlatforms сохраняем существующие статусы опубликованных платформ
-      if (updates.socialPlatforms !== undefined) {
-        // Получаем текущие данные контента
-        const currentContent = await this.getCampaignContentById(id, authToken);
-        if (currentContent && currentContent.socialPlatforms) {
+      // Проверяем как snake_case (от API), так и camelCase (от других источников)
+      const socialPlatformsUpdate = (updates as any).social_platforms !== undefined ? (updates as any).social_platforms : updates.socialPlatforms;
+      
+      if (socialPlatformsUpdate !== undefined) {
+        // Если явно передан null - значит нужно очистить все платформы (например, при переводе в draft)
+        if (socialPlatformsUpdate === null) {
+          console.log(`🧹🧹🧹 STORAGE: Принудительная очистка social_platforms для контента ${id} 🧹🧹🧹`);
+          directusUpdates.social_platforms = null;
+        } else {
+          // Получаем текущие данные контента
+          const currentContent = await this.getCampaignContentById(id, authToken);
+          if (currentContent && currentContent.socialPlatforms) {
           const currentPlatforms = typeof currentContent.socialPlatforms === 'string' 
             ? JSON.parse(currentContent.socialPlatforms) 
             : currentContent.socialPlatforms;
           
-          const newPlatforms = typeof updates.socialPlatforms === 'string'
-            ? JSON.parse(updates.socialPlatforms)
-            : updates.socialPlatforms;
+          const newPlatforms = typeof socialPlatformsUpdate === 'string'
+            ? JSON.parse(socialPlatformsUpdate)
+            : socialPlatformsUpdate;
           
           // Объединяем данные: сохраняем опубликованные статусы, обновляем остальные
           const mergedPlatforms = { ...currentPlatforms };
@@ -1139,9 +1147,10 @@ export class DatabaseStorage implements IStorage {
           console.log(`🔒 Сохранены published статусы:`, Object.entries(mergedPlatforms)
             .filter(([_, data]) => data.status === 'published')
             .map(([platform, _]) => platform));
-        } else {
-          // Если нет текущих данных, используем новые
-          directusUpdates.social_platforms = updates.socialPlatforms;
+          } else {
+            // Если нет текущих данных, используем новые
+            directusUpdates.social_platforms = socialPlatformsUpdate;
+          }
         }
       }
       // Добавляем обработку дополнительных изображений

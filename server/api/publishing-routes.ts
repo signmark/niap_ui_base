@@ -1151,6 +1151,8 @@ export function registerPublishingRoutes(app: Express): void {
       const updates = req.body;
       const authHeader = req.headers.authorization;
       
+      console.log(`🔍 PATCH /api/publish/update-content/${id} - Входящие данные:`, JSON.stringify(updates, null, 2));
+      
       // Проверяем заголовок авторизации
       if (!authHeader) {
         return res.status(401).json({ error: 'Не авторизован: Отсутствует заголовок авторизации' });
@@ -1191,6 +1193,27 @@ export function registerPublishingRoutes(app: Express): void {
       if (!updates.userId && content.userId) {
         updates.userId = content.userId;
       }
+      
+      // Если статус изменяется на draft, очищаем social_platforms
+      if (updates.status === 'draft') {
+        console.log(`🧹 PATCH /api/publish/update-content/${id}: Clearing social_platforms for draft status`);
+        updates.social_platforms = null;
+      }
+      
+      // Также очищаем если пришел пустой объект social_platforms
+      console.log(`🔍 PATCH /api/publish/update-content/${id}: Checking social_platforms:`, {
+        value: updates.social_platforms,
+        type: typeof updates.social_platforms,
+        keys: updates.social_platforms ? Object.keys(updates.social_platforms) : 'N/A',
+        isEmpty: updates.social_platforms && typeof updates.social_platforms === 'object' && Object.keys(updates.social_platforms).length === 0
+      });
+      
+      if (updates.social_platforms && typeof updates.social_platforms === 'object' && Object.keys(updates.social_platforms).length === 0) {
+        console.log(`🧹 PATCH /api/publish/update-content/${id}: Converting empty social_platforms object to null`);
+        updates.social_platforms = null;
+      }
+      
+      console.log(`🔍 PATCH /api/publish/update-content/${id}: Передаем в storage.updateCampaignContent:`, updates);
       
       // Обновляем контент с передачей токена авторизации
       const updatedContent = await storage.updateCampaignContent(id, updates, token);
