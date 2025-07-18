@@ -4132,20 +4132,13 @@ ${text}
 
 Где trend (1-100) - популярность, competition (1-100) - конкуренция.`;
 
-      // Используем Vertex AI для генерации ключевых слов через Gemini 2.5
-      console.log('Отправляем запрос к Vertex AI Gemini 2.5...');
-      const vertexAIService = new VertexAIService({
-        projectId: 'gen-lang-client-0492208227',
-        location: 'us-central1',
-        credentials: vertexAICredentials
-      });
-      const geminiResponse = await vertexAIService.generateText({
-        prompt: prompt,
-        model: 'gemini-2.5-flash'
-      });
+      // Используем Gemini сервис для генерации ключевых слов
+      console.log('Отправляем запрос к Gemini через сервис...');
+      const geminiService = new GeminiService(geminiApiKey);
+      const geminiResponse = await geminiService.generateText(prompt);
 
       if (!geminiResponse) {
-        console.log('Пустой ответ от Vertex AI, используем fallback');
+        console.log('Пустой ответ от Gemini сервиса, используем fallback');
         // Создаем fallback ключевые слова
         const fallbackKeywords = [
           { keyword: keyword, trend: 80, competition: 65 },
@@ -4160,11 +4153,11 @@ ${text}
             keywords: fallbackKeywords
           },
           fallback: true,
-          error_message: "Использованы базовые ключевые слова - пустой ответ от Vertex AI"
+          error_message: "Использованы базовые ключевые слова - пустой ответ от Gemini"
         });
       }
       
-      console.log('Ответ от Vertex AI Gemini для ключевых слов:', geminiResponse);
+      console.log('Ответ от Gemini для ключевых слов:', geminiResponse);
       
       // Попытка парсинга JSON ответа
       let keywords = [];
@@ -4214,8 +4207,8 @@ ${text}
       });
       
     } catch (error: any) {
-      console.error("Ошибка при использовании Gemini API для поиска ключевых слов:", error);
-      console.error("Детали ошибки:", error.response?.data || error.message);
+      console.error("Ошибка при использовании Gemini сервиса для поиска ключевых слов:", error);
+      console.error("Детали ошибки:", error.message);
       
       // Предоставляем fallback результат в случае ошибки API
       const fallbackKeywords = [
