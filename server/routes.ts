@@ -9511,140 +9511,13 @@ ${commentTexts}`;
     }
   });
   
-  // Анализ сайта для автоматического заполнения анкеты
+  // УСТАРЕВШИЙ endpoint - удален в пользу /api/website-analysis
+  // Этот endpoint больше не используется
   app.post("/api/analyze-website-for-questionnaire", authenticateUser, async (req: any, res) => {
-    try {
-      const { url, campaignId } = req.body;
-      const authHeader = req.headers['authorization'];
-      
-      if (!url) {
-        return res.status(400).json({ error: "URL сайта не указан" });
-      }
-      
-      if (!authHeader) {
-        return res.status(401).json({ error: "Не авторизован" });
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      
-      console.log(`Analyzing website ${url} for questionnaire data...`);
-      
-      // Получаем API ключ DeepSeek из настроек пользователя
-      try {
-        const userKeysResponse = await directusApi.get('/items/user_api_keys', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          params: {
-            filter: {
-              service_name: {
-                _eq: 'deepseek'
-              }
-            }
-          }
-        });
-        
-        const userKeys = userKeysResponse?.data?.data || [];
-        const deepseekKey = userKeys.length > 0 ? userKeys[0].api_key : '';
-        
-        if (deepseekKey) {
-          console.log('Found DeepSeek API key in user settings');
-          // Обновляем ключ в сервисе DeepSeek
-          deepseekService.updateApiKey(deepseekKey);
-        } else {
-          console.warn('DeepSeek API key not found in user settings');
-        }
-      } catch (error) {
-        console.error('Error fetching DeepSeek API key from user settings:', error);
-        // Продолжаем выполнение, так как ключ может быть доступен из переменных окружения
-      }
-      
-      // Извлекаем контент сайта с помощью существующей функции
-      let websiteContent = '';
-      try {
-        websiteContent = await extractFullSiteContent(url);
-        console.log(`Successfully extracted content from ${url}, content length: ${websiteContent.length} characters`);
-      } catch (error) {
-        console.error(`Error extracting content from ${url}:`, error);
-        return res.status(400).json({ 
-          error: "Не удалось получить содержимое сайта", 
-          details: error.message 
-        });
-      }
-      
-      if (!websiteContent || websiteContent.length < 100) {
-        return res.status(400).json({ error: "Получено недостаточно контента с сайта для анализа" });
-      }
-      
-      // Используем DeepSeek для анализа контента
-      const prompt = `
-Проанализируй содержимое сайта и предоставь следующую информацию в формате JSON:
-
-1. companyName: название компании
-2. contactInfo: контактная информация (адрес, телефоны, email и т.д.)
-3. businessDescription: краткое описание бизнеса (1-2 предложения)
-4. mainDirections: основные направления деятельности, перечисленные через запятую
-5. brandImage: как компания позиционирует себя (имидж, статус)
-6. productsServices: основные продукты и услуги, перечисленные через запятую
-7. targetAudience: описание целевой аудитории
-8. customerResults: какие результаты получают клиенты
-9. companyFeatures: отличительные особенности компании
-10. businessValues: ценности компании
-11. productBeliefs: что компания думает о своих продуктах/услугах
-12. competitiveAdvantages: конкурентные преимущества
-13. marketingExpectations: цели маркетинга, ожидания от маркетинговых кампаний
-
-Формат должен быть строго JSON без дополнительных комментариев. Если какой-то информации не удается найти, оставь соответствующее поле пустым.
-
-Контент сайта:
-${websiteContent.substring(0, 8000)} // Ограничиваем, чтобы не превысить лимиты токенов
-`;
-
-      try {
-        const analysisResponse = await deepseekService.generateText([
-          { role: 'system', content: 'Ты бизнес-аналитик, который анализирует содержимое веб-сайтов и извлекает деловую информацию о компании.' },
-          { role: 'user', content: prompt }
-        ], { max_tokens: 2000 });
-        
-        console.log('Received analysis from DeepSeek');
-        console.log('DeepSeek response first 100 chars:', analysisResponse.substring(0, 100));
-        
-        // Извлекаем JSON из ответа
-        let jsonData = {};
-        try {
-          // Попытка найти JSON в ответе, даже если он не полностью соответствует формату
-          const jsonMatch = analysisResponse.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            jsonData = JSON.parse(jsonMatch[0]);
-          } else {
-            throw new Error('Не удалось извлечь JSON из ответа');
-          }
-        } catch (parseError) {
-          console.error('Error parsing JSON from DeepSeek response:', parseError);
-          return res.status(500).json({ 
-            error: "Ошибка при обработке результатов анализа", 
-            details: parseError.message 
-          });
-        }
-        
-        return res.json({
-          success: true,
-          data: jsonData
-        });
-      } catch (aiError) {
-        console.error('Error calling DeepSeek API:', aiError);
-        return res.status(500).json({ 
-          error: "Ошибка при выполнении анализа сайта", 
-          details: aiError.message 
-        });
-      }
-    } catch (error) {
-      console.error('Error analyzing website for questionnaire:', error);
-      return res.status(500).json({ 
-        error: "Ошибка при анализе сайта для заполнения анкеты", 
-        details: error.message 
-      });
-    }
+    return res.status(410).json({ 
+      error: "Этот endpoint устарел. Используйте /api/website-analysis вместо него.",
+      redirectTo: "/api/website-analysis"
+    });
   });
 
   // Обновление существующей анкеты напрямую через ID кампании (без указания ID анкеты)
@@ -9969,10 +9842,10 @@ ${websiteContent}`;
         console.log(`[WEBSITE-ANALYSIS] 🔍 Размер промпта: ${prompt.length} символов`);
         
         console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini через прокси...');
-        const geminiResponse = await geminiProxyService.generateText(prompt, {
-          model: 'gemini-2.5-flash',
-          temperature: 0.3,
-          maxTokens: 2000
+        const geminiResponse = await geminiProxyService.improveText({
+          text: websiteContent,
+          prompt: prompt,
+          model: 'gemini-2.5-flash'
         });
         
         analysisResponse = geminiResponse;
@@ -10032,8 +9905,21 @@ ${websiteContent}`;
         console.log('[WEBSITE-ANALYSIS] 🔧 DEBUG: businessValues после парсинга:', JSON.stringify(result.businessValues || ''));
         console.log('[WEBSITE-ANALYSIS] 🔧 DEBUG: productBeliefs после парсинга:', JSON.stringify(result.productBeliefs || ''));
         
-        // Все поля уже заполнены в fallback или Gemini ответе
-        console.log('[WEBSITE-ANALYSIS] Пропускаем дополнительную обработку полей');
+        // Заполняем пустые критические поля
+        if (!result.businessValues || result.businessValues.trim() === '') {
+          result.businessValues = 'Профессионализм, качество, клиентоориентированность';
+          console.log('[WEBSITE-ANALYSIS] Добавлены businessValues');
+        }
+        
+        if (!result.productBeliefs || result.productBeliefs.trim() === '') {
+          result.productBeliefs = 'Продукт должен решать реальные потребности пользователей';
+          console.log('[WEBSITE-ANALYSIS] Добавлены productBeliefs');
+        }
+        
+        if (!result.contactInfo || result.contactInfo.trim() === '') {
+          const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+          result.contactInfo = `Контактная информация доступна на сайте ${domain}`;
+        }
       } catch (parseError) {
         console.error('Ошибка при парсинге JSON:', parseError);
         return res.status(500).json({ 
