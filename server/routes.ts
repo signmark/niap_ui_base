@@ -4699,43 +4699,78 @@ ${siteContent.substring(0, 2000)}
           console.log(`[${requestId}] GeminiProxyService не сработал, создаем умные fallback ключевые слова`);
           console.log(`[${requestId}] Анализируем контент (${siteContent.length} символов):`, siteContent.substring(0, 300));
           
-          // Анализируем контент сайта для создания релевантных ключевых слов
-          const contentLower = siteContent.toLowerCase();
+          // УНИВЕРСАЛЬНЫЙ АНАЛИЗ КОНТЕНТА - без привязки к конкретным сайтам
+          console.log(`[${requestId}] УНИВЕРСАЛЬНЫЙ анализ любого сайта без классификации`);
+          
+          // Извлекаем ключевую информацию из скрапленного контента
+          const titleMatch = siteContent.match(/ЗАГОЛОВОК:\s*([^\n]+)/);
+          const descMatch = siteContent.match(/ОПИСАНИЕ:\s*([^\n]+)/);
+          const title = titleMatch ? titleMatch[1] : '';
+          const description = descMatch ? descMatch[1] : '';
+          
+          console.log(`[${requestId}] Анализ контента: title="${title}", desc="${description}"`);
+          
           let smartKeywords = [];
           
-          // НИАП / Питание / Медицинская диагностика (специально для nplanner.ru)
-          if (contentLower.includes('ниап') || contentLower.includes('питан') || contentLower.includes('диетолог') || 
-              contentLower.includes('нутрициолог') || contentLower.includes('рацион') || normalizedUrl.includes('nplanner')) {
-            smartKeywords = [
-              { keyword: 'НИАП анализ питания', trend: 88, competition: 45 },
-              { keyword: 'диетология диагностика', trend: 85, competition: 50 },
-              { keyword: 'персональный рацион', trend: 82, competition: 55 },
-              { keyword: 'нутрициология сервис', trend: 80, competition: 48 },
-              { keyword: 'автоматическая диета', trend: 78, competition: 52 },
-              { keyword: 'анализ состояния здоровья', trend: 75, competition: 58 },
-              { keyword: 'персонализированное питание', trend: 83, competition: 46 },
-              { keyword: 'облачная диетология', trend: 70, competition: 42 }
-            ];
+          // Анализируем заголовок - самое важное для любого сайта
+          if (title) {
+            // Извлекаем ключевые слова из заголовка
+            const titleWords = title.toLowerCase()
+              .replace(/[^\wа-яё\s]/g, ' ')
+              .split(/\s+/)
+              .filter(word => word.length > 2 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for', 'википедия', 'wiki'].includes(word));
+            
+            console.log(`[${requestId}] Ключевые слова из заголовка:`, titleWords.slice(0, 5));
+            
+            // Создаем ключевые слова на основе заголовка
+            titleWords.slice(0, 4).forEach((word, index) => {
+              smartKeywords.push({
+                keyword: word,
+                trend: 85 - index * 5,
+                competition: 60 + index * 3
+              });
+            });
+            
+            // Добавляем комбинированные ключевые слова
+            if (titleWords.length >= 2) {
+              smartKeywords.push({
+                keyword: `${titleWords[0]} ${titleWords[1]}`,
+                trend: 80,
+                competition: 55
+              });
+            }
           }
-          // SMM тематика  
-          else if (contentLower.includes('социальн') || contentLower.includes('smm') || contentLower.includes('публикац') ||
-                   normalizedUrl.includes('smm')) {
-            smartKeywords = [
-              { keyword: 'SMM управление', trend: 88, competition: 70 },
-              { keyword: 'автоматизация социальных сетей', trend: 85, competition: 65 },
-              { keyword: 'контент планирование', trend: 80, competition: 60 },
-              { keyword: 'AI для SMM', trend: 90, competition: 75 }
-            ];
+          
+          // Анализируем описание для дополнительных ключевых слов
+          if (description && smartKeywords.length < 6) {
+            const descWords = description.toLowerCase()
+              .replace(/[^\wа-яё\s]/g, ' ')
+              .split(/\s+/)
+              .filter(word => word.length > 3 && !['это', 'для', 'как', 'что', 'где', 'the', 'and', 'for'].includes(word));
+            
+            descWords.slice(0, 2).forEach((word, index) => {
+              if (!smartKeywords.some(kw => kw.keyword === word)) {
+                smartKeywords.push({
+                  keyword: word,
+                  trend: 75 - index * 5,
+                  competition: 50 + index * 5
+                });
+              }
+            });
           }
-          // Общий fallback
-          else {
+          
+          // Если не удалось извлечь ключевые слова, используем домен
+          if (smartKeywords.length === 0) {
             const siteName = normalizedUrl.replace(/https?:\/\//, '').split('/')[0];
             smartKeywords = [
               { keyword: siteName, trend: 85, competition: 60 },
-              { keyword: 'онлайн сервис', trend: 75, competition: 50 },
-              { keyword: 'веб платформа', trend: 70, competition: 45 },
-              { keyword: 'цифровые решения', trend: 80, competition: 55 }
+              { keyword: 'информационный ресурс', trend: 75, competition: 50 },
+              { keyword: 'онлайн платформа', trend: 70, competition: 45 },
+              { keyword: 'веб-сайт', trend: 80, competition: 55 }
             ];
+            console.log(`[${requestId}] Использован базовый fallback для домена: ${siteName}`);
+          } else {
+            console.log(`[${requestId}] Создано ${smartKeywords.length} ключевых слов на основе реального анализа контента`);
           }
           
           deepseekKeywords = smartKeywords;
