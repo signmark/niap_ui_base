@@ -193,7 +193,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                         {status.status === 'published' 
                           ? `Опубликовано ${formatDateWithTimezone(status.publishedAt)}`
                           : status.status === 'failed'
-                            ? status.error 
+                            ? (status.error && status.error !== 'null')
                               ? `Не удалось опубликовать: ${status.error}`
                               : 'Публикация не удалась'
                             : 'Ожидает публикации'
@@ -269,7 +269,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                   {status.status === 'published' ? (
                     <CheckCircle2 size={14} className="text-green-500" />
                   ) : status.status === 'failed' ? (
-                    status.error ? (
+                    (status.error && status.error !== 'null') ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
@@ -284,7 +284,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       <AlertTriangle size={14} className="text-red-500" />
                     )
                   ) : status.status === 'quota_exceeded' ? (
-                    status.error ? (
+                    (status.error && status.error !== 'null') ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
