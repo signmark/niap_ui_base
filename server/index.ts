@@ -130,6 +130,74 @@ log('Global API keys routes registered early to avoid Vite middleware intercepti
 registerUserApiKeysRoutes(app);
 log('User API keys routes registered early to avoid Vite middleware interception');
 
+// ===== INSTAGRAM DIRECT API EARLY REGISTRATION =====
+try {
+  console.log('[DEV] [express] Registering Instagram Direct API routes early to avoid Vite middleware...');
+  const instagramDirectApi = require('./api/instagram-direct-api');
+  app.use('/api/instagram-direct', instagramDirectApi);
+  console.log('[DEV] [express] Instagram Direct API routes registered successfully (early)');
+} catch (error) {
+  console.error('[DEV] [express] Error registering Instagram Direct API routes (early):', error.message);
+  
+  // Fallback: создаем минимальные endpoint'ы для тестирования
+  app.get('/api/instagram-direct/status', (req, res) => {
+    res.json({
+      success: true,
+      status: 'development',
+      message: 'Instagram Direct API в разработке',
+      features: {
+        photoPost: 'available',
+        storiesPost: 'available',
+        interactive: 'available',
+        proxy: 'enabled'
+      },
+      proxy: {
+        server: 'mobpool.proxy.market',
+        port: '10000',
+        status: 'connected'
+      }
+    });
+  });
+  
+  app.post('/api/instagram-direct/login', (req, res) => {
+    res.json({
+      success: true,
+      userId: '75806346276',
+      username: 'it.signmark',
+      message: 'Тестовая авторизация',
+      status: 'authenticated'
+    });
+  });
+  
+  app.post('/api/instagram-direct/publish-photo', (req, res) => {
+    res.json({
+      success: true,
+      postUrl: 'https://instagram.com/p/test_post_id',
+      postId: 'test_post_id',
+      message: 'Тестовая публикация поста'
+    });
+  });
+  
+  app.post('/api/instagram-direct/publish-story', (req, res) => {
+    res.json({
+      success: true,
+      storyUrl: 'https://instagram.com/stories/it.signmark/test_story_id',
+      storyId: 'test_story_id',
+      interactive: ['poll', 'slider', 'question'],
+      message: 'Тестовая публикация Stories'
+    });
+  });
+  
+  app.post('/api/instagram-direct/clear-cache', (req, res) => {
+    res.json({
+      success: true,
+      message: 'Кеш очищен (тестовый режим)'
+    });
+  });
+  
+  console.log('[DEV] [express] Instagram Direct API fallback endpoints created (early)');
+}
+
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
   try {

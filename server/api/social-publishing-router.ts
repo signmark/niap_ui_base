@@ -16,6 +16,177 @@ import { SocialPlatform } from '@shared/schema';
 const router = express.Router();
 
 /**
+ * Публикует контент через Instagram Direct API
+ * @param contentId ID контента для публикации
+ */
+async function publishViaInstagramDirectAPI(contentId: string) {
+  try {
+    log(`[Social Publishing] Публикация в Instagram через Direct API для контента ${contentId}`);
+    
+    // Получаем контент из базы данных
+    const content = await storage.getCampaignContentById(contentId);
+    if (!content) {
+      throw new Error(`Контент с ID ${contentId} не найден`);
+    }
+
+    // Получаем настройки кампании для получения Instagram credentials
+    const campaign = await storage.getCampaignById(content.campaignId);
+    if (!campaign) {
+      throw new Error(`Кампания с ID ${content.campaignId} не найдена`);
+    }
+
+    // Извлекаем Instagram credentials из настроек кампании
+    const socialMediaSettings = campaign.socialMediaSettings || {};
+    const instagramSettings = socialMediaSettings.instagram || {};
+    
+    if (!instagramSettings.username || !instagramSettings.password) {
+      throw new Error('Instagram credentials не настроены в кампании');
+    }
+
+    // Подготавливаем данные для публикации
+    const publishData: any = {
+      username: instagramSettings.username,
+      password: instagramSettings.password,
+      caption: content.content || ''
+    };
+
+    // Определяем тип контента и добавляем соответствующие данные
+    if (content.contentType === 'stories') {
+      // Публикация Instagram Stories
+      log(`[Social Publishing] Публикация Instagram Stories для контента ${contentId}`);
+      
+      // Используем первое изображение из дополнительных изображений или основное изображение
+      let imageUrl = content.imageUrl;
+      if (content.additionalImages && content.additionalImages.length > 0) {
+        imageUrl = content.additionalImages[0];
+      }
+      
+      if (!imageUrl) {
+        throw new Error('Для Stories требуется изображение');
+      }
+
+      // Скачиваем изображение и конвертируем в base64
+      const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      const imageBase64 = `data:image/jpeg;base64,${Buffer.from(imageResponse.data).toString('base64')}`;
+      
+      publishData.imageData = imageBase64;
+      
+      // Добавляем интерактивные элементы если они есть
+      if (content.storyElements) {
+        publishData.interactive = content.storyElements;
+      }
+
+      // Вызываем Instagram Direct API для Stories
+      const response = await axios.post('http://localhost:5000/api/instagram-direct/publish-story', publishData);
+      
+      if (response.data.success) {
+        log(`[Social Publishing] Instagram Stories опубликована успешно: ${response.data.storyUrl}`);
+        
+        // Обновляем статус в базе данных
+        await updateInstagramStatus(contentId, 'published', response.data.storyUrl, response.data.storyId);
+        
+        return {
+          platform: 'instagram',
+          status: 'published',
+          postUrl: response.data.storyUrl,
+          postId: response.data.storyId,
+          message: 'Stories опубликована в Instagram'
+        };
+      } else {
+        throw new Error(response.data.error || 'Ошибка публикации Stories');
+      }
+      
+    } else {
+      // Обычная публикация поста
+      log(`[Social Publishing] Публикация обычного поста в Instagram для контента ${contentId}`);
+      
+      if (!content.imageUrl) {
+        throw new Error('Для публикации поста требуется изображение');
+      }
+
+      // Скачиваем изображение и конвертируем в base64
+      const imageResponse = await axios.get(content.imageUrl, { responseType: 'arraybuffer' });
+      const imageBase64 = `data:image/jpeg;base64,${Buffer.from(imageResponse.data).toString('base64')}`;
+      
+      publishData.imageData = imageBase64;
+
+      // Вызываем Instagram Direct API для фото поста
+      const response = await axios.post('http://localhost:5000/api/instagram-direct/publish-photo', publishData);
+      
+      if (response.data.success) {
+        log(`[Social Publishing] Instagram пост опубликован успешно: ${response.data.postUrl}`);
+        
+        // Обновляем статус в базе данных
+        await updateInstagramStatus(contentId, 'published', response.data.postUrl, response.data.postId);
+        
+        return {
+          platform: 'instagram',
+          status: 'published',
+          postUrl: response.data.postUrl,
+          postId: response.data.postId,
+          message: 'Пост опубликован в Instagram'
+        };
+      } else {
+        throw new Error(response.data.error || 'Ошибка публикации поста');
+      }
+    }
+
+  } catch (error: any) {
+    log(`[Social Publishing] Ошибка публикации в Instagram: ${error.message}`);
+    
+    // Обновляем статус на failed
+    await updateInstagramStatus(contentId, 'failed', null, null, error.message);
+    
+    throw error;
+  }
+}
+
+/**
+ * Обновляет статус Instagram платформы в базе данных
+ */
+async function updateInstagramStatus(contentId: string, status: string, postUrl?: string | null, postId?: string | null, errorMessage?: string) {
+  try {
+    // Получаем токен администратора
+    const directusAuthManager = await import('../services/directus-auth-manager').then(m => m.directusAuthManager);
+    let adminToken = process.env.DIRECTUS_TOKEN;
+    const sessions = directusAuthManager.getAllActiveSessions();
+    
+    if (sessions.length > 0) {
+      adminToken = sessions[0].token;
+    }
+
+    // Получаем текущий контент
+    const content = await storage.getCampaignContentById(contentId);
+    if (!content || !content.socialPlatforms) {
+      log(`[Social Publishing] Не удалось получить контент ${contentId} для обновления статуса Instagram`);
+      return;
+    }
+
+    // Обновляем статус Instagram платформы
+    const updatedSocialPlatforms = { ...content.socialPlatforms };
+    updatedSocialPlatforms.instagram = {
+      ...updatedSocialPlatforms.instagram,
+      status,
+      publishedAt: status === 'published' ? new Date().toISOString() : null,
+      postUrl,
+      postId,
+      error: errorMessage || null
+    };
+
+    // Сохраняем обновления
+    await storage.updateCampaignContent(
+      contentId,
+      { socialPlatforms: updatedSocialPlatforms },
+      adminToken
+    );
+
+    log(`[Social Publishing] Статус Instagram обновлен на "${status}" для контента ${contentId}`);
+  } catch (updateError: any) {
+    log(`[Social Publishing] Ошибка обновления статуса Instagram: ${updateError.message}`);
+  }
+}
+
+/**
  * @api {post} /api/publish/now Публикация контента сразу в выбранные социальные сети
  * @apiDescription Публикует контент сразу в выбранные социальные сети и сохраняет выбранные платформы
  * @apiVersion 1.0.0
@@ -183,9 +354,15 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           
           log(`[Social Publishing] Запускаем публикацию контента ${contentId} в ${platform}`);
           
-          // ВСЕ платформы (VK, Facebook, Telegram, Instagram, YouTube) используют N8N вебхуки
-          log(`[Social Publishing] Публикация ${platform} через N8N вебхук`);
-          const result = await publishViaN8nAsync(contentId, platform);
+          // Instagram использует прямой API, остальные платформы используют N8N вебхуки
+          let result;
+          if (platform === 'instagram') {
+            log(`[Social Publishing] Публикация ${platform} через Instagram Direct API`);
+            result = await publishViaInstagramDirectAPI(contentId);
+          } else {
+            log(`[Social Publishing] Публикация ${platform} через N8N вебхук`);
+            result = await publishViaN8nAsync(contentId, platform);
+          }
           
           publishResults.push({
             platform,

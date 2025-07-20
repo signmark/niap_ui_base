@@ -98,6 +98,7 @@
     "gtoken": "^7.1.0",
     "https-proxy-agent": "^7.0.6",
     "input-otp": "^1.2.4",
+    "instagram-private-api": "^1.46.1",
     "jest": "^29.7.0",
     "lucide-react": "^0.453.0",
     "memoizee": "^0.4.17",

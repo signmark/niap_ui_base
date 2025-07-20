@@ -12341,6 +12341,10 @@ ${datesText}
     }
   });
   
+  // ===== INSTAGRAM DIRECT API INTEGRATION =====
+  // Уже зарегистрировано в index.ts для избежания конфликтов с Vite middleware
+  console.log('[DEV] [routes] Instagram Direct API routes should be registered early in index.ts');
+
   return httpServer;
 }
 
