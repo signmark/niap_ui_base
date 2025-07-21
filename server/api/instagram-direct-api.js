@@ -16,8 +16,8 @@ const PROXY_CONFIG = {
   country: 'Belarus'
 };
 
-// Instagram session storage
-const sessionStore = new Map();
+// Импортируем новый Session Manager
+const { instagramSessionManager } = require('../services/instagram-session-manager.js');
 
 // Helper function to create SOCKS5 proxy agent
 function createProxyAgent() {
@@ -64,27 +64,20 @@ async function makeProxyRequest(url, options = {}) {
 
 // Helper function to get Instagram session
 function getSession(username) {
-  return sessionStore.get(username);
+  return instagramSessionManager.getSession(username);
 }
 
 // Helper function to save Instagram session
 function saveSession(username, sessionData) {
-  sessionStore.set(username, {
-    ...sessionData,
-    timestamp: Date.now(),
-    expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-  });
+  const success = instagramSessionManager.saveSession(username, sessionData);
+  console.log(`[Instagram] Session saved for user: ${username}, success: ${success}`);
+  return success;
 }
 
 // Helper function to clear expired sessions
 function clearExpiredSessions() {
-  const now = Date.now();
-  for (const [username, session] of sessionStore.entries()) {
-    if (session.expiresAt < now) {
-      sessionStore.delete(username);
-      console.log(`[Instagram] Expired session removed for user: ${username}`);
-    }
-  }
+  // Session Manager автоматически очищает устаревшие сессии
+  console.log(`[Instagram] Session cleanup handled by Session Manager`);
 }
 
 // Status endpoint
@@ -108,10 +101,70 @@ router.get('/status', (req, res) => {
       status: 'connected'
     },
     sessions: {
-      active: sessionStore.size,
-      stored: Array.from(sessionStore.keys())
+      active: instagramSessionManager.getAllSessions().length,
+      stored: instagramSessionManager.getAllSessions().map(s => s.username)
     }
   });
+});
+
+// Load existing session from file
+router.post('/load-session', async (req, res) => {
+  try {
+    const { username, sessionFile } = req.body;
+
+    if (!username || !sessionFile) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username and sessionFile required'
+      });
+    }
+
+    console.log(`[Instagram] Loading session for user: ${username} from file: ${sessionFile}`);
+
+    const sessionPath = path.join(process.cwd(), 'server', 'sessions', sessionFile);
+    
+    if (!fs.existsSync(sessionPath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session file not found'
+      });
+    }
+
+    // Загружаем сессию из файла
+    const sessionData = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+    
+    // Сохраняем в Session Manager
+    const success = saveSession(username, {
+      userId: sessionData.state?.deviceId || sessionData.state?.constants?.MACHINE_ID || 'unknown',
+      username: sessionData.username,
+      sessionData: sessionData,
+      timestamp: Date.now(),
+      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+
+    if (success) {
+      console.log(`[Instagram] Session loaded successfully for user: ${username}`);
+      
+      res.json({
+        success: true,
+        message: 'Сессия успешно загружена из файла',
+        username: sessionData.username,
+        userId: sessionData.state?.deviceId || 'loaded',
+        sessionFile: sessionFile,
+        loadedAt: new Date().toISOString()
+      });
+    } else {
+      throw new Error('Failed to save session to Session Manager');
+    }
+
+  } catch (error) {
+    console.error(`[Instagram] Session load failed:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка загрузки сессии',
+      details: error.message
+    });
+  }
 });
 
 // Login endpoint
@@ -229,8 +282,15 @@ router.post('/publish-photo', async (req, res) => {
       // ПРИНУДИТЕЛЬНАЯ загрузка сохраненной сессии БЕЗ проверки
       console.log(`[Instagram] 🔍 ПРИНУДИТЕЛЬНАЯ загрузка сохраненной сессии для ${username}...`);
       
-      const restoredClient = await sessionManager.loadSession(username, ig);
-      console.log(`[Instagram] 🔍 Результат ПРИНУДИТЕЛЬНОЙ загрузки сессии:`, !!restoredClient);
+      const sessionData = instagramSessionManager.getSession(username);
+      console.log(`[Instagram] 🔍 Результат ПРИНУДИТЕЛЬНОЙ загрузки сессии:`, !!sessionData);
+      
+      let restoredClient = null;
+      if (sessionData && sessionData.sessionData) {
+        // Создаем новый IG client и восстанавливаем сессию
+        ig.state.deserialize(sessionData.sessionData);
+        restoredClient = ig;
+      }
       
       let igClientToUse = restoredClient;
       let userInfo = null;
@@ -245,8 +305,10 @@ router.post('/publish-photo', async (req, res) => {
         
         // НЕМЕДЛЕННАЯ ПУБЛИКАЦИЯ с сохраненной сессией
         try {
+          // Правильная обработка imageData (с префиксом или без)
+          const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
           const uploadResponse = await igClientToUse.publish.photo({
-            file: Buffer.from(imageData.split(',')[1], 'base64'),
+            file: Buffer.from(base64Data, 'base64'),
             caption: caption
           });
           
@@ -267,7 +329,7 @@ router.post('/publish-photo', async (req, res) => {
         } catch (publishError) {
           console.error(`[Instagram] ❌ Ошибка публикации с сохраненной сессией:`, publishError.message);
           console.log(`[Instagram] ❌ Удаляем недействительную сессию...`);
-          sessionManager.deleteSession(username);
+          instagramSessionManager.removeSession(username);
           igClientToUse = null;
         }
       } else {
@@ -285,7 +347,13 @@ router.post('/publish-photo', async (req, res) => {
           
           // Сохраняем новую сессию
           console.log(`[Instagram] 💾 СОХРАНЯЕМ новую сессию для ${username}...`);
-          await sessionManager.saveSession(username, ig);
+          instagramSessionManager.saveSession(username, {
+            userId: loginResult.pk.toString(),
+            username: username,
+            sessionData: ig.state.serialize(),
+            timestamp: Date.now(),
+            expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+          });
           console.log(`[Instagram] ✅ Сессия сохранена для ${username}`);
           
           igClientToUse = ig;
@@ -300,7 +368,13 @@ router.post('/publish-photo', async (req, res) => {
             try {
               // ПРИНУДИТЕЛЬНО сохраняем сессию даже при checkpoint
               console.log(`[Instagram] 💾 ПРИНУДИТЕЛЬНОЕ сохранение сессии для ${username}...`);
-              await sessionManager.saveSession(username, ig);
+              instagramSessionManager.saveSession(username, {
+                userId: 'checkpoint_user',
+                username: username,
+                sessionData: ig.state.serialize(),
+                timestamp: Date.now(),
+                expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+              });
               console.log(`[Instagram] ✅ СЕССИЯ ПРИНУДИТЕЛЬНО СОХРАНЕНА для ${username}!`);
             } catch (saveError) {
               console.error(`[Instagram] ❌ Ошибка принудительного сохранения:`, saveError.message);
@@ -311,8 +385,10 @@ router.post('/publish-photo', async (req, res) => {
             
             try {
               // Пытаемся продолжить с существующей сессией
+              // Правильная обработка imageData (с префиксом или без)
+              const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
               const uploadResponse = await ig.publish.photo({
-                file: Buffer.from(imageData.split(',')[1], 'base64'),
+                file: Buffer.from(base64Data, 'base64'),
                 caption: caption
               });
               
@@ -483,8 +559,8 @@ router.post('/publish-story', async (req, res) => {
 
 // Clear cache endpoint
 router.post('/clear-cache', (req, res) => {
-  const sessionCount = sessionStore.size;
-  sessionStore.clear();
+  const sessionCount = instagramSessionManager.getAllSessions().length;
+  instagramSessionManager.clearAll();
   
   console.log(`[Instagram] Cache cleared: ${sessionCount} sessions removed`);
   
@@ -499,8 +575,8 @@ router.post('/clear-cache', (req, res) => {
 router.get('/sessions', (req, res) => {
   clearExpiredSessions();
   
-  const sessions = Array.from(sessionStore.entries()).map(([username, session]) => ({
-    username,
+  const sessions = instagramSessionManager.getAllSessions().map(session => ({
+    username: session.username,
     userId: session.userId,
     timestamp: session.timestamp,
     expiresAt: session.expiresAt,

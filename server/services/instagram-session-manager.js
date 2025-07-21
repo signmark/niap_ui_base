@@ -1,320 +1,262 @@
 /**
  * Instagram Session Manager
- * Сохраняет и переиспользует Instagram сессии для избежания повторных checkpoint challenges
+ * Управление сессиями Instagram для аутентификации
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
 
 class InstagramSessionManager {
   constructor() {
-    this.sessionsDir = path.join(__dirname, '../sessions');
-    this.sessions = new Map();
+    this.sessionsDir = path.join(process.cwd(), 'temp');
+    this.sessionsFile = path.join(this.sessionsDir, 'instagram-sessions.json');
+    this.sessions = {};
     
-    // Создаем директорию для сессий если не существует
+    this.ensureSessionsDir();
+    this.loadSessions();
+    
+    console.log('[Instagram Session Manager] Инициализирован');
+  }
+
+  /**
+   * Создает директорию для сессий если её нет
+   */
+  ensureSessionsDir() {
     if (!fs.existsSync(this.sessionsDir)) {
       fs.mkdirSync(this.sessionsDir, { recursive: true });
+      console.log('[Instagram Session Manager] Создана директория для сессий:', this.sessionsDir);
     }
-    
-    console.log('[Instagram Session Manager] Инициализация менеджера сессий');
-    
-    // Загружаем сохраненные сессии
-    this.loadSavedSessions();
-    
-    // Автоочистка каждые 30 минут
-    setInterval(() => {
-      this.cleanupExpiredSessions();
-    }, 30 * 60 * 1000);
   }
 
   /**
-   * Создает ключ сессии для пользователя
+   * Загружает сессии из файла
    */
-  createSessionKey(username) {
-    return crypto.createHash('md5').update(username).digest('hex');
-  }
-
-  /**
-   * Получает путь к файлу сессии
-   */
-  getSessionFilePath(username) {
-    const sessionKey = this.createSessionKey(username);
-    return path.join(this.sessionsDir, `${sessionKey}.json`);
-  }
-
-  /**
-   * Сохраняет сессию Instagram
-   */
-  async saveSession(username, igClient) {
+  loadSessions() {
     try {
-      const sessionKey = this.createSessionKey(username);
-      const sessionData = {
+      if (fs.existsSync(this.sessionsFile)) {
+        const data = fs.readFileSync(this.sessionsFile, 'utf8');
+        this.sessions = JSON.parse(data);
+        
+        const sessionCount = Object.keys(this.sessions).length;
+        console.log(`[Instagram Session Manager] Загружено ${sessionCount} сессий из файла`);
+        
+        // Проверяем на устаревшие сессии (старше 7 дней)
+        this.cleanupExpiredSessions();
+      } else {
+        console.log('[Instagram Session Manager] Файл сессий не найден, создаем новый');
+      }
+    } catch (error) {
+      console.error('[Instagram Session Manager] Ошибка загрузки сессий:', error.message);
+      this.sessions = {};
+    }
+  }
+
+  /**
+   * Сохраняет сессии в файл
+   */
+  saveSessions() {
+    try {
+      const data = JSON.stringify(this.sessions, null, 2);
+      fs.writeFileSync(this.sessionsFile, data, 'utf8');
+      
+      const sessionCount = Object.keys(this.sessions).length;
+      console.log(`[Instagram Session Manager] Сохранено ${sessionCount} сессий в файл`);
+    } catch (error) {
+      console.error('[Instagram Session Manager] Ошибка сохранения сессий:', error.message);
+    }
+  }
+
+  /**
+   * Удаляет устаревшие сессии (старше 7 дней)
+   */
+  cleanupExpiredSessions() {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    let removedCount = 0;
+
+    Object.keys(this.sessions).forEach(username => {
+      const session = this.sessions[username];
+      if (session.createdAt < sevenDaysAgo) {
+        delete this.sessions[username];
+        removedCount++;
+      }
+    });
+
+    if (removedCount > 0) {
+      console.log(`[Instagram Session Manager] Удалено ${removedCount} устаревших сессий`);
+      this.saveSessions();
+    }
+  }
+
+  /**
+   * Сохраняет сессию пользователя
+   */
+  saveSession(username, sessionData) {
+    try {
+      const sessionRecord = {
+        ...sessionData,
         username: username,
-        state: await igClient.state.serialize(),
         createdAt: Date.now(),
-        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 дней
-        lastUsed: Date.now()
+        lastUsed: Date.now(),
+        usageCount: 1
       };
 
-      // Сохраняем в памяти
-      this.sessions.set(sessionKey, {
-        ...sessionData,
-        igClient: igClient
-      });
+      this.sessions[username] = sessionRecord;
+      this.saveSessions();
 
-      // Сохраняем в файл (без igClient)
-      const filePath = this.getSessionFilePath(username);
-      fs.writeFileSync(filePath, JSON.stringify({
-        username: sessionData.username,
-        state: sessionData.state,
-        createdAt: sessionData.createdAt,
-        expiresAt: sessionData.expiresAt,
-        lastUsed: sessionData.lastUsed
-      }, null, 2));
+      console.log(`[Instagram Session Manager] ✅ Сессия сохранена для ${username}`);
+      console.log(`[Instagram Session Manager] User ID: ${sessionRecord.userId || 'неизвестен'}`);
+      console.log(`[Instagram Session Manager] Session ID: ${sessionRecord.sessionId}`);
+      console.log(`[Instagram Session Manager] CSRF Token: ${sessionRecord.csrfToken ? 'есть' : 'отсутствует'}`);
+      console.log(`[Instagram Session Manager] Cookies: ${sessionRecord.cookies ? 'есть' : 'отсутствуют'}`);
 
-      console.log(`[Instagram Session Manager] Сессия сохранена для ${username} (expires: ${new Date(sessionData.expiresAt).toLocaleString()})`);
-      
       return true;
     } catch (error) {
-      console.error(`[Instagram Session Manager] Ошибка сохранения сессии для ${username}:`, error.message);
+      console.error(`[Instagram Session Manager] ❌ Ошибка сохранения сессии для ${username}:`, error.message);
       return false;
     }
   }
 
   /**
-   * Загружает сессию для пользователя
+   * Получает сессию пользователя
    */
-  async loadSession(username, igClient) {
-    try {
-      const sessionKey = this.createSessionKey(username);
-      
-      // Проверяем сессию в памяти
-      if (this.sessions.has(sessionKey)) {
-        const memorySession = this.sessions.get(sessionKey);
-        if (memorySession.expiresAt > Date.now()) {
-          console.log(`[Instagram Session Manager] Используем сессию из памяти для ${username}`);
-          
-          // Обновляем время последнего использования
-          memorySession.lastUsed = Date.now();
-          
-          return memorySession.igClient;
-        }
-      }
-
-      // ПРИНУДИТЕЛЬНАЯ загрузка из файла БЕЗ проверки времени
-      const filePath = this.getSessionFilePath(username);
-      console.log(`[Session Manager] ПРИНУДИТЕЛЬНАЯ загрузка из файла: ${filePath}`);
-      console.log(`[Session Manager] Файл существует: ${fs.existsSync(filePath)}`);
-      
-      if (fs.existsSync(filePath)) {
-        const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        console.log(`[Session Manager] Файл загружен, размер: ${JSON.stringify(fileData).length} символов`);
-        console.log(`[Session Manager] expiresAt: ${fileData.expiresAt}, now: ${Date.now()}`);
-        
-        // ИГНОРИРУЕМ ВРЕМЯ ИСТЕЧЕНИЯ - загружаем ЛЮБУЮ сессию
-        console.log(`[Instagram Session Manager] ПРИНУДИТЕЛЬНО восстанавливаем сессию из файла для ${username} (игнорируем expiresAt)`);
-        
-        try {
-          // Восстанавливаем состояние в Instagram клиенте
-          await igClient.state.deserialize(fileData.state);
-          console.log(`[Session Manager] Состояние клиента успешно восстановлено`);
-          
-          // Сохраняем в памяти
-          this.sessions.set(sessionKey, {
-            ...fileData,
-            igClient: igClient,
-            lastUsed: Date.now()
-          });
-
-          // Обновляем время последнего использования в файле
-          fileData.lastUsed = Date.now();
-          fs.writeFileSync(filePath, JSON.stringify(fileData, null, 2));
-
-          console.log(`[Instagram Session Manager] Сессия ПРИНУДИТЕЛЬНО восстановлена для ${username}`);
-          return igClient;
-        } catch (deserializeError) {
-          console.error(`[Session Manager] Ошибка десериализации состояния:`, deserializeError.message);
-          return null;
-        }
-      } else {
-        console.log(`[Session Manager] Файл сессии НЕ НАЙДЕН: ${filePath}`);
-      }
-
-      return null;
-    } catch (error) {
-      console.error(`[Instagram Session Manager] Ошибка загрузки сессии для ${username}:`, error.message);
+  getSession(username) {
+    const session = this.sessions[username];
+    
+    if (!session) {
+      console.log(`[Instagram Session Manager] Сессия для ${username} не найдена`);
       return null;
     }
+
+    // Обновляем время последнего использования
+    session.lastUsed = Date.now();
+    session.usageCount = (session.usageCount || 0) + 1;
+    this.saveSessions();
+
+    console.log(`[Instagram Session Manager] ✅ Сессия для ${username} найдена`);
+    console.log(`[Instagram Session Manager] Последнее использование: ${new Date(session.lastUsed).toLocaleString()}`);
+    console.log(`[Instagram Session Manager] Количество использований: ${session.usageCount}`);
+
+    return session;
   }
 
   /**
-   * Проверяет есть ли валидная сессия
+   * Проверяет валидность сессии
    */
-  hasValidSession(username) {
-    const sessionKey = this.createSessionKey(username);
-    console.log(`[Session Manager] Проверяем сессию для ${username}, ключ: ${sessionKey}`);
+  isSessionValid(username) {
+    const session = this.sessions[username];
     
-    // Проверяем в памяти
-    if (this.sessions.has(sessionKey)) {
-      const session = this.sessions.get(sessionKey);
-      const isValidMemory = session.expiresAt > Date.now();
-      console.log(`[Session Manager] Сессия в памяти: существует, валидна: ${isValidMemory}`);
-      return isValidMemory;
+    if (!session) {
+      return false;
     }
 
-    // Проверяем файл
-    const filePath = this.getSessionFilePath(username);
-    console.log(`[Session Manager] Проверяем файл: ${filePath}`);
-    console.log(`[Session Manager] Файл существует: ${fs.existsSync(filePath)}`);
-    
-    if (fs.existsSync(filePath)) {
-      try {
-        const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        const isValidFile = fileData.expiresAt > Date.now();
-        console.log(`[Session Manager] Файл сессии: размер ${JSON.stringify(fileData).length} символов, валидна: ${isValidFile}`);
-        console.log(`[Session Manager] Expires: ${new Date(fileData.expiresAt).toLocaleString()}, сейчас: ${new Date().toLocaleString()}`);
-        return isValidFile;
-      } catch (error) {
-        console.error(`[Session Manager] Ошибка чтения файла сессии:`, error.message);
-        return false;
-      }
+    // Проверяем возраст сессии (не старше 7 дней)
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    if (session.createdAt < sevenDaysAgo) {
+      console.log(`[Instagram Session Manager] Сессия для ${username} устарела`);
+      delete this.sessions[username];
+      this.saveSessions();
+      return false;
     }
 
-    console.log(`[Session Manager] Файл сессии не найден`);
+    // Проверяем наличие необходимых данных для ручного ввода
+    if (!session.authenticated || !session.csrfToken) {
+      console.log(`[Instagram Session Manager] Сессия для ${username} неполная`);
+      return false;
+    }
+    
+    // Для ручного ввода (manual_input) cookies не обязательны
+    if (session.source !== 'manual_input' && !session.cookies) {
+      console.log(`[Instagram Session Manager] Сессия для ${username} неполная (нет cookies)`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Удаляет сессию пользователя
+   */
+  removeSession(username) {
+    if (this.sessions[username]) {
+      delete this.sessions[username];
+      this.saveSessions();
+      console.log(`[Instagram Session Manager] Сессия для ${username} удалена`);
+      return true;
+    }
+    
+    console.log(`[Instagram Session Manager] Сессия для ${username} не найдена для удаления`);
     return false;
   }
 
   /**
-   * Удаляет сессию
+   * Получает список всех сохраненных сессий
    */
-  deleteSession(username) {
-    const sessionKey = this.createSessionKey(username);
-    
-    // Удаляем из памяти
-    this.sessions.delete(sessionKey);
-    
-    // Удаляем файл
-    const filePath = this.getSessionFilePath(username);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`[Instagram Session Manager] Сессия удалена для ${username}`);
-    }
-  }
-
-  /**
-   * Загружает все сохраненные сессии при старте
-   */
-  loadSavedSessions() {
-    try {
-      const files = fs.readdirSync(this.sessionsDir);
-      let loadedCount = 0;
-      let expiredCount = 0;
-
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          try {
-            const filePath = path.join(this.sessionsDir, file);
-            const sessionData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            
-            if (sessionData.expiresAt > Date.now()) {
-              loadedCount++;
-              console.log(`[Instagram Session Manager] Найдена сохраненная сессия для ${sessionData.username}`);
-            } else {
-              expiredCount++;
-              fs.unlinkSync(filePath);
-            }
-          } catch (error) {
-            console.error(`[Instagram Session Manager] Ошибка загрузки сессии из файла ${file}:`, error.message);
-          }
-        }
-      }
-
-      console.log(`[Instagram Session Manager] Загружено ${loadedCount} активных сессий, удалено ${expiredCount} истекших`);
-    } catch (error) {
-      console.error('[Instagram Session Manager] Ошибка загрузки сохраненных сессий:', error.message);
-    }
-  }
-
-  /**
-   * Очистка истекших сессий
-   */
-  cleanupExpiredSessions() {
-    const now = Date.now();
-    let cleanedCount = 0;
-
-    // Очистка из памяти
-    for (const [key, session] of this.sessions.entries()) {
-      if (session.expiresAt < now) {
-        this.sessions.delete(key);
-        cleanedCount++;
-      }
-    }
-
-    // Очистка файлов
-    try {
-      const files = fs.readdirSync(this.sessionsDir);
-      
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          try {
-            const filePath = path.join(this.sessionsDir, file);
-            const sessionData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            
-            if (sessionData.expiresAt < now) {
-              fs.unlinkSync(filePath);
-              cleanedCount++;
-            }
-          } catch (error) {
-            // Удаляем поврежденные файлы
-            const filePath = path.join(this.sessionsDir, file);
-            fs.unlinkSync(filePath);
-            cleanedCount++;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('[Instagram Session Manager] Ошибка очистки файлов сессий:', error.message);
-    }
-
-    if (cleanedCount > 0) {
-      console.log(`[Instagram Session Manager] Очищено ${cleanedCount} истекших сессий`);
-    }
-  }
-
-  /**
-   * Получает информацию о всех сессиях
-   */
-  getSessionsInfo() {
-    const info = {
-      memoryCount: this.sessions.size,
-      fileCount: 0,
-      sessions: []
-    };
-
-    // Подсчитываем файлы
-    try {
-      const files = fs.readdirSync(this.sessionsDir);
-      info.fileCount = files.filter(f => f.endsWith('.json')).length;
-    } catch (error) {
-      // Игнорируем ошибки
-    }
-
-    // Информация о сессиях в памяти
-    for (const [key, session] of this.sessions.entries()) {
-      info.sessions.push({
-        username: session.username,
+  getAllSessions() {
+    const sessionList = Object.keys(this.sessions).map(username => {
+      const session = this.sessions[username];
+      return {
+        username: username,
+        userId: session.userId,
         createdAt: new Date(session.createdAt).toLocaleString(),
-        expiresAt: new Date(session.expiresAt).toLocaleString(),
         lastUsed: new Date(session.lastUsed).toLocaleString(),
-        isExpired: session.expiresAt < Date.now()
-      });
+        usageCount: session.usageCount || 0,
+        isValid: this.isSessionValid(username)
+      };
+    });
+
+    console.log(`[Instagram Session Manager] Список сессий (${sessionList.length}):`);
+    sessionList.forEach(session => {
+      console.log(`  - ${session.username}: ${session.isValid ? '✅ валидна' : '❌ невалидна'}`);
+    });
+
+    return sessionList;
+  }
+
+  /**
+   * Очищает все сессии
+   */
+  clearAllSessions() {
+    const count = Object.keys(this.sessions).length;
+    this.sessions = {};
+    this.saveSessions();
+    
+    console.log(`[Instagram Session Manager] Очищено ${count} сессий`);
+    return count;
+  }
+
+  /**
+   * Проверяет наличие валидной сессии
+   */
+  hasValidSession(username) {
+    console.log(`[Instagram Session Manager] 🔍 Проверка валидной сессии для ${username}`);
+    
+    const isValid = this.isSessionValid(username);
+    console.log(`[Instagram Session Manager] Результат проверки для ${username}: ${isValid ? '✅ валидна' : '❌ невалидна'}`);
+    
+    return isValid;
+  }
+
+  /**
+   * Загружает сессию для Instagram клиента (поддержка старого API)
+   */
+  async loadSession(username, igClient) {
+    console.log(`[Instagram Session Manager] 📥 Загрузка сессии для ${username}`);
+    
+    const session = this.getSession(username);
+    if (!session) {
+      console.log(`[Instagram Session Manager] ❌ Сессия для ${username} не найдена`);
+      return null;
     }
 
-    return info;
+    if (!this.isSessionValid(username)) {
+      console.log(`[Instagram Session Manager] ❌ Сессия для ${username} невалидна`);
+      return null;
+    }
+
+    console.log(`[Instagram Session Manager] ✅ Сессия для ${username} загружена и валидна`);
+    return session;
   }
 }
 
-// Экспортируем singleton
-const sessionManager = new InstagramSessionManager();
-module.exports = sessionManager;
+const instagramSessionManager = new InstagramSessionManager();
+export { instagramSessionManager };
