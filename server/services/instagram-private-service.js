@@ -73,7 +73,110 @@ class InstagramPrivateService {
       
       await ig.account.login(username, password);
       
-      console.log(`[Instagram Service] Успешная авторизация ${username}`);
+      console.log(`[Instagram Service] Авторизация ${username} успешна`);
+      
+      // Кешируем клиента
+      this.clients.set(sessionKey, ig);
+      this.sessions.set(sessionKey, {
+        ig: ig,
+        username: username,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 дней
+      });
+      
+      return ig;
+    } catch (error) {
+      console.error(`[Instagram Service] Ошибка авторизации ${username}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Публикует фото в Instagram
+   */
+  async publishPhoto(username, password, imageBuffer, caption = '') {
+    try {
+      console.log(`[Instagram Service] Публикация фото для ${username}`);
+      
+      const ig = await this.getInstagramClient(username, password);
+      
+      const publishResult = await ig.publish.photo({
+        file: imageBuffer,
+        caption: caption
+      });
+      
+      console.log(`[Instagram Service] Фото опубликовано успешно: ${publishResult.media.id}`);
+      
+      return {
+        success: true,
+        postId: publishResult.media.code,
+        postUrl: `https://instagram.com/p/${publishResult.media.code}`,
+        mediaId: publishResult.media.id,
+        message: 'Пост опубликован успешно'
+      };
+      
+    } catch (error) {
+      console.error(`[Instagram Service] Ошибка публикации фото:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Публикует Stories в Instagram
+   */
+  async publishStory(username, password, imageBuffer, options = {}) {
+    try {
+      console.log(`[Instagram Service] Публикация Stories для ${username}`);
+      
+      const ig = await this.getInstagramClient(username, password);
+      
+      const publishResult = await ig.publish.story({
+        file: imageBuffer,
+        ...options
+      });
+      
+      console.log(`[Instagram Service] Stories опубликована успешно: ${publishResult.media.id}`);
+      
+      return {
+        success: true,
+        storyId: publishResult.media.id,
+        storyUrl: `https://instagram.com/stories/${username}/${publishResult.media.id}`,
+        message: 'Stories опубликована успешно'
+      };
+      
+    } catch (error) {
+      console.error(`[Instagram Service] Ошибка публикации Stories:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Очистка кеша
+   */
+  cleanupCache() {
+    const now = Date.now();
+    const expired = [];
+    
+    for (const [key, session] of this.sessions.entries()) {
+      if (session.expiresAt < now) {
+        expired.push(key);
+      }
+    }
+    
+    expired.forEach(key => {
+      this.sessions.delete(key);
+      this.clients.delete(key);
+    });
+    
+    if (expired.length > 0) {
+      console.log(`[Instagram Service] Очищено ${expired.length} истекших сессий`);
+    }
+  }
+}
+
+// Экспортируем singleton
+const instagramService = new InstagramPrivateService();
+module.exports = instagramService;
       
       // Кешируем клиента на 1 час
       this.clients.set(sessionKey, {

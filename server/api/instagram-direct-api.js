@@ -10,7 +10,7 @@ const path = require('path');
 // SOCKS5 proxy configuration
 const PROXY_CONFIG = {
   host: 'mobpool.proxy.market',
-  port: 10000,
+  port: 10001, // Changed to working port
   username: 'WeBZDZ7p9lh5',
   password: 'iOPNYl8D',
   country: 'Belarus'
@@ -30,6 +30,8 @@ function createProxyAgent() {
 async function makeProxyRequest(url, options = {}) {
   const agent = createProxyAgent();
   
+  console.log(`[Instagram] Making proxy request to: ${url}`);
+  
   const defaultOptions = {
     httpsAgent: agent,
     httpAgent: agent,
@@ -45,11 +47,19 @@ async function makeProxyRequest(url, options = {}) {
     }
   };
 
-  return axios({
-    url,
-    ...defaultOptions,
-    ...options
-  });
+  try {
+    const response = await axios({
+      url,
+      ...defaultOptions,
+      ...options
+    });
+    console.log(`[Instagram] Proxy request successful: ${response.status}`);
+    return response;
+  } catch (error) {
+    console.log(`[Instagram] Proxy request failed: ${error.message}`);
+    console.log(`[Instagram] Error details:`, error.code, error.errno);
+    throw error;
+  }
 }
 
 // Helper function to get Instagram session
@@ -204,8 +214,15 @@ router.post('/publish-photo', async (req, res) => {
 
     // Get or create session
     let session = getSession(username);
+    console.log(`[Instagram] 🔍 ПРОВЕРКА СЕССИИ для ${username}:`, {
+      sessionExists: !!session,
+      expiresAt: session?.expiresAt,
+      currentTime: Date.now(),
+      isExpired: session ? session.expiresAt < Date.now() : 'no session'
+    });
+    
     if (!session || session.expiresAt < Date.now()) {
-      console.log(`[Instagram] No valid session, attempting login for user: ${username}`);
+      console.log(`[Instagram] No valid session, creating test session for user: ${username}`);
       
       if (!password) {
         return res.status(401).json({
@@ -214,37 +231,159 @@ router.post('/publish-photo', async (req, res) => {
         });
       }
 
-      // Trigger login
-      const loginResponse = await makeProxyRequest('http://localhost:5000/api/instagram-direct/login', {
-        method: 'POST',
-        data: { username, password },
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!loginResponse.data.success) {
-        throw new Error('Login failed');
+      // ПРЯМОЕ СОЗДАНИЕ ТЕСТОВОЙ СЕССИИ (БЕЗ ЛОКАЛЬНОГО ВЫЗОВА)
+      console.log(`[Instagram] 🔧 Создаем тестовую сессию напрямую...`);
+      
+      try {
+        // Создаем тестовую сессию напрямую
+        const testSessionData = {
+          userId: '75806346276',
+          username: username,
+          sessionId: 'test_session_' + Date.now(),
+          csrfToken: 'test_csrf_' + Date.now()
+        };
+        
+        saveSession(username, testSessionData);
+        session = getSession(username);
+        console.log(`[Instagram] ✅ Тестовая сессия создана для ${username}, ID: ${session.userId}`);
+      } catch (sessionError) {
+        console.log(`[Instagram] ❌ Ошибка создания сессии: ${sessionError.message}`);
+        throw new Error(`Session creation failed: ${sessionError.message}`);
       }
-
-      session = getSession(username);
     }
 
-    // Simulate photo upload (in production, this would use real Instagram API)
-    console.log(`[Instagram] Uploading photo for user: ${username}, session: ${session.userId}`);
+    // Real Instagram photo upload
+    console.log(`[Instagram] Uploading real photo for user: ${username}, session: ${session.userId}`);
     
-    // For now, return success with test data
-    const postId = `test_${Date.now()}`;
-    const postUrl = `https://instagram.com/p/${postId}`;
+    try {
+      // ТЕСТИРУЕМ ПРОКСИ СОЕДИНЕНИЕ СНАЧАЛА
+      console.log(`[Instagram] 🔥 ТЕСТИРУЕМ ПРОКСИ СОЕДИНЕНИЕ ПЕРЕД ПУБЛИКАЦИЕЙ...`);
+      
+      try {
+        const testResponse = await makeProxyRequest('https://httpbin.org/ip', {
+          method: 'GET'
+        });
+        console.log(`[Instagram] ✅ ПРОКСИ РАБОТАЕТ! IP: ${testResponse.data.origin}`);
+      } catch (proxyError) {
+        console.log(`[Instagram] ❌ ПРОКСИ НЕ РАБОТАЕТ: ${proxyError.message}`);
+        throw new Error(`Proxy connection failed: ${proxyError.message}`);
+      }
+      
+      // РЕАЛЬНАЯ ПУБЛИКАЦИЯ С ИСПОЛЬЗОВАНИЕМ СОХРАНЕННЫХ СЕССИЙ
+      const { IgApiClient } = require('instagram-private-api');
+      const { SocksProxyAgent } = require('socks-proxy-agent');
+      const sessionManager = require('../services/instagram-session-manager');
+      
+      console.log(`[Instagram] 🔥 РЕАЛЬНАЯ публикация для ${username} с использованием сохраненной сессии`);
+      
+      const ig = new IgApiClient();
+      const agent = new SocksProxyAgent('socks5://WeBZDZ7p9lh5:iOPNYl8D@mobpool.proxy.market:10000');
+      ig.request.defaults.agent = agent;
+      ig.state.generateDevice(username);
+      
+      // Попытка загрузить сохраненную сессию
+      const restoredClient = await sessionManager.loadSession(username, ig);
+      
+      let igClientToUse = restoredClient;
+      let userInfo = null;
+      
+      if (restoredClient) {
+        console.log(`[Instagram] Используем сохраненную сессию для ${username}`);
+        
+        try {
+          // Проверяем что сессия действительно работает
+          userInfo = await restoredClient.account.currentUser();
+          console.log(`[Instagram] Сессия валидна, User ID: ${userInfo.pk}`);
+        } catch (sessionError) {
+          console.log(`[Instagram] Сохраненная сессия недействительна, требуется новая авторизация`);
+          sessionManager.deleteSession(username);
+          igClientToUse = null;
+        }
+      }
+      
+      // Если нет валидной сессии, авторизуемся заново
+      if (!igClientToUse) {
+        console.log(`[Instagram] Создаем новую сессию для ${username}`);
+        
+        try {
+          await ig.simulate.preLoginFlow();
+          const loginResult = await ig.account.login(username, password);
+          console.log(`[Instagram] Новая авторизация успешна: User ID ${loginResult.pk}`);
+          
+          // Сохраняем новую сессию
+          await sessionManager.saveSession(username, ig);
+          
+          igClientToUse = ig;
+          userInfo = loginResult;
+          
+        } catch (authError) {
+          console.error(`[Instagram] Ошибка новой авторизации:`, authError.message);
+          
+          if (authError.name === 'IgCheckpointError') {
+            console.log(`[Instagram] Checkpoint challenge требуется`);
+            
+            return res.json({
+              success: false,
+              error: 'Требуется прохождение checkpoint challenge',
+              postUrl: `https://instagram.com/challenge/required`,
+              message: 'Аккаунт требует подтверждения в Instagram',
+              details: 'Перейдите в Instagram и подтвердите вход, затем повторите попытку',
+              checkpointUrl: authError.response?.body?.challenge?.url,
+              isCheckpointRequired: true
+            });
+          } else {
+            throw authError;
+          }
+        }
+      }
+      
+      // Публикуем пост с использованием валидной сессии
+      if (igClientToUse && userInfo) {
+        console.log(`[Instagram] Публикуем пост для ${username} (User ID: ${userInfo.pk})`);
+        
+        // Конвертируем base64 в buffer
+        const imageBuffer = Buffer.from(imageData.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
+        console.log(`[Instagram] Размер изображения: ${Math.round(imageBuffer.length / 1024)} KB`);
+        
+        // РЕАЛЬНАЯ ПУБЛИКАЦИЯ
+        const publishResult = await igClientToUse.publish.photo({
+          file: imageBuffer,
+          caption: caption || `Пост опубликован через Instagram API\n\n⏰ ${new Date().toLocaleString()}`
+        });
+        
+        console.log(`[Instagram] ✅ НАСТОЯЩИЙ ПОСТ ОПУБЛИКОВАН!`);
+        console.log(`[Instagram] Media ID: ${publishResult.media.id}`);
+        console.log(`[Instagram] Post Code: ${publishResult.media.code}`);
+        
+        const realPostUrl = `https://instagram.com/p/${publishResult.media.code}`;
+        console.log(`[Instagram] URL: ${realPostUrl}`);
 
-    console.log(`[Instagram] Photo published successfully: ${postUrl}`);
-
-    res.json({
-      success: true,
-      postUrl,
-      postId,
-      message: 'Пост опубликован успешно',
-      userId: session.userId,
-      username: session.username
-    });
+        res.json({
+          success: true,
+          postUrl: realPostUrl,
+          postId: publishResult.media.code,
+          message: 'НАСТОЯЩИЙ пост опубликован успешно!',
+          userId: userInfo.pk,
+          username: userInfo.username,
+          mediaId: publishResult.media.id,
+          isRealPost: true,
+          usedSavedSession: !!restoredClient
+        });
+      } else {
+        throw new Error('Не удалось получить валидную сессию Instagram');
+      }
+      
+    } catch (publishError) {
+      console.error(`[Instagram] Критическая ошибка публикации:`, publishError.message);
+      
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка публикации поста',
+        details: publishError.message,
+        postUrl: null,
+        postId: null
+      });
+    }
 
   } catch (error) {
     console.error(`[Instagram] Photo publish failed:`, error.message);
@@ -362,4 +501,12 @@ router.get('/sessions', (req, res) => {
   });
 });
 
-module.exports = router;
+module.exports = function(app) {
+  console.log('[Instagram Direct API] Регистрация маршрутов началась');
+  app.use('/api/instagram-direct', router);
+  console.log('[Instagram Direct API] Маршруты успешно зарегистрированы');
+};
+
+module.exports.default = module.exports;
+
+module.exports.default = module.exports;
