@@ -867,46 +867,150 @@ export class DatabaseStorage implements IStorage {
 
   async getCampaignContentById(id: string, authToken?: string): Promise<CampaignContent | undefined> {
     try {
-      console.log(`[getCampaignContentById] Получение контента с ID: ${id}`);
+      // Запрос контента по ID
       
-      // Используем переданный токен или системный токен
-      const token = authToken || process.env.DIRECTUS_TOKEN;
+      // Настраиваем headers с токеном, если он передан
+      let response = null;
       
-      const response = await directusApi.get(`/items/campaign_content/${id}`, { 
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      // Попытка 1: Используем переданный токен авторизации (если он есть)
+      if (authToken) {
+        try {
+          // Используем переданный токен авторизации
+          response = await directusApi.get(`/items/campaign_content/${id}`, { 
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (response?.data?.data) {
+            console.log('✅ Контент получен с переданным токеном');
+            // Обрабатываем данные напрямую
+            const item = response.data.data;
+            return {
+              id: item.id,
+              content: item.content,
+              userId: item.user_id,
+              campaignId: item.campaign_id,
+              contentType: item.content_type,
+              status: item.status,
+              postType: item.post_type,
+              imageUrl: item.image_url,
+              videoUrl: item.video_url,
+              prompt: item.prompt || "",
+              keywords: item.keywords,
+              title: item.title,
+              scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
+              createdAt: new Date(item.created_at),
+              socialPlatforms: item.social_platforms || {},
+              publishedPlatforms: item.published_platforms || [],
+              additionalImages: item.additional_images || [],
+              additionalMedia: item.additional_media,
+              metadata: item.metadata
+            };
+          }
+        } catch (error: any) {
+          console.warn(`Не удалось получить контент с переданным токеном: ${error.message}`);
+          response = null;
+        }
+      }
       
-      if (!response?.data?.data) {
-        console.log(`❌ Контент с ID ${id} не найден`);
+      // Если контент не найден с переданным токеном, возвращаем undefined
+      console.log(`❌ Контент с ID ${id} не найден`);
+        
+        // Пробуем сделать запрос списка контента с фильтром по ID 
+        // и посмотреть, кто владелец (без доступа к БД напрямую)
+        const filter = {
+          id: {
+            _eq: id
+          }
+        };
+        
+        try {
+          // Пробуем с разными токенами активных пользователей
+          // Получаем все активные токены
+          const userIds = Object.keys(this.tokenCache || {});
+          
+          for (const userId of userIds) {
+            const userToken = await this.getAuthToken(userId);
+            if (userToken) {
+              try {
+                console.log(`Пробуем с токеном пользователя ${userId}`);
+                const metaResponse = await directusApi.get(`/items/campaign_content`, {
+                  params: { filter },
+                  headers: {
+                    'Authorization': `Bearer ${userToken}`
+                  }
+                });
+                
+                if (metaResponse?.data?.data?.length > 0) {
+                  // Если нашли, используем этот же токен для получения полных данных
+                  response = await directusApi.get(`/items/campaign_content/${id}`, {
+                    headers: {
+                      'Authorization': `Bearer ${userToken}`
+                    }
+                  });
+                  console.log(`Успешно получен контент с токеном пользователя ${userId}`);
+                  break;
+                }
+              } catch (error) {
+                // Продолжаем с другим пользователем
+              }
+            }
+          }
+        } catch (error: any) {
+          console.warn(`Не удалось найти владельца контента: ${error.message}`);
+        }
+      }
+      
+      // Попытка 4: Пробуем без токена (публичный доступ)
+      if (!response) {
+        console.log(`Пробуем получить контент без токена авторизации`);
+        try {
+          response = await directusApi.get(`/items/campaign_content/${id}`);
+          console.log(`Успешно получен контент без авторизации (публичный доступ)`);
+        } catch (error: any) {
+          console.warn(`Не удалось получить контент без авторизации: ${error.message}`);
+        }
+      }
+      
+      // Проверяем, получили ли мы данные
+      if (!response || !response.data?.data) {
+        console.warn(`Контент с ID ${id} не найден ни одним из способов`);
         return undefined;
       }
       
-      console.log('✅ Контент найден успешно');
       const item = response.data.data;
+      // Контент найден в Directus
       
       return {
         id: item.id,
         content: item.content,
         userId: item.user_id,
         campaignId: item.campaign_id,
-        contentType: item.content_type,
         status: item.status,
-        postType: item.post_type,
+        contentType: item.content_type || "text",
+        title: item.title || null,
         imageUrl: item.image_url,
         videoUrl: item.video_url,
         prompt: item.prompt || "",
-        keywords: item.keywords,
-        title: item.title,
         scheduledAt: item.scheduled_at ? new Date(item.scheduled_at) : null,
         createdAt: new Date(item.created_at),
-        socialPlatforms: item.social_platforms || {},
+        socialPlatforms: item.social_platforms,
         publishedPlatforms: item.published_platforms || [],
-        additionalImages: item.additional_images || [],
-        additionalMedia: item.additional_media,
-        metadata: item.metadata
+        keywords: item.keywords || [] // Добавляем ключевые слова
       };
     } catch (error: any) {
-      console.error(`Ошибка при получении контента с ID ${id}:`, error.message);
+      console.error(`Ошибка при получении контента с ID ${id}:`, error);
+      
+      // Добавляем подробную информацию об ошибке
+      if (error.response) {
+        console.error(`Статус ошибки: ${error.response.status}`);
+        console.error(`Данные ошибки: ${JSON.stringify(error.response.data || {})}`);
+      }
+      
+      // Если ошибка 403, логируем это
+      if (error.response?.status === 403) {
+        console.log(`Ошибка доступа 403 при получении контента ${id} - недостаточно прав`);
+      }
+      
+      console.error('Error getting campaign content by ID from Directus:', error);
       return undefined;
     }
   }

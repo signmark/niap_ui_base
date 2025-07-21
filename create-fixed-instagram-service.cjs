@@ -1,4 +1,8 @@
-/**
+const fs = require('fs');
+
+// Создаем исправленную версию instagram-private-service.js с правильными ES module импортами/экспортами
+
+const fixedCode = `/**
  * Instagram Private Service
  * Сервис для работы с Instagram через instagram-private-api
  * Включает SOCKS5 proxy поддержку для публикации постов и Stories
@@ -40,7 +44,7 @@ class InstagramPrivateService {
    * Создает SOCKS5 proxy agent для Instagram клиента
    */
   createProxyAgent() {
-    const proxyUrl = `socks5://${this.proxyConfig.username}:${this.proxyConfig.password}@${this.proxyConfig.host}:${this.proxyConfig.port}`;
+    const proxyUrl = \`socks5://\${this.proxyConfig.username}:\${this.proxyConfig.password}@\${this.proxyConfig.host}:\${this.proxyConfig.port}\`;
     return new SocksProxyAgent(proxyUrl);
   }
 
@@ -48,12 +52,12 @@ class InstagramPrivateService {
    * Создает и настраивает Instagram клиента с proxy
    */
   async createInstagramClient(username, password) {
-    const sessionKey = `${username}:${crypto.createHash('md5').update(password).digest('hex')}`;
+    const sessionKey = \`\${username}:\${crypto.createHash('md5').update(password).digest('hex')}\`;
     
     // Проверяем кеш
     if (this.clients.has(sessionKey)) {
       const cached = this.clients.get(sessionKey);
-      console.log(`[Instagram Service] Используем кешированную сессию для ${username}`);
+      console.log(\`[Instagram Service] Используем кешированную сессию для \${username}\`);
       return cached;
     }
 
@@ -69,13 +73,13 @@ class InstagramPrivateService {
 
       // Настраиваем user agent и device
       ig.state.generateDevice(username);
-      ig.state.proxyUrl = `socks5://${this.proxyConfig.username}:${this.proxyConfig.password}@${this.proxyConfig.host}:${this.proxyConfig.port}`;
+      ig.state.proxyUrl = \`socks5://\${this.proxyConfig.username}:\${this.proxyConfig.password}@\${this.proxyConfig.host}:\${this.proxyConfig.port}\`;
 
-      console.log(`[Instagram Service] Авторизация пользователя ${username} через SOCKS5`);
+      console.log(\`[Instagram Service] Авторизация пользователя \${username} через SOCKS5\`);
       
       // Авторизация
       const auth = await ig.account.login(username, password);
-      console.log(`[Instagram Service] ✅ Успешная авторизация: ${username}, User ID: ${auth.pk}`);
+      console.log(\`[Instagram Service] ✅ Успешная авторизация: \${username}, User ID: \${auth.pk}\`);
       
       // Кешируем клиента на 1 час
       this.clients.set(sessionKey, {
@@ -88,14 +92,14 @@ class InstagramPrivateService {
       return this.clients.get(sessionKey);
       
     } catch (error) {
-      console.error(`[Instagram Service] Ошибка авторизации ${username}:`, error.message);
+      console.error(\`[Instagram Service] Ошибка авторизации \${username}:\`, error.message);
       
       // Если challenge требуется, логируем это
       if (error.message.includes('challenge_required')) {
-        console.log(`[Instagram Service] Требуется challenge для ${username}`);
+        console.log(\`[Instagram Service] Требуется challenge для \${username}\`);
       }
       
-      throw new Error(`Не удалось авторизоваться в Instagram: ${error.message}`);
+      throw new Error(\`Не удалось авторизоваться в Instagram: \${error.message}\`);
     }
   }
 
@@ -123,7 +127,7 @@ class InstagramPrivateService {
    * Публикует Stories с интерактивными элементами
    */
   async publishStory(username, password, storyData) {
-    console.log(`[Instagram Service] Публикация Stories для ${username}`);
+    console.log(\`[Instagram Service] Публикация Stories для \${username}\`);
     
     try {
       const clientData = await this.createInstagramClient(username, password);
@@ -135,7 +139,7 @@ class InstagramPrivateService {
         
         for (let i = 0; i < storyData.slides.length; i++) {
           const slide = storyData.slides[i];
-          console.log(`[Instagram Service] Публикация слайда ${i + 1}/${storyData.slides.length}`);
+          console.log(\`[Instagram Service] Публикация слайда \${i + 1}/\${storyData.slides.length}\`);
           
           try {
             const result = await this.publishSingleStorySlide(ig, slide);
@@ -146,7 +150,7 @@ class InstagramPrivateService {
               await new Promise(resolve => setTimeout(resolve, 2000));
             }
           } catch (error) {
-            console.error(`[Instagram Service] Ошибка публикации слайда ${i + 1}:`, error.message);
+            console.error(\`[Instagram Service] Ошибка публикации слайда \${i + 1}:\`, error.message);
             results.push({ success: false, error: error.message });
           }
         }
@@ -163,7 +167,7 @@ class InstagramPrivateService {
       }
       
     } catch (error) {
-      console.error(`[Instagram Service] Критическая ошибка публикации Stories:`, error);
+      console.error(\`[Instagram Service] Критическая ошибка публикации Stories:\`, error);
       throw error;
     }
   }
@@ -240,16 +244,16 @@ class InstagramPrivateService {
         });
       }
       
-      console.log(`[Instagram Service] ✅ Stories опубликован: ${result.media?.id || 'ID неизвестен'}`);
+      console.log(\`[Instagram Service] ✅ Stories опубликован: \${result.media?.id || 'ID неизвестен'}\`);
       
       return {
         success: true,
         storyId: result.media?.id,
-        storyUrl: `https://instagram.com/stories/${slideData.username || 'unknown'}/${result.media?.id || ''}`
+        storyUrl: \`https://instagram.com/stories/\${slideData.username || 'unknown'}/\${result.media?.id || ''}\`
       };
       
     } catch (error) {
-      console.error(`[Instagram Service] Ошибка публикации слайда Stories:`, error);
+      console.error(\`[Instagram Service] Ошибка публикации слайда Stories:\`, error);
       throw error;
     }
   }
@@ -273,7 +277,7 @@ class InstagramPrivateService {
     });
     
     if (expired.length > 0) {
-      console.log(`[Instagram Service] Очищено ${expired.length} истекших сессий`);
+      console.log(\`[Instagram Service] Очищено \${expired.length} истекших сессий\`);
     }
   }
 }
@@ -281,3 +285,9 @@ class InstagramPrivateService {
 // Экспортируем singleton
 const instagramService = new InstagramPrivateService();
 export default instagramService;
+`;
+
+// Записываем исправленный файл
+fs.writeFileSync('server/services/instagram-private-service.js', fixedCode);
+
+console.log('✅ Создан исправленный instagram-private-service.js с ES modules');

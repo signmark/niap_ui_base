@@ -1554,9 +1554,12 @@ router.post('/publish/test-stories', async (req, res) => {
 });
 
 /**
- * Обновленная функция для публикации Instagram Stories
+ * Публикует Instagram Stories через наш Instagram Private Service
+ * @param contentId ID контента для публикации
+ * @param interactive Интерактивные элементы для Stories
+ * @returns Результат публикации
  */
-async function publishViaInstagramStoriesAPIUpdated(contentId: string, interactive: any = null): Promise<any> {
+async function publishViaInstagramStoriesAPI(contentId: string, interactive: any = null): Promise<any> {
   const { InstagramPrivateService } = await import('../services/instagram-private-service.js');
   const instagramService = new InstagramPrivateService();
   
