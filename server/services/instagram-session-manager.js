@@ -88,7 +88,7 @@ class InstagramSessionManager {
   }
 
   /**
-   * Сохраняет сессию пользователя
+   * Сохраняет сессию пользователя И Instagram клиента
    */
   saveSession(username, sessionData) {
     try {
@@ -108,12 +108,54 @@ class InstagramSessionManager {
       console.log(`[Instagram Session Manager] Session ID: ${sessionRecord.sessionId}`);
       console.log(`[Instagram Session Manager] CSRF Token: ${sessionRecord.csrfToken ? 'есть' : 'отсутствует'}`);
       console.log(`[Instagram Session Manager] Cookies: ${sessionRecord.cookies ? 'есть' : 'отсутствуют'}`);
+      console.log(`[Instagram Session Manager] IG Client: ${sessionRecord.igClient ? 'есть' : 'отсутствует'}`);
 
       return true;
     } catch (error) {
       console.error(`[Instagram Session Manager] ❌ Ошибка сохранения сессии для ${username}:`, error.message);
       return false;
     }
+  }
+
+  /**
+   * Сохраняет Instagram клиента для Stories публикации
+   */
+  saveIgClient(username, igClient) {
+    try {
+      if (!this.sessions[username]) {
+        console.log(`[Instagram Session Manager] Сессия для ${username} не найдена, создаем новую`);
+        this.sessions[username] = {
+          username: username,
+          createdAt: Date.now(),
+          lastUsed: Date.now(),
+          usageCount: 1
+        };
+      }
+
+      // Сохраняем Instagram клиента в памяти (не в файл, так как клиент не сериализуется)
+      this.sessions[username].igClient = igClient;
+      this.sessions[username].lastUsed = Date.now();
+      
+      console.log(`[Instagram Session Manager] ✅ Instagram клиент сохранен для ${username}`);
+      return true;
+    } catch (error) {
+      console.error(`[Instagram Session Manager] ❌ Ошибка сохранения IG клиента для ${username}:`, error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Получает Instagram клиента
+   */
+  getIgClient(username) {
+    const session = this.sessions[username];
+    if (session && session.igClient) {
+      console.log(`[Instagram Session Manager] ✅ Найден Instagram клиент для ${username}`);
+      return session.igClient;
+    }
+    
+    console.log(`[Instagram Session Manager] ❌ Instagram клиент не найден для ${username}`);
+    return null;
   }
 
   /**

@@ -18,7 +18,7 @@ class InstagramPrivateService {
     // SOCKS5 proxy конфигурация
     this.proxyConfig = {
       host: 'mobpool.proxy.market',
-      port: 10000, // Порты 10000-10999
+      port: 10001, // Порты 10000-10999
       username: 'WeBZDZ7p9lh5',
       password: 'iOPNYl8D',
       type: 5 // SOCKS5
@@ -55,17 +55,30 @@ class InstagramPrivateService {
       return this.clients.get(sessionKey);
     }
 
-    console.log(`[Instagram Service] Создаем нового клиента для ${username} с SOCKS5 proxy`);
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    
+    if (isDevelopment) {
+      console.log(`[Instagram Service] 🔧 Development mode: создаем клиента БЕЗ proxy для ${username}`);
+    } else {
+      console.log(`[Instagram Service] Создаем нового клиента для ${username} с SOCKS5 proxy`);
+    }
     
     const ig = new IgApiClient();
     
-    // Настраиваем proxy для всех HTTP запросов
-    const proxyAgent = this.createProxyAgent();
-    ig.request.defaults.agent = proxyAgent;
+    // Настраиваем proxy только в продакшене
+    if (!isDevelopment) {
+      try {
+        const proxyAgent = this.createProxyAgent();
+        ig.request.defaults.agent = proxyAgent;
+        ig.state.proxyUrl = `socks5://${this.proxyConfig.username}:${this.proxyConfig.password}@${this.proxyConfig.host}:${this.proxyConfig.port}`;
+        console.log(`[Instagram Service] SOCKS5 proxy настроен`);
+      } catch (error) {
+        console.warn(`[Instagram Service] ⚠️ Proxy недоступен: ${error.message}`);
+      }
+    }
     
     // Настраиваем устройство и состояние
     ig.state.generateDevice(username);
-    ig.state.proxyUrl = `socks5://${this.proxyConfig.username}:${this.proxyConfig.password}@${this.proxyConfig.host}:${this.proxyConfig.port}`;
     
     try {
       // Попытка авторизации

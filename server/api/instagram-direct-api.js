@@ -6,6 +6,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
+const { IgApiClient } = require('instagram-private-api');
 
 // SOCKS5 proxy configuration
 const PROXY_CONFIG = {
@@ -183,62 +184,84 @@ router.post('/login', async (req, res) => {
 
     // Check if session already exists and is valid
     const existingSession = getSession(username);
-    if (existingSession && existingSession.expiresAt > Date.now()) {
-      console.log(`[Instagram] Using existing session for user: ${username}`);
-      return res.json({
-        success: true,
-        userId: existingSession.userId,
-        username: existingSession.username,
-        message: 'Авторизация из кеша',
-        status: 'authenticated',
-        cached: true
-      });
+    if (existingSession && existingSession.expiresAt > Date.now() && existingSession.authMethod === 'private-api') {
+      // Проверяем что Instagram клиент тоже есть
+      const igClient = instagramSessionManager.getIgClient(username);
+      if (igClient) {
+        console.log(`[Instagram] Using existing Private API session for user: ${username}`);
+        return res.json({
+          success: true,
+          userId: existingSession.userId,
+          username: existingSession.username,
+          message: 'Private API авторизация из кеша',
+          status: 'authenticated',
+          cached: true,
+          authMethod: 'private-api'
+        });
+      }
     }
 
-    // Perform Instagram login through proxy
-    const loginUrl = 'https://i.instagram.com/api/v1/accounts/login/';
+    // Если старая сессия без Private API клиента, создаем новую
+    console.log(`[Instagram] Creating new Private API session for ${username}`);
+    if (existingSession) {
+      console.log(`[Instagram] Removing old session without Private API client`);
+      instagramSessionManager.removeSession(username);
+    }
+
+    // СОЗДАЕМ INSTAGRAM PRIVATE API КЛИЕНТА с SOCKS5 proxy
+    console.log(`[Instagram] 🔧 Создаем Instagram Private API клиента для ${username}`);
     
-    const loginData = new FormData();
-    loginData.append('username', username);
-    loginData.append('password', password);
-    loginData.append('device_id', `android-${Math.random().toString(36).substring(7)}`);
-    loginData.append('login_attempt_count', '0');
-
-    const response = await makeProxyRequest(loginUrl, {
-      method: 'POST',
-      data: loginData,
-      headers: {
-        ...loginData.getHeaders(),
-        'X-IG-App-ID': '567067343352427',
-        'X-IG-Connection-Type': 'WIFI',
-        'X-IG-Capabilities': '3brTvw==',
-        'Content-Type': `multipart/form-data; boundary=${loginData._boundary}`
-      }
-    });
-
-    if (response.data && response.data.logged_in_user) {
-      const user = response.data.logged_in_user;
+    const ig = new IgApiClient();
+    
+    // Настраиваем SOCKS5 proxy
+    const proxyAgent = createProxyAgent();
+    ig.request.defaults.agent = proxyAgent;
+    
+    // Настраиваем устройство
+    ig.state.generateDevice(username);
+    
+    try {
+      // Авторизация через Instagram Private API
+      console.log(`[Instagram] 🔐 Выполняем авторизацию ${username} через Private API`);
+      
+      const user = await ig.account.login(username, password);
+      
+      console.log(`[Instagram] ✅ Успешная авторизация Private API:`, {
+        userId: user.pk,
+        username: user.username,
+        fullName: user.full_name
+      });
+      
+      // Сохраняем сессионные данные
       const sessionData = {
         userId: user.pk.toString(),
         username: user.username,
-        sessionId: response.headers['set-cookie']?.find(c => c.includes('sessionid'))?.split(';')[0]?.split('=')[1],
-        csrfToken: response.headers['set-cookie']?.find(c => c.includes('csrftoken'))?.split(';')[0]?.split('=')[1]
+        fullName: user.full_name,
+        isVerified: user.is_verified,
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 дней
+        authMethod: 'private-api'
       };
 
+      // Сохраняем сессию И Instagram клиента
       saveSession(username, sessionData);
+      instagramSessionManager.saveIgClient(username, ig);
 
-      console.log(`[Instagram] Login successful for user: ${username}, ID: ${sessionData.userId}`);
+      console.log(`[Instagram] ✅ PRIVATE API Login successful для ${username}, ID: ${sessionData.userId}`);
 
       res.json({
         success: true,
         userId: sessionData.userId,
         username: sessionData.username,
-        message: 'Авторизация успешна',
+        fullName: sessionData.fullName,
+        message: '✅ Private API авторизация успешна',
         status: 'authenticated',
-        cached: false
+        cached: false,
+        authMethod: 'private-api'
       });
-    } else {
-      throw new Error('Invalid login response');
+      
+    } catch (loginError) {
+      console.error(`[Instagram] ❌ Private API авторизация не удалась:`, loginError.message);
+      throw new Error(`Private API login failed: ${loginError.message}`);
     }
 
   } catch (error) {
@@ -554,28 +577,151 @@ router.post('/publish-story', async (req, res) => {
       session = getSession(username);
     }
 
-    // Simulate story upload with interactive elements
+    // РЕАЛЬНАЯ публикация Stories через Instagram Private API
     console.log(`[Instagram] Uploading story for user: ${username}, session: ${session.userId}`);
     
-    if (interactive) {
-      console.log(`[Instagram] Adding interactive elements:`, Object.keys(interactive));
+    try {
+      // Получаем Instagram клиента из сессии
+      const ig = instagramSessionManager.getIgClient(username);
+      if (!ig) {
+        throw new Error('Instagram клиент не найден для данной сессии');
+      }
+      
+      // Конвертируем base64 в buffer
+      let imageBuffer;
+      if (imageData.includes(',')) {
+        const base64Data = imageData.split(',')[1];
+        imageBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        imageBuffer = Buffer.from(imageData, 'base64');
+      }
+      
+      console.log(`[Instagram] Размер изображения для Stories: ${imageBuffer.length} байт`);
+      
+      // Проверяем размер изображения
+      if (imageBuffer.length < 1000) {
+        throw new Error(`Изображение слишком маленькое: ${imageBuffer.length} байт. Минимум 1KB для тестирования.`);
+      }
+      
+      // Публикуем Stories с правильными параметрами для Private API
+      console.log(`[Instagram] Загружаем Stories размером ${imageBuffer.length} байт`);
+      
+      // Специальная конфигурация для Instagram Private API Stories
+      const storyOptions = {
+        file: imageBuffer
+      };
+      
+      // Если есть интерактивные элементы из параметра req.body
+      if (interactive && Object.keys(interactive).length > 0) {
+        console.log(`[Instagram] Добавляем интерактивные элементы:`, Object.keys(interactive));
+        
+        // Добавляем story stickers для интерактивных элементов
+        storyOptions.story_stickers = [];
+        
+        // Поддержка опросов
+        if (interactive.poll) {
+          storyOptions.story_stickers.push({
+            x: 0.5,
+            y: 0.5,
+            z: 0,
+            width: 0.6,
+            height: 0.15,
+            rotation: 0.0,
+            item_id: 'poll_sticker',
+            item_type: 'poll',
+            poll_sticker: {
+              question: interactive.poll.question || 'Да или нет?',
+              tallies: [
+                { text: interactive.poll.option1 || 'Да', count: 0 },
+                { text: interactive.poll.option2 || 'Нет', count: 0 }
+              ],
+              viewer_can_vote: true,
+              viewer_vote: null,
+              is_shared_result: false
+            }
+          });
+        }
+        
+        // Поддержка слайдеров
+        if (interactive.slider) {
+          storyOptions.story_stickers.push({
+            x: 0.5,
+            y: 0.7,
+            z: 0,
+            width: 0.6,
+            height: 0.15,
+            rotation: 0.0,
+            item_id: 'slider_sticker',
+            item_type: 'slider',
+            slider_sticker: {
+              question: interactive.slider.question || 'Как оцениваете?',
+              slider_vote_average: 0.5,
+              slider_vote_count: 0,
+              viewer_can_vote: true,
+              viewer_vote: null,
+              background_color: '#FF5722',
+              emoji: interactive.slider.emoji || '🔥'
+            }
+          });
+        }
+        
+        // Поддержка вопросов
+        if (interactive.question) {
+          storyOptions.story_stickers.push({
+            x: 0.5,
+            y: 0.3,
+            z: 0,
+            width: 0.7,
+            height: 0.2,
+            rotation: 0.0,
+            item_id: 'question_sticker',
+            item_type: 'question',
+            question_sticker: {
+              question: interactive.question.text || 'Задайте вопрос',
+              viewer_can_interact: true,
+              background_color: '#8E44AD',
+              text_color: '#FFFFFF'
+            }
+          });
+        }
+      }
+      
+      console.log(`[Instagram] Конфигурация Stories:`, {
+        hasFile: !!storyOptions.file,
+        fileSize: imageBuffer.length,
+        hasStickers: !!(storyOptions.story_stickers && storyOptions.story_stickers.length > 0),
+        stickerCount: storyOptions.story_stickers ? storyOptions.story_stickers.length : 0
+      });
+      
+      const storyResult = await ig.publish.story(storyOptions);
+      
+      console.log(`[Instagram] ✅ РЕАЛЬНАЯ Stories опубликована!`, storyResult);
+      
+      const realStoryUrl = `https://instagram.com/stories/${username}/${storyResult.media.id}`;
+      
+      res.json({
+        success: true,
+        storyUrl: realStoryUrl,
+        storyId: storyResult.media.id,
+        interactive: interactive ? Object.keys(interactive) : [],
+        message: '✅ РЕАЛЬНАЯ Stories опубликована успешно!',
+        userId: session.userId,
+        username: session.username,
+        mediaId: storyResult.media.id,
+        isRealStory: true
+      });
+      
+    } catch (publishError) {
+      console.error(`[Instagram] Ошибка публикации Stories:`, publishError.message);
+      
+      // Fallback - возвращаем ошибку вместо фиктивных данных
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка публикации Stories',
+        details: publishError.message,
+        message: 'Не удалось опубликовать Stories'
+      });
     }
-    
-    // For now, return success with test data
-    const storyId = `story_${Date.now()}`;
-    const storyUrl = `https://instagram.com/stories/${session.username}/${storyId}`;
-
-    console.log(`[Instagram] Story published successfully: ${storyUrl}`);
-
-    res.json({
-      success: true,
-      storyUrl,
-      storyId,
-      interactive: interactive ? Object.keys(interactive) : [],
-      message: 'Stories опубликована успешно',
-      userId: session.userId,
-      username: session.username
-    });
 
   } catch (error) {
     console.error(`[Instagram] Story publish failed:`, error.message);
@@ -590,14 +736,14 @@ router.post('/publish-story', async (req, res) => {
 // Clear cache endpoint
 router.post('/clear-cache', (req, res) => {
   const sessionCount = instagramSessionManager.getAllSessions().length;
-  instagramSessionManager.clearAll();
+  const cleared = instagramSessionManager.clearAllSessions();
   
-  console.log(`[Instagram] Cache cleared: ${sessionCount} sessions removed`);
+  console.log(`[Instagram] Cache cleared: ${cleared} sessions removed`);
   
   res.json({
     success: true,
-    message: `Кеш очищен: ${sessionCount} сессий удалено`,
-    cleared: sessionCount
+    message: `Кеш очищен: ${cleared} сессий удалено`,
+    cleared: cleared
   });
 });
 
