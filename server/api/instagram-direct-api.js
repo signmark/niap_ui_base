@@ -598,9 +598,10 @@ router.post('/publish-story', async (req, res) => {
       
       console.log(`[Instagram] Размер изображения для Stories: ${imageBuffer.length} байт`);
       
-      // Проверяем размер изображения
-      if (imageBuffer.length < 1000) {
-        throw new Error(`Изображение слишком маленькое: ${imageBuffer.length} байт. Минимум 1KB для тестирования.`);
+      // Проверяем размер изображения (убираем жесткую валидацию)
+      console.log(`[Instagram] Размер изображения Stories: ${imageBuffer.length} байт`);
+      if (imageBuffer.length < 100) {
+        console.log(`[Instagram] ⚠️ Изображение очень маленькое: ${imageBuffer.length} байт`);
       }
       
       // Публикуем Stories с правильными параметрами для Private API
