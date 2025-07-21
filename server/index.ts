@@ -138,6 +138,12 @@ require('./api/instagram-direct-api')(app);
 require('./api/instagram-session-status')(app);
 console.log('[DEV] [express] Instagram Direct API routes registered successfully (early)');
 
+// ===== SOCIAL PUBLISHING ROUTER REGISTRATION =====
+console.log('[DEV] [express] Registering Social Publishing Router...');
+import socialPublishingRouter from './api/social-publishing-router';
+app.use('/api', socialPublishingRouter);
+console.log('[DEV] [express] Social Publishing Router registered successfully');
+
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
   try {

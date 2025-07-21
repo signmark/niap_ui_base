@@ -23,9 +23,9 @@ def create_stories_image(text, background_color='#6366f1', text_color='#FFFFFF',
         output_path: Путь для сохранения изображения
     """
     
-    # Размеры Instagram Stories (9:16)
-    width = 1080
-    height = 1920
+    # Размеры Instagram Stories (9:16) - минимальные для быстрой загрузки через прокси
+    width = 540   # Очень компактный размер
+    height = 960  # Сохраняем пропорции 9:16
     
     # Преобразуем hex цвета в RGB
     bg_rgb = hex_to_rgb(background_color)

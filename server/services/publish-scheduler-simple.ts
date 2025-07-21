@@ -199,14 +199,28 @@ export class PublishScheduler {
   }
 
   /**
-   * Отправляет webhook в N8N для публикации
+   * Отправляет webhook в N8N для публикации или использует прямой API для Instagram
    */
   private async publishToSocialMedia(contentId: string, platform: string): Promise<boolean> {
-    const webhookUrl = `${process.env.N8N_URL}/webhook/publish-${platform}`;
-    
     try {
       log(`[scheduler] Отправка ${platform}: contentId=${contentId}`, 'scheduler');
       
+      // Для Instagram используем прямой API
+      if (platform === 'instagram') {
+        const directApiUrl = `http://localhost:5000/api/social-publish/instagram`;
+        const response = await axios.post(directApiUrl, {
+          contentId
+        }, { timeout: 30000 });
+
+        if (response.status === 200) {
+          log(`✅ Instagram Direct API принял задачу: contentId=${contentId}`, 'scheduler');
+          return true;
+        }
+        return false;
+      }
+      
+      // Для остальных платформ используем N8N webhooks
+      const webhookUrl = `${process.env.N8N_URL}/webhook/publish-${platform}`;
       const response = await axios.post(webhookUrl, {
         contentId,
         platform
@@ -219,7 +233,7 @@ export class PublishScheduler {
       return false;
       
     } catch (error) {
-      log(`❌ Ошибка webhook ${platform}: ${error.message}`, 'scheduler');
+      log(`❌ Ошибка публикации ${platform}: ${error.message}`, 'scheduler');
       return false;
     }
   }

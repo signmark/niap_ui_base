@@ -7,30 +7,33 @@ const path = require('path');
 const axios = require('axios');
 const { createStoriesImage, saveImageToTempFile } = require('../utils/image-generator.cjs');
 
-// Конфигурация прокси
+// Конфигурация прокси (используем несколько портов для повторных попыток)
 const PROXY_CONFIG = {
   host: 'mobpool.proxy.market',
-  port: Math.floor(Math.random() * 10) + 10000, // 10000-10009
+  ports: [10001, 10002, 10007, 10006], // Быстрые порты согласно тестам
   username: 'WeBZDZ7p9lh5',
   password: 'iOPNYl8D'
 };
 
-console.log(`[Instagram Stories API] Использую прокси: ${PROXY_CONFIG.host}:${PROXY_CONFIG.port}`);
+console.log(`[Instagram Stories API] Использую прокси: ${PROXY_CONFIG.host} (порты: ${PROXY_CONFIG.ports.join(', ')})`);
 
 /**
  * Создает Instagram клиент с прокси
  */
-function createInstagramClient() {
+function createInstagramClient(portIndex = 0) {
   const ig = new IgApiClient();
   
+  // Выбираем порт для данной попытки
+  const port = PROXY_CONFIG.ports[portIndex % PROXY_CONFIG.ports.length];
+  
   // Настраиваем прокси
-  const proxyUrl = `socks5://${PROXY_CONFIG.username}:${PROXY_CONFIG.password}@${PROXY_CONFIG.host}:${PROXY_CONFIG.port}`;
+  const proxyUrl = `socks5://${PROXY_CONFIG.username}:${PROXY_CONFIG.password}@${PROXY_CONFIG.host}:${port}`;
   const agent = new SocksProxyAgent(proxyUrl);
   
   ig.request.defaults.agent = agent;
-  ig.request.defaults.timeout = 30000;
+  ig.request.defaults.timeout = 60000; // Сокращаем таймаут для быстрых повторных попыток
   
-  return ig;
+  return { ig, port };
 }
 
 /**
@@ -55,6 +58,116 @@ async function downloadImage(imageUrl) {
     console.error(`[Stories] Ошибка скачивания изображения: ${error.message}`);
     throw error;
   }
+}
+
+// Система контроля времени между публикациями
+const publicationTimestamps = new Map(); // username -> timestamp последней публикации
+
+/**
+ * Проверяет и обеспечивает минимальную задержку между публикациями
+ */
+async function enforcePublicationDelay(username, minDelayMinutes = 5) {
+  const now = Date.now();
+  const lastPublication = publicationTimestamps.get(username);
+  
+  if (lastPublication) {
+    const timeSinceLastPublication = now - lastPublication;
+    const minDelayMs = minDelayMinutes * 60 * 1000;
+    
+    if (timeSinceLastPublication < minDelayMs) {
+      const waitTime = minDelayMs - timeSinceLastPublication;
+      console.log(`[Stories Delay] Последняя публикация была ${Math.round(timeSinceLastPublication / 1000)} сек назад`);
+      console.log(`[Stories Delay] Ждем ${Math.round(waitTime / 1000)} секунд перед следующей публикацией...`);
+      
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  
+  // Обновляем время последней публикации
+  publicationTimestamps.set(username, now);
+}
+
+/**
+ * Публикует простую Stories с генерированным изображением с повторными попытками
+ */
+async function publishStoriesWithRetry(username, password, storyText, storyBgColor, storyTextColor, maxAttempts = 3) {
+  let lastError = null;
+  
+  // Обеспечиваем задержку между публикациями
+  await enforcePublicationDelay(username, 3); // 3 минуты между публикациями
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      console.log(`[Stories Retry] Попытка ${attempt + 1}/${maxAttempts} с портом ${PROXY_CONFIG.ports[attempt % PROXY_CONFIG.ports.length]}`);
+      
+      const { ig, port } = createInstagramClient(attempt);
+      
+      // Авторизуемся
+      ig.state.generateDevice(username);
+      await ig.account.login(username, password);
+      
+      console.log(`[Stories Retry] Авторизация успешна через порт ${port}`);
+      
+      // Дополнительная задержка перед загрузкой для имитации человеческого поведения
+      const humanDelay = 2000 + Math.random() * 3000; // 2-5 секунд
+      console.log(`[Stories Retry] Имитация человеческого поведения: ждем ${Math.round(humanDelay)} мс`);
+      await new Promise(resolve => setTimeout(resolve, humanDelay));
+      
+      // Создаем изображение с текстом
+      const imageBuffer = await createStoriesImage(
+        storyText, 
+        storyBgColor, 
+        storyTextColor
+      );
+      
+      console.log(`[Stories Retry] Изображение создано: ${imageBuffer.length} байт`);
+      
+      // Публикуем Stories
+      const storyResult = await ig.publish.story({
+        file: imageBuffer
+      });
+      
+      console.log(`[Stories Retry] SUCCESS на попытке ${attempt + 1} через порт ${port}:`, storyResult);
+      
+      const storyId = storyResult.media?.id || 'unknown';
+      const storyUrl = `https://instagram.com/stories/${username}/story_${storyId}`;
+      
+      return {
+        success: true,
+        message: `Stories успешно опубликована через порт ${port} на попытке ${attempt + 1}`,
+        storyId: storyId,
+        storyUrl: storyUrl,
+        publishedAt: new Date().toISOString(),
+        text: storyText,
+        colors: { background: storyBgColor, text: storyTextColor },
+        port: port,
+        attempt: attempt + 1,
+        result: storyResult
+      };
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`[Stories Retry] Попытка ${attempt + 1} неудачна: ${error.message}`);
+      
+      // Если это feedback_required, добавляем дополнительную задержку
+      if (error.message.includes('feedback_required')) {
+        console.log(`[Stories Retry] Обнаружена потребность в дополнительной верификации - увеличиваем задержку`);
+        if (attempt < maxAttempts - 1) {
+          const extendedDelay = 30000 + Math.random() * 15000; // 30-45 секунд
+          console.log(`[Stories Retry] Расширенная задержка: ${Math.round(extendedDelay / 1000)} секунд`);
+          await new Promise(resolve => setTimeout(resolve, extendedDelay));
+        }
+      } else {
+        // Обычная задержка для других ошибок
+        if (attempt < maxAttempts - 1) {
+          console.log(`[Stories Retry] Ждем 5 секунд перед следующей попыткой...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+    }
+  }
+  
+  throw lastError;
 }
 
 /**
@@ -90,46 +203,13 @@ router.post('/publish-simple', async (req, res) => {
     console.log(`[Stories Simple] Публикация простой Stories для ${username} с текстом "${storyText}"`);
     console.log(`[Stories Simple] Цвета: фон ${storyBgColor}, текст ${storyTextColor}`);
     
-    const ig = createInstagramClient();
+    // Используем функцию с повторными попытками
+    const result = await publishStoriesWithRetry(username, password, storyText, storyBgColor, storyTextColor);
     
-    // Авторизуемся
-    ig.state.generateDevice(username);
-    await ig.account.login(username, password);
-    
-    console.log(`[Stories Simple] Авторизация успешна`);
-    
-    // Создаем изображение с текстом
-    const imageBuffer = await createStoriesImage(
-      storyText, 
-      storyBgColor, 
-      storyTextColor
-    );
-    
-    console.log(`[Stories Simple] Изображение создано с текстом "${storyText}" (${imageBuffer.length} байт)`);
-    
-    // Публикуем Stories
-    const storyResult = await ig.publish.story({
-      file: imageBuffer
-    });
-    
-    console.log(`[Stories Simple] Stories опубликована успешно:`, storyResult);
-    
-    const storyId = storyResult.media?.id || 'unknown';
-    const storyUrl = `https://instagram.com/stories/${username}/story_${storyId}`;
-    
-    res.json({
-      success: true,
-      message: 'Простая Stories успешно опубликована',
-      storyId: storyId,
-      storyUrl: storyUrl,
-      publishedAt: new Date().toISOString(),
-      text: storyText,
-      colors: { background: storyBgColor, text: storyTextColor },
-      result: storyResult
-    });
+    res.json(result);
     
   } catch (error) {
-    console.error(`[Stories Simple] Ошибка публикации:`, error);
+    console.error(`[Stories Simple] Все попытки исчерпаны:`, error);
     res.status(500).json({
       success: false,
       error: error.message,
