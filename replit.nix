@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.virtualenv
     pkgs.zlib
     pkgs.tk
     pkgs.tcl

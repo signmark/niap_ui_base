@@ -5,7 +5,7 @@ const { SocksProxyAgent } = require('socks-proxy-agent');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { createStoriesImage, saveImageToTempFile } = require('../utils/image-generator');
+const { createStoriesImage, saveImageToTempFile } = require('../utils/image-generator.cjs');
 
 // Конфигурация прокси
 const PROXY_CONFIG = {
@@ -62,16 +62,33 @@ async function downloadImage(imageUrl) {
  */
 router.post('/publish-simple', async (req, res) => {
   try {
-    const { username, password, text, backgroundColor, textColor, caption } = req.body;
+    const { username, password, text, backgroundColor, textColor, caption, slides } = req.body;
     
-    if (!username || !password || !text) {
+    // Поддерживаем как старый формат (text), так и новый (slides)
+    let storyText, storyBgColor, storyTextColor;
+    
+    if (slides && Array.isArray(slides) && slides.length > 0) {
+      // Новый формат - используем первый слайд
+      const firstSlide = slides[0];
+      storyText = firstSlide.text;
+      storyBgColor = firstSlide.backgroundColor || '#6366f1';
+      storyTextColor = firstSlide.textColor || '#FFFFFF';
+    } else {
+      // Старый формат
+      storyText = text;
+      storyBgColor = backgroundColor || '#6366f1';
+      storyTextColor = textColor || '#FFFFFF';
+    }
+    
+    if (!username || !password || !storyText) {
       return res.status(400).json({
         success: false,
-        error: 'Отсутствуют обязательные параметры: username, password, text'
+        error: 'Отсутствуют обязательные параметры: username, password и текст (в поле text или slides[0].text)'
       });
     }
     
-    console.log(`[Stories Simple] Публикация простой Stories для ${username} с текстом "${text}"`);
+    console.log(`[Stories Simple] Публикация простой Stories для ${username} с текстом "${storyText}"`);
+    console.log(`[Stories Simple] Цвета: фон ${storyBgColor}, текст ${storyTextColor}`);
     
     const ig = createInstagramClient();
     
@@ -83,12 +100,12 @@ router.post('/publish-simple', async (req, res) => {
     
     // Создаем изображение с текстом
     const imageBuffer = await createStoriesImage(
-      text, 
-      backgroundColor || '#6366f1', 
-      textColor || '#FFFFFF'
+      storyText, 
+      storyBgColor, 
+      storyTextColor
     );
     
-    console.log(`[Stories Simple] Изображение создано с текстом "${text}" (${imageBuffer.length} байт)`);
+    console.log(`[Stories Simple] Изображение создано с текстом "${storyText}" (${imageBuffer.length} байт)`);
     
     // Публикуем Stories
     const storyResult = await ig.publish.story({
@@ -106,6 +123,8 @@ router.post('/publish-simple', async (req, res) => {
       storyId: storyId,
       storyUrl: storyUrl,
       publishedAt: new Date().toISOString(),
+      text: storyText,
+      colors: { background: storyBgColor, text: storyTextColor },
       result: storyResult
     });
     

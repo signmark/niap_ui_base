@@ -1338,27 +1338,20 @@ async function publishViaInstagramStoriesAPI(contentId: string): Promise<any> {
     
     log(`[Instagram Stories] Использую аккаунт: ${instagramSettings.username}`);
     
-    // Определяем изображение для Stories
-    let imagePath = content.imageUrl;
-    if (!imagePath && content.additionalImages && content.additionalImages.length > 0) {
-      // Используем первое изображение из дополнительных
-      imagePath = content.additionalImages[0];
-    }
-    if (!imagePath) {
-      // Используем случайное изображение для тестирования
-      imagePath = 'https://picsum.photos/1080/1920';
-      log(`[Instagram Stories] Изображение не указано, используем тестовое: ${imagePath}`);
-    }
-    
     // Определяем текст для Stories
-    const storyText = content.content || content.title || '';
+    const storyText = content.content || content.title || 'Новый пост';
     
-    // Подготавливаем данные для публикации через Stories API
+    // Подготавливаем данные для публикации через новый Stories API с генерацией изображений
     const storiesPayload = {
       username: instagramSettings.username,
       password: instagramSettings.password,
-      imagePath: imagePath,
-      caption: storyText
+      slides: [
+        {
+          text: storyText,
+          backgroundColor: '#6366f1', // Современный синий цвет
+          textColor: '#FFFFFF'
+        }
+      ]
     };
     
     log(`[Instagram Stories] Отправляем запрос к Stories API: ${JSON.stringify({ ...storiesPayload, password: '***' })}`);
