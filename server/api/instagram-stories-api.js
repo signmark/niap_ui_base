@@ -5,6 +5,7 @@ const { SocksProxyAgent } = require('socks-proxy-agent');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { createStoriesImage, saveImageToTempFile } = require('../utils/image-generator');
 
 // Конфигурация прокси
 const PROXY_CONFIG = {
@@ -226,6 +227,120 @@ router.post('/publish', async (req, res) => {
     
   } catch (error) {
     console.error(`[Stories Interactive] Ошибка публикации:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.stack
+    });
+  }
+});
+
+/**
+ * Публикует интерактивные Stories с несколькими слайдами на основе пользовательских данных
+ */
+router.post('/publish-interactive', async (req, res) => {
+  try {
+    const { username, password, slides } = req.body;
+    
+    if (!username || !password || !slides || !Array.isArray(slides)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствуют обязательные параметры: username, password, slides (массив)'
+      });
+    }
+    
+    console.log(`[Stories Interactive] Публикация пользовательских Stories для ${username}`);
+    console.log(`[Stories Interactive] Количество слайдов: ${slides.length}`);
+    
+    const ig = createInstagramClient();
+    
+    // Авторизуемся
+    ig.state.generateDevice(username);
+    await ig.account.login(username, password);
+    
+    console.log(`[Stories Interactive] Авторизация успешна`);
+    
+    const publishedStories = [];
+    
+    // Публикуем каждый слайд как отдельную Stories
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i];
+      console.log(`[Stories Interactive] Обрабатываем слайд ${i + 1}/${slides.length}:`, slide);
+      
+      try {
+        // Извлекаем данные слайда
+        const backgroundColor = slide.background?.value || '#6366f1';
+        let slideText = '';
+        
+        // Собираем весь текст со слайда
+        if (slide.elements && Array.isArray(slide.elements)) {
+          slide.elements.forEach(element => {
+            if (element.type === 'text' && element.content && element.content.text) {
+              slideText = element.content.text;
+            }
+          });
+        }
+        
+        // Если нет текста, используем порядковый номер
+        if (!slideText) {
+          slideText = `Слайд ${i + 1}`;
+        }
+        
+        console.log(`[Stories Interactive] Слайд ${i + 1}: создаем изображение с текстом "${slideText}" на фоне ${backgroundColor}`);
+        
+        // Создаем изображение с текстом на цветном фоне
+        const imageBuffer = createStoriesImage(slideText, backgroundColor, '#FFFFFF');
+        
+        console.log(`[Stories Interactive] Слайд ${i + 1}: изображение создано (${imageBuffer.length} байт)`);
+        
+        // Публикуем Stories
+        const publishOptions = {
+          file: imageBuffer
+        };
+        
+        const storyResult = await ig.publish.story(publishOptions);
+        
+        const storyId = storyResult.media?.id || 'unknown';
+        const storyUrl = `https://instagram.com/stories/${username}/${storyId}`;
+        
+        publishedStories.push({
+          slideIndex: i,
+          slideId: slide.id,
+          storyId: storyId,
+          storyUrl: storyUrl,
+          elements: slide.elements?.length || 0
+        });
+        
+        console.log(`[Stories Interactive] Слайд ${i + 1} опубликован: ${storyId}`);
+        
+        // Пауза между публикациями
+        if (i < slides.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+      } catch (slideError) {
+        console.error(`[Stories Interactive] Ошибка публикации слайда ${i + 1}:`, slideError);
+        publishedStories.push({
+          slideIndex: i,
+          slideId: slide.id,
+          error: slideError.message
+        });
+      }
+    }
+    
+    console.log(`[Stories Interactive] Завершено. Опубликовано ${publishedStories.filter(s => !s.error).length} из ${slides.length} слайдов`);
+    
+    res.json({
+      success: true,
+      message: `Интерактивные Stories опубликованы: ${publishedStories.filter(s => !s.error).length}/${slides.length} слайдов`,
+      publishedStories: publishedStories,
+      totalSlides: slides.length,
+      successfulSlides: publishedStories.filter(s => !s.error).length,
+      publishedAt: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error(`[Stories Interactive] Ошибка публикации интерактивных Stories:`, error);
     res.status(500).json({
       success: false,
       error: error.message,
