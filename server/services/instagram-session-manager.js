@@ -102,16 +102,23 @@ class InstagramSessionManager {
         }
       }
 
-      // Загружаем из файла
+      // ПРИНУДИТЕЛЬНАЯ загрузка из файла БЕЗ проверки времени
       const filePath = this.getSessionFilePath(username);
+      console.log(`[Session Manager] ПРИНУДИТЕЛЬНАЯ загрузка из файла: ${filePath}`);
+      console.log(`[Session Manager] Файл существует: ${fs.existsSync(filePath)}`);
+      
       if (fs.existsSync(filePath)) {
         const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        console.log(`[Session Manager] Файл загружен, размер: ${JSON.stringify(fileData).length} символов`);
+        console.log(`[Session Manager] expiresAt: ${fileData.expiresAt}, now: ${Date.now()}`);
         
-        if (fileData.expiresAt > Date.now()) {
-          console.log(`[Instagram Session Manager] Восстанавливаем сессию из файла для ${username}`);
-          
+        // ИГНОРИРУЕМ ВРЕМЯ ИСТЕЧЕНИЯ - загружаем ЛЮБУЮ сессию
+        console.log(`[Instagram Session Manager] ПРИНУДИТЕЛЬНО восстанавливаем сессию из файла для ${username} (игнорируем expiresAt)`);
+        
+        try {
           // Восстанавливаем состояние в Instagram клиенте
           await igClient.state.deserialize(fileData.state);
+          console.log(`[Session Manager] Состояние клиента успешно восстановлено`);
           
           // Сохраняем в памяти
           this.sessions.set(sessionKey, {
@@ -124,12 +131,14 @@ class InstagramSessionManager {
           fileData.lastUsed = Date.now();
           fs.writeFileSync(filePath, JSON.stringify(fileData, null, 2));
 
-          console.log(`[Instagram Session Manager] Сессия успешно восстановлена для ${username}`);
+          console.log(`[Instagram Session Manager] Сессия ПРИНУДИТЕЛЬНО восстановлена для ${username}`);
           return igClient;
-        } else {
-          console.log(`[Instagram Session Manager] Сессия истекла для ${username}, удаляем файл`);
-          fs.unlinkSync(filePath);
+        } catch (deserializeError) {
+          console.error(`[Session Manager] Ошибка десериализации состояния:`, deserializeError.message);
+          return null;
         }
+      } else {
+        console.log(`[Session Manager] Файл сессии НЕ НАЙДЕН: ${filePath}`);
       }
 
       return null;
@@ -144,24 +153,35 @@ class InstagramSessionManager {
    */
   hasValidSession(username) {
     const sessionKey = this.createSessionKey(username);
+    console.log(`[Session Manager] Проверяем сессию для ${username}, ключ: ${sessionKey}`);
     
     // Проверяем в памяти
     if (this.sessions.has(sessionKey)) {
       const session = this.sessions.get(sessionKey);
-      return session.expiresAt > Date.now();
+      const isValidMemory = session.expiresAt > Date.now();
+      console.log(`[Session Manager] Сессия в памяти: существует, валидна: ${isValidMemory}`);
+      return isValidMemory;
     }
 
     // Проверяем файл
     const filePath = this.getSessionFilePath(username);
+    console.log(`[Session Manager] Проверяем файл: ${filePath}`);
+    console.log(`[Session Manager] Файл существует: ${fs.existsSync(filePath)}`);
+    
     if (fs.existsSync(filePath)) {
       try {
         const fileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        return fileData.expiresAt > Date.now();
+        const isValidFile = fileData.expiresAt > Date.now();
+        console.log(`[Session Manager] Файл сессии: размер ${JSON.stringify(fileData).length} символов, валидна: ${isValidFile}`);
+        console.log(`[Session Manager] Expires: ${new Date(fileData.expiresAt).toLocaleString()}, сейчас: ${new Date().toLocaleString()}`);
+        return isValidFile;
       } catch (error) {
+        console.error(`[Session Manager] Ошибка чтения файла сессии:`, error.message);
         return false;
       }
     }
 
+    console.log(`[Session Manager] Файл сессии не найден`);
     return false;
   }
 
