@@ -58,20 +58,20 @@ async function downloadImage(imageUrl) {
 }
 
 /**
- * Публикует простую Stories (только изображение + текст)
+ * Публикует простую Stories с генерированным изображением
  */
 router.post('/publish-simple', async (req, res) => {
   try {
-    const { username, password, imagePath, caption } = req.body;
+    const { username, password, text, backgroundColor, textColor, caption } = req.body;
     
-    if (!username || !password || !imagePath) {
+    if (!username || !password || !text) {
       return res.status(400).json({
         success: false,
-        error: 'Отсутствуют обязательные параметры: username, password, imagePath'
+        error: 'Отсутствуют обязательные параметры: username, password, text'
       });
     }
     
-    console.log(`[Stories Simple] Публикация простой Stories для ${username}`);
+    console.log(`[Stories Simple] Публикация простой Stories для ${username} с текстом "${text}"`);
     
     const ig = createInstagramClient();
     
@@ -81,14 +81,14 @@ router.post('/publish-simple', async (req, res) => {
     
     console.log(`[Stories Simple] Авторизация успешна`);
     
-    // Получаем изображение
-    let imageBuffer;
-    if (imagePath.startsWith('http')) {
-      imageBuffer = await downloadImage(imagePath);
-    } else {
-      const fullPath = path.resolve(imagePath);
-      imageBuffer = fs.readFileSync(fullPath);
-    }
+    // Создаем изображение с текстом
+    const imageBuffer = await createStoriesImage(
+      text, 
+      backgroundColor || '#6366f1', 
+      textColor || '#FFFFFF'
+    );
+    
+    console.log(`[Stories Simple] Изображение создано с текстом "${text}" (${imageBuffer.length} байт)`);
     
     // Публикуем Stories
     const storyResult = await ig.publish.story({
@@ -289,7 +289,7 @@ router.post('/publish-interactive', async (req, res) => {
         console.log(`[Stories Interactive] Слайд ${i + 1}: создаем изображение с текстом "${slideText}" на фоне ${backgroundColor}`);
         
         // Создаем изображение с текстом на цветном фоне
-        const imageBuffer = createStoriesImage(slideText, backgroundColor, '#FFFFFF');
+        const imageBuffer = await createStoriesImage(slideText, backgroundColor, '#FFFFFF');
         
         console.log(`[Stories Interactive] Слайд ${i + 1}: изображение создано (${imageBuffer.length} байт)`);
         

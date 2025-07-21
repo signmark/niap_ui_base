@@ -80,7 +80,9 @@ async function publishYourStories() {
       const response = await axios.post('http://localhost:5000/api/instagram-stories/publish-simple', {
         username: 'darkhorse_fashion',
         password: 'QtpZ3dh70306',
-        imagePath: 'https://picsum.photos/1080/1920', // Временное изображение
+        text: slideText, // Текст для генерации изображения
+        backgroundColor: '#6366f1', // Синий фон как у ваших слайдов
+        textColor: '#FFFFFF', // Белый текст
         caption: `${slideText} - слайд ${i + 1} из ваших Stories`
       }, {
         timeout: 60000
