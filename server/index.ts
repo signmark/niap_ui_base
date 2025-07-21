@@ -350,6 +350,14 @@ app.use((req, res, next) => {
     console.log("Stories routes registered");
     log("Stories routes registered successfully");
     
+    // Регистрируем Instagram Stories API
+    console.log("Registering Instagram Stories API...");
+    log("Registering Instagram Stories API...");
+    const instagramStoriesApi = require('./api/instagram-stories-api');
+    app.use('/api/instagram-stories', instagramStoriesApi);
+    console.log("Instagram Stories API registered");
+    log("Instagram Stories API registered successfully");
+    
     // Регистрируем маршруты аналитики
     log("Registering Analytics routes...");
     registerAnalyticsRoutes(app);

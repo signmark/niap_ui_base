@@ -359,13 +359,13 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
           if (platform === 'instagram') {
             // Определяем тип контента для выбора метода публикации
             const content = await storage.getCampaignContentById(contentId);
-            const isStoriesContent = content && content.contentType === 'story';
+            const isStoriesContent = content && (content.contentType === 'story' || content.contentType === 'instagram_stories');
             
             if (isStoriesContent) {
-              log(`[Social Publishing] Обнаружен контент типа Stories, используем Stories API`);
+              log(`[Social Publishing] Обнаружен контент типа Stories (${content.contentType}), используем Stories API`);
               result = await publishViaInstagramStoriesAPI(contentId);
             } else {
-              log(`[Social Publishing] Обычный контент, используем стандартный Instagram API`);
+              log(`[Social Publishing] Обычный контент (${content?.contentType}), используем стандартный Instagram API`);
               result = await publishViaInstagramDirectAPI(contentId);
             }
           } else {
@@ -1304,7 +1304,7 @@ router.post('/publish/update-status', authMiddleware, async (req, res) => {
 });
 
 /**
- * Публикует Instagram Stories через Instagram Private Service
+ * Публикует Instagram Stories через новый Stories API
  * @param contentId ID контента для публикации Stories
  * @returns Результат публикации
  */
@@ -1338,10 +1338,6 @@ async function publishViaInstagramStoriesAPI(contentId: string): Promise<any> {
     
     log(`[Instagram Stories] Использую аккаунт: ${instagramSettings.username}`);
     
-    // Импортируем Instagram Private Service
-    const { default: InstagramPrivateService } = await import('../services/instagram-private-service.js');
-    const igService = InstagramPrivateService;
-    
     // Определяем изображение для Stories
     let imagePath = content.imageUrl;
     if (!imagePath && content.additionalImages && content.additionalImages.length > 0) {
@@ -1349,51 +1345,38 @@ async function publishViaInstagramStoriesAPI(contentId: string): Promise<any> {
       imagePath = content.additionalImages[0];
     }
     if (!imagePath) {
-      // Fallback изображение если не указано
-      imagePath = './uploads/smmtest.jpg';
-      log(`[Instagram Stories] Изображение не указано, используем fallback: ${imagePath}`);
+      // Используем случайное изображение для тестирования
+      imagePath = 'https://picsum.photos/1080/1920';
+      log(`[Instagram Stories] Изображение не указано, используем тестовое: ${imagePath}`);
     }
     
     // Определяем текст для Stories
     const storyText = content.content || content.title || '';
     
-    // Проверяем есть ли интерактивные элементы в Stories
-    let interactiveElements = null;
-    if (content.additionalData && content.additionalData.storyElements) {
-      interactiveElements = content.additionalData.storyElements;
-      log(`[Instagram Stories] Найдены интерактивные элементы: ${JSON.stringify(interactiveElements)}`);
-    }
+    // Подготавливаем данные для публикации через Stories API
+    const storiesPayload = {
+      username: instagramSettings.username,
+      password: instagramSettings.password,
+      imagePath: imagePath,
+      caption: storyText
+    };
     
-    let publishResult;
+    log(`[Instagram Stories] Отправляем запрос к Stories API: ${JSON.stringify({ ...storiesPayload, password: '***' })}`);
     
-    if (interactiveElements && interactiveElements.length > 0) {
-      // Публикация Stories с интерактивными элементами
-      log(`[Instagram Stories] Публикация Stories с интерактивными элементами`);
-      publishResult = await igService.publishStory(
-        instagramSettings.username,
-        instagramSettings.password,
-        {
-          imageUrl: imagePath,
-          content: storyText,
-          interactiveElements: interactiveElements
-        }
-      );
-    } else {
-      // Простая публикация Stories без интерактивных элементов
-      log(`[Instagram Stories] Публикация простого Stories`);
-      publishResult = await igService.publishStory(
-        instagramSettings.username,
-        instagramSettings.password,
-        {
-          imageUrl: imagePath,
-          content: storyText
-        }
-      );
-    }
+    // Публикуем через наш новый Stories API
+    const publishResult = await axios.post('http://localhost:5000/api/instagram-stories/publish-simple', storiesPayload, {
+      timeout: 90000, // 90 секунд timeout
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
     
-    log(`[Instagram Stories] Результат публикации: ${JSON.stringify(publishResult)}`);
+    const responseData = publishResult.data;
+    log(`[Instagram Stories] Результат публикации: ${JSON.stringify(responseData)}`);
     
-    if (publishResult.success) {
+    if (responseData.success && responseData.result) {
+      const result = responseData.result;
+      
       // Обновляем статус в базе данных
       try {
         await storage.updateCampaignContentSocialPlatforms(
@@ -1401,11 +1384,10 @@ async function publishViaInstagramStoriesAPI(contentId: string): Promise<any> {
           {
             instagram: {
               status: 'published',
-              storyId: publishResult.storyId,
-              storyUrl: publishResult.storyUrl,
+              storyId: result.storyId,
+              storyUrl: result.storyUrl,
               publishedAt: new Date().toISOString(),
-              message: publishResult.message,
-              interactiveElements: interactiveElements
+              message: result.message || 'Успешно опубликовано в Instagram Stories'
             }
           },
           adminToken
@@ -1419,15 +1401,14 @@ async function publishViaInstagramStoriesAPI(contentId: string): Promise<any> {
       return {
         success: true,
         status: 'published',
-        storyId: publishResult.storyId,
-        storyUrl: publishResult.storyUrl,
+        storyId: result.storyId,
+        storyUrl: result.storyUrl,
         platform: 'instagram',
-        publishedAt: publishResult.publishedAt || new Date().toISOString(),
-        message: 'Успешно опубликовано в Instagram Stories',
-        interactiveElements: interactiveElements
+        publishedAt: result.publishedAt || new Date().toISOString(),
+        message: result.message || 'Успешно опубликовано в Instagram Stories'
       };
     } else {
-      throw new Error(publishResult.error || 'Неизвестная ошибка при публикации Stories');
+      throw new Error(responseData.error || 'Неизвестная ошибка при публикации Stories');
     }
     
   } catch (error: any) {
