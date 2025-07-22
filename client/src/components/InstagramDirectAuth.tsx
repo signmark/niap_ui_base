@@ -31,11 +31,21 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      return await apiRequest('POST', '/api/instagram-direct/login', {
-        username,
-        password,
-        campaignId
-      }) as AuthResponse;
+      try {
+        const response = await apiRequest('/api/instagram-direct/login', {
+          method: 'POST',
+          data: {
+            username,
+            password,
+            campaignId
+          }
+        });
+        console.log('Instagram login response:', response);
+        return response as AuthResponse;
+      } catch (error) {
+        console.error('Instagram login error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -51,9 +61,12 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
 
   const confirmMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('POST', '/api/instagram-direct/confirm-session', {
-        username: credentials.username,
-        campaignId
+      return await apiRequest('/api/instagram-direct/confirm-session', {
+        method: 'POST',
+        data: {
+          username: credentials.username,
+          campaignId
+        }
       }) as AuthResponse;
     },
     onSuccess: (data) => {

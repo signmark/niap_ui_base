@@ -2,11 +2,12 @@
   "dsignmark": {
     "userId": "555220254",
     "username": "dsignmark",
-    "sessionData": {},
-    "timestamp": 1753176318196,
-    "expiresAt": 1753781118196,
-    "createdAt": 1753176318196,
-    "lastUsed": 1753176318196,
+    "fullName": "Dmitry Zhdanov",
+    "isVerified": false,
+    "expiresAt": 1753782595749,
+    "authMethod": "private-api",
+    "createdAt": 1753177795750,
+    "lastUsed": 1753177795750,
     "usageCount": 1
   }
 }
