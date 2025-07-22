@@ -2894,6 +2894,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Маршрут для генерации изображений через универсальный интерфейс FAL.AI API
   // Этот маршрут используется клиентскими компонентами для генерации изображений
+  // Instagram Direct Authentication routes
+  app.post("/api/instagram-direct/login", authenticateUser, async (req, res) => {
+    try {
+      const { username, password, campaignId } = req.body;
+      
+      if (!username || !password || !campaignId) {
+        return res.status(400).json({
+          success: false,
+          message: "Требуются параметры: username, password, campaignId"
+        });
+      }
+
+      console.log(`[Instagram Auth] Login attempt for user: ${username}, campaign: ${campaignId}`);
+
+      // Вызываем Instagram Direct API
+      const { IgApiClient } = await import('instagram-private-api');
+      const { instagramSessionManager } = await import('./services/instagram-session-manager.js');
+      
+      // Создаем новый клиент Instagram
+      const ig = new IgApiClient();
+      
+      try {
+        await ig.account.login(username, password);
+        
+        const user = await ig.user.info(ig.state.cookieUserId);
+        const loginResult = {
+          success: true,
+          username: user.username,
+          userId: user.pk.toString(),
+          fullName: user.full_name,
+          challengeRequired: false,
+          sessionData: ig.state.serialize()
+        };
+        
+        // Сохраняем сессию
+        instagramSessionManager.saveSession(username, loginResult.sessionData);
+
+        console.log(`[Instagram Auth] Login successful for ${username}`);
+        
+        // Сохраняем данные сессии в social_media_settings кампании
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.replace('Bearer ', '');
+        
+        const sessionData = {
+          isAuthenticated: true,
+          username: loginResult.username,
+          userId: loginResult.userId,
+          fullName: loginResult.fullName,
+          status: loginResult.challengeRequired ? 'challenge_required' : 'active',
+          lastAuthDate: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 дней
+          sessionData: loginResult.sessionData
+        };
+
+        // Обновляем кампанию с новыми данными Instagram
+        const response = await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
+          social_media_settings: {
+            instagram: sessionData
+          }
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log(`[Instagram Auth] Session saved for campaign ${campaignId}`);
+
+        return res.json({
+          success: true,
+          challengeRequired: loginResult.challengeRequired,
+          sessionData: {
+            username: sessionData.username,
+            userId: sessionData.userId,
+            fullName: sessionData.fullName,
+            status: sessionData.status,
+            lastAuth: sessionData.lastAuthDate,
+            expiresAt: sessionData.expiresAt
+          }
+        });
+      } catch (authError: any) {
+        console.error('[Instagram Auth] Authentication failed:', authError);
+        return res.status(400).json({
+          success: false,
+          message: authError.message || "Ошибка авторизации Instagram"
+        });
+      }
+    } catch (error: any) {
+      console.error('[Instagram Auth] Login error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Внутренняя ошибка сервера"
+      });
+    }
+  });
+
+  app.post("/api/instagram-direct/confirm-session", authenticateUser, async (req, res) => {
+    try {
+      const { username, campaignId } = req.body;
+      
+      if (!username || !campaignId) {
+        return res.status(400).json({
+          success: false,
+          message: "Требуются параметры: username, campaignId"
+        });
+      }
+
+      console.log(`[Instagram Auth] Confirming session for user: ${username}, campaign: ${campaignId}`);
+
+      // Проверяем статус сессии в Instagram Direct API
+      const { instagramSessionManager } = await import('./services/instagram-session-manager.js');
+      const sessionData = instagramSessionManager.getSession(username);
+      
+      if (!sessionData) {
+        return res.status(400).json({
+          success: false,
+          message: "Сессия не найдена"
+        });
+      }
+      
+      const sessionStatus = {
+        success: true,
+        isValid: true,
+        username: username,
+        userId: sessionData.userId || 'unknown',
+        fullName: sessionData.fullName || username,
+        sessionData: sessionData
+      };
+
+      if (sessionStatus.success && sessionStatus.isValid) {
+        // Обновляем статус сессии в кампании
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.replace('Bearer ', '');
+        
+        const sessionData = {
+          isAuthenticated: true,
+          username: sessionStatus.username,
+          userId: sessionStatus.userId,
+          fullName: sessionStatus.fullName,
+          status: 'active',
+          lastAuthDate: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          sessionData: sessionStatus.sessionData
+        };
+
+        await directusApi.patch(`/items/user_campaigns/${campaignId}`, {
+          social_media_settings: {
+            instagram: sessionData
+          }
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log(`[Instagram Auth] Session confirmed for campaign ${campaignId}`);
+
+        return res.json({
+          success: true,
+          sessionData: {
+            username: sessionData.username,
+            userId: sessionData.userId,
+            fullName: sessionData.fullName,
+            status: sessionData.status,
+            lastAuth: sessionData.lastAuthDate,
+            expiresAt: sessionData.expiresAt
+          }
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Сессия Instagram не подтверждена или истекла"
+        });
+      }
+    } catch (error: any) {
+      console.error('[Instagram Auth] Confirm session error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Внутренняя ошибка сервера"
+      });
+    }
+  });
+
   app.post('/api/generate-image', authenticateUser, async (req, res) => {
     try {
       const { prompt, negativePrompt, width, height, numImages, modelName, stylePreset, businessData, content, platform, savePrompt, contentId, campaignId } = req.body;
@@ -3840,6 +4018,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/webhook', telegramWebhookRoutes);
   app.use('/api/webhook', vkWebhookRoutes);
   app.use('/api/webhook', instagramWebhookRoutes);
+  
+  // Регистрируем Instagram Direct API routes
+  console.log('Registering Instagram Direct API routes...');
+  // Маршруты регистрируются в index.ts раньше
   // Регистрируем унифицированный вебхук Facebook (основной)
   app.use('/api/facebook', facebookWebhookUnifiedRoutes);
   
