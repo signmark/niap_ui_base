@@ -484,6 +484,50 @@ export class PublishScheduler {
   }
 
   /**
+   * Публикует контент в Instagram через Direct API с автоматическим поиском изображений
+   */
+  private async publishToInstagramDirect(content: any, authToken: string) {
+    try {
+      log(`Планировщик: Прямая публикация в Instagram с поиском изображений для контента ${content.id}`, 'scheduler');
+      
+      // Импортируем функцию из социального роутера
+      const { publishViaInstagramDirectAPI } = await import('../api/social-publishing-router');
+      
+      // Публикуем через Direct API (уже включает поиск изображений)
+      const result = await publishViaInstagramDirectAPI(content.id);
+      
+      log(`Instagram публикация завершена для контента ${content.id}: ${JSON.stringify(result)}`, 'scheduler');
+      return { platform: 'instagram', success: true, result };
+      
+    } catch (error: any) {
+      log(`Ошибка публикации в Instagram для контента ${content.id}: ${error.message}`, 'scheduler');
+      
+      // Обновляем статус как failed в базе данных
+      try {
+        const updateData = {
+          social_platforms: {
+            ...content.social_platforms,
+            instagram: {
+              status: 'failed',
+              platform: 'instagram', 
+              error: error.message,
+              updatedAt: new Date().toISOString()
+            }
+          }
+        };
+        
+        await storage.updateCampaignContent(content.id, updateData, authToken);
+        log(`Статус failed установлен для Instagram контента ${content.id}`, 'scheduler');
+        
+      } catch (updateError: any) {
+        log(`Ошибка обновления статуса failed: ${updateError.message}`, 'scheduler');
+      }
+      
+      return { platform: 'instagram', success: false, error: error.message };
+    }
+  }
+
+  /**
    * Публикует контент в YouTube напрямую через API
    */
   private async publishToYouTubeDirect(content: any, authToken: string) {

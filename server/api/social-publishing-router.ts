@@ -175,31 +175,96 @@ async function publishViaInstagramDirectAPI(contentId: string) {
           
           log(`[Social Publishing] Размер base64: ${originalBase64.length} символов (~${Math.round(originalBase64.length * 0.75 / 1024)}KB)`);
           
-          // Если base64 слишком большой для Instagram API, используем уменшенное изображение
-          if (originalBase64.length > 512 * 1024) { // ~384KB в base64
-            log(`[Social Publishing] Base64 слишком большой (${Math.round(originalBase64.length * 0.75 / 1024)}KB), создаем уменшенную версию...`);
+          // Если base64 слишком большой для Instagram API, используем Sharp для сжатия
+          if (originalBase64.length > 200 * 1024) { // ~150KB в base64 - снижен порог для надежности
+            log(`[Social Publishing] Base64 слишком большой (${Math.round(originalBase64.length * 0.75 / 1024)}KB), сжимаем изображение...`);
             
             try {
-              // Загружаем уменшенную версию изображения
-              const smallImageUrl = content.imageUrl.includes('?') 
-                ? content.imageUrl + '&w=800&h=800' 
-                : content.imageUrl + '?w=800&h=800';
+              // Используем Sharp для сжатия изображения
+              const { default: sharp } = await import('sharp');
               
-              const smallImageResponse = await axios.get(smallImageUrl, {
-                responseType: 'arraybuffer',
-                timeout: 15000,
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              const compressedImageBuffer = await sharp(imageResponse.data)
+                .resize(1080, 1080, { 
+                  fit: 'inside',
+                  withoutEnlargement: true 
+                })
+                .jpeg({ 
+                  quality: 80,
+                  progressive: true 
+                })
+                .toBuffer();
+              
+              const compressedBase64 = compressedImageBuffer.toString('base64');
+              log(`[Social Publishing] Сжатое изображение: ${Math.round(compressedBase64.length * 0.75 / 1024)}KB`);
+              log(`[Social Publishing] Проверка дополнительного сжатия: ${compressedBase64.length} > ${100 * 1024} = ${compressedBase64.length > 100 * 1024}`);
+              
+              // Если все еще слишком большое, уменьшаем еще больше
+              if (compressedBase64.length > 100 * 1024) { // Снижен порог до 75KB
+                log(`[Social Publishing] Все еще большое, уменьшаем до 540x540...`);
+                
+                const verySmallBuffer = await sharp(imageResponse.data)
+                  .resize(540, 540, { 
+                    fit: 'inside',
+                    withoutEnlargement: true 
+                  })
+                  .jpeg({ 
+                    quality: 60,
+                    progressive: true 
+                  })
+                  .toBuffer();
+                
+                const verySmallBase64 = verySmallBuffer.toString('base64');
+                log(`[Social Publishing] Максимально сжатое изображение: ${Math.round(verySmallBase64.length * 0.75 / 1024)}KB`);
+                
+                // Если даже это слишком большое, делаем ультра-мини версию
+                if (verySmallBase64.length > 60 * 1024) { // 45KB порог
+                  log(`[Social Publishing] Создаем ультра-мини версию 320x320...`);
+                  
+                  const ultraSmallBuffer = await sharp(imageResponse.data)
+                    .resize(320, 320, { 
+                      fit: 'inside',
+                      withoutEnlargement: true 
+                    })
+                    .jpeg({ 
+                      quality: 50,
+                      progressive: true 
+                    })
+                    .toBuffer();
+                  
+                  const ultraSmallBase64 = ultraSmallBuffer.toString('base64');
+                  imageBase64 = `data:image/jpeg;base64,${ultraSmallBase64}`;
+                  
+                  log(`[Social Publishing] Ультра-мини изображение: ${Math.round(ultraSmallBase64.length * 0.75 / 1024)}KB`);
+                } else {
+                  imageBase64 = `data:image/jpeg;base64,${verySmallBase64}`;
                 }
-              });
+              } else {
+                imageBase64 = `data:image/jpeg;base64,${compressedBase64}`;
+              }
               
-              const smallBase64 = Buffer.from(smallImageResponse.data).toString('base64');
-              imageBase64 = `data:image/jpeg;base64,${smallBase64}`;
+            } catch (compressError: any) {
+              log(`[Social Publishing] Ошибка сжатия изображения: ${compressError.message}, пробуем поиск нового изображения`);
               
-              log(`[Social Publishing] Уменшенное изображение: ${Math.round(smallBase64.length * 0.75 / 1024)}KB`);
-            } catch (resizeError: any) {
-              log(`[Social Publishing] Не удалось получить уменшенную версию: ${resizeError.message}, используем оригинал`);
-              imageBase64 = `data:image/jpeg;base64,${originalBase64}`;
+              // Fallback: поиск нового меньшего изображения
+              const imageSearchService = await import('../services/image-search-service.js');
+              const findAndPrepareImage = imageSearchService.findAndPrepareImage;
+              
+              try {
+                const keywords = content.keywords ? content.keywords.split(',').map((k: string) => k.trim()) : [];
+                const imageSearchResult = await findAndPrepareImage(content.content || '', keywords);
+                
+                if (imageSearchResult.success) {
+                  imageBase64 = `data:image/jpeg;base64,${imageSearchResult.imageBuffer.toString('base64')}`;
+                  log(`[Social Publishing] Найдено новое изображение через поиск: ${imageSearchResult.size} байт`);
+                } else {
+                  imageBase64 = `data:image/jpeg;base64,${imageSearchResult.imageBuffer.toString('base64')}`;
+                  log(`[Social Publishing] Используем резервное изображение: ${imageSearchResult.size} байт`);
+                }
+              } catch (searchError: any) {
+                log(`[Social Publishing] Ошибка поиска изображения: ${searchError.message}, используем минимальное`);
+                const minimalImageBase64 = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+                imageBase64 = `data:image/jpeg;base64,${minimalImageBase64}`;
+              }
             }
           }
         } catch (downloadError: any) {
@@ -232,11 +297,12 @@ async function publishViaInstagramDirectAPI(contentId: string) {
         log(`[Social Publishing] 🔍 Изображение отсутствует, ищем реальное изображение для контента...`);
         
         // Импортируем сервис поиска изображений на лету
-        const imageSearchService = require('../services/image-search-service');
+        const imageSearchModule = await import('../services/image-search-service.js');
+        const findAndPrepareImage = imageSearchModule.findAndPrepareImage;
         
         try {
           const keywords = content.keywords ? content.keywords.split(',').map((k: string) => k.trim()) : [];
-          const imageSearchResult = await imageSearchService.findAndPrepareImage(content.content || '', keywords);
+          const imageSearchResult = await findAndPrepareImage(content.content || '', keywords);
           
           if (imageSearchResult.success) {
             // Успешно найдено РЕАЛЬНОЕ изображение
@@ -1933,5 +1999,8 @@ router.post('/social-publish/instagram', async (req, res) => {
     });
   }
 });
+
+// Экспортируем функцию для использования в планировщике
+export { publishViaInstagramDirectAPI };
 
 export default router;
