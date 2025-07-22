@@ -30,7 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
-import { InstagramOAuthSetup } from "./InstagramOAuthSetup";
+import { InstagramDirectAuth } from "./InstagramDirectAuth";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -504,25 +504,20 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              {/* Instagram OAuth Setup */}
-              <InstagramOAuthSetup 
+              {/* Instagram Direct Auth Setup */}
+              <InstagramDirectAuth 
                 campaignId={campaignId}
-                onAuthComplete={() => {
+                existingSession={initialSettings?.instagram}
+                onAuthSuccess={(sessionData) => {
                   // Обновляем статус после успешной авторизации
                   setInstagramStatus({
                     isLoading: false,
                     isValid: true,
-                    message: 'Instagram OAuth авторизация настроена'
+                    message: 'Instagram авторизация настроена'
                   });
                   onSettingsUpdated?.();
                 }}
               />
-              
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-                <h4 className="text-sm font-medium mb-2">Альтернативный способ - API ключи</h4>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Если OAuth не работает, вы можете настроить Instagram через API ключи вручную
-                </p>
                 
                 <div className="space-y-3">
                   <FormField
