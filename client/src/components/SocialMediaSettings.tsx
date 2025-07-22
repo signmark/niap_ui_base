@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { api } from "@/lib/api";
@@ -79,15 +79,21 @@ export function SocialMediaSettings({
 }: SocialMediaSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Получаем данные кампании
+  // Получаем данные кампании через авторизованный API
   const { data: response, refetch } = useQuery({
     queryKey: ['/api/campaigns', campaignId],
-    queryFn: () => fetch(`/api/campaigns/${campaignId}`).then(res => res.json()),
     enabled: !!campaignId
   });
   
-  const campaign = response?.data;
+  const campaign = response?.data || response;
+  
+  // Логирование для диагностики
+  console.log('🔥 SocialMediaSettings campaign response:', response);
+  console.log('🔥 SocialMediaSettings campaign data:', campaign);
+  console.log('🔥 SocialMediaSettings social_media_settings:', campaign?.social_media_settings);
+  console.log('🔥 SocialMediaSettings instagram settings:', campaign?.social_media_settings?.instagram);
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -319,6 +325,10 @@ export function SocialMediaSettings({
         }
       });
       
+      // Принудительно инвалидируем кеш после сохранения в базе данных
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+      
       toast({
         description: "Instagram аккаунт успешно подключен"
       });
@@ -362,19 +372,27 @@ export function SocialMediaSettings({
   };
 
   const onSubmit = async (data: SocialMediaSettings) => {
-
-
-    
     try {
       setIsLoading(true);
 
+      // Исключаем Instagram из данных - он обновляется отдельно через InstagramDirectAuth
+      const { instagram, ...dataWithoutInstagram } = data;
+      
+      // Получаем текущие настройки Instagram из кампании
+      const existingInstagramSettings = campaign?.social_media_settings?.instagram;
+      
+      // Объединяем данные, сохраняя Instagram настройки
+      const finalData = {
+        ...dataWithoutInstagram,
+        instagram: existingInstagramSettings || {}
+      };
+
+      console.log('🔥 Отправляемые данные (Instagram сохранен):', finalData);
       
       // Используем наш API endpoint вместо прямого обращения к Directus
       const response = await api.patch(`/campaigns/${campaignId}`, {
-        social_media_settings: data
+        social_media_settings: finalData
       });
-
-
 
       toast({
         description: "Настройки соцсетей обновлены"
@@ -389,7 +407,6 @@ export function SocialMediaSettings({
       });
     } finally {
       setIsLoading(false);
-
     }
   };
 
@@ -539,18 +556,30 @@ export function SocialMediaSettings({
               <InstagramDirectAuth 
                 campaignId={campaignId}
                 existingSession={campaign?.social_media_settings?.instagram}
-                onAuthSuccess={(sessionData) => {
+                onAuthSuccess={async (sessionData) => {
+                  console.log('🔥 Instagram onAuthSuccess called with sessionData:', sessionData);
+                  
                   // Обновляем статус после успешной авторизации
                   setInstagramStatus({
                     isLoading: false,
                     isValid: true,
                     message: 'Instagram авторизация настроена'
                   });
+                  
                   if (sessionData) {
-                    handleInstagramAuth(sessionData);
+                    await handleInstagramAuth(sessionData);
                   }
+                  
+                  // Принудительно инвалидируем кеш для обновления данных
+                  console.log('🔥 Инвалидируем кеш для кампании:', campaignId);
+                  await queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+                  await queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+                  
                   // Обновляем кампанию после изменений
-                  refetch();
+                  await refetch();
+                  
+                  console.log('🔥 Данные кампании после обновления:', campaign?.social_media_settings?.instagram);
+                  
                   onSettingsUpdated?.();
                 }}
               />

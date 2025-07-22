@@ -235,6 +235,34 @@ type PlatformRequirements = {
   [key: string]: number;
 };
 
+// Функция для проверки прав администратора по токену пользователя
+async function checkIsAdmin(userToken: string): Promise<boolean> {
+  try {
+    const userResponse = await fetch(`${directusUrl}/users/me?fields=id,email,is_smm_admin,is_smm_super`, {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.log(`[checkIsAdmin] Ошибка получения данных пользователя: ${userResponse.status}`);
+      return false;
+    }
+
+    const userData = await userResponse.json();
+    const currentUser = userData.data;
+    
+    const isAdmin = currentUser?.is_smm_admin === true;
+    console.log(`[checkIsAdmin] Пользователь ${currentUser?.email}: is_smm_admin = ${isAdmin}`);
+    
+    return isAdmin;
+  } catch (error) {
+    console.error('[checkIsAdmin] Ошибка при проверке прав администратора:', error);
+    return false;
+  }
+}
+
 // Image proxy function to handle Telegram images and Video thumbnails
 async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: boolean; forceType?: string | null; isVideoThumbnail?: boolean } = {}) {
   try {
@@ -9271,7 +9299,7 @@ ${commentTexts}`;
       const { id } = req.params;
       const userId = (req as any).userId;
       
-      console.log(`Запрос данных кампании ${id} для пользователя ${userId}`);
+      console.log(`[GET /api/campaigns/${id}] Запрос данных кампании ${id} для пользователя ${userId}`);
       
       // Получаем токен из заголовков
       const authHeader = req.headers['authorization'] as string;
@@ -9282,11 +9310,25 @@ ${commentTexts}`;
         });
       }
       
-      const token = authHeader.replace('Bearer ', '');
-      const directusAuth = directusApiManager.instance;
+      const userToken = authHeader.replace('Bearer ', '');
       
-      // Получаем данные кампании через Directus
-      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', id, token);
+      // Используем глобальный directusApi инстанс как в других маршрутах
+      const response = await directusApi.get(`/items/user_campaigns/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.data || !response.data.data) {
+        console.error(`Directus API error: Campaign not found`);
+        return res.status(404).json({
+          success: false,
+          error: 'Кампания не найдена'
+        });
+      }
+      
+      const campaignData = response.data.data;
       
       if (!campaignData) {
         return res.status(404).json({
@@ -9295,13 +9337,18 @@ ${commentTexts}`;
         });
       }
       
-      // Проверяем, что кампания принадлежит пользователю
-      if (campaignData.user_id !== userId) {
+      // Администраторы имеют доступ ко всем кампаниям
+      const isOwner = campaignData.user_id === userId;
+      const isAdmin = await checkIsAdmin(userToken);
+      
+      if (!isOwner && !isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Доступ к кампании запрещен'
         });
       }
+      
+      console.log(`Доступ разрешен к кампании ${id} - isOwner: ${isOwner}, isAdmin: ${isAdmin}`);
       
       console.log(`Данные кампании ${id} успешно получены`);
       
@@ -9353,10 +9400,15 @@ ${commentTexts}`;
         
         const campaign = campaignResponse.data.data;
         
-        // Проверяем, принадлежит ли кампания текущему пользователю
-        if (campaign.user_id !== userId) {
+        // Проверяем права доступа - владелец кампании или администратор
+        const isOwner = campaign.user_id === userId;
+        const isAdmin = await checkIsAdmin(token);
+        
+        if (!isOwner && !isAdmin) {
           return res.status(403).json({ error: "Доступ запрещен: вы не являетесь владельцем этой кампании" });
         }
+        
+        console.log(`PATCH доступ к кампании ${campaignId} разрешен - isOwner: ${isOwner}, isAdmin: ${isAdmin}`);
         
         // Разрешаем обновление только определенных полей
         // Удалим undefined значения, оставим только те, что нужно обновить

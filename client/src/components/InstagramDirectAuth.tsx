@@ -29,6 +29,10 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
   const [showPassword, setShowPassword] = useState(false);
   const [authStatus, setAuthStatus] = useState<'idle' | 'challenge' | 'success'>('idle');
 
+  // Логирование для диагностики
+  console.log('🔥 InstagramDirectAuth existingSession:', existingSession);
+  console.log('🔥 InstagramDirectAuth existingSession?.username:', existingSession?.username);
+
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
       try {

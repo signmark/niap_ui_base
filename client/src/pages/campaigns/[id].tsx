@@ -701,7 +701,8 @@ export default function CampaignDetails() {
           Object.keys(campaign.social_media_settings).length > 0 &&
           Object.values(campaign.social_media_settings).some((setting: any) => 
             setting && typeof setting === 'object' && 
-            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
+            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token ||
+             setting.username || setting.isAuthenticated)
           )
         ),
         label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
@@ -728,7 +729,8 @@ export default function CampaignDetails() {
           Object.keys(campaign.social_media_settings).length > 0 &&
           Object.values(campaign.social_media_settings).some((setting: any) => 
             setting && typeof setting === 'object' && 
-            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
+            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token ||
+             setting.username || setting.isAuthenticated)
           )
         ),
         label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
