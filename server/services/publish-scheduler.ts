@@ -456,14 +456,20 @@ export class PublishScheduler {
   }
 
   /**
-   * Публикует контент в указанные платформы ТОЛЬКО через N8N webhooks
+   * Публикует контент в указанные платформы через соответствующие API
    */
   private async publishContentToPlatforms(content: any, platforms: string[], authToken: string) {
     // Создаем промисы для параллельной публикации
     const publishPromises = platforms.map(async (platform) => {
       try {
-        // ВСЕ платформы публикуются ТОЛЬКО через N8N webhooks
-        return await this.publishThroughN8nWebhook(content, platform);
+        // Instagram публикуется через Direct API с поиском изображений
+        if (platform === 'instagram') {
+          return await this.publishToInstagramDirect(content, authToken);
+        }
+        // Остальные платформы публикуются через N8N webhooks
+        else {
+          return await this.publishThroughN8nWebhook(content, platform);
+        }
       } catch (error: any) {
         log(`Ошибка публикации ${content.id} в ${platform}: ${error.message}`, 'scheduler');
         return { platform, success: false, error: error.message };
