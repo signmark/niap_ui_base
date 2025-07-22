@@ -1,1 +1,13 @@
-{}
+{
+  "dsignmark": {
+    "userId": "555220254",
+    "username": "dsignmark",
+    "fullName": "Dmitry Zhdanov",
+    "isVerified": false,
+    "expiresAt": 1753783034957,
+    "authMethod": "private-api",
+    "createdAt": 1753178234958,
+    "lastUsed": 1753178234958,
+    "usageCount": 1
+  }
+}

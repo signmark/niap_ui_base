@@ -81,10 +81,13 @@ export function SocialMediaSettings({
   const { toast } = useToast();
   
   // Получаем данные кампании
-  const { data: campaign, refetch } = useQuery({
+  const { data: response, refetch } = useQuery({
     queryKey: ['/api/campaigns', campaignId],
+    queryFn: () => fetch(`/api/campaigns/${campaignId}`).then(res => res.json()),
     enabled: !!campaignId
   });
+  
+  const campaign = response?.data;
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });

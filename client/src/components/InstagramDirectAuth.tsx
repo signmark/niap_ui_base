@@ -105,10 +105,10 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm text-muted-foreground">
-            <div>Пользователь: {existingSession.fullName}</div>
+            <div>Пользователь: {existingSession.username}</div>
             <div>ID: {existingSession.userId}</div>
+            <div>Статус: {existingSession.status}</div>
             <div>Дата авторизации: {new Date(existingSession.lastAuthDate).toLocaleDateString('ru-RU')}</div>
-            <div>Действует до: {new Date(existingSession.expiresAt).toLocaleDateString('ru-RU')}</div>
           </div>
           <Button 
             variant="outline" 
