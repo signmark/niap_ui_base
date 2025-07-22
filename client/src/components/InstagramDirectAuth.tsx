@@ -91,7 +91,8 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
   const isLoading = loginMutation.isPending || confirmMutation.isPending;
   const error = loginMutation.error || confirmMutation.error;
 
-  if (existingSession?.isAuthenticated && existingSession?.username && existingSession?.userId) {
+  // Проверяем наличие сессии: если есть username, то авторизация есть (независимо от статуса challenge_required)
+  if (existingSession?.username) {
     return (
       <Card>
         <CardHeader>
@@ -106,9 +107,9 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
         <CardContent>
           <div className="space-y-2 text-sm text-muted-foreground">
             <div>Пользователь: {existingSession.username}</div>
-            <div>ID: {existingSession.userId}</div>
             <div>Статус: {existingSession.status}</div>
             <div>Дата авторизации: {new Date(existingSession.lastAuthDate).toLocaleDateString('ru-RU')}</div>
+            {existingSession.userId && <div>ID: {existingSession.userId}</div>}
           </div>
           <Button 
             variant="outline" 
