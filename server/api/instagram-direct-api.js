@@ -159,6 +159,46 @@ router.get('/status', (req, res) => {
   });
 });
 
+// User status endpoint - проверка статуса конкретного пользователя
+router.post('/status', (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username required'
+      });
+    }
+
+    clearExpiredSessions();
+    
+    // Проверяем есть ли сессия для пользователя
+    const session = getSession(username);
+    const igClient = instagramSessionManager.getIgClient(username);
+    
+    res.json({
+      success: true,
+      username: username,
+      hasSession: !!session,
+      sessionValid: session && session.expiresAt > Date.now(),
+      hasIgClient: !!igClient,
+      userId: session?.userId || null,
+      authMethod: session?.authMethod || null,
+      lastAuth: session?.timestamp ? new Date(session.timestamp).toISOString() : null,
+      expiresAt: session?.expiresAt ? new Date(session.expiresAt).toISOString() : null
+    });
+    
+  } catch (error) {
+    console.error(`[Instagram] Ошибка проверки статуса пользователя:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка проверки статуса',
+      details: error.message
+    });
+  }
+});
+
 // Load existing session from file
 router.post('/load-session', async (req, res) => {
   try {
@@ -241,7 +281,7 @@ router.post('/login', async (req, res) => {
       if (igClient) {
         console.log(`[Instagram] Using existing Private API session for user: ${username}`);
         
-        // Создаем данные для сохранения в кампанию при использовании кешированной сессии
+        // Создаем полные данные для сохранения в кампанию при использовании кешированной сессии
         const cachedSessionData = {
           username: existingSession.username,
           password: password,
@@ -251,8 +291,22 @@ router.post('/login', async (req, res) => {
           userId: existingSession.userId,
           fullName: existingSession.fullName,
           timestamp: Date.now(),
-          expiresAt: existingSession.expiresAt
+          expiresAt: existingSession.expiresAt,
+          // Включаем данные для публикации из кэшированной сессии
+          sessionId: existingSession.sessionId,
+          csrfToken: existingSession.csrfToken,
+          deviceId: existingSession.deviceId,
+          userAgent: existingSession.userAgent,
+          cookies: existingSession.cookies,
+          authMethod: 'private-api'
         };
+
+        console.log(`[Instagram] 📊 Кэшированные данные для публикации:`, {
+          hasSessionId: !!existingSession.sessionId,
+          hasCsrfToken: !!existingSession.csrfToken,
+          hasDeviceId: !!existingSession.deviceId,
+          hasCookies: !!(existingSession.cookies && existingSession.cookies.cookieString)
+        });
 
         // Сохраняем в кампанию если указан campaignId
         if (campaignId) {
@@ -303,14 +357,71 @@ router.post('/login', async (req, res) => {
         fullName: user.full_name
       });
       
-      // Сохраняем сессионные данные
+      // Извлекаем данные сессии Instagram для публикации
+      const igState = ig.state;
+      
+      // Получаем доступные сессионные данные
+      const sessionId = igState.sessionId || null;
+      const csrfToken = igState.csrfToken || null;
+      const deviceId = igState.deviceId || igState.uuid || null;
+      const userAgent = igState.appUserAgent || igState.userAgent || null;
+      
+      // Получаем cookies и дополнительные данные
+      let cookies = {};
+      try {
+        const cookieJar = ig.request.jar;
+        if (cookieJar && cookieJar.getCookieString) {
+          const cookieString = cookieJar.getCookieString('https://www.instagram.com');
+          if (cookieString) {
+            cookies = { cookieString };
+          }
+        }
+        
+        // Также получаем внутренние токены если доступны
+        if (igState.authorization) {
+          cookies.authorization = igState.authorization;
+        }
+        if (igState.machineId) {
+          cookies.machineId = igState.machineId;
+        }
+      } catch (cookieError) {
+        console.log(`[Instagram] Не удалось извлечь cookies:`, cookieError.message);
+      }
+      
+      // Получаем дополнительные данные для аутентификации
+      const authData = {
+        igClient: true, // Указываем что у нас есть полный IG клиент
+        phoneId: igState.phoneId || null,
+        uuid: igState.uuid || null,
+        machineId: igState.machineId || null,
+        mid: igState.mid || null
+      };
+      
+      console.log(`[Instagram] 🔍 Анализ сессионных данных:`, {
+        sessionId: sessionId ? 'есть' : 'отсутствует',
+        csrfToken: csrfToken ? 'есть' : 'отсутствует', 
+        deviceId: deviceId ? 'есть' : 'отсутствует',
+        userAgent: userAgent ? 'есть' : 'отсутствует',
+        cookies: Object.keys(cookies).length > 0 ? `${Object.keys(cookies).length} элементов` : 'отсутствуют',
+        authData: Object.keys(authData).filter(k => authData[k]).length + ' элементов'
+      });
+      
+      // Сохраняем полные сессионные данные
       const sessionData = {
         userId: user.pk.toString(),
         username: user.username,
         fullName: user.full_name,
         isVerified: user.is_verified,
         expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 дней
-        authMethod: 'private-api'
+        authMethod: 'private-api',
+        // Данные для публикации
+        sessionId: sessionId,
+        csrfToken: csrfToken,
+        deviceId: deviceId,
+        userAgent: userAgent,
+        cookies: cookies,
+        // Дополнительные данные аутентификации
+        authData: authData
       };
 
       // Сохраняем сессию И Instagram клиента
@@ -318,8 +429,14 @@ router.post('/login', async (req, res) => {
       instagramSessionManager.saveIgClient(username, ig);
 
       console.log(`[Instagram] ✅ PRIVATE API Login successful для ${username}, ID: ${sessionData.userId}`);
+      console.log(`[Instagram] 📊 Сессионные данные для публикации:`, {
+        hasSessionId: !!sessionId,
+        hasCsrfToken: !!csrfToken,
+        hasDeviceId: !!deviceId,
+        hasCookies: !!cookies.cookieString
+      });
 
-      // Создаем данные для сохранения в кампанию
+      // Создаем расширенные данные для сохранения в кампанию
       const campaignSessionData = {
         username: sessionData.username,
         password: password, // Сохраняем для повторного использования
@@ -329,7 +446,15 @@ router.post('/login', async (req, res) => {
         userId: sessionData.userId,
         fullName: sessionData.fullName,
         timestamp: Date.now(),
-        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000),
+        // Данные для публикации постов
+        sessionId: sessionId,
+        csrfToken: csrfToken,
+        deviceId: deviceId,
+        userAgent: userAgent,
+        cookies: cookies,
+        authData: authData,
+        authMethod: 'private-api'
       };
 
       // Сохраняем в кампанию если указан campaignId
@@ -425,18 +550,37 @@ router.post('/publish-photo', async (req, res) => {
       ig.request.defaults.agent = agent;
       ig.state.generateDevice(username);
       
-      // ПРИНУДИТЕЛЬНАЯ загрузка сохраненной сессии БЕЗ проверки
-      console.log(`[Instagram] 🔍 ПРИНУДИТЕЛЬНАЯ загрузка сохраненной сессии для ${username}...`);
+      // ПРИНУДИТЕЛЬНАЯ загрузка сохраненного Instagram клиента
+      console.log(`[Instagram] 🔍 ПРИНУДИТЕЛЬНАЯ загрузка Instagram клиента для ${username}...`);
       
-      const sessionData = instagramSessionManager.getSession(username);
-      console.log(`[Instagram] 🔍 Результат ПРИНУДИТЕЛЬНОЙ загрузки сессии:`, !!sessionData);
-      console.log(`[Instagram] 🔍 Детали сессии:`, sessionData ? 'найдена' : 'НЕ НАЙДЕНА');
+      // Сначала пробуем получить готовый клиент
+      let igClient = instagramSessionManager.getIgClient(username);
+      console.log(`[Instagram] 🔍 Готовый клиент:`, !!igClient);
       
-      let restoredClient = null;
-      if (sessionData && sessionData.sessionData) {
-        // Создаем новый IG client и восстанавливаем сессию
-        ig.state.deserialize(sessionData.sessionData);
-        restoredClient = ig;
+      let restoredClient = igClient;
+      
+      // Если готового клиента нет, пробуем восстановить из session data
+      if (!igClient) {
+        console.log(`[Instagram] 🔄 Готового клиента нет, восстанавливаем из session data...`);
+        const sessionData = instagramSessionManager.getSession(username);
+        
+        if (sessionData && sessionData.authData) {
+          console.log(`[Instagram] 📊 Найдены session data для восстановления клиента`);
+          try {
+            // Восстанавливаем клиент из serialized session data
+            ig.state.deserialize(sessionData.authData);
+            restoredClient = ig;
+            console.log(`[Instagram] ✅ Клиент восстановлен из session data!`);
+            
+            // Сохраняем восстановленный клиент
+            instagramSessionManager.saveIgClient(username, restoredClient);
+          } catch (restoreError) {
+            console.error(`[Instagram] ❌ Ошибка восстановления клиента:`, restoreError.message);
+            restoredClient = null;
+          }
+        } else {
+          console.log(`[Instagram] ❌ Session data не найдены для восстановления`);
+        }
       }
       
       let igClientToUse = restoredClient;

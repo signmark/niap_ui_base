@@ -4,10 +4,24 @@
     "username": "dsignmark",
     "fullName": "Dmitry Zhdanov",
     "isVerified": false,
-    "expiresAt": 1753783730476,
+    "expiresAt": 1753784555003,
     "authMethod": "private-api",
-    "createdAt": 1753178930476,
-    "lastUsed": 1753178930476,
+    "sessionId": null,
+    "csrfToken": null,
+    "deviceId": "android-df8a5546a0714d5a",
+    "userAgent": "Instagram 222.0.0.13.114 Android (24/7.0; 640dpi; 1440x2560; samsung; SM-G925F; zerolte; samsungexynos7420; en_US; 350696709)",
+    "cookies": {
+      "authorization": "Bearer IGT:2:eyJkc191c2VyX2lkIjoiNTU1MjIwMjU0Iiwic2Vzc2lvbmlkIjoiNTU1MjIwMjU0JTNBNWVXZHNIQWh0ODVwdUQlM0EwJTNBQVlkWHpIMlQ3YzRzTElDTnZ1al9yb055LTlXb3hWNnQyUlFMWjd3RVdnIn0="
+    },
+    "authData": {
+      "igClient": true,
+      "phoneId": "1f2693c5-3f8b-534f-abde-8d1f81c66ef4",
+      "uuid": "5b35fdb9-d2a4-5089-a4d2-773964c5eb01",
+      "machineId": null,
+      "mid": null
+    },
+    "createdAt": 1753179755004,
+    "lastUsed": 1753179755004,
     "usageCount": 1
   }
 }
