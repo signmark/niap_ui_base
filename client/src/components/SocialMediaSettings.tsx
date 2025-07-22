@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { api } from "@/lib/api";
@@ -78,6 +79,12 @@ export function SocialMediaSettings({
 }: SocialMediaSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Получаем данные кампании
+  const { data: campaign, refetch } = useQuery({
+    queryKey: ['/api/campaigns', campaignId],
+    enabled: !!campaignId
+  });
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -299,6 +306,27 @@ export function SocialMediaSettings({
       });
     }
   };
+
+  // Обработчик успешной авторизации Instagram
+  const handleInstagramAuth = async (sessionData: any) => {
+    try {
+      const response = await api.patch(`/campaigns/${campaignId}`, {
+        social_media_settings: {
+          instagram: sessionData
+        }
+      });
+      
+      toast({
+        description: "Instagram аккаунт успешно подключен"
+      });
+    } catch (error) {
+      console.error('Error saving Instagram auth:', error);
+      toast({
+        variant: "destructive",
+        description: "Ошибка при сохранении авторизации Instagram"
+      });
+    }
+  };
   
   // Компонент статуса валидации
   const ValidationBadge = ({ status }: { status: ValidationStatus }) => {
@@ -507,7 +535,7 @@ export function SocialMediaSettings({
               {/* Instagram Direct Auth Setup */}
               <InstagramDirectAuth 
                 campaignId={campaignId}
-                existingSession={initialSettings?.instagram}
+                existingSession={campaign?.social_media_settings?.instagram}
                 onAuthSuccess={(sessionData) => {
                   // Обновляем статус после успешной авторизации
                   setInstagramStatus({
@@ -515,6 +543,11 @@ export function SocialMediaSettings({
                     isValid: true,
                     message: 'Instagram авторизация настроена'
                   });
+                  if (sessionData) {
+                    handleInstagramAuth(sessionData);
+                  }
+                  // Обновляем кампанию после изменений
+                  refetch();
                   onSettingsUpdated?.();
                 }}
               />

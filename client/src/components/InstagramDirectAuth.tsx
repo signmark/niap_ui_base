@@ -91,7 +91,7 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
   const isLoading = loginMutation.isPending || confirmMutation.isPending;
   const error = loginMutation.error || confirmMutation.error;
 
-  if (existingSession?.status === 'active') {
+  if (existingSession?.isAuthenticated && existingSession?.username && existingSession?.userId) {
     return (
       <Card>
         <CardHeader>
@@ -107,7 +107,7 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
           <div className="space-y-2 text-sm text-muted-foreground">
             <div>Пользователь: {existingSession.fullName}</div>
             <div>ID: {existingSession.userId}</div>
-            <div>Дата авторизации: {new Date(existingSession.lastAuth).toLocaleDateString('ru-RU')}</div>
+            <div>Дата авторизации: {new Date(existingSession.lastAuthDate).toLocaleDateString('ru-RU')}</div>
             <div>Действует до: {new Date(existingSession.expiresAt).toLocaleDateString('ru-RU')}</div>
           </div>
           <Button 
@@ -116,6 +116,8 @@ export function InstagramDirectAuth({ campaignId, onAuthSuccess, existingSession
             onClick={() => {
               setAuthStatus('idle');
               setCredentials({ username: '', password: '' });
+              // Обновляем данные кампании после смены аккаунта
+              onAuthSuccess(null);
             }}
           >
             Сменить аккаунт
