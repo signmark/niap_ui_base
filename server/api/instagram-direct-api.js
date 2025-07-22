@@ -20,6 +20,9 @@ const PROXY_CONFIG = {
 // Импортируем новый Session Manager
 const { instagramSessionManager } = require('../services/instagram-session-manager.js');
 
+// Импортируем для сохранения в кампанию
+const { directusApiManager } = require('../directus');
+
 // Helper function to create SOCKS5 proxy agent
 function createProxyAgent() {
   const proxyUrl = `socks5://${PROXY_CONFIG.username}:${PROXY_CONFIG.password}@${PROXY_CONFIG.host}:${PROXY_CONFIG.port}`;
@@ -79,6 +82,54 @@ function saveSession(username, sessionData) {
 function clearExpiredSessions() {
   // Session Manager автоматически очищает устаревшие сессии
   console.log(`[Instagram] Session cleanup handled by Session Manager`);
+}
+
+// Helper function to save Instagram session to campaign
+async function saveSessionToCampaign(campaignId, sessionData) {
+  if (!campaignId || !sessionData) {
+    console.log(`[Instagram] Не могу сохранить в кампанию: campaignId=${campaignId}, sessionData=${!!sessionData}`);
+    return false;
+  }
+
+  try {
+    // Получаем токен администратора для системных операций
+    const adminToken = await directusApiManager.getAdminToken();
+    if (!adminToken) {
+      throw new Error('Не удалось получить токен администратора');
+    }
+    
+    // Получаем текущие social_media_settings кампании
+    const campaignResponse = await directusApiManager.get(`/items/user_campaigns/${campaignId}`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    
+    const currentSettings = campaignResponse.data?.data?.social_media_settings || {};
+    
+    // Обновляем настройки с новой Instagram сессией
+    const updatedSettings = {
+      ...currentSettings,
+      instagram: sessionData
+    };
+    
+    // Сохраняем в кампанию
+    await directusApiManager.request({
+      method: 'PATCH',
+      url: `/items/user_campaigns/${campaignId}`,
+      data: { social_media_settings: updatedSettings },
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    
+    console.log(`[Instagram] ✅ Сессия сохранена в кампанию ${campaignId}:`, {
+      username: sessionData.username,
+      status: sessionData.status,
+      timestamp: new Date().toISOString()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error(`[Instagram] ❌ Ошибка сохранения сессии в кампанию ${campaignId}:`, error.message);
+    return false;
+  }
 }
 
 // Status endpoint
@@ -171,7 +222,7 @@ router.post('/load-session', async (req, res) => {
 // Login endpoint
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, campaignId } = req.body;
     
     if (!username || !password) {
       return res.status(400).json({
@@ -189,6 +240,25 @@ router.post('/login', async (req, res) => {
       const igClient = instagramSessionManager.getIgClient(username);
       if (igClient) {
         console.log(`[Instagram] Using existing Private API session for user: ${username}`);
+        
+        // Создаем данные для сохранения в кампанию при использовании кешированной сессии
+        const cachedSessionData = {
+          username: existingSession.username,
+          password: password,
+          isAuthenticated: true,
+          status: 'authenticated',
+          lastAuthDate: new Date().toISOString(),
+          userId: existingSession.userId,
+          fullName: existingSession.fullName,
+          timestamp: Date.now(),
+          expiresAt: existingSession.expiresAt
+        };
+
+        // Сохраняем в кампанию если указан campaignId
+        if (campaignId) {
+          await saveSessionToCampaign(campaignId, cachedSessionData);
+        }
+        
         return res.json({
           success: true,
           userId: existingSession.userId,
@@ -196,7 +266,8 @@ router.post('/login', async (req, res) => {
           message: 'Private API авторизация из кеша',
           status: 'authenticated',
           cached: true,
-          authMethod: 'private-api'
+          authMethod: 'private-api',
+          sessionData: cachedSessionData
         });
       }
     }
@@ -248,6 +319,24 @@ router.post('/login', async (req, res) => {
 
       console.log(`[Instagram] ✅ PRIVATE API Login successful для ${username}, ID: ${sessionData.userId}`);
 
+      // Создаем данные для сохранения в кампанию
+      const campaignSessionData = {
+        username: sessionData.username,
+        password: password, // Сохраняем для повторного использования
+        isAuthenticated: true,
+        status: 'authenticated',
+        lastAuthDate: new Date().toISOString(),
+        userId: sessionData.userId,
+        fullName: sessionData.fullName,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+      };
+
+      // Сохраняем в кампанию если указан campaignId
+      if (campaignId) {
+        await saveSessionToCampaign(campaignId, campaignSessionData);
+      }
+
       res.json({
         success: true,
         userId: sessionData.userId,
@@ -256,11 +345,45 @@ router.post('/login', async (req, res) => {
         message: '✅ Private API авторизация успешна',
         status: 'authenticated',
         cached: false,
-        authMethod: 'private-api'
+        authMethod: 'private-api',
+        sessionData: campaignSessionData
       });
       
     } catch (loginError) {
       console.error(`[Instagram] ❌ Private API авторизация не удалась:`, loginError.message);
+      
+      // Проверяем если это challenge_required ошибка
+      if (loginError.message && loginError.message.toLowerCase().includes('challenge')) {
+        console.log(`[Instagram] 🔄 Обнаружен challenge_required для ${username}`);
+        
+        // Создаем данные сессии для challenge_required
+        const challengeSessionData = {
+          username: username,
+          password: password,
+          isAuthenticated: false,
+          status: 'challenge_required',
+          lastAuthDate: new Date().toISOString(),
+          timestamp: Date.now(),
+          expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000),
+          challengeUrl: loginError.response?.body?.challenge?.url
+        };
+        
+        // Сохраняем в кампанию если указан campaignId
+        if (campaignId) {
+          await saveSessionToCampaign(campaignId, challengeSessionData);
+        }
+        
+        // Возвращаем challenge_required статус
+        return res.json({
+          success: true,
+          challengeRequired: true,
+          status: 'challenge_required',
+          username: username,
+          message: 'Требуется подтверждение через Instagram',
+          sessionData: challengeSessionData
+        });
+      }
+      
       throw new Error(`Private API login failed: ${loginError.message}`);
     }
 
@@ -729,6 +852,103 @@ router.post('/publish-story', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Ошибка публикации Stories',
+      details: error.message
+    });
+  }
+});
+
+// Confirm session endpoint (после challenge решения)
+router.post('/confirm-session', async (req, res) => {
+  try {
+    const { username, campaignId } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username required'
+      });
+    }
+
+    console.log(`[Instagram] Подтверждение сессии для пользователя: ${username}`);
+
+    // Получаем существующую сессию из Session Manager
+    const existingSession = getSession(username);
+    if (!existingSession) {
+      return res.status(404).json({
+        success: false,
+        error: 'Сессия не найдена'
+      });
+    }
+
+    // Получаем Instagram клиента
+    const igClient = instagramSessionManager.getIgClient(username);
+    if (!igClient) {
+      return res.status(404).json({
+        success: false,
+        error: 'Instagram клиент не найден'
+      });
+    }
+
+    try {
+      // Пытаемся получить информацию о пользователе для проверки сессии
+      const userInfo = await igClient.user.info(igClient.state.cookieUserId);
+      
+      console.log(`[Instagram] ✅ Сессия подтверждена для ${username}, ID: ${userInfo.pk}`);
+
+      // Обновляем данные сессии
+      const confirmedSessionData = {
+        username: username,
+        password: existingSession.password,
+        isAuthenticated: true,
+        status: 'authenticated',
+        lastAuthDate: new Date().toISOString(),
+        userId: userInfo.pk.toString(),
+        fullName: userInfo.full_name,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+      };
+
+      // Обновляем Session Manager
+      saveSession(username, {
+        ...existingSession,
+        userId: userInfo.pk.toString(),
+        fullName: userInfo.full_name,
+        status: 'authenticated'
+      });
+
+      // Сохраняем в кампанию если указан campaignId
+      if (campaignId) {
+        await saveSessionToCampaign(campaignId, confirmedSessionData);
+      }
+
+      res.json({
+        success: true,
+        userId: userInfo.pk.toString(),
+        username: userInfo.username,
+        fullName: userInfo.full_name,
+        message: '✅ Сессия подтверждена после challenge',
+        status: 'authenticated',
+        sessionData: confirmedSessionData
+      });
+
+    } catch (checkError) {
+      console.log(`[Instagram] ⚠️  Проверка сессии не удалась, сессия все еще требует подтверждения`);
+      
+      res.json({
+        success: false,
+        challengeRequired: true,
+        status: 'challenge_required',
+        username: username,
+        message: 'Сессия все еще требует подтверждения в Instagram',
+        sessionData: existingSession
+      });
+    }
+
+  } catch (error) {
+    console.error(`[Instagram] Confirm session failed:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка подтверждения сессии',
       details: error.message
     });
   }
