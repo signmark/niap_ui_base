@@ -1,13 +1,12 @@
 {
-  "darkhorse_fashion": {
-    "userId": "33225098116",
-    "username": "darkhorse_fashion",
-    "fullName": "DarkHorse Men's Clothes",
-    "isVerified": false,
-    "expiresAt": 1753698780877,
-    "authMethod": "private-api",
-    "createdAt": 1753093980877,
-    "lastUsed": 1753093980877,
+  "dsignmark": {
+    "userId": "555220254",
+    "username": "dsignmark",
+    "sessionData": {},
+    "timestamp": 1753176318196,
+    "expiresAt": 1753781118196,
+    "createdAt": 1753176318196,
+    "lastUsed": 1753176318196,
     "usageCount": 1
   }
 }
