@@ -518,65 +518,6 @@ export function SocialMediaSettings({
                   onSettingsUpdated?.();
                 }}
               />
-                
-                <div className="space-y-3">
-                  <FormField
-                    control={form.control}
-                    name="instagram.token"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">Access Token</FormLabel>
-                        <div className="flex space-x-2">
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Введите токен доступа" 
-                              {...field} 
-                              value={field.value || ''}
-                              className="text-xs"
-                            />
-                          </FormControl>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm"
-                            onClick={validateInstagramToken}
-                            disabled={instagramStatus.isLoading}
-                          >
-                            {instagramStatus.isLoading ? 
-                              <Loader2 className="h-4 w-4 animate-spin" /> : 
-                              <AlertCircle className="h-4 w-4" />
-                            }
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="instagram.businessAccountId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">ID бизнес-аккаунта</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Например: 17841409299499997" 
-                            {...field} 
-                            value={field.value || ''}
-                            className="text-xs"
-                          />
-                        </FormControl>
-                        <div className="text-xs text-muted-foreground">
-                          Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
             </AccordionContent>
           </AccordionItem>
 
