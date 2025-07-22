@@ -34,6 +34,29 @@ import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 import { InstagramDirectAuth } from "./InstagramDirectAuth";
 import type { SocialMediaSettings } from "@shared/schema";
 
+// Схема для валидации только основных платформ (без Instagram)
+const socialMediaSettingsSchemaForValidation = z.object({
+  telegram: z.object({
+    token: z.string().nullable(),
+    chatId: z.string().nullable(),
+  }),
+  vk: z.object({
+    token: z.string().nullable(),
+    groupId: z.string().nullable(),
+  }),
+  facebook: z.object({
+    token: z.string().nullable(),
+    pageId: z.string().nullable(),
+  }),
+  youtube: z.object({
+    apiKey: z.string().nullable(),
+    channelId: z.string().nullable(),
+    accessToken: z.string().nullable(),
+    refreshToken: z.string().nullable(),
+  }),
+});
+
+// Полная схема для типов
 const socialMediaSettingsSchema = z.object({
   telegram: z.object({
     token: z.string().nullable(),
@@ -87,7 +110,7 @@ export function SocialMediaSettings({
     enabled: !!campaignId
   });
   
-  const campaign = response?.data || response;
+  const campaign = (response as any)?.data || response;
   
   // Логирование для диагностики
   console.log('🔥 SocialMediaSettings campaign response:', response);
@@ -103,7 +126,7 @@ export function SocialMediaSettings({
   const [youtubeStatus, setYoutubeStatus] = useState<ValidationStatus>({ isLoading: false });
 
   const form = useForm<SocialMediaSettings>({
-    resolver: zodResolver(socialMediaSettingsSchema),
+    resolver: zodResolver(socialMediaSettingsSchemaForValidation),
     defaultValues: initialSettings || {
       telegram: { token: null, chatId: null },
       vk: { token: null, groupId: null },
@@ -398,6 +421,10 @@ export function SocialMediaSettings({
         description: "Настройки соцсетей обновлены"
       });
 
+      // Принудительно обновляем данные кампании
+      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+      
       onSettingsUpdated?.();
     } catch (error: any) {
       console.error('🔥 Ошибка при обновлении настроек:', error);
@@ -774,7 +801,17 @@ export function SocialMediaSettings({
         </Accordion>
 
         <div className="flex justify-end space-x-2 pt-4">
-          <Button type="submit" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            onClick={(e) => {
+              console.log('🔥 КНОПКА СОХРАНЕНИЯ НАЖАТА (НОВАЯ СХЕМА)');
+              console.log('🔥 isLoading:', isLoading);
+              console.log('🔥 form.formState.errors (НОВАЯ):', form.formState.errors);
+              console.log('🔥 form values:', form.getValues());
+              console.log('🔥 form.formState.isValid:', form.formState.isValid);
+            }}
+          >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
           </Button>

@@ -699,13 +699,28 @@ export default function CampaignDetails() {
           campaign?.social_media_settings && 
           typeof campaign.social_media_settings === 'object' &&
           Object.keys(campaign.social_media_settings).length > 0 &&
-          Object.values(campaign.social_media_settings).some((setting: any) => 
-            setting && typeof setting === 'object' && 
-            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token ||
-             setting.username || setting.isAuthenticated)
-          )
+          Object.values(campaign.social_media_settings).some((setting: any) => {
+            if (!setting || typeof setting !== 'object') return false;
+            // Проверяем разные типы настроек соцсетей
+            return (
+              // Общие настройки
+              setting.enabled === true || 
+              setting.configured === true || 
+              // Токены API
+              (setting.token && setting.token.trim()) ||
+              (setting.access_token && setting.access_token.trim()) ||
+              // Instagram Direct API
+              (setting.username && setting.isAuthenticated === true) ||
+              // VK
+              (setting.groupId && setting.token) ||
+              // YouTube OAuth
+              (setting.accessToken && setting.refreshToken) ||
+              // Facebook
+              (setting.pageId && setting.token)
+            );
+          })
         ),
-        label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
+        label: "Настройки публикации"
       },
       content: {
         completed: Boolean(allCampaignContent && Array.isArray(allCampaignContent) && allCampaignContent.length > 0),
@@ -727,13 +742,28 @@ export default function CampaignDetails() {
           campaign?.social_media_settings && 
           typeof campaign.social_media_settings === 'object' &&
           Object.keys(campaign.social_media_settings).length > 0 &&
-          Object.values(campaign.social_media_settings).some((setting: any) => 
-            setting && typeof setting === 'object' && 
-            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token ||
-             setting.username || setting.isAuthenticated)
-          )
+          Object.values(campaign.social_media_settings).some((setting: any) => {
+            if (!setting || typeof setting !== 'object') return false;
+            // Проверяем разные типы настроек соцсетей
+            return (
+              // Общие настройки
+              setting.enabled === true || 
+              setting.configured === true || 
+              // Токены API
+              (setting.token && setting.token.trim()) ||
+              (setting.access_token && setting.access_token.trim()) ||
+              // Instagram Direct API
+              (setting.username && setting.isAuthenticated === true) ||
+              // VK
+              (setting.groupId && setting.token) ||
+              // YouTube OAuth
+              (setting.accessToken && setting.refreshToken) ||
+              // Facebook
+              (setting.pageId && setting.token)
+            );
+          })
         ),
-        label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
+        label: "Настройки публикации"
       },
       schedule: {
         completed: Boolean(

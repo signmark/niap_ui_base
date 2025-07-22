@@ -8,10 +8,10 @@ const fs = require('fs');
 const path = require('path');
 const { IgApiClient } = require('instagram-private-api');
 
-// SOCKS5 proxy configuration
+// SOCKS5 proxy configuration - trying different port
 const PROXY_CONFIG = {
   host: 'mobpool.proxy.market',
-  port: 10001, // Changed to working port
+  port: 10002, // Trying different port
   username: 'WeBZDZ7p9lh5',
   password: 'iOPNYl8D',
   country: 'Belarus'
@@ -19,6 +19,9 @@ const PROXY_CONFIG = {
 
 // Импортируем новый Session Manager
 const { instagramSessionManager } = require('../services/instagram-session-manager.js');
+
+// Импортируем сервис поиска изображений
+const imageSearchService = require('../services/image-search-service');
 
 // Импортируем для сохранения в кампанию
 const { directusApiManager } = require('../directus');
@@ -596,15 +599,32 @@ router.post('/publish-photo', async (req, res) => {
         
         // НЕМЕДЛЕННАЯ ПУБЛИКАЦИЯ с сохраненной сессией
         try {
-          // Правильная обработка imageData (с префиксом или без)
-          if (!imageData) {
-            throw new Error('imageData не предоставлен');
+          // Получаем РЕАЛЬНОЕ изображение через поиск
+          let imageBuffer;
+          
+          if (!imageData || imageData === 'text-only' || !imageData.includes('data:image')) {
+            // Нет изображения - используем автопоиск реального изображения
+            console.log(`[Instagram] 🔍 Ищем реальное изображение для текстового контента...`);
+            
+            const imageSearchResult = await imageSearchService.findAndPrepareImage(caption, []);
+            
+            if (imageSearchResult.success) {
+              imageBuffer = imageSearchResult.imageBuffer;
+              console.log(`[Instagram] ✅ Найдено реальное изображение: ${imageSearchResult.size} байт`);
+              console.log(`[Instagram] 📷 Источник: ${imageSearchResult.originalUrl}`);
+            } else {
+              imageBuffer = imageSearchResult.imageBuffer; // fallback image
+              console.log(`[Instagram] ⚠️ Используем резервное изображение: ${imageSearchResult.size} байт`);
+            }
+          } else {
+            // Есть переданное изображение
+            const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
+            imageBuffer = Buffer.from(base64Data, 'base64');
+            console.log(`[Instagram] 📸 Используем переданное изображение: ${imageBuffer.length} байт`);
           }
-          const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
-          console.log(`[Instagram] 📸 Публикуем изображение, размер base64: ${base64Data.length} символов`);
           
           const uploadResponse = await igClientToUse.publish.photo({
-            file: Buffer.from(base64Data, 'base64'),
+            file: imageBuffer,
             caption: caption
           });
           
@@ -684,27 +704,32 @@ router.post('/publish-photo', async (req, res) => {
             console.log(`[Instagram] 🚀 ПОПЫТКА РЕАЛЬНОЙ ПУБЛИКАЦИИ после checkpoint!`);
             
             try {
-              // Пытаемся продолжить с существующей сессией
-              // Правильная обработка imageData - создаем валидное изображение
+              // Получаем РЕАЛЬНОЕ изображение через поиск
               let imageBuffer;
-              if (imageData.includes(',')) {
-                // Если есть data:image префикс, убираем его
-                const base64Data = imageData.split(',')[1];
-                imageBuffer = Buffer.from(base64Data, 'base64');
+              
+              if (!imageData || imageData === 'text-only' || !imageData.includes('data:image')) {
+                // Нет изображения - используем автопоиск реального изображения
+                console.log(`[Instagram] 🔍 Checkpoint: Ищем реальное изображение для контента...`);
+                
+                const imageSearchResult = await imageSearchService.findAndPrepareImage(caption, []);
+                
+                if (imageSearchResult.success) {
+                  imageBuffer = imageSearchResult.imageBuffer;
+                  console.log(`[Instagram] ✅ Checkpoint: Найдено реальное изображение: ${imageSearchResult.size} байт`);
+                  console.log(`[Instagram] 📷 Checkpoint: Источник: ${imageSearchResult.originalUrl}`);
+                } else {
+                  imageBuffer = imageSearchResult.imageBuffer; // fallback image
+                  console.log(`[Instagram] ⚠️ Checkpoint: Используем резервное изображение: ${imageSearchResult.size} байт`);
+                }
               } else {
-                // Если это чистый base64, используем как есть
-                imageBuffer = Buffer.from(imageData, 'base64');
-              }
-              
-              // Проверяем размер изображения
-              console.log(`[Instagram] Размер изображения: ${imageBuffer.length} байт`);
-              
-              if (imageBuffer.length < 100) {
-                // Если изображение слишком маленькое, создаем тестовое изображение
-                console.log(`[Instagram] ⚠️ Изображение слишком маленькое, создаем тестовое`);
-                // Простое 1x1 JPEG изображение в base64
-                const testImageBase64 = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
-                imageBuffer = Buffer.from(testImageBase64, 'base64');
+                // Есть переданное изображение
+                if (imageData.includes(',')) {
+                  const base64Data = imageData.split(',')[1];
+                  imageBuffer = Buffer.from(base64Data, 'base64');
+                } else {
+                  imageBuffer = Buffer.from(imageData, 'base64');
+                }
+                console.log(`[Instagram] 📸 Checkpoint: Используем переданное изображение: ${imageBuffer.length} байт`);
               }
               
               const uploadResponse = await ig.publish.photo({
@@ -750,9 +775,28 @@ router.post('/publish-photo', async (req, res) => {
       if (igClientToUse && userInfo) {
         console.log(`[Instagram] Публикуем пост для ${username} (User ID: ${userInfo.pk})`);
         
-        // Конвертируем base64 в buffer
-        const imageBuffer = Buffer.from(imageData.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
-        console.log(`[Instagram] Размер изображения: ${Math.round(imageBuffer.length / 1024)} KB`);
+        // Получаем РЕАЛЬНОЕ изображение через поиск
+        let imageBuffer;
+        
+        if (!imageData || imageData === 'text-only' || !imageData.includes('data:image')) {
+          // Нет изображения - используем автопоиск реального изображения
+          console.log(`[Instagram] 🔍 Final: Ищем реальное изображение для контента...`);
+          
+          const imageSearchResult = await imageSearchService.findAndPrepareImage(caption, []);
+          
+          if (imageSearchResult.success) {
+            imageBuffer = imageSearchResult.imageBuffer;
+            console.log(`[Instagram] ✅ Final: Найдено реальное изображение: ${imageSearchResult.size} байт`);
+            console.log(`[Instagram] 📷 Final: Источник: ${imageSearchResult.originalUrl}`);
+          } else {
+            imageBuffer = imageSearchResult.imageBuffer; // fallback image
+            console.log(`[Instagram] ⚠️ Final: Используем резервное изображение: ${imageSearchResult.size} байт`);
+          }
+        } else {
+          // Есть переданное изображение
+          imageBuffer = Buffer.from(imageData.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
+          console.log(`[Instagram] 📸 Final: Используем переданное изображение: ${Math.round(imageBuffer.length / 1024)} KB`);
+        }
         
         // РЕАЛЬНАЯ ПУБЛИКАЦИЯ
         const publishResult = await igClientToUse.publish.photo({

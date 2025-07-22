@@ -146,13 +146,116 @@ async function publishViaInstagramDirectAPI(contentId: string) {
       // Обычная публикация поста
       log(`[Social Publishing] Публикация обычного поста в Instagram для контента ${contentId}`);
       
-      if (!content.imageUrl) {
-        throw new Error('Для публикации поста требуется изображение');
+      let imageBase64;
+      
+      if (content.imageUrl) {
+        // Есть готовое изображение - используем его
+        log(`[Social Publishing] Используем готовое изображение: ${content.imageUrl}`);
+        
+        try {
+          log(`[Social Publishing] Попытка загрузки изображения: ${content.imageUrl}`);
+          const imageResponse = await axios.get(content.imageUrl, { 
+            responseType: 'arraybuffer',
+            timeout: 30000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          
+          if (!imageResponse.data || imageResponse.data.byteLength === 0) {
+            throw new Error('Получен пустой ответ от сервера изображений');
+          }
+          
+          const originalSize = imageResponse.data.byteLength;
+          log(`[Social Publishing] Размер исходного изображения: ${Math.round(originalSize / 1024)}KB`);
+          
+          // Конвертируем в base64 и проверяем размер
+          const originalBase64 = Buffer.from(imageResponse.data).toString('base64');
+          imageBase64 = `data:image/jpeg;base64,${originalBase64}`;
+          
+          log(`[Social Publishing] Размер base64: ${originalBase64.length} символов (~${Math.round(originalBase64.length * 0.75 / 1024)}KB)`);
+          
+          // Если base64 слишком большой для Instagram API, используем уменшенное изображение
+          if (originalBase64.length > 512 * 1024) { // ~384KB в base64
+            log(`[Social Publishing] Base64 слишком большой (${Math.round(originalBase64.length * 0.75 / 1024)}KB), создаем уменшенную версию...`);
+            
+            try {
+              // Загружаем уменшенную версию изображения
+              const smallImageUrl = content.imageUrl.includes('?') 
+                ? content.imageUrl + '&w=800&h=800' 
+                : content.imageUrl + '?w=800&h=800';
+              
+              const smallImageResponse = await axios.get(smallImageUrl, {
+                responseType: 'arraybuffer',
+                timeout: 15000,
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+              });
+              
+              const smallBase64 = Buffer.from(smallImageResponse.data).toString('base64');
+              imageBase64 = `data:image/jpeg;base64,${smallBase64}`;
+              
+              log(`[Social Publishing] Уменшенное изображение: ${Math.round(smallBase64.length * 0.75 / 1024)}KB`);
+            } catch (resizeError: any) {
+              log(`[Social Publishing] Не удалось получить уменшенную версию: ${resizeError.message}, используем оригинал`);
+              imageBase64 = `data:image/jpeg;base64,${originalBase64}`;
+            }
+          }
+        } catch (downloadError: any) {
+          log(`[Social Publishing] Ошибка загрузки изображения ${content.imageUrl}: ${downloadError.message}`);
+          log(`[Social Publishing] Детали ошибки: status=${downloadError.response?.status}, statusText=${downloadError.response?.statusText}`);
+          
+          // Fallback: попробуем сгенерировать изображение из текста
+          log(`[Social Publishing] Fallback: генерируем изображение из текста контента`);
+          
+          try {
+            const imageGenResponse = await axios.post('http://localhost:5000/api/instagram-stories/generate-text-image', {
+              text: content.content || 'Новый пост',
+              backgroundColor: '#ffffff',
+              textColor: '#000000'
+            });
+            
+            if (imageGenResponse.data.success && imageGenResponse.data.imageBase64) {
+              imageBase64 = imageGenResponse.data.imageBase64;
+              log(`[Social Publishing] Fallback изображение успешно сгенерировано из текста`);
+            } else {
+              throw new Error('Не удалось сгенерировать fallback изображение');
+            }
+          } catch (genError: any) {
+            log(`[Social Publishing] Fallback генерация также неудачна: ${genError.message}`);
+            throw new Error(`Не удалось загрузить изображение (${downloadError.message}) и сгенерировать fallback (${genError.message})`);
+          }
+        }
+      } else {
+        // Нет изображения - ищем РЕАЛЬНОЕ изображение через автопоиск
+        log(`[Social Publishing] 🔍 Изображение отсутствует, ищем реальное изображение для контента...`);
+        
+        // Импортируем сервис поиска изображений на лету
+        const imageSearchService = require('../services/image-search-service');
+        
+        try {
+          const keywords = content.keywords ? content.keywords.split(',').map((k: string) => k.trim()) : [];
+          const imageSearchResult = await imageSearchService.findAndPrepareImage(content.content || '', keywords);
+          
+          if (imageSearchResult.success) {
+            // Успешно найдено РЕАЛЬНОЕ изображение
+            imageBase64 = `data:image/jpeg;base64,${imageSearchResult.imageBuffer.toString('base64')}`;
+            log(`[Social Publishing] ✅ Найдено реальное изображение: ${imageSearchResult.size} байт`);
+            log(`[Social Publishing] 📷 Источник: ${imageSearchResult.originalUrl}`);
+          } else {
+            // Fallback изображение из сервиса поиска
+            imageBase64 = `data:image/jpeg;base64,${imageSearchResult.imageBuffer.toString('base64')}`;
+            log(`[Social Publishing] ⚠️ Используем резервное изображение: ${imageSearchResult.size} байт`);
+          }
+        } catch (searchError: any) {
+          log(`[Social Publishing] ❌ Ошибка поиска изображения: ${searchError.message}`);
+          // Используем минимальное изображение только в крайнем случае
+          const minimalImageBase64 = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
+          imageBase64 = `data:image/jpeg;base64,${minimalImageBase64}`;
+          log(`[Social Publishing] ⚠️ Fallback: используем минимальное изображение (1x1 pixel)`);
+        }
       }
-
-      // Скачиваем изображение и конвертируем в base64
-      const imageResponse = await axios.get(content.imageUrl, { responseType: 'arraybuffer' });
-      const imageBase64 = `data:image/jpeg;base64,${Buffer.from(imageResponse.data).toString('base64')}`;
       
       publishData.imageData = imageBase64;
 

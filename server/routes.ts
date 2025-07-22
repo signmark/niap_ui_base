@@ -1397,6 +1397,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       test_prompt: "Wild cat"
     });
   });
+
+  // Тестовый endpoint для проверки сервиса поиска изображений
+  app.get('/api/test-image-search', async (req, res) => {
+    try {
+      console.log('🔍 Тестирование сервиса поиска реальных изображений...');
+      
+      // Импортируем сервис поиска изображений
+      const imageSearchService = require('./services/image-search-service');
+      
+      const testCases = [
+        {
+          text: 'технологии инновации будущее',
+          keywords: ['технологии', 'инновации', 'будущее']
+        },
+        {
+          text: 'еда кулинария рецепты',
+          keywords: ['еда', 'кулинария', 'рецепты']
+        },
+        {
+          text: 'путешествия природа горы',
+          keywords: ['путешествия', 'природа', 'горы']
+        }
+      ];
+
+      const results = [];
+
+      for (const testCase of testCases) {
+        try {
+          console.log(`🔎 Тестируем поиск для: "${testCase.text}"`);
+          
+          const result = await imageSearchService.findAndPrepareImage(testCase.text, testCase.keywords);
+          
+          results.push({
+            query: testCase.text,
+            keywords: testCase.keywords,
+            success: result.success,
+            size: result.size,
+            source: result.source || 'fallback',
+            originalUrl: result.originalUrl || 'нет URL',
+            hasBuffer: !!result.imageBuffer
+          });
+          
+        } catch (error: any) {
+          console.error(`❌ Ошибка тестирования "${testCase.text}": ${error.message}`);
+          results.push({
+            query: testCase.text,
+            keywords: testCase.keywords,
+            error: error.message
+          });
+        }
+      }
+      
+      console.log('✅ Тестирование сервиса поиска изображений завершено');
+      
+      res.json({
+        success: true,
+        message: 'Тестирование сервиса поиска реальных изображений',
+        results: results,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error: any) {
+      console.error('💥 Ошибка тестирования сервиса поиска изображений:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   
   // Тестовый маршрут для проверки разных форматов API ключа
   app.get('/api/test-fal-ai-formats-v2', async (req, res) => {
