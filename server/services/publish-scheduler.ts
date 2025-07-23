@@ -241,9 +241,9 @@ export class PublishScheduler {
               continue;
             }
             
-            // КРИТИЧЕСКАЯ ПРОВЕРКА: Пропускаем ВСЕ failed статусы - НЕ ПЕРЕПУБЛИКУЕМ ОШИБОЧНЫЕ ПОСТЫ
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: Пропускаем конкретную платформу с failed статусом
             if (data.status === 'failed') {
-              log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус (ошибка: ${data.error || 'неизвестная ошибка'})`, 'scheduler');
+              log(`Планировщик: ❌ Пропускаем ${platformName} ${content.id} - failed статус (ошибка: ${data.error || 'неизвестная ошибка'})`, 'scheduler');
               continue;
             }
             
