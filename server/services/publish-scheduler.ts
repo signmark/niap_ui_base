@@ -237,6 +237,13 @@ export class PublishScheduler {
             
             // Пропускаем уже опубликованные платформы (строгая проверка)
             if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - уже опубликован (${data.postUrl})`, 'scheduler');
+              continue;
+            }
+            
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: Пропускаем ВСЕ failed статусы - НЕ ПЕРЕПУБЛИКУЕМ ОШИБОЧНЫЕ ПОСТЫ
+            if (data.status === 'failed') {
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус (ошибка: ${data.error || 'неизвестная ошибка'})`, 'scheduler');
               continue;
             }
             
@@ -254,48 +261,6 @@ export class PublishScheduler {
             )) {
               log(`Планировщик: Пропускаем ${platformName} ${content.id} - конфигурационная ошибка: ${data.error}`, 'scheduler');
               continue;
-            }
-            
-            // Пропускаем старые failed статусы (старше 24 часов) чтобы не спамить
-            if (data.status === 'failed' && data.lastAttempt) {
-              const lastAttempt = new Date(data.lastAttempt);
-              const hoursOld = (currentTime.getTime() - lastAttempt.getTime()) / (1000 * 60 * 60);
-              if (hoursOld > 24) {
-                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 24 часов`, 'scheduler');
-                continue;
-              }
-            }
-            
-            // ПРОВЕРКА НА КРИТИЧЕСКИЕ ОШИБКИ - ДЕЛАЕМ ЭТО ПЕРВЫМ ДЕЛОМ!
-            if (data.status === 'failed') {
-              const errorMessage = data.error || '';
-              const criticalErrors = [
-                'Bad request - please check your parameters',
-                'Authorization failed - please check your credentials',
-                'Invalid credentials',
-                'Permission denied',
-                'Account suspended',
-                'Content policy violation'
-              ];
-              
-              const isCriticalError = criticalErrors.some(error => 
-                errorMessage.toLowerCase().includes(error.toLowerCase())
-              );
-              
-              if (isCriticalError) {
-                log(`Планировщик: Пропускаем ${platformName} ${content.id} - критическая ошибка: ${errorMessage}`, 'scheduler');
-                continue;
-              }
-            }
-
-            // Умеренная фильтрация: пропускаем failed статусы старше 12 часов (вместо 1 часа)
-            if (data.status === 'failed' && (platformName === 'instagram' || platformName === 'facebook') && data.updatedAt) {
-              const lastUpdate = new Date(data.updatedAt);
-              const hoursOld = (currentTime.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
-              if (hoursOld > 12) {
-                log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус старше 12 часов`, 'scheduler');
-                continue;
-              }
             }
             
             // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем на дублирование YouTube публикаций
@@ -393,11 +358,7 @@ export class PublishScheduler {
               shouldPublish = true;
               log(`Планировщик: Платформа ${platformName} - немедленная публикация (статус ${data.status})`, 'scheduler');
             }
-            // Failed статус - НЕ ПУБЛИКУЕМ, КРИТИЧЕСКИЕ ОШИБКИ УЖЕ ПРОВЕРЕНЫ ВЫШЕ
-            else if (data.status === 'failed') {
-              log(`Планировщик: Пропускаем ${platformName} ${content.id} - failed статус (ошибка: ${data.error})`, 'scheduler');
-              continue;
-            }
+            // Failed статус уже проверен выше, эта проверка удалена
 
             if (shouldPublish) {
               // Отмечаем платформу как обрабатываемую ПЕРЕД добавлением в очередь
