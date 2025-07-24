@@ -7327,12 +7327,11 @@ Return your response as a JSON array in this exact format:
             'Authorization': `Bearer ${token}`
           }
         });
-        });
         
         console.log(`[GET /api/trend-comments] Directus response:`, {
           status: response.status,
           dataLength: response.data?.data?.length,
-          trendId,
+          trendId: trendId,
           firstComment: response.data?.data?.[0]
         });
         
