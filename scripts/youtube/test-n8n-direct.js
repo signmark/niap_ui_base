@@ -7,7 +7,7 @@ async function testN8NDirectCall() {
   console.log('🚀 Тестирование прямого вызова N8N workflow для YouTube...');
   
   try {
-    const webhookUrl = 'https://n8n.roboflow.tech/webhook/publish-youtube';
+    const webhookUrl = process.env.N8N_URL ? `${process.env.N8N_URL}/webhook/publish-youtube` : 'https://n8n.roboflow.space/webhook/publish-youtube';
     
     const payload = {
       contentId: 'b6f8a5a1-5bdf-4e05-b9ad-8083f3a89702',
