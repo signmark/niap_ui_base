@@ -197,7 +197,7 @@ export default function Trends() {
     try {
       setCollectingCommentsForTrend(trendId);
       
-      const response = await fetch('https://n8n.roboflow.tech/webhook/collect-comments', {
+      const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/collect-comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

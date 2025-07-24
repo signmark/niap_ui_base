@@ -3,9 +3,9 @@
  */
 
 export function getApiBaseUrl(): string {
-  // Если мы на продакшене smm.roboflow.tech, используем полный URL
-  if (typeof window !== 'undefined' && window.location.hostname === 'smm.roboflow.tech') {
-    return 'https://smm.roboflow.tech';
+  // Если мы на продакшене smm.roboflow.space, используем полный URL
+  if (typeof window !== 'undefined' && window.location.hostname === 'smm.roboflow.space') {
+    return 'https://smm.roboflow.space';
   }
   
   // Для локальной разработки используем относительные пути

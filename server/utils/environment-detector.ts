@@ -23,7 +23,7 @@ export function detectEnvironment(): EnvironmentConfig {
   
   // URL Directus в зависимости от окружения
   const directusUrl = environment === 'development' 
-    ? (process.env.DIRECTUS_URL || 'https://directus.roboflow.tech')
+    ? (process.env.DIRECTUS_URL || 'https://directus.roboflow.space')
     : (process.env.DIRECTUS_URL || 'https://directus.nplanner.ru');
 
   // Конфигурация логгирования в зависимости от окружения
@@ -34,7 +34,7 @@ export function detectEnvironment(): EnvironmentConfig {
   const verboseLogs = process.env.VERBOSE_LOGS === 'true' || environment === 'development';
 
   return {
-    adminEmail: 'admin@roboflow.tech',
+    adminEmail: 'admin@roboflow.space',
     adminPassword: 'asdASD123!@#',
     directusUrl,
     environment,
