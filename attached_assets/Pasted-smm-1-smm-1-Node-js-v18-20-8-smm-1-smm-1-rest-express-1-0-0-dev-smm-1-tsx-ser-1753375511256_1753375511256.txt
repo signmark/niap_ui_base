@@ -1,0 +1,46 @@
+smm-1  |
+smm-1  | Node.js v18.20.8
+smm-1  |
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  |
+smm-1  |
+smm-1  | node:internal/process/esm_loader:40
+smm-1  |       internalBinding('errors').triggerUncaughtException(
+smm-1  |                                 ^
+smm-1  | Error [TransformError]: Transform failed with 1 error:
+smm-1  | /app/server/routes.ts:7330:9: ERROR: Expected "finally" but found ")"
+smm-1  |     at failureErrorWithLog (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:1476:15)
+smm-1  |     at /app/node_modules/tsx/node_modules/esbuild/lib/main.js:755:50
+smm-1  |     at responseCallbacks.<computed> (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:622:9)
+smm-1  |     at handleIncomingPacket (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:677:12)
+smm-1  |     at Socket.readFromStdout (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:600:7)
+smm-1  |     at Socket.emit (node:events:517:28)
+smm-1  |     at addChunk (node:internal/streams/readable:368:12)
+smm-1  |     at readableAddChunk (node:internal/streams/readable:341:9)
+smm-1  |     at Readable.push (node:internal/streams/readable:278:10)
+smm-1  |     at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)
+smm-1  |
+smm-1  | Node.js v18.20.8
+smm-1  |
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  |
+smm-1  |
+smm-1  | node:internal/process/esm_loader:40
+smm-1  |       internalBinding('errors').triggerUncaughtException(
+smm-1  |                                 ^
+smm-1  | Error [TransformError]: Transform failed with 1 error:
+smm-1  | /app/server/routes.ts:7330:9: ERROR: Expected "finally" but found ")"
+smm-1  |     at failureErrorWithLog (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:1476:15)
+smm-1  |     at /app/node_modules/tsx/node_modules/esbuild/lib/main.js:755:50
+smm-1  |     at responseCallbacks.<computed> (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:622:9)
+smm-1  |     at handleIncomingPacket (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:677:12)
+smm-1  |     at Socket.readFromStdout (/app/node_modules/tsx/node_modules/esbuild/lib/main.js:600:7)
+smm-1  |     at Socket.emit (node:events:517:28)
+smm-1  |     at addChunk (node:internal/streams/readable:368:12)
+smm-1  |     at readableAddChunk (node:internal/streams/readable:341:9)
+smm-1  |     at Readable.push (node:internal/streams/readable:278:10)
+smm-1  |     at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)
+smm-1  |
+smm-1  | Node.js v18.20.8
