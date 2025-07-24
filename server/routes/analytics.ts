@@ -13,7 +13,7 @@ export function registerAnalyticsRoutes(app: Express) {
     const token = authHeader.substring(7);
     try {
       // Verify token with Directus - use environment-specific URL
-      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+      const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.space';
       const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
       const axios = (await import('axios')).default;
       
@@ -74,7 +74,7 @@ export function registerAnalyticsRoutes(app: Express) {
       let content = [];
       
       try {
-        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
+        const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.space';
         const finalUrl = directusUrl.endsWith('/') ? directusUrl : directusUrl + '/';
         const url = `${finalUrl}items/campaign_content`;
         

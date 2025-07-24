@@ -471,7 +471,7 @@ export function registerAuthRoutes(app: Express): void {
     try {
       // Получаем токен администратора из кэша для внутренних операций
       const { directusApiManager } = await import('../directus.js');
-      const adminUserId = '61941d89-55c2-4def-83a3-bc8bfbd21d6f'; // admin@roboflow.tech
+      const adminUserId = '61941d89-55c2-4def-83a3-bc8bfbd21d6f'; // admin@roboflow.space
       
       const cachedToken = directusApiManager.getCachedToken(adminUserId);
       

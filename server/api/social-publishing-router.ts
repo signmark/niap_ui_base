@@ -659,7 +659,7 @@ async function publishViaN8nAsync(contentId: string, platform: string): Promise<
     
     // Формируем URL вебхука
     // ИСПРАВЛЕНО: Поправлен формат URL для вызова webhook
-    const baseUrl = "https://n8n.roboflow.tech/webhook";
+    const baseUrl = `${process.env.N8N_URL}/webhook`;
     // Убираем возможный слеш в конце базового URL
     const baseUrlWithoutTrailingSlash = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const webhookUrl = `${baseUrlWithoutTrailingSlash}/${webhookName}`;
