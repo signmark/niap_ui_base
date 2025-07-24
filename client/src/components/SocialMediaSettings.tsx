@@ -121,6 +121,12 @@ export function SocialMediaSettings({
         variant: response.data.success ? "default" : "destructive",
         description: response.data.message
       });
+
+      // Если валидация успешна, автоматически сохраняем настройки
+      if (response.data.success) {
+        console.log('🔥 Telegram валиден, автосохранение...');
+        await onSubmit(form.getValues());
+      }
     } catch (error) {
       console.error('Error validating Telegram token:', error);
       setTelegramStatus({
@@ -162,6 +168,12 @@ export function SocialMediaSettings({
         variant: response.data.success ? "default" : "destructive",
         description: response.data.message
       });
+
+      // Если валидация успешна, автоматически сохраняем настройки
+      if (response.data.success) {
+        console.log('🔥 VK валиден, автосохранение...');
+        await onSubmit(form.getValues());
+      }
     } catch (error) {
       console.error('Error validating VK token:', error);
       setVkStatus({
@@ -202,6 +214,12 @@ export function SocialMediaSettings({
         variant: response.data.success ? "default" : "destructive",
         description: response.data.message
       });
+
+      // Если валидация успешна, автоматически сохраняем настройки
+      if (response.data.success) {
+        console.log('🔥 Instagram валиден, автосохранение...');
+        await onSubmit(form.getValues());
+      }
     } catch (error) {
       console.error('Error validating Instagram token:', error);
       setInstagramStatus({
@@ -243,6 +261,12 @@ export function SocialMediaSettings({
         variant: response.data.success ? "default" : "destructive",
         description: response.data.message
       });
+
+      // Если валидация успешна, автоматически сохраняем настройки
+      if (response.data.success) {
+        console.log('🔥 Facebook валиден, автосохранение...');
+        await onSubmit(form.getValues());
+      }
     } catch (error) {
       console.error('Error validating Facebook token:', error);
       setFacebookStatus({
@@ -284,6 +308,12 @@ export function SocialMediaSettings({
         variant: response.data.success ? "default" : "destructive",
         description: response.data.message
       });
+
+      // Если валидация успешна, автоматически сохраняем настройки
+      if (response.data.success) {
+        console.log('🔥 YouTube валиден, автосохранение...');
+        await onSubmit(form.getValues());
+      }
     } catch (error) {
       console.error('Error validating YouTube API key:', error);
       setYoutubeStatus({

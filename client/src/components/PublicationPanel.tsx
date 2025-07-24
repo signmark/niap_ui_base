@@ -6,6 +6,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Calendar, Share2 } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { Loader2 } from "lucide-react";
+import { platformNames } from "@/lib/social-platforms";
 
 interface PublicationPanelProps {
   campaignId: string;
@@ -52,7 +53,7 @@ export function PublicationPanel({ campaignId }: PublicationPanelProps) {
             </p>
           ) : (
             <div className="space-y-4">
-              {content?.map((item) => (
+              {content?.map((item: any) => (
                 <Card key={item.id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -62,9 +63,9 @@ export function PublicationPanel({ campaignId }: PublicationPanelProps) {
                           {item.content}
                         </p>
                         <div className="flex gap-2">
-                          {item.platforms.map((platform) => (
+                          {item.platforms.map((platform: any) => (
                             <Badge key={platform} variant="secondary">
-                              {platform}
+                              {platformNames[platform as keyof typeof platformNames] || platform}
                             </Badge>
                           ))}
                         </div>

@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { SiVk, SiFacebook } from 'react-icons/si';
-import type { SocialPlatform, CampaignContent } from '@shared/schema';
+import type { SocialPlatform, CampaignContent } from '@/types';
 import RichTextEditor from './RichTextEditor';
+import { platformNames } from '@/lib/social-platforms';
 
 interface SocialPublishingPanelProps {
   content: CampaignContent;
@@ -114,7 +115,7 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
         
         // 1. Обработка ссылок - сначала обрабатываем их, чтобы сохранить href атрибуты
         const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
-        formattedHtml = formattedHtml.replace(linkRegex, (match, url, text) => {
+        formattedHtml = formattedHtml.replace(linkRegex, (match: any, url: any, text: any) => {
           return `<a href="${url}">${text}</a>`;
         });
         
@@ -255,8 +256,8 @@ export function SocialPublishingPanel({ content, onClose }: SocialPublishingPane
             <RichTextEditor
               content={adaptedContent[platform]}
               onChange={(html: string) => handleContentChange(platform, html)}
-              placeholder={`Введите контент для ${platform}`}
-              minHeight="150px"
+              placeholder={`Введите контент для ${platformNames[platform as keyof typeof platformNames] || platform}`}
+              minHeight={150}
             />
             <Button 
               variant="outline" 

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { platformNames } from '@/lib/social-platforms';
 
 interface PublishingStatusProps {
   contentId: string;
@@ -28,7 +29,8 @@ const platformIcons: Record<string, string> = {
   instagram: '📸',
   telegram: '📱',
   vk: '💬',
-  facebook: '👥'
+  facebook: '👥',
+  youtube: '📺'
 };
 
 const statusColors: Record<string, string> = {
@@ -104,7 +106,7 @@ export function PublishingStatus({ contentId, className }: PublishingStatusProps
           <div key={platform} className="flex items-center justify-between bg-muted/30 rounded p-1 px-2">
             <div className="flex items-center gap-1.5">
               <span>{platformIcons[platform]}</span>
-              <span className="text-sm font-medium capitalize">{platform}</span>
+              <span className="text-sm font-medium">{platformNames[platform as keyof typeof platformNames] || platform}</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge 

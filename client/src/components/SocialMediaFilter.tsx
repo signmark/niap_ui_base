@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SocialPlatform } from '@/types';
-import { SiInstagram, SiTelegram, SiVk, SiFacebook } from 'react-icons/si';
+import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from 'react-icons/si';
 
 interface SocialMediaFilterProps {
   onFilterChange: (selected: SocialPlatform[]) => void;
@@ -14,7 +14,7 @@ export default function SocialMediaFilter({
   onFilterChange,
   initialSelected = [],
   showCounts = false,
-  platformCounts = {},
+  platformCounts = {} as Record<SocialPlatform, number>,
   className = ''
 }: SocialMediaFilterProps) {
   const [selected, setSelected] = useState<SocialPlatform[]>(initialSelected);
@@ -51,6 +51,14 @@ export default function SocialMediaFilter({
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
       count: platformCounts.facebook || 0
+    },
+    {
+      id: 'youtube' as SocialPlatform,
+      name: 'YouTube',
+      icon: SiYoutube,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      count: platformCounts.youtube || 0
     }
   ];
 

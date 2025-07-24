@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Instagram, AlertTriangle, CheckCircle2, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatDateWithTimezone } from '@/lib/date-utils';
+import { platformNames } from '@/lib/social-platforms';
 
 /**
  * Форматирует URL Telegram для правильного отображения
@@ -115,13 +116,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   youtube: <span className="text-xs">📺</span>,
 };
 
-const platformNames: Record<string, string> = {
-  instagram: "Instagram",
-  telegram: "Telegram",
-  vk: "ВКонтакте",
-  facebook: "Facebook",
-  youtube: "YouTube",
-};
+
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/30",
@@ -188,7 +183,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p className="font-medium">{platformNames[platform] || platform}</p>
+                      <p className="font-medium">{platformNames[platform as keyof typeof platformNames] || platform}</p>
                       <p className="text-xs">
                         {status.status === 'published' 
                           ? `Опубликовано ${formatDateWithTimezone(status.publishedAt)}`
@@ -247,7 +242,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                   <div className="w-6 h-6 flex items-center justify-center">
                     {platformIcons[platform] || platform.substring(0, 1).toUpperCase()}
                   </div>
-                  <span>{platformNames[platform] || platform}</span>
+                  <span>{platformNames[platform as keyof typeof platformNames] || platform}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs">
@@ -308,7 +303,7 @@ export function ScheduledPostInfo({ scheduledAt, publishedAt, socialPlatforms, c
                       className="text-xs text-primary underline flex items-center gap-1"
                     >
                       {platformIcons[platform] || platform.substring(0, 1).toUpperCase()}
-                      <span>{platformNames[platform] || platform}</span>
+                      <span>{platformNames[platform as keyof typeof platformNames] || platform}</span>
                     </a>
                   ))
                 }

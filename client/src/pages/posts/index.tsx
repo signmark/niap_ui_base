@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatInTimeZone } from 'date-fns-tz';
-import { SiInstagram, SiTelegram, SiVk, SiFacebook } from "react-icons/si";
+import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
 import { SocialPlatform, PlatformPublishInfo, CampaignContent } from "@/types";
@@ -26,7 +26,8 @@ export default function Posts() {
     instagram: 0,
     telegram: 0,
     vk: 0,
-    facebook: 0
+    facebook: 0,
+    youtube: 0
   });
   
   // Функция для форматирования ЗАПЛАНИРОВАННОГО времени (добавляем +3 часа для пользователя)
@@ -104,7 +105,8 @@ export default function Posts() {
         instagram: 0,
         telegram: 0,
         vk: 0,
-        facebook: 0
+        facebook: 0,
+        youtube: 0
       };
 
       campaignContent.forEach(content => {
@@ -348,7 +350,8 @@ export default function Posts() {
                         { platform: 'instagram' as SocialPlatform, name: 'Instagram', icon: SiInstagram, color: 'text-pink-600' },
                         { platform: 'telegram' as SocialPlatform, name: 'Telegram', icon: SiTelegram, color: 'text-blue-500' },
                         { platform: 'vk' as SocialPlatform, name: 'ВКонтакте', icon: SiVk, color: 'text-blue-600' },
-                        { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' }
+                        { platform: 'facebook' as SocialPlatform, name: 'Facebook', icon: SiFacebook, color: 'text-indigo-600' },
+                        { platform: 'youtube' as SocialPlatform, name: 'YouTube', icon: SiYoutube, color: 'text-red-600' }
                       ].map(item => (
                         <div key={item.platform} className="flex items-center gap-2">
                           <div className="w-4 h-4">
@@ -530,6 +533,10 @@ export default function Posts() {
                                             platformName = 'Facebook';
                                           } else if (platform === 'instagram') {
                                             platformName = 'Instagram';
+                                          } else if (platform === 'youtube') {
+                                            Icon = SiYoutube;
+                                            color = 'text-red-600';
+                                            platformName = 'YouTube';
                                           }
                                           
                                           const hasError = info.status === 'failed' || info.error;
