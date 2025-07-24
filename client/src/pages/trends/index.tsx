@@ -412,7 +412,7 @@ export default function Trends() {
       return matchesSearch && platformMatches;
     });
 
-    return visibleTrends.length > 0 && visibleTrends.every(trend => 
+    return visibleTrends.length > 0 && visibleTrends.every((trend: any) => 
       selectedTopics.some(selected => selected.id === trend.id)
     );
   };
@@ -694,24 +694,20 @@ export default function Trends() {
   const trendsRefreshInterval = useRef<NodeJS.Timeout>();
   const sourcesRefreshInterval = useRef<NodeJS.Timeout>();
 
-  // Эффект для постоянного обновления трендов и источников
+  // Эффект для обновления данных (менее частое)
   useEffect(() => {
     // Не запускаем обновление без ID кампании
     if (!selectedCampaignId) return;
     
-    console.log('Starting automatic data refresh intervals');
-    
     // Создаем интервал обновления трендов (реже)
     trendsRefreshInterval.current = setInterval(() => {
-      console.log('Refreshing trends data...');
       queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
-    }, 15000); // Обновление трендов каждые 15 секунд
+    }, 60000); // Обновление трендов каждую минуту
     
     // Создаем интервал обновления источников (реже)
     sourcesRefreshInterval.current = setInterval(() => {
-      console.log('Refreshing sources data...');
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
-    }, 10000); // Обновление источников каждые 10 секунд
+    }, 120000); // Обновление источников каждые 2 минуты
     
     return () => {
       // Очищаем интервалы при размонтировании компонента или смене кампании
@@ -789,22 +785,7 @@ export default function Trends() {
           return processedTrends; // Для неизвестных периодов возвращаем все данные
       }
 
-      // Специальная диагностика для проблемного тренда
-      const targetTrendId = "166eb032-3372-4807-926a-c6ca93a3db43";
-      const targetTrend = processedTrends.find((trend: any) => trend.id === targetTrendId);
-      
-      if (targetTrend) {
-        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} НАЙДЕН в данных:`, {
-          id: targetTrend.id,
-          title: targetTrend.title,
-          created_at: targetTrend.created_at,
-          createdAt: targetTrend.createdAt,
-          campaign_id: targetTrend.campaign_id
-        });
-      } else {
-        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} НЕ найден в ${processedTrends.length} трендах`);
-        console.log(`[ДИАГНОСТИКА] Все ID трендов:`, processedTrends.map((t: any) => t.id));
-      }
+      // Диагностика удалена - избыточное логирование
 
       // Фильтруем тренды по дате
       const filteredTrends = processedTrends.filter((trend: any) => {
@@ -814,11 +795,7 @@ export default function Trends() {
         return trendDate >= filterDate;
       });
 
-      // Проверяем, остался ли целевой тренд после фильтрации
-      const targetTrendAfterFilter = filteredTrends.find((trend: any) => trend.id === targetTrendId);
-      if (targetTrend && !targetTrendAfterFilter) {
-        console.log(`[ДИАГНОСТИКА] Тренд ${targetTrendId} исключён фильтром по дате. Дата тренда: ${targetTrend.created_at || targetTrend.createdAt}, фильтр от: ${filterDate.toISOString()}`);
-      }
+      // Диагностика фильтрации удалена
       
       return filteredTrends;
     },
@@ -1630,7 +1607,7 @@ export default function Trends() {
                                   }
                                 } else if (typeof mediaLinksStr === 'object') {
                                   // Может прийти уже распарсенным
-                                  if (mediaLinksStr.images && Array.isArray(mediaLinksStr.images) && mediaLinksStr.images.length > 0) {
+                                  if ((mediaLinksStr as any).images && Array.isArray((mediaLinksStr as any).images) && (mediaLinksStr as any).images.length > 0) {
                                     mediaData = mediaLinksStr as { images: string[], videos: string[] };
                                   }
                                 }
@@ -1922,7 +1899,7 @@ export default function Trends() {
                                       console.error('Ошибка анализа:', error);
                                       toast({
                                         title: "Ошибка анализа",
-                                        description: `Ошибка подключения: ${error.message}`,
+                                        description: `Ошибка подключения: ${(error as Error).message}`,
                                         variant: "destructive"
                                       });
                                     } finally {

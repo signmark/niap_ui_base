@@ -73,7 +73,8 @@ export function useWebSocket() {
     };
 
     ws.onerror = (error) => {
-
+      // Убираем избыточное логирование WebSocket ошибок
+      // console.error('WebSocket error:', error);
     };
 
     // Cleanup при размонтировании
