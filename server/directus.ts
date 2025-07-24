@@ -1,5 +1,4 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
-import https from 'https';
 import { log } from './utils/logger';
 
 // Создаем кэш для хранения токенов авторизации
@@ -39,10 +38,6 @@ class DirectusApiManager {
       },
       // Увеличиваем таймаут для стабильности при медленных соединениях
       timeout: 15000,
-      // Временно игнорируем SSL для самоподписанных сертификатов (до получения Let's Encrypt)
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-      }),
     });
 
     // Добавляем интерцептор для автоматического обновления токенов
