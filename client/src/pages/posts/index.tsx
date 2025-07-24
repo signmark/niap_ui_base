@@ -14,6 +14,7 @@ import { SiInstagram, SiTelegram, SiVk, SiFacebook, SiYoutube } from "react-icon
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
 import { SocialPlatform, PlatformPublishInfo, CampaignContent } from "@/types";
+import { platformNames } from "@/lib/social-platforms";
 
 // Страница календаря публикаций
 export default function Posts() {
@@ -446,6 +447,9 @@ export default function Posts() {
                                               } else if (platform === 'facebook') {
                                                 Icon = SiFacebook;
                                                 color = 'text-indigo-600';
+                                              } else if (platform === 'youtube') {
+                                                Icon = SiYoutube;
+                                                color = 'text-red-600';
                                               }
                                               
                                               // Определяем стиль бэджа в зависимости от статуса
@@ -456,7 +460,7 @@ export default function Posts() {
                                               return (
                                                 <Badge key={platform} variant="secondary" className={badgeClass}>
                                                   <Icon className={`h-3 w-3 mr-1 ${color}`} />
-                                                  <span className="capitalize">{platform}</span>
+                                                  <span>{platformNames[platform as keyof typeof platformNames] || platform}</span>
                                                   {(info.status === 'failed' || info.error) && (
                                                     <span className="ml-1 text-xs">⚠️</span>
                                                   )}

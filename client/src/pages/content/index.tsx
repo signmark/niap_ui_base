@@ -2841,7 +2841,8 @@ export default function ContentPage() {
                           vk: 'ВКонтакте',
                           telegram: 'Telegram',
                           instagram: 'Instagram',
-                          facebook: 'Facebook'
+                          facebook: 'Facebook',
+                          youtube: 'YouTube'
                         };
                         
                         // Показываем все платформы которые имеют данные
