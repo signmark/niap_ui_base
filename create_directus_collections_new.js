@@ -4,8 +4,8 @@
 
 import axios from 'axios';
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.roboflow.tech';
-const ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
+const DIRECTUS_URL = process.env.DIRECTUS_URL || 'https://directus.roboflow.space';
+const ADMIN_EMAIL = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.space';
 const ADMIN_PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD || 'roboflow_admin_2025';
 
 let authToken = null;
