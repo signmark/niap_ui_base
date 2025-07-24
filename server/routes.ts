@@ -72,20 +72,7 @@ import youtubeAuthRouter from './routes/youtube-auth';
 // import { getFeatureFlags, DEFAULT_FEATURE_FLAGS, FEATURE_DESCRIPTIONS } from './utils/feature-flags.js';
 
 
-/**
- * Подготавливает токен авторизации для запросов к Directus API
- * Исправляет дублирование префикса "Bearer" в токене
- * @param token Токен авторизации
- * @returns Корректно отформатированный токен авторизации
- */
-function formatAuthToken(token: string): string {
-  // Если токен уже начинается с "Bearer ", используем его как есть
-  if (token.startsWith('Bearer ')) {
-    return token;
-  }
-  // Иначе добавляем префикс "Bearer "
-  return `Bearer ${token}`;
-}
+
 
 // Расширяем типы Express.Request для поддержки пользовательских полей в middleware
 declare global {
@@ -7344,7 +7331,7 @@ Return your response as a JSON array in this exact format:
             'fields': ['id', 'trent_post_id', 'text', 'author', 'date', 'comment_id', 'platform']
           },
           headers: {
-            'Authorization': formatAuthToken(systemToken)
+            'Authorization': `Bearer ${systemToken}`
           }
         });
         
@@ -7367,7 +7354,7 @@ Return your response as a JSON array in this exact format:
                 'fields': ['id', 'trent_post_id', 'text']
               },
               headers: {
-                'Authorization': formatAuthToken(systemToken)
+                'Authorization': `Bearer ${systemToken}`
               }
             });
             console.log(`[GET /api/trend-comments] Найдено комментариев всего: ${allCommentsResponse.data?.data?.length}`);
@@ -7471,7 +7458,7 @@ Return your response as a JSON array in this exact format:
             'fields': ['text', 'platform']
           },
           headers: {
-            'Authorization': formatAuthToken(systemToken)
+            'Authorization': `Bearer ${systemToken}`
           }
         });
         
@@ -7568,7 +7555,7 @@ ${commentTexts}`;
           
           await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, updateData, {
             headers: {
-              'Authorization': formatAuthToken(systemToken)
+              'Authorization': `Bearer ${systemToken}`
             }
           });
           
@@ -7622,7 +7609,7 @@ ${commentTexts}`;
         // Получаем ключевые слова для кампании из Directus из таблицы campaign_keywords
         const response = await directusApi.get(`/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
           headers: {
-            'Authorization': formatAuthToken(token)
+            'Authorization': `Bearer ${token}`
           }
         });
         
