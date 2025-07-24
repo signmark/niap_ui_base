@@ -150,8 +150,8 @@ export class GeminiProxyService {
         const forceProxy = process.env.FORCE_GEMINI_PROXY === 'true';
         
         // КРИТИЧНО: на стейдже/продакшене ВСЕГДА используем прокси для обхода блокировок Google
-        // В Replit временно отключаем, но на проде включаем обратно
-        if (this.agent && (isStaging || forceProxy) && !isReplit) {
+        // Если FORCE_GEMINI_PROXY=true, принудительно используем прокси даже в Replit
+        if (this.agent && (isStaging || forceProxy)) {
           // Используем прокси для ВСЕХ запросов (включая Vertex AI)
           fetchOptions.agent = this.agent;
           logger.log(`[gemini-proxy] 🇺🇸 Используется американский SOCKS5 прокси для обхода геоблокировки: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
