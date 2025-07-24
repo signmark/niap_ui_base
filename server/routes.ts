@@ -978,14 +978,18 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
       // Проверяем является ли токен статическим DIRECTUS_TOKEN
       if (token === process.env.DIRECTUS_TOKEN || token === process.env.DIRECTUS_ADMIN_TOKEN) {
         console.log('[AUTH] Используется статический DIRECTUS_TOKEN для тестирования');
+        
+        // ИСПРАВЛЕНО: Используем реальный ID администратора из Directus
+        const realAdminId = 'fcae6ef5-8a6d-4ffd-a39a-58c5bda176e4'; // Реальный ID из ответа Directus
+        
         req.user = {
-          id: 'admin-test',
+          id: realAdminId,
           token: token,
-          email: 'admin@test.com',
+          email: 'admin@roboflow.space', // Обновленный email
           firstName: 'Admin',
-          lastName: 'Test'
+          lastName: 'Roboflow'
         };
-        (req as any).userId = 'admin-test';
+        (req as any).userId = realAdminId;
         next();
         return;
       }
