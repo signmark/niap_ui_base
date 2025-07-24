@@ -118,7 +118,7 @@ export class GeminiProxyService {
         const safeUrl = url.replace(/key=[^&]+/, 'key=****');
         logger.log(`[gemini-proxy] Отправка запроса к: ${safeUrl}`, 'gemini');
         
-        const fetchOptions: RequestInit = {
+        const fetchOptions: any = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -154,7 +154,7 @@ export class GeminiProxyService {
         if (this.agent && (isStaging || forceProxy) && !isReplit) {
           // Используем прокси для ВСЕХ запросов (включая Vertex AI)
           fetchOptions.agent = this.agent;
-          logger.log(`[gemini-proxy] 🇨🇦 Используется канадский SOCKS5 прокси для обхода геоблокировки: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
+          logger.log(`[gemini-proxy] 🇺🇸 Используется американский SOCKS5 прокси для обхода геоблокировки: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
         } else {
           if (isReplit) {
             logger.log(`[gemini-proxy] 🇺🇸 Replit среда - прямое соединение без прокси`, 'gemini');
