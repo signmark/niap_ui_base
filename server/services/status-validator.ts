@@ -106,7 +106,7 @@ export class StatusValidator {
       if (directusAuthManager) {
         const adminSessions = directusAuthManager.getAllSessions();
         const adminSession = adminSessions.find((session: any) => 
-          session.user?.email === 'admin@roboflow.tech'
+          session.user?.email === 'admin@roboflow.space'
         );
         
         if (adminSession?.token) {

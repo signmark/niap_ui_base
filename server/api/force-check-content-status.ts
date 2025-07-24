@@ -19,7 +19,7 @@ export default function registerForceCheckRoute(app: any) {
       
       // Получаем токен администратора
       const directusUrl = process.env.DIRECTUS_URL;
-      const email = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
+      const email = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.space';
       const password = process.env.DIRECTUS_ADMIN_PASSWORD || 'password';
       
       // Авторизация в Directus

@@ -84,7 +84,7 @@ export function registerAuthRoutes(app: Express): void {
         
         // Пробуем получить токен через прямую авторизацию администратора
         const loginResponse = await directusApiManager.post('/auth/login', {
-          email: 'admin@roboflow.tech',
+          email: 'admin@roboflow.space',
           password: 'QtpZ3dh7'
         });
         
