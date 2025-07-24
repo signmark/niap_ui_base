@@ -72,11 +72,11 @@ export class GeminiProxyService {
   constructor(options: GeminiProxyOptions) {
     this.apiKey = options.apiKey;
     
-    // Настройки прокси по умолчанию (канадский прокси)
-    const proxyHost = options.proxyHost || '138.219.123.68';
-    const proxyPort = options.proxyPort || 9710;
-    const proxyUsername = options.proxyUsername || 'PGjuJV';
-    const proxyPassword = options.proxyPassword || 'cwZmJ3';
+    // Настройки прокси - приоритет переменным окружения, затем defaults
+    const proxyHost = options.proxyHost || process.env.PROXY_HOST || '138.219.123.68';
+    const proxyPort = options.proxyPort || parseInt(process.env.PROXY_PORT || '9710');
+    const proxyUsername = options.proxyUsername || process.env.PROXY_USERNAME || 'PGjuJV';
+    const proxyPassword = options.proxyPassword || process.env.PROXY_PASSWORD || 'cwZmJ3';
     
     // Формируем URL прокси с учетными данными
     this.proxyUrl = `socks5://${proxyUsername}:${proxyPassword}@${proxyHost}:${proxyPort}`;
