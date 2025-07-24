@@ -2817,31 +2817,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'gemini-2.0-flash':
         case 'gemini-pro':
           try {
-            // Прямой вызов Gemini API без сервиса для обхода проблемы require
-            console.log('[gemini] Прямой вызов Gemini API');
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+            // Используем geminiProxyService для унификации с трендами
+            console.log('[gemini] Используем geminiProxyService для унификации');
+            const { geminiProxyService } = await import('./services/gemini-proxy');
             
-            const geminiResponse = await fetch(geminiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: enrichedPrompt }] }],
-                generationConfig: {
-                  maxOutputTokens: 8192,
-                  temperature: 0.7,
-                  topP: 0.8,
-                  topK: 40
-                }
-              })
+            generatedContent = await geminiProxyService.generateText({ 
+              prompt: enrichedPrompt, 
+              model: 'gemini-2.5-flash'  // Унифицированная модель
             });
-            
-            if (!geminiResponse.ok) {
-              throw new Error(`Gemini API error: ${geminiResponse.status}`);
-            }
-            
-            const geminiData = await geminiResponse.json();
-            generatedContent = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Ошибка генерации контента';
-            console.log('[gemini] Контент успешно сгенерирован');
+            console.log('[gemini] Контент успешно сгенерирован через прокси');
           } catch (geminiError) {
             console.error('[gemini] Ошибка при генерации:', geminiError);
             return res.status(500).json({
