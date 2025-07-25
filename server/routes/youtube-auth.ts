@@ -5,8 +5,12 @@
 import { Router } from 'express';
 import { YouTubeOAuth } from '../utils/youtube-oauth';
 import { authMiddleware } from '../middleware/auth';
+import { GlobalApiKeysService } from '../services/global-api-keys';
 
 const router = Router();
+
+// Экземпляр сервиса для работы с глобальными API ключами
+const globalApiKeysService = new GlobalApiKeysService();
 
 // Временное хранилище для OAuth состояний (в продакшене использовать Redis)
 const oauthStates = new Map<string, { userId: string; timestamp: number }>();
@@ -21,22 +25,19 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Пользователь не авторизован' });
     }
 
-    // Получаем конфигурацию YouTube из переменных окружения
-    const clientId = process.env.YOUTUBE_CLIENT_ID;
-    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI;
+    // Получаем конфигурацию YouTube из базы данных
+    const youtubeConfig = await globalApiKeysService.getYouTubeConfig();
 
-    console.log('[youtube-auth] Проверяем переменные среды:');
-    console.log('[youtube-auth] YOUTUBE_CLIENT_ID:', clientId ? 'установлен' : 'отсутствует');
-    console.log('[youtube-auth] YOUTUBE_CLIENT_SECRET:', clientSecret ? 'установлен' : 'отсутствует');
-    console.log('[youtube-auth] YOUTUBE_REDIRECT_URI:', redirectUri || 'не установлен');
+    console.log('[youtube-auth] YouTube config loaded from database:', youtubeConfig ? 'успешно' : 'ошибка');
 
-    if (!clientId || !clientSecret) {
+    if (!youtubeConfig) {
       return res.status(500).json({ 
         error: 'YouTube OAuth не настроен',
-        details: 'Отсутствуют YOUTUBE_CLIENT_ID или YOUTUBE_CLIENT_SECRET'
+        details: 'Отсутствуют YOUTUBE_CLIENT_ID или YOUTUBE_CLIENT_SECRET в базе данных'
       });
     }
+
+    const { clientId, clientSecret, redirectUri } = youtubeConfig;
 
     const youtubeOAuth = new YouTubeOAuth();
 
@@ -111,9 +112,15 @@ router.get('/youtube/auth/callback', async (req, res) => {
       oauthStates.delete(state as string);
     }
 
-    const clientId = process.env.YOUTUBE_CLIENT_ID!;
-    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
+    // Получаем конфигурацию YouTube из базы данных
+    const youtubeConfig = await globalApiKeysService.getYouTubeConfig();
+    
+    if (!youtubeConfig) {
+      return res.status(500).json({ 
+        error: 'YouTube OAuth не настроен',
+        details: 'Отсутствует конфигурация YouTube в базе данных'
+      });
+    }
 
     const youtubeOAuth = new YouTubeOAuth();
 
