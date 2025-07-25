@@ -215,6 +215,12 @@ export class GlobalApiKeysService {
         }
       }
       
+      console.log('[global-api-keys] Config parsed from DB:', { 
+        clientId: config.clientId ? '***' : 'null',
+        clientSecret: config.clientSecret ? '***' : 'null', 
+        redirectUri: config.redirectUri || 'не задан'
+      });
+
       // Проверяем, что есть обязательные поля
       if (!config.clientId || !config.clientSecret) {
         console.error('[global-api-keys] YouTube конфигурация неполная:', config);
@@ -222,7 +228,13 @@ export class GlobalApiKeysService {
       }
       
       console.log('[global-api-keys] YouTube конфигурация успешно загружена из базы данных');
-      return config as YouTubeConfig;
+      const finalConfig = config as YouTubeConfig;
+      console.log('[global-api-keys] Final config object:', { 
+        clientId: finalConfig.clientId ? '***' : 'null',
+        clientSecret: finalConfig.clientSecret ? '***' : 'null', 
+        redirectUri: finalConfig.redirectUri || 'не задан'
+      });
+      return finalConfig;
       
     } catch (error) {
       console.error('[global-api-keys] Ошибка при получении YouTube конфигурации:', error);

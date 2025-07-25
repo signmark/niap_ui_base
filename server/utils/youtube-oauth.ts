@@ -1,39 +1,52 @@
 import { google } from 'googleapis';
+import { YouTubeConfig } from '../services/global-api-keys';
 
 export class YouTubeOAuth {
   private oauth2Client: any;
 
-  constructor() {
-    // Автоматическое определение redirect URI в зависимости от среды
-    const getRedirectUri = () => {
-      // Если есть переменная среды, используем её
-      if (process.env.YOUTUBE_REDIRECT_URI) {
-        return process.env.YOUTUBE_REDIRECT_URI;
-      }
+  constructor(config?: YouTubeConfig) {
+    // Если конфигурация передана, используем её
+    if (config) {
+      const redirectUri = config.redirectUri || this.getDefaultRedirectUri();
+      console.log('[youtube-oauth] Используем конфигурацию из базы данных, redirect URI:', redirectUri);
       
-      // Определяем среду по URL Directus
-      const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
+      this.oauth2Client = new google.auth.OAuth2(
+        config.clientId,
+        config.clientSecret,
+        redirectUri
+      );
+    } else {
+      // Fallback на старый способ с переменными среды
+      const redirectUri = this.getDefaultRedirectUri();
+      console.log('[youtube-oauth] Fallback: используем переменные среды и redirect URI:', redirectUri);
       
-      if (directusUrl?.includes('roboflow.space')) {
-        // Стейдж среда
-        return 'https://smm.roboflow.space/api/auth/youtube/callback';
-      } else if (directusUrl?.includes('replit.dev') || process.env.REPL_ID) {
-        // Dev среда (Replit)
-        return 'https://6813c5d2-7c73-4e24-8e70-d9b38d1135b3-00-1i11z1ktw30ct.worf.replit.dev/api/auth/youtube/callback';
-      } else {
-        // Fallback для локальной разработки
-        return 'http://localhost:5000/api/auth/youtube/callback';
-      }
-    };
+      this.oauth2Client = new google.auth.OAuth2(
+        process.env.YOUTUBE_CLIENT_ID,
+        process.env.YOUTUBE_CLIENT_SECRET,
+        redirectUri
+      );
+    }
+  }
 
-    const redirectUri = getRedirectUri();
-    console.log('[youtube-oauth] Используем redirect URI:', redirectUri);
+  private getDefaultRedirectUri(): string {
+    // Если есть переменная среды, используем её
+    if (process.env.YOUTUBE_REDIRECT_URI) {
+      return process.env.YOUTUBE_REDIRECT_URI;
+    }
     
-    this.oauth2Client = new google.auth.OAuth2(
-      process.env.YOUTUBE_CLIENT_ID,
-      process.env.YOUTUBE_CLIENT_SECRET,
-      redirectUri
-    );
+    // Определяем среду по URL Directus
+    const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
+    
+    if (directusUrl?.includes('roboflow.space')) {
+      // Стейдж среда
+      return 'https://smm.roboflow.space/api/auth/youtube/callback';
+    } else if (directusUrl?.includes('replit.dev') || process.env.REPL_ID) {
+      // Dev среда (Replit)
+      return 'https://6813c5d2-7c73-4e24-8e70-d9b38d1135b3-00-1i11z1ktw30ct.worf.replit.dev/api/auth/youtube/callback';
+    } else {
+      // Fallback для локальной разработки
+      return 'http://localhost:5000/api/auth/youtube/callback';
+    }
   }
 
   getAuthUrl(): string {

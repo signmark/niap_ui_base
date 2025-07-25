@@ -39,7 +39,7 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
 
     const { clientId, clientSecret, redirectUri } = youtubeConfig;
 
-    const youtubeOAuth = new YouTubeOAuth();
+    const youtubeOAuth = new YouTubeOAuth(youtubeConfig);
 
     // Генерируем уникальный state для защиты от CSRF
     const state = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -122,7 +122,7 @@ router.get('/youtube/auth/callback', async (req, res) => {
       });
     }
 
-    const youtubeOAuth = new YouTubeOAuth();
+    const youtubeOAuth = new YouTubeOAuth(youtubeConfig);
 
     // Обмениваем code на токены
     const tokens = await youtubeOAuth.exchangeCodeForTokens(code as string);
@@ -201,11 +201,17 @@ router.post('/youtube/test', authMiddleware, async (req, res) => {
       });
     }
 
-    const clientId = process.env.YOUTUBE_CLIENT_ID!;
-    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET!;
-    const redirectUri = process.env.YOUTUBE_REDIRECT_URI!;
+    // Получаем конфигурацию YouTube из базы данных
+    const youtubeConfig = await globalApiKeysService.getYouTubeConfig();
+    
+    if (!youtubeConfig) {
+      return res.status(500).json({ 
+        error: 'YouTube OAuth не настроен',
+        details: 'Отсутствует конфигурация YouTube в базе данных'
+      });
+    }
 
-    const youtubeOAuth = new YouTubeOAuth();
+    const youtubeOAuth = new YouTubeOAuth(youtubeConfig);
     const channelInfo = await youtubeOAuth.getChannelInfo(accessToken);
 
     res.json({
