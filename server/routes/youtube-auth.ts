@@ -26,6 +26,11 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
     const redirectUri = process.env.YOUTUBE_REDIRECT_URI;
 
+    console.log('[youtube-auth] Проверяем переменные среды:');
+    console.log('[youtube-auth] YOUTUBE_CLIENT_ID:', clientId ? 'установлен' : 'отсутствует');
+    console.log('[youtube-auth] YOUTUBE_CLIENT_SECRET:', clientSecret ? 'установлен' : 'отсутствует');
+    console.log('[youtube-auth] YOUTUBE_REDIRECT_URI:', redirectUri || 'не установлен');
+
     if (!clientId || !clientSecret) {
       return res.status(500).json({ 
         error: 'YouTube OAuth не настроен',
