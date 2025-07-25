@@ -4,6 +4,8 @@
 
 SMM Manager is an intelligent social media content management platform that helps content creators with AI-powered content generation, analytics, and multi-platform publishing strategies. The application provides adaptive workflows for content creation with intelligent scheduling, multi-language AI-driven content creation, and direct social media publishing capabilities.
 
+**Project Status: Fresh Reset** - Project was reset from checkpoint, requiring restoration of recent features and configurations.
+
 ## System Architecture
 
 ### Technology Stack
