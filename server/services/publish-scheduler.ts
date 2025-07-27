@@ -4,6 +4,7 @@ import { storage } from '../storage';
 import { socialPublishingService } from './social/index';
 import { directusCrud } from './directus-crud';
 import { publicationLockManager } from './publication-lock-manager';
+import { publicationTracker } from './publication-tracking';
 
 /**
  * Исправленный класс для планирования и выполнения автоматической публикации контента
@@ -20,18 +21,19 @@ export class PublishScheduler {
   
   // Кэш для предотвращения повторной публикации
   private processedContentCache = new Map<string, Set<string>>(); // contentId -> Set<platform>
-  private cacheCleanupInterval = 10 * 60 * 1000; // очищаем кэш каждые 10 минут
+  private cacheCleanupInterval = 60 * 60 * 1000; // очищаем кэш каждые 60 минут (увеличено с 10 минут)
   private lastCacheCleanup = Date.now();
 
   /**
-   * Очищает кэш обработанного контента
+   * Очищает кэш обработанного контента (НЕ АГРЕССИВНО)
+   * Теперь кэш сохраняется 60 минут для защиты от дублирования
    */
   private cleanupCache() {
     const now = Date.now();
     if (now - this.lastCacheCleanup > this.cacheCleanupInterval) {
       this.processedContentCache.clear();
       this.lastCacheCleanup = now;
-      log('Кэш обработанного контента очищен', 'scheduler');
+      log(`🛡️ Кэш защиты от дублирования очищен после 60 минут (размер был: ${this.processedContentCache.size})`, 'scheduler');
     }
   }
 
@@ -165,10 +167,15 @@ export class PublishScheduler {
         // Проверяем наши тестовые YouTube контенты
         const testContentIds = ['bea24ff7-9c75-4404-812b-06d355bd98ac', 'fd9b54a9-24ad-41ab-b1fa-4da777154b3d', '9d2c6b9a-0aa9-44c0-b37d-538b6c6193c3', '654701b6-a865-44f4-8453-0ea433cd5f90', 'ea5a4482-8885-408e-9495-bca8293b7f85', 'e2469bd4-416e-4258-8c34-5822c3759c77', '6eff52ab-7623-414c-8a0c-5744f4c0be55'];
         
-        // Принудительно очищаем весь кэш обработки для свежего старта
-        if (this.processedContentCache.size > 0) {
-          log(`Принудительно очищаем весь кэш обработки (${this.processedContentCache.size} записей)`, 'scheduler');
-          this.processedContentCache.clear();
+        // НЕ ОЧИЩАЕМ кэш принудительно - защита от дублирования важнее
+        // Кэш очищается автоматически через cleanupCache() каждые 60 минут
+        log(`🛡️ Кэш защиты от дублирования содержит ${this.processedContentCache.size} записей (сохраняется для защиты)`, 'scheduler');
+        
+        // Выводим статистику Publication Tracker
+        const trackerStats = publicationTracker.getStats();
+        log(`📊 Publication Tracker: ${trackerStats.activePublications} активных публикаций`, 'scheduler');
+        if (trackerStats.publicationsInProgress.length > 0) {
+          log(`📊 В процессе: ${trackerStats.publicationsInProgress.join(', ')}`, 'scheduler');
         }
         const foundTestContent = allContent.filter((item: any) => testContentIds.includes(item.id));
         
@@ -235,9 +242,15 @@ export class PublishScheduler {
             const data = platformData as any;
             log(`Планировщик: Платформа ${platformName} - статус: ${data.status}, enabled: ${data.enabled}`, 'scheduler');
             
-            // Пропускаем уже опубликованные платформы (строгая проверка)
-            if (data.status === 'published' && data.postUrl && data.postUrl.trim() !== '') {
-              log(`Планировщик: Пропускаем ${platformName} ${content.id} - уже опубликован (${data.postUrl})`, 'scheduler');
+            // 🛡️ УНИВЕРСАЛЬНАЯ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ: Проверяем postUrl для ВСЕХ платформ
+            if (data.postUrl && data.postUrl.trim() !== '') {
+              log(`🛡️ УНИВЕРСАЛЬНАЯ ЗАЩИТА: ${platformName} ${content.id} уже опубликован (${data.postUrl}), пропускаем`, 'scheduler');
+              continue;
+            }
+            
+            // Пропускаем уже опубликованные платформы (проверка статуса)
+            if (data.status === 'published') {
+              log(`Планировщик: Пропускаем ${platformName} ${content.id} - статус published`, 'scheduler');
               continue;
             }
             
@@ -263,9 +276,16 @@ export class PublishScheduler {
               continue;
             }
             
-            // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем на дублирование YouTube публикаций
-            if (platformName === 'youtube' && data.postUrl) {
-              log(`🛡️ ЗАЩИТА ОТ ДУБЛИРОВАНИЯ: YouTube контент ${content.id} уже опубликован (${data.postUrl}), пропускаем`, 'scheduler');
+            // 🛡️ УРОВЕНЬ 1: Локальный кэш планировщика
+            if (this.isAlreadyProcessed(content.id, platformName)) {
+              log(`🛡️ ЗАЩИТА УРОВЕНЬ 1: ${platformName} ${content.id} уже обрабатывается (локальный кэш)`, 'scheduler');
+              continue;
+            }
+            
+            // 🛡️ УРОВЕНЬ 2: Publication Tracker (база данных)
+            const canPublishFromDB = await publicationTracker.canPublish(content.id, platformName);
+            if (!canPublishFromDB) {
+              log(`🛡️ ЗАЩИТА УРОВЕНЬ 2: ${platformName} ${content.id} заблокирован Publication Tracker`, 'scheduler');
               continue;
             }
 
@@ -316,9 +336,9 @@ export class PublishScheduler {
               }
             }
 
-            // КРИТИЧЕСКАЯ ЗАЩИТА: Проверяем кэш на предмет повторной обработки
-            if (this.isAlreadyProcessed(content.id, platformName)) {
-              log(`Планировщик: Платформа ${platformName} для контента ${content.id} уже обрабатывается, пропускаем`, 'scheduler');
+            // 🛡️ УРОВЕНЬ 3: Lock Manager блокировки
+            if (publicationLockManager.isLocked(content.id, platformName)) {
+              log(`🛡️ ЗАЩИТА УРОВЕНЬ 3: ${platformName} ${content.id} заблокирован Lock Manager`, 'scheduler');
               continue;
             }
 
@@ -361,10 +381,11 @@ export class PublishScheduler {
             // Failed статус уже проверен выше, эта проверка удалена
 
             if (shouldPublish) {
-              // Отмечаем платформу как обрабатываемую ПЕРЕД добавлением в очередь
+              // 🛡️ УРОВЕНЬ 3 и 4: Отмечаем в кэше планировщика и Publication Tracker
               this.markAsProcessed(content.id, platformName);
+              publicationTracker.markAsProcessed(content.id, platformName);
               readyPlatforms.push(platformName);
-              log(`Планировщик: Платформа ${platformName} добавлена в очередь публикации для контента ${content.id}`, 'scheduler');
+              log(`🛡️ Планировщик: Платформа ${platformName} защищена от дублирования и добавлена в очередь для ${content.id}`, 'scheduler');
             }
           }
 
