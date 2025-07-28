@@ -533,6 +533,25 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API Setup Wizard</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                      Автоматическая настройка Instagram Business API за 5-10 минут
+                    </p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open('/settings/instagram-setup', '_blank')}
+                  >
+                    Запустить Wizard
+                  </Button>
+                </div>
+              </div>
+              
               <FormField
                 control={form.control}
                 name="instagram.token"
