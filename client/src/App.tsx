@@ -55,6 +55,7 @@ import TelegramTestPage from "@/pages/telegram-test";
 import EditorDemoPage from "@/pages/editor-demo";
 import AiImageTester from "@/pages/AiImageTester";
 import BusinessQuestionnairePage from "@/pages/business-questionnaire";
+import InstagramSimplePage from "@/pages/instagram-simple";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -63,6 +64,7 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
 import VideoEditor from "@/pages/video";
 import YouTubeCallback from "@/pages/youtube-callback";
+import StoryEditor from "@/components/stories/StoryEditor";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -99,6 +101,7 @@ const LayoutGlobalApiKeysPage = React.memo(() => <WithLayout Component={GlobalAp
 const LayoutUserManagement = React.memo(() => <WithLayout Component={UserManagement} />);
 const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
 const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
+const LayoutInstagramSetup = React.memo(() => <WithLayout Component={InstagramSimplePage} />);
 
 function Router() {
   return (
@@ -137,6 +140,7 @@ function Router() {
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
+      <Route path="/settings/instagram-setup" component={LayoutInstagramSetup} />
       
       {/* Video and Stories routes */}
       <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />

@@ -123,12 +123,18 @@ registerAuthRoutes(app);
 
 // Импортируем и регистрируем маршруты для глобальных API ключей
 import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
+// Импортируем Instagram Setup Wizard
+import instagramSetupRoutes from './routes/instagram-setup-wizard';
 registerGlobalApiKeysRoutes(app);
 log('Global API keys routes registered early to avoid Vite middleware interception');
 
 // Регистрируем маршруты для пользовательских API ключей раньше Vite
 registerUserApiKeysRoutes(app);
 log('User API keys routes registered early to avoid Vite middleware interception');
+
+// Регистрируем Instagram Setup Wizard маршруты
+app.use('/api/instagram-setup', instagramSetupRoutes);
+log('Instagram Setup Wizard routes registered');
 
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
