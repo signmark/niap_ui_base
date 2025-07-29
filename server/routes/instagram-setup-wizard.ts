@@ -29,6 +29,9 @@ const AXIOS_CONFIG = {
  */
 router.post('/start', async (req, res) => {
   try {
+    console.log('🔥 Instagram Setup Start Route - RAW BODY:', req.body);
+    console.log('🔥 Instagram Setup Start Route - Content-Type:', req.headers['content-type']);
+    
     const { appId, appSecret, redirectUri, webhookUrl, instagramId, userId } = req.body;
 
     if (!appId || !appSecret || !redirectUri || !userId) {
