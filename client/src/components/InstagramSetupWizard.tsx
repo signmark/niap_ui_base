@@ -77,32 +77,55 @@ const InstagramSetupWizard: React.FC = () => {
     }
 
     setLoading(true);
-    setStep('loading');
 
     try {
-      const redirectUri = `${window.location.origin}/api/instagram-setup/callback`;
+      const redirectUri = `https://n8n.roboflow.space/webhook/authorize-ig`;
+      const scopes = [
+        'pages_manage_posts',
+        'pages_read_engagement', 
+        'pages_show_list',
+        'instagram_basic',
+        'instagram_content_publish',
+        'business_management',
+        'pages_manage_metadata',
+        'instagram_manage_insights',
+        'publish_to_groups',
+        'user_posts'
+      ];
       
-      const response = await apiRequest('/api/instagram-setup/start', {
+      // Генерируем state для безопасности
+      const state = `${user?.id}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Формируем URL авторизации Facebook напрямую
+      const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +
+        `client_id=${formData.appId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=${encodeURIComponent(scopes.join(','))}&` +
+        `response_type=code&` +
+        `state=${state}`;
+
+      // Сохраняем данные для последующей обработки в N8N
+      await apiRequest('/api/instagram-setup/save-config', {
         method: 'POST'
       }, {
         appId: formData.appId,
         appSecret: formData.appSecret,
-        redirectUri,
         webhookUrl: formData.webhookUrl,
         instagramId: formData.instagramId,
-        userId: user?.id
+        userId: user?.id,
+        state: state
       });
 
-      if (response.success && response.authUrl) {
-        // Сохраняем state для последующей проверки и переходим к шагу ввода кода
-        setCallbackData({ ...callbackData, state: response.state });
-        setStep('callback');
-        
-        // Открываем окно Facebook OAuth в новой вкладке
-        window.open(response.authUrl, '_blank', 'width=600,height=700');
-      } else {
-        throw new Error(response.error || 'Неизвестная ошибка');
-      }
+      // Открываем Facebook OAuth
+      window.open(authUrl, '_blank', 'width=600,height=700');
+      
+      setStep('success');
+      toast({
+        title: "Настройка завершена",
+        description: "Перейдите в открывшееся окно Facebook для завершения авторизации",
+        variant: "default"
+      });
+      
     } catch (error) {
       console.error('Error starting OAuth:', error);
       toast({
@@ -111,6 +134,7 @@ const InstagramSetupWizard: React.FC = () => {
         variant: "destructive"
       });
       setStep('form');
+    } finally {
       setLoading(false);
     }
   };
@@ -406,7 +430,7 @@ const InstagramSetupWizard: React.FC = () => {
                   <li>Выберите тип "Consumer" или "Business"</li>
                   <li>Добавьте продукт "Facebook Login"</li>
                   <li>Добавьте продукт "Instagram Basic Display" (если доступно)</li>
-                  <li>В настройках OAuth добавьте Redirect URI: <code className="bg-white px-1 rounded">{window.location.origin}/api/instagram-setup/callback</code></li>
+                  <li>В настройках OAuth добавьте Redirect URI: <code className="bg-white px-1 rounded">https://n8n.roboflow.space/webhook/authorize-ig</code></li>
                 </ul>
               </div>
             </div>

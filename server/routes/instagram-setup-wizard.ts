@@ -2,6 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
 import { directusApiManager } from '../directus';
+import { GlobalApiKeysService } from '../services/global-api-keys';
 
 const router = express.Router();
 
@@ -25,7 +26,126 @@ const AXIOS_CONFIG = {
 };
 
 /**
- * Начало OAuth flow для Instagram
+ * Сохранение конфигурации Instagram для N8N workflow
+ */
+router.post('/save-config', async (req, res) => {
+  try {
+    console.log('🔥 Instagram Setup Save Config - RAW BODY:', req.body);
+    console.log('🔥 Instagram Setup Save Config - Content-Type:', req.headers['content-type']);
+    
+    const { appId, appSecret, webhookUrl, instagramId, userId, state } = req.body;
+
+    if (!appId || !appSecret || !userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Отсутствуют обязательные поля: appId, appSecret, userId'
+      });
+    }
+
+    // Сохраняем конфигурацию в глобальные API ключи для доступа из N8N
+    const configData = {
+      userId,
+      appId,
+      appSecret,
+      webhookUrl: webhookUrl || 'https://n8n.roboflow.space/webhook/publish-instagram',
+      instagramId,
+      state,
+      createdAt: new Date(),
+      status: 'pending_auth',
+      scopes: [
+        'pages_manage_posts',
+        'pages_read_engagement', 
+        'pages_show_list',
+        'instagram_basic',
+        'instagram_content_publish',
+        'business_management',
+        'pages_manage_metadata',
+        'instagram_manage_insights',
+        'publish_to_groups',
+        'user_posts'
+      ].join(',')
+    };
+
+    // Сохраняем в Global API Keys для доступа из N8N
+    try {
+      // Создаем или обновляем запись в global_api_keys
+      const globalApiKeysService = new GlobalApiKeysService();
+      await globalApiKeysService.setApiKey(`INSTAGRAM_SETUP_${state}`, JSON.stringify(configData), userId);
+      log(`Instagram config saved as API key INSTAGRAM_SETUP_${state} for user ${userId}`, 'instagram-setup');
+    } catch (dbError) {
+      log(`Warning: Could not save config to global API keys: ${dbError.message}`, 'instagram-setup');
+      
+      // Fallback: сохраняем в отдельную коллекцию если есть
+      try {
+        await directusApiManager.createItem('instagram_setup_configs', configData);
+        log(`Instagram config saved to fallback collection for user ${userId}`, 'instagram-setup');
+      } catch (fallbackError) {
+        log(`Error: Could not save config anywhere: ${fallbackError.message}`, 'instagram-setup');
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Конфигурация сохранена',
+      state: state
+    });
+
+  } catch (error) {
+    log(`Error saving Instagram config: ${error.message}`, 'instagram-setup');
+    res.status(500).json({ 
+      success: false,
+      error: 'Ошибка при сохранении конфигурации',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Проверка статуса Instagram подключения 
+ */
+router.get('/status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Проверяем активные Instagram credentials
+    const credentials = await directusApiManager.getItems('instagram_credentials', {
+      filter: {
+        userId: { _eq: userId },
+        status: { _eq: 'active' }
+      },
+      limit: 1
+    });
+
+    if (credentials.length > 0) {
+      const cred = credentials[0];
+      res.json({
+        success: true,
+        connected: true,
+        data: {
+          facebookUser: cred.facebookUser,
+          instagramAccounts: cred.instagramAccounts,
+          setupCompletedAt: cred.setupCompletedAt
+        }
+      });
+    } else {
+      res.json({
+        success: true,
+        connected: false
+      });
+    }
+
+  } catch (error) {
+    log(`Error checking Instagram status: ${error.message}`, 'instagram-setup');
+    res.status(500).json({ 
+      success: false,
+      error: 'Ошибка при проверке статуса Instagram',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Начало OAuth flow для Instagram (DEPRECATED - используется N8N)
  */
 router.post('/start', async (req, res) => {
   try {
