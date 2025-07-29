@@ -104,15 +104,30 @@ const InstagramSetupWizard: React.FC = () => {
         `state=${state}`;
 
       // Сохраняем данные для последующей обработки в N8N
-      await apiRequest('/api/instagram-setup/save-config', {
-        method: 'POST'
-      }, {
+      const requestData = {
         appId: formData.appId,
         appSecret: formData.appSecret,
         instagramId: formData.instagramId,
         userId: userId,
         state: state
+      };
+      
+      console.log('🔥 CLIENT SENDING DATA:', requestData);
+      
+      const response = await fetch('/api/instagram-setup/save-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().token}`,
+          'x-user-id': userId || ''
+        },
+        body: JSON.stringify(requestData)
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Request failed');
+      }
 
       // Открываем Facebook OAuth
       window.open(authUrl, '_blank', 'width=600,height=700');
