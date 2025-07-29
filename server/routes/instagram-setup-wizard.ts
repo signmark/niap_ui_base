@@ -30,11 +30,15 @@ const AXIOS_CONFIG = {
  */
 router.post('/save-config', async (req, res) => {
   try {
-    console.log('🔥 Instagram Setup Save Config - RAW BODY:', req.body);
+    console.log('🔥🔥🔥 INSTAGRAM SETUP SAVE CONFIG START 🔥🔥🔥');
+    console.log('🔥 Instagram Setup Save Config - RAW BODY:', JSON.stringify(req.body, null, 2));
     console.log('🔥 Instagram Setup Save Config - Content-Type:', req.headers['content-type']);
+    console.log('🔥 Instagram Setup Save Config - Headers:', JSON.stringify(req.headers, null, 2));
     
     const { appId, appSecret, instagramId, userId, state } = req.body;
     const webhookUrl = 'https://n8n.roboflow.space/webhook/authorize-ig'; // Фиксированный URL
+    
+    console.log('🔥 Extracted data:', { appId, appSecret, instagramId, userId, state });
 
     if (!appId || !appSecret || !userId) {
       return res.status(400).json({

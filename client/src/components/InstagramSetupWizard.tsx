@@ -43,18 +43,18 @@ const InstagramSetupWizard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
-  const { user } = useAuthStore() as { user: { id: string } };
+  const { userId } = useAuthStore();
 
   // Проверяем статус подключения при загрузке
   useEffect(() => {
-    if (user?.id) {
+    if (userId) {
       checkInstagramStatus();
     }
-  }, [user?.id]);
+  }, [userId]);
 
   const checkInstagramStatus = async () => {
     try {
-      const response = await apiRequest(`/api/instagram-setup/status/${user?.id}`);
+      const response = await apiRequest(`/api/instagram-setup/status/${userId}`);
       setInstagramData(response);
       
       if (response.connected && !response.expired) {
@@ -93,7 +93,7 @@ const InstagramSetupWizard: React.FC = () => {
       ];
       
       // Генерируем state для безопасности
-      const state = `${user?.id}_${Math.random().toString(36).substring(2, 15)}`;
+      const state = `${userId}_${Math.random().toString(36).substring(2, 15)}`;
       
       // Формируем URL авторизации Facebook напрямую
       const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +
@@ -105,17 +105,13 @@ const InstagramSetupWizard: React.FC = () => {
 
       // Сохраняем данные для последующей обработки в N8N
       await apiRequest('/api/instagram-setup/save-config', {
-        method: 'POST',
-        body: JSON.stringify({
-          appId: formData.appId,
-          appSecret: formData.appSecret,
-          instagramId: formData.instagramId,
-          userId: user?.id,
-          state: state
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        method: 'POST'
+      }, {
+        appId: formData.appId,
+        appSecret: formData.appSecret,
+        instagramId: formData.instagramId,
+        userId: userId,
+        state: state
       });
 
       // Открываем Facebook OAuth
