@@ -105,13 +105,17 @@ const InstagramSetupWizard: React.FC = () => {
 
       // Сохраняем данные для последующей обработки в N8N
       await apiRequest('/api/instagram-setup/save-config', {
-        method: 'POST'
-      }, {
-        appId: formData.appId,
-        appSecret: formData.appSecret,
-        instagramId: formData.instagramId,
-        userId: user?.id,
-        state: state
+        method: 'POST',
+        body: JSON.stringify({
+          appId: formData.appId,
+          appSecret: formData.appSecret,
+          instagramId: formData.instagramId,
+          userId: user?.id,
+          state: state
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       // Открываем Facebook OAuth
