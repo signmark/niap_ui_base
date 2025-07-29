@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -77,6 +78,7 @@ export function SocialMediaSettings({
 }: SocialMediaSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -545,7 +547,7 @@ export function SocialMediaSettings({
                     type="button" 
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open('/settings/instagram-setup', '_blank')}
+                    onClick={() => setLocation('/settings/instagram-setup')}
                   >
                     Запустить Wizard
                   </Button>
