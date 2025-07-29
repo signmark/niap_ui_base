@@ -279,7 +279,13 @@ export class YouTubeService extends BaseSocialService {
 
           log('youtube', `Обложка успешно установлена для видео ${videoId}`);
         } catch (thumbnailError: any) {
-          log('youtube', `Ошибка установки обложки: ${thumbnailError.message}`);
+          // Специальная обработка ошибки 403 для миниатюр
+          if (thumbnailError.code === 403 && thumbnailError.message?.includes("upload and set custom video thumbnails")) {
+            log('youtube', `ПРЕДУПРЕЖДЕНИЕ: Канал не имеет прав для загрузки кастомных миниатюр. Видео опубликовано без обложки.`);
+            log('youtube', `Для загрузки кастомных миниатюр необходимо: 1) Верифицировать канал через телефон, 2) Иметь историю загрузок без нарушений`);
+          } else {
+            log('youtube', `Ошибка установки обложки: ${thumbnailError.message}`);
+          }
           // Не падаем, если обложка не загрузилась - видео уже опубликовано
         }
       } else {
