@@ -66,7 +66,12 @@ const InstagramSetupWizard: React.FC = () => {
   };
 
   const handleStartOAuth = async () => {
+    console.log('🔥 START OAUTH CALLED');
+    console.log('🔥 FORM DATA:', formData);
+    console.log('🔥 USER ID:', userId);
+    
     if (!formData.appId || !formData.appSecret) {
+      console.log('🔥 VALIDATION FAILED - missing fields');
       toast({
         title: "Ошибка",
         description: "Введите App ID и App Secret",
@@ -75,6 +80,7 @@ const InstagramSetupWizard: React.FC = () => {
       return;
     }
 
+    console.log('🔥 VALIDATION PASSED');
     setLoading(true);
 
     try {
