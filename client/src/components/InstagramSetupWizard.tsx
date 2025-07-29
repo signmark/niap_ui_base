@@ -78,7 +78,8 @@ const InstagramSetupWizard: React.FC = () => {
     setLoading(true);
 
     try {
-      const redirectUri = `https://n8n.roboflow.space/webhook/authorize-ig`;
+      // Facebook OAuth redirect должен быть на наш домен, не на N8N
+      const redirectUri = `${window.location.origin}/instagram-callback`;
       const scopes = [
         'pages_manage_posts',
         'pages_read_engagement', 

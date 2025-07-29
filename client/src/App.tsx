@@ -64,6 +64,7 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
 import VideoEditor from "@/pages/video";
 import YouTubeCallback from "@/pages/youtube-callback";
+import InstagramCallback from "@/pages/instagram-callback";
 import StoryEditor from "@/components/stories/StoryEditor";
 
 // Создаем обертки для компонентов с Layout
@@ -146,8 +147,9 @@ function Router() {
       <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />
       <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
       
-      {/* YouTube OAuth callback */}
+      {/* OAuth callbacks */}
       <Route path="/api/auth/youtube/callback" component={YouTubeCallback} />
+      <Route path="/instagram-callback" component={InstagramCallback} />
       
       {/* Stories routes */}
       <Route path="/campaigns/:campaignId/stories/new">
