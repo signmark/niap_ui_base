@@ -10,11 +10,11 @@ const oauthSessions = new Map();
 // Эндпоинт для начала OAuth flow
 router.post('/instagram/auth/start', async (req, res) => {
   try {
-    const { appId, appSecret, redirectUri, webhookUrl, instagramId } = req.body;
+    const { appId, appSecret, redirectUri, webhookUrl, instagramId, campaignId } = req.body;
 
-    if (!appId || !appSecret || !redirectUri) {
+    if (!appId || !appSecret || !redirectUri || !campaignId) {
       return res.status(400).json({
-        error: 'Требуются: appId, appSecret, redirectUri'
+        error: 'Требуются: appId, appSecret, redirectUri, campaignId'
       });
     }
 
@@ -31,6 +31,7 @@ router.post('/instagram/auth/start', async (req, res) => {
       redirectUri,
       webhookUrl: finalWebhookUrl,
       instagramId,
+      campaignId, // Добавляем campaignId для последующего сохранения
       timestamp: Date.now()
     });
 
@@ -50,7 +51,7 @@ router.post('/instagram/auth/start', async (req, res) => {
       `response_type=code&` +
       `state=${state}`;
 
-    log('instagram-oauth', `OAuth поток запущен для App ID: ${appId}`);
+    log('instagram-oauth', `OAuth поток запущен для App ID: ${appId}, Campaign ID: ${campaignId}`);
     
     res.json({ authUrl, state });
   } catch (error) {
@@ -138,7 +139,7 @@ router.get('/instagram/auth/callback', async (req, res) => {
     });
 
     // Фильтруем только страницы с подключенным Instagram
-    const pagesWithInstagram = pagesResponse.data.data?.filter(page =>
+    const pagesWithInstagram = pagesResponse.data.data?.filter((page: any) =>
       page.instagram_business_account
     ) || [];
 
@@ -152,7 +153,7 @@ router.get('/instagram/auth/callback', async (req, res) => {
       expiresIn,
       user: userResponse.data,
       pages: pagesWithInstagram,
-      instagramAccounts: pagesWithInstagram.map(page => ({
+      instagramAccounts: pagesWithInstagram.map((page: any) => ({
         instagramId: page.instagram_business_account.id,
         username: page.instagram_business_account.username,
         name: page.instagram_business_account.name,
@@ -163,18 +164,73 @@ router.get('/instagram/auth/callback', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
-    // Отправляем данные в N8N webhook
+    // Сохраняем данные Instagram напрямую в social_media_settings кампании
     try {
-      await axios.post(session.webhookUrl, webhookData, {
-        headers: {
-          'Content-Type': 'application/json'
+      // Подготавливаем данные для сохранения в кампанию
+      const instagramSettings = {
+        appId: session.appId,
+        longLivedToken,
+        expiresIn,
+        tokenExpiresAt: new Date(Date.now() + (expiresIn * 1000)).toISOString(),
+        user: userResponse.data,
+        instagramAccounts: webhookData.instagramAccounts,
+        authTimestamp: new Date().toISOString(),
+        status: 'active'
+      };
+
+      // Получаем текущие настройки кампании
+      const DIRECTUS_URL = process.env.DIRECTUS_URL;
+      const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
+
+      const currentCampaignResponse = await axios.get(
+        `${DIRECTUS_URL}/items/user_campaigns/${session.campaignId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${DIRECTUS_TOKEN}`
+          }
+        }
+      );
+
+      // Обновляем social_media_settings с данными Instagram
+      const currentSettings = currentCampaignResponse.data.data.social_media_settings || {};
+      const updatedSettings = {
+        ...currentSettings,
+        instagram: instagramSettings
+      };
+
+      // Сохраняем обновленные настройки в кампанию
+      await axios.patch(
+        `${DIRECTUS_URL}/items/user_campaigns/${session.campaignId}`,
+        {
+          social_media_settings: updatedSettings
         },
-        timeout: 10000
-      });
-      
-      log('instagram-oauth', `Данные успешно отправлены в N8N webhook: ${session.webhookUrl}`);
-    } catch (webhookError) {
-      log('instagram-oauth', `Ошибка отправки в N8N webhook: ${webhookError}`);
+        {
+          headers: {
+            'Authorization': `Bearer ${DIRECTUS_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      log('instagram-oauth', `Instagram настройки успешно сохранены в кампанию ${session.campaignId}`);
+
+      // Дополнительно отправляем в N8N webhook если указан
+      if (session.webhookUrl) {
+        try {
+          await axios.post(session.webhookUrl, webhookData, {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 10000
+          });
+          log('instagram-oauth', `Данные также отправлены в N8N webhook: ${session.webhookUrl}`);
+        } catch (webhookError) {
+          log('instagram-oauth', `Ошибка отправки в N8N webhook: ${webhookError}`);
+        }
+      }
+
+    } catch (saveError) {
+      log('instagram-oauth', `Ошибка сохранения Instagram настроек: ${saveError}`);
     }
 
     // Очищаем сессию

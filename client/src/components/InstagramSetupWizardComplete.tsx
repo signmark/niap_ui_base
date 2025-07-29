@@ -102,7 +102,8 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
           appSecret: formData.appSecret,
           redirectUri: redirectUri,
           webhookUrl: webhookUrl,
-          instagramId: formData.instagramId
+          instagramId: formData.instagramId,
+          campaignId: campaignId
         })
       });
 
@@ -145,12 +146,10 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     try {
       await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
         method: 'PATCH',
-        body: {
-          instagram: {
-            appId: formData.appId,
-            appSecret: formData.appSecret,
-            instagramId: formData.instagramId
-          }
+        instagram: {
+          appId: formData.appId,
+          appSecret: formData.appSecret,
+          instagramId: formData.instagramId
         }
       });
 
@@ -398,31 +397,19 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         <Alert>
           <Instagram className="h-4 w-4" />
           <AlertDescription>
-            Система автоматически получит долгосрочный токен и сохранит его в базе данных через N8N webhook
+            Система автоматически получит долгосрочный токен и сохранит его в настройках кампании
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Как это работает:</h4>
-            <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
-              <li>Откроется окно авторизации Facebook</li>
-              <li>Вы авторизуете доступ к Instagram</li>
-              <li>Система получит краткосрочный токен</li>
-              <li>N8N автоматически обменяет его на долгосрочный токен</li>
-              <li>Токен сохранится в базе данных кампании</li>
-            </ol>
-          </div>
-
-          <div className="border rounded-lg p-4 space-y-3">
-            <h4 className="font-medium">N8N Webhook URL:</h4>
-            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md flex items-center justify-between">
-              <code className="text-sm">{webhookUrl}</code>
-              <Button size="sm" variant="ghost" onClick={() => copyToClipboard(webhookUrl)}>
-                <Copy className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Как это работает:</h4>
+          <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+            <li>Откроется окно авторизации Facebook</li>
+            <li>Вы авторизуете доступ к Instagram Business аккаунту</li>
+            <li>Система получит краткосрочный токен и обменяет на долгосрочный</li>
+            <li>Все данные Instagram сохранятся в настройках этой кампании</li>
+            <li>Готово! Можно публиковать контент в Instagram</li>
+          </ol>
         </div>
 
         <div className="flex gap-2">

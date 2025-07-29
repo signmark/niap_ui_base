@@ -9,7 +9,8 @@ const testData = {
   appSecret: 'test_app_secret_12345',
   instagramId: '17841400000000000',
   redirectUri: 'https://worf.replit.dev/instagram-callback',
-  webhookUrl: 'https://n8n.roboflow.space/webhook/instagram-auth'
+  webhookUrl: 'https://n8n.roboflow.space/webhook/instagram-auth',
+  campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e' // Test campaign ID
 };
 
 // Симуляция успешного OAuth ответа от Facebook
@@ -58,7 +59,8 @@ async function testInstagramOAuthStart() {
       appSecret: testData.appSecret,
       redirectUri: testData.redirectUri,
       webhookUrl: testData.webhookUrl,
-      instagramId: testData.instagramId
+      instagramId: testData.instagramId,
+      campaignId: testData.campaignId
     });
 
     console.log('✅ OAuth start успешен:', {
