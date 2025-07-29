@@ -221,6 +221,160 @@ router.get('/callback', async (req, res) => {
 });
 
 /**
+ * POST Callback для обработки кода из формы
+ */
+router.post('/callback', async (req, res) => {
+  try {
+    const { code, state, userId } = req.body;
+
+    if (!code || !state) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Отсутствует код авторизации или state' 
+      });
+    }
+
+    // Получаем данные сессии
+    const session = oauthSessions.get(state);
+    if (!session) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Недействительная сессия или сессия истекла. Попробуйте начать процесс заново.' 
+      });
+    }
+
+    // Проверяем, что userId совпадает
+    if (session.userId !== userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный пользователь для данной сессии'
+      });
+    }
+
+    // Удаляем сессию после использования
+    oauthSessions.delete(state);
+
+    log(`Processing Instagram OAuth callback for user ${userId}`, 'instagram-setup');
+
+    // Используем тот же код обработки что и в GET callback
+    // Шаг 1: Получаем краткосрочный токен
+    const tokenResponse = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+      params: {
+        client_id: session.appId,
+        client_secret: session.appSecret,
+        redirect_uri: session.redirectUri,
+        code: code
+      },
+      ...AXIOS_CONFIG
+    });
+
+    const shortLivedToken = tokenResponse.data.access_token;
+    log('Получен краткосрочный токен', 'instagram-setup');
+
+    // Шаг 2: Обмениваем на долгосрочный токен
+    const longLivedResponse = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+      params: {
+        grant_type: 'fb_exchange_token',
+        client_id: session.appId,
+        client_secret: session.appSecret,
+        fb_exchange_token: shortLivedToken
+      },
+      ...AXIOS_CONFIG
+    });
+
+    const longLivedToken = longLivedResponse.data.access_token;
+    const expiresIn = longLivedResponse.data.expires_in;
+    log('Получен долгосрочный токен', 'instagram-setup');
+
+    // Шаг 3: Получаем информацию о пользователе
+    const userResponse = await axios.get('https://graph.facebook.com/v23.0/me', {
+      params: {
+        access_token: longLivedToken,
+        fields: 'id,name,email'
+      },
+      ...AXIOS_CONFIG
+    });
+
+    // Шаг 4: Получаем страницы с Instagram аккаунтами
+    const pagesResponse = await axios.get('https://graph.facebook.com/v23.0/me/accounts', {
+      params: {
+        access_token: longLivedToken,
+        fields: 'id,name,access_token,instagram_business_account{id,name,username,profile_picture_url}',
+        limit: 100
+      },
+      ...AXIOS_CONFIG
+    });
+
+    // Фильтруем только страницы с подключенным Instagram
+    const pagesWithInstagram = pagesResponse.data.data.filter(page =>
+      page.instagram_business_account
+    );
+
+    log(`Found ${pagesWithInstagram.length} pages with Instagram accounts`, 'instagram-setup');
+
+    // Обрабатываем Instagram аккаунты
+    const instagramAccounts = pagesWithInstagram.map(page => ({
+      instagramId: page.instagram_business_account.id,
+      username: page.instagram_business_account.username,
+      name: page.instagram_business_account.name,
+      profilePicture: page.instagram_business_account.profile_picture_url,
+      pageId: page.id,
+      pageName: page.name,
+      pageAccessToken: page.access_token
+    }));
+
+    // Подготавливаем данные для сохранения
+    const instagramData = {
+      userId: session.userId,
+      appId: session.appId,
+      appSecret: session.appSecret,
+      userAccessToken: longLivedToken,
+      tokenExpiresIn: expiresIn,
+      tokenExpiresAt: new Date(Date.now() + (expiresIn * 1000)),
+      facebookUser: userResponse.data,
+      instagramAccounts: instagramAccounts,
+      webhookUrl: session.webhookUrl,
+      setupCompletedAt: new Date(),
+      status: 'active'
+    };
+
+    // Сохраняем в Directus
+    try {
+      await directusApiManager.createItem('instagram_credentials', instagramData);
+      log(`Instagram credentials saved for user ${session.userId}`, 'instagram-setup');
+    } catch (dbError) {
+      log(`Error saving Instagram credentials: ${dbError.message}`, 'instagram-setup');
+    }
+
+    // Отправляем успешный ответ
+    res.json({
+      success: true,
+      message: 'Instagram успешно подключен!',
+      data: {
+        connected: true,
+        facebookUser: userResponse.data,
+        instagramAccounts: instagramAccounts,
+        tokenExpiresAt: instagramData.tokenExpiresAt,
+        setupCompletedAt: instagramData.setupCompletedAt
+      }
+    });
+
+  } catch (error) {
+    log(`Error in Instagram OAuth POST callback: ${error.message}`, 'instagram-setup');
+    
+    if (error.response?.data) {
+      log(`Facebook API error: ${JSON.stringify(error.response.data)}`, 'instagram-setup');
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      error: 'Ошибка при обработке авторизации',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+/**
  * Получение статуса подключения Instagram для пользователя
  */
 router.get('/status/:userId', async (req, res) => {

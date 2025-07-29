@@ -29,12 +29,16 @@ interface InstagramSetupData {
 }
 
 const InstagramSetupWizard: React.FC = () => {
-  const [step, setStep] = useState<'instructions' | 'form' | 'loading' | 'success'>('instructions');
+  const [step, setStep] = useState<'instructions' | 'form' | 'callback' | 'loading' | 'success'>('instructions');
   const [formData, setFormData] = useState({
     appId: '',
     appSecret: '',
     webhookUrl: 'https://n8n.nplanner.ru/webhook/instagram',
     instagramId: ''
+  });
+  const [callbackData, setCallbackData] = useState({
+    code: '',
+    state: ''
   });
   const [instagramData, setInstagramData] = useState<InstagramSetupData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -91,8 +95,12 @@ const InstagramSetupWizard: React.FC = () => {
       });
 
       if (response.success && response.authUrl) {
-        // Перенаправляем на Facebook для авторизации
-        window.location.href = response.authUrl;
+        // Сохраняем state для последующей проверки и переходим к шагу ввода кода
+        setCallbackData({ ...callbackData, state: response.state });
+        setStep('callback');
+        
+        // Открываем окно Facebook OAuth в новой вкладке
+        window.open(response.authUrl, '_blank', 'width=600,height=700');
       } else {
         throw new Error(response.error || 'Неизвестная ошибка');
       }
@@ -104,6 +112,52 @@ const InstagramSetupWizard: React.FC = () => {
         variant: "destructive"
       });
       setStep('form');
+      setLoading(false);
+    }
+  };
+
+  const handleProcessCallback = async () => {
+    if (!callbackData.code) {
+      toast({
+        title: "Ошибка",
+        description: "Введите код авторизации",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    setStep('loading');
+
+    try {
+      const response = await apiRequest('/api/instagram-setup/callback', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: callbackData.code,
+          state: callbackData.state,
+          userId: user?.id
+        })
+      });
+
+      if (response.success) {
+        setInstagramData(response.data);
+        setStep('success');
+        
+        toast({
+          title: "Успешно!",
+          description: `Instagram подключен. Найдено аккаунтов: ${response.data.instagramAccounts?.length || 0}`
+        });
+      } else {
+        throw new Error(response.error || 'Ошибка обработки авторизации');
+      }
+    } catch (error) {
+      console.error('Error processing callback:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Ошибка обработки авторизации",
+        variant: "destructive"
+      });
+      setStep('callback');
       setLoading(false);
     }
   };
@@ -152,6 +206,68 @@ const InstagramSetupWizard: React.FC = () => {
       });
     }
   };
+
+  if (step === 'callback') {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Instagram className="h-6 w-6 text-pink-600" />
+            <span>Шаг 2: Обработка авторизации</span>
+          </CardTitle>
+          <CardDescription>
+            Скопируйте код авторизации из адресной строки браузера
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                После авторизации в Facebook вас перенаправит на страницу с кодом в URL. 
+                Скопируйте значение параметра <code>code=...</code> из адресной строки.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="authCode">Код авторизации</Label>
+                <Input
+                  id="authCode"
+                  placeholder="Введите код из параметра code=... в URL"
+                  value={callbackData.code}
+                  onChange={(e) => setCallbackData({ ...callbackData, code: e.target.value })}
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Пример: AQAB...xyz (длинная строка символов после code=)
+                </p>
+              </div>
+
+              <div className="flex space-x-2">
+                <Button onClick={handleProcessCallback} disabled={loading} className="flex-1">
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Обработка...
+                    </>
+                  ) : (
+                    'Подключить Instagram'
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('form')}
+                  disabled={loading}
+                >
+                  Назад
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (step === 'loading') {
     return (
