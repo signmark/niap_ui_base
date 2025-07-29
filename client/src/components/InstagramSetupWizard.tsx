@@ -33,7 +33,6 @@ const InstagramSetupWizard: React.FC = () => {
   const [formData, setFormData] = useState({
     appId: '',
     appSecret: '',
-    webhookUrl: 'https://n8n.nplanner.ru/webhook/instagram',
     instagramId: ''
   });
   const [callbackData, setCallbackData] = useState({
@@ -110,7 +109,6 @@ const InstagramSetupWizard: React.FC = () => {
       }, {
         appId: formData.appId,
         appSecret: formData.appSecret,
-        webhookUrl: formData.webhookUrl,
         instagramId: formData.instagramId,
         userId: user?.id,
         state: state
@@ -494,19 +492,7 @@ const InstagramSetupWizard: React.FC = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="webhookUrl">Webhook URL</Label>
-            <Input
-              id="webhookUrl"
-              type="url"
-              value={formData.webhookUrl}
-              onChange={(e) => setFormData(prev => ({ ...prev, webhookUrl: e.target.value }))}
-              placeholder="URL для получения уведомлений"
-            />
-            <p className="text-xs text-gray-500">
-              URL для получения уведомлений о статусе публикаций (опционально)
-            </p>
-          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="instagramId">Instagram Business Account ID (опционально)</Label>

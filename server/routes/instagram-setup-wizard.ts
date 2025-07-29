@@ -33,7 +33,8 @@ router.post('/save-config', async (req, res) => {
     console.log('🔥 Instagram Setup Save Config - RAW BODY:', req.body);
     console.log('🔥 Instagram Setup Save Config - Content-Type:', req.headers['content-type']);
     
-    const { appId, appSecret, webhookUrl, instagramId, userId, state } = req.body;
+    const { appId, appSecret, instagramId, userId, state } = req.body;
+    const webhookUrl = 'https://n8n.roboflow.space/webhook/authorize-ig'; // Фиксированный URL
 
     if (!appId || !appSecret || !userId) {
       return res.status(400).json({
@@ -47,7 +48,7 @@ router.post('/save-config', async (req, res) => {
       userId,
       appId,
       appSecret,
-      webhookUrl: webhookUrl || 'https://n8n.roboflow.space/webhook/publish-instagram',
+      webhookUrl,
       instagramId,
       state,
       createdAt: new Date(),
