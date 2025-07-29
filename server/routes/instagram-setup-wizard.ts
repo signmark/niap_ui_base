@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
-import { directusApiManager } from '../directus';
 import { GlobalApiKeysService } from '../services/global-api-keys';
 
 const router = express.Router();
@@ -71,23 +70,9 @@ router.post('/save-config', async (req, res) => {
       ].join(',')
     };
 
-    // Сохраняем в Global API Keys для доступа из N8N
-    try {
-      // Создаем или обновляем запись в global_api_keys
-      const globalApiKeysService = new GlobalApiKeysService();
-      await globalApiKeysService.setApiKey(`INSTAGRAM_SETUP_${state}`, JSON.stringify(configData), userId);
-      log(`Instagram config saved as API key INSTAGRAM_SETUP_${state} for user ${userId}`, 'instagram-setup');
-    } catch (dbError) {
-      log(`Warning: Could not save config to global API keys: ${dbError.message}`, 'instagram-setup');
-      
-      // Fallback: сохраняем в отдельную коллекцию если есть
-      try {
-        await directusApiManager.createItem('instagram_setup_configs', configData);
-        log(`Instagram config saved to fallback collection for user ${userId}`, 'instagram-setup');
-      } catch (fallbackError) {
-        log(`Error: Could not save config anywhere: ${fallbackError.message}`, 'instagram-setup');
-      }
-    }
+    // Сохраняем конфигурацию в память (для демо)
+    oauthSessions.set(state, configData);
+    log(`Instagram config saved to memory store for user ${userId}`, 'instagram-setup');
 
     res.json({
       success: true,
@@ -111,33 +96,31 @@ router.post('/save-config', async (req, res) => {
 router.get('/status/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    log(`Checking Instagram status for user: ${userId}`, 'instagram-setup');
     
-    // Проверяем активные Instagram credentials
-    const credentials = await directusApiManager.getItems('instagram_credentials', {
-      filter: {
-        userId: { _eq: userId },
-        status: { _eq: 'active' }
-      },
-      limit: 1
-    });
-
-    if (credentials.length > 0) {
-      const cred = credentials[0];
-      res.json({
+    // Проверяем сохраненные конфигурации в памяти
+    const userConfigs = Array.from(oauthSessions.entries()).filter(([key, value]) => 
+      key.startsWith(`${userId}_`) && value.status === 'active'
+    );
+    
+    if (userConfigs.length > 0) {
+      const [state, data] = userConfigs[0];
+      return res.json({
         success: true,
         connected: true,
         data: {
-          facebookUser: cred.facebookUser,
-          instagramAccounts: cred.instagramAccounts,
-          setupCompletedAt: cred.setupCompletedAt
+          appId: data.appId,
+          status: data.status,
+          setupCompletedAt: data.createdAt,
+          hasAccessToken: !!data.accessToken
         }
       });
-    } else {
-      res.json({
-        success: true,
-        connected: false
-      });
     }
+    
+    return res.json({
+      success: true,
+      connected: false
+    });
 
   } catch (error) {
     log(`Error checking Instagram status: ${error.message}`, 'instagram-setup');
