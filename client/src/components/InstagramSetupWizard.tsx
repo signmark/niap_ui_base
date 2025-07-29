@@ -44,7 +44,7 @@ const InstagramSetupWizard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
-  const { user } = useAuthStore();
+  const { user } = useAuthStore() as { user: { id: string } };
 
   // Проверяем статус подключения при загрузке
   useEffect(() => {
@@ -83,15 +83,14 @@ const InstagramSetupWizard: React.FC = () => {
       const redirectUri = `${window.location.origin}/api/instagram-setup/callback`;
       
       const response = await apiRequest('/api/instagram-setup/start', {
-        method: 'POST',
-        body: JSON.stringify({
-          appId: formData.appId,
-          appSecret: formData.appSecret,
-          redirectUri,
-          webhookUrl: formData.webhookUrl,
-          instagramId: formData.instagramId,
-          userId: user?.id
-        })
+        method: 'POST'
+      }, {
+        appId: formData.appId,
+        appSecret: formData.appSecret,
+        redirectUri,
+        webhookUrl: formData.webhookUrl,
+        instagramId: formData.instagramId,
+        userId: user?.id
       });
 
       if (response.success && response.authUrl) {
@@ -108,7 +107,7 @@ const InstagramSetupWizard: React.FC = () => {
       console.error('Error starting OAuth:', error);
       toast({
         title: "Ошибка",
-        description: error.message || "Ошибка инициализации авторизации",
+        description: (error as any)?.message || "Ошибка инициализации авторизации",
         variant: "destructive"
       });
       setStep('form');
@@ -131,12 +130,11 @@ const InstagramSetupWizard: React.FC = () => {
 
     try {
       const response = await apiRequest('/api/instagram-setup/callback', {
-        method: 'POST',
-        body: JSON.stringify({
-          code: callbackData.code,
-          state: callbackData.state,
-          userId: user?.id
-        })
+        method: 'POST'
+      }, {
+        code: callbackData.code,
+        state: callbackData.state,
+        userId: user?.id
       });
 
       if (response.success) {
@@ -154,7 +152,7 @@ const InstagramSetupWizard: React.FC = () => {
       console.error('Error processing callback:', error);
       toast({
         title: "Ошибка",
-        description: error.message || "Ошибка обработки авторизации",
+        description: (error as any)?.message || "Ошибка обработки авторизации",
         variant: "destructive"
       });
       setStep('callback');
